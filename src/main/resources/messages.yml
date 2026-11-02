@@ -556,6 +556,7 @@ messages:
       <gray>Срок действия до: </gray><aqua>%until%</aqua>
       <gold>==============================================</gold>
     "admin-help": |-
+      <yellow>/%label% tabcheck [ник]</yellow> <gray>— серверная проверка клановой анимации</gray>
       <gold>Команды управления рангами:</gold>
       <yellow>/%label% add <ник></yellow><gray> — выдать/продлить ранг на %grant_days% дней</gray>
       <yellow>/%label% remove <ник></yellow><gray> — отозвать ранг игрока</gray>
@@ -1448,3 +1449,40 @@ messages:
   "atlas-close": "<gray>Закрыть</gray>"
   "atlas-prev": "<gray>Предыдущая страница</gray>"
   "atlas-next": "<gray>Следующая страница</gray>"
+
+  # Новый TAB: готовые RGB-кадры, полезные статусы и ограниченный admin-probe.
+  tab:
+    brand: "CHERDAK"
+    sign-in: "после входа"
+    unavailable: "недоступен"
+    boost-off: "нет"
+    boost-time: "+10% · %hours%ч %minutes%м"
+    health-good: "<green>● стабильно</green>"
+    health-medium: "<yellow>● нагрузка</yellow>"
+    health-high: "<red>● задержки</red>"
+    health-unknown: "<gray>● нет замера</gray>"
+    ping-good: "<green>▰ %ping% мс</green>"
+    ping-medium: "<yellow>▰ %ping% мс</yellow>"
+    ping-high: "<red>▰ %ping% мс</red>"
+    ping-unknown: "<gray>▰ —</gray>"
+    world-normal: "Верхний мир"
+    world-nether: "Незер"
+    world-end: "Энд"
+    world-other: "Другой мир"
+    tip-0: "/bp — задания, деньги и XP-буст"
+    tip-1: "/profession — развитие своей профессии"
+    tip-2: "/hunt — дикие существа и полнолуние"
+    tip-3: "/clan gui — кланы и условия вступления"
+    tip-4: "/labels — метки; клановая анимация не занимает место"
+    tip-5: "/profile — достижения и защита аккаунта"
+    audit-start: "<gray>Проверяю кадры TAB игрока %player% за 30 тиков…</gray>"
+    audit-result: "<gold>TAB %player%:</gold> <white>%state%</white> <gray>Это проверка сервера, не клиентского FPS.</gray>"
+    audit-offline: "<yellow>Нужен игрок онлайн: /pass tabcheck ник</yellow>"
+    audit-busy: "<yellow>Для игрока уже идёт проверка либо достигнут предел 16 проверок.</yellow>"
+    audit-disabled: "встроенный TAB выключен администратором"
+    audit-inactive: "нет активной оплаченной анимации или игрок ещё не вошёл"
+    audit-pending: "ещё нет пары кадров; повторите проверку"
+    audit-overwritten: "имя перезаписано после CHRDK; проверьте другой TAB-плагин"
+    audit-frozen: "серверные кадры не меняются; проверьте оформление и heartbeat"
+    audit-repaired: "кадры движутся; обнаружена и исправлена чужая перезапись имени"
+    audit-ok: "кадры меняются, последнее имя совпадает с ожидаемым"

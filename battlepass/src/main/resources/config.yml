@@ -1,4 +1,4 @@
-# 1.4.282 RC.3: денежные награды + буст, 5 постоянных волн.
+# 1.4.282 RC.4: денежные награды RC3 ×10 + буст, 5 постоянных волн.
 # Награды — целые алмазы в личный /bal и часы отдельного +10% XP-буста.
 # Накопление времени буста без игрового потолка; платные ранги/товары не выдаются.
 # Не меняйте season-start ради рестарта: он задаёт область receipt наград.
@@ -31,11 +31,11 @@ battlepass:
       material: DIAMOND_ORE
       target: 16
       free-boost-hours: 6
-      free-diamonds: 40
+      free-diamonds: 400
       vip-boost-hours: 8
-      vip-diamonds: 20
+      vip-diamonds: 200
       premium-boost-hours: 12
-      premium-diamonds: 60
+      premium-diamonds: 600
       points: 20
     - id: hunt_zombies
       desc: <gray>Победить зомби</gray>
@@ -43,11 +43,11 @@ battlepass:
       entity: ZOMBIE|HUSK|DROWNED
       target: 40
       free-boost-hours: 6
-      free-diamonds: 40
+      free-diamonds: 400
       vip-boost-hours: 4
-      vip-diamonds: 20
+      vip-diamonds: 200
       premium-boost-hours: 12
-      premium-diamonds: 60
+      premium-diamonds: 600
       points: 20
     - id: angler
       desc: <gray>Поймать 10 уловов</gray>
@@ -55,11 +55,11 @@ battlepass:
       entity: ANY
       target: 10
       free-boost-hours: 6
-      free-diamonds: 40
+      free-diamonds: 400
       vip-boost-hours: 4
-      vip-diamonds: 20
+      vip-diamonds: 200
       premium-boost-hours: 12
-      premium-diamonds: 60
+      premium-diamonds: 600
       points: 10
     - id: builder
       desc: <gray>Построить 128 блоков</gray>
@@ -67,11 +67,11 @@ battlepass:
       material: COBBLESTONE|STONE|OAK_PLANKS
       target: 128
       free-boost-hours: 6
-      free-diamonds: 40
+      free-diamonds: 400
       vip-boost-hours: 4
-      vip-diamonds: 20
+      vip-diamonds: 200
       premium-boost-hours: 12
-      premium-diamonds: 60
+      premium-diamonds: 600
       points: 15
       icon: BRICKS
     - id: starter_lumber
@@ -80,11 +80,11 @@ battlepass:
       material: OAK_LOG|BIRCH_LOG|SPRUCE_LOG
       target: 32
       free-boost-hours: 6
-      free-diamonds: 40
+      free-diamonds: 400
       vip-boost-hours: 8
-      vip-diamonds: 20
+      vip-diamonds: 200
       premium-boost-hours: 12
-      premium-diamonds: 60
+      premium-diamonds: 600
       points: 25
     - id: starter_cook
       desc: <gray>Приготовить 16 порций еды</gray>
@@ -92,11 +92,11 @@ battlepass:
       material: COOKED_BEEF|COOKED_PORKCHOP|COOKED_COD
       target: 16
       free-boost-hours: 6
-      free-diamonds: 40
+      free-diamonds: 400
       vip-boost-hours: 8
-      vip-diamonds: 20
+      vip-diamonds: 200
       premium-boost-hours: 12
-      premium-diamonds: 60
+      premium-diamonds: 600
       points: 25
   - unlock-day: 7
     missions:
@@ -106,11 +106,11 @@ battlepass:
       material: ANCIENT_DEBRIS
       target: 6
       free-boost-hours: 12
-      free-diamonds: 60
+      free-diamonds: 600
       vip-boost-hours: 12
-      vip-diamonds: 30
+      vip-diamonds: 300
       premium-boost-hours: 18
-      premium-diamonds: 90
+      premium-diamonds: 900
       points: 30
     - id: craft_netherite
       desc: <gray>Скрафтить 2 незеритовых слитка</gray>
@@ -118,11 +118,11 @@ battlepass:
       material: NETHERITE_INGOT
       target: 2
       free-boost-hours: 6
-      free-diamonds: 60
+      free-diamonds: 600
       vip-boost-hours: 8
-      vip-diamonds: 30
+      vip-diamonds: 300
       premium-boost-hours: 12
-      premium-diamonds: 90
+      premium-diamonds: 900
       points: 25
     - id: hunt_skeletons
       desc: <gray>Победить скелетов</gray>
@@ -130,11 +130,11 @@ battlepass:
       entity: SKELETON|STRAY|BOGGED
       target: 60
       free-boost-hours: 6
-      free-diamonds: 60
+      free-diamonds: 600
       vip-boost-hours: 4
-      vip-diamonds: 30
+      vip-diamonds: 300
       premium-boost-hours: 12
-      premium-diamonds: 90
+      premium-diamonds: 900
       points: 20
     - id: smelter
       desc: <gray>Выплавить 64 слитка</gray>
@@ -142,11 +142,11 @@ battlepass:
       material: IRON_INGOT|GOLD_INGOT
       target: 64
       free-boost-hours: 6
-      free-diamonds: 60
+      free-diamonds: 600
       vip-boost-hours: 8
-      vip-diamonds: 30
+      vip-diamonds: 300
       premium-boost-hours: 12
-      premium-diamonds: 90
+      premium-diamonds: 900
       points: 20
     - id: iron_worker
       desc: <gray>Добыть 64 железных руды</gray>
@@ -154,11 +154,11 @@ battlepass:
       material: IRON_ORE
       target: 64
       free-boost-hours: 6
-      free-diamonds: 60
+      free-diamonds: 600
       vip-boost-hours: 8
-      vip-diamonds: 30
+      vip-diamonds: 300
       premium-boost-hours: 12
-      premium-diamonds: 90
+      premium-diamonds: 900
       points: 25
   - unlock-day: 14
     missions:
@@ -168,11 +168,11 @@ battlepass:
       material: DIAMOND_SWORD|DIAMOND_PICKAXE|DIAMOND_CHESTPLATE
       target: 3
       free-boost-hours: 12
-      free-diamonds: 80
+      free-diamonds: 800
       vip-boost-hours: 8
-      vip-diamonds: 40
+      vip-diamonds: 400
       premium-boost-hours: 24
-      premium-diamonds: 120
+      premium-diamonds: 1200
       points: 30
     - id: farmer
       desc: <gray>Развести 10 животных</gray>
@@ -180,11 +180,11 @@ battlepass:
       entity: COW|PIG|SHEEP|CHICKEN
       target: 10
       free-boost-hours: 6
-      free-diamonds: 80
+      free-diamonds: 800
       vip-boost-hours: 4
-      vip-diamonds: 40
+      vip-diamonds: 400
       premium-boost-hours: 12
-      premium-diamonds: 120
+      premium-diamonds: 1200
       points: 15
     - id: nether_miner
       desc: <gray>Добыть 256 блоков в Нижнем мире</gray>
@@ -192,11 +192,11 @@ battlepass:
       material: NETHERRACK|BLACKSTONE
       target: 256
       free-boost-hours: 6
-      free-diamonds: 80
+      free-diamonds: 800
       vip-boost-hours: 8
-      vip-diamonds: 40
+      vip-diamonds: 400
       premium-boost-hours: 12
-      premium-diamonds: 120
+      premium-diamonds: 1200
       points: 25
       worlds:
       - world_nether
@@ -206,11 +206,11 @@ battlepass:
       material: DEEPSLATE|TUFF
       target: 512
       free-boost-hours: 6
-      free-diamonds: 80
+      free-diamonds: 800
       vip-boost-hours: 8
-      vip-diamonds: 40
+      vip-diamonds: 400
       premium-boost-hours: 12
-      premium-diamonds: 120
+      premium-diamonds: 1200
       points: 25
   - unlock-day: 21
     missions:
@@ -220,11 +220,11 @@ battlepass:
       entity: ZOMBIE|SKELETON|SPIDER
       target: 128
       free-boost-hours: 12
-      free-diamonds: 100
+      free-diamonds: 1000
       vip-boost-hours: 12
-      vip-diamonds: 50
+      vip-diamonds: 500
       premium-boost-hours: 18
-      premium-diamonds: 150
+      premium-diamonds: 1500
       points: 40
     - id: stone_architect
       desc: <gray>Построить 512 каменных блоков</gray>
@@ -232,11 +232,11 @@ battlepass:
       material: STONE_BRICKS|COBBLESTONE|DEEPSLATE_BRICKS
       target: 512
       free-boost-hours: 12
-      free-diamonds: 100
+      free-diamonds: 1000
       vip-boost-hours: 12
-      vip-diamonds: 50
+      vip-diamonds: 500
       premium-boost-hours: 18
-      premium-diamonds: 150
+      premium-diamonds: 1500
       points: 40
     - id: master_angler
       desc: <gray>Поймать 64 улова</gray>
@@ -244,11 +244,11 @@ battlepass:
       entity: ANY
       target: 64
       free-boost-hours: 12
-      free-diamonds: 100
+      free-diamonds: 1000
       vip-boost-hours: 12
-      vip-diamonds: 50
+      vip-diamonds: 500
       premium-boost-hours: 18
-      premium-diamonds: 150
+      premium-diamonds: 1500
       points: 40
     - id: ranch_keeper
       desc: <gray>Развести 32 животных</gray>
@@ -256,11 +256,11 @@ battlepass:
       entity: COW|SHEEP|PIG|CHICKEN
       target: 32
       free-boost-hours: 12
-      free-diamonds: 100
+      free-diamonds: 1000
       vip-boost-hours: 12
-      vip-diamonds: 50
+      vip-diamonds: 500
       premium-boost-hours: 18
-      premium-diamonds: 150
+      premium-diamonds: 1500
       points: 40
   - unlock-day: 28
     missions:
@@ -270,11 +270,11 @@ battlepass:
       material: ANCIENT_DEBRIS
       target: 12
       free-boost-hours: 18
-      free-diamonds: 120
+      free-diamonds: 1200
       vip-boost-hours: 16
-      vip-diamonds: 60
+      vip-diamonds: 600
       premium-boost-hours: 24
-      premium-diamonds: 180
+      premium-diamonds: 1800
       points: 60
     - id: diamond_expert
       desc: <gray>Добыть 32 алмазные руды</gray>
@@ -282,11 +282,11 @@ battlepass:
       material: DIAMOND_ORE
       target: 32
       free-boost-hours: 18
-      free-diamonds: 120
+      free-diamonds: 1200
       vip-boost-hours: 16
-      vip-diamonds: 60
+      vip-diamonds: 600
       premium-boost-hours: 24
-      premium-diamonds: 180
+      premium-diamonds: 1800
       points: 60
     - id: enchant_expert
       desc: <gray>Зачаровать 8 предметов</gray>
@@ -294,11 +294,11 @@ battlepass:
       material: ANY
       target: 8
       free-boost-hours: 18
-      free-diamonds: 120
+      free-diamonds: 1200
       vip-boost-hours: 16
-      vip-diamonds: 60
+      vip-diamonds: 600
       premium-boost-hours: 24
-      premium-diamonds: 180
+      premium-diamonds: 1800
       points: 60
     - id: tool_expert
       desc: <gray>Скрафтить 3 алмазные кирки</gray>
@@ -306,9 +306,9 @@ battlepass:
       material: DIAMOND_PICKAXE
       target: 3
       free-boost-hours: 18
-      free-diamonds: 120
+      free-diamonds: 1200
       vip-boost-hours: 16
-      vip-diamonds: 60
+      vip-diamonds: 600
       premium-boost-hours: 24
-      premium-diamonds: 180
+      premium-diamonds: 1800
       points: 60

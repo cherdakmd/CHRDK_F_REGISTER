@@ -454,3 +454,21 @@ guilds:
   style-animation-status: "<gray>Анимация текущего клана: <white>%effect%</white>.</gray>"
   style-animation-inactive: "нет действующего выбранного эффекта главы"
   style-leader-only: "<yellow>Оформление меняет только текущий глава клана. Участникам доступен предпросмотр.</yellow>"
+
+  chat-prefix-open: "<dark_gray>[</dark_gray>"
+  chat-prefix-close: "<dark_gray>]</dark_gray> "
+
+  peace-chat-prefix-open: "<green>[☮ </green>"
+  peace-chat-prefix-close: "<green>]</green> "
+
+  peace-pending-prefix-open: "<yellow>[⌛ </yellow>"
+  peace-pending-prefix-close: "<yellow>]</yellow> "
+
+  tab-battle-prefix-open: "<red>[</red>"
+  tab-battle-prefix-close: "<red>]</red> "
+
+  tab-peace-prefix-open: "<green>[☮ </green>"
+  tab-peace-prefix-close: "<green>]</green> "
+
+  tab-peace-pending-prefix-open: "<green>[⌛ </green>"
+  tab-peace-pending-prefix-close: "<green>]</green> "

@@ -12,14 +12,14 @@ class TabAnimation282Test {
         assertTrue(TabListService.animationEnabled(settings(true, 0, "%player_tagged%")));
         assertTrue(TabListService.animationEnabled(settings(true, 40, "%player_tagged%")));
         assertFalse(TabListService.animationEnabled(settings(false, 40, "%player_tagged%")));
-        assertFalse(TabListService.animationEnabled(settings(true, 40, " ")));
-        assertFalse(TabListService.animationEnabled(settings(true, 0, null)));
+        assertTrue(TabListService.animationEnabled(settings(true, 40, " ")));
+        assertTrue(TabListService.animationEnabled(settings(true, 0, null)));
         assertEquals(0, TabListService.refreshTicks(0));
         assertEquals(0, TabListService.refreshTicks(-1));
         assertEquals(10, TabListService.refreshTicks(1));
         assertEquals(40, TabListService.refreshTicks(40));
         assertEquals(5, TabListService.animationTicks(0));
         assertEquals(10, TabListService.animationTicks(10));
-        assertEquals(40, TabListService.animationTicks(1000));
+        assertEquals(20, TabListService.animationTicks(1000));
     }
 }

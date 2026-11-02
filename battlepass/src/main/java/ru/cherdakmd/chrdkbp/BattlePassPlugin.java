@@ -160,7 +160,7 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
         if(guide!=null)guide.closeAll();
         if(menu!=null)menu.closeAll();
         reloadConfig();
-        for (String legacyFile : java.util.List.of("battlepass-default-legacy-1.4.280.yml", "battlepass-default-legacy-1.4.282.yml"))
+        for (String legacyFile : java.util.List.of("battlepass-default-legacy-1.4.280.yml", "battlepass-default-legacy-1.4.282.yml", "battlepass-default-legacy-1.4.282-money-rc3.yml"))
         try(var stream=getResource(legacyFile)) {
             if(stream!=null) {
                 var legacy=org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(new java.io.InputStreamReader(stream,java.nio.charset.StandardCharsets.UTF_8));

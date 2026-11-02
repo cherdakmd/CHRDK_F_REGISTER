@@ -36,16 +36,16 @@ class GuildAnimation282Test {
             public List<String> registrationOrder() { return List.of("guilds"); }
         };
         for (String animation : GuildStyleDefs.ANIMATIONS) {
-            for (String tag : List.of("ЦРАК", "A", "&c<red>")) {
-                for (String key : List.of("chat-prefix", "peace-chat-prefix", "tab-battle-prefix", "tab-peace-prefix")) {
+            for (String tag : List.of("ЦРАК", "A", "&c<red>", "Я🚀", "abв")) {
+                for (String key : List.of("chat-prefix", "peace-chat-prefix", "peace-pending-prefix", "tab-battle-prefix", "tab-peace-prefix", "tab-peace-pending-prefix")) {
                     var styles = new LabelStyleService((id, player, anchor) ->
-                            GuildNameTag.prefix(messages, key,
+                            GuildNameTag.animatedPrefix(messages, key,
                                     GuildStyleAnimation.render(tag, "gold", "crown", animation, now.get())) + anchor,
                             prefs, ranks);
                     Set<List<Integer>> chatColors = new HashSet<>();
                     Set<List<Integer>> tabColors = new HashSet<>();
                     Component firstMessage = null;
-                    for (long time = 0; time < 12000; time += 500) {
+                    for (long time = 0; time < 12000; time += 250) {
                         now.set(time);
                         Component chat = messages.renderTemplate("%player_tagged%", "player_tagged",
                                 Messages.trusted(styles.decorate("Steve", "Steve", null)));
@@ -57,7 +57,7 @@ class GuildAnimation282Test {
                         assertTrue(plain.contains("⚜ " + tag), plain);
                         assertEquals(1, plain.split("Steve", -1).length - 1);
                         int borderColor = key.equals("chat-prefix") ? 0x555555
-                                : key.equals("tab-battle-prefix") ? 0xff5555 : 0x55ff55;
+                                : key.equals("tab-battle-prefix") ? 0xff5555 : key.equals("peace-pending-prefix") ? 0xffff55 : 0x55ff55;
                         assertEquals(borderColor, colors(chat).get(plain.indexOf('[')));
                         assertEquals(borderColor, colors(chat).get(plain.lastIndexOf(']')));
                         int at = plain.indexOf(tag);
@@ -74,6 +74,44 @@ class GuildAnimation282Test {
                 }
             }
         }
+    }
+
+    @Test void fullSlotsHiddenLabelsAndLegacyOuterGradientCannotSuppressActivePaidAnimation() throws Exception {
+        Path overrides=folder.resolve("custom.yml");
+        Files.writeString(overrides,"guilds:\n  tab-battle-prefix: '<gradient:red:blue>%tag%</gradient>'\n"
+                +"  chat-prefix: 'SHOULD_NOT_HIDE_TAG'\n"
+                +"  tab-battle-prefix-open: '<gradient:red:blue>[</gradient>'\n");
+        var messages=Messages.from(Files.newInputStream(Path.of("src/main/resources/messages.yml")),overrides,Logger.getAnonymousLogger());
+        var prefs=new LabelPreferences(folder.resolve("prefs"),Logger.getAnonymousLogger());prefs.load();
+        prefs.setSlots("Steve",List.of("classes","achievements","guilds"));
+        prefs.set("Steve",LabelPreferences.Label.GUILDS,false);
+        var time=new AtomicLong();
+        var styles=new LabelStyleService((id,name,anchor)->switch(id) {
+            case "guilds", "guilds-chat", "guilds-tab" -> GuildNameTag.animatedPrefix(messages,
+                    id.equals("guilds-tab")?"tab-battle-prefix":"chat-prefix",
+                    GuildStyleAnimation.render("ЦРАК","gold","crown","aurora",time.get()))+anchor;
+            case "classes" -> "<blue>[Класс]</blue> "+anchor;
+            case "achievements" -> "<green>[Титул]</green> "+anchor;
+            default -> anchor;
+        },prefs,new LabelStyleService.RankLookup(){
+            public LabelStyleService.Rank view(String name){return null;}
+            public List<String> registrationOrder(){return List.of("classes","achievements","guilds");}
+        });
+        var assignments=styles.assignments("Steve");Set<List<Integer>> visible=new HashSet<>();
+        for(long now=0;now<12000;now+=250) {
+            time.set(now);
+            for(String markup:List.of(styles.decorateForTab("Steve","Steve",null),styles.decorate("Steve","Steve",null,true))) {
+                Component component=messages.renderTemplate("%player_tagged%","player_tagged",Messages.trusted(markup));
+                String text=PLAIN.serialize(component);
+                assertTrue(text.contains("ЦРАК"),text);assertEquals(1,text.split("ЦРАК",-1).length-1);
+                assertFalse(text.contains("SHOULD_NOT_HIDE_TAG"));assertTrue(text.startsWith("Steve · [Класс] · [Титул]"));
+                int at=text.indexOf("ЦРАК");visible.add(colors(component).subList(at,at+4));
+                assertTrue(colors(component).subList(0,5).stream().allMatch(Objects::isNull));
+            }
+        }
+        assertTrue(visible.size()>=24);assertEquals(assignments,styles.assignments("Steve"));
+        assertEquals(2,styles.selection("Steve").limit());
+        assertFalse(PLAIN.serialize(MINI.deserialize(styles.decorate("Steve","Steve",null))).contains("ЦРАК"));
     }
 
     private static List<Integer> colors(Component component) {

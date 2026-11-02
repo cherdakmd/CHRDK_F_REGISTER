@@ -156,7 +156,7 @@ public final class ChatService implements Listener {
         // Купленный тег каталога главнее выбора игрока: оплаченное вперёд не
         // отбираем. Иначе свой цвет из палитры, затем цвет ступени.
         return tab ? styles.decorateForTab(playerName,base,catalogTag ? null : customColor(playerName))
-                : styles.decorate(playerName, base, catalogTag ? null : customColor(playerName));
+                : styles.decorate(playerName, base, catalogTag ? null : customColor(playerName), nameTags.animated("guilds-chat", playerName));
     }
 
     /**

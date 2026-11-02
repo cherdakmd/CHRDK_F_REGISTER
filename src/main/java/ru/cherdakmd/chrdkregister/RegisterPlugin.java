@@ -37,6 +37,7 @@ public final class RegisterPlugin extends JavaPlugin {
     private AdminDonationsGuiService adminDonationsGui;
     private PasswordKeypadService passwordKeypad;
     private TabListService tabListService;
+    TabListService tabList() { return tabListService; }
     /** 1.4.183: личные переключатели надписей в нике и табе. */
     private LabelPreferences labelPreferences;
     private LabelsCommandHandler labelsCommand;

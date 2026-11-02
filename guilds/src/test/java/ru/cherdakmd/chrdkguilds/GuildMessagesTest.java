@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class GuildMessagesTest {
 
     private static final List<String> REQUIRED = List.of(
+            "chat-prefix-open", "chat-prefix-close", "peace-chat-prefix-open", "peace-chat-prefix-close", "peace-pending-prefix-open", "peace-pending-prefix-close", "tab-battle-prefix-open", "tab-battle-prefix-close", "tab-peace-prefix-open", "tab-peace-prefix-close", "tab-peace-pending-prefix-open", "tab-peace-pending-prefix-close",
             "style-leader-only",
 
             "style-animation-status", "style-animation-inactive",

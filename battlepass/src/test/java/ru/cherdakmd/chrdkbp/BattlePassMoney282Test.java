@@ -26,14 +26,37 @@ class BattlePassMoney282Test {
         var now=BattlePassConfig.parseWeeksDetailed(weeks);assertTrue(now.problems().isEmpty(),now.problems().toString());
         var previous=BattlePassConfig.parseWeeks(prior);
         var all=now.weeks().stream().flatMap(w->w.missions().stream()).toList();
-        assertEquals(1740,all.stream().mapToLong(BattlePassConfig.MissionDef::freeDiamonds).sum());
-        assertEquals(870,all.stream().mapToLong(BattlePassConfig.MissionDef::vipDiamonds).sum());
-        assertEquals(2610,all.stream().mapToLong(BattlePassConfig.MissionDef::premiumDiamonds).sum());
+        assertEquals(17400,all.stream().mapToLong(BattlePassConfig.MissionDef::freeDiamonds).sum());
+        assertEquals(8700,all.stream().mapToLong(BattlePassConfig.MissionDef::vipDiamonds).sum());
+        assertEquals(26100,all.stream().mapToLong(BattlePassConfig.MissionDef::premiumDiamonds).sum());
         for(var week:previous)for(var oldMission:week.missions()) {
             var next=all.stream().filter(m->m.id().equals(oldMission.id())).findFirst().orElseThrow();
             assertEquals(oldMission.target(),next.target());assertEquals(oldMission.freeHours(),next.freeHours());
             assertEquals(oldMission.vipHours(),next.vipHours());assertEquals(oldMission.premiumHours(),next.premiumHours());
         }
+    }
+    @Test void rc3CashIsMultipliedByTenForEveryTrackWithoutChangingAnyOtherMissionField() {
+        var old=YamlConfiguration.loadConfiguration(Path.of("src/main/resources/battlepass-default-legacy-1.4.282-money-rc3.yml").toFile());
+        var current=YamlConfiguration.loadConfiguration(Path.of("src/main/resources/config.yml").toFile());
+        var before=old.getMapList("battlepass.weeks");var after=current.getMapList("battlepass.weeks");
+        assertTrue(BattlePassConfig.stockUpgrade(before,old.getList("battlepass.weeks")));
+        int count=0;
+        for(int i=0;i<before.size();i++) {
+            var a=(List<?>)before.get(i).get("missions");var b=(List<?>)after.get(i).get("missions");
+            for(int j=0;j<a.size();j++) {
+                var left=new HashMap<>((Map<?,?>)a.get(j));var right=new HashMap<>((Map<?,?>)b.get(j));
+                for(String track:List.of("free","vip","premium")) {
+                    String key=track+"-diamonds";
+                    assertEquals(((Number)left.remove(key)).longValue()*10,((Number)right.remove(key)).longValue());count++;
+                }
+                assertEquals(left,right,"Цели, часы, ID и очки неизменны");
+            }
+        }
+        assertEquals(69,count);
+        var custom=new ArrayList<Object>(before);
+        var customWeek=new HashMap<Object,Object>(before.getFirst());customWeek.put("owner-custom",true);custom.set(0,customWeek);
+        assertFalse(BattlePassConfig.stockUpgrade(custom,before));
+        assertEquals(old.getString("battlepass.season-start"),current.getString("battlepass.season-start"));
     }
     @Test void oldBoostClaimsCanReceiveMoneyWithoutRegrantingBoostAndMarkersSurviveRestart() {
         var store=new BattlePassStore(folder,log);store.load();UUID player=UUID.randomUUID();var mission=mission();
