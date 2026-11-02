@@ -103,6 +103,16 @@ class ExplorationStoreTest {
             assertEquals(data, Files.readString(dir.resolve("exploration.json")));
         }
     }
+    @Test void invalidCallersCannotCreateNullOwnerOrInvalidUniqueProgress() {
+        var s = store();
+        assertFalse(s.award(null, 2)); assertEquals(0, s.license(null));
+        assertFalse(s.visit("lifetime", null, "minecraft:plains"));
+        assertFalse(s.awardTrophy("lifetime", null, "visited"));
+        assertFalse(s.add("lifetime", player, "custom:unknown", null, 1, null));
+        assertFalse(s.add("lifetime", player, "minecraft:plains", ExplorationCatalog.tasks("minecraft:plains").get(0), 1, "x".repeat(129)));
+        assertTrue(s.save());
+        assertTrue(store().healthy());
+    }
     @Test void waypointRejectsNonFiniteCoordinates() {
         assertThrows(IllegalArgumentException.class, () -> new ExplorationStore.Waypoint(UUID.randomUUID().toString(), Double.NaN, 1, 2));
         assertThrows(IllegalArgumentException.class, () -> new ExplorationStore.Waypoint("notUUID", 1, 2, 3));

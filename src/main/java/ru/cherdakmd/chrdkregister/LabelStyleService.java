@@ -122,7 +122,9 @@ public final class LabelStyleService {
         String badge = rank == null || rank.badge() == null ? "" : rank.badge();
         String name = rank == null || !rank.showName() || rank.name() == null
                 ? "" : rankName(rank, customColor);
-        List<Decoration> available = select(playerName, defaultOrder(), badge, name,
+        List<LabelPreferences.Label> availableSources = new ArrayList<>(defaultOrder());
+        availableSources.add(LabelPreferences.Label.EXPEDITIONS);
+        List<Decoration> available = select(playerName, availableSources, badge, name,
                 Set.of(), LabelLimits.MAX_LABELS).shown();
         int limit = limits.labelsFor(rank == null ? 0 : rank.level());
         List<Decoration> shown = new ArrayList<>();
@@ -311,7 +313,7 @@ public final class LabelStyleService {
                 LabelPreferences.Label.GUILDS,
                 LabelPreferences.Label.TIERFORGE,
                 LabelPreferences.Label.QUESTS, LabelPreferences.Label.ACHIEVEMENTS,
-                LabelPreferences.Label.VK, LabelPreferences.Label.EXPEDITIONS);
+                LabelPreferences.Label.VK);
     }
 
     /**

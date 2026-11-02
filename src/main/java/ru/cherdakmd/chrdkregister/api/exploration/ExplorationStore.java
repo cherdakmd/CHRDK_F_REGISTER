@@ -99,13 +99,16 @@ public final class ExplorationStore {
         if (!scope.matches("lifetime|season:-?[0-9]+|licenses")) throw new IllegalArgumentException("scope");
         return root.scopes.computeIfAbsent(scope, s -> new LinkedHashMap<>()).computeIfAbsent(id, u -> new Profile());
     }
-    private Profile existing(String scope, UUID id) { return root.scopes.getOrDefault(scope, Map.of()).get(id); }
+    private Profile existing(String scope, UUID id) {
+        if (scope == null || id == null) return null;
+        var profiles = root.scopes.get(scope); return profiles == null ? null : profiles.get(id);
+    }
     public synchronized boolean visited(String scope, UUID id, String biome) {
         Profile p = existing(scope, id);
         return p != null && p.biomes.containsKey(biome) && p.biomes.get(biome).visited;
     }
     public synchronized boolean visit(String scope, UUID id, String biome) {
-        if (!healthy || !ExplorationCatalog.required(biome)) return false;
+        if (!healthy || id == null || !ExplorationCatalog.required(biome)) return false;
         var b = profile(scope, id).biomes.computeIfAbsent(biome, k -> new BiomeProgress());
         if (b.visited) return false;
         b.visited = true; dirty = true; return true;
@@ -117,7 +120,8 @@ public final class ExplorationStore {
     }
     /** Unique chunks/blocks cannot be farmed at the same coordinate, including after restart. */
     public synchronized boolean add(String scope, UUID id, String biome, ExplorationCatalog.Task task, long delta, String unique) {
-        if (!healthy || delta <= 0 || !ExplorationCatalog.tasks(biome).contains(task)) return false;
+        if (!healthy || id == null || delta <= 0 || !ExplorationCatalog.required(biome) || !ExplorationCatalog.tasks(biome).contains(task)
+                || unique != null && (unique.isBlank() || unique.length() > 128)) return false;
         visit(scope, id, biome);
         var b = profile(scope, id).biomes.get(biome);
         long before = b.counts.getOrDefault(task.id(), 0L);
@@ -131,7 +135,7 @@ public final class ExplorationStore {
         return (int) ExplorationCatalog.tasks(biome).stream().filter(t -> progress(scope, id, biome, t.id()) >= t.target()).count();
     }
     public synchronized List<String> catalog(String scope, List<String> candidates) {
-        if (!healthy || !scope.matches("lifetime|season:-?[0-9]+") || candidates.isEmpty()) return List.of();
+        if (!healthy || scope == null || candidates == null || !scope.matches("lifetime|season:-?[0-9]+") || candidates.isEmpty()) return List.of();
         List<String> valid = candidates.stream().filter(ExplorationCatalog::required).distinct().sorted().toList();
         List<String> previous = root.catalogs.get(scope);
         if (previous != null && !scope.equals("lifetime")) return List.copyOf(previous);
@@ -146,13 +150,13 @@ public final class ExplorationStore {
         var p = existing(scope, id); return p != null && p.trophies.contains(name);
     }
     public synchronized boolean awardTrophy(String scope, UUID id, String name) {
-        if (!healthy || !Set.of("visited", "master").contains(name)) return false;
+        if (!healthy || id == null || name == null || !Set.of("visited", "master").contains(name)) return false;
         boolean fresh = profile(scope, id).trophies.add(name); if (fresh) dirty = true; return fresh;
     }
     public synchronized int license(UUID id) { Profile p = existing("licenses", id); return healthy && p != null ? p.license : 0; }
     /** The license becomes usable only after an fsync+atomic checkpoint, never after a failed write. */
     public synchronized boolean award(UUID id, int level) {
-        if (!healthy || level < 1 || level > 2) return false;
+        if (!healthy || id == null || level < 1 || level > 2) return false;
         Profile p = profile("licenses", id);
         int before = p.license; String title = p.title;
         if (before >= level) return true;
@@ -201,7 +205,7 @@ public final class ExplorationStore {
     }
     public synchronized boolean route(UUID id, String name, List<String> marks) {
         int level = license(id);
-        if (level == 0 || !validName(name) || marks.isEmpty() || marks.size() > (level == 2 ? 24 : 8)) return false;
+        if (level == 0 || !validName(name) || marks == null || marks.isEmpty() || marks.size() > (level == 2 ? 24 : 8)) return false;
         var p = profile("licenses", id);
         if ((!p.routes.containsKey(name) && p.routes.size() >= (level == 2 ? 5 : 1)) || marks.stream().anyMatch(n -> !p.marks.containsKey(n))) return false;
         var old = p.routes.put(name, List.copyOf(marks)); dirty = true;

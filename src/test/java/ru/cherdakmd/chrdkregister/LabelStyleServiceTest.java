@@ -224,7 +224,7 @@ class LabelStyleServiceTest {
     void defaultOrderIsStableAndRankHasPriority(@TempDir Path dir) {
         assertEquals(List.of(R, C, G, LabelPreferences.Label.TIERFORGE,
                 LabelPreferences.Label.QUESTS, LabelPreferences.Label.ACHIEVEMENTS,
-                LabelPreferences.Label.VK, LabelPreferences.Label.EXPEDITIONS),
+                LabelPreferences.Label.VK),
                 with(fresh(dir)).defaultOrder());
     }
 

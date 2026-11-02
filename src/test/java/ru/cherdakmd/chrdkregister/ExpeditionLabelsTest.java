@@ -20,6 +20,7 @@ class ExpeditionLabelsTest {
                 });
         var label = LabelPreferences.Label.EXPEDITIONS;
         assertTrue(styles.selection("Steve").obtained(label));
+        assertEquals("", styles.assignments("Steve").get(7), "новый источник не занимает старое пустое место автоматически");
         int oldLimit = styles.selection("Steve").limit();
         assertEquals(LabelStyleService.AssignmentResult.APPLIED, styles.assign("Steve", 0, label));
         assertEquals("Steve · Покоритель миров", Messages.stripFormatting(styles.decorate("Steve", "Steve", "")));

@@ -47,7 +47,7 @@ public final class LabelsMenuService implements Listener {
     /** Как ник выглядит для остальных — ровно та строка, что уходит в чат и таб. */
     static final int PREVIEW_SLOT = 8;
     /** Переключатели источников под выбранными местами; шапка TAB отдельно. */
-    static final int[] ENTRY_SLOTS = {28, 29, 30, 31, 32, 33, 34, 35};
+    static final int[] ENTRY_SLOTS = {28, 29, 30, 31, 32, 33, 34, 35, 37};
     static final int[] PLACE_SLOTS = {19, 20, 21, 22, 23, 24, 25, 26};
     static final int ENABLE_ALL_SLOT = 45;
     static final int DISABLE_ALL_SLOT = 47;
@@ -118,10 +118,8 @@ public final class LabelsMenuService implements Listener {
         inventory.setItem(HEAD_SLOT, head(player, selection));
         inventory.setItem(PREVIEW_SLOT, preview(player));
         for (int i = 0; i < PLACE_SLOTS.length; i++) inventory.setItem(PLACE_SLOTS[i], placeTile(player, i));
-        List<LabelPreferences.Label> labels = LabelPreferences.Label.nameTags();
         // Шапка TAB — отдельный переключатель, не место возле ника.
-        List<LabelPreferences.Label> tiles = new ArrayList<>(labels);
-        tiles.add(LabelPreferences.Label.HEADER);
+        List<LabelPreferences.Label> tiles = List.of(LabelPreferences.Label.values());
         for (int index = 0; index < Math.min(ENTRY_SLOTS.length, tiles.size()); index++) {
             inventory.setItem(ENTRY_SLOTS[index], tile(player, tiles.get(index), selection));
         }
@@ -370,9 +368,7 @@ public final class LabelsMenuService implements Listener {
 
     /** Надпись в этом слоте; {@code null} — слот занят чем-то другим. */
     static LabelPreferences.Label labelAt(int slot) {
-        List<LabelPreferences.Label> tiles =
-                new ArrayList<>(LabelPreferences.Label.nameTags());
-        tiles.add(LabelPreferences.Label.HEADER);
+        List<LabelPreferences.Label> tiles = List.of(LabelPreferences.Label.values());
         for (int index = 0; index < ENTRY_SLOTS.length; index++) {
             if (ENTRY_SLOTS[index] == slot) {
                 return index < tiles.size() ? tiles.get(index) : null;
@@ -383,9 +379,7 @@ public final class LabelsMenuService implements Listener {
 
     /** Слот плитки надписи; {@code -1} — надписи нет в меню. */
     static int slotOf(LabelPreferences.Label label) {
-        List<LabelPreferences.Label> tiles =
-                new ArrayList<>(LabelPreferences.Label.nameTags());
-        tiles.add(LabelPreferences.Label.HEADER);
+        List<LabelPreferences.Label> tiles = List.of(LabelPreferences.Label.values());
         int index = tiles.indexOf(label);
         return index < 0 || index >= ENTRY_SLOTS.length ? -1 : ENTRY_SLOTS[index];
     }
