@@ -56,6 +56,10 @@ FIELDS = {
     "vk_donut_bonus": ("vk", "rewards.donut-shop-bonus-percent"),
     "enchant_max": ("enchants", "rules.max-per-item"),
     "legendary_max": ("enchants", "rules.max-legendary-per-item"),
+    "artifact_pulse": ("artifacts", "general.passive-refresh-ticks"),
+    "artifact_traits_max": ("artifacts", "traits.max-per-item"),
+    "artifact_trait_chance": ("artifacts", "traits.chance-percent"),
+    "artifact_cross_chance": ("artifacts", "traits.cross-chance-percent"),
     "season_name": ("battlepass", "battlepass.season-name"),
     "season_start": ("battlepass", "battlepass.season-start"),
 }
@@ -168,6 +172,8 @@ class FactBook:
                 r.get("sell-enabled", True) is False
                 for r in self.configs["diamond-shop"]["items"]
             )
+        if name == "artifact_count":
+            return len(self.artifact_catalog())
         if name == "enchant_count":
             return len(self.configs["enchants"]["enchants"])
         if name == "daily_days":
@@ -284,6 +290,28 @@ class FactBook:
                 )
             )
         return rows
+
+    def artifact_catalog(self):
+        base = self.root / "artifacts/src/main"
+        source = (base / "java/ru/cherdakmd/chrdkartifacts/ArtifactRegistry.java").read_text(encoding="utf-8")
+        records = re.findall(r'register\("([a-z-]+)", (GOOD|CURSED), (PASSIVE|ACTIVE), Material\.([A-Z_]+)(?:, (\d+), (\d+))?\);', source)
+        if not records or len(records) != len({r[0] for r in records}) or {r[0] for r in records} != set(self.configs["artifacts"]["artifacts"]):
+            raise ValueError("Реестр артефактов не совпадает с конфигурацией")
+        messages = yaml.safe_load((base / "resources/messages.yml").read_text(encoding="utf-8"))["messages"]["art"]
+        cards = []
+        for id, side, mode, material, cooldown, xp in sorted(records):
+            text = messages.get(id, {})
+            details = text.get("details")
+            if not text.get("name") or not isinstance(details, list) or len(details) < 2 or not all(isinstance(line, str) and clean(line) for line in details):
+                raise ValueError("Нет подробного описания артефакта: " + id)
+            settings = self.configs["artifacts"]["artifacts"][id]
+            use = "Пассивный: носить при себе, ПКМ не нужен."
+            if mode == "ACTIVE":
+                use = f"Активный: ПКМ из руки; цена {settings.get('xp-cost-levels', int(xp))} ур. XP; откат {settings.get('cooldown-seconds', int(cooldown))} сек."
+            cards.append(f"### {clean(text['name'])} — `{id}`\n\n"
+                         + ("Светлый" if side == "GOOD" else "Проклятый") + ". " + use + "\n\n"
+                         + "\n".join("- " + clean(line) for line in details))
+        return cards
 
     def render_table(self, name):
         c = self.configs
@@ -413,6 +441,30 @@ class FactBook:
                     for r in c["daily-rewards"]["rewards"]
                 ],
             )
+        if name == "artifact_details":
+            return "\n\n".join(self.artifact_catalog())
+        if name == "artifact_sources":
+            sources = c["artifacts"]["sources"]
+            return table(["Этап источника", "Ключ / тип", "Шанс, %"],
+                         [("Генерация добычи", key, chance) for key, chance in sources["chests"].items()]
+                         + [("Убийство с зачтённым игроком", key, chance) for key, chance in sources["mobs"].items()]
+                         + [("Подходящее рыболовное сокровище", "Дополнительная находка", sources["fishing-treasure-percent"])])
+        if name == "artifact_rewards":
+            total = len(self.artifact_catalog())
+            return table(["Веха, %", "Нужно разных ID", "Часов буста", "Алмазов в /bal"],
+                         [(percent, (total * int(percent) + 99) // 100, reward.get("boost-hours", 0), reward.get("diamonds", 0))
+                          for percent, reward in sorted(c["artifacts"]["collection"]["rewards"].items(), key=lambda pair: int(pair[0]))])
+        if name == "artifact_traits":
+            base = self.root / "artifacts/src/main"
+            messages = yaml.safe_load((base / "resources/messages.yml").read_text(encoding="utf-8"))["messages"]
+            traits = {key.removeprefix("trait."): value for key, value in messages.items() if key.startswith("trait.") and isinstance(value, dict)}
+            registry = (base / "java/ru/cherdakmd/chrdkartifacts/ArtifactTraits.java").read_text(encoding="utf-8")
+            records = re.findall(r'^\s*(good|bad|badRaw)\("([a-z-]+)"', registry, re.M)
+            records += [("good" if sign == "GOOD" else "bad", id) for id, sign in re.findall(r'^\s*potion\("([a-z-]+)", Polarity\.(GOOD|BAD)', registry, re.M)]
+            if {id for _, id in records} != set(traits):
+                raise ValueError("Реестр свойств артефактов не совпадает с сообщениями")
+            return table(["ID свойства", "Название", "Знак", "Обзор уровней I–III"],
+                         [(id, traits[id]["name"], "▲ польза" if kind == "good" else "▼ вред", traits[id]["desc"]) for kind, id in sorted(records, key=lambda pair: pair[1])])
         if name == "enchant_sources":
             s = c["enchants"]["sources"]
             return table(

@@ -47,6 +47,14 @@ review: [core, claims, teleports, diamond-shop]
 При входе в свой участок он появляется автоматически, без перезапуска внутри
 участка. `/claim notices off` выключает только текст, не частицы.
 
+## Осмотр артефактов
+
+`/artifacts help [use|sources|traits|collection]` — ношение, активация и правила.
+`/artifacts inspect` — read-only карточка предмета в основной руке с точными
+свойствами; `/artifacts sources` — действующие проценты этапов добычи.
+Справочник не выдаёт вещи и не восстанавливает их из коллекции.
+Подробности всех ID — в [справочнике артефактов](artifacts.md).
+
 {{table:commands}}
 
 `/clan`, `/clans`, `/guild`, `/guilds`, `/klan`, `/klans`, `/gildiya`, `/gildii` — один интерфейс.

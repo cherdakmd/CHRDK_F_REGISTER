@@ -148,6 +148,8 @@ public final class Messages {
                 "guild-style-messages-legacy-1.4.282.yml", logger));
         migrateStockOverrides(defaults, overrides, readResource(plugin,
                 "battlepass-messages-legacy-1.4.282.yml", logger));
+        migrateStockOverrides(defaults, overrides, readResource(plugin,
+                "artifacts-messages-legacy-1.4.282-rc7.yml", logger));
         overrides.replaceAll((key, text) -> GameplayRewardTexts.message(moduleName, key, text));
         Messages messages = new Messages(defaults, overrides, logger);
         messages.logMissingKeys(fileName);
