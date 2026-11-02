@@ -49,10 +49,7 @@ final class FullMoonController implements Listener {
     }
     void reload() {
         generation++;
-        if (settings != null) {
-            for (var entry : Map.copyOf(pendingPlans).entrySet()) if (!nights.containsKey(entry.getKey()) && entry.getValue().selected() && !entry.getValue().finished()) checkpoint(entry.getKey(), entry.getValue().finish(), () -> { });
-            endAll("moon-stopped");
-        }
+        if (settings != null) endAll("moon-stopped");
         var c = plugin.getConfig(); String p = "full-moon.";
         settings = FullMoonRules.Settings.bounded(c.getBoolean(p + "enabled", true), c.getDouble(p + "chance-percent", 25),
                 c.getInt(p + "global-cap", 64), c.getInt(p + "per-player-cap", 8), c.getInt(p + "nearby-cap", 16),
@@ -81,7 +78,11 @@ final class FullMoonController implements Listener {
     }
     private void finish(World w, String message) {
         var old = nights.remove(w.getUID());
-        if (old == null) return;
+        if (old == null) {
+            var unpublished = pendingPlans.get(w.getUID());
+            if (unpublished != null && unpublished.selected() && !unpublished.finished()) checkpoint(w.getUID(), unpublished.finish(), () -> { });
+            return;
+        }
         var planned = pendingPlans.get(w.getUID());
         if (planned == null || !planned.token().equals(old.token())) planned = old;
         checkpoint(w.getUID(), planned.finish(), () -> { });
@@ -92,6 +93,9 @@ final class FullMoonController implements Listener {
         }
     }
     private void endAll(String message) {
+        // В том числе решения, чей fsync ещё не вернулся: disable/unload/overload не должны
+        // позволить позднему callback опубликовать уже отменённое предупреждение.
+        for (var entry : Map.copyOf(pendingPlans).entrySet()) if (!nights.containsKey(entry.getKey()) && entry.getValue().selected() && !entry.getValue().finished()) checkpoint(entry.getKey(), entry.getValue().finish(), () -> { });
         for (UUID id : List.copyOf(nights.keySet())) {
             World w = Bukkit.getWorld(id);
             if (w != null) finish(w, message); else { var n = nights.remove(id); checkpoint(id, n.finish(), () -> { }); }
@@ -174,7 +178,7 @@ final class FullMoonController implements Listener {
         var next = new FullMoonLedger.Night(day, selected, UUID.randomUUID(), 0, !selected);
         checkpoint(id, next, () -> {
             if (!selected) return;
-            if (FullMoonRules.day(w.getFullTime()) == day && FullMoonRules.warning(FullMoonRules.phase(w.getFullTime())) && worldAllowed(w)) {
+            if (Bukkit.getWorld(id) == w && FullMoonRules.day(w.getFullTime()) == day && FullMoonRules.warning(FullMoonRules.phase(w.getFullTime())) && worldAllowed(w)) {
                 nights.put(id, next); tell(w, "moon-warning");
             } else checkpoint(id, next.finish(), () -> { });
         });
@@ -182,7 +186,7 @@ final class FullMoonController implements Listener {
     private void start(World w, FullMoonLedger.Night old, long now) {
         var started = old.start(now);
         checkpoint(w.getUID(), started, () -> {
-            if (nights.get(w.getUID()) == old && old.day() == FullMoonRules.day(w.getFullTime())
+            if (Bukkit.getWorld(w.getUID()) == w && nights.get(w.getUID()) == old && old.day() == FullMoonRules.day(w.getFullTime())
                     && FullMoonRules.night(FullMoonRules.phase(w.getFullTime())) && worldAllowed(w)) {
                 nights.put(w.getUID(), started); tell(w, "moon-started");
             }
