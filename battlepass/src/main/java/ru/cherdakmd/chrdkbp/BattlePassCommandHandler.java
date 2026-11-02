@@ -29,7 +29,7 @@ final class BattlePassCommandHandler implements CommandExecutor, TabCompleter {
     private static final DateTimeFormatter SHORT_DATE = DateTimeFormatter.ofPattern("dd.MM")
             .withZone(ZoneId.systemDefault());
     private static final List<String> SUBCOMMANDS =
-            List.of("tasks", "rewards", "claim", "menu", "progress", "top", "info", "help");
+            List.of("biomes", "expedition", "tasks", "rewards", "claim", "menu", "progress", "top", "info", "help");
 
     private final BattlePassPlugin plugin;
 
@@ -58,6 +58,11 @@ final class BattlePassCommandHandler implements CommandExecutor, TabCompleter {
             return true;
         }
         switch (args[0].toLowerCase(Locale.ROOT)) {
+            case "biomes", "atlas" -> {
+                if (args.length == 2 && args[1].equalsIgnoreCase("study")) plugin.atlas().study(player);
+                else plugin.atlas().open(player, 0);
+            }
+            case "expedition" -> plugin.expeditions().command(player, args);
             case "tasks" -> plugin.menu().missions(player,0);
             case "rewards" -> plugin.guide().rewards(player,0);
             case "claim" -> {
