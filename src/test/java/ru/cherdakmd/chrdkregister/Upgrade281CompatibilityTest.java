@@ -36,8 +36,8 @@ class Upgrade281CompatibilityTest {
     }
     @Test void customOrEmptyHeaderAndBlankOrCustomNameFormatsSurviveUpgrade() throws Exception {
         var fresh=yaml("config.yml");var snapshots=snapshots();
-        for(List<String> header:List.of(List.<String>of(),List.of("Owner layout %player%"))) {
-            for(String format:List.of("","<red>%player%</red>")) {
+        for(List<String> header:List.of(List.<String>of(),List.of(""),List.of(" ",""),List.of("Owner layout %player%"))) {
+            for(String format:List.of("","  ","<red>%player%</red>")) {
                 var live=yaml("upgrade-1.4.281/core-config.yml");live.set("tablist.header",header);live.set("tablist.player-name-format",format);
                 var replacements=PresentationMigration.replacements(live,snapshots,fresh);
                 assertFalse(replacements.contains("tablist.header"));assertFalse(replacements.contains("tablist.player-name-format"));

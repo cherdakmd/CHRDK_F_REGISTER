@@ -63,6 +63,11 @@ final class PresentationMigration {
                 continue;
             }
             Object value = live.get(key);
+            // Пустой TAB — явный выбор владельца, даже если когда-то это был старый stock.
+            // Иначе сравнение со всеми историческими снимками отменяет выключение имени/шапки.
+            if (key.equals("tablist.player-name-format") && value instanceof String text && text.isBlank()) continue;
+            if ((key.equals("tablist.header") || key.equals("tablist.footer")) && value instanceof List<?> lines
+                    && lines.stream().allMatch(line -> line == null || line instanceof String text && text.isBlank())) continue;
             // Снятие старой рекламы не должно обновлять цены/сроки из более ранних снимков.
             if (key.equals("shop.products") && !sameCatalogTerms(value, fresh.get(key))) continue;
             boolean stock = false;

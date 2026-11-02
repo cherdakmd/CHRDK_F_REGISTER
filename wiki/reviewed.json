@@ -1,168 +1,168 @@
 {
   "pages": {
     "about": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "ecd34ab9685304c55042e675322f0842c2a8b58c60baa7ee5bab451b61877361",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "0aec18c1fe8448501d1409a7abd70020667ada5c9f0b24552532076e2c9c93d5",
       "text": "17788b7b4007e90c62acd266f95cec124e0a53b603a1b2e5d9a7c19fb304c7d9"
     },
     "achievements": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "af76ccdfdf2ff787482b47d7b40bb6186cee571c7a332d9104d78d5a9440f56a",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "bedd23060835ff6c452baead0119c4281be02f283aab2a9215549806800636dd",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "616fe985e6177c8fb46dc6f8afab88d3567b51a26ecddd3dfc4cf7cf90121eb7",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "88d8695530889c71d5caea0089ac0a81fbb99c8880dccd211be5c10989bfb59b",
       "text": "a4a922729b6635a6d286fcc3c9f18c8c57a0c98a19ec05c44f8d448dc422a84f"
     },
     "auction": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "c6c1008098ef9b6caaa7938d346f1ed4352572448d7851c299987364985ce65e",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "6be5efd6e1aaf3167b8647ca58a38ce6689bcc75c7d7d8b2976120cb9ff23fd0",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "24e9cd86bfafe932e27f883db045c6ed68cd4b890eb2e6d49f1a2fe59ec786f2",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "013ff4f67caf96d6e42caa93623d3603f6a8f4c78e0f7fe1ed6e56bf826545f5",
       "text": "3ce1198a1efbb4ffaa512c01225415225ed02d0c42d23733a0701f918bd65c46"
     },
     "chat": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "ecd34ab9685304c55042e675322f0842c2a8b58c60baa7ee5bab451b61877361",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "0aec18c1fe8448501d1409a7abd70020667ada5c9f0b24552532076e2c9c93d5",
       "text": "b46e914efbafe7696687ae47b1604592151aaacaaccd2264d4a5d7b6efc5845a"
     },
     "claims": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "8bac3b3e8e68a32863e9a5acfc8856fd758f5b4f1ff5bee7e7c728651a4a37dc",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "fbe02625c6ebaa081e3b442345e7e8dcd2b63f8267d800035220571d44351cc7",
       "text": "2a1634efadca1810c82bc496b30432d553c72fb226a5e051443232224a366538"
     },
     "classes": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "fd900eccce85520cbe2b06b91d0499ba92babeb80b3ad0dfa182cc81c9a0bad4",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "d48c522291155abc76d7b6d6b2e86e9f117e0f6b9f6e86b5d489ae235afb0dd1",
       "text": "ee29d92bd4e9527924d14405057fd62402857c1a688439c7b9d86d4c9bf3b546"
     },
     "commands": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "9024270f5fd7a50854e22cb5ad6c431522bf37c02ebbde70b9ed2453dd7dfb83",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "3ab2f3a48780195c612297bf3c8e93fa2c9b09e1d4aefa2ecd755e5e03bc853f",
       "text": "7cad9d77bd280628e514082fba018af5aaee1e7e0db4f648354e18f1399a47e8"
     },
     "cosmetics": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "a3a597cc1d34ae0788fa9ea3772291ec3be7abc02ab94fed0c9f7afd8e5d24bf",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "89e0cb6786499329ae55083ac94429dd088c9d3c78c5ce9b1f66ac933d8dbf17",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "e0689afce2d046a896ae20850cc8bcd855309fc8219aeb7eb9e821dac6414fd3",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "a5554719fd28729dcc98ee0bfb439c150ec4ba2ec768906683290e8d6835ca73",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "economy": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "616867d9b14a458ec438e8674740a64576d9c90bd44936d0359ea8b3956a5120",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "a2ec6d388685436de451c31b537845dba1a14b6a1f2e1480a7cf9c1d8d08041b",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "f985c28ec7a9ccfacacb6818e8d63d11fe4923a560de1bc74187f253c0204020",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "59772a2583400bd00b02e9c4e8a5b159535083c232174551aca26b4f4d2c4c31",
       "text": "70b6bd31d749073c4e4144ebb536661042f7f925d3ccb838f294fb031e4a8558"
     },
     "faq": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "9024270f5fd7a50854e22cb5ad6c431522bf37c02ebbde70b9ed2453dd7dfb83",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "3ab2f3a48780195c612297bf3c8e93fa2c9b09e1d4aefa2ecd755e5e03bc853f",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "d8f07f83ad43b5b1ee29089a69fa428488b589d2add6decdaf7b55d75fada305",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "2ec8244200f401d0d2bed6db5c4edc675358a62cef974689fc04962df0b2947b",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "8bac3b3e8e68a32863e9a5acfc8856fd758f5b4f1ff5bee7e7c728651a4a37dc",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "fbe02625c6ebaa081e3b442345e7e8dcd2b63f8267d800035220571d44351cc7",
       "text": "0b88ad75a5fd39e149ba9908fb4b3641147df59ca1dc26b073547eca8d4accf6"
     },
     "hunt": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "95bc6083d9e8cf41ccfa0959bf9ee090caf6645baf176a02792a93b8bf96ef0e",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "aea8d2de78375c6257bfabbc848ac48b08920ca7fc8b372d9247076e5987ad3b",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "6dbb59822e4adf4b13741baa7b79f04fca9ebe753d2c870ac96e49e81e83d280",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "4056398c6f5346101e3df739a63482daec6c4d9ddd7ab865be36e63dfb967be2",
       "text": "9e4a54959f53e85f3e1076c43f2f7863fbaf499584948d064d72367538e0dbd2"
     },
     "menu": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "fc285b024d810ddd6d47f9a361609a5cdfde45cb85c5651a390e3a4b1b211f42",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "abaed0244f7cc5971d544a506ce6612cc4ba257880005c2a948a3161a7fb479c",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "orders": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "f6ac77d5cde6fe62adb3ed25f2a8c80a0eddbb6389c0c45469e8ee8af438c203",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "82fc0e039614da9704e0189fc38c660f94a9e1f7917630d7cb8e7220e594f553",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "pets": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "95ee707ad8e0ee63b148fece77ebbcaeff76b2669bbf0729afb05ee174f1ce49",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "fa5df5366661075a48a2d3bd2bbc79ba23fa0ff651467b544314a772cb7aff34",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "957be292a8296e39d1739083e74721f066e1028ddaf18918e09a6fe1e71bb795",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "56e0a0b1cd8bf82688e5a9d49be36b6fa386aa790d88d1f142ea97cac162622b",
       "text": "ced22f9d3bdafb0c5f5e4027849d8cf32dd0530d5a937f0c409e07546439d01a"
     },
     "profile": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "a2130fbbe7e542dfd817980dbda23cb68a2405d27bc8ed481ce91e3efe8705c1",
-      "text": "8c76ffb4c58cc4a03e7c3e9200fe4399bf13e0a40481c323ccbb2ed6d85431ae"
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "6e178e8ca37f7e3d0e13b6cb45ff2a26a8f216fd3b259d53e18979cb405476fc",
+      "text": "48268436cddc87fccb6cef73155d49595784eb242d3ea3fed3c542596c5bfb06"
     },
     "quests": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "c67b21a0c8add54250fa20a0602c20c1f13644834e0c8beefb757e74921d7287",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "855c54af9067624727b6cde242c890321b29a31afb1b8601abe0ed1d3e4015f2",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "f0e8587669f16a609408cd4bf0ed14d384d09be01e3a6c999e731a86cf9ba5b9",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "b0090cce6f9133e37a2455d9753997323bbaa56547f583db652c9f7942db00fb",
       "text": "83fdfb3ddc5551875ec1f031676a80e3adb73e448dffae614c489441ea6f2c33"
     },
     "shop": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "6dbb59822e4adf4b13741baa7b79f04fca9ebe753d2c870ac96e49e81e83d280",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "4056398c6f5346101e3df739a63482daec6c4d9ddd7ab865be36e63dfb967be2",
       "text": "62e3ad5ae040c7c30a1e73d314c1e226426dc47e287a7fceaa18ad975e73296b"
     },
     "skills": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "bf1220ac2ce847cbefc5f5024f9048c665510a20fe439f64983d85391169566a",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "5ad9c065a112d9cadbbb672b4337a9b0c14ddb7b24d0413bf8aced78128c5e75",
       "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
     },
     "start": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "386305f1fc0d31b70c512240c665f70978f385674427a1fa93a48bcc02571a9d",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "026cd07555c0ec115fce523bfb12a6ba19607c4e3b200cb7141622ed2871fb99",
       "text": "3f26288c52ae35e92097798a9a413933351e8e8422d33230a6322c69aedbb238"
     },
     "teleports": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "700998f2fc8af56c5e13ad05677d7304ea3b99ecf77077c9a505b823febe8bfe",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "ecc2ef9b6310e5231f6a464772a49108cd1147019ab31b79baf05b861280ab6c",
       "text": "896b72de8b56b3374b3a6346a701f45defae6e6ecff688868e02233aa040d1fa"
     },
     "tierforge": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "7965997c7c7ca88a3e57e417f29c37f5d0c22813907529ec7c30c0c1aaa1f842",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "1978ca289e79da70c1bf52a2c1c3a840fb6137c8a26e6f9e836b4b740b589bf3",
       "text": "bb59e5c05ec16e1951d67e444a35885ce8a38805d367f3e73f09a0fd74cce12c"
     },
     "titles": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "888f85446e49670b06e0fe23a5851a08b71c9545dbf21769af773a1fc9b119a7",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "28e3af7d07cd87d673004f74d6d03bee9784262c34ec0bacf6ef41223cab0405",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "6dbb59822e4adf4b13741baa7b79f04fca9ebe753d2c870ac96e49e81e83d280",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "4056398c6f5346101e3df739a63482daec6c4d9ddd7ab865be36e63dfb967be2",
       "text": "dfac37460071169331d2b9242834257df9651801a744d3c0894dfd032227397a"
     },
     "vk": {
-      "reason": "1.4.282 RC6: сверены прямой upgrade stable281, strict/backup/atomic BP stock migration, запрет скрытого default/epoch0 при ошибках, configReady gate без смены авторизации, сохранение custom TAB/прогресса/claims/paid/auth/receipts и no-op повтор. BP 52200 и клановая политика неизменны; без live smoke.",
-      "sources": "0a903f5175f4e3047f94c10c85e08fcc01ec732321366aeeeae2b8c15797141f",
+      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
+      "sources": "fc5f247dd89bd194e950cf87dfd10e2462be09cdf76cc50c082c4d070bde338c",
       "text": "2b67feb5684b14875601ba47314694afa598ff87f6dd74350a06f65029a735eb"
     }
   },
