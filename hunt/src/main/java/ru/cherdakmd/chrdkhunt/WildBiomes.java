@@ -122,6 +122,7 @@ final class WildBiomes implements Listener {
         while (iterator.hasNext()) {
             State s = iterator.next(); Mob mob = s.mob.get();
             if (mob == null || !mob.isValid() || mob.isDead() || kind(mob) != s.variant) { iterator.remove(); continue; }
+            if (!enabled || !plugin.config().enabled()) { s.windup = 0; s.primed = 0; s.target = null; continue; }
             if (!(mob.getTarget() instanceof Player p)) { s.windup = 0; s.target = null; continue; }
             if (!usable(mob, p) || tick < s.ignore || (s.target != null && tick - s.chase >= 400)) {
                 mob.setTarget(null); s.windup = 0; s.target = null; s.ignore = tick + 100; continue;
@@ -179,6 +180,7 @@ final class WildBiomes implements Listener {
     }
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void damage(EntityDamageByEntityEvent e) {
+        if (!enabled || !plugin.config().enabled()) return;
         Entity source = e.getDamager();
         boolean wildShot = source instanceof Projectile shot && (shot.getPersistentDataContainer().has(projectileKey)
                 || shot.getShooter() instanceof Entity shooter && kind(shooter) != null);
@@ -199,18 +201,22 @@ final class WildBiomes implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void death(EntityDeathEvent e) {
         var v = kind(e.getEntity()); Player p = e.getEntity().getKiller();
-        if (v != null && safety.target(p, protection) && safety.clear(e.getEntity().getLocation(), protection)) observe(p, v, true);
+        if (v != null && safety.target(p, protection) && safety.clear(e.getEntity().getLocation(), protection)
+                && e.getEntity().getLastDamageCause() instanceof EntityDamageByEntityEvent hit && !hit.isCancelled()) {
+            Player finisher = hit.getDamager() instanceof Player player ? player : hit.getDamager() instanceof Projectile shot && shot.getShooter() instanceof Player player ? player : null;
+            if (p.equals(finisher)) observe(p, v, true);
+        }
         states.remove(e.getEntity().getUniqueId());
     }
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void target(EntityTargetLivingEntityEvent e) {
-        if (kind(e.getEntity()) == null || !(e.getTarget() instanceof Player p)) return;
+        if (!enabled || !plugin.config().enabled() || kind(e.getEntity()) == null || !(e.getTarget() instanceof Player p)) return;
         State s = states.get(e.getEntity().getUniqueId());
         if (!safety.target(p, protection) || !safety.clear(e.getEntity().getLocation(), protection) || s != null && tick < s.ignore) e.setCancelled(true);
     }
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void teleport(EntityTeleportEvent e) {
-        if (kind(e.getEntity()) != null && !safety.clear(e.getTo(), protection)) e.setCancelled(true);
+        if (enabled && plugin.config().enabled() && kind(e.getEntity()) != null && !safety.clear(e.getTo(), protection)) e.setCancelled(true);
     }
     @EventHandler public void load(EntitiesLoadEvent e) { for (Entity entity : e.getEntities()) loaded(entity); }
     @EventHandler public void unload(EntitiesUnloadEvent e) { for (Entity entity : e.getEntities()) states.remove(entity.getUniqueId()); }

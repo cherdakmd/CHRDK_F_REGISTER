@@ -10,6 +10,10 @@ public final class MobRewardPolicy {
     public static boolean temporary(Entity entity) {
         return entity != null && entity.getPersistentDataContainer().has(TEMPORARY);
     }
+    /** Биомная разновидность — не босс, даже если у неё есть читаемое имя. */
+    public static boolean wild(Entity entity) {
+        return entity != null && entity.getPersistentDataContainer().has(new NamespacedKey("chrdk_hunt", "wild_variant"));
+    }
     /** Provenance Classes — не уровень/статы. Остальные чужие PDC не принимаем за vanilla-моба. */
     public static boolean onlyNaturalProvenance(Entity entity) {
         var natural = new NamespacedKey("chrdk_classes", "natural-v1");
