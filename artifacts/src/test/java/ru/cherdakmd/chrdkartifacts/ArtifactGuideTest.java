@@ -101,7 +101,7 @@ class ArtifactGuideTest {
                 getClass().getResourceAsStream("/artifacts-messages-legacy-1.4.282-rc7.yml"), logger);
         assertEquals("", custom.plain("card-source"));
         assertEquals("Свой текст владельца", custom.plain("art.pero-feniksa.lore"));
-        assertTrue(custom.getList("art.pero-feniksa.details").isEmpty());
+        assertEquals("", custom.raw("art.pero-feniksa.details"));
     }
     @Test void readingRemainingTimeDoesNotChangeStoredCooldownsOrDirtyFlag() {
         var cooldowns = new Cooldowns();
@@ -145,7 +145,7 @@ class ArtifactGuideTest {
         var messages = messages();
         String collection = messages.getList("guide-collection").toString();
         assertTrue(collection.contains("/bal"));
-        assertTrue(collection.contains("бесплатную копию"));
+        assertTrue(collection.contains("не восстанавливается"));
         String use = messages.getList("guide-use").toString();
         assertTrue(use.contains("уровни XP"));
         assertTrue(use.contains("отменённый телепорт"));
