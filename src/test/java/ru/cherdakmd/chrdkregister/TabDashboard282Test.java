@@ -51,6 +51,17 @@ class TabDashboard282Test {
         assertEquals("недоступен",TabDashboard.frame(messages,0,true,-1,0,20,4,20,"Мир").balance());
         assertEquals("нет",TabDashboard.frame(messages,0,true,0,0,20,4,20,"Мир").boost());
     }
+    @Test void allIndirectDashboardAndProbeKeysExistAndRender() throws Exception {
+        var messages=messages();
+        List<String> keys=new ArrayList<>();
+        for(int i=0;i<6;i++)keys.add("tab.tip-"+i);
+        for(String state:List.of("good","medium","high","unknown"))keys.add("tab.health-"+state);
+        for(String state:List.of("disabled","inactive","pending","overwritten","frozen","repaired","ok"))keys.add("tab.audit-"+state);
+        for(String key:keys) {
+            assertTrue(messages.defaultKeys().contains(key),key);assertFalse(messages.plain(key).isBlank(),key);
+        }
+        assertEquals(48,plain.serialize(mini.deserialize(TabDashboard.wave("А".repeat(1000),0))).length());
+    }
     @Test void telemetryHandlesUnavailableAndThresholdValues() {
         assertEquals("tab.health-unknown",TabDashboard.healthKey(Double.NaN,1));
         assertEquals("tab.health-unknown",TabDashboard.healthKey(20,Double.POSITIVE_INFINITY));

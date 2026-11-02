@@ -913,6 +913,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 return true;
             }
             case "tabcheck" -> {
+                if (args.length > 2) { messages.send(sender, "tab.audit-offline"); return true; }
                 Player target = args.length == 2 ? Bukkit.getPlayerExact(args[1]) : sender instanceof Player p ? p : null;
                 plugin.tabList().audit(sender, target);
                 return true;

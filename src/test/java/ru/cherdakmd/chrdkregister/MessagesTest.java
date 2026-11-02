@@ -45,6 +45,11 @@ class MessagesTest {
     private static final List<String> DYNAMIC_PREFIXES = List.of(
             "password.error.", "password.hint.", "password.strength.", "donation.", "pass.menu.item-", "finance.service-");
     private static final Set<String> INDIRECT_KEYS = Set.of(
+            // TAB RC4: keys chosen by the bounded frame/probe state, checked by TabDashboard282Test.
+            "tab.tip-0", "tab.tip-1", "tab.tip-2", "tab.tip-3", "tab.tip-4", "tab.tip-5",
+            "tab.health-good", "tab.health-medium", "tab.health-high", "tab.health-unknown",
+            "tab.audit-disabled", "tab.audit-inactive", "tab.audit-pending", "tab.audit-overwritten",
+            "tab.audit-frozen", "tab.audit-repaired", "tab.audit-ok",
             // API37: shared atlas renders these via Task.textKey(), not a literal get().
             "atlas-survey", "atlas-path", "atlas-geology", "atlas-breed", "atlas-fish", "atlas-kill", "atlas-study", "atlas-camp",
             "register.success", "login.success", "chat.broadcast-prefix",

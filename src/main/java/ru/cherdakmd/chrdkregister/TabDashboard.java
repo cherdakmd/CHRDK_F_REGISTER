@@ -22,8 +22,9 @@ final class TabDashboard {
     static Frame frame(Messages messages, long now, boolean authenticated, long balance, long boostMillis,
                        double tps, double mspt, int ping, String world) {
         String hidden = messages.plain("tab.sign-in");
+        String tipKey = "tab.tip-" + Math.floorMod(now / 12000, 6);
         return new Frame(wave(messages.plain("tab.brand"), now), separator(now),
-                authenticated ? messages.plain("tab.tip-" + Math.floorMod(now / 12000, 6)) : hidden,
+                authenticated ? messages.plain(tipKey) : hidden,
                 CLOCK.format(Instant.ofEpochMilli(now)),
                 !authenticated ? hidden : balance < 0 ? messages.plain("tab.unavailable") : BankService.format(balance),
                 !authenticated ? hidden : boostMillis <= 0 ? messages.plain("tab.boost-off")
@@ -39,7 +40,7 @@ final class TabDashboard {
     }
     static String wave(String text, long now) {
         StringBuilder out = new StringBuilder();
-        int[] points = text.codePoints().toArray();
+        int[] points = text.codePoints().limit(48).toArray();
         double phase = Math.floorMod(now, 8000) / 8000.0;
         for (int i = 0; i < points.length; i++) {
             double mix = (1 + Math.sin((phase + i * .075) * Math.PI * 2)) / 2;

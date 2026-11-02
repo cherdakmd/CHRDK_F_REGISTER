@@ -308,8 +308,9 @@ public final class TabListService implements Listener {
             if (!target.isOnline()) { plugin.messages().send(sender, "tab.audit-offline"); return; }
             String state = TabFrameState.audit(settings.enabled(), animationPredicate.test(target.getName()),
                     before, nameFrames.get(id), target.playerListName());
+            String stateKey = "tab.audit-" + state;
             plugin.messages().send(sender, "tab.audit-result", "player", target.getName(),
-                    "state", plugin.messages().plain("tab.audit-" + state));
+                    "state", plugin.messages().plain(stateKey));
         }, 30L));
     }
 
