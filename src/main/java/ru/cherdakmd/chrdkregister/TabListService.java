@@ -102,6 +102,7 @@ public final class TabListService implements Listener {
         animationPredicate = predicate == null ? name -> false : predicate;
     }
     static int animationTicks(int ticks) { return Math.clamp(ticks, 5, 40); }
+    static int refreshTicks(int ticks) { return ticks <= 0 ? 0 : Math.max(10, ticks); }
     static boolean animationEnabled(Settings settings) {
         return settings.enabled() && settings.nameFormat() != null && !settings.nameFormat().isBlank();
     }
@@ -146,7 +147,7 @@ public final class TabListService implements Listener {
         String root = "tablist";
         this.settings = new Settings(
                 cfg.getBoolean(root + ".enabled", true),
-                Math.max(10, cfg.getInt(root + ".refresh-ticks", 40)),
+                refreshTicks(cfg.getInt(root + ".refresh-ticks", 40)),
                 cfg.getStringList(root + ".header"),
                 cfg.getStringList(root + ".footer"),
                 cfg.getString(root + ".player-name-format", ""),
