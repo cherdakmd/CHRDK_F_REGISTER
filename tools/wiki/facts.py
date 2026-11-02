@@ -218,13 +218,13 @@ class FactBook:
                 )
         return rows
 
-    def enchant_catalog(self):
+    def enchant_catalog(self, detailed=False):
         source = (
             self.root
             / "enchants/src/main/java/ru/cherdakmd/chrdkenchants/EnchantRegistry.java"
         ).read_text(encoding="utf-8")
         records = re.findall(
-            r'^\s*register\("([^"\n]+)", (COMMON|RARE|EPIC|LEGENDARY), (\d+), (?:"[^"\n]+"|null), (LIGHT|CURSE), ([A-Z_, ]+)\);',
+            r'^\s*register\("([^"\n]+)", (COMMON|RARE|EPIC|LEGENDARY), (\d+), ("[^"\n]+"|null), (LIGHT|CURSE), ([A-Z_, ]+)\);',
             source,
             re.M,
         )
@@ -243,7 +243,7 @@ class FactBook:
             "BOW": "лук",
             "CROSSBOW": "арбалет",
             "HELMET": "шлем",
-            "CHESTPLATE": "нагрудник",
+            "CHESTPLATE": "нагрудник или элитры",
             "LEGGINGS": "поножи",
             "BOOTS": "ботинки",
             "PICKAXE": "кирка",
@@ -258,12 +258,21 @@ class FactBook:
             "LEGENDARY": "легендарная",
         }
         rows = []
-        for id, rarity, level, polarity, supports in sorted(records):
-            title = messages.get("en", {}).get(id, {}).get("name") or messages.get(
-                "en." + id + ".name"
-            )
+        for id, rarity, level, conflict, polarity, supports in sorted(records):
+            title = messages.get("en." + id + ".name") or messages.get("en", {}).get(id, {}).get("name")
             if not title:
                 raise ValueError("Нет имени чары: " + id)
+            if detailed:
+                lore = messages.get("en." + id + ".lore", messages.get("en", {}).get(id, {}).get("lore"))
+                if not isinstance(lore, list) or len(lore) < 2 or not all(isinstance(line, str) and clean(line) for line in lore):
+                    raise ValueError("Нет подробного описания чары: " + id)
+                conflicts = [other[0] for other in records if conflict != "null" and other[3] == conflict and other[0] != id]
+                rows.append(f"### {clean(title)} — `{id}`\n\n"
+                            f"{rarities[rarity].capitalize()} · {'проклятие' if polarity == 'CURSE' else 'светлая'} · максимум {level}. "
+                            f"Снаряжение: {', '.join(groups[g.strip()] for g in supports.split(','))}.\n\n"
+                            + "\n".join("- " + clean(line) for line in lore)
+                            + "\n\nНесовместимо на одном предмете: " + (", ".join('`' + other + '`' for other in sorted(conflicts)) or "нет отдельной группы конфликтов") + ".")
+                continue
             rows.append(
                 (
                     f"`{id}`",
@@ -410,7 +419,7 @@ class FactBook:
                 ["Источник", "Шанс по конфигу, %"],
                 [
                     ("Стол: дополнительная чара", s["table"]["chance-percent"]),
-                    ("Стол: проклятие", s["table"]["curse-chance-percent"]),
+                    ("Стол: доля проклятий среди успешных доп. бросков", s["table"]["curse-chance-percent"]),
                     ("Обычный моб", s["mobs"]["regular-chance-percent"]),
                     ("Элитный моб", s["mobs"]["elite-chance-percent"]),
                     (
@@ -419,6 +428,8 @@ class FactBook:
                     ),
                 ],
             )
+        if name == "enchant_details":
+            return "\n\n".join(self.enchant_catalog(detailed=True))
         if name == "enchants":
             return table(
                 ["ID", "Название", "Редкость", "Макс. уровень", "Полюс", "Снаряжение"],

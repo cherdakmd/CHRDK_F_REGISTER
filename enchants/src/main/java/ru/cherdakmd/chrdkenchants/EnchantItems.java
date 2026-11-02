@@ -236,6 +236,16 @@ public final class EnchantItems {
         return false;
     }
 
+    /** Явное обновление только лора валидной книги; PDC, источник, уровень и атрибуты неизменны. */
+    public boolean refreshBookDescription(ItemStack book) {
+        if (!isEnchantBook(book) || validated(book) == null) return false;
+        ItemMeta meta = book.getItemMeta();
+        var previous = meta.lore();
+        refreshLore(meta, read(book));
+        if (java.util.Objects.equals(previous, meta.lore())) return false;
+        return book.setItemMeta(meta);
+    }
+
     /**
      * Перерисовывает секцию лора чар: старые наши строки (с маркером) удаляются,
      * новые добавляются по реестру.
@@ -252,6 +262,7 @@ public final class EnchantItems {
                     "name", plugin.messages().mini("en." + def.id() + ".name"),
                     "levelroman", EnchantCodec.roman(entry.getValue())));
             if (meta instanceof org.bukkit.inventory.meta.EnchantmentStorageMeta) {
+                lore.add(plugin.messages().get("book-level", "id", def.id(), "level", entry.getValue(), "maxlevel", def.maxLevel()));
                 lore.add(plugin.messages().get("book-rarity", "rarity", plugin.messages().mini(def.rarity().labelKey()),
                         "maxlevel", def.maxLevel()));
                 String groups = plugin.gui().supportedLabel(def);
@@ -264,7 +275,9 @@ public final class EnchantItems {
                             .map(other -> plugin.messages().raw("en." + other.id() + ".name")).toList());
                     if (!conflicts.isEmpty()) lore.add(plugin.messages().get("book-conflicts", "conflicts", ru.cherdakmd.chrdkregister.Messages.trusted(conflicts)));
                 }
+                if (def.curse()) lore.add(plugin.messages().get("book-curse-warning", "id", def.id()));
                 lore.add(plugin.messages().get("book-apply"));
+                lore.add(plugin.messages().get("book-preview"));
             }
         }
         if (meta instanceof org.bukkit.inventory.meta.EnchantmentStorageMeta && !enchants.isEmpty())

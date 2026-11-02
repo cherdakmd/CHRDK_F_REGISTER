@@ -5,6 +5,7 @@ import importlib.util
 import io
 import json
 from pathlib import Path
+from unittest.mock import patch
 import sys
 import tempfile
 import unittest
@@ -110,6 +111,37 @@ class WikiBuildTest(unittest.TestCase):
             self.assertIn(row[0].strip("`"), page)
         self.assertIn("Бережная пересадка", page)
         self.assertIn("PvE-якорь", page)
+
+    def test_detailed_enchant_cards_publish_all_game_descriptions_and_conflicts(self):
+        details = self.book.enchant_catalog(detailed=True)
+        self.assertEqual(76, len(details))
+        page = (self.root / "site/enchants.html").read_text()
+        for card in details:
+            self.assertIn("Несовместимо на одном предмете:", card)
+            self.assertGreaterEqual(card.count("\n- "), 2)
+            self.assertNotIn("<gray>", card)
+        self.assertIn("Начальная скорость полёта стрелы: +4/6/8%", page)
+        self.assertIn("0,5/0,75/1 ед. HP", page)
+        chain = next(card for card in details if "— `chainspark`" in card)
+        self.assertIn("`thunderstrike`", chain)
+        self.assertNotIn("`lifesteal`", chain)
+        self.assertIn("не потолок уровня I/II/III", page)
+
+    def test_enchant_handbook_and_end_of_catalog_remain_searchable(self):
+        index = json.loads((self.root / "site/search-index.json").read_text())
+        text = next(p["text"] for p in index if p["url"] == "enchants.html")
+        for word in ("quickdraw", "время натяжения", "vitality", "физический алмаз", "мастерская", "veinminer", "до 6/10/14"):
+            self.assertIn(word, text)
+
+    def test_missing_or_shallow_enchant_descriptions_stop_publication(self):
+        import yaml
+        resource = self.root / "enchants/src/main/resources/messages.yml"
+        for invalid in (None, "старый краткий текст", ["только одна строка"], ["строка", ""]):
+            messages = yaml.safe_load(resource.read_text())
+            messages["enchants"]["en"]["quickdraw"]["lore"] = invalid
+            with patch("facts.yaml.safe_load", return_value=messages):
+                with self.assertRaisesRegex(ValueError, "quickdraw"):
+                    self.book.enchant_catalog(detailed=True)
 
     def test_bundle_terms_match_public_configuration(self):
         page = (self.root / "site/ranks.html").read_text()

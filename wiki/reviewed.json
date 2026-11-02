@@ -1,168 +1,168 @@
 {
   "pages": {
     "about": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "0aec18c1fe8448501d1409a7abd70020667ada5c9f0b24552532076e2c9c93d5",
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "7af3820ce98b6457893ff3c6c7d29579a8d5d8e18dce74d0191610b55a1bb35e",
       "text": "17788b7b4007e90c62acd266f95cec124e0a53b603a1b2e5d9a7c19fb304c7d9"
     },
     "achievements": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "bedd23060835ff6c452baead0119c4281be02f283aab2a9215549806800636dd",
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "6660e4330a38d99699159884d6e47fbfefe15c940982ed627f5b01d261624745",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "88d8695530889c71d5caea0089ac0a81fbb99c8880dccd211be5c10989bfb59b",
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "2277683ccf5d92a8147ba4c03626f9dfe82e89485593f76a79b34f6db12dc12d",
       "text": "a4a922729b6635a6d286fcc3c9f18c8c57a0c98a19ec05c44f8d448dc422a84f"
     },
     "auction": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "6be5efd6e1aaf3167b8647ca58a38ce6689bcc75c7d7d8b2976120cb9ff23fd0",
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "fc3860462d91d7c48fbe78b6f76afdb7a7d2fb5cb438301dc7d59822d1b03743",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "013ff4f67caf96d6e42caa93623d3603f6a8f4c78e0f7fe1ed6e56bf826545f5",
-      "text": "3ce1198a1efbb4ffaa512c01225415225ed02d0c42d23733a0701f918bd65c46"
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "ffb224c0202a005891f42bd1b68bed545720e2b6689de7f0cc45e872d0a7786d",
+      "text": "71ba693cc7563affd3f68e5b16b3811fa346550f00ffb12748a6bf8954de9a64"
     },
     "chat": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "0aec18c1fe8448501d1409a7abd70020667ada5c9f0b24552532076e2c9c93d5",
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "7af3820ce98b6457893ff3c6c7d29579a8d5d8e18dce74d0191610b55a1bb35e",
       "text": "b46e914efbafe7696687ae47b1604592151aaacaaccd2264d4a5d7b6efc5845a"
     },
     "claims": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "fbe02625c6ebaa081e3b442345e7e8dcd2b63f8267d800035220571d44351cc7",
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "e8de1812f743e0616474ceb76fb045df67d3f157aa030b8a2e7572b821861203",
       "text": "2a1634efadca1810c82bc496b30432d553c72fb226a5e051443232224a366538"
     },
     "classes": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "d48c522291155abc76d7b6d6b2e86e9f117e0f6b9f6e86b5d489ae235afb0dd1",
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "680a1209c7523f969aa8fe9760403abbdc219b31a9db050cf60012ed52c9ed16",
       "text": "ee29d92bd4e9527924d14405057fd62402857c1a688439c7b9d86d4c9bf3b546"
     },
     "commands": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "3ab2f3a48780195c612297bf3c8e93fa2c9b09e1d4aefa2ecd755e5e03bc853f",
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "dfa187f4075606af7318fe382890d19d7e28db9384ae86c4cc6f27589e5fc06b",
       "text": "7cad9d77bd280628e514082fba018af5aaee1e7e0db4f648354e18f1399a47e8"
     },
     "cosmetics": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "89e0cb6786499329ae55083ac94429dd088c9d3c78c5ce9b1f66ac933d8dbf17",
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "31a34b99ed604700e432e49f221d42ac8f49c37f0b46e043a715ca39579b805b",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "a5554719fd28729dcc98ee0bfb439c150ec4ba2ec768906683290e8d6835ca73",
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "6524078fc7990531468cabcfab4631045025fc535afad84f1411996218400d30",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "economy": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "a2ec6d388685436de451c31b537845dba1a14b6a1f2e1480a7cf9c1d8d08041b",
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "4ce3a02858f2e147647812baf99bce3328918951d7bed7b2caa14c3edee261b6",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "59772a2583400bd00b02e9c4e8a5b159535083c232174551aca26b4f4d2c4c31",
-      "text": "70b6bd31d749073c4e4144ebb536661042f7f925d3ccb838f294fb031e4a8558"
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "64a9a303f736fe6a78bc4816a7226596d63a9a9bb8e4925fdbaea9aa74b5101f",
+      "text": "8a1098bc890f8a13d97dcebc28c30cd689f7ffc64b02d5d9716ff64cf2117d2f"
     },
     "faq": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "3ab2f3a48780195c612297bf3c8e93fa2c9b09e1d4aefa2ecd755e5e03bc853f",
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "dfa187f4075606af7318fe382890d19d7e28db9384ae86c4cc6f27589e5fc06b",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "2ec8244200f401d0d2bed6db5c4edc675358a62cef974689fc04962df0b2947b",
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "d8483f88eb3f953a877e7fea2ed91dedd1724c230dfb41b329c2005792971682",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "fbe02625c6ebaa081e3b442345e7e8dcd2b63f8267d800035220571d44351cc7",
-      "text": "0b88ad75a5fd39e149ba9908fb4b3641147df59ca1dc26b073547eca8d4accf6"
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "e8de1812f743e0616474ceb76fb045df67d3f157aa030b8a2e7572b821861203",
+      "text": "66f8a53204baa7c4ba71ae94a4a731d37b9c6acb3cb2e3349540303ce8a0558e"
     },
     "hunt": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "aea8d2de78375c6257bfabbc848ac48b08920ca7fc8b372d9247076e5987ad3b",
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "ea3a998d5f7531027d14e6c30d604f3dfdc89ae200f6b129fade74b9b18e60e9",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "4056398c6f5346101e3df739a63482daec6c4d9ddd7ab865be36e63dfb967be2",
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "f0660f21b26d5ce250dd1c4ebd77bd344b5a7600049cbe73982e54089b70b8b5",
       "text": "9e4a54959f53e85f3e1076c43f2f7863fbaf499584948d064d72367538e0dbd2"
     },
     "menu": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "abaed0244f7cc5971d544a506ce6612cc4ba257880005c2a948a3161a7fb479c",
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "38dfee59c4fea6e622a837ffff807ea41619ecd243587123eea63ec60f89ea11",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "orders": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "82fc0e039614da9704e0189fc38c660f94a9e1f7917630d7cb8e7220e594f553",
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "504421c957491dc586b5f87ddf1f9cc50960de699b6badc5e82b9c3e43ab724b",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "pets": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "fa5df5366661075a48a2d3bd2bbc79ba23fa0ff651467b544314a772cb7aff34",
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "3fd23c4515722110ab67e6d509a2e6b8e15128f6d260b6da7d0038e9be143d70",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "56e0a0b1cd8bf82688e5a9d49be36b6fa386aa790d88d1f142ea97cac162622b",
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "300a1ae10e21adee0d3095237e817fbe2e2294b9bc47f184a00e6bb4531bb819",
       "text": "ced22f9d3bdafb0c5f5e4027849d8cf32dd0530d5a937f0c409e07546439d01a"
     },
     "profile": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "6e178e8ca37f7e3d0e13b6cb45ff2a26a8f216fd3b259d53e18979cb405476fc",
-      "text": "48268436cddc87fccb6cef73155d49595784eb242d3ea3fed3c542596c5bfb06"
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "a12d40931e80d061135e2239b6662ae68bdcde3bbeaa7461c306f9da795a67a4",
+      "text": "1de7cf2a07a10045610d44ac4a345842613b93fa514b01f21f5555a72e044cc7"
     },
     "quests": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "855c54af9067624727b6cde242c890321b29a31afb1b8601abe0ed1d3e4015f2",
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "a62bbefddea7347b096bfa87d276ff938fc95f133759cc11575df30ec2cb5481",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "b0090cce6f9133e37a2455d9753997323bbaa56547f583db652c9f7942db00fb",
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "a85493db6921e1816a47de9a84ed808274b0e3eaa8258234055a282909939a45",
       "text": "83fdfb3ddc5551875ec1f031676a80e3adb73e448dffae614c489441ea6f2c33"
     },
     "shop": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "4056398c6f5346101e3df739a63482daec6c4d9ddd7ab865be36e63dfb967be2",
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "f0660f21b26d5ce250dd1c4ebd77bd344b5a7600049cbe73982e54089b70b8b5",
       "text": "62e3ad5ae040c7c30a1e73d314c1e226426dc47e287a7fceaa18ad975e73296b"
     },
     "skills": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "5ad9c065a112d9cadbbb672b4337a9b0c14ddb7b24d0413bf8aced78128c5e75",
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "d945f9303ae7163de8a2a7b6c9c34fba98890e41b664a38fe1e876e363c4838d",
       "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
     },
     "start": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "026cd07555c0ec115fce523bfb12a6ba19607c4e3b200cb7141622ed2871fb99",
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "41ed4d13d70c97d99af52c8789c1b4d6358563b7ec89dc26a3e960cd3f0f170d",
       "text": "3f26288c52ae35e92097798a9a413933351e8e8422d33230a6322c69aedbb238"
     },
     "teleports": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "ecc2ef9b6310e5231f6a464772a49108cd1147019ab31b79baf05b861280ab6c",
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "6c9197b6ed4f48a2c3f1f92dee408befda3f75029fd725496b162490f63e2232",
       "text": "896b72de8b56b3374b3a6346a701f45defae6e6ecff688868e02233aa040d1fa"
     },
     "tierforge": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "1978ca289e79da70c1bf52a2c1c3a840fb6137c8a26e6f9e836b4b740b589bf3",
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "42a23b37f46b6be20cc07f7263171f31c9b743ca1b1f585fd3ce702870b3074b",
       "text": "bb59e5c05ec16e1951d67e444a35885ce8a38805d367f3e73f09a0fd74cce12c"
     },
     "titles": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "28e3af7d07cd87d673004f74d6d03bee9784262c34ec0bacf6ef41223cab0405",
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "4b3fe4e63ed078c7c876f6053dfc1d9c169997bc9fb0fbc52ff366b2a95b8075",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "4056398c6f5346101e3df739a63482daec6c4d9ddd7ab865be36e63dfb967be2",
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "f0660f21b26d5ce250dd1c4ebd77bd344b5a7600049cbe73982e54089b70b8b5",
       "text": "dfac37460071169331d2b9242834257df9651801a744d3c0894dfd032227397a"
     },
     "vk": {
-      "reason": "1.4.282 RC6: проверен upgrade stable281, strict/backup/atomic BP migration и receipts; новый golden тест обнаружил коллизию пустого TAB с древним stock — empty/blank name/header/footer явно сохраняются. Config gate без смены авторизации; BP 52200/paid leader policy прежние; без live smoke.",
-      "sources": "fc5f247dd89bd194e950cf87dfd10e2462be09cdf76cc50c082c4d070bde338c",
+      "reason": "RC7: 76 описаний и уровни/единицы сверены с обработчиками; таблицы конфликтов из реестра, полные карточки из игровых messages. Проверены условные шансы/ступени, XP-наковальня, материалы и подтверждение мастерской, strict exact-stock migration без записи owner файла. Баланс и прочие системы не менялись.",
+      "sources": "a2fbf919ccf8d09a066f3a6262a69884ab1e7edbf3ceceed913452dc002a436b",
       "text": "2b67feb5684b14875601ba47314694afa598ff87f6dd74350a06f65029a735eb"
     }
   },

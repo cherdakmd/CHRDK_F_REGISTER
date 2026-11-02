@@ -8,7 +8,7 @@ depend: [CHRDK_Core]
 softdepend: [CHRDK_Hunt]
 commands:
   enchants:
-    description: Список кастомных чар и их описания
+    description: Каталог чар, подробные карточки и справка по книгам (/enchants help)
     aliases: [cenchant]
   enchantsadmin:
     description: Управление чарами (выдача книг, перезагрузка)

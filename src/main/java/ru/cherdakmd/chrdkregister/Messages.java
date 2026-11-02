@@ -175,6 +175,7 @@ public final class Messages {
         // Только первый запуск создаёт шаблон. На reload удалённый/недоступный файл — ошибка, не fallback.
         if (createMissing && !Files.exists(file)) plugin.saveResource(fileName, false);
         Map<String, String> overrides = checkedOverrides(base, file);
+        migrateCheckedStock(defaults, overrides, plugin.getResource("enchants-messages-legacy-1.4.282-rc6.yml"));
         overrides.replaceAll((key, text) -> GameplayRewardTexts.message(plugin.getName(), key, text));
         return checkedMessages(defaults, overrides, logger);
     }
@@ -182,8 +183,21 @@ public final class Messages {
     /** Строгий файловый контракт для загрузчиков/тестов, без JavaPlugin и без записи на диск. */
     public static Messages fromChecked(InputStream defaultsStream, Path userFile, Logger logger)
             throws IOException, org.bukkit.configuration.InvalidConfigurationException {
+        return fromChecked(defaultsStream, userFile, null, logger);
+    }
+
+    /** Строгая загрузка с точным прежним stock; меняется только эффективный текст, не файл владельца. */
+    public static Messages fromChecked(InputStream defaultsStream, Path userFile, InputStream legacyStream, Logger logger)
+            throws IOException, org.bukkit.configuration.InvalidConfigurationException {
         YamlConfiguration base = readChecked(defaultsStream);
-        return checkedMessages(flatten(base), checkedOverrides(base, userFile), logger);
+        var defaults = flatten(base);
+        var overrides = checkedOverrides(base, userFile);
+        migrateCheckedStock(defaults, overrides, legacyStream);
+        return checkedMessages(defaults, overrides, logger);
+    }
+    private static void migrateCheckedStock(Map<String, String> defaults, Map<String, String> overrides, InputStream legacy)
+            throws IOException, org.bukkit.configuration.InvalidConfigurationException {
+        if (legacy != null) migrateStockOverrides(defaults, overrides, flatten(readChecked(legacy)));
     }
     private static YamlConfiguration readChecked(InputStream stream)
             throws IOException, org.bukkit.configuration.InvalidConfigurationException {
