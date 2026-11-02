@@ -45,6 +45,8 @@ class MessagesTest {
     private static final List<String> DYNAMIC_PREFIXES = List.of(
             "password.error.", "password.hint.", "password.strength.", "donation.", "pass.menu.item-", "finance.service-");
     private static final Set<String> INDIRECT_KEYS = Set.of(
+            // API37: shared atlas renders these via Task.textKey(), not a literal get().
+            "atlas-survey", "atlas-path", "atlas-geology", "atlas-breed", "atlas-fish", "atlas-kill", "atlas-study", "atlas-camp",
             "register.success", "login.success", "chat.broadcast-prefix",
             "dialog.password-missing", "dialog.confirm-mismatch", "dialog.code-missing",
             // 1.4.105: передаются вспомогательным методам — beginForcedEnrollment(player, introKey)
@@ -361,7 +363,7 @@ class MessagesTest {
                 Matcher literal = LITERAL.matcher(arguments);
                 while (literal.find()) {
                     String key = literal.group(1);
-                    if (key.indexOf('.') > 0) {
+                    if (key.indexOf('.') > 0 || key.startsWith("atlas-")) {
                         keys.add(key);
                     }
                 }

@@ -61,6 +61,7 @@ public final class ExplorationAtlas implements Listener, AutoCloseable {
         tickTask = Bukkit.getScheduler().runTaskTimer(owner, this::tick, 20, 20);
         saveTask = Bukkit.getScheduler().runTaskTimerAsynchronously(owner, store::save, 100, 600);
     }
+    private Messages messages() { return messages.get(); }
     public List<String> catalog() {
         String current = scope.get();
         if (!current.equals(cachedScope)) { cachedCatalog = store.catalog(current, registry); cachedScope = current; }
@@ -84,7 +85,7 @@ public final class ExplorationAtlas implements Listener, AutoCloseable {
         if (key == null) return false;
         boolean fresh = store.visit(scope.get(), p.getUniqueId(), key);
         if (fresh) {
-            p.sendActionBar(messages.get().get("atlas-discovered", "biome", Messages.trusted(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().serialize(biomeName(key)))));
+            p.sendActionBar(messages().get("atlas-discovered", "biome", Messages.trusted(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().serialize(biomeName(key)))));
             trophies(p);
         }
         return true;
@@ -101,10 +102,10 @@ public final class ExplorationAtlas implements Listener, AutoCloseable {
         for (var task : ExplorationCatalog.tasks(key)) {
             if (task.kind() != kind || !task.matches().isEmpty() && !task.accepts(material)) continue;
             if (store.add(scope.get(), p.getUniqueId(), key, task, amount, unique)) {
-                p.sendActionBar(messages.get().get("atlas-task-done", "biome", Messages.trusted(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().serialize(biomeName(key))),
-                        "task", Messages.trusted(messages.get().raw(task.textKey()))));
+                p.sendActionBar(messages().get("atlas-task-done", "biome", Messages.trusted(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().serialize(biomeName(key))),
+                        "task", Messages.trusted(messages().raw(task.textKey()))));
                 if (store.done(scope.get(), p.getUniqueId(), key) == 5)
-                    messages.get().send(p, "atlas-biome-done", "biome", Messages.trusted(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().serialize(biomeName(key))));
+                    messages().send(p, "atlas-biome-done", "biome", Messages.trusted(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().serialize(biomeName(key))));
                 trophies(p);
             }
         }
@@ -113,9 +114,9 @@ public final class ExplorationAtlas implements Listener, AutoCloseable {
         List<String> all = catalog(); if (all.isEmpty()) return;
         String s = scope.get(); UUID id = p.getUniqueId();
         if (all.stream().allMatch(b -> store.visited(s, id, b)) && store.awardTrophy(s, id, "visited"))
-            messages.get().send(p, "atlas-all-visited");
+            messages().send(p, "atlas-all-visited");
         if (all.stream().allMatch(b -> store.done(s, id, b) == 5) && store.awardTrophy(s, id, "master"))
-            messages.get().send(p, "atlas-all-done");
+            messages().send(p, "atlas-all-done");
     }
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void move(PlayerMoveEvent e) {
@@ -167,15 +168,15 @@ public final class ExplorationAtlas implements Listener, AutoCloseable {
     /** Read-only observation: target must actually be visible and within five blocks. */
     public void study(Player p) { study(p, null); }
     private void study(Player p, String expectedBiome) {
-        if (!honest(p)) { messages.get().send(p, "atlas-readonly"); return; }
+        if (!honest(p)) { messages().send(p, "atlas-readonly"); return; }
         Block b = p.getTargetBlockExact(5);
-        if (b == null || b.getType().isAir()) { messages.get().send(p, "atlas-no-target"); return; }
+        if (b == null || b.getType().isAir()) { messages().send(p, "atlas-no-target"); return; }
         String key = biome(b.getLocation());
         if (key == null || expectedBiome != null && !expectedBiome.equals(key) || ExplorationCatalog.tasks(key).stream().noneMatch(t -> t.kind() == ExplorationCatalog.Kind.STUDY && t.accepts(b.getType().getKey().getKey()))) {
-            messages.get().send(p, "atlas-no-target"); return;
+            messages().send(p, "atlas-no-target"); return;
         }
         add(p, b.getLocation(), ExplorationCatalog.Kind.STUDY, b.getType().getKey().getKey(), 1, coordinate(b.getLocation(), false));
-        messages.get().send(p, "atlas-observed");
+        messages().send(p, "atlas-observed");
     }
     private void tick() {
         for (Player p : Bukkit.getOnlinePlayers()) {
@@ -190,17 +191,17 @@ public final class ExplorationAtlas implements Listener, AutoCloseable {
     public int completed(UUID id) { String s = scope.get(); return catalog().stream().mapToInt(b -> store.done(s, id, b)).sum(); }
     private Component biomeName(String key) { return Component.translatable("biome." + key.replace(':', '.')); }
     private Holder window(Player p) {
-        if (!permitted(p)) { messages.get().send(p, "atlas-unavailable"); return null; }
+        if (!permitted(p)) { messages().send(p, "atlas-unavailable"); return null; }
         Holder h = new Holder(p.getUniqueId(), scope.get(), this);
-        h.inventory = Bukkit.createInventory(h, 54, messages.get().get(scope.get().equals("lifetime") ? "atlas-title-lifetime" : "atlas-title-season")); return h;
+        h.inventory = Bukkit.createInventory(h, 54, messages().get(scope.get().equals("lifetime") ? "atlas-title-lifetime" : "atlas-title-season")); return h;
     }
     private void item(Holder h, int slot, Material mat, Component title, List<Component> lore, Consumer<Player> action) {
         var item = new ItemStack(mat); var meta = item.getItemMeta(); meta.displayName(title); meta.lore(lore); item.setItemMeta(meta);
         h.inventory.setItem(slot, item); if (action != null) h.actions.put(slot, action);
     }
     private void controls(Holder h) {
-        item(h, 48, Material.ARROW, messages.get().get("atlas-back"), List.of(), back);
-        item(h, 49, Material.OAK_DOOR, messages.get().get("atlas-close"), List.of(), Player::closeInventory);
+        item(h, 48, Material.ARROW, messages().get("atlas-back"), List.of(), back);
+        item(h, 49, Material.OAK_DOOR, messages().get("atlas-close"), List.of(), Player::closeInventory);
     }
     public void open(Player p, int requested) {
         Holder h = window(p); if (h == null) return;
@@ -208,34 +209,34 @@ public final class ExplorationAtlas implements Listener, AutoCloseable {
         for (int i = 0; i < 45 && page * 45 + i < all.size(); i++) {
             String key = all.get(page * 45 + i); int done = store.done(h.scope, h.owner, key);
             item(h, i, done == 5 ? Material.EMERALD : store.visited(h.scope, h.owner, key) ? Material.MAP : Material.GRAY_DYE,
-                    biomeName(key), messages.get().getList("atlas-biome-lore", "done", done,
-                            "visit", messages.get().plain(store.visited(h.scope, h.owner, key) ? "atlas-yes" : "atlas-no")), x -> detail(x, key, page));
+                    biomeName(key), messages().getList("atlas-biome-lore", "done", done,
+                            "visit", messages().plain(store.visited(h.scope, h.owner, key) ? "atlas-yes" : "atlas-no")), x -> detail(x, key, page));
         }
-        item(h, 46, Material.COMPASS, messages.get().get("atlas-summary"), messages.get().getList("atlas-summary-lore",
+        item(h, 46, Material.COMPASS, messages().get("atlas-summary"), messages().getList("atlas-summary-lore",
                 "visited", visited(h.owner), "total", all.size(), "done", completed(h.owner), "tasks", all.size() * 5), null);
-        if (page > 0) item(h, 45, Material.ARROW, messages.get().get("atlas-prev"), List.of(), x -> open(x, page - 1));
-        if (page + 1 < pages) item(h, 53, Material.ARROW, messages.get().get("atlas-next"), List.of(), x -> open(x, page + 1));
+        if (page > 0) item(h, 45, Material.ARROW, messages().get("atlas-prev"), List.of(), x -> open(x, page - 1));
+        if (page + 1 < pages) item(h, 53, Material.ARROW, messages().get("atlas-next"), List.of(), x -> open(x, page + 1));
         controls(h); p.openInventory(h.inventory);
     }
     private void detail(Player p, String biome, int page) {
         Holder h = window(p); if (h == null || !catalog().contains(biome)) return;
-        item(h, 4, Material.MAP, biomeName(biome), messages.get().getList("atlas-biome-lore", "done", store.done(h.scope, h.owner, biome),
-                "visit", messages.get().plain(store.visited(h.scope, h.owner, biome) ? "atlas-yes" : "atlas-no")), null);
+        item(h, 4, Material.MAP, biomeName(biome), messages().getList("atlas-biome-lore", "done", store.done(h.scope, h.owner, biome),
+                "visit", messages().plain(store.visited(h.scope, h.owner, biome) ? "atlas-yes" : "atlas-no")), null);
         int[] slots = {19, 21, 23, 30, 32}; int i = 0;
         for (var t : ExplorationCatalog.tasks(biome)) {
             long progress = store.progress(h.scope, h.owner, biome, t.id());
-            List<Component> lore = new ArrayList<>(messages.get().getList("atlas-task-lore", "progress", t.kind() == ExplorationCatalog.Kind.WALK ? progress / 100 : progress,
+            List<Component> lore = new ArrayList<>(messages().getList("atlas-task-lore", "progress", t.kind() == ExplorationCatalog.Kind.WALK ? progress / 100 : progress,
                     "target", t.kind() == ExplorationCatalog.Kind.WALK ? t.target() / 100 : t.target()));
-            if (t.kind() == ExplorationCatalog.Kind.STUDY) lore.addAll(messages.get().getList("atlas-study-help"));
+            if (t.kind() == ExplorationCatalog.Kind.STUDY) lore.addAll(messages().getList("atlas-study-help"));
             for (String target : new TreeSet<>(t.matches())) {
-                if (target.equals("*")) { lore.add(messages.get().get("atlas-any-block")); continue; }
+                if (target.equals("*")) { lore.add(messages().get("atlas-any-block")); continue; }
                 Material m = Material.matchMaterial(target);
                 lore.add(m != null ? Component.translatable(m.getTranslationKey()) : Component.translatable("entity.minecraft." + target));
             }
-            item(h, slots[i++], progress >= t.target() ? Material.LIME_DYE : Material.BOOK, messages.get().get(t.textKey()), lore, null);
+            item(h, slots[i++], progress >= t.target() ? Material.LIME_DYE : Material.BOOK, messages().get(t.textKey()), lore, null);
         }
-        item(h, 40, Material.SPYGLASS, messages.get().get("atlas-study-button"), messages.get().getList("atlas-study-help"), x -> { study(x, biome); detail(x, biome, page); });
-        controls(h); item(h, 48, Material.ARROW, messages.get().get("atlas-back"), List.of(), x -> open(x, page));
+        item(h, 40, Material.SPYGLASS, messages().get("atlas-study-button"), messages().getList("atlas-study-help"), x -> { study(x, biome); detail(x, biome, page); });
+        controls(h); item(h, 48, Material.ARROW, messages().get("atlas-back"), List.of(), x -> open(x, page));
         p.openInventory(h.inventory);
     }
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
