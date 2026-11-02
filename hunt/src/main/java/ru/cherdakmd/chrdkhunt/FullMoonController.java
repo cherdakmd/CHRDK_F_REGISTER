@@ -258,6 +258,7 @@ final class FullMoonController implements Listener {
             boolean close = false;
             for (Player other : w.getPlayers()) if (other.getLocation().distanceSquared(loc) < 16 * 16) { close = true; break; }
             if (close) continue;
+            if (!WildSafety.loadedArea(loc, at)) continue;
             var direction = at.clone().add(0, 1, 0).toVector().subtract(loc.clone().add(0, 1, 0).toVector());
             if (w.rayTraceBlocks(loc.clone().add(0, 1, 0), direction, direction.length(), FluidCollisionMode.NEVER, true) == null) return loc;
         }

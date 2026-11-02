@@ -50,6 +50,20 @@ final class WildSafety {
                 && floor != Material.SOUL_CAMPFIRE && floor != Material.CACTUS
                 && w.getBlockAt(x, y, z).getType().isAir() && w.getBlockAt(x, y + 1, z).getType().isAir();
     }
+    /** Ray trace сам может обратиться к промежуточному чанку. Проверяем весь малый
+     * прямоугольник заранее, а не только начальную и конечную точки. Без дыр/генерации. */
+    static boolean loadedArea(Location from, Location to) {
+        if (from == null || to == null || from.getWorld() == null || !from.getWorld().equals(to.getWorld())) return false;
+        double dx = from.getX() - to.getX(), dz = from.getZ() - to.getZ();
+        if (!Double.isFinite(dx) || !Double.isFinite(dz) || Math.abs(dx) > 80 || Math.abs(dz) > 80) return false;
+        int minX = Math.min(from.getBlockX() >> 4, to.getBlockX() >> 4), maxX = Math.max(from.getBlockX() >> 4, to.getBlockX() >> 4);
+        int minZ = Math.min(from.getBlockZ() >> 4, to.getBlockZ() >> 4), maxZ = Math.max(from.getBlockZ() >> 4, to.getBlockZ() >> 4);
+        for (int x = minX; x <= maxX; x++) for (int z = minZ; z <= maxZ; z++) if (!from.getWorld().isChunkLoaded(x, z)) return false;
+        return true;
+    }
+    static boolean sight(org.bukkit.entity.Mob mob, Player p) {
+        return loadedArea(mob.getEyeLocation(), p.getEyeLocation()) && mob.hasLineOfSight(p);
+    }
     static boolean healthyTick(double ceiling) {
         double mspt = Bukkit.getAverageTickTime();
         return Double.isFinite(mspt) && mspt <= ceiling;

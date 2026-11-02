@@ -133,12 +133,12 @@ final class WildBiomes implements Listener {
             if (!p.getUniqueId().equals(s.target)) { s.windup = 0; s.primed = 0; s.target = p.getUniqueId(); s.chase = tick; observe(p, s.variant, false); }
             if (!WildSafety.healthyTick(40)) { s.windup = 0; s.primed = 0; continue; }
             if (s.windup > 0) {
-                if (!mob.hasLineOfSight(p) || mob.getLocation().distanceSquared(p.getLocation()) > 12 * 12) { s.windup = 0; s.next = tick + 80; continue; }
+                if (!WildSafety.sight(mob, p) || mob.getLocation().distanceSquared(p.getLocation()) > 12 * 12) { s.windup = 0; s.next = tick + 80; continue; }
                 if (tick >= s.windup) { s.windup = 0; s.next = tick + 240; execute(mob, p, s); }
                 continue;
             }
             double range = mob.getLocation().distanceSquared(p.getLocation());
-            if (tick < s.next || range < 3 * 3 || range > 10 * 10 || !mob.hasLineOfSight(p)) continue;
+            if (tick < s.next || range < 3 * 3 || range > 10 * 10 || !WildSafety.sight(mob, p)) continue;
             if (s.variant == WildVariant.BOG && (!mob.isInWater() || !p.isInWater())) continue;
             s.aim = p.getLocation().toVector().subtract(mob.getLocation().toVector()).setY(0);
             s.windup = tick + (s.variant == WildVariant.CRIMSON ? 25 : 20);
@@ -149,7 +149,7 @@ final class WildBiomes implements Listener {
         }
     }
     private void execute(Mob mob, Player p, State s) {
-        if (!usable(mob, p) || !mob.hasLineOfSight(p)) return;
+        if (!usable(mob, p) || !WildSafety.sight(mob, p)) return;
         if (s.variant == WildVariant.FROST) { s.primed = tick + 40; return; }
         Vector toward = s.aim == null ? new Vector() : s.aim.clone();
         if (toward.lengthSquared() < .01) return;
@@ -157,7 +157,7 @@ final class WildBiomes implements Listener {
         if (s.variant == WildVariant.RIFT) {
             Vector side = new Vector(-toward.getZ(), 0, toward.getX()).multiply(ThreadLocalRandom.current().nextBoolean() ? 2.25 : -2.25);
             Location to = mob.getLocation().add(side);
-            if (!safety.stand(to, protection) || !to.getWorld().getBlockAt(to.getBlockX(), to.getBlockY() + 2, to.getBlockZ()).getType().isAir()) return;
+            if (!WildSafety.loadedArea(mob.getLocation(), to) || !safety.stand(to, protection) || !to.getWorld().getBlockAt(to.getBlockX(), to.getBlockY() + 2, to.getBlockZ()).getType().isAir()) return;
             if (mob.getWorld().rayTraceBlocks(mob.getLocation().add(0, 1, 0), side, side.length(), FluidCollisionMode.NEVER, true) != null) return;
             if (mob.teleport(to)) p.spawnParticle(Particle.PORTAL, to.clone().add(0, 1, 0), 12, .3, .5, .3, .02); return;
         }
@@ -165,7 +165,7 @@ final class WildBiomes implements Listener {
         if (s.variant == WildVariant.BOG && (!mob.isInWater() || !p.isInWater())) return;
         // Короткий импульс, не преследующий homing: направление фиксируется в момент окончания предупреждения.
         Location ahead = mob.getLocation().add(toward.clone().multiply(2));
-        if (!safety.clear(ahead, protection) || mob.getWorld().rayTraceBlocks(mob.getLocation().add(0, .6, 0), toward, 2, FluidCollisionMode.NEVER, true) != null) return;
+        if (!WildSafety.loadedArea(mob.getLocation(), ahead) || !safety.clear(ahead, protection) || mob.getWorld().rayTraceBlocks(mob.getLocation().add(0, .6, 0), toward, 2, FluidCollisionMode.NEVER, true) != null) return;
         double speed = s.variant == WildVariant.CRIMSON ? .40 : .32;
         mob.setVelocity(toward.multiply(speed).setY(s.variant == WildVariant.THICKET ? .30 : s.variant == WildVariant.BOG ? .08 : .12));
         if (s.variant == WildVariant.CRIMSON) s.recovery = tick + 60;
@@ -176,7 +176,7 @@ final class WildBiomes implements Listener {
         State s = states.get(e.getEntity().getUniqueId());
         if (s == null || s.variant != WildVariant.FROST || s.primed < tick || s.primed == 0
                 || !(e.getEntity() instanceof Mob mob) || !(mob.getTarget() instanceof Player p)
-                || !p.getUniqueId().equals(s.target) || !usable(mob, p) || !mob.hasLineOfSight(p) || !(e.getProjectile() instanceof Arrow arrow)) return;
+                || !p.getUniqueId().equals(s.target) || !usable(mob, p) || !WildSafety.sight(mob, p) || !(e.getProjectile() instanceof Arrow arrow)) return;
         s.primed = 0;
         arrow.setBasePotionType(PotionType.WATER); arrow.clearCustomEffects();
         arrow.addCustomEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 1), true);
