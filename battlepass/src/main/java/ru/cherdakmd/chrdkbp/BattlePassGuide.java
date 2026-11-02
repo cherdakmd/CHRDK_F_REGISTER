@@ -56,7 +56,7 @@ final class BattlePassGuide implements Listener {
         put(h,38,Material.FILLED_MAP,"atlas-title-season","atlas-entry-lore",x->plugin.atlas().open(x,0));
         put(h,42,Material.COMPASS,"exp-menu","exp-condition",x->plugin.expeditions().open(x));
         put(h,40,Material.EXPERIENCE_BOTTLE,"guide-bank","guide-bank-lore",null,
-                "minutes",(plugin.coreApi().rewardBoostRemainingMillis(p.getName())+59_999)/60_000);
+                "minutes",boostMinutes(p));
         var recommended=season.weeks().stream().filter(w->now>=season.startEpochMillis()+w.unlockDay()*86_400_000L)
                 .flatMap(w->w.missions().stream()).map(m->view(p,m)).filter(v->v.state()==BattlePassView.State.READY||!v.goalReached())
                 .sorted(Comparator.<BattlePassView.Mission>comparingInt(v->v.state()==BattlePassView.State.READY?0:1)
@@ -67,8 +67,12 @@ final class BattlePassGuide implements Listener {
     }
     private BattlePassView.Mission view(Player p,BattlePassConfig.MissionDef m) {
         UUID id=p.getUniqueId();return new BattlePassView.Mission(m,plugin.store().progressOf(id,m.id()),
-                plugin.store().isClaimed(id,m.id(),"FREE"),plugin.store().isClaimed(id,m.id(),"VIP"),plugin.vipActive(p),
-                plugin.store().isClaimed(id,m.id(),"PREMIUM"),plugin.premiumActive(p));
+                BattlePassClaims.claimed(plugin.store(),id,m,"FREE"),BattlePassClaims.claimed(plugin.store(),id,m,"VIP"),plugin.vipActive(p),
+                BattlePassClaims.claimed(plugin.store(),id,m,"PREMIUM"),plugin.premiumActive(p));
+    }
+    private long boostMinutes(Player p) {
+        long millis = plugin.coreApi().rewardBoostRemainingMillis(p.getName());
+        return millis / 60_000 + (millis % 60_000 > 0 ? 1 : 0);
     }
     void rewards(Player p,int requested) {
         Holder h=window(p,"guide-rewards");if(h==null)return;
@@ -96,13 +100,13 @@ final class BattlePassGuide implements Listener {
     private void track(Holder h,Player p,BattlePassConfig.MissionDef m,String track,int hours,boolean access,int slot,boolean claim) {
         var found=BattlePassConfig.find(h.season,m.id());
         boolean unlocked=BattlePassConfig.isUnlocked(h.season,found.weekIndex(),System.currentTimeMillis());
-        boolean claimed=plugin.store().isClaimed(p.getUniqueId(),m.id(),track);
-        String state=hours==0?"guide-no-reward":claimed?"guide-received":!unlocked?"guide-future":!access?"guide-access-locked":plugin.store().progressOf(p.getUniqueId(),m.id())<m.target()?"guide-in-progress":"guide-ready";
+        boolean claimed=BattlePassClaims.claimed(plugin.store(),p.getUniqueId(),m,track);
+        String state=hours==0&&m.diamonds(track)==0?"guide-no-reward":claimed?"guide-received":!unlocked?"guide-future":!access?"guide-access-locked":plugin.store().progressOf(p.getUniqueId(),m.id())<m.target()?"guide-in-progress":"guide-ready";
         put(h,slot,claimed?Material.GRAY_DYE:state.equals("guide-ready")?Material.LIME_CONCRETE:access?Material.EXPERIENCE_BOTTLE:Material.BARRIER,
                 "guide-track-reward",claim?"guide-track-claim-lore":"guide-track-lore",x->{
                     if(claim)plugin.claims().claimTrack(x,m.id(),track);detail(x,m.id());
                 },"track",plugin.messages().plain("guide-"+track.toLowerCase(Locale.ROOT)),
-                "hours",hours,"state",plugin.messages().plain(state));
+                "hours",hours,"diamonds",m.diamonds(track),"state",plugin.messages().plain(state));
     }
     void detail(Player p,String id) {
         Holder h=window(p,"guide-detail");if(h==null)return;var found=BattlePassConfig.find(h.season,id);if(found==null){home(p);return;}
@@ -131,7 +135,7 @@ final class BattlePassGuide implements Listener {
         Holder h=window(p,"guide-help");if(h==null)return;
         put(h,13,Material.KNOWLEDGE_BOOK,"guide-help","guide-help-lore",null);
         put(h,22,Material.SHIELD,"guide-fair","guide-fair-lore",null);
-        put(h,31,Material.EXPERIENCE_BOTTLE,"guide-bank","guide-bank-lore",null,"minutes",(plugin.coreApi().rewardBoostRemainingMillis(p.getName())+59_999)/60_000);
+        put(h,31,Material.EXPERIENCE_BOTTLE,"guide-bank","guide-bank-lore",null,"minutes",boostMinutes(p));
         controls(h);p.openInventory(h.inventory);
     }
     void closeAll(){for(Player p:Bukkit.getOnlinePlayers())if(p.getOpenInventory().getTopInventory().getHolder() instanceof Holder h){h.consumed=true;p.closeInventory();}}

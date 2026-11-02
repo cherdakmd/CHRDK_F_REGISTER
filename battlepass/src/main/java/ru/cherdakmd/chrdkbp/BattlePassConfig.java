@@ -51,13 +51,28 @@ final class BattlePassConfig {
     record MissionDef(String id, String description, MissionType type, String matchKey,
                       int target, int freeHours, int vipHours, int points,
                       List<String> worlds, String permission, String icon,
-                      int premiumHours, List<String> premiumProducts) {
+                      int premiumHours, List<String> premiumProducts,
+                      long freeDiamonds, long vipDiamonds, long premiumDiamonds) {
 
         MissionDef {
             if (premiumHours <= 0 && premiumProducts != null && !premiumProducts.isEmpty()) premiumHours = 1;
             premiumProducts = List.of(); // платные товары доступны только за реальную оплату
             // 1.4.184: награда в часах, одна награда — не больше суток.
             premiumHours = Math.max(0, Math.min(24, premiumHours));
+        }
+
+        MissionDef(String id, String description, MissionType type, String matchKey,
+                   int target, int freeHours, int vipHours, int points,
+                   List<String> worlds, String permission, String icon,
+                   int premiumHours, List<String> premiumProducts) {
+            this(id, description, type, matchKey, target, freeHours, vipHours, points,
+                    worlds, permission, icon, premiumHours, premiumProducts, 0, 0, 0);
+        }
+        int hours(String track) {
+            return switch (track) { case "FREE" -> freeHours; case "VIP" -> vipHours; case "PREMIUM" -> premiumHours; default -> 0; };
+        }
+        long diamonds(String track) {
+            return switch (track) { case "FREE" -> freeDiamonds; case "VIP" -> vipDiamonds; case "PREMIUM" -> premiumDiamonds; default -> 0; };
         }
 
         /** Совместимый конструктор для тестов и старых вызовов. */
@@ -76,7 +91,7 @@ final class BattlePassConfig {
 
         /** В задании есть премиум-награда. */
         boolean hasPremium() {
-            return premiumHours > 0 || !premiumProducts.isEmpty();
+            return premiumHours > 0 || premiumDiamonds > 0 || !premiumProducts.isEmpty();
         }
 
         boolean restrictedWorld() {
@@ -308,7 +323,8 @@ final class BattlePassConfig {
                 String.valueOf(raw.get("permission") == null ? "" : raw.get("permission")).trim(),
                 norm(raw.get("icon")).toUpperCase(Locale.ROOT),
                 premiumHours(raw, id, weekNumber, problems),
-                premiumProducts(raw, id, weekNumber, problems));
+                premiumProducts(raw, id, weekNumber, problems),
+                diamondsOf(raw, "free", problems), diamondsOf(raw, "vip", problems), diamondsOf(raw, "premium", problems));
     }
 
     /**
@@ -316,6 +332,19 @@ final class BattlePassConfig {
      * читаются как часы: конфиг, не перезаписанный после обновления, не должен
      * потерять награду, а сутками прежние значения больше не выдаются.
      */
+    private static long diamondsOf(Map<?,?> raw, String track, List<String> problems) {
+        Object value = raw.get(track + "-diamonds");
+        if (value == null) return 0;
+        try {
+            long amount = new java.math.BigDecimal(value.toString()).longValueExact();
+            if (amount < 0 || amount > 1_000_000_000L) throw new IllegalArgumentException();
+            return amount;
+        } catch (RuntimeException invalid) {
+            problems.add(track + "-diamonds: нужны целые алмазы 0..1000000000");
+            return 0;
+        }
+    }
+
     private static int hoursOf(Map<?, ?> raw, String branch) {
         Object value = raw.containsKey(branch + "-boost-hours") ? raw.get(branch + "-boost-hours") : raw.get(branch + "-hours");
         if (value == null) {

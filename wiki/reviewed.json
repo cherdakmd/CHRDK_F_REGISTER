@@ -1,168 +1,168 @@
 {
   "pages": {
     "about": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "fb97d765ac1b6466430ed1b8182aa407f968af41b25ba163f866243a89a4a3a7",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "f3f535049bb3596953002abca38396d46749231264d87f142cf80198f4d4a32e",
       "text": "17788b7b4007e90c62acd266f95cec124e0a53b603a1b2e5d9a7c19fb304c7d9"
     },
     "achievements": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "d2177ca2a876de44b5fc0b62c60d25704be80bb4e4e0f6747fef0a8597478cec",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "3f36e9d401e2c5119a758ccdaf96d6f92c0523722e8991e83a86e36ae07f0078",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "7b406377bb033b1cbefe58c9e8f554f21a811e5abdf889919f42c84279f9cfd1",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "c740233261e7f673d5cd9759570e23e2c6cb41ad4f2a7cd20bd2371b633df980",
       "text": "a4a922729b6635a6d286fcc3c9f18c8c57a0c98a19ec05c44f8d448dc422a84f"
     },
     "auction": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "10ab1677117abae91aafd893dce39f9a5225f953903b1a567cde12d4c4726d76",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "8f3b6e2a5855f6190f7c9ce44275d90ac86898bbac25e96afd056a232c1f11b0",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "1f2fbde51e6ac853577b1a741f8fcbd47e49d007dbb956005515cbe4a5ae94a0",
-      "text": "8c59b8f155d7cd9cd41bfb109879b7a18f51b84d24bb86ba4dd49980a2ac4b03"
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "533c4bd1c8f916f302d3e1be220e4e9505fc3e12afd9e64cd075d5cb37f4e060",
+      "text": "b39e20d3c96e240fe8654f082a46771bdb6359391393e1f5597b82380a64da35"
     },
     "chat": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "fb97d765ac1b6466430ed1b8182aa407f968af41b25ba163f866243a89a4a3a7",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "f3f535049bb3596953002abca38396d46749231264d87f142cf80198f4d4a32e",
       "text": "2c625757285d22e38e33b2b3ee5eb1f8416fc9c66026faffc049812f34fe600e"
     },
     "claims": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "deba6e624ee86a33fb2e53e842bfd9ccd1383242e92b8cfd3a21c3b793b359f4",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "b33f0ec0cb031892b351bfa305f08f1e65b1482abbf25ba2e409029b0636ca3d",
       "text": "2a1634efadca1810c82bc496b30432d553c72fb226a5e051443232224a366538"
     },
     "classes": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "260e9eea94593d746b208f832bf0a72b5ead72cf1024db84f736befd17c14f02",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "fc28aa00eca8dc5e36ff5754b3ceb000f8de3c7767cce3e61f0903df69b44deb",
       "text": "ee29d92bd4e9527924d14405057fd62402857c1a688439c7b9d86d4c9bf3b546"
     },
     "commands": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "0d8f0d679e293c1b042a7d1a89345e9a1f1eed730ef4ad4f78a07369772b52ec",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "5d2e1442602e9c65a4460467b3311888c59cdc0b1f3fc05531c41d04d10c8986",
       "text": "7cad9d77bd280628e514082fba018af5aaee1e7e0db4f648354e18f1399a47e8"
     },
     "cosmetics": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "29c8bcd53b89d47bba8fa54d8dbada10ff0213dcf1578c88f4638f66ed340c83",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "d1c2198cb0b6cd11cd7ec7fb1dd6936bf8156c37f78b9e2747728ff518f6bed6",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "12ff2f029ab3762f0cd2252b6043cc27a2de3479ed08d37102e0c5ab2460e440",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "8f58f19686c6f8c4f1698925f9c0d79ef3a8954f919d433bb2e8eb7477d66f06",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "economy": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "76964211d19737935d8b28688a05a702ebf769184c2da4c9216aa8d580ce9b91",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "f0f985f7657165566b00988b61cecbbc15b7eb02380a777d55927e4af06ab87c",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "8805c1cd934f32ee64f00cf991f869402c86da92917d7312cde80652663b1f0b",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "c0feabc81fb6cb5b22dfbe35be8f176c6b61295a8512bcb9acbdb427fb924f74",
       "text": "70b6bd31d749073c4e4144ebb536661042f7f925d3ccb838f294fb031e4a8558"
     },
     "faq": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "0d8f0d679e293c1b042a7d1a89345e9a1f1eed730ef4ad4f78a07369772b52ec",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "5d2e1442602e9c65a4460467b3311888c59cdc0b1f3fc05531c41d04d10c8986",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "bf1564dad8e3f013bc2ee94e23c35b119762dfd7faf0fec78d3b3d57ce323606",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "85c574539ebda58ca8b43e29c22e9e9ee8b4697cec379ad43ec37c8ccb6f7ed6",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "deba6e624ee86a33fb2e53e842bfd9ccd1383242e92b8cfd3a21c3b793b359f4",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "b33f0ec0cb031892b351bfa305f08f1e65b1482abbf25ba2e409029b0636ca3d",
       "text": "c5d0bc1d7c79273da913e9c6668918b2f2e4e560fa0d0135ba933739f51ce44b"
     },
     "hunt": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "8a1c7693349a69e8ce25245ffc4f8fda61259953dd65b9c2e6c8fe794d21b66b",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "a43056d9495d3a768221dbdc10517d3211f32f8266914324b8cedb0f384c4a3c",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "d6e568088eb08d72e7cb2eead680541ca30e10875e63ed9c98763f885ad747c7",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "b57ac568bf5a0ee1b02f1a9c0ef26e18ec3ef888162367d87161fd9f83b42dbb",
       "text": "9e4a54959f53e85f3e1076c43f2f7863fbaf499584948d064d72367538e0dbd2"
     },
     "menu": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "d5b0cefac99865a81e7f5ffb211505b862cf47d38254943546c5c18d8dcfe892",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "2a8a9344756b3b06dfc65340f6d02ece529db7352caad24cada1d4767ccf3fc7",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "orders": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "f5d52c303d6ba8cafdd922d0e71dd2e4d8b9acd8c039cc6562057651497bea4a",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "4dd2cae1e73d55d5419ee1b0e6c66286c39a88251533e049e69933f8eb81ef47",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "pets": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "00d9d9095c0a69db3b4db8351c7343ff037e66954dfdcfc759a0c047b6a0e19a",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "3a9af87f4fb2a75efc48f9415bd01df210d6d20fff52c17a455f08c34c2a226a",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "b3b0547a32c2ced7aded22e4c480faf838569b2102ce5b8182e496cd49069b29",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "e5e715f21606df3deda7ac29df3bf0a0b7377bdc910dcf7754b932ff316f81bc",
       "text": "ced22f9d3bdafb0c5f5e4027849d8cf32dd0530d5a937f0c409e07546439d01a"
     },
     "profile": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "b9243d896e7038a4f51619a21cfe0b274b5d666a2cca7d14cf148792803d57eb",
-      "text": "54e3f32931d043add66cd8c79174f90ac3597ce659e68de8f5ed05a6e37a45e8"
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "1097757de5a6d04017b1df881a40e096565252ec4e26265fdaac473680b6b8e7",
+      "text": "7452430f2a4bc5b0c39790e52791bf447eb30573d74dccb716e00e1f104bdd76"
     },
     "quests": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "08fe999f4945dc725d1081cfb84fd3cab5be412f2386ccd8530191157d6490ea",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "72f88e9b4d799d96606a4d303819482b3641d47a311daaccc60a8982dc913d05",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "baeb83abba4f60d66c22012104acecbfa0963c9624f7553db972b224f9021619",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "1bf3c84aafbcfa2b71b0b5857144d9f72f134570633e3b555470e9a463194cb6",
       "text": "83fdfb3ddc5551875ec1f031676a80e3adb73e448dffae614c489441ea6f2c33"
     },
     "shop": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "d6e568088eb08d72e7cb2eead680541ca30e10875e63ed9c98763f885ad747c7",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "b57ac568bf5a0ee1b02f1a9c0ef26e18ec3ef888162367d87161fd9f83b42dbb",
       "text": "62e3ad5ae040c7c30a1e73d314c1e226426dc47e287a7fceaa18ad975e73296b"
     },
     "skills": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "0785210eba545af41bdf1225c96440888edfc244a9d006f6fd89c24d0e895515",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "2f37ba468a6f8c53c8e438c185f54b28ea858c50b392da650b02d3b75a6ebb4d",
       "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
     },
     "start": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "e90a5f3486fc1009141fa2516de3e9c8a8534f027e8454f5280cdbd27bb09f57",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "ca5320298ddc3c4b13377867aa07c21493a91e683b5a81c0c646f3c66fb9d9bd",
       "text": "3f26288c52ae35e92097798a9a413933351e8e8422d33230a6322c69aedbb238"
     },
     "teleports": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "087b2f0b17cced42a31bf4838c72eb3f0127d4983680a2a1fdf4bea131a39ae9",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "f870c759c135384301193ee1106ded3243e23019dc5e00acc05e5d0c5008aa80",
       "text": "896b72de8b56b3374b3a6346a701f45defae6e6ecff688868e02233aa040d1fa"
     },
     "tierforge": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "5136f5c4b10967e875d1920b27cd77ff9574556c29b7854c6f1e15bb1d93bbc8",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "4c5f3ba2123c51b7397e889f9c6f26949d0365784f3471c5001254d35c6ccba6",
       "text": "bb59e5c05ec16e1951d67e444a35885ce8a38805d367f3e73f09a0fd74cce12c"
     },
     "titles": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "428ae8d8631ee4eafc86726f9b5a89a872c2234dd18e118ea9b4e7330a4bdbf7",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "0af33012f1050c59f02c9acf0785895b0a41d41d1ab8439b835b37ebe284fa40",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "d6e568088eb08d72e7cb2eead680541ca30e10875e63ed9c98763f885ad747c7",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "b57ac568bf5a0ee1b02f1a9c0ef26e18ec3ef888162367d87161fd9f83b42dbb",
       "text": "dfac37460071169331d2b9242834257df9651801a744d3c0894dfd032227397a"
     },
     "vk": {
-      "reason": "1.4.282 RC2: текущие инструкции оформления сверены с leader-only контроллером/GUI/рендером. Ожидание и предложения отменены, цены и сроки сохранены; миграции только stock-текстов. Остальной Core/gameplay не менялся.",
-      "sources": "bb55909aa999d4e380d4797c7e0def2f35359f88c97de026ea07f0e2ff6f8070",
+      "reason": "1.4.282 RC3: сверены деньги BP в личный /bal и separate receipts, миграция stock, API39, отсутствие игрового потолка буста и long-safe display. BattlePass/profile обновлены; процент, экономика остальных модулей и клановая RC2-политика не менялись.",
+      "sources": "c275717bc0be4b5609b2a067a5e7869ec6ac04ebe36f336eb6599c77ca01e607",
       "text": "2b67feb5684b14875601ba47314694afa598ff87f6dd74350a06f65029a735eb"
     }
   },

@@ -351,6 +351,14 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
         plugin.rewardBoosts().grant(playerName, hours, source);
     }
 
+    @Override public MoneyGrant grantBattlePassMoneyOnce(java.util.UUID uuid, String name, long diamonds, String receipt) {
+        if (!org.bukkit.Bukkit.isPrimaryThread() || !personalBankAvailable() || uuid == null) return MoneyGrant.FAILED;
+        Player player = org.bukkit.Bukkit.getPlayer(uuid);
+        if (player == null || !isAuthenticated(player) || !player.getName().equals(name)
+                || !uuid.equals(knownBankPlayer(name))) return MoneyGrant.FAILED;
+        return bank.grantBattlePassMoneyOnce(uuid, diamonds, receipt);
+    }
+
     @Override public BoostGrant grantRewardBoostOnce(java.util.UUID player,String name,int hours,String receipt) {
         return plugin.rewardBoosts().grantOnce(player,name,hours,receipt);
     }

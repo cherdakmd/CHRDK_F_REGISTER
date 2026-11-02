@@ -47,6 +47,8 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
     private volatile ChrdkRegisterApi coreApi;
     private BattlePassStore store;
     private BattlePassClaims claims;
+    private boolean moneyReady;
+    boolean moneyReady() { return moneyReady; }
     private BattlePassMenu menu;
     private BattlePassGuide guide;
     BattlePassGuide guide(){return guide;}
@@ -62,7 +64,7 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
     private BukkitTask announceTask;
 
     private boolean supportsRewardReceipts() {
-        try { return ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)>=38; }
+        try { return ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)>=39; }
         catch(ReflectiveOperationException e){return false;}
     }
     boolean canUse(Player player) {
@@ -76,7 +78,7 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
         store.load();
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
         if(coreApi==null || !supportsRewardReceipts()) {
-            getLogger().severe("Нужен Core API38 (1.4.281-rc.3+): безопасная выдача наград battlepass");
+            getLogger().severe("Нужен Core API39 (1.4.282-rc.3+): безопасная выдача наград battlepass");
             Bukkit.getPluginManager().disablePlugin(this);return;
         }
         reloadBattlePassConfig();
@@ -151,12 +153,15 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
 
     /** Перечитать config.yml и messages.yml, не перезапуская сервер. */
     public void reloadBattlePassConfig() {
+        moneyReady = BattlePassMoneySource.initialize(getDataFolder().toPath(), coreApi, getLogger());
+        if (!moneyReady) getLogger().severe("Денежные награды BP приостановлены: проверьте банк и battlepass-money.json, затем выполните reload. Прогресс и буст сохранены.");
         if (atlas != null) atlas.closeWindows();
         if (expeditions != null) expeditions.closeWindows();
         if(guide!=null)guide.closeAll();
         if(menu!=null)menu.closeAll();
         reloadConfig();
-        try(var stream=getResource("battlepass-default-legacy-1.4.280.yml")) {
+        for (String legacyFile : java.util.List.of("battlepass-default-legacy-1.4.280.yml", "battlepass-default-legacy-1.4.282.yml"))
+        try(var stream=getResource(legacyFile)) {
             if(stream!=null) {
                 var legacy=org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(new java.io.InputStreamReader(stream,java.nio.charset.StandardCharsets.UTF_8));
                 if(BattlePassConfig.stockUpgrade(getConfig().getList("battlepass.weeks"),legacy.getList("battlepass.weeks"))) {

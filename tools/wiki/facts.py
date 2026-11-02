@@ -17,7 +17,6 @@ FIELDS = {
     "pay_tax": ("core", "economy.pay-tax-percent"),
     "goals_active": ("common-goals", "rotation.active-count"),
     "goals_days": ("common-goals", "rotation.period-days"),
-    "boost_bank": ("core", "reward-boost.max-bank-hours"),
     "welcome_boost": ("core", "reward-boost.welcome-hours"),
     "claim_price": ("claims", "pricing.chunk-price"),
     "rent_min": ("claims", "pricing.rental-min-per-day"),

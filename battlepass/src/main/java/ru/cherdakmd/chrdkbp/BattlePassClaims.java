@@ -19,6 +19,11 @@ final class BattlePassClaims {
             return "bp:"+HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(identity.getBytes(StandardCharsets.UTF_8)));
         } catch(java.security.NoSuchAlgorithmException e){throw new IllegalStateException(e);}
     }
+    static boolean claimed(BattlePassStore store, UUID player, BattlePassConfig.MissionDef mission, String track) {
+        return (mission.hours(track) <= 0 || store.isClaimed(player, mission.id(), track))
+                && (mission.diamonds(track) <= 0 || store.isClaimed(player, mission.id(), track + "_MONEY"));
+    }
+
     int claimAll(Player player){
         int result = claim(player,null,null);
         if (plugin.expeditions() != null) plugin.expeditions().claim(player,false);
@@ -35,7 +40,7 @@ final class BattlePassClaims {
         if(season==null||season.empty()){plugin.messages().send(player,"no-season");return 0;}
         var found=id==null?null:BattlePassConfig.find(season,id);
         if(id!=null&&found==null){plugin.messages().send(player,"unknown","id",id);return 0;}
-        int rewards=0,hours=0,full=0,locked=0;boolean failed=false;
+        int rewards=0,hours=0,full=0,locked=0;long diamonds=0;boolean failed=false;
         UUID uuid=player.getUniqueId();long now=System.currentTimeMillis();
         for(int index=0;index<season.weeks().size()&&!failed;index++) {
             if(!BattlePassConfig.isUnlocked(season,index,now))continue;
@@ -47,26 +52,39 @@ final class BattlePassClaims {
                 boolean[] available={true,plugin.vipActive(player),plugin.premiumActive(player)};
                 for(int t=0;t<tracks.length;t++) {
                     if(selected!=null&&!selected.equals(tracks[t]))continue;
-                    if(amounts[t]<=0||plugin.store().isClaimed(uuid,mission.id(),tracks[t]))continue;
+                    if((amounts[t]<=0 && mission.diamonds(tracks[t])<=0) || claimed(plugin.store(),uuid,mission,tracks[t]))continue;
                     if(!available[t]){locked++;continue;}
-                    ChrdkRegisterApi.BoostGrant result;
                     try {
-                        result=plugin.coreApi().grantRewardBoostOnce(uuid,player.getName(),amounts[t],receipt(season.startEpochMillis(),uuid,mission.id(),tracks[t]));
+                        String key = receipt(season.startEpochMillis(),uuid,mission.id(),tracks[t]);
+                        if (amounts[t] > 0 && !plugin.store().isClaimed(uuid,mission.id(),tracks[t])) {
+                            var result=plugin.coreApi().grantRewardBoostOnce(uuid,player.getName(),amounts[t],key);
+                            if(result==ChrdkRegisterApi.BoostGrant.FULL){full++;continue;}
+                            if(result!=ChrdkRegisterApi.BoostGrant.ADDED&&result!=ChrdkRegisterApi.BoostGrant.ALREADY){failed=true;break;}
+                            plugin.store().markClaimed(uuid,mission.id(),tracks[t]);
+                            if(result==ChrdkRegisterApi.BoostGrant.ADDED)hours+=amounts[t];
+                        }
+                        long money = mission.diamonds(tracks[t]);
+                        if (money > 0 && !plugin.store().isClaimed(uuid,mission.id(),tracks[t]+"_MONEY")) {
+                            if (!plugin.moneyReady()) { failed=true; break; }
+                            var result=plugin.coreApi().grantBattlePassMoneyOnce(uuid,player.getName(),money,key);
+                            if(result==ChrdkRegisterApi.MoneyGrant.FULL){full++;continue;}
+                            if(result!=ChrdkRegisterApi.MoneyGrant.ADDED&&result!=ChrdkRegisterApi.MoneyGrant.ALREADY){failed=true;break;}
+                            plugin.store().markClaimed(uuid,mission.id(),tracks[t]+"_MONEY");
+                            if(result==ChrdkRegisterApi.MoneyGrant.ADDED)diamonds+=money;
+                        }
+                        rewards++;
                     } catch(RuntimeException | LinkageError error) {
                         plugin.getLogger().log(java.util.logging.Level.SEVERE,"Battlepass: выдача не подтверждена; сохраните данные Core/аддона для сверки",error);
                         failed=true;break;
                     }
-                    if(result==ChrdkRegisterApi.BoostGrant.FULL){full++;continue;}
-                    if(result!=ChrdkRegisterApi.BoostGrant.ADDED&&result!=ChrdkRegisterApi.BoostGrant.ALREADY){failed=true;break;}
-                    plugin.store().markClaimed(uuid,mission.id(),tracks[t]);rewards++;
-                    if(result==ChrdkRegisterApi.BoostGrant.ADDED)hours+=amounts[t];
                 }
                 if(failed)break;
             }
         }
         // Если локальная запись не удалась, Core receipt всё равно запрещает повторное пополнение.
         plugin.store().saveIfDirty();
-        if(rewards>0){plugin.messages().send(player,"claim-all-summary","count",rewards,"hours",hours);plugin.fx().claimed(player,hours);}
+        if(rewards>0||hours>0){plugin.messages().send(player,"claim-all-summary","count",rewards,"hours",hours,"diamonds",diamonds);plugin.fx().claimed(player,hours);}
+        if(diamonds>0)plugin.messages().send(player,"money-granted","diamonds",diamonds);
         if(full>0)plugin.messages().send(player,"reward-bank-full","count",full);
         if(failed)plugin.messages().send(player,"reward-retry");
         if(rewards==0&&full==0&&!failed) {
