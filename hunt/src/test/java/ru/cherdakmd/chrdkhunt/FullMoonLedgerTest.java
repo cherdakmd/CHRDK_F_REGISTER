@@ -50,5 +50,6 @@ class FullMoonLedgerTest {
         Files.writeString(file, "{\"version\":1,\"worlds\":{\"" + world + "\":{\"day\":8.5,\"selected\":true,\"finished\":false,\"started\":0,\"token\":\"" + UUID.randomUUID() + "\"}}}");
         assertFalse(new FullMoonLedger(file).healthy());
         Files.writeString(file, "{\"version\":2,\"worlds\":{}}"); assertFalse(new FullMoonLedger(file).healthy());
+        Files.writeString(file, "{\"version\":\"1\",\"worlds\":{}}"); assertFalse(new FullMoonLedger(file).healthy());
     }
 }

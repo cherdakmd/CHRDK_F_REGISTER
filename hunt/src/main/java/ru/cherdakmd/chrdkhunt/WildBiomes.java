@@ -47,6 +47,8 @@ final class WildBiomes implements Listener {
         chance = c.getDouble("wild-biomes.chance-percent", 1.5);
         chance = Double.isFinite(chance) ? Math.clamp(chance, 0, 3) : 1.5;
         protection = Math.clamp(c.getInt("wild-biomes.spawn-protection-radius", 128), 64, 4096);
+        var trimmed = states.values().iterator();
+        while (states.size() > cap && trimmed.hasNext()) { trimmed.next(); trimmed.remove(); }
         for (var s : states.values()) { s.windup = 0; s.primed = 0; s.next = tick + 160; }
     }
     private void clearPending() {
@@ -124,11 +126,11 @@ final class WildBiomes implements Listener {
             State s = iterator.next(); Mob mob = s.mob.get();
             if (mob == null || !mob.isValid() || mob.isDead() || kind(mob) != s.variant) { iterator.remove(); continue; }
             if (!enabled || !plugin.config().enabled()) { s.windup = 0; s.primed = 0; s.target = null; continue; }
-            if (!(mob.getTarget() instanceof Player p)) { s.windup = 0; s.target = null; continue; }
+            if (!(mob.getTarget() instanceof Player p)) { s.windup = 0; s.primed = 0; s.target = null; continue; }
             if (!usable(mob, p) || tick < s.ignore || (s.target != null && tick - s.chase >= 400)) {
                 mob.setTarget(null); s.windup = 0; s.target = null; s.ignore = tick + 100; continue;
             }
-            if (!p.getUniqueId().equals(s.target)) { s.target = p.getUniqueId(); s.chase = tick; observe(p, s.variant, false); }
+            if (!p.getUniqueId().equals(s.target)) { s.windup = 0; s.primed = 0; s.target = p.getUniqueId(); s.chase = tick; observe(p, s.variant, false); }
             if (!WildSafety.healthyTick(40)) { s.windup = 0; s.primed = 0; continue; }
             if (s.windup > 0) {
                 if (!mob.hasLineOfSight(p) || mob.getLocation().distanceSquared(p.getLocation()) > 12 * 12) { s.windup = 0; s.next = tick + 80; continue; }
@@ -157,7 +159,7 @@ final class WildBiomes implements Listener {
             Location to = mob.getLocation().add(side);
             if (!safety.stand(to, protection) || !to.getWorld().getBlockAt(to.getBlockX(), to.getBlockY() + 2, to.getBlockZ()).getType().isAir()) return;
             if (mob.getWorld().rayTraceBlocks(mob.getLocation().add(0, 1, 0), side, side.length(), FluidCollisionMode.NEVER, true) != null) return;
-            mob.teleport(to); return;
+            if (mob.teleport(to)) p.spawnParticle(Particle.PORTAL, to.clone().add(0, 1, 0), 12, .3, .5, .3, .02); return;
         }
         if (!mob.isOnGround() && s.variant != WildVariant.BOG) return;
         if (s.variant == WildVariant.BOG && (!mob.isInWater() || !p.isInWater())) return;
@@ -170,10 +172,11 @@ final class WildBiomes implements Listener {
     }
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void bow(EntityShootBowEvent e) {
+        if (kind(e.getEntity()) == WildVariant.FROST && e.getProjectile() instanceof Arrow shot) shot.getPersistentDataContainer().set(projectileKey, PersistentDataType.BYTE, (byte) 1);
         State s = states.get(e.getEntity().getUniqueId());
         if (s == null || s.variant != WildVariant.FROST || s.primed < tick || s.primed == 0
                 || !(e.getEntity() instanceof Mob mob) || !(mob.getTarget() instanceof Player p)
-                || !usable(mob, p) || !mob.hasLineOfSight(p) || !(e.getProjectile() instanceof Arrow arrow)) return;
+                || !p.getUniqueId().equals(s.target) || !usable(mob, p) || !mob.hasLineOfSight(p) || !(e.getProjectile() instanceof Arrow arrow)) return;
         s.primed = 0;
         arrow.setBasePotionType(PotionType.WATER); arrow.clearCustomEffects();
         arrow.addCustomEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 1), true);

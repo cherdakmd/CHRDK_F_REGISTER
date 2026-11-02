@@ -22,21 +22,26 @@ final class FullMoonLedger {
         if (!Files.exists(file)) return;
         try {
             var root = JsonParser.parseString(Files.readString(file)).getAsJsonObject();
-            if (root.get("version").getAsBigDecimal().intValueExact() != 1) throw new IllegalArgumentException("version");
+            if (number(root, "version") != 1) throw new IllegalArgumentException("version");
             var worlds = root.getAsJsonObject("worlds");
             if (worlds.size() > 128) throw new IllegalArgumentException("world count");
             for (var entry : worlds.entrySet()) {
                 var n = entry.getValue().getAsJsonObject();
-                long day = n.get("day").getAsBigDecimal().longValueExact();
-                long started = n.get("started").getAsBigDecimal().longValueExact();
+                long day = number(n, "day");
+                long started = number(n, "started");
                 if (day < 0 || started < 0 || !n.get("selected").getAsJsonPrimitive().isBoolean()
                         || !n.get("finished").getAsJsonPrimitive().isBoolean()) throw new IllegalArgumentException("night");
                 boolean selected = n.get("selected").getAsBoolean(), finished = n.get("finished").getAsBoolean();
-                if (started > 0 && !selected) throw new IllegalArgumentException("start without selection");
+                if (!selected && (started > 0 || !finished)) throw new IllegalArgumentException("start without selection");
                 rows.put(UUID.fromString(entry.getKey()), new Night(day, selected,
                         UUID.fromString(n.get("token").getAsString()), started, finished));
             }
         } catch (Exception error) { healthy = false; rows.clear(); }
+    }
+    private static long number(com.google.gson.JsonObject object, String key) {
+        var value = object.get(key);
+        if (value == null || !value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) throw new IllegalArgumentException(key);
+        return value.getAsBigDecimal().longValueExact();
     }
     boolean healthy() { return healthy; }
     Night get(UUID world) { return rows.get(world); }
@@ -44,7 +49,7 @@ final class FullMoonLedger {
         if (!healthy || world == null || night == null) return false;
         if (rows.size() >= 128 && !rows.containsKey(world)) { healthy = false; return false; }
         Night prior = rows.get(world);
-        if (night.day() < 0 || night.started() < 0 || night.token() == null
+        if (night.day() < 0 || night.started() < 0 || night.token() == null || !night.selected() && (night.started() > 0 || !night.finished())
                 || prior != null && (night.day() < prior.day() || night.day() == prior.day()
                 && (!night.token().equals(prior.token()) || night.selected() != prior.selected()
                 || prior.finished() && !night.finished() || prior.started() > 0 && night.started() != prior.started()))) return false;
@@ -62,6 +67,7 @@ final class FullMoonLedger {
             }
             // Не допускаем неатомарную замену: старый валидный календарь лучше неоднозначного нового.
             Files.move(temp, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            try (var directory = FileChannel.open(file.toAbsolutePath().getParent(), StandardOpenOption.READ)) { directory.force(true); }
             return true;
         } catch (Exception error) { healthy = false; return false; }
     }
