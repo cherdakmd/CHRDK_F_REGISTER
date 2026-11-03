@@ -47,9 +47,9 @@ class ForgeMaterialTest {
         assertThrows(IllegalArgumentException.class, () -> ForgeMaterial.nextSequence(-1));
         assertThrows(IllegalArgumentException.class, () -> ForgeMaterial.nextSequence(Long.MAX_VALUE));
     }
-    @Test void allThreeMaterialsHaveSharedInstructionsAndOnlyFiniteIds() throws Exception {
+    @Test void allEightMaterialsHaveSharedInstructionsAndOnlyFiniteIds() throws Exception {
         var messages = Messages.fromChecked(getClass().getResourceAsStream("/messages.yml"), null, Logger.getAnonymousLogger());
-        assertEquals(3, ForgeMaterial.values().length);
+        assertEquals(8, ForgeMaterial.values().length);
         for (var material : ForgeMaterial.values()) {
             assertSame(material, ForgeMaterial.byId(material.id.toUpperCase(Locale.ROOT)));
             String lines = messages.getList("forge." + material.id + ".details").toString();
@@ -115,6 +115,70 @@ class ForgeMaterialTest {
             assertEquals(custom,retained.raw("forge-help"));
             assertEquals(yaml,java.nio.file.Files.readString(path));
         }
+    }
+    @Test void rc16FullXpPricesAreLevelsAndSevenTiersStayIntact() {
+        assertEquals(8, ForgeMaterial.SEED_XP);
+        assertEquals(6, ForgeMaterial.REPAIR_XP);
+        assertEquals(10, ForgeMaterial.INSCRIBE_XP);
+        assertEquals(4, ForgeMaterial.REMOVE_XP);
+        assertEquals(2, ForgeMaterial.NAME_XP);
+        assertEquals(7, TierDef.LADDER.size());
+        assertEquals(4, ForgeMaterial.HUNT_DROPS.size());
+        assertEquals(4, ForgeMaterial.SHOP_ONLY.size());
+        assertTrue(ForgeMaterial.SEED.seed());
+        assertTrue(ForgeMaterial.REPAIR.shopOnly());
+        assertFalse(ForgeMaterial.SEED.shopOnly());
+    }
+    @Test void seedDropChanceIsHalfOneAndThreePercent() {
+        assertEquals(0.5, ForgeMaterial.chance(ForgeMaterial.SEED_BASE_DROP_PERCENT,1,0), 0.0);
+        assertEquals(1.0, ForgeMaterial.chance(ForgeMaterial.SEED_BASE_DROP_PERCENT,30,0), 0.0);
+        assertEquals(3.0, ForgeMaterial.chance(ForgeMaterial.SEED_BASE_DROP_PERCENT,30,1), 0.0);
+    }
+    @Test void seedUidIsValid12HexAndNeverAcceptsRawUuid() {
+        String canonical = "6f1c2a94-6e5b-4d3a-9c7e-1b0d5f8a2c33";
+        String uid = ForgeMaterial.seedUid(canonical);
+        assertEquals(12, uid.length());
+        assertTrue(TierModifierIds.validUid(uid));
+        assertFalse(TierModifierIds.validUid(canonical));
+        assertEquals(uid, ForgeMaterial.seedUid(canonical));
+        assertThrows(IllegalArgumentException.class, () -> ForgeMaterial.seedUid("not-a-uuid"));
+        assertThrows(IllegalArgumentException.class, () -> ForgeMaterial.seedUid(canonical.toUpperCase(Locale.ROOT).replace("-", "")));
+    }
+    @Test void rc15AnvilInstructionsMigrationPreservesCustomAndEmptyWithoutRewritingFile(
+            @org.junit.jupiter.api.io.TempDir java.nio.file.Path directory) throws Exception {
+        var path = directory.resolve("messages.yml");
+        byte[] legacy;
+        try (var input = getClass().getResourceAsStream("/tierforge-messages-legacy-1.4.282-rc15.yml")) {
+            assertNotNull(input); legacy = input.readAllBytes();
+        }
+        java.nio.file.Files.write(path,legacy);
+        var logger = Logger.getAnonymousLogger();
+        var fresh = Messages.fromChecked(getClass().getResourceAsStream("/messages.yml"),null,logger);
+        var migrated = Messages.fromChecked(getClass().getResourceAsStream("/messages.yml"),path,
+                getClass().getResourceAsStream("/tierforge-messages-legacy-1.4.282-rc15.yml"),logger);
+        assertEquals(fresh.raw("forge-help"),migrated.raw("forge-help"));
+        assertArrayEquals(legacy,java.nio.file.Files.readAllBytes(path));
+        for (String custom : List.of("Свой текст", "")) {
+            String yaml = "tiers:\n  forge-help: '" + custom + "'\n";
+            java.nio.file.Files.writeString(path,yaml);
+            var retained = Messages.fromChecked(getClass().getResourceAsStream("/messages.yml"),path,
+                    getClass().getResourceAsStream("/tierforge-messages-legacy-1.4.282-rc15.yml"),logger);
+            assertEquals(custom,retained.raw("forge-help"));
+            assertEquals(yaml,java.nio.file.Files.readString(path));
+        }
+    }
+    @Test void rc16LoreAppendIsSingleAndRefreshOwnedLoreStaysMigrationOnly() throws Exception {
+        String items = java.nio.file.Files.readString(java.nio.file.Path.of(
+                "tier-forge/src/main/java/ru/cherdakmd/chrdktierforge/TierItems.java"));
+        assertTrue(items.contains("ItemStack forgeMaterialCopy("));
+        assertTrue(items.contains("refreshTierModifiers(copy); // migration-only"));
+        int start = items.indexOf("private ItemStack assemble");
+        int end = items.indexOf("public void bumpUpgrade(", start);
+        assertTrue(start >= 0 && end > start);
+        assertEquals(1, items.substring(start, end).split("lore.add\\(tierLine\\(tier, kind\\)\\);", -1).length - 1);
+        String lore = java.nio.file.Files.readString(java.nio.file.Path.of(
+                "tier-forge/src/main/java/ru/cherdakmd/chrdktierforge/TierLore.java"));
+        assertTrue(lore.contains("if (!recognized) return before;"));
     }
     @Test void propertyReplacementPoolStaysInTierRoleAndAvoidsExistingProperties() {
         for (String tier : TierDef.LADDER) for (ItemKind kind : ItemKind.values()) {

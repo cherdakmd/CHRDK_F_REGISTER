@@ -1,168 +1,168 @@
 {
   "pages": {
     "about": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "2129e45e96deee1a34da0e674968a2b1906a058fa5b8d50b51f71ba9cfc9689c",
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "230c07d43f727d055fb30ff7e222b11c92d0144c38afab90e39959a8cdb69e3a",
       "text": "17788b7b4007e90c62acd266f95cec124e0a53b603a1b2e5d9a7c19fb304c7d9"
     },
     "achievements": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "d13ca6bc3f495299b290a1ce7b54128811a9e326c538765903b0a01db7ed932f",
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "1290ceb61c919a12e144350faa0a0fc54c6147bc585ff2b1795c68c8118dbf4e",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "75a7024b0691b6bb41030f163932070ec21f9f84c1210c92eee111539c730546",
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "ab187566810e0dccbcf2f9dad4c2339d8729602e710eb37e46f0bda3334c53b3",
       "text": "fcdffb1098428fac2bd42d1c4acb73bb9a024d1823d5398b8845bb2f415a506f"
     },
     "auction": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "07c798421bab110aaaa5461670b8934b3aaab68fe79356d60535a1e57268a0eb",
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "7f8261c75f69f407ec97965dc0cce3062e01225ce33cefaeeb5658148757ef02",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "15037b7a3cf350e777fd823f4c1dbfd068869b250af6cec432b4e39ad7de35d6",
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "aaf3a3d2c715939e69d25e5878ad70d4c1f55b58192b05fb87f438c14a7f9a15",
       "text": "f368077b5f1961a1982957afe3b8523b60c8330f3dfd1891003d01ea1c4fd6db"
     },
     "chat": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "2129e45e96deee1a34da0e674968a2b1906a058fa5b8d50b51f71ba9cfc9689c",
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "230c07d43f727d055fb30ff7e222b11c92d0144c38afab90e39959a8cdb69e3a",
       "text": "b46e914efbafe7696687ae47b1604592151aaacaaccd2264d4a5d7b6efc5845a"
     },
     "claims": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "28bd8d59a5b6e8de51ac57e9b238b631d21fa90b8800d2606ea79e5ad871475f",
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "0885a9c1b97971a66c12ca017b2422d0a58cda6a65aa72884b04541eda243a6d",
       "text": "2a1634efadca1810c82bc496b30432d553c72fb226a5e051443232224a366538"
     },
     "classes": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "f1b5a57f4d54d173e70957a5a917146ec3ffcdeae5f105d6656b6e944a56dc13",
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "ada6ba2be6328c619408cdae3b1cee3f07f9508c22b86e0f46ee91cf1fb09b64",
       "text": "ee29d92bd4e9527924d14405057fd62402857c1a688439c7b9d86d4c9bf3b546"
     },
     "commands": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "015e1bae54ecf2e5a065d6033bbd9f31e4dca5255ced049f9af754d679f732a2",
-      "text": "d82332a02e47a5591c3ac0b9eb0dd9a495ea6e5dcdfa945fccda413ccf9650e8"
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "be4919c4d19f5e9c00df5a190a8c60b6e89f5b360f8fff41628992695a447e4f",
+      "text": "b210ff00d9d9a82a7663a9ddc5fac3491e03b244a72217f81c997ec39bc03928"
     },
     "cosmetics": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "c7318aec97721d22196ff2e48bc9d75ecbc8de19b2a28ec9b2a8012d2801edd9",
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "d45b07d5d43781e47c00607c242b7875383238ae39b3c71d953f725502ed10a3",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "d96e2893db418c724cf85f1b2a9464552f1fd6fa2582c9a7c6a067d17dece778",
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "8ab2f1b951578f697bf697a944e60921b98ea5f595961473514d0f32a2c9cde1",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "economy": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "77f977ee02c7499f3d9043a244f844b405247abc2d1a15ace53a67afaae2f367",
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "9c53102d4d3289c001b9214e8ef53ccac9e06f3fc6bd19fce9e32a715d5a8bba",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "ef05ded057ef58f03965bf52624721de5e5047eab0cf5795a2c06ca1980a23aa",
-      "text": "6d442fea1391ac12a1fb2c49fad5a534621ac09e622316c055a7e81ac14ce682"
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "e894565ec4c378797f653a9ddad86c1fc8a8c2b7c8ea0c00ac0759ae964cb4ed",
+      "text": "2f63cda5d40b9f1a5cf63389ba482a7f3ad0426b2ed68c3745785eee3655a671"
     },
     "faq": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "9409aad90761524bac683c3a76e0101428b8d663398f16260391cc349624458c",
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "9f597a47905b2c24b8bfd36111268ed45068e4056978efce77765fa0780df3f5",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "d4ee234736f45cdc2aaafb005b5d00731976ef17ddd7e0975979fa9374b23da2",
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "900cae51174ca2f1f2016396a498ae77ab1a162aad52f2d2fbbb3806694ead09",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "28bd8d59a5b6e8de51ac57e9b238b631d21fa90b8800d2606ea79e5ad871475f",
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "0885a9c1b97971a66c12ca017b2422d0a58cda6a65aa72884b04541eda243a6d",
       "text": "e166f2671aabcdf55ecf59d1465ddb19a36343f6d07983eb8b8821b3a63cce34"
     },
     "hunt": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "d899d94260298c41eb1479b1c59526cf6d1a15e1e812c6abcc1be72e8608ef0b",
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "385bc38b4cbcc88f165015a42673126549183dee347ba53341b7390cbf9a170d",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "86d2c15944b9244f6da5378d004871d907dd086abc1b4e0ee0ecf46979398627",
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "03701bc33a58ccca424a9d21bd9f52b02a9ac9b079535a093310189570fbde08",
       "text": "9e4a54959f53e85f3e1076c43f2f7863fbaf499584948d064d72367538e0dbd2"
     },
     "menu": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "5124369f0461f15f03af7f850b1c86991ab4742d3d1e50eb12528ce1fe516c0c",
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "1d5e0b605ae799c163707d741fcfb89f789d3fac24fc0733decb7252d5af6b02",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "orders": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "4bd27b6e00cd9708e09514485891da7a83608ea0bde4125e0c5cdb2de88d6505",
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "81f79ed31d3b3f995e4cb9440c2081e032e7532f68ae6bbd302d9a61f6d62073",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "pets": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "b0d3dc907327c1369f0323e7fa26c9894341159e8377775f506d18710e35efcc",
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "6f9ef71b159cee5e94f6a9ec7fe26c25444b70ee1c42197698bd6d4377da542c",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "da57e0c41f06bb153e67b2f043c3b60b3fc2df532207fd3808236af40f4c3f4d",
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "8549cfc2dd87bbfed944da5d7d29e11b78f4891fb4e3e3bad4699acd6e3dac49",
       "text": "ced22f9d3bdafb0c5f5e4027849d8cf32dd0530d5a937f0c409e07546439d01a"
     },
     "profile": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "8cdb8b98dc6fa16a4c9166b4a9d9394d0a29642b91466f099cd64695a1e726f7",
-      "text": "75cd41da3d938d9bee73fa8ef26ec1928fc64418ab42ccd7e4476716f9265ea2"
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "9bc56d5931516ede851aedb1b184245da19c65a86b10db16ea899a50d18bf81d",
+      "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "3d822e323c85bfbe91a8bdccc42e06d27308ca69670f0345c2405af3a9ecdfdb",
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "20cdc2aede7c72fa5bff9ff0f9e69a42c7df9be50fbff49bd7655644009d3d7a",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "8c7067d1151f3077e2d2f42796e6b76e71316c1a80f973c2335f853eac23cbf1",
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "7817db7d43a81c5faa01422ea9156043397b5275df284fc6602a9af6d64da0d1",
       "text": "83fdfb3ddc5551875ec1f031676a80e3adb73e448dffae614c489441ea6f2c33"
     },
     "shop": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "86d2c15944b9244f6da5378d004871d907dd086abc1b4e0ee0ecf46979398627",
-      "text": "62e3ad5ae040c7c30a1e73d314c1e226426dc47e287a7fceaa18ad975e73296b"
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "03701bc33a58ccca424a9d21bd9f52b02a9ac9b079535a093310189570fbde08",
+      "text": "2d6fae6aea13d47318a75a661c4eec4cc4a5d999df8d2ddb89254ee62cb97746"
     },
     "skills": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "91bb2cb8c9653d4da458b8db003c2103b116f96202ec1c2fddb3f45590ba25ad",
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "9f1f2b13b98b453780db94f94581323572d43c67092819604e9beb2a7d17236d",
       "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
     },
     "start": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "86ba1128fb1776a4ecc64a20cc053288947b2af3f4399a62a549d5aa714bd905",
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "054df85294a1f05df93c6ce32d25cc67c979d7659d308b503077ba7b3684ab02",
       "text": "3f26288c52ae35e92097798a9a413933351e8e8422d33230a6322c69aedbb238"
     },
     "teleports": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "7c16ce0d3c62ddfa1eeadcea76223b4bc75497a491c9af68f56dde4c49b0a2ef",
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "db723d5c24ddc94fb28ebcac02889ff1c1b66f1264a085f60aba29646a4c993a",
       "text": "896b72de8b56b3374b3a6346a701f45defae6e6ecff688868e02233aa040d1fa"
     },
     "tierforge": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "ef05ded057ef58f03965bf52624721de5e5047eab0cf5795a2c06ca1980a23aa",
-      "text": "31641e329607bc43d7226c80df24168ac5b8f8d424445f1550b2258169ef06d8"
+      "reason": "RC16: ссылка на раздел Кузни исправлена на действующий якорь shop.html#kuznja; восемь SKU, цены и XP сверены с кодом",
+      "sources": "e894565ec4c378797f653a9ddad86c1fc8a8c2b7c8ea0c00ac0759ae964cb4ed",
+      "text": "a4d12cf48881e623761e39d44e627b95975f839a8737cfd76b9ee138317a4c07"
     },
     "titles": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "9949e9aa8b87c1533824fe7a554296164823a6b39956e2ed9fc802e4323595fa",
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "60b51402f8178a5282d57e0912f58d8f57464e2bd8479dd29d2151a2a513ab9e",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "86d2c15944b9244f6da5378d004871d907dd086abc1b4e0ee0ecf46979398627",
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "03701bc33a58ccca424a9d21bd9f52b02a9ac9b079535a093310189570fbde08",
       "text": "dfac37460071169331d2b9242834257df9651801a744d3c0894dfd032227397a"
     },
     "vk": {
-      "reason": "RC14: читаемость блика коротких тегов, светлее минимум дыхания, проверяемые Java-кадры для PNG/GIF; цена, сроки, лицензии и остальные механики не изменены.",
-      "sources": "017559dcf4a42b83b6fab3f984ea74ca177bd49a18691af71002357078853567",
+      "reason": "RC16: сверены восемь PDC-SKU Кузни, /shop forge, цены, XP уровнями, искра/UUID, frozen grant и WAL; страницы commands/enchants/profile проверены по коду, живой серверный smoke не проводился",
+      "sources": "06d476711b181d17c48df2f88846910d0ad8746a66b4b412c3ed5fb24f95a561",
       "text": "2b67feb5684b14875601ba47314694afa598ff87f6dd74350a06f65029a735eb"
     }
   },

@@ -33,15 +33,30 @@ class WikiBuildTest(unittest.TestCase):
     def test_forge_consumables_share_game_instructions_and_exact_prices(self):
         book = FactBook()
         cards = book.render_table("forge_materials")
-        self.assertEqual(3, cards.count("### "))
-        for name in ("Кристалл возвышения", "Кузнечное ядро", "Печать перековки"):
+        self.assertEqual(8, cards.count("### "))
+        for name in ("Кристалл возвышения", "Кузнечное ядро", "Печать перековки",
+                     "Искра первого тира", "Кузнечный лом", "Резец ковки",
+                     "Смывка ковки", "Чернила клички"):
             self.assertIn(name, cards)
-        self.assertEqual(3, cards.count("В наковальне"))
+        for sku in ("ascend", "temper", "reforge", "seed", "repair", "inscribe", "remove", "name"):
+            self.assertIn("`" + sku + "`", cards)
+        self.assertEqual(8, cards.count("В наковальне"))
         self.assertNotIn("/tiers forge confirm", cards)
-        self.assertEqual(3, cards.count("ЛКМ с пустым курсором"))
+        self.assertEqual(8, cards.count("ЛКМ с пустым курсором"))
         self.assertIn("Легендарный | 16 | 24", book.render_table("forge_costs"))
-        self.assertIn("4.2%", book.render_table("forge_drops"))
-        self.assertNotIn("999999", book.render_table("forge_drops"))
+        drops = book.render_table("forge_drops")
+        self.assertIn("4.2%", drops)
+        self.assertIn("seed | 0.5%", drops)
+        self.assertIn("1%", drops)
+        self.assertIn("3%", drops)
+        self.assertNotIn("999999", drops)
+        shop = book.render_table("forge_shop")
+        for row in ("ascend | ECHO_SHARD | 128", "temper | NAUTILUS_SHELL | 96",
+                    "reforge | PAPER | 160", "seed | NETHER_STAR | 64",
+                    "repair | IRON_INGOT | 24", "inscribe | GOLD_NUGGET | 192",
+                    "remove | GUNPOWDER | 32", "name | INK_SAC | 16"):
+            self.assertIn(row, shop)
+        self.assertEqual(8, shop.count("Hunt + /shop forge") + shop.count("| /shop forge |"))
 
     def test_forge_missing_item_instruction_fails_closed(self):
         book = FactBook()
