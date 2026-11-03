@@ -4,16 +4,46 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import java.util.*;
 
-/** Reconstructs the exact storage-only consume/grant. No inventory mutation, drops or repricing. */
+/** Reconstructs the exact storage-only consume/grant. No inventory mutation, drops or repricing.
+ * API42: для замороженного гранта воспроизводится та же оплата и вставка exact isSimilar clone. */
 public final class ShopInventory {
     private static boolean plain(ItemStack i) { return i!=null&&!i.getType().isAir()&&!i.hasItemMeta()&&i.getAmount()>0&&i.getAmount()<=i.getMaxStackSize(); }
-    public static boolean valid(ShopExchange t) {
+
+    /** Точная вставка клонов PDC-прототипа: сначала в похожий неполный стак, затем в пустой слот. */
+    public static boolean insertExact(ItemStack[] items, ItemStack prototype, int units) {
+        if (items == null || items.length != 36 || prototype == null || units < 1) return false;
+        int maximum = prototype.getMaxStackSize();
+        if (maximum < 1) return false;
+        int left = units;
+        for (int slot = 0; slot < 36 && left > 0; slot++) {
+            ItemStack stack = items[slot];
+            if (stack != null && !stack.getType().isAir() && stack.isSimilar(prototype)) {
+                int room = stack.getMaxStackSize() - stack.getAmount();
+                if (room <= 0) continue;
+                int add = Math.min(left, room);
+                stack.setAmount(stack.getAmount() + add);
+                left -= add;
+            }
+        }
+        for (int slot = 0; slot < 36 && left > 0; slot++) {
+            if (items[slot] != null && !items[slot].getType().isAir()) continue;
+            int add = Math.min(left, maximum);
+            ItemStack clone = prototype.clone();
+            clone.setAmount(add);
+            items[slot] = clone;
+            left -= add;
+        }
+        return left == 0;
+    }
+
+    /** Полный native after, восстановленный из before. null — сделка невоспроизводима. */
+    public static ItemStack[] replay(ShopExchange t) {
         try {
-            if(t==null||!t.valid()) return false;
-            Material material=Material.matchMaterial(t.material()); if(material==null||!material.isItem()) return false;
-            for(String currency:t.rates().keySet()) { var m=Material.matchMaterial(currency); if(m==null||!m.isItem()) return false; }
+            if(t==null||!t.valid()) return null;
+            Material material=Material.matchMaterial(t.material()); if(material==null||!material.isItem()) return null;
+            for(String currency:t.rates().keySet()) { var m=Material.matchMaterial(currency); if(m==null||!m.isItem()) return null; }
             var items=ChargeInventory.decode(t.before());
-            if(ChargeInventory.matches(items,t.after())) return false;
+            if(ChargeInventory.matches(items,t.after())) return null;
             if(t.buy()) {
                 long left=t.money()-t.debit(),paid=0; var order=new ArrayList<Integer>();
                 for(int i=0;i<36;i++) if(plain(items[i])&&t.rates().containsKey(items[i].getType().name())) order.add(i);
@@ -23,24 +53,34 @@ public final class ShopInventory {
                     var i=items[slot]; long rate=t.rates().get(i.getType().name()); int n=(int)Math.min(i.getAmount(),(left+rate-1)/rate);
                     paid+=n*rate; left-=n*rate; i.setAmount(i.getAmount()-n); if(i.getAmount()==0) items[slot]=null;
                 }
-                if(left>0||paid!=t.physical()) return false;
-                long units=t.units(); int max=material.getMaxStackSize();
-                for(int slot=0;slot<36&&units>0;slot++) if(plain(items[slot])&&items[slot].getType()==material) {
-                    int n=(int)Math.min(units,max-items[slot].getAmount()); items[slot].setAmount(items[slot].getAmount()+n); units-=n;
+                if(left>0||paid!=t.physical()) return null;
+                if(t.carriesGrant()) {
+                    var prototype=ForgeMarketCatalog.prototype(t.grant());
+                    if(prototype==null||!insertExact(items,prototype,(int)t.units())) return null;
+                } else {
+                    long units=t.units(); int max=material.getMaxStackSize();
+                    for(int slot=0;slot<36&&units>0;slot++) if(plain(items[slot])&&items[slot].getType()==material) {
+                        int n=(int)Math.min(units,max-items[slot].getAmount()); items[slot].setAmount(items[slot].getAmount()+n); units-=n;
+                    }
+                    for(int slot=0;slot<36&&units>0;slot++) if(items[slot]==null||items[slot].getType().isAir()) {
+                        int n=(int)Math.min(units,max); items[slot]=new ItemStack(material,n); units-=n;
+                    }
+                    if(units!=0) return null;
                 }
-                for(int slot=0;slot<36&&units>0;slot++) if(items[slot]==null||items[slot].getType().isAir()) {
-                    int n=(int)Math.min(units,max); items[slot]=new ItemStack(material,n); units-=n;
-                }
-                if(units!=0) return false;
             } else {
                 long units=t.units();
                 for(int slot=0;slot<36&&units>0;slot++) if(plain(items[slot])&&items[slot].getType()==material) {
                     int n=(int)Math.min(units,items[slot].getAmount()); items[slot].setAmount(items[slot].getAmount()-n); units-=n; if(items[slot].getAmount()==0) items[slot]=null;
                 }
-                if(units!=0) return false;
+                if(units!=0) return null;
             }
-            return ChargeInventory.matches(items,t.after());
-        } catch(RuntimeException error) { return false; }
+            return items;
+        } catch(RuntimeException error) { return null; }
+    }
+
+    public static boolean valid(ShopExchange t) {
+        var items = replay(t);
+        return items != null && ChargeInventory.matches(items, t.after());
     }
     private ShopInventory() { }
 }

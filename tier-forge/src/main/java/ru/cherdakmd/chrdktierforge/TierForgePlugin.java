@@ -67,7 +67,7 @@ public final class TierForgePlugin extends JavaPlugin {
         saveDefaultConfig();
         reloadTierConfig();
         try {
-            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 40) throw new IllegalStateException("Нужен Core API 40+");
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 42) throw new IllegalStateException("Нужен Core API 42+ (RC16)");
             this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"tierforge-awards",ru.cherdakmd.chrdkregister.api.MilestoneMigration.tierForge(getDataFolder().toPath().resolve("stats.yml")));
         } catch (Exception | LinkageError error) {
             getLogger().log(java.util.logging.Level.SEVERE,"Модуль остановлен без сброса прогресса/наград",error);
@@ -107,6 +107,10 @@ public final class TierForgePlugin extends JavaPlugin {
         this.tierApi = new TierApiBridge(this);
         Bukkit.getServicesManager().register(ChrdkTierApi.class, tierApi, this,
                 ServicePriority.Normal);
+        // RC16: whitelist-прототипы для витрины /shop forge. Не нужен для WAL-recovery.
+        Bukkit.getServicesManager().register(
+                ru.cherdakmd.chrdkregister.api.ForgeMaterialSource.class,
+                new ForgeMaterialSourceImpl(this), this, ServicePriority.Normal);
 
         this.identification = new TierIdentificationListener(this);
         Bukkit.getPluginManager().registerEvents(identification, this);

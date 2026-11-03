@@ -73,6 +73,10 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
     @Override public ru.cherdakmd.chrdkregister.api.ShopExchange.Status commitShopExchange(Player p,ru.cherdakmd.chrdkregister.api.ShopExchange t) {
         return plugin==null||plugin.bank()==null?ru.cherdakmd.chrdkregister.api.ShopExchange.Status.UNAVAILABLE:plugin.bank().shopExchange(p,t);
     }
+    @Override public ru.cherdakmd.chrdkregister.api.ForgeMaterialSource forgeMaterialSource() {
+        try { return org.bukkit.Bukkit.getServicesManager().load(ru.cherdakmd.chrdkregister.api.ForgeMaterialSource.class); }
+        catch(RuntimeException | LinkageError unavailable) { return null; }
+    }
     @Override public boolean exchangeDiamonds(Player player, long debit, long credit,
             org.bukkit.inventory.ItemStack[] expected, org.bukkit.inventory.ItemStack[] replacement) {
         if (plugin == null || plugin.bank() == null || !plugin.bank().enabled() || bank == null

@@ -175,6 +175,12 @@ public final class BankService implements org.bukkit.event.Listener {
             // Trusted market API accepts only a previously durable source intent: eligibility was frozen by ShopService.
             // Auth/native evidence remain live; changed config/permissions/mode cannot strand accepted obligations.
             if(!new BankChargeGuard(plugin,store).check(player)||!ru.cherdakmd.chrdkregister.api.ShopInventory.valid(t)) return unavailable;
+            if(t.carriesGrant()) {
+                // API42: повторяем платёж и exact isSimilar clone insertion из замороженного
+                // гранта, затем сравниваем полный native after. Живой TierForge и цены не нужны.
+                var replayed=ru.cherdakmd.chrdkregister.api.ShopInventory.replay(t);
+                if(replayed==null||!ru.cherdakmd.chrdkregister.api.ChargeInventory.matches(replayed,t.after())) return unavailable;
+            }
             if(recoverCash(player)!=ru.cherdakmd.chrdkregister.api.InventoryTransfer.Decision.APPLIED) return unavailable;
             if(!ru.cherdakmd.chrdkregister.api.ChargeInventory.matches(player.getInventory().getStorageContents(),t.before())||!store.prepareShop(t,player.getName())) return unavailable;
         } else if(status!=ru.cherdakmd.chrdkregister.api.ShopExchange.Status.PREPARED) return status;

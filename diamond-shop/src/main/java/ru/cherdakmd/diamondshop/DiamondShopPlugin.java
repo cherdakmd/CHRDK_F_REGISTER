@@ -24,7 +24,12 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
     private ShopStore store;
     private ShopGui gui;
     private ShopQuantityGui quantities;
+    private ForgeShopPrices forgePrices;
+    private ForgeShopService forgeShop;
+    private ForgeShopGui forgeShopGui;
     public ShopQuantityGui quantities(){return quantities;}
+    public ForgeShopService forgeShop(){return forgeShop;}
+    public ForgeShopGui forgeShopGui(){return forgeShopGui;}
     private volatile Messages messages;
     private BukkitTask saveTask;
     private BukkitTask historyTask;
@@ -45,6 +50,7 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
         this.quantities=new ShopQuantityGui(this);
         getServer().getPluginManager().registerEvents(quantities,this);
         Bukkit.getPluginManager().registerEvents(gui, this);
+        Bukkit.getPluginManager().registerEvents(forgeShopGui, this);
 
         ShopCommandHandler commands = new ShopCommandHandler(this);
         for (String name : List.of("shop", "shopadmin")) {
@@ -117,6 +123,9 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
         }
         ShopConfig.ShopConfigData data = ShopConfig.parse(getConfig(), getLogger());
         this.shopService = new ShopService(data, store, this::coreApi);
+        this.forgePrices = ForgeShopPrices.parse(getConfig(), getLogger());
+        if (this.forgeShopGui == null) this.forgeShopGui = new ForgeShopGui(this);
+        this.forgeShop = new ForgeShopService(this, forgePrices);
     }
 
     /** API ядра; {@code null}, если основной плагин не загружен (очередь загрузки). */

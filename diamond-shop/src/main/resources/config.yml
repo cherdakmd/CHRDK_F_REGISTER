@@ -1354,3 +1354,29 @@ defaults:
 general:
   # Язык сообщений (файл messages_<locale>.yml, по умолчанию ru)
   locale: "ru"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# RC16: раздел «Кузня» (/shop forge). Восемь PDC-расходников, только покупка.
+# Неверная/отрицательная/нечисловая цена ЗАКРЫВАЕТ SKU, а не подменяется
+# значением по умолчанию. Обратной скупки расходников нет. Цены — за ШТУКУ.
+# ═══════════════════════════════════════════════════════════════════════════
+forge-shop:
+  enabled: true
+  operations:
+    ascend: true
+    temper: true
+    reforge: true
+    seed: true
+    repair: true
+    inscribe: true
+    remove: true
+    name: true
+  prices:
+    ascend: 128
+    temper: 96
+    reforge: 160
+    seed: 64
+    repair: 24
+    inscribe: 192
+    remove: 32
+    name: 16

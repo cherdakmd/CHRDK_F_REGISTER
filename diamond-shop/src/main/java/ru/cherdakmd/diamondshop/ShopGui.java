@@ -66,6 +66,8 @@ public final class ShopGui implements Listener {
             inventory.setItem(index, tabIcon(tab, tab == current, count));
         }
         inventory.setItem(ShopLayout.SLOT_CLOSE, named(Material.BARRIER, "trading.gui.close-name"));
+        // RC16: раздел «Кузня» доступен и кнопкой, и командой /shop forge.
+        inventory.setItem(ShopLayout.SLOT_FORGE, named(Material.ANVIL, "forge.shop.tab"));
 
         int from = safePage * ShopLayout.ITEMS_PER_PAGE;
         for (int slot = 0; slot < ShopLayout.ITEMS_PER_PAGE && from + slot < view.size(); slot++) {
@@ -194,6 +196,10 @@ public final class ShopGui implements Listener {
                 ShopCategory target = tabs.get(slot);
                 reopen(player, target, 0);
             }
+            return;
+        }
+        if (slot == ShopLayout.SLOT_FORGE) {
+            plugin.forgeShopGui().open(player);
             return;
         }
         if (slot == ShopLayout.SLOT_PREV) {

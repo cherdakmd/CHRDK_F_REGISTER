@@ -539,3 +539,16 @@ forge-materials:
     ascend: 1.0
     temper: 0.7
     reforge: 0.35
+    # RC16: 0.5% на ур.1 → 1% на ур.30 → 3% на элитном ур.30.
+    # Остальные четыре расходника по умолчанию НЕ дропаются вообще.
+    seed: 0.5
+  # RC16: выключенная операция/производитель не продаются в /shop forge.
+  operations:
+    ascend: true
+    temper: true
+    reforge: true
+    seed: true
+    repair: true
+    inscribe: true
+    remove: true
+    name: true

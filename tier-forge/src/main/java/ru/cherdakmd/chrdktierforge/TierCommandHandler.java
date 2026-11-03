@@ -526,8 +526,16 @@ public final class TierCommandHandler implements TabExecutor {
             int count;
             try { count = Integer.parseInt(args[3]); } catch (NumberFormatException invalid) { count = 0; }
             if (target == null || kind == null || count < 1 || count > 64) { plugin.messages().send(sender, "forge-admin-usage"); return true; }
-            var leftovers = target.getInventory().addItem(plugin.materials().item(kind, count));
-            leftovers.values().forEach(item -> target.getWorld().dropItemNaturally(target.getLocation(), item));
+            // RC16: искра выдаётся строго по одной, каждый экземпляр со своим canonical UUID.
+            if (kind.seed()) {
+                for (int i = 0; i < count; i++) {
+                    var left = target.getInventory().addItem(plugin.materials().item(kind, 1));
+                    left.values().forEach(item -> target.getWorld().dropItemNaturally(target.getLocation(), item));
+                }
+            } else {
+                var leftovers = target.getInventory().addItem(plugin.materials().item(kind, count));
+                leftovers.values().forEach(item -> target.getWorld().dropItemNaturally(target.getLocation(), item));
+            }
             return true;
         }
         if (args.length >= 1 && "reload".equalsIgnoreCase(args[0])) {

@@ -43,11 +43,29 @@ final class ForgeAnvilListener implements Listener {
                 && plugin.materials().enabled() && plugin.config().anvilEnabled() && AnvilUse.accessible(view,player);
     }
     private List<String> choices(ItemStack left,ForgeMaterial material) {
-        if (material==ForgeMaterial.ASCEND) return List.of("");
+        if (material==ForgeMaterial.ASCEND || material==ForgeMaterial.SEED || material==ForgeMaterial.REPAIR
+                || material==ForgeMaterial.NAME) return List.of("");
         if (left==null || !left.hasItemMeta()) return List.of();
         if (material==ForgeMaterial.TEMPER) return plugin.items().upgradesOf(left).entrySet().stream()
                 .filter(e -> e.getValue()>0 && e.getValue()<e.getKey().maxLevel() && e.getKey().fits(ItemKind.classify(left.getType().name()))).map(e -> e.getKey().id()).sorted().toList();
+        if (material==ForgeMaterial.INSCRIBE) {
+            var kind=ItemKind.classify(left.getType().name());
+            return ForgeUpgrade.ALL.stream().filter(d -> d.fits(kind) && plugin.items().upgradeLevel(left,d.id())==0)
+                    .map(ForgeUpgrade.Def::id).sorted().toList();
+        }
+        if (material==ForgeMaterial.REMOVE) return plugin.items().upgradesOf(left).keySet().stream()
+                .map(ForgeUpgrade.Def::id).sorted().toList();
         return plugin.items().propertiesOf(left).stream().map(TierProperty::id).sorted().toList();
+    }
+    private String choiceName(ForgeMaterial material,String id) {
+        if (material==ForgeMaterial.ASCEND) return plugin.messages().plain("forge-ascend-action");
+        if (material==ForgeMaterial.SEED || material==ForgeMaterial.REPAIR || material==ForgeMaterial.NAME)
+            return plugin.messages().plain("forge-"+material.id+"-action");
+        if (material==ForgeMaterial.REFORGE) {
+            var property=TierProperties.byId(id); return property==null?"":property.name();
+        }
+        return ForgeUpgrade.ALL.stream().filter(d -> d.id().equals(id)).findFirst()
+                .map(ForgeUpgrade.Def::displayName).orElse("");
     }
     @EventHandler(priority=EventPriority.HIGH) public void prepare(PrepareAnvilEvent event) {
         var view=event.getView();
@@ -73,7 +91,8 @@ final class ForgeAnvilListener implements Listener {
         state.plan=null; state.display=null;
         if (state.choices.isEmpty()) {
             if (notices.shouldNotify(player.getUniqueId(),"empty:"+material.id)) plugin.messages().send(player,
-                    material==ForgeMaterial.TEMPER?"forge-upgrade-invalid":"forge-property-invalid");
+                    material==ForgeMaterial.TEMPER||material==ForgeMaterial.INSCRIBE||material==ForgeMaterial.REMOVE
+                            ?"forge-upgrade-invalid":"forge-property-invalid");
             return;
         }
         try {
@@ -82,9 +101,7 @@ final class ForgeAnvilListener implements Listener {
             var meta=state.display.getItemMeta();
             var lore=meta.lore()==null?new ArrayList<net.kyori.adventure.text.Component>():new ArrayList<>(meta.lore());
             String id=state.choices.get(state.index);
-            String name=material==ForgeMaterial.ASCEND?plugin.messages().plain("forge-ascend-action")
-                    :material==ForgeMaterial.TEMPER?ForgeUpgrade.ALL.stream().filter(d -> d.id().equals(id)).findFirst().orElseThrow().displayName()
-                    :TierProperties.byId(id).name();
+            String name=choiceName(material,id);
             lore.addAll(plugin.messages().getList("forge-anvil-preview","name",name,"index",state.index+1,"count",state.choices.size(),
                     "units",state.plan.units(),"xp",state.plan.xp()));
             meta.lore(lore); state.display.setItemMeta(meta);
