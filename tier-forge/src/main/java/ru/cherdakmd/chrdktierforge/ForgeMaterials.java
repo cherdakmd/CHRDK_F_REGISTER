@@ -1,6 +1,5 @@
 package ru.cherdakmd.chrdktierforge;
 
-import net.kyori.adventure.text.Component;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -140,9 +139,8 @@ final class ForgeMaterials implements Listener {
             int index = TierDef.indexOf(nextTier);
             units = ForgeMaterial.ascendCost(index); xp = ForgeMaterial.ascendXp(index);
             if (!plugin.config().propertiesEnabled()) { plugin.messages().send(player, "forge-unavailable"); return true; }
-            if (plugin.config().propertiesEnabled()) properties = new ArrayList<>(TierProperties.roll(nextTier, itemKind,
+            properties = new ArrayList<>(TierProperties.roll(nextTier, itemKind,
                     plugin.config().propertiesPerItem(), choice));
-            else if (!properties.isEmpty()) { plugin.messages().send(player, "forge-unavailable"); return true; }
         } else if (kind == ForgeMaterial.TEMPER) {
             upgrade = ForgeUpgrade.ALL.stream().filter(def -> def.id().equalsIgnoreCase(args[2])).findFirst().orElse(null);
             int current = upgrade == null ? 0 : plugin.items().upgradeLevel(main, upgrade.id());
@@ -189,6 +187,10 @@ final class ForgeMaterials implements Listener {
     @EventHandler(ignoreCancelled = true) public void place(BlockPlaceEvent event) { if (kind(event.getItemInHand()) != null) event.setCancelled(true); }
     @EventHandler public void craft(PrepareItemCraftEvent event) {
         if (Arrays.stream(event.getInventory().getMatrix()).anyMatch(i -> kind(i) != null)) event.getInventory().setResult(null);
+    }
+    @EventHandler(ignoreCancelled = true) public void crafter(org.bukkit.event.block.CrafterCraftEvent event) {
+        if (event.getBlock().getState() instanceof org.bukkit.block.Crafter crafter
+                && Arrays.stream(crafter.getInventory().getContents()).anyMatch(item -> kind(item) != null)) event.setCancelled(true);
     }
     @EventHandler public void smith(PrepareSmithingEvent event) {
         for (int i = 0; i < 3; i++) if (kind(event.getInventory().getItem(i)) != null) { event.setResult(null); return; }
