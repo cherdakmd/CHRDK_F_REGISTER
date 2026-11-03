@@ -1,168 +1,168 @@
 {
   "pages": {
     "about": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "80722a1d6c754086d44fe7ea6378c62a5ebdccc70d714e84cded0326801c81aa",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "b111f4c65f1c3068a7e7f88137a9d5e93c54b6122f73d386f49177a878eff6c5",
       "text": "17788b7b4007e90c62acd266f95cec124e0a53b603a1b2e5d9a7c19fb304c7d9"
     },
     "achievements": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "f469b0c602266fbbfc33dd3e190329ac5bdc62032392f75eed925d5bff5a7255",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "2fafa6a890fc550dbfe3da12b35652993936b5de5cd1b9e0d0a534ad913afe75",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "c9fda9093b05009be79569f6464d40ce33fa27de74b3224b5f46472b7ed55066",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "6f3eb337f4d9bd680448f97f8c309ac341d3c57fdde5e914073e1b8025f925b1",
       "text": "fcdffb1098428fac2bd42d1c4acb73bb9a024d1823d5398b8845bb2f415a506f"
     },
     "auction": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "e8283e497eab4faa015d52fb31e99edf6c45de763f29fbf1029c032756a4c357",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "f42466e8d779cead461580c01f6ca7be1b2712008451a6cb59b1866ceec0432a",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "86b53609d431137b11976425bcb846efabb918e984780b73a3bce2d740009dba",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "41a768cdd1833700cb13e2c53566de41d7f2b6417aae72e83e109fafb7f4c402",
       "text": "70f6a63648aa984b08562459768bc7021a87eb9cdf62e172cec7e40eae1601b9"
     },
     "chat": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "80722a1d6c754086d44fe7ea6378c62a5ebdccc70d714e84cded0326801c81aa",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "b111f4c65f1c3068a7e7f88137a9d5e93c54b6122f73d386f49177a878eff6c5",
       "text": "b46e914efbafe7696687ae47b1604592151aaacaaccd2264d4a5d7b6efc5845a"
     },
     "claims": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "aee22efa914c913aecc63e668ce93d082444b0fd1128831d05681d5fbcdc06f8",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "dd0332112d9b5c493564cfd42cdd1a0a233e46410971c056766ce4690f8b0eba",
       "text": "2a1634efadca1810c82bc496b30432d553c72fb226a5e051443232224a366538"
     },
     "classes": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "2bd975a2dc94a6e1cdc1774e2d23089cc3315b9444b52040e769998ca665b7df",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "9134fbd489641ffccc0237afd0bbaaaa4ed14041c8a4b77a22b0a9d2091574f5",
       "text": "ee29d92bd4e9527924d14405057fd62402857c1a688439c7b9d86d4c9bf3b546"
     },
     "commands": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "c809887025249cb7099abe297d33f28a4cda72c0d8f46691cd457a609fd60e46",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "74008e2bcd7810a4692876cd2d820932a283c8a6ecbbed4bf1af25085b758895",
       "text": "d82332a02e47a5591c3ac0b9eb0dd9a495ea6e5dcdfa945fccda413ccf9650e8"
     },
     "cosmetics": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "d7ac61ed4759f3e8a6f79476de9e3c8a72f02c932c9d3da5a70352f3c436a4d9",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "e669e9b2f968b33e2cce8814f73b55630ef9aa8a99f9dab102accc95b301c954",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "a734e614d884b5bddcebb8cb6da834b4a13554804c8a07ad4567cd0aba09f7c0",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "a3a7ae49059a6f6c3184c422c2b21a7765c82ce25e0493e6f6a9bbcf81ffb285",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "economy": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "38cb7d625d971000c9bd7ad5ad9a9e618e6eff2aa60160479898fb4466218f99",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "9f48642d1c08b6a40990a5d9e445c9e6bb9d5acacf7c7c1b6d2bf3baf94bf0d0",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "f50ca9c92670bb8b3e0f1d0e6b97cb1e8a87800e32f0cd61b1088d667ec65458",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "391d882853a0dd1053de091941ab2e789e3a8e31ae7a5f9b31ce7ce6cb2b10cf",
       "text": "5ad9ee52235dd9102d5f98e57b53ee69b3c66d0624a602070fe911dbb0f27afa"
     },
     "faq": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "a0a9b626340c2dacb9a652e0de82b20fe9d598cd4b1b61e0abe541f3980ed2c4",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "de141629b8ae6223292cd6652722a728184e4014a7dbb76ae9ec937c53e2926f",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "a14a27e8ea6db4456a2e562a2d3ed975b55fe318600d42f9bd113329767b245b",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "0fbb0eca8ca71711c3a40cbb9d9778006e00fd691c11c0936b3975dd673456fd",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "aee22efa914c913aecc63e668ce93d082444b0fd1128831d05681d5fbcdc06f8",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "dd0332112d9b5c493564cfd42cdd1a0a233e46410971c056766ce4690f8b0eba",
       "text": "edd0435315679ef6c5631a43518aeb910a424bd16db4d43dd0984111e59befac"
     },
     "hunt": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "003de9195181db179785b76343a98650ee88987082150f5da78e522699a8a445",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "44d3d593e22dcc3554fea966cb9b4b18848d56e13b1a5331ae0f2a8b17d126fe",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "b00ec1492929709609c39856d877248c99b304c524f5d352dd9205d0b337628a",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "d3934aa7bf838b3ba55027a1f3ecf569f8a5dc02cc8132b02329d2ed698f3426",
       "text": "9e4a54959f53e85f3e1076c43f2f7863fbaf499584948d064d72367538e0dbd2"
     },
     "menu": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "eff0cce374225b171f56e3e7faf2c8c5d950ed1a227e898261836afefc71d821",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "b9283a105abdf966703d794790c7a6ae38142f5591d0600e88e39c41046b804c",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "orders": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "c1ec69f5fa32882dc4a7c11856cde20753d71aac0aba6d500926891065dd4646",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "1f46065e1c9725dfd860fac183761ae1db9a38a516db73d1daaf6c506c069164",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "pets": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "84dd99a1102ac3c5f056906444cd8a31d86fdd01a9726c637f07ba4a38165a0b",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "1c1455773f00882c746871d3b778e700012d92fb9824d0d5e1339c975aafa383",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "6bdfa13afc8b8085503e12c3737a73f5adad4daa293fc9eb26fe85dd6236ee06",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "15bb2b868d9c08b5e90fb5b96bc6870a5e3ed6225e64d2cf98f8e73936f9e751",
       "text": "ced22f9d3bdafb0c5f5e4027849d8cf32dd0530d5a937f0c409e07546439d01a"
     },
     "profile": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "bbc65bee70f8fa8a96983996a990b9161f69873b820d7926944e0f86f422efef",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "c86b53b4029167e6b1ebe1aedb1f9a7e6eded75dc52f5175954ed9c20a58247a",
       "text": "887327b1bce79ff734ab4155b0593c9276d85123ed0a24463ee86f51d663b758"
     },
     "quests": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "52382fa091966539af0127977dc31c6a606d1466624b975de419cad97fbd654b",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "26a72f773e458b720380bf53a45d7eca1ef3114f37facab2d0b812a923648d2a",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "dd8acbf039edd5312a9204a9396f5f41d01399c6958d775b14e60243c145659a",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "88df2395dccd53c6ff1a94194117da3d4cc8c1f680ae12851126e2fd920a7519",
       "text": "83fdfb3ddc5551875ec1f031676a80e3adb73e448dffae614c489441ea6f2c33"
     },
     "shop": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "b00ec1492929709609c39856d877248c99b304c524f5d352dd9205d0b337628a",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "d3934aa7bf838b3ba55027a1f3ecf569f8a5dc02cc8132b02329d2ed698f3426",
       "text": "62e3ad5ae040c7c30a1e73d314c1e226426dc47e287a7fceaa18ad975e73296b"
     },
     "skills": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "94bc6bb748be7f65e5870e523045d8382a5c8856ea4f340479bf23b6c2c58562",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "f5403243ab51e89daab32fc9a95ccdf0c418ed992e0e4a0698850c15fcbac723",
       "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
     },
     "start": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "94a80b8996d3e3ce1d86478ba237f93eb3b226007f1aa37d97d24686cef4ce47",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "11ca4e780b18e63ebafeb910d73a8e63973cbe323170a6c18218fcf40520a7a6",
       "text": "3f26288c52ae35e92097798a9a413933351e8e8422d33230a6322c69aedbb238"
     },
     "teleports": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "1c91b841bce4b2436a283ca5d41b072144ff065ba53b28c461c3e79c708c93b8",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "e0937581fc079bf62d3595b308c3a9e64d48bd4679914813c12282f4f3b64943",
       "text": "896b72de8b56b3374b3a6346a701f45defae6e6ecff688868e02233aa040d1fa"
     },
     "tierforge": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "f50ca9c92670bb8b3e0f1d0e6b97cb1e8a87800e32f0cd61b1088d667ec65458",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "391d882853a0dd1053de091941ab2e789e3a8e31ae7a5f9b31ce7ce6cb2b10cf",
       "text": "9f2303b854e9433fb4de75feb5e9d1dfdc7a931c7d3d5e3fd9b8f442a797f6dd"
     },
     "titles": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "3065f78d64681b666d0865f4f575ddd82c345f864a69b789c06188d1b81cff41",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "57fbe1788c0882f40b79947119bad1f9b128d14480bce564aec64ffd55dbc5fe",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "b00ec1492929709609c39856d877248c99b304c524f5d352dd9205d0b337628a",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "d3934aa7bf838b3ba55027a1f3ecf569f8a5dc02cc8132b02329d2ed698f3426",
       "text": "dfac37460071169331d2b9242834257df9651801a744d3c0894dfd032227397a"
     },
     "vk": {
-      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
-      "sources": "243281daf3140ed584faa4d86c3bb2f1f58bacd15b77f2e90a34369045b02d5c",
+      "reason": "RC10: дополнительно сверена профессия Кузнец — полный cost bridge, одна скидка native-части, явный порядок до Enchants/Forge, неизменные цены расходников и прочий баланс.",
+      "sources": "a227fefd6efe89d85bf44b1b346e787d5f612586453dc518ed3481f4982a7178",
       "text": "2b67feb5684b14875601ba47314694afa598ff87f6dd74350a06f65029a735eb"
     }
   },

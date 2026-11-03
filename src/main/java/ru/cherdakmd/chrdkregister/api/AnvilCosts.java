@@ -31,6 +31,15 @@ public final class AnvilCosts {
     }
     /** Потребитель (например чары) явно сообщает новую полную цену, даже если она равна 39. */
     public static void price(AnvilView view, int price) { QUOTES.remove(view); WRITTEN.put(view,price); view.setRepairCost(price); }
+    /** Скидка до сборки custom-результата; повтор готового preview не скидируется второй раз. */
+    public static void discount(AnvilView view,ItemStack preview,int percent) {
+        Quote previous=QUOTES.get(view);
+        if (previous!=null && previous.matches(view) && Objects.equals(previous.result(),preview)) return;
+        int full=actual(view,preview);
+        if (full<=0 || percent<=0) return;
+        int discounted=(int)Math.round(full*(100-Math.min(100,percent))/100.0);
+        if (discounted<full) price(view,discounted);
+    }
     public static Quote quote(AnvilView view) { return QUOTES.get(view); }
     public static boolean remember(AnvilView view, ItemStack result) {
         int cost = actual(view,result);

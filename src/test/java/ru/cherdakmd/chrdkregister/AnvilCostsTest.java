@@ -38,6 +38,21 @@ class AnvilCostsTest {
         var field=AnvilCosts.class.getDeclaredField("QUOTES");field.setAccessible(true);
         ((Map<AnvilView,AnvilCosts.Quote>)field.get(null)).put(frame.view,quote);
     }
+    @Test void smithDiscountUsesFullPriceInsteadOfVisualThirtyNine() {
+        var f=new Frame();f.price=80;AnvilCosts.discount(f.view,null,10);
+        assertEquals(72,f.price);assertEquals(72,AnvilCosts.actual(f.view));
+    }
+    @Test void readyPreviewIsNotDiscountedAgainAndFreshNativeCalculationIs() throws Exception {
+        var f=new Frame();install(f,f.quote(72));
+        for(int i=0;i<100;i++) AnvilCosts.discount(f.view,null,10);
+        assertEquals(39,f.price);assertEquals(72,AnvilCosts.actual(f.view));
+        f.price=80;AnvilCosts.discount(f.view,null,10);assertEquals(72,AnvilCosts.actual(f.view));
+    }
+    @Test void zeroOrInvalidPriceAndAbsentDiscountRemainUnchanged() {
+        var f=new Frame();f.price=-1;AnvilCosts.discount(f.view,null,10);assertEquals(-1,f.price);
+        f.price=0;AnvilCosts.discount(f.view,null,10);assertEquals(0,f.price);
+        f.price=80;AnvilCosts.discount(f.view,null,0);assertEquals(80,f.price);
+    }
     @Test void ordinaryAdventureUsesVanillaXpButSpectatorCannotTake() {
         assertTrue(ru.cherdakmd.chrdkregister.api.AnvilUse.usesLevels(GameMode.SURVIVAL));
         assertTrue(ru.cherdakmd.chrdkregister.api.AnvilUse.usesLevels(GameMode.ADVENTURE));
