@@ -1,7 +1,7 @@
 ---
 title: "Команды"
 description: "Публичные команды действующих плагинов — автоматически из их дескрипторов."
-review: [core, claims, teleports, diamond-shop]
+review: [core, claims, teleports, diamond-shop, tier-forge]
 ---
 
 ## Взносы клана

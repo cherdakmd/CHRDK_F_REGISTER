@@ -1,7 +1,7 @@
 ---
 title: "Редкости снаряжения"
 description: "Тиры, свойства, положительные и отрицательные аффиксы и коллекция находок."
-review: [tier-forge, enchants, core]
+review: [tier-forge, enchants, core, hunt]
 ---
 
 ## Узнать свою находку
