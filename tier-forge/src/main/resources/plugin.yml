@@ -8,7 +8,7 @@ depend: [CHRDK_Core]
 softdepend: [CHRDK_Enchants, PlaceholderAPI]
 commands:
   tiers:
-    description: Таблица редкостей крафта и шансов
+    description: Тиры, info снаряжения и forge — развитие вещи расходниками охоты
   tiersadmin:
     description: Управление тир-предметами
     permission: chrdktierforge.admin

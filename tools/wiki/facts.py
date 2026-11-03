@@ -421,6 +421,39 @@ class FactBook:
                     )
                 ],
             )
+        if name == "forge_materials":
+            base = self.root / "tier-forge/src/main"
+            messages = yaml.safe_load((base / "resources/messages.yml").read_text(encoding="utf-8"))["tiers"]
+            java = (base / "java/ru/cherdakmd/chrdktierforge/ForgeMaterial.java").read_text(encoding="utf-8")
+            records = re.findall(r'[A-Z]+\("(ascend|temper|reforge)", "([A-Z_]+)"\)', java)
+            if len(records) != 3 or len(set(id for id, _ in records)) != 3:
+                raise ValueError("Изменена схема расходников кузни")
+            cards = []
+            for id, material in records:
+                key = "forge." + id
+                lines = messages.get(key + ".details")
+                if not messages.get(key + ".name") or not isinstance(lines, list) or len(lines) < 4 or not all(isinstance(line, str) and clean(line) for line in lines):
+                    raise ValueError("Нет инструкции расходника: " + id)
+                cards.append("### " + clean(messages[key + ".name"]) + " — `" + id + "`\n\n" + "\n".join("- " + clean(line) for line in lines))
+            return "\n\n".join(cards)
+        if name == "forge_costs":
+            java = (self.root / "tier-forge/src/main/java/ru/cherdakmd/chrdktierforge/ForgeMaterial.java").read_text(encoding="utf-8")
+            values = []
+            for field in ("ASCEND_COSTS", "ASCEND_XP"):
+                match = re.search(field + r' = java.util.List.of\(([0-9, ]+)\);', java)
+                if match is None: raise ValueError("Изменена схема цен возвышения")
+                row = [int(n) for n in match[1].split(",")]
+                if len(row) != 6 or any(n < 1 for n in row): raise ValueError("Неверные цены возвышения")
+                values.append(row)
+            registry = (self.root / "tier-forge/src/main/java/ru/cherdakmd/chrdktierforge/TierDef.java").read_text(encoding="utf-8")
+            match = re.search(r'LADDER = List.of\((.*?)\);', registry, re.S)
+            tiers = re.findall(r'"([a-z]+)"', match[1]) if match else []
+            if len(tiers) != 7 or set(tiers) != set(c["tier-forge"]["tiers"]): raise ValueError("Изменена лестница тиров")
+            messages = yaml.safe_load((self.root / "tier-forge/src/main/resources/messages.yml").read_text(encoding="utf-8"))["tiers"]
+            return table(["Целевой тир", "Кристаллов", "Уровней XP"], [(messages["tier"][tier]["name"], values[0][i], values[1][i]) for i, tier in enumerate(tiers[1:])])
+        if name == "forge_drops":
+            rates = c["tier-forge"]["forge-materials"]["drop-percent"]
+            return table(["Расходник", "Уровень 1", "Уровень 30", "Элитный уровня 30"], [(id, f"{rates[id]:g}%", f"{rates[id] * 2:g}%", f"{rates[id] * 6:g}%") for id in ("ascend", "temper", "reforge")])
         if name == "tiers":
             return table(
                 ["ID редкости", "Вес розыгрыша", "Базовый модификатор, %"],

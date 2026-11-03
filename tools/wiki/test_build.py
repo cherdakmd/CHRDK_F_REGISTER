@@ -30,6 +30,25 @@ class WikiBuildTest(unittest.TestCase):
         cls.root = HERE.parents[1]
         cls.book = FactBook(cls.root)
 
+    def test_forge_consumables_share_game_instructions_and_exact_prices(self):
+        book = FactBook()
+        cards = book.render_table("forge_materials")
+        self.assertEqual(3, cards.count("### "))
+        for name in ("Кристалл возвышения", "Кузнечное ядро", "Печать перековки"):
+            self.assertIn(name, cards)
+        self.assertEqual(3, cards.count("/tiers forge confirm"))
+        self.assertIn("Легендарный | 16 | 24", book.render_table("forge_costs"))
+        self.assertIn("4.2%", book.render_table("forge_drops"))
+        self.assertNotIn("999999", book.render_table("forge_drops"))
+
+    def test_forge_missing_item_instruction_fails_closed(self):
+        book = FactBook()
+        data = yaml.safe_load((self.root / "tier-forge/src/main/resources/messages.yml").read_text())
+        data["tiers"].pop("forge.temper.details")
+        with patch("facts.yaml.safe_load", return_value=data):
+            with self.assertRaisesRegex(ValueError, "Нет инструкции расходника"):
+                book.render_table("forge_materials")
+
     def test_artifact_catalog_has_all_65_shared_details_and_live_config_costs(self):
         book = FactBook()
         cards = book.artifact_catalog()

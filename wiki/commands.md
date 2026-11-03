@@ -47,6 +47,15 @@ review: [core, claims, teleports, diamond-shop]
 При входе в свой участок он появляется автоматически, без перезапуска внутри
 участка. `/claim notices off` выключает только текст, не частицы.
 
+## Развитие тир-вещи
+
+`/tiers forge help` — три расходника Hunt с полными инструкциями.
+`/tiers forge ascend`, `/tiers forge temper ID`, `/tiers forge reforge ID` —
+предпросмотр с вещью в основной и расходниками во второй руке.
+`/tiers forge confirm` — одноразовое подтверждение за 30 секунд.
+ID выбранного установленного улучшения/свойства подсказывает TAB.
+Подробности — [тиры и ковка](tierforge.md).
+
 ## Осмотр артефактов
 
 `/artifacts help [use|sources|traits|collection]` — ношение, активация и правила.

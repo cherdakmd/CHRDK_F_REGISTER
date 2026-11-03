@@ -71,6 +71,7 @@ public final class TierAnvilListener implements Listener {
         // и перекат продолжали работать вопреки документации.
         // 1.4.89: проверка поднята выше стража неопознанных — при выключенном
         // аддоне наковальня должна оставаться полностью ванильной.
+        if (plugin.materials().kind(left) != null || plugin.materials().kind(right) != null) { event.setResult(null); return; }
         if (!plugin.config().anvilEnabled()) {
             notices.reset(player.getUniqueId());
             previewKeys.remove(player.getUniqueId());
@@ -121,7 +122,7 @@ public final class TierAnvilListener implements Listener {
         }
 
         // ---- перекат: слева тир-предмет, справа катализатор без тира ----
-        if (leftTier != null && rightTier == null && plugin.config().rerollEnabled()
+        if (leftTier != null && rightTier == null && plugin.materials().legacyRerollEnabled()
                 && isCatalyst(right) && plugin.config().kindAllowed(
                         ItemKind.classify(left.getType().name()))) {
             String key = left.getType().name() + ":" + leftTier;

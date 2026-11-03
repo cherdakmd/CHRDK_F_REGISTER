@@ -29,6 +29,8 @@ public final class TierForgePlugin extends JavaPlugin {
     private volatile TierForgeConfig config;
     private volatile ForgeNamePool namePool;
     private TierItems items;
+    private ForgeMaterials materials;
+    ForgeMaterials materials() { return materials; }
     /** Аура редкости (1.4.119): частицы и блеск по тиру предмета. */
     private TierVisualService visuals;
     private final TierStatsKeeper stats = new TierStatsKeeper();
@@ -71,6 +73,8 @@ public final class TierForgePlugin extends JavaPlugin {
             Bukkit.getPluginManager().disablePlugin(this); return;
         }
         this.items = new TierItems(this);
+        this.materials = new ForgeMaterials(this);
+        Bukkit.getPluginManager().registerEvents(materials, this);
         this.visuals = new TierVisualService(this);
         this.visuals.restart();
         loadStats();
