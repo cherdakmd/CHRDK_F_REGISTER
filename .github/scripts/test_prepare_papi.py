@@ -70,9 +70,11 @@ class PapiBuildInputTest(unittest.TestCase):
             text=path.read_text()
             self.assertIn("compileOnly(rootProject.findProperty('chrdk.papiJar')",text,str(path))
             self.assertIn(': "me.clip:placeholderapi:2.12.3")',text,str(path))
-        workflow=(root/".github/workflows/build.yml").read_text()
-        self.assertIn("python3 .github/scripts/gradle_build.py",workflow)
-        self.assertNotIn("continue-on-error",workflow)
+        for name in ["build.yml","release.yml"]:
+            workflow=(root/".github/workflows"/name).read_text()
+            self.assertIn("python3 .github/scripts/gradle_build.py",workflow,name)
+            self.assertNotIn("continue-on-error",workflow,name)
+            self.assertIn("test_prepare_papi.py",workflow,name)
 
 
 if __name__=="__main__":unittest.main()
