@@ -410,6 +410,8 @@ guilds:
   style-preset-animation-aurora: "Плавный перелив"
   style-preset-animation-shine: "Золотой блик"
   style-preset-animation-pulse: "Мягкое пульсирование"
+  style-preset-animation-prism: "Призма"
+  style-preset-animation-flame: "Пламя"
   style-gui-choice: "<white>%choice%</white>"
   style-gui-transfer-warning: "<yellow>Весь ваш выбор перейдёт в этот клан сразу, без ожидания.</yellow>"
 

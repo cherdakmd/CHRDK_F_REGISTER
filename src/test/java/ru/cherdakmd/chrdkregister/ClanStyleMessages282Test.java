@@ -34,6 +34,20 @@ class ClanStyleMessages282Test {
         assertTrue(Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkregister/Messages.java"))
                 .contains("\"guild-style-messages-legacy-1.4.282.yml\", logger)"));
     }
+    @Test void previousThreeAnimationPackDescriptionsMigrateExactlyAndIdempotently() {
+        for (String old : List.of(
+                "Цвет, значок и рамка на 30 дней; три анимации на выбор бонусом. Личные лицензии, один свой клан, перенос раз в 24 часа, согласие главы. /clan style",
+                "Цвет, значок и рамка на 30 дней; три анимации на выбор бонусом. Личные лицензии; применяет только глава по своим покупкам, без ожидания переноса. /clan style")) {
+            String updated = ShopCatalog.clanStyleDescription("clan-style-pack", old);
+            assertTrue(updated.contains("пять анимаций"));
+            assertTrue(updated.contains("только глава"));
+            assertEquals(updated, ShopCatalog.clanStyleDescription("clan-style-pack", updated));
+            assertEquals(old, ShopCatalog.clanStyleDescription("other", old));
+        }
+        for (String custom : List.of("", "Мои три анимации", "Авторский текст"))
+            assertEquals(custom, ShopCatalog.clanStyleDescription("clan-style-pack", custom));
+    }
+
     @Test void stockCatalogDescriptionsLoseTheOldWaitButKeepCustomTextAndOtherProducts() {
         String old = "Личная лицензия на 30 дней для одного своего клана; перенос не чаще раза в 24 часа, применение с согласия главы. Только внешний вид. /clan style";
         for (String id : List.of("clan-name-style", "clan-emblem", "clan-card-frame")) {

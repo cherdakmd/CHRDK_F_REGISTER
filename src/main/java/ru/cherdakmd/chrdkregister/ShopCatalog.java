@@ -194,8 +194,9 @@ public final class ShopCatalog {
         if (Set.of("clan-name-style", "clan-emblem", "clan-card-frame").contains(id) && old.equals(description))
             return "Личная лицензия на 30 дней. Оформление меняет только глава по своим покупкам; смена и перенос без ожидания. Только внешний вид. /clan style";
         String oldPack = "Цвет, значок и рамка на 30 дней; три анимации на выбор бонусом. Личные лицензии, один свой клан, перенос раз в 24 часа, согласие главы. /clan style";
-        if ("clan-style-pack".equals(id) && oldPack.equals(description))
-            return "Цвет, значок и рамка на 30 дней; три анимации на выбор бонусом. Личные лицензии; применяет только глава по своим покупкам, без ожидания переноса. /clan style";
+        String previousPack = "Цвет, значок и рамка на 30 дней; три анимации на выбор бонусом. Личные лицензии; применяет только глава по своим покупкам, без ожидания переноса. /clan style";
+        if ("clan-style-pack".equals(id) && (oldPack.equals(description) || previousPack.equals(description)))
+            return "Цвет, значок и рамка на 30 дней; пять анимаций на выбор бонусом. Личные лицензии; применяет только глава по своим покупкам, без ожидания переноса. /clan style";
         return description;
     }
 

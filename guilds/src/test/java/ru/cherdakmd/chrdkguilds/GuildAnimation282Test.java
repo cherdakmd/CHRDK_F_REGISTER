@@ -114,6 +114,66 @@ class GuildAnimation282Test {
         assertFalse(PLAIN.serialize(MINI.deserialize(styles.decorate("Steve","Steve",null))).contains("ЦРАК"));
     }
 
+    @Test void fivePresetsAreDistinctBrightAndSmoothIncludingSingleCodePoint() {
+        assertEquals(List.of("aurora", "shine", "pulse", "prism", "flame"), GuildStyleDefs.ANIMATIONS);
+        Set<List<Integer>> tracks = new HashSet<>();
+        for (String animation : GuildStyleDefs.ANIMATIONS) {
+            List<Integer> track = new ArrayList<>();
+            for (long time = 0; time < 12000; time += 25) {
+                int rgb = colors(MINI.deserialize(GuildStyleAnimation.render("Я", null, null, animation, time))).getFirst();
+                track.add(rgb);
+                int next = colors(MINI.deserialize(GuildStyleAnimation.render("Я", null, null, animation, time + 1))).getFirst();
+                assertTrue(distance(rgb, next) <= 3, animation + " jumps at " + time);
+                assertTrue(Math.max(rgb >> 16 & 255, Math.max(rgb >> 8 & 255, rgb & 255)) >= 240,
+                        animation + " lost its bright channel");
+            }
+            assertTrue(new HashSet<>(track).size() >= 32, animation);
+            assertTrue(track.stream().anyMatch(a -> track.stream().anyMatch(b -> distance(a, b) >= 150)),
+                    animation + " has insufficient colour range");
+            assertTrue(tracks.add(track), animation + " duplicates another effect");
+        }
+    }
+
+    @Test void framesLoopWithoutSeamAndUnknownPresetKeepsStaticStyle() {
+        for (String animation : GuildStyleDefs.ANIMATIONS) {
+            for (long time : List.of(-12001L, -1L, 0L, 1L, 11999L, 12000L)) {
+                String frame = GuildStyleAnimation.render("Я🚀<red>", "gold", "crown", animation, time);
+                assertEquals(frame, GuildStyleAnimation.render("Я🚀<red>", "gold", "crown", animation, time + 12000));
+                assertEquals("⚜ Я🚀<red>", PLAIN.serialize(MINI.deserialize(frame)));
+            }
+            int before = colors(MINI.deserialize(GuildStyleAnimation.render("X", null, null, animation, 11999))).getFirst();
+            int after = colors(MINI.deserialize(GuildStyleAnimation.render("X", null, null, animation, 0))).getFirst();
+            assertTrue(distance(before, after) <= 3, animation);
+        }
+        for (String animation : Arrays.asList(null, "unknown", "<red>"))
+            assertEquals(GuildStyleDefs.name("Я🚀", "gold", "crown"),
+                    GuildStyleAnimation.render("Я🚀", "gold", "crown", animation, Long.MIN_VALUE));
+    }
+
+    @Test void allFivePersistAndStillRequireCurrentLeadersOwnUnexpiredLicence() {
+        UUID leader = UUID.randomUUID(), member = UUID.randomUUID();
+        var guild = new Guild("clan", "Alpha", "TAG", leader, 1000);
+        guild.addMember(member, GuildRank.OFFICER);
+        for (String animation : GuildStyleDefs.ANIMATIONS) {
+            var store = new GuildStyleStore(folder, Logger.getAnonymousLogger());
+            assertTrue(GuildStyleDefs.valid("animation", animation));
+            assertEquals(GuildStyleStore.Result.OK, store.select(leader, "Steve", "clan", "animation", animation, 1000));
+            assertEquals(GuildStyleStore.Result.OK, store.select(member, "Alex", "clan", "animation", animation, 2000));
+            var rows = new GuildStyleStore(folder, Logger.getAnonymousLogger()).forGuild("clan");
+            assertEquals(animation, GuildStylePolicy.active(rows, guild, "animation", 2500, row -> 5000, row -> true));
+            assertNull(GuildStylePolicy.active(rows, guild, "animation", 2500,
+                    row -> row.owner().equals(leader) ? 2500 : 5000, row -> true));
+            assertNull(GuildStylePolicy.active(rows, guild, "animation", 2500, row -> 5000, row -> false));
+        }
+    }
+
+    private static int distance(int first, int second) {
+        int total = 0;
+        for (int shift = 0; shift <= 16; shift += 8)
+            total += Math.abs((first >> shift & 255) - (second >> shift & 255));
+        return total;
+    }
+
     private static List<Integer> colors(Component component) {
         List<Integer> colors = new ArrayList<>();
         colors(component, null, colors);
