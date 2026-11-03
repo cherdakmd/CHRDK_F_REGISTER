@@ -76,7 +76,10 @@ def build(root: Path, command: list[str], *, attempts: int = 3, delay: int = 15,
 
 
 def main() -> int:
-    return build(Path.cwd(), ["./gradlew", "--no-daemon", "build", "--continue"])
+    from prepare_papi import prepare, RELATIVE_PATH
+    root=Path.cwd()
+    prepare(root)
+    return build(root, ["./gradlew", "--no-daemon", f"-Pchrdk.papiJar={RELATIVE_PATH}", "build", "--continue"])
 
 
 if __name__ == "__main__":

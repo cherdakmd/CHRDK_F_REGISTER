@@ -17,6 +17,7 @@
 | Forge | Фиксированные цены, eligible target/pool, UID+sequence determinism, snapshots/выбор, переполнение, stock/custom/empty | `ForgeMaterialTest` и прежние тесты TierForge |
 | Чары | Pure/mixed, native conflicts, повторный prepare, generation, накопительная работа, максимумы | `AnvilQuotesTest`, `AnvilPriceTest` и прежние тесты Enchants |
 | CI transport | Только распознанный transient dependency download, все секции --continue, максимум 3 попытки; compiler/test/unknown/401/403/404/PKIX/OOM не повторяются; настоящий subprocess/exit/log | `test_gradle_build.py` |
+| PAPI build input | Официальный GitHub release 2.12.3, pinned SHA-256/размер/классы, атомарный cache, отказ при подмене/ошибке; все 8 потребителей используют compileOnly | `test_prepare_papi.py` |
 | Комплект | Gradle build всех модулей, сообщения, retired/release regressions, wiki/freshness/data/links/browser и offline social | `.github/workflows/build.yml` |
 
 В `AnvilTakeTest` адаптеры auth/доступа/звука/логгирования подменены. Предметы —
@@ -58,3 +59,20 @@ production. Для каждого пункта записать версию к�
    старый лор, штатные notify/collection. Снять MSPT/пакеты на реальной ожидаемой нагрузке.
 
 Отчёт CI и зелёная сборка не заменяют этот список и не дают разрешения на выпуск.
+
+
+## Устранение устойчивого отказа Maven PlaceholderAPI
+
+Ограниченные повторы сами по себе не починили длительный таймаут extendedclip.
+CI готовит официальный plugin release **той же версии 2.12.3** с GitHub:
+`https://github.com/PlaceholderAPI/PlaceholderAPI/releases/download/2.12.3/PlaceholderAPI-2.12.3.jar`.
+Зафиксирован SHA-256 `fde03259f5af6938f3c33eeb4d814000a1adabf1d2304ce14970be81f609a437`
+(официальный release asset `465403523`, digest из GitHub API). Это официальный
+полный plugin JAR, а не побайтовая копия тонкого Maven API JAR.
+
+Он применяется только как compileOnly вход через `-Pchrdk.papiJar=build/dependencies/...`.
+Не распаковывается в наши JAR, не лежит в `build/libs`, не входит в комплект и не
+устанавливается. Без свойства локальная Gradle-сборка сохраняет прежнюю Maven-зависимость.
+Нет случайного mirror, mutable latest, отключения TLS или принятия неподписанного hash.
+Несовпадение SHA/размера/ожидаемых классов и невалидный cache останавливают сборку;
+при сетевом отказе подготовки нет обхода на непроверенный артефакт. 7 отдельных тестов.

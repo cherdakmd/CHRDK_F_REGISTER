@@ -47,6 +47,7 @@ jobs:
         run: |
           python3 -m unittest discover -s .github/scripts -p 'test_*release.py' -v
           python3 -m unittest discover -s .github/scripts -p 'test_gradle_build.py' -v
+          python3 -m unittest discover -s .github/scripts -p 'test_prepare_papi.py' -v
 
       - name: Verify TradeMC kit and regression tests
         run: |
