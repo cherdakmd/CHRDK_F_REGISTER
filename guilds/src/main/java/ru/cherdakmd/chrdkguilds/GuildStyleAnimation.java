@@ -18,7 +18,7 @@ final class GuildStyleAnimation {
         if (animation.equals("pulse")) {
             // Синхронному дыханию достаточно одного компонента: не раздуваем TAB-пакет
             // одинаковыми RGB-тегами на каждую букву.
-            name = colored(text, mix(0xa344ff, 0xffd0ff, breath(phase)));
+            name = colored(text, mix(0xb86bff, 0xffd0ff, breath(phase)));
         } else {
             int[] points = text.codePoints().toArray();
             StringBuilder frame = new StringBuilder();
@@ -29,7 +29,7 @@ final class GuildStyleAnimation {
                     case "aurora" -> aurora(phase, offset);
                     // Один направленный узкий блик за проход; тёплая основа не гаснет.
                     case "shine" -> mix(0xffb000, 0xfffacd,
-                            Math.pow(intensity(phase * 2 - offset * .85), 6));
+                            Math.pow(intensity(phase * 2 - offset * .85), Math.min(6, Math.max(2, points.length))));
                     case "prism" -> prism(phase, offset);
                     // Две связанные волны тепла дают языки пламени без случайного мерцания.
                     case "flame" -> flame(phase, offset);

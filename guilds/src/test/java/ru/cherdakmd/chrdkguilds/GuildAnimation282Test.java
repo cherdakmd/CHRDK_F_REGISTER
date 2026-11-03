@@ -150,10 +150,19 @@ class GuildAnimation282Test {
                     GuildStyleAnimation.render("Я🚀", "gold", "crown", animation, Long.MIN_VALUE));
     }
 
+    @Test void shortTagsKeepShineVisibleRatherThanOnlyFlashingAtItsPeak() {
+        int visible = 0;
+        for (long time = 0; time < 6000; time += 250) {
+            int rgb = colors(MINI.deserialize(GuildStyleAnimation.render("X", null, null, "shine", time))).getFirst();
+            if ((rgb & 255) >= 80) visible++;
+        }
+        assertTrue(visible >= 8, "Однобуквенный тег должен показывать светлую часть хотя бы треть цикла");
+    }
+
     @Test void breathingHasTwoSecondInhaleAndFourSecondExhaleWithoutFlatCadence() {
-        assertEquals(0xa344ff, colors(MINI.deserialize(GuildStyleAnimation.render("X", null, null, "pulse", 0))).getFirst());
+        assertEquals(0xb86bff, colors(MINI.deserialize(GuildStyleAnimation.render("X", null, null, "pulse", 0))).getFirst());
         assertEquals(0xffd0ff, colors(MINI.deserialize(GuildStyleAnimation.render("X", null, null, "pulse", 2000))).getFirst());
-        assertEquals(0xa344ff, colors(MINI.deserialize(GuildStyleAnimation.render("X", null, null, "pulse", 6000))).getFirst());
+        assertEquals(0xb86bff, colors(MINI.deserialize(GuildStyleAnimation.render("X", null, null, "pulse", 6000))).getFirst());
         Set<Integer> frames = new HashSet<>();
         for (long time = 0; time < 6000; time += 500)
             frames.add(colors(MINI.deserialize(GuildStyleAnimation.render("X", null, null, "pulse", time))).getFirst());

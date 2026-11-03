@@ -98,6 +98,19 @@ jobs:
           retention-days: 14
           if-no-files-found: ignore
 
+      - name: Render verified clan animation preview
+        run: |
+          python3 -m unittest discover -s tools/clan_preview -p 'test_*.py'
+          python3 tools/clan_preview/render.py --output build/clan-preview
+
+      - name: Upload clan animation preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: clan-preview-${{ github.sha }}
+          path: build/clan-preview/
+          retention-days: 14
+          if-no-files-found: error
+
       - name: Upload plugin JAR
         uses: actions/upload-artifact@v4
         with:

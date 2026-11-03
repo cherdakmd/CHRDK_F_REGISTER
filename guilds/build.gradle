@@ -69,3 +69,12 @@ test {
         events "failed"
     }
 }
+
+// Только явная команда разработчика: обновить проверяемые RGB-кадры для PNG/GIF.
+tasks.register('exportClanAnimationPreview', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'ru.cherdakmd.chrdkguilds.GuildAnimationPreview'
+    workingDir = projectDir
+    args file('src/test/resources/clan-animation-preview.json').absolutePath
+}
