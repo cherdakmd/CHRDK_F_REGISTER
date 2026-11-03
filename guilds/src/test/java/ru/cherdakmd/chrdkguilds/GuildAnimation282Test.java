@@ -150,6 +150,48 @@ class GuildAnimation282Test {
                     GuildStyleAnimation.render("Я🚀", "gold", "crown", animation, Long.MIN_VALUE));
     }
 
+    @Test void everyAnimationHasADistinctGuiIcon() {
+        assertEquals(5, GuildStyleDefs.ANIMATIONS.stream().map(GuildStyleGui::animationIcon).distinct().count());
+        assertEquals(org.bukkit.Material.PAPER, GuildStyleGui.animationIcon("unknown"));
+    }
+
+    @Test void shineHasOneTravellingCrestWhilePulseBreathesAsAWhole() {
+        Set<Integer> positions = new HashSet<>();
+        Set<Integer> pulseFrames = new HashSet<>();
+        for (long time = 0; time < 6000; time += 125) {
+            var shine = colors(MINI.deserialize(GuildStyleAnimation.render("КЛАНОВЫЙТЕГ", null, null, "shine", time)));
+            int brightest = 0;
+            int brightCount = 0;
+            for (int i = 0; i < shine.size(); i++) {
+                if ((shine.get(i) & 255) > (shine.get(brightest) & 255)) brightest = i;
+                if ((shine.get(i) & 255) >= 170) brightCount++;
+            }
+            positions.add(brightest);
+            assertTrue(brightCount <= 3, "Блик не должен заливать всё название");
+            var pulse = colors(MINI.deserialize(GuildStyleAnimation.render("КЛАНОВЫЙТЕГ", null, null, "pulse", time)));
+            assertEquals(1, new HashSet<>(pulse).size(), "Дыхание синхронно для всего тега");
+            pulseFrames.add(pulse.getFirst());
+        }
+        assertTrue(positions.size() >= 8, "Блик должен пройти почти все буквы");
+        assertTrue(pulseFrames.size() >= 12);
+    }
+
+    @Test void spatialEffectsStayStructuredAtTabCadenceAndPreserveUnicodeGlyphs() {
+        for (String animation : List.of("aurora", "shine", "prism", "flame")) {
+            Set<List<Integer>> frames = new HashSet<>();
+            for (long time = 0; time < 12000; time += 250) {
+                Component frame = MINI.deserialize(GuildStyleAnimation.render("КЛАН🚀", null, null, animation, time));
+                assertEquals("КЛАН🚀", PLAIN.serialize(frame));
+                var rgb = colors(frame);
+                assertEquals(rgb.get(4), rgb.get(5), "Обе половины Unicode-символа одного цвета");
+                assertTrue(new HashSet<>(rgb).size() >= 2, animation + " стал сплошной заливкой");
+                frames.add(rgb);
+            }
+            int minimum = animation.equals("flame") ? 12 : 20;
+            assertTrue(frames.size() >= minimum, animation + " слишком мало кадров при штатных 250 мс");
+        }
+    }
+
     @Test void allFivePersistAndStillRequireCurrentLeadersOwnUnexpiredLicence() {
         UUID leader = UUID.randomUUID(), member = UUID.randomUUID();
         var guild = new Guild("clan", "Alpha", "TAG", leader, 1000);

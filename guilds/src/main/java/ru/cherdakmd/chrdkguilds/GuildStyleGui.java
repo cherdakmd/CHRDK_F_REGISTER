@@ -80,6 +80,7 @@ final class GuildStyleGui implements Listener {
             List<Component> lore = new ArrayList<>();
             lore.add(plugin.messages().get("style-gui-choice", "choice", label(h.kind, preset)));
             lore.add(plugin.messages().get("style-gui-preset", "preset", preset));
+            if (h.kind.equals("animation")) lore.add(plugin.messages().get("style-effect-" + preset));
             lore.add(plugin.messages().get("style-gui-selected", "personal", preset.equals(personal) ? "✓" : "—", "active", preset.equals(current) ? "✓" : "—"));
             lore.add(plugin.messages().get(manager ? "style-gui-apply" : "style-leader-only"));
             if (manager && row != null && !row.guild().equals(guild.id())) lore.add(plugin.messages().get("style-gui-transfer-warning"));
@@ -106,7 +107,18 @@ final class GuildStyleGui implements Listener {
             case "frame" -> Material.PAINTING; case "animation" -> Material.AMETHYST_SHARD; default -> Material.PAPER; };
     }
     private Material material(String kind, String preset) {
-        return kind.equals("frame") ? Material.valueOf(GuildStyleDefs.FRAMES.get(preset)) : icon(kind);
+        return kind.equals("frame") ? Material.valueOf(GuildStyleDefs.FRAMES.get(preset))
+                : kind.equals("animation") ? animationIcon(preset) : icon(kind);
+    }
+    static Material animationIcon(String preset) {
+        return switch (preset) {
+            case "aurora" -> Material.AMETHYST_SHARD;
+            case "shine" -> Material.GLOWSTONE_DUST;
+            case "pulse" -> Material.HEART_OF_THE_SEA;
+            case "prism" -> Material.PRISMARINE_CRYSTALS;
+            case "flame" -> Material.BLAZE_POWDER;
+            default -> Material.PAPER;
+        };
     }
     private ItemStack button(Material type, String key) { return item(type, plugin.messages().get(key), List.of()); }
     private ItemStack item(Material type, Component name, List<Component> lore) {

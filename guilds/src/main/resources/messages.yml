@@ -412,6 +412,11 @@ guilds:
   style-preset-animation-pulse: "Мягкое пульсирование"
   style-preset-animation-prism: "Призма"
   style-preset-animation-flame: "Пламя"
+  style-effect-aurora: "<aqua>Бирюза и фуксия с ледяным гребнем</aqua><gray> · перелив за 6 с.</gray>"
+  style-effect-shine: "<gold>Узкий светлый блик бежит по буквам</gold><gray> · проход за 6 с.</gray>"
+  style-effect-pulse: "<light_purple>Весь тег плавно дышит одним цветом</light_purple><gray> · цикл 6 с.</gray>"
+  style-effect-prism: "<aqua>Радужный спектр движется по буквам</aqua><gray> · цикл 6 с.</gray>"
+  style-effect-flame: "<gold>Два слоя жара: оранжевый, золотой, светлый</gold><gray> · цикл 4 с.</gray>"
   style-gui-choice: "<white>%choice%</white>"
   style-gui-transfer-warning: "<yellow>Весь ваш выбор перейдёт в этот клан сразу, без ожидания.</yellow>"
 
