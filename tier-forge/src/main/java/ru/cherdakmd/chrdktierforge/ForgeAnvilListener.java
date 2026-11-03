@@ -28,6 +28,15 @@ final class ForgeAnvilListener implements Listener {
         boolean busy;
     }
     ForgeAnvilListener(TierForgePlugin plugin) { this.plugin=plugin; }
+    void close() {
+        // Close возвращает исходные материалы, а не выдаёт display-предмет без обработчика.
+        for (var id:new ArrayList<>(states.keySet())) {
+            var player=Bukkit.getPlayer(id); var state=states.get(id);
+            if (player!=null && state!=null && player.getOpenInventory()==state.inputs.view()) player.closeInventory();
+            notices.clear(id);
+        }
+        states.clear();
+    }
     private boolean allowed(Player player,AnvilView view) {
         return player.isOnline() && !player.isDead() && player.getGameMode()==GameMode.SURVIVAL
                 && player.hasPermission("chrdktierforge.use") && plugin.coreApi()!=null && plugin.coreApi().isAuthenticated(player)

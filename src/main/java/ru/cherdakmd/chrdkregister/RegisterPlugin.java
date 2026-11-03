@@ -311,6 +311,10 @@ public final class RegisterPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        // Нельзя оставить готовый результат с клиентским cost=39 после снятия full-price guard.
+        getServer().getOnlinePlayers().forEach(player -> {
+            if (player.getOpenInventory() instanceof org.bukkit.inventory.view.AnvilView) player.closeInventory();
+        });
         ru.cherdakmd.chrdkregister.api.AnvilCosts.clearAll();
         ru.cherdakmd.chrdkregister.api.PassivePotions.stop();
         ru.cherdakmd.chrdkregister.api.CropReplanting.clear();

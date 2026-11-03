@@ -25,7 +25,7 @@ final class AnvilCostListener implements Listener {
             AnvilCosts.clear(view); view.setRepairCost(-1); return;
         }
         if (AnvilCosts.remember(view,event.getResult()) && view.getPlayer() instanceof Player player)
-            plugin.messages().send(player,"anvil-full-price","xp",AnvilCosts.actual(view));
+            plugin.messages().send(player,"anvil.full-price","xp",AnvilCosts.actual(view));
     }
     @EventHandler public void close(InventoryCloseEvent event) { if (event.getView() instanceof AnvilView view) AnvilCosts.clear(view); }
     @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=true) public void take(InventoryClickEvent event) {
@@ -38,7 +38,7 @@ final class AnvilCostListener implements Listener {
                 || plugin.getServer().getServicesManager().load(ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.class) == null
                 || !plugin.getServer().getServicesManager().load(ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.class).isAuthenticated(player) || player.getLevel()<quote.price()
                 || event.getClick()!=ClickType.LEFT || !event.getCursor().getType().isAir()) {
-            plugin.messages().send(player,"anvil-take-help","xp",quote.price()); return;
+            plugin.messages().send(player,"anvil.take-help","xp",quote.price()); return;
         }
         ItemStack rest=quote.right()==null?null:quote.right().clone();
         if (rest!=null) {

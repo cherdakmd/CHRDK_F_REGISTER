@@ -37,13 +37,21 @@ public final class AnvilCosts {
         WRITTEN.remove(view);
         if (result == null || result.getType().isAir() || cost < 0) { QUOTES.remove(view); return false; }
         // Ванильное исключение для одного переименования остаётся не дороже 39.
-        cost=renamePrice(cost,view.getTopInventory().getItem(1)==null && view.getRenameText()!=null);
+        cost=renamePrice(cost,cost>=40 && onlyRename(view,result));
         Quote previous = QUOTES.get(view);
         var quote = new Quote(copy(view.getTopInventory().getItem(0)),copy(view.getTopInventory().getItem(1)),copy(result),
                 view.getRenameText(),cost,view.getRepairItemCountCost(),view.getMaximumRepairCost(),view.getPlayer().getGameMode());
         QUOTES.put(view,quote);
         view.setRepairCost(display(cost));
         return cost >= 40 && !quote.equals(previous);
+    }
+    private static boolean onlyRename(AnvilView view,ItemStack result) {
+        var left=view.getTopInventory().getItem(0);
+        if (left==null || view.getTopInventory().getItem(1)!=null || view.getRenameText()==null) return false;
+        var before=left.getItemMeta(); var after=result.getItemMeta();
+        if (before==null || after==null || Objects.equals(before.displayName(),after.displayName())) return false;
+        ItemStack renamed=left.clone(); before.displayName(after.displayName()); renamed.setItemMeta(before);
+        return renamed.equals(result); // Только имя, без скрытого изменения PDC/чар/количества/прочности.
     }
     private static ItemStack copy(ItemStack item) { return item == null ? null : item.clone(); }
     public static void clear(AnvilView view) { QUOTES.remove(view); WRITTEN.remove(view); }
