@@ -48,6 +48,10 @@ class AnvilCostsTest {
         assertEquals(39,f.price);assertEquals(72,AnvilCosts.actual(f.view));
         f.price=80;AnvilCosts.discount(f.view,null,10);assertEquals(72,AnvilCosts.actual(f.view));
     }
+    @Test void fullPriceDiscountMultiplicationCannotOverflowIntoNegativeCost() {
+        var f=new Frame();f.price=Integer.MAX_VALUE-1;AnvilCosts.discount(f.view,null,10);
+        assertEquals(1_932_735_281,AnvilCosts.actual(f.view));
+    }
     @Test void zeroOrInvalidPriceAndAbsentDiscountRemainUnchanged() {
         var f=new Frame();f.price=-1;AnvilCosts.discount(f.view,null,10);assertEquals(-1,f.price);
         f.price=0;AnvilCosts.discount(f.view,null,10);assertEquals(0,f.price);

@@ -37,7 +37,7 @@ public final class AnvilCosts {
         if (previous!=null && previous.matches(view) && Objects.equals(previous.result(),preview)) return;
         int full=actual(view,preview);
         if (full<=0 || percent<=0) return;
-        int discounted=(int)Math.round(full*(100-Math.min(100,percent))/100.0);
+        int discounted=(int)Math.round((long)full*(100-Math.min(100,percent))/100.0);
         if (discounted<full) price(view,discounted);
     }
     public static Quote quote(AnvilView view) { return QUOTES.get(view); }
