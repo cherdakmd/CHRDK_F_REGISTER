@@ -11,6 +11,10 @@ import java.util.concurrent.ThreadLocalRandom;
 /** Общие правила реальной наковальни для операций с ручным подтверждением. */
 public final class AnvilUse {
     private AnvilUse() { }
+    /** Adventure сохраняет обычную ванильную оплату; Spectator не забирает результат. */
+    public static boolean usesLevels(org.bukkit.GameMode mode) {
+        return mode==org.bukkit.GameMode.SURVIVAL || mode==org.bukkit.GameMode.ADVENTURE;
+    }
     public static boolean accessible(AnvilView view, Player player) {
         var location = view.getTopInventory().getLocation();
         return location != null && player.getWorld().equals(location.getWorld()) && player.getLocation().distanceSquared(location) <= 64

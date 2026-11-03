@@ -34,9 +34,9 @@ final class AnvilCostListener implements Listener {
         if (quote == null || quote.price()<40 || player.getGameMode()==GameMode.CREATIVE) return;
         event.setCancelled(true);
         // Никакого бесплатного дорогого результата, даже если клиент видит только 39.
-        if (!quote.matches(view) || !AnvilUse.accessible(view,player) || player.getGameMode()!=GameMode.SURVIVAL
-                || plugin.getServer().getServicesManager().load(ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.class) == null
-                || !plugin.getServer().getServicesManager().load(ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.class).isAuthenticated(player) || player.getLevel()<quote.price()
+        var api=plugin.getServer().getServicesManager().load(ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.class);
+        if (!quote.matches(view) || !AnvilUse.accessible(view,player) || !AnvilUse.usesLevels(player.getGameMode())
+                || !player.isOnline() || player.isDead() || api==null || !api.isAuthenticated(player) || player.getLevel()<quote.price()
                 || event.getClick()!=ClickType.LEFT || !event.getCursor().getType().isAir()) {
             plugin.messages().send(player,"anvil.take-help","xp",quote.price()); return;
         }

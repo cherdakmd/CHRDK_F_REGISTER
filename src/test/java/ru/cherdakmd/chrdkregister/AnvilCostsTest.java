@@ -38,6 +38,13 @@ class AnvilCostsTest {
         var field=AnvilCosts.class.getDeclaredField("QUOTES");field.setAccessible(true);
         ((Map<AnvilView,AnvilCosts.Quote>)field.get(null)).put(frame.view,quote);
     }
+    @Test void ordinaryAdventureUsesVanillaXpButSpectatorCannotTake() {
+        assertTrue(ru.cherdakmd.chrdkregister.api.AnvilUse.usesLevels(GameMode.SURVIVAL));
+        assertTrue(ru.cherdakmd.chrdkregister.api.AnvilUse.usesLevels(GameMode.ADVENTURE));
+        assertFalse(ru.cherdakmd.chrdkregister.api.AnvilUse.usesLevels(GameMode.SPECTATOR));
+        assertFalse(ru.cherdakmd.chrdkregister.api.AnvilUse.usesLevels(GameMode.CREATIVE));
+        assertFalse(ru.cherdakmd.chrdkregister.api.AnvilUse.usesLevels(null));
+    }
     @Test void displayNeverShowsFortyButFullPriceIsNotClamped() {
         assertEquals(-1,AnvilCosts.display(-1));assertEquals(0,AnvilCosts.display(0));
         assertEquals(39,AnvilCosts.display(39));assertEquals(39,AnvilCosts.display(40));

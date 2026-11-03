@@ -1,168 +1,168 @@
 {
   "pages": {
     "about": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "cc1b9057e8e0241c3490246ba6b3e80f372160d599447d100e993f326bd14b97",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "80722a1d6c754086d44fe7ea6378c62a5ebdccc70d714e84cded0326801c81aa",
       "text": "17788b7b4007e90c62acd266f95cec124e0a53b603a1b2e5d9a7c19fb304c7d9"
     },
     "achievements": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "532f03909c2c6d30823d3a42dcaeb00ab251e58fba91fa449f88aee7ee536e64",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "f469b0c602266fbbfc33dd3e190329ac5bdc62032392f75eed925d5bff5a7255",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "25004cf24446b72fc7fe884a2e6c8b0457eecb952b61872da9a842c894ecd874",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "c9fda9093b05009be79569f6464d40ce33fa27de74b3224b5f46472b7ed55066",
       "text": "fcdffb1098428fac2bd42d1c4acb73bb9a024d1823d5398b8845bb2f415a506f"
     },
     "auction": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "9115e155676ad33fb5fa9c6e69d3ea947caea1e1b9b2faaad6f94883e1be62b4",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "e8283e497eab4faa015d52fb31e99edf6c45de763f29fbf1029c032756a4c357",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "b326eb6107c57afe3e22b3ccd14d78e749163aebdbd6208125b4a28f1c8b638b",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "86b53609d431137b11976425bcb846efabb918e984780b73a3bce2d740009dba",
       "text": "70f6a63648aa984b08562459768bc7021a87eb9cdf62e172cec7e40eae1601b9"
     },
     "chat": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "cc1b9057e8e0241c3490246ba6b3e80f372160d599447d100e993f326bd14b97",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "80722a1d6c754086d44fe7ea6378c62a5ebdccc70d714e84cded0326801c81aa",
       "text": "b46e914efbafe7696687ae47b1604592151aaacaaccd2264d4a5d7b6efc5845a"
     },
     "claims": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "90097386a0c52d46c8a86a0d0a7fd4b5d7e00d1195a2fd5d5958064f17d73b5a",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "aee22efa914c913aecc63e668ce93d082444b0fd1128831d05681d5fbcdc06f8",
       "text": "2a1634efadca1810c82bc496b30432d553c72fb226a5e051443232224a366538"
     },
     "classes": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "8e3f7817220b3820324dba5085dbf5c96a38259c6a0423b2021bca06c7b5e0d5",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "2bd975a2dc94a6e1cdc1774e2d23089cc3315b9444b52040e769998ca665b7df",
       "text": "ee29d92bd4e9527924d14405057fd62402857c1a688439c7b9d86d4c9bf3b546"
     },
     "commands": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "0cd1dc69d0e435b2f4193866e4bc4ef7f5fea46624153b7fc09a149270c69100",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "c809887025249cb7099abe297d33f28a4cda72c0d8f46691cd457a609fd60e46",
       "text": "d82332a02e47a5591c3ac0b9eb0dd9a495ea6e5dcdfa945fccda413ccf9650e8"
     },
     "cosmetics": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "c687754de0b0956fd5562549657894436ea563ee6e1089a4db8200c79f67b2f8",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "d7ac61ed4759f3e8a6f79476de9e3c8a72f02c932c9d3da5a70352f3c436a4d9",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "721a31b2be938282ee9f3694d35431a73816cbbd28126e56ed68af8d88e7fd32",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "a734e614d884b5bddcebb8cb6da834b4a13554804c8a07ad4567cd0aba09f7c0",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "economy": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "e69edcf03b29baa1e68c151e5dc6f02fb925dba91445013c02925a6470c2dbcf",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "38cb7d625d971000c9bd7ad5ad9a9e618e6eff2aa60160479898fb4466218f99",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "0531a5121bdd218970de71e8ff67bc5f3286783bd0ecd7826207763548817df2",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "f50ca9c92670bb8b3e0f1d0e6b97cb1e8a87800e32f0cd61b1088d667ec65458",
       "text": "5ad9ee52235dd9102d5f98e57b53ee69b3c66d0624a602070fe911dbb0f27afa"
     },
     "faq": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "156c981861e252864049e28c477eabf0b4a8bcac83494ff7b6e43ce8d227f964",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "a0a9b626340c2dacb9a652e0de82b20fe9d598cd4b1b61e0abe541f3980ed2c4",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "5502bfb57a129239692f6f9c25d9bd48dba883aff5b28628288a4c6d0fb0717d",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "a14a27e8ea6db4456a2e562a2d3ed975b55fe318600d42f9bd113329767b245b",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "90097386a0c52d46c8a86a0d0a7fd4b5d7e00d1195a2fd5d5958064f17d73b5a",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "aee22efa914c913aecc63e668ce93d082444b0fd1128831d05681d5fbcdc06f8",
       "text": "edd0435315679ef6c5631a43518aeb910a424bd16db4d43dd0984111e59befac"
     },
     "hunt": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "105ccf4bfefd11287e261e8a8162d2dce20e3f156011888a4ea0fc8711f7f694",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "003de9195181db179785b76343a98650ee88987082150f5da78e522699a8a445",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "b6ef8944ad88b7c9f20582d5829fa8954f492c7a1b0684ad1d2233f197891a4b",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "b00ec1492929709609c39856d877248c99b304c524f5d352dd9205d0b337628a",
       "text": "9e4a54959f53e85f3e1076c43f2f7863fbaf499584948d064d72367538e0dbd2"
     },
     "menu": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "becfef494ef9e83beac6959f2c3e236c3e5d54046135676cd692b27125138422",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "eff0cce374225b171f56e3e7faf2c8c5d950ed1a227e898261836afefc71d821",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "orders": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "917e2c6130abe17d2cf6b7a578f95a80ce90ed65b356f2ac9974fbc113c677fe",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "c1ec69f5fa32882dc4a7c11856cde20753d71aac0aba6d500926891065dd4646",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "pets": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "9a86ae20efbb5a551a9728258b2a3af23029485c632982355903ec437ed940b0",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "84dd99a1102ac3c5f056906444cd8a31d86fdd01a9726c637f07ba4a38165a0b",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "da1ccccf45b7e6c4ccb9b7d8f88963a04867b4a6f8aab2cc388b1383dcd7f1bd",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "6bdfa13afc8b8085503e12c3737a73f5adad4daa293fc9eb26fe85dd6236ee06",
       "text": "ced22f9d3bdafb0c5f5e4027849d8cf32dd0530d5a937f0c409e07546439d01a"
     },
     "profile": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "1f6c278224cdc96d5b0bd241799b1bbac8440e0847ee7da52b11f2da9af82d5d",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "bbc65bee70f8fa8a96983996a990b9161f69873b820d7926944e0f86f422efef",
       "text": "887327b1bce79ff734ab4155b0593c9276d85123ed0a24463ee86f51d663b758"
     },
     "quests": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "06b326f508901c66acbcd5df2361ce85a30650eb4b142632317f87fa73eb2283",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "52382fa091966539af0127977dc31c6a606d1466624b975de419cad97fbd654b",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "669fb530460b085c50895b89e1d50af276df0aca72743d25220e1fd8a9715a8f",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "dd8acbf039edd5312a9204a9396f5f41d01399c6958d775b14e60243c145659a",
       "text": "83fdfb3ddc5551875ec1f031676a80e3adb73e448dffae614c489441ea6f2c33"
     },
     "shop": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "b6ef8944ad88b7c9f20582d5829fa8954f492c7a1b0684ad1d2233f197891a4b",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "b00ec1492929709609c39856d877248c99b304c524f5d352dd9205d0b337628a",
       "text": "62e3ad5ae040c7c30a1e73d314c1e226426dc47e287a7fceaa18ad975e73296b"
     },
     "skills": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "064d6e3942e9c1cb47640be84a669552b7b47d7c1d83d6a15080739fa56bf48d",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "94bc6bb748be7f65e5870e523045d8382a5c8856ea4f340479bf23b6c2c58562",
       "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
     },
     "start": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "27b8f6ffa5da11f61634909bc12cbdfa8f7609ce8200a12d0a5962c247ee4b93",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "94a80b8996d3e3ce1d86478ba237f93eb3b226007f1aa37d97d24686cef4ce47",
       "text": "3f26288c52ae35e92097798a9a413933351e8e8422d33230a6322c69aedbb238"
     },
     "teleports": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "ae11102d0b70c9a01a20aee66827981f7ae511f9cc1fae8016ad0bd78553ba2b",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "1c91b841bce4b2436a283ca5d41b072144ff065ba53b28c461c3e79c708c93b8",
       "text": "896b72de8b56b3374b3a6346a701f45defae6e6ecff688868e02233aa040d1fa"
     },
     "tierforge": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "0531a5121bdd218970de71e8ff67bc5f3286783bd0ecd7826207763548817df2",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "f50ca9c92670bb8b3e0f1d0e6b97cb1e8a87800e32f0cd61b1088d667ec65458",
       "text": "9f2303b854e9433fb4de75feb5e9d1dfdc7a931c7d3d5e3fd9b8f442a797f6dd"
     },
     "titles": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "e296dadb7a7f2905e0fc15bea0be8300608d1974b01fb67745104ce2e53b1f5f",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "3065f78d64681b666d0865f4f575ddd82c345f864a69b789c06188d1b81cff41",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "b6ef8944ad88b7c9f20582d5829fa8954f492c7a1b0684ad1d2233f197891a4b",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "b00ec1492929709609c39856d877248c99b304c524f5d352dd9205d0b337628a",
       "text": "dfac37460071169331d2b9242834257df9651801a744d3c0894dfd032227397a"
     },
     "vk": {
-      "reason": "RC10: дополнительно сверено закрытие предпросмотров при disable Core/TierForge, полная XP цена и исключение только для чистого переименования; тексты/остальные механики актуальны.",
-      "sources": "87fcd4417cf82d9c173a4f0bf018f0f29ed424ea56541bfe0c9cb4a201cdc7da",
+      "reason": "RC10: проверены full-price XP, Survival/Adventure/Spectator, закрытие preview при disable и stock-миграции; обычные операции и прежние страницы/баланс сохранены.",
+      "sources": "243281daf3140ed584faa4d86c3bb2f1f58bacd15b77f2e90a34369045b02d5c",
       "text": "2b67feb5684b14875601ba47314694afa598ff87f6dd74350a06f65029a735eb"
     }
   },
