@@ -31,6 +31,10 @@ public final class AnvilCosts {
     }
     /** Потребитель (например чары) явно сообщает новую полную цену, даже если она равна 39. */
     public static void price(AnvilView view, int price) { QUOTES.remove(view); WRITTEN.put(view,price); view.setRepairCost(price); }
+    /** До скидки профессии: ванильное исключение rename-only остаётся 39, а не maxInt-1. */
+    public static void capRename(AnvilView view,ItemStack preview) {
+        if (preview!=null && view.getRepairCost()>=40 && onlyRename(view,preview)) price(view,39);
+    }
     /** Скидка до сборки custom-результата; повтор готового preview не скидируется второй раз. */
     public static void discount(AnvilView view,ItemStack preview,int percent) {
         Quote previous=QUOTES.get(view);

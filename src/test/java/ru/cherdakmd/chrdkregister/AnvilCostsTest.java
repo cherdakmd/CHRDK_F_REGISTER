@@ -48,6 +48,14 @@ class AnvilCostsTest {
         assertEquals(39,f.price);assertEquals(72,AnvilCosts.actual(f.view));
         f.price=80;AnvilCosts.discount(f.view,null,10);assertEquals(72,AnvilCosts.actual(f.view));
     }
+    @Test void renameExceptionPrecedesProfessionDiscountSoExistingPerkSurvives() throws Exception {
+        var f=new Frame();f.price=AnvilCosts.renamePrice(120,true);AnvilCosts.discount(f.view,null,10);
+        assertEquals(35,AnvilCosts.actual(f.view));
+        var source=java.nio.file.Files.readString(java.nio.file.Path.of("src/main/java/ru/cherdakmd/chrdkregister/AnvilCostListener.java"));
+        int low=source.indexOf("@EventHandler(priority=EventPriority.LOWEST) public void ceiling");
+        int high=source.indexOf("@EventHandler(priority=EventPriority.HIGHEST)",low);
+        assertTrue(source.substring(low,high).contains("AnvilCosts.capRename(event.getView(),event.getResult())"));
+    }
     @Test void fullPriceDiscountMultiplicationCannotOverflowIntoNegativeCost() {
         var f=new Frame();f.price=Integer.MAX_VALUE-1;AnvilCosts.discount(f.view,null,10);
         assertEquals(1_932_735_281,AnvilCosts.actual(f.view));

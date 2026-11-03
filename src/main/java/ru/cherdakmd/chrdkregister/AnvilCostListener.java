@@ -18,7 +18,10 @@ final class AnvilCostListener implements Listener {
     @EventHandler(priority=EventPriority.LOWEST,ignoreCancelled=true) public void open(InventoryOpenEvent event) {
         if (event.getView() instanceof AnvilView view) view.setMaximumRepairCost(Integer.MAX_VALUE);
     }
-    @EventHandler(priority=EventPriority.LOWEST) public void ceiling(PrepareAnvilEvent event) { event.getView().setMaximumRepairCost(Integer.MAX_VALUE); }
+    @EventHandler(priority=EventPriority.LOWEST) public void ceiling(PrepareAnvilEvent event) {
+        event.getView().setMaximumRepairCost(Integer.MAX_VALUE);
+        AnvilCosts.capRename(event.getView(),event.getResult());
+    }
     @EventHandler(priority=EventPriority.HIGHEST) public void prepare(PrepareAnvilEvent event) {
         var view = event.getView();
         if (event.getResult()==null && view.getRepairCost()>=40) {
