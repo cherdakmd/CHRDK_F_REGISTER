@@ -58,6 +58,35 @@ class ForgeMaterialTest {
         assertNull(ForgeMaterial.byId("../ascend"));
         assertNull(ForgeMaterial.byId("<red>ascend"));
     }
+    @Test void previewChoiceIsStableAcrossRepeatsButAdvancesAfterPaidSuccess() {
+        long first = ForgeMaterial.choice("persistent-uid", 1, ForgeMaterial.REFORGE, "rare_edge").nextLong();
+        for (int i = 0; i < 100; i++) assertEquals(first,
+                ForgeMaterial.choice("persistent-uid", 1, ForgeMaterial.REFORGE, "RARE_EDGE").nextLong());
+        assertNotEquals(first, ForgeMaterial.choice("persistent-uid", 2, ForgeMaterial.REFORGE, "rare_edge").nextLong());
+    }
+    @Test void stockFooterMigrationPreservesCustomAndEmptyWithoutRewritingFile(
+            @org.junit.jupiter.api.io.TempDir java.nio.file.Path directory) throws Exception {
+        var path = directory.resolve("messages.yml");
+        byte[] legacy;
+        try (var input = getClass().getResourceAsStream("/tierforge-messages-legacy-1.4.282-rc8.yml")) {
+            assertNotNull(input); legacy = input.readAllBytes();
+        }
+        java.nio.file.Files.write(path,legacy);
+        var logger = Logger.getAnonymousLogger();
+        var fresh = Messages.fromChecked(getClass().getResourceAsStream("/messages.yml"),null,logger);
+        var migrated = Messages.fromChecked(getClass().getResourceAsStream("/messages.yml"),path,
+                getClass().getResourceAsStream("/tierforge-messages-legacy-1.4.282-rc8.yml"),logger);
+        assertEquals(fresh.raw("list-footer"),migrated.raw("list-footer"));
+        assertArrayEquals(legacy,java.nio.file.Files.readAllBytes(path));
+        for (String custom : List.of("Свой текст", "")) {
+            String yaml = "tiers:\n  list-footer: '" + custom + "'\n";
+            java.nio.file.Files.writeString(path,yaml);
+            var retained = Messages.fromChecked(getClass().getResourceAsStream("/messages.yml"),path,
+                    getClass().getResourceAsStream("/tierforge-messages-legacy-1.4.282-rc8.yml"),logger);
+            assertEquals(custom,retained.raw("list-footer"));
+            assertEquals(yaml,java.nio.file.Files.readString(path));
+        }
+    }
     @Test void propertyReplacementPoolStaysInTierRoleAndAvoidsExistingProperties() {
         for (String tier : TierDef.LADDER) for (ItemKind kind : ItemKind.values()) {
             var properties = TierProperties.roll(tier,kind,1,new Random(1));

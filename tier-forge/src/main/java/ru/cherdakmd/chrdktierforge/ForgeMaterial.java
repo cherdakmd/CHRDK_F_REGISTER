@@ -20,6 +20,9 @@ enum ForgeMaterial {
         return ASCEND_COSTS.get(targetIndex - 1);
     }
     static int ascendXp(int targetIndex) { ascendCost(targetIndex); return ASCEND_XP.get(targetIndex - 1); }
+    static java.util.Random choice(String identity, long sequence, ForgeMaterial kind, String selected) {
+        return new java.util.Random(java.util.Objects.hash(identity, sequence, kind.id, selected.toLowerCase(Locale.ROOT)));
+    }
     static long nextSequence(long current) {
         if (current < 0 || current == Long.MAX_VALUE) throw new IllegalArgumentException("Forge sequence exhausted");
         return current + 1;

@@ -128,7 +128,7 @@ final class ForgeMaterials implements Listener {
         }
         long next = ForgeMaterial.nextSequence(oldSequence);
         // Повтор предпросмотра, перестановка и relog не меняют выбор свойства; UID не перезаписывается.
-        Random choice = new Random(Objects.hash(identity, next, kind.id, args.length == 3 ? args[2].toLowerCase(Locale.ROOT) : ""));
+        Random choice = ForgeMaterial.choice(identity, next, kind, args.length == 3 ? args[2] : "");
         var properties = new ArrayList<>(plugin.items().storedPropertiesOf(main));
         ForgeUpgrade.Def upgrade = null;
         int units = 1, xp;

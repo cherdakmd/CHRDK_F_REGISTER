@@ -775,6 +775,10 @@ public final class TierItems {
             target.getPersistentDataContainer()
                     .set(propertiesKey, PersistentDataType.STRING, properties);
         }
+        // История оплаченных операций переезжает вместе с UID, не сбрасывая выбор перековки.
+        var forgeSequence = new NamespacedKey(plugin, "forge_sequence");
+        Long sequence = source.getPersistentDataContainer().get(forgeSequence, PersistentDataType.LONG);
+        if (sequence != null) target.getPersistentDataContainer().set(forgeSequence, PersistentDataType.LONG, sequence);
         // Волна 17: uid задаёт аффиксы и зачарования. Незеритовый апгрейд — тот же
         // предмет, поэтому набор должен переехать, а не перероллиться.
         String uid = source.getPersistentDataContainer()
