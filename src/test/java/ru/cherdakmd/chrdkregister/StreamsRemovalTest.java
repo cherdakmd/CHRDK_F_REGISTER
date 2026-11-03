@@ -34,7 +34,7 @@ class StreamsRemovalTest {
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_Streams"));
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_VK"));
         assertEquals(22, PluginUpdateService.MODULES.size());
-        assertEquals(40, ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
+        assertEquals(41, ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
         assertNull(LabelPreferences.Label.byId("streams"));
         assertNull(LabelsCommandHandler.singleOf("streams"));
         assertNull(LabelsCommandHandler.singleOf("стример"));

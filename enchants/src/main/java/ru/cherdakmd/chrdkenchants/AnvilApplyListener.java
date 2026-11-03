@@ -214,10 +214,7 @@ public final class AnvilApplyListener implements Listener {
                 || event.getAction() == InventoryAction.NOTHING
                 || (player.getGameMode() != GameMode.CREATIVE && player.getLevel() < ru.cherdakmd.chrdkregister.api.AnvilCosts.actual(view))) return;
         Map<String, Integer> before = plugin.items().read(left);
-        boolean newCurse = plugin.items().read(result).entrySet().stream()
-                .anyMatch(entry -> EnchantRegistry.byId(entry.getKey()) != null
-                        && EnchantRegistry.byId(entry.getKey()).curse()
-                        && entry.getValue() > before.getOrDefault(entry.getKey(), 0));
+        boolean newCurse = addsCurse(before,plugin.items().read(result));
         if (!newCurse || notices.size() >= AnvilQuotes.LIMIT) return;
         Object ticket = new Object();
         if (notices.putIfAbsent(player.getUniqueId(), ticket) != null) return;
@@ -232,6 +229,19 @@ public final class AnvilApplyListener implements Listener {
         });
     }
 
+    /** Core сам отменяет native-клик при дорогой операции; уведомляем только по факту commit. */
+    @EventHandler(priority=EventPriority.MONITOR)
+    public void paid(ru.cherdakmd.chrdkregister.api.events.AnvilPaidResultEvent event) {
+        if (event.getPlayer().isOnline() && addsCurse(plugin.items().read(event.left()),plugin.items().read(event.result()))) {
+            plugin.messages().send(event.getPlayer(),"anvil-curse-applied");
+        }
+    }
+    static boolean addsCurse(Map<String,Integer> before,Map<String,Integer> result) {
+        return result.entrySet().stream().anyMatch(entry -> {
+            var definition=EnchantRegistry.byId(entry.getKey());
+            return definition!=null && definition.curse() && entry.getValue()>before.getOrDefault(entry.getKey(),0);
+        });
+    }
     private void forget(UUID player) { quotes.remove(player); notices.remove(player); }
     @EventHandler public void onClose(InventoryCloseEvent event) { forget(event.getPlayer().getUniqueId()); }
     @EventHandler public void onQuit(PlayerQuitEvent event) { forget(event.getPlayer().getUniqueId()); }

@@ -44,7 +44,9 @@ jobs:
         run: python3 .github/scripts/check_messages.py
 
       - name: Test release archive validation
-        run: python3 -m unittest discover -s .github/scripts -p 'test_*release.py' -v
+        run: |
+          python3 -m unittest discover -s .github/scripts -p 'test_*release.py' -v
+          python3 -m unittest discover -s .github/scripts -p 'test_gradle_build.py' -v
 
       - name: Verify TradeMC kit and regression tests
         run: |
@@ -63,8 +65,8 @@ jobs:
         shell: bash
         run: |
           set +e
-          ./gradlew --no-daemon build --continue 2>&1 | tee build.log
-          status=${PIPESTATUS[0]}
+          python3 .github/scripts/gradle_build.py
+          status=$?
           if [[ $status -ne 0 ]]; then
             {
               echo '### Gradle failure excerpt'
@@ -85,6 +87,15 @@ jobs:
         if: always()
         shell: bash
         run: python3 .github/scripts/report_tests.py
+
+      - name: Upload build transport diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-${{ github.sha }}
+          path: build*.log
+          retention-days: 14
+          if-no-files-found: ignore
 
       - name: Upload plugin JAR
         uses: actions/upload-artifact@v4

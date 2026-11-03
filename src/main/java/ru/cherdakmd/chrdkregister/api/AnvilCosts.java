@@ -48,7 +48,7 @@ public final class AnvilCosts {
     public static boolean remember(AnvilView view, ItemStack result) {
         int cost = actual(view,result);
         WRITTEN.remove(view);
-        if (result == null || result.getType().isAir() || cost < 0) { QUOTES.remove(view); return false; }
+        if (result == null || result.isEmpty() || cost < 0) { QUOTES.remove(view); return false; }
         // Ванильное исключение для одного переименования остаётся не дороже 39.
         cost=renamePrice(cost,cost>=40 && onlyRename(view,result));
         Quote previous = QUOTES.get(view);
