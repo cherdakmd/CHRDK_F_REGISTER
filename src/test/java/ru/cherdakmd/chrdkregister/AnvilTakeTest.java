@@ -81,7 +81,7 @@ class AnvilTakeTest {
             case "getPlayer"->player;case "getTopInventory"->inventory;case "getType"->InventoryType.ANVIL;
             case "getRepairCost"->cost;case "setRepairCost"->{cost=(int)args[0];yield null;}
             case "getRepairItemCountCost"->materials;case "getMaximumRepairCost"->maximum;case "getRenameText"->rename;
-            case "getCursor"->cursor;case "getItem"->slots[(int)args[0]];
+            case "getCursor"->cursor;case "getItem"->slots[(int)args[0]];case "convertSlot"->args[0];
             default->null;
         });
         final AnvilCostListener listener;

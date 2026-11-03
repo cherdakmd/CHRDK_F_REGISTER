@@ -31,7 +31,12 @@ class AnvilCostsTest {
     @SuppressWarnings("unchecked") static <T>T proxy(Class<T> type,Call call) {
         return (T)Proxy.newProxyInstance(type.getClassLoader(),new Class<?>[]{type},(p,m,a)->switch(m.getName()) {
             case "hashCode"->System.identityHashCode(p); case "equals"->p==a[0]; case "toString"->type.getSimpleName();
-            default->call.invoke(m.getName(),a);
+            default->{
+                Object value=call.invoke(m.getName(),a);
+                if(value==null && m.getReturnType().isPrimitive() && m.getReturnType()!=void.class)
+                    throw new UnsupportedOperationException("Missing fixture primitive: "+type.getSimpleName()+"."+m.getName());
+                yield value;
+            }
         });
     }
     @SuppressWarnings("unchecked") void install(Frame frame,AnvilCosts.Quote quote) throws Exception {
