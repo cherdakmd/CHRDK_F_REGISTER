@@ -11,7 +11,7 @@ import re
 import sys
 import tempfile
 from urllib.parse import quote
-from content import ROOT, Post, SafetyError, catalog, due_slot, news, tip, validate, MOSCOW, TAG
+from content import ROOT, Post, SafetyError, catalog, due_slot, news, tip, validate, MOSCOW, TAG, RC_TAG
 from cards import render
 from publisher import GitHub, Ledger, VK, publish
 
@@ -31,24 +31,42 @@ def tagged_news(gh, release):
 
 
 def release_for_run(gh, run):
+    """Стабильный релиз для новости, None для пререлиза, иначе отказ.
+
+    Release-workflow работает и для RC, поэтому успешный прогон с тегом -rc.*
+    не должен превращаться в ошибку: новость о выпуске публикуется только
+    после стабильного релиза. Пропуск возможен лишь когда собранный commit
+    действительно принадлежит пререлизу; отсутствие подходящего тега по
+    другой причине остаётся ошибкой, чтобы не скрыть рассинхрон API/тегов.
+    """
     if (run.get('conclusion') != 'success' or run.get('event') != 'release'
             or run.get('head_repository', {}).get('full_name') != gh.repository):
         raise SafetyError('Разрешён только успешный Release своего репозитория')
-    candidates = []
+    stable = []
+    prereleases = []
     for release in gh.call('releases?per_page=100'):
         tag = release['tag_name']
-        if release['draft'] or release['prerelease'] or not TAG.fullmatch(tag):
+        stable_tag = bool(TAG.fullmatch(tag))
+        rc_tag = bool(RC_TAG.fullmatch(tag))
+        if release['draft'] or not (stable_tag or rc_tag):
             continue
         obj = gh.call('git/ref/tags/' + quote(tag, safe=''))['object']
         for _ in range(5):
             if obj['type'] != 'tag':
                 break
             obj = gh.call('git/tags/' + obj['sha'])['object']
-        if obj['type'] == 'commit' and obj['sha'] == run['head_sha']:
-            candidates.append(release)
-    if len(candidates) != 1:
+        if obj['type'] != 'commit' or obj['sha'] != run['head_sha']:
+            continue
+        # Новость допустима только для стабильного тега без флага prerelease.
+        if stable_tag and not release['prerelease']:
+            stable.append(release)
+        else:
+            prereleases.append(release)
+    if len(stable) == 1:
+        return stable[0]
+    if len(stable) > 1 or not prereleases:
         raise SafetyError('Нельзя однозначно определить релиз завершившейся сборки')
-    return candidates[0]
+    return None
 
 
 def main(argv=None):
@@ -110,6 +128,12 @@ def main(argv=None):
         event = json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text())
         gh = github()
         release = release_for_run(gh, event['workflow_run'])
+        if release is None:
+            # RC-релиз: новость не готовится и не отправляется, job завершается успешно.
+            print('Пререлиз: новость о выпуске не публикуется, отправки нет.')
+            if os.environ.get('GITHUB_ACTIONS') == 'true':
+                print('::notice title=VK news::Пререлиз: новость о выпуске не публикуется')
+            return 0
         post = tagged_news(gh, release)
     elif args.kind == 'news' or args.news_version:
         if args.news_version:

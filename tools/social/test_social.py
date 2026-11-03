@@ -1,7 +1,9 @@
 """Тесты с fake API: настоящий VK/Issues никогда не вызываются."""
+from contextlib import redirect_stdout
 import copy
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
+from io import StringIO
 import json
 import os
 from pathlib import Path
@@ -349,6 +351,40 @@ class EntryPointTest(unittest.TestCase):
             with self.assertRaises(SafetyError): run.release_for_run(gh, event)
         self.assertEqual([], gh.calls)
 
+    def test_prerelease_workflow_run_is_a_clean_skip_without_publication(self):
+        # Release-workflow для RC не должен ронять job и не должен трогать VK/журнал.
+        rc = {'tag_name': 'v1.4.282-rc.16', 'draft': False, 'prerelease': True,
+              'assets': [{'name': 'chrdk-plugins-1.4.282-rc.16.zip', 'state': 'uploaded', 'size': 123}],
+              'published_at': '2026-11-03T15:46:07Z',
+              'html_url': 'https://github.com/owner/repo/releases/tag/v1.4.282-rc.16'}
+        class API:
+            repository = 'owner/repo'
+            def call(self, path):
+                responses = {'releases?per_page=100': [rc],
+                             'git/ref/tags/v1.4.282-rc.16': {'object': {'type': 'commit', 'sha': 'built-commit'}}}
+                return responses[path]
+        event = {'conclusion': 'success', 'event': 'release', 'head_sha': 'built-commit',
+                 'head_repository': {'full_name': 'owner/repo'}}
+        with tempfile.TemporaryDirectory() as folder:
+            event_file = Path(folder) / 'event.json'
+            event_file.write_text(json.dumps({'workflow_run': event}), encoding='utf-8')
+            out = Path(folder) / 'preview'
+            env = {'VK_AUTOPUBLISH_ENABLED': 'true', 'GITHUB_REF': 'refs/heads/main',
+                   'GITHUB_EVENT_NAME': 'workflow_run', 'GITHUB_EVENT_PATH': str(event_file),
+                   'GITHUB_REPOSITORY': 'owner/repo', 'GH_TOKEN': 'token',
+                   'VK_NEWS_ACCESS_TOKEN': 'secret', 'VK_NEWS_GROUP_ID': '237779683',
+                   'GITHUB_ACTIONS': 'true'}
+            output = StringIO()
+            with patch.dict(os.environ, env, clear=True), \
+                    patch('run.github', return_value=API()), \
+                    patch('run.configured_vk', side_effect=AssertionError('network')), \
+                    patch('run.VK', side_effect=AssertionError('network')), \
+                    patch('run.Ledger', side_effect=AssertionError('network')), \
+                    redirect_stdout(output):
+                self.assertEqual(0, run.main(['--publish', '--out', str(out)]))
+            self.assertIn('Пререлиз', output.getvalue())
+            self.assertFalse(out.exists())  # ни карточки, ни текста, ни записи в журнале
+
 
 class ReleaseBindingTest(unittest.TestCase):
     def release(self):
@@ -370,6 +406,69 @@ class ReleaseBindingTest(unittest.TestCase):
         self.assertEqual(release, run.release_for_run(API(), event))
         with self.assertRaises(SafetyError):
             run.release_for_run(API(), {**event, 'head_sha': 'different-commit'})
+
+    @staticmethod
+    def event(head_sha='built-commit'):
+        return {'conclusion': 'success', 'event': 'release', 'head_sha': head_sha,
+                'head_repository': {'full_name': 'owner/repo'}}
+
+    @staticmethod
+    def release_api(*releases, commits=None):
+        commits = commits or {}
+        class API:
+            repository = 'owner/repo'
+            def call(self, path):
+                if path == 'releases?per_page=100':
+                    return list(releases)
+                prefix = 'git/ref/tags/'
+                if path.startswith(prefix):
+                    return {'object': {'type': 'commit', 'sha': commits.get(path[len(prefix):], 'built-commit')}}
+                raise AssertionError(path)
+        return API()
+
+    def rc_release(self, tag='v1.4.282-rc.16'):
+        release = self.release()
+        release['tag_name'] = tag
+        release['prerelease'] = True
+        release['assets'] = [{'name': f'chrdk-plugins-{tag[1:]}.zip', 'state': 'uploaded', 'size': 123}]
+        release['html_url'] = 'https://github.com/owner/repo/releases/tag/' + tag
+        return release
+
+    def test_rc_release_run_is_skipped_not_rejected(self):
+        self.assertIsNone(run.release_for_run(self.release_api(self.rc_release()), self.event()))
+
+    def test_rc_tag_without_prerelease_flag_is_not_a_stable_release(self):
+        rc = self.rc_release()
+        rc['prerelease'] = False
+        self.assertIsNone(run.release_for_run(self.release_api(rc), self.event()))
+
+    def test_prerelease_flag_on_stable_tag_is_not_published(self):
+        release = self.release()
+        release['prerelease'] = True
+        self.assertIsNone(run.release_for_run(self.release_api(release), self.event()))
+
+    def test_rc_and_stable_on_same_commit_publish_only_stable(self):
+        stable = self.release()
+        self.assertEqual(stable, run.release_for_run(
+            self.release_api(self.rc_release(), stable), self.event()))
+
+    def test_unrelated_rc_does_not_mask_missing_stable_release(self):
+        # RC и стабильный тег есть в истории, но собранный commit им не принадлежит.
+        stable = self.release()
+        commits = {'v1.4.282-rc.16': 'other-commit', 'v1.4.272': 'other-commit'}
+        with self.assertRaises(SafetyError):
+            run.release_for_run(self.release_api(self.rc_release(), stable, commits=commits), self.event())
+
+    def test_two_stable_releases_are_rejected(self):
+        first, second = self.release(), self.release()
+        second['tag_name'] = 'v1.4.273'
+        with self.assertRaises(SafetyError):
+            run.release_for_run(self.release_api(first, second), self.event())
+
+    def test_arbitrary_suffix_is_not_treated_as_rc(self):
+        release = self.rc_release('v1.4.282-beta.1')
+        with self.assertRaises(SafetyError):
+            run.release_for_run(self.release_api(release), self.event())
 
     def test_news_comes_from_release_tag_not_main_or_release_body(self):
         import base64
