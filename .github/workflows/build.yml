@@ -59,6 +59,11 @@ jobs:
           python3 tools/clan_shop/build_bundle.py --check
           python3 -m unittest discover -s tools/clan_shop -p 'test_*.py' -v
 
+      - name: Check Incendium structure NBT format
+        run: |
+          python3 -m pip install -r tools/datapacks/requirements.txt
+          python3 tools/datapacks/check_incendium.py
+
       - name: Build plugin
         shell: bash
         run: |
