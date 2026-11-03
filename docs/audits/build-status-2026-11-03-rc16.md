@@ -202,3 +202,50 @@ Core API42, `ForgeMarketCatalog`, nullable frozen grant, восемь SKU, `/sho
 новые сообщения/конфиги, rc15 legacy snapshot, аудит `docs/audits/forge-shop-rc16.md`,
 обновлённые notes/памятка/вики и тесты. Результат сборки RC16, CRC/SHA256 и новый ZIP
 появятся только после зелёного CI и штатной упаковки; RC14 ZIP не является этим результатом.
+Фактический результат см. в разделе 9.
+
+## 9. Итог: проверенный комплект RC16 (2026-11-03)
+
+Зелёный CI и штатная упаковка RC16 получены; это **новый** комплект, а не исторический RC14.
+
+- Источник: коммит `6966f70` ветки `arena/49bc75f7-chrdk-f-register`.
+  `plugin_version=1.4.282-rc.16`, Core API42, 22 includ'а, Java 25 / Purpur 26.3.
+- CI `Build`, run `41619000955` — `success`: `Build wiki`, `Social automation`,
+  `Purpur 26.3 / Java 25` (включая шаг `Build plugin`, т.е. полный
+  `gradle_build.py` → `build --continue` с JUnit) и `Report test failures`.
+  Ранее `41617961106` (compile, invalid multi-catch) и `41618458624` (два
+  source-inspection теста) были исправлены `5335a13` и `6966f70`.
+- CI `Build` на `c11983a` — `41619607331`, `success`; CI транспортного
+  workflow `41619607311` — `success` со всеми шагами: полный Gradle build,
+  `./gradlew test :diamond-shop:test :tier-forge:test --console=plain`,
+  `report_tests.py`, `verify_release.py`, `pack_release.py`, `unzip -t`,
+  `verify_release.py --standalone`.
+- Артефакты: `chrdk-plugins-1.4.282-rc.16.zip` — 4 406 601 байт,
+  SHA256 `6d51d75cedb4f2930a055c8ea32d902dca542bc6eb11c8e74745e4e30f15436c`;
+  optional `chrdk-vk-1.4.282-rc.16.jar` — 128 940 байт,
+  SHA256 `41d7923149efed3a0f99a1891d1949072b7617513dfe175de45466e119b0c1b7`.
+- ZIP: 23 записи = 22 JAR + `ОБНОВЛЕНИЕ.txt` (707 634 байт); `unzip -t` — без
+  ошибок (CRC всех записей и внутренних JAR); `verify_release.py <dir>
+  1.4.282-rc.16` — «22 plugins, version 1.4.282-rc.16, update memo present»;
+  `plugin.yml` всех 22 JAR и standalone VK — `1.4.282-rc.16`;
+  `verify_release.py --standalone` — `CHRDK_VK`, версия `1.4.282-rc.16`.
+  В `chrdk-core`/`tier-forge`/`diamond-shop` JAR присутствуют скомпилированные
+  `ForgeMarketCatalog`, `ForgeMaterialSource`, `ShopExchange`, `ForgeMaterial*`,
+  `ForgeShop*`, `ShopQuantityGui` — то есть собран именно RC16, а не RC14.
+- `ОБНОВЛЕНИЕ.txt` содержит раздел RC16 и явное предупреждение: игровой smoke,
+  native `CraftItemStack` codec на живом сервере, серверная проверка и установка
+  **НЕ проводились**; Release и merge PR не выполнялись; общая crash-atomic
+  гарантия playerdata не обещается.
+- Локально после `6966f70`: `tools/wiki/build.py --check` — «33 страниц …
+  (v1.4.282-rc.16); данные и ссылки проверены; сверка источников: проверена»;
+  `git diff --check` — чисто. Полный `/tmp/run_checks.sh` на `b071e00` давал
+  19/19 `RESULT=0`.
+- Доставка: временный Git-тег `arena-local-zip-41619607311` (разрешённый
+  `github.com`), workflow и тег удалены сразу после `git fetch`/`git archive`.
+  Сгенерированные ZIP/JAR в Git не добавлены; исторические RC14 ZIP/JAR
+  остаются отдельными файлами и RC16 не подменяют.
+
+**Не проверялось / не реализовано:** живой серверный smoke матрицы из
+`docs/audits/forge-shop-rc16.md`, native NBT/`CraftItemStack` codec (тесты —
+source-inspection, а не рантайм-кодек), WAL-recovery в проде, дропы/цены на
+живом сервере и crash-atomic guarantee. Выпуск Release и merge PR не делались.
