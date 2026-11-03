@@ -75,7 +75,7 @@ public final class ForgeMarketCatalog {
         if (value == null || value.length() != 36) return false;
         try {
             return UUID.fromString(value).toString().equals(value.toLowerCase(Locale.ROOT));
-        } catch (IllegalArgumentException | RuntimeException error) {
+        } catch (RuntimeException error) {
             return false;
         }
     }
