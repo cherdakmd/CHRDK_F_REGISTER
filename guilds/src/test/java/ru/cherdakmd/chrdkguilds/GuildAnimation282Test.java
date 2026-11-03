@@ -150,6 +150,16 @@ class GuildAnimation282Test {
                     GuildStyleAnimation.render("Я🚀", "gold", "crown", animation, Long.MIN_VALUE));
     }
 
+    @Test void breathingHasTwoSecondInhaleAndFourSecondExhaleWithoutFlatCadence() {
+        assertEquals(0xa344ff, colors(MINI.deserialize(GuildStyleAnimation.render("X", null, null, "pulse", 0))).getFirst());
+        assertEquals(0xffd0ff, colors(MINI.deserialize(GuildStyleAnimation.render("X", null, null, "pulse", 2000))).getFirst());
+        assertEquals(0xa344ff, colors(MINI.deserialize(GuildStyleAnimation.render("X", null, null, "pulse", 6000))).getFirst());
+        Set<Integer> frames = new HashSet<>();
+        for (long time = 0; time < 6000; time += 500)
+            frames.add(colors(MINI.deserialize(GuildStyleAnimation.render("X", null, null, "pulse", time))).getFirst());
+        assertTrue(frames.size() >= 8, "Дыхание заметно даже на редком обновлении");
+    }
+
     @Test void uniformPulseDoesNotExpandIntoOneRgbTagPerCharacter() {
         String tag = "ДЛИННЫЙКЛАН🚀<red>";
         String markup = GuildStyleAnimation.render(tag, null, null, "pulse", 1500);

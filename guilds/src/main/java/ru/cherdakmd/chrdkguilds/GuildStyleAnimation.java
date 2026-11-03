@@ -18,7 +18,7 @@ final class GuildStyleAnimation {
         if (animation.equals("pulse")) {
             // Синхронному дыханию достаточно одного компонента: не раздуваем TAB-пакет
             // одинаковыми RGB-тегами на каждую букву.
-            name = colored(text, mix(0xa344ff, 0xffd0ff, smooth(intensity(phase * 2))));
+            name = colored(text, mix(0xa344ff, 0xffd0ff, breath(phase)));
         } else {
             int[] points = text.codePoints().toArray();
             StringBuilder frame = new StringBuilder();
@@ -65,6 +65,13 @@ final class GuildStyleAnimation {
                 + .28 * intensity(phase * 6 + offset * 1.4 + .15));
         return heat < .6 ? mix(0xff4b16, 0xffb31c, smooth(heat / .6))
                 : mix(0xffb31c, 0xfff4a3, smooth((heat - .6) / .4));
+    }
+
+    /** Вдох 2 с, выдох 4 с: плавные нулевые скорости на обоих концах. */
+    private static double breath(double phase) {
+        double cycle = phase * 2;
+        cycle -= Math.floor(cycle);
+        return cycle < 1.0 / 3 ? smooth(cycle * 3) : 1 - smooth((cycle - 1.0 / 3) * 1.5);
     }
 
     private static double smooth(double value) { return value * value * (3 - 2 * value); }
