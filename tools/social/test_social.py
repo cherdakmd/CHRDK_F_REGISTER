@@ -50,6 +50,7 @@ class FakeVK:
         self.uploads = self.posts = 0
         self.messages = {}
         self.fail = False
+        self.fail_upload = False
         self.lost_response = False
 
     def find(self, marker):
@@ -57,6 +58,8 @@ class FakeVK:
 
     def upload(self, image):
         self.uploads += 1
+        if self.fail_upload:
+            raise SafetyError('VK photos.saveMessagesPhoto отклонил запрос (код 100)')
         return 'photo-123_10'
 
     def post(self, post, attachment):
@@ -209,6 +212,19 @@ class DurablePublishingTest(unittest.TestCase):
         publish(POST, IMAGE, self.ledger(), self.vk)
         self.assertEqual(2, self.vk.uploads, 'после prepared можно перезагрузить фото, не сохраняя приватный access_key')
 
+    def test_photo_save_rejection_leaves_prepared_and_allows_retry(self):
+        # Инцидент 2026-11-02: photos.saveMessagesPhoto вернул код 100 до messages.send.
+        self.vk.fail_upload = True
+        with self.assertRaises(SafetyError) as error:
+            publish(POST, IMAGE, self.ledger(), self.vk)
+        self.assertIn('код 100', str(error.exception))
+        self.assertEqual('prepared', self.ledger().locate(POST.key)[1]['status'])
+        self.assertEqual(0, self.vk.posts)
+        self.vk.fail_upload = False
+        self.assertEqual((42, True), publish(POST, IMAGE, self.ledger(), self.vk))
+        self.assertEqual(1, self.vk.posts)
+        self.assertEqual(2, self.vk.uploads, 'фото загружается заново, но сообщение остаётся одним')
+
     def test_lost_final_ledger_write_is_reconciled(self):
         self.gh.fail_status = 'posted'
         with self.assertRaises(SafetyError):
@@ -289,6 +305,40 @@ class ApiTest(unittest.TestCase):
         self.assertEqual('photo-123_9', VK(123, 'SECRET', t, peer=PEER).upload(IMAGE))
         self.assertNotIn(b'SECRET', t.calls[1][2])
         self.assertNotIn('Authorization', t.calls[1][3])
+
+    def test_upload_rejects_malformed_upload_response_before_save(self):
+        # Невалидный photo/server/hash не должен уходить в saveMessagesPhoto
+        # и превращаться в неинформативный «код 100» от VK.
+        bad = ({'photo': '', 'server': 1, 'hash': 'h'},
+               {'photo': ['not-a-string'], 'server': 1, 'hash': 'h'},
+               {'photo': 'p', 'server': 1, 'hash': ''},
+               {'photo': 'p', 'server': 'not-a-number', 'hash': 'h'},
+               {'photo': 'p', 'hash': 'h'},
+               ['unexpected list'])
+        for answer in bad:
+            t = QueueTransport({'response': {'upload_url': 'https://pu.vk.com/upload'}}, answer)
+            with self.assertRaises(SafetyError) as error:
+                VK(123, 'SECRET', t, peer=PEER).upload(IMAGE)
+            self.assertIn('не подтвердил загрузку', str(error.exception))
+            self.assertEqual(2, len(t.calls), 'saveMessagesPhoto вызывать нельзя')
+
+    def test_upload_accepts_numeric_string_server(self):
+        # VK иногда возвращает server строкой; ужесточение не должно ломать рабочий путь.
+        t = QueueTransport({'response': {'upload_url': 'https://pu.vk.com/upload'}},
+                           {'photo': 'p', 'server': '123', 'hash': 'h'},
+                           {'response': [{'owner_id': -123, 'id': 9}]})
+        self.assertEqual('photo-123_9', VK(123, 'SECRET', t, peer=PEER).upload(IMAGE))
+
+    def test_save_messages_photo_code_100_stops_before_send_and_hides_params(self):
+        t = QueueTransport({'response': {'upload_url': 'https://pu.vk.com/upload'}},
+                           {'photo': 'p', 'server': 1, 'hash': 'h'},
+                           {'error': {'error_code': 100, 'request_params': [{'value': 'SECRET'}]}})
+        with self.assertRaises(SafetyError) as error:
+            VK(123, 'SECRET', t, peer=PEER).upload(IMAGE)
+        self.assertIn('код 100', str(error.exception))
+        self.assertNotIn('SECRET', str(error.exception))
+        self.assertEqual(3, len(t.calls))
+        self.assertFalse(any('messages.send' in str(call[0]) for call in t.calls))
 
     def test_history_scan_checks_sender_peer_and_whole_marker(self):
         t = QueueTransport({'response': {'items': [{'id': 3, 'from_id': -123, 'peer_id': PEER, 'text': POST.text}]}})
