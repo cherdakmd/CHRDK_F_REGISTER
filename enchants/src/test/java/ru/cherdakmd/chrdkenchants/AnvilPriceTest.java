@@ -5,6 +5,12 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 class AnvilPriceTest {
+    @Test void raisedServerCeilingKeepsFullPriceAndEnchantmentRules() {
+        assertTrue(AnvilPrice.allowed(85,Integer.MAX_VALUE,false));
+        assertEquals(85,AnvilPrice.total(60,25));
+        assertFalse(AnvilPrice.allowed(Integer.MAX_VALUE,Integer.MAX_VALUE,false));
+        assertFalse(AnvilPrice.nativeCompatible(false,false,85));
+    }
     @Test void mergeUsesActualResultLevel() {
         assertEquals(3, AnvilPrice.merge(2, 2, 5));
         assertEquals(5, AnvilPrice.merge(5, 5, 5));

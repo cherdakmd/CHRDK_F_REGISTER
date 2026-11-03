@@ -25,17 +25,22 @@ class ForgeMaterialTest {
         assertEquals(0, ForgeMaterial.chance(1,31,0));
         assertEquals(0, ForgeMaterial.chance(1,10,99));
     }
-    @Test void confirmationBindsBothFullInputsSlotWorldSettingsTimeAndLevels() {
-        Object settings = new Object(); UUID world = UUID.randomUUID();
-        var quote = new ForgeQuote<>("sword:pdc:durability", "crystals:16", 2, world, settings, 1000, 24);
-        assertTrue(quote.matches("sword:pdc:durability", "crystals:16",2,world,settings,1000,24));
-        assertFalse(quote.matches("sword:pdc:changed", "crystals:16",2,world,settings,900,24));
-        assertFalse(quote.matches("sword:pdc:durability", "crystals:15",2,world,settings,900,24));
-        assertFalse(quote.matches("sword:pdc:durability", "crystals:16",3,world,settings,900,24));
-        assertFalse(quote.matches("sword:pdc:durability", "crystals:16",2,UUID.randomUUID(),settings,900,24));
-        assertFalse(quote.matches("sword:pdc:durability", "crystals:16",2,world,new Object(),900,24));
-        assertFalse(quote.matches("sword:pdc:durability", "crystals:16",2,world,settings,1001,24));
-        assertFalse(quote.matches("sword:pdc:durability", "crystals:16",2,world,settings,900,23));
+    @Test void anvilQuoteBindsFullInputsWindowSettingsAndRename() {
+        Object settings=new Object(),view=new Object();
+        var quote=new ForgeAnvilInputs<>(view,"sword:pdc:durability","crystals:16",settings,"name");
+        assertTrue(quote.matches(view,"sword:pdc:durability","crystals:16",settings,"name"));
+        assertFalse(quote.matches(new Object(),"sword:pdc:durability","crystals:16",settings,"name"));
+        assertFalse(quote.matches(view,"sword:pdc:changed","crystals:16",settings,"name"));
+        assertFalse(quote.matches(view,"sword:pdc:durability","crystals:15",settings,"name"));
+        assertFalse(quote.matches(view,"sword:pdc:durability","crystals:16",new Object(),"name"));
+        assertFalse(quote.matches(view,"sword:pdc:durability","crystals:16",settings,"changed"));
+    }
+    @Test void selectionWrapsWithoutAcceptingForgedOrEmptyIndexes() {
+        assertEquals(0,ForgeAnvilInputs.next(0,1)); assertEquals(1,ForgeAnvilInputs.next(0,3));
+        assertEquals(0,ForgeAnvilInputs.next(2,3));
+        assertThrows(IllegalArgumentException.class,()->ForgeAnvilInputs.next(0,0));
+        assertThrows(IllegalArgumentException.class,()->ForgeAnvilInputs.next(3,3));
+        assertThrows(IllegalArgumentException.class,()->ForgeAnvilInputs.next(-1,3));
     }
     @Test void sequenceCannotWrapOrGoBackwards() {
         assertEquals(1, ForgeMaterial.nextSequence(0));
@@ -48,9 +53,10 @@ class ForgeMaterialTest {
         for (var material : ForgeMaterial.values()) {
             assertSame(material, ForgeMaterial.byId(material.id.toUpperCase(Locale.ROOT)));
             String lines = messages.getList("forge." + material.id + ".details").toString();
-            assertTrue(lines.contains("основную руку"));
-            assertTrue(lines.contains("вторую"));
-            assertTrue(lines.contains("/tiers forge confirm"));
+            assertTrue(lines.contains("слева"));
+            assertTrue(lines.contains("справа"));
+            assertTrue(lines.contains("ЛКМ"));
+            assertFalse(lines.contains("/tiers forge"));
             assertTrue(lines.contains("XP"));
             assertTrue(messages.has("forge." + material.id + ".name"));
         }
@@ -84,6 +90,29 @@ class ForgeMaterialTest {
             var retained = Messages.fromChecked(getClass().getResourceAsStream("/messages.yml"),path,
                     getClass().getResourceAsStream("/tierforge-messages-legacy-1.4.282-rc8.yml"),logger);
             assertEquals(custom,retained.raw("list-footer"));
+            assertEquals(yaml,java.nio.file.Files.readString(path));
+        }
+    }
+    @Test void rc9AnvilInstructionsMigrationPreservesCustomAndEmptyWithoutRewritingFile(
+            @org.junit.jupiter.api.io.TempDir java.nio.file.Path directory) throws Exception {
+        var path = directory.resolve("messages.yml");
+        byte[] legacy;
+        try (var input = getClass().getResourceAsStream("/tierforge-messages-legacy-1.4.282-rc9.yml")) {
+            assertNotNull(input); legacy = input.readAllBytes();
+        }
+        java.nio.file.Files.write(path,legacy);
+        var logger = Logger.getAnonymousLogger();
+        var fresh = Messages.fromChecked(getClass().getResourceAsStream("/messages.yml"),null,logger);
+        var migrated = Messages.fromChecked(getClass().getResourceAsStream("/messages.yml"),path,
+                getClass().getResourceAsStream("/tierforge-messages-legacy-1.4.282-rc9.yml"),logger);
+        assertEquals(fresh.raw("forge-help"),migrated.raw("forge-help"));
+        assertArrayEquals(legacy,java.nio.file.Files.readAllBytes(path));
+        for (String custom : List.of("Свой текст", "")) {
+            String yaml = "tiers:\n  forge-help: '" + custom + "'\n";
+            java.nio.file.Files.writeString(path,yaml);
+            var retained = Messages.fromChecked(getClass().getResourceAsStream("/messages.yml"),path,
+                    getClass().getResourceAsStream("/tierforge-messages-legacy-1.4.282-rc9.yml"),logger);
+            assertEquals(custom,retained.raw("forge-help"));
             assertEquals(yaml,java.nio.file.Files.readString(path));
         }
     }

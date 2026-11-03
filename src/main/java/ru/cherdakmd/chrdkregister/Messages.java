@@ -152,6 +152,8 @@ public final class Messages {
                 "artifacts-messages-legacy-1.4.282-rc7.yml", logger));
         migrateStockOverrides(defaults, overrides, readResource(plugin,
                 "tierforge-messages-legacy-1.4.282-rc8.yml", logger));
+        migrateStockOverrides(defaults, overrides, readResource(plugin,
+                "tierforge-messages-legacy-1.4.282-rc9.yml", logger));
         overrides.replaceAll((key, text) -> GameplayRewardTexts.message(moduleName, key, text));
         Messages messages = new Messages(defaults, overrides, logger);
         messages.logMissingKeys(fileName);
@@ -180,6 +182,7 @@ public final class Messages {
         if (createMissing && !Files.exists(file)) plugin.saveResource(fileName, false);
         Map<String, String> overrides = checkedOverrides(base, file);
         migrateCheckedStock(defaults, overrides, plugin.getResource("enchants-messages-legacy-1.4.282-rc6.yml"));
+        migrateCheckedStock(defaults, overrides, plugin.getResource("enchants-messages-legacy-1.4.282-rc9.yml"));
         overrides.replaceAll((key, text) -> GameplayRewardTexts.message(plugin.getName(), key, text));
         return checkedMessages(defaults, overrides, logger);
     }

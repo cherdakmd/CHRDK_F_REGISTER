@@ -130,7 +130,7 @@ class AddonRetirement271Test {
         assertNull(BankCharge.permission("lottery"));
     }
     @Test void sharedCoreBukkitAndBankContractsStillExist() {
-        assertEquals(39,ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
+        assertEquals(40,ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
         assertTrue(org.bukkit.event.Event.class.isAssignableFrom(ru.cherdakmd.chrdkregister.api.events.PassGrantedEvent.class));
         assertNotNull(ru.cherdakmd.chrdkregister.api.ChargeRecovery.class);
         assertNotNull(ru.cherdakmd.chrdkregister.api.MilestoneAwards.class);

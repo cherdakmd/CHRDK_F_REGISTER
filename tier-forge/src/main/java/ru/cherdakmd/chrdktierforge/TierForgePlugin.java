@@ -66,7 +66,7 @@ public final class TierForgePlugin extends JavaPlugin {
         saveDefaultConfig();
         reloadTierConfig();
         try {
-            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 38) throw new IllegalStateException("Нужен Core API 38+");
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 40) throw new IllegalStateException("Нужен Core API 40+");
             this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"tierforge-awards",ru.cherdakmd.chrdkregister.api.MilestoneMigration.tierForge(getDataFolder().toPath().resolve("stats.yml")));
         } catch (Exception | LinkageError error) {
             getLogger().log(java.util.logging.Level.SEVERE,"Модуль остановлен без сброса прогресса/наград",error);
@@ -75,6 +75,7 @@ public final class TierForgePlugin extends JavaPlugin {
         this.items = new TierItems(this);
         this.materials = new ForgeMaterials(this);
         Bukkit.getPluginManager().registerEvents(materials, this);
+        Bukkit.getPluginManager().registerEvents(new ForgeAnvilListener(this), this);
         this.visuals = new TierVisualService(this);
         this.visuals.restart();
         loadStats();

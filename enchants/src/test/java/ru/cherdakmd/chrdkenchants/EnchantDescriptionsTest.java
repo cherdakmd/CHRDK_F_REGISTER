@@ -89,6 +89,24 @@ class EnchantDescriptionsTest {
         return Messages.fromChecked(getClass().getResourceAsStream("/messages.yml"), file,
                 getClass().getResourceAsStream("/enchants-messages-legacy-1.4.282-rc6.yml"), LOG);
     }
+    @Test void rc9AnvilHelpMigratesAndOwnerListOrEmptyIsPreserved() throws Exception {
+        Path file=folder.resolve("rc9.yml");
+        try(var input=getClass().getResourceAsStream("/enchants-messages-legacy-1.4.282-rc9.yml")) { assertNotNull(input); Files.copy(input,file); }
+        byte[] before=Files.readAllBytes(file);
+        var fresh=messages();
+        var migrated=Messages.fromChecked(getClass().getResourceAsStream("/messages.yml"),file,
+                getClass().getResourceAsStream("/enchants-messages-legacy-1.4.282-rc9.yml"),LOG);
+        assertEquals(fresh.template("help-anvil"),migrated.template("help-anvil"));
+        assertTrue(plain(migrated,"help-anvil").contains("полная цена"));
+        assertArrayEquals(before,Files.readAllBytes(file));
+        for(String custom:List.of("Свой текст","")) {
+            String yaml="enchants:\n  help-anvil: '"+custom+"'\n";
+            Files.writeString(file,yaml);
+            var retained=Messages.fromChecked(getClass().getResourceAsStream("/messages.yml"),file,
+                    getClass().getResourceAsStream("/enchants-messages-legacy-1.4.282-rc9.yml"),LOG);
+            assertEquals(custom,retained.template("help-anvil"));assertEquals(yaml,Files.readString(file));
+        }
+    }
     @Test void malformedOwnerYamlIsNotSubstitutedDuringMigration() throws Exception {
         Path file = folder.resolve("messages.yml"); String broken = "enchants: [broken"; Files.writeString(file, broken);
         assertThrows(org.bukkit.configuration.InvalidConfigurationException.class, () -> migrated(file));

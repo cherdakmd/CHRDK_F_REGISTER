@@ -36,7 +36,9 @@ class WikiBuildTest(unittest.TestCase):
         self.assertEqual(3, cards.count("### "))
         for name in ("Кристалл возвышения", "Кузнечное ядро", "Печать перековки"):
             self.assertIn(name, cards)
-        self.assertEqual(3, cards.count("/tiers forge confirm"))
+        self.assertEqual(3, cards.count("В наковальне"))
+        self.assertNotIn("/tiers forge confirm", cards)
+        self.assertEqual(3, cards.count("ЛКМ с пустым курсором"))
         self.assertIn("Легендарный | 16 | 24", book.render_table("forge_costs"))
         self.assertIn("4.2%", book.render_table("forge_drops"))
         self.assertNotIn("999999", book.render_table("forge_drops"))

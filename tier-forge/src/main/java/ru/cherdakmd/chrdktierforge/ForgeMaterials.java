@@ -12,7 +12,6 @@ import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.event.inventory.PrepareSmithingEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import ru.cherdakmd.chrdkregister.api.events.QualifiedHuntKillEvent;
@@ -26,15 +25,36 @@ final class ForgeMaterials implements Listener {
     private final NamespacedKey token;
     private final NamespacedKey sequence;
     private final NamespacedKey uid;
-    private final Map<UUID, Pending> pending = new HashMap<>();
     private final Random random = new Random();
-    private record Pending(ItemStack main, ItemStack off, ItemStack result, int slot, int units, int xp,
-                           UUID world, TierForgeConfig settings, long deadline) { }
+    private final ru.cherdakmd.chrdkregister.Messages legacy;
     ForgeMaterials(TierForgePlugin plugin) {
         this.plugin = plugin;
         token = new NamespacedKey(plugin, "forge_material_v1");
         sequence = new NamespacedKey(plugin, "forge_sequence");
         uid = new NamespacedKey(plugin, TierItems.PDC_MODIFIER_UID);
+        try (var input=plugin.getResource("tierforge-messages-legacy-1.4.282-rc9.yml")) {
+            legacy=ru.cherdakmd.chrdkregister.Messages.fromChecked(input,null,plugin.getLogger());
+        } catch (java.io.IOException | org.bukkit.configuration.InvalidConfigurationException failure) { throw new IllegalStateException("Повреждён stock-снимок расходников",failure); }
+        scheduleRefresh();
+    }
+    private void scheduleRefresh() {
+        org.bukkit.Bukkit.getScheduler().runTask(plugin,() -> org.bukkit.Bukkit.getOnlinePlayers().forEach(this::refresh));
+    }
+    private void refresh(Player player) {
+        for (var stack:player.getInventory().getContents()) {
+            var type=kind(stack); if (type==null) continue;
+            var meta=stack.getItemMeta(); var before=meta.lore();
+            if (before!=null && before.stream().map(net.kyori.adventure.text.Component::compact).toList().equals(
+                    legacy.getList("forge."+type.id+".details").stream().map(net.kyori.adventure.text.Component::compact).toList())) {
+                meta.lore(plugin.messages().getList("forge."+type.id+".details")); stack.setItemMeta(meta);
+            }
+        }
+    }
+    @EventHandler public void join(org.bukkit.event.player.PlayerJoinEvent event) {
+        org.bukkit.Bukkit.getScheduler().runTask(plugin,() -> { if(event.getPlayer().isOnline()) refresh(event.getPlayer()); });
+    }
+    @EventHandler(ignoreCancelled=true) public void open(InventoryOpenEvent event) {
+        if (event.getView() instanceof org.bukkit.inventory.view.AnvilView && event.getPlayer() instanceof Player player) refresh(player);
     }
     boolean enabled() { return plugin.getConfig().getBoolean("forge-materials.enabled", true); }
     boolean legacyRerollEnabled() {
@@ -66,124 +86,72 @@ final class ForgeMaterials implements Listener {
             plugin.messages().send(player, "forge-found", "name", plugin.messages().mini("forge." + kind.id + ".name"));
         }
     }
+    record Plan(ItemStack left, ItemStack right, ItemStack result, int units, int xp, TierForgeConfig settings) { }
+    static final class Failure extends RuntimeException {
+        final String key; final Object[] arguments;
+        Failure(String key, Object... arguments) { this.key=key; this.arguments=arguments; }
+    }
+    private void fail(String key,Object... arguments) { throw new Failure(key,arguments); }
     boolean command(Player player, String[] args) {
-        if (args.length == 1 || args.length == 2 && args[1].equalsIgnoreCase("help")) {
-            plugin.messages().sendList(player, "forge-help");
-            for (var kind : ForgeMaterial.values()) {
-                player.sendMessage(plugin.messages().get("forge." + kind.id + ".name"));
-                plugin.messages().sendList(player, "forge." + kind.id + ".details");
-            }
-            return true;
+        plugin.messages().sendList(player,"forge-help");
+        for (var kind : ForgeMaterial.values()) {
+            player.sendMessage(plugin.messages().get("forge."+kind.id+".name"));
+            plugin.messages().sendList(player,"forge."+kind.id+".details");
         }
-        if (!enabled() || !plugin.config().anvilEnabled() || player.getGameMode() != GameMode.SURVIVAL
-                || !player.hasPermission("chrdktierforge.use") || plugin.coreApi() == null || !plugin.coreApi().isAuthenticated(player)
-                || player.getOpenInventory().getTopInventory().getType() != org.bukkit.event.inventory.InventoryType.CRAFTING) {
-            pending.remove(player.getUniqueId()); plugin.messages().send(player, "forge-unavailable"); return true;
-        }
-        if (args.length == 2 && args[1].equalsIgnoreCase("confirm")) {
-            var plan = pending.remove(player.getUniqueId());
-            var inventory = player.getInventory();
-            if (plan == null || !new ForgeQuote<>(plan.main, plan.off, plan.slot, plan.world, plan.settings, plan.deadline, plan.xp)
-                    .matches(inventory.getItemInMainHand(), inventory.getItemInOffHand(), inventory.getHeldItemSlot(),
-                            player.getWorld().getUID(), plugin.config(), System.currentTimeMillis(), player.getLevel())) {
-                plugin.messages().send(player, "forge-stale"); return true;
-            }
-            // План собран полностью до изменения входов, событий/сети/асинхронного ожидания между записями нет.
-            ItemStack rest = plan.off.clone(); rest.setAmount(rest.getAmount() - plan.units);
-            int level = player.getLevel(), total = player.getTotalExperience();
-            float progress = player.getExp();
-            try {
-                inventory.setItemInOffHand(rest.getAmount() == 0 ? null : rest);
-                inventory.setItemInMainHand(plan.result.clone());
-                player.giveExpLevels(-plan.xp);
-            } catch (RuntimeException failure) {
-                inventory.setItemInMainHand(plan.main.clone());
-                inventory.setItemInOffHand(plan.off.clone());
-                player.setLevel(level); player.setTotalExperience(total); player.setExp(progress);
-                plugin.getLogger().log(java.util.logging.Level.SEVERE, "Кузня: откат незавершённого применения", failure);
-                plugin.messages().send(player, "forge-stale"); return true;
-            }
-            plugin.messages().send(player, "forge-done");
-            plugin.collection().record(player, plan.result);
-            return true;
-        }
-        pending.remove(player.getUniqueId());
-        ForgeMaterial kind = ForgeMaterial.byId(args[1]);
-        if (kind == null || args.length != (kind == ForgeMaterial.ASCEND ? 2 : 3)) {
-            plugin.messages().send(player, "forge-usage"); return true;
-        }
-        var main = player.getInventory().getItemInMainHand();
-        var off = player.getInventory().getItemInOffHand();
+        return true; // Справка по старому адресу; применение только в настоящей наковальне.
+    }
+    Plan build(ItemStack main, ItemStack off, ForgeMaterial kind, String selectedId) {
         String tierId = plugin.items().tierOf(main);
         var tier = tierId == null ? null : plugin.config().find(tierId);
         var itemKind = ItemKind.classify(main.getType().name());
         if (main.getAmount() != 1 || tier == null || itemKind == null || !plugin.config().kindAllowed(itemKind)
                 || plugin.items().isUnidentified(main) || kind(off) != kind || main.getItemMeta() == null) {
-            plugin.messages().send(player, "forge-input"); return true;
+            fail("forge-input"); return null;
         }
         String identity = main.getItemMeta().getPersistentDataContainer().get(uid, PersistentDataType.STRING);
         long oldSequence = main.getItemMeta().getPersistentDataContainer().getOrDefault(sequence, PersistentDataType.LONG, 0L);
         if (!TierModifierIds.validUid(identity) || oldSequence < 0 || oldSequence == Long.MAX_VALUE) {
-            plugin.messages().send(player, "forge-legacy"); return true;
+            fail("forge-legacy"); return null;
         }
         long next = ForgeMaterial.nextSequence(oldSequence);
         // Повтор предпросмотра, перестановка и relog не меняют выбор свойства; UID не перезаписывается.
-        Random choice = ForgeMaterial.choice(identity, next, kind, args.length == 3 ? args[2] : "");
+        Random choice = ForgeMaterial.choice(identity, next, kind, selectedId == null ? "" : selectedId);
         var properties = new ArrayList<>(plugin.items().storedPropertiesOf(main));
         ForgeUpgrade.Def upgrade = null;
         int units = 1, xp;
         if (kind == ForgeMaterial.ASCEND) {
             String nextTier = TierDef.next(tierId);
             tier = nextTier == null ? null : plugin.config().find(nextTier);
-            if (tier == null) { plugin.messages().send(player, "up-max"); return true; }
+            if (tier == null) { fail("up-max"); return null; }
             int index = TierDef.indexOf(nextTier);
             units = ForgeMaterial.ascendCost(index); xp = ForgeMaterial.ascendXp(index);
-            if (!plugin.config().propertiesEnabled()) { plugin.messages().send(player, "forge-unavailable"); return true; }
+            if (!plugin.config().propertiesEnabled()) { fail("forge-unavailable"); return null; }
             properties = new ArrayList<>(TierProperties.roll(nextTier, itemKind,
                     plugin.config().propertiesPerItem(), choice));
         } else if (kind == ForgeMaterial.TEMPER) {
-            upgrade = ForgeUpgrade.ALL.stream().filter(def -> def.id().equalsIgnoreCase(args[2])).findFirst().orElse(null);
+            upgrade = ForgeUpgrade.ALL.stream().filter(def -> def.id().equalsIgnoreCase(selectedId)).findFirst().orElse(null);
             int current = upgrade == null ? 0 : plugin.items().upgradeLevel(main, upgrade.id());
             if (!plugin.config().improveEnabled() || upgrade == null || !upgrade.fits(itemKind) || current < 1 || current >= upgrade.maxLevel()) {
-                plugin.messages().send(player, "forge-upgrade-invalid"); return true;
+                fail("forge-upgrade-invalid"); return null;
             }
             xp = 8 + current * 2;
         } else {
-            TierProperty selected = TierProperties.byId(args[2]);
+            TierProperty selected = TierProperties.byId(selectedId);
             if (!plugin.config().propertiesEnabled() || selected == null || !plugin.items().propertiesOf(main).contains(selected)) {
-                plugin.messages().send(player, "forge-property-invalid"); return true;
+                fail("forge-property-invalid"); return null;
             }
             var excluded = Set.copyOf(properties);
             var alternatives = TierProperties.candidates(tierId, itemKind).stream().filter(p -> !excluded.contains(p)).toList();
-            if (alternatives.isEmpty()) { plugin.messages().send(player, "forge-property-invalid"); return true; }
+            if (alternatives.isEmpty()) { fail("forge-property-invalid"); return null; }
             properties.set(properties.indexOf(selected), alternatives.get(choice.nextInt(alternatives.size())));
             xp = 12 + TierDef.indexOf(tierId) * 3;
         }
-        if (off.getAmount() < units || player.getLevel() < xp) {
-            plugin.messages().send(player, "forge-cost", "units", units, "xp", xp); return true;
-        }
+        if (off.getAmount() < units) fail("forge-cost", "units", units, "xp", xp);
         ItemStack result = plugin.items().forgeCopy(main, tier, properties, upgrade, next);
-        // Одна запись на игрока, очищается на quit/open; никакой выдачи при просмотре.
-        pending.put(player.getUniqueId(), new Pending(main.clone(), off.clone(), result, player.getInventory().getHeldItemSlot(),
-                units, xp, player.getWorld().getUID(), plugin.config(), System.currentTimeMillis() + 30_000));
-        plugin.messages().send(player, "forge-preview", "units", units, "xp", xp);
-        if (result.getItemMeta().displayName() != null) player.sendMessage(result.getItemMeta().displayName());
-        if (result.getItemMeta().lore() != null) result.getItemMeta().lore().forEach(player::sendMessage);
-        plugin.messages().send(player, "forge-preserve");
-    return true;
+        return new Plan(main.clone(),off.clone(),result,units,xp,plugin.config());
     }
-    List<String> complete(CommandSender sender, String[] args) {
-        if (!(sender instanceof Player p) || plugin.coreApi() == null || !plugin.coreApi().isAuthenticated(p)
-                || !p.hasPermission("chrdktierforge.use")) return List.of();
-        String prefix = args[args.length - 1].toLowerCase(Locale.ROOT);
-        List<String> values = args.length == 2 ? List.of("help", "ascend", "temper", "reforge", "confirm")
-                : args.length == 3 && args[1].equalsIgnoreCase("temper") ? plugin.items().upgradesOf(p.getInventory().getItemInMainHand()).keySet().stream().map(ForgeUpgrade.Def::id).toList()
-                : args.length == 3 && args[1].equalsIgnoreCase("reforge") ? plugin.items().propertiesOf(p.getInventory().getItemInMainHand()).stream().map(TierProperty::id).toList() : List.of();
-        return values.stream().filter(s -> s.startsWith(prefix)).toList();
-    }
-    @EventHandler public void quit(PlayerQuitEvent event) { pending.remove(event.getPlayer().getUniqueId()); }
-    @EventHandler public void open(InventoryOpenEvent event) { pending.remove(event.getPlayer().getUniqueId()); }
-    @EventHandler(ignoreCancelled = true) public void interact(PlayerInteractEvent event) { if (kind(event.getItem()) != null) event.setCancelled(true); }
+    List<String> complete(CommandSender sender,String[] args) { return args.length==2 && "help".startsWith(args[1].toLowerCase(Locale.ROOT)) ? List.of("help") : List.of(); }
+    @EventHandler(ignoreCancelled = true) public void interact(PlayerInteractEvent event) { if (kind(event.getItem()) != null && (event.getClickedBlock()==null || !org.bukkit.Tag.ANVIL.isTagged(event.getClickedBlock().getType()))) event.setCancelled(true); }
     @EventHandler(ignoreCancelled = true) public void place(BlockPlaceEvent event) { if (kind(event.getItemInHand()) != null) event.setCancelled(true); }
     @EventHandler public void craft(PrepareItemCraftEvent event) {
         if (Arrays.stream(event.getInventory().getMatrix()).anyMatch(i -> kind(i) != null)) event.getInventory().setResult(null);
