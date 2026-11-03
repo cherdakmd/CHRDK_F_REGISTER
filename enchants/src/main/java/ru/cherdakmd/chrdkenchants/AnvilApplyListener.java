@@ -34,7 +34,7 @@ public final class AnvilApplyListener implements Listener {
     public AnvilApplyListener(EnchantsPlugin plugin) { this.plugin = plugin; }
     void clear() { quotes.clear(); notices.clear(); }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.HIGH)
     public void onPrepareAnvil(PrepareAnvilEvent event) {
         AnvilView view = event.getView();
         ItemStack left = event.getInventory().getItem(0);
@@ -58,15 +58,15 @@ public final class AnvilApplyListener implements Listener {
         // Paper может повторно отправить PrepareResult после createResult при переименовании.
         // Это уже наш результат/цена: не сливаем уровень и не начисляем доплату повторно.
         if (previous != null && previous.source(view, left, right, view.getRenameText())
-                && previous.couldBeRepeat(view.getRepairCost(), view.getRepairItemCountCost())) {
-            if (!previous.output(event.getResult(), view.getRepairCost(), view.getRepairItemCountCost(),
+                && previous.couldBeRepeat(ru.cherdakmd.chrdkregister.api.AnvilCosts.actual(view,event.getResult()), view.getRepairItemCountCost())) {
+            if (!previous.output(event.getResult(), ru.cherdakmd.chrdkregister.api.AnvilCosts.actual(view,event.getResult()), view.getRepairItemCountCost(),
                     view.getMaximumRepairCost(), plugin.sourceGeneration(), cumulative, creative)) {
                 reject(event, viewer); // Изменённый сторонним обработчиком или устаревший preview.
             }
             return;
         }
         ItemStack vanilla = event.getResult();
-        int vanillaCost = view.getRepairCost();
+        int vanillaCost = ru.cherdakmd.chrdkregister.api.AnvilCosts.actual(view,event.getResult());
         boolean pureBook = right.getItemMeta() instanceof EnchantmentStorageMeta storage && !storage.hasStoredEnchants();
         // Null смешанной книги может означать конфликт vanilla, недопустимый предмет или Too Expensive.
         if (!AnvilPrice.nativeCompatible(pureBook, vanilla != null, vanillaCost)) {
@@ -123,7 +123,7 @@ public final class AnvilApplyListener implements Listener {
             return;
         }
         view.setRepairItemCountCost(1);
-        view.setRepairCost(cost);
+        ru.cherdakmd.chrdkregister.api.AnvilCosts.price(view, cost);
         event.setResult(output);
     }
 
@@ -133,7 +133,7 @@ public final class AnvilApplyListener implements Listener {
         var quote = quotes.get(player.getUniqueId());
         var left = view.getTopInventory().getItem(0); var right = view.getTopInventory().getItem(1);
         if (quote == null || !quote.source(view, left, right, view.getRenameText())
-                || !quote.output(view.getTopInventory().getItem(2), view.getRepairCost(), view.getRepairItemCountCost(),
+                || !quote.output(view.getTopInventory().getItem(2), ru.cherdakmd.chrdkregister.api.AnvilCosts.actual(view), view.getRepairItemCountCost(),
                     view.getMaximumRepairCost(), plugin.sourceGeneration(), cumulativeCost(), player.getGameMode() == GameMode.CREATIVE)
                 || view.canBypassCost() || !player.hasPermission("chrdkenchants.use") || plugin.coreApi() == null
                 || !plugin.coreApi().isAuthenticated(player) || plugin.service().canApplyFromBook(left, right) != null) {
@@ -155,7 +155,7 @@ public final class AnvilApplyListener implements Listener {
     private void reject(PrepareAnvilEvent event, Player viewer) {
         quotes.remove(viewer.getUniqueId());
         event.setResult(null);
-        event.getView().setRepairCost(-1);
+        ru.cherdakmd.chrdkregister.api.AnvilCosts.price(event.getView(), -1);
     }
 
     private boolean customBook(ItemStack right) {
@@ -187,7 +187,7 @@ public final class AnvilApplyListener implements Listener {
         return 1;
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onTakeResult(InventoryClickEvent event) {
         if (!(event.getView() instanceof AnvilView view) || event.getRawSlot() != 2
                 || !(event.getWhoClicked() instanceof Player player)) return;
@@ -198,10 +198,10 @@ public final class AnvilApplyListener implements Listener {
         if (customBook(right) || quote != null && quote.view() == view) {
             if (!customBook(right) || left == null || result == null || quote == null
                     || !quote.source(view, left, right, view.getRenameText())
-                    || !quote.output(result, view.getRepairCost(), view.getRepairItemCountCost(),
+                    || !quote.output(result, ru.cherdakmd.chrdkregister.api.AnvilCosts.actual(view), view.getRepairItemCountCost(),
                         view.getMaximumRepairCost(), plugin.sourceGeneration(), cumulativeCost(),
                         player.getGameMode() == GameMode.CREATIVE)
-                    || !AnvilPrice.allowed(view.getRepairCost(), view.getMaximumRepairCost(),
+                    || !AnvilPrice.allowed(ru.cherdakmd.chrdkregister.api.AnvilCosts.actual(view), view.getMaximumRepairCost(),
                         player.getGameMode() == GameMode.CREATIVE)
                     || view.canBypassCost() || !player.hasPermission("chrdkenchants.use")
                     || plugin.coreApi() == null || !plugin.coreApi().isAuthenticated(player)
@@ -212,12 +212,9 @@ public final class AnvilApplyListener implements Listener {
         }
         if (result == null || left == null || !result.hasItemMeta()
                 || event.getAction() == InventoryAction.NOTHING
-                || (player.getGameMode() != GameMode.CREATIVE && player.getLevel() < view.getRepairCost())) return;
+                || (player.getGameMode() != GameMode.CREATIVE && player.getLevel() < ru.cherdakmd.chrdkregister.api.AnvilCosts.actual(view))) return;
         Map<String, Integer> before = plugin.items().read(left);
-        boolean newCurse = plugin.items().read(result).entrySet().stream()
-                .anyMatch(entry -> EnchantRegistry.byId(entry.getKey()) != null
-                        && EnchantRegistry.byId(entry.getKey()).curse()
-                        && entry.getValue() > before.getOrDefault(entry.getKey(), 0));
+        boolean newCurse = addsCurse(before,plugin.items().read(result));
         if (!newCurse || notices.size() >= AnvilQuotes.LIMIT) return;
         Object ticket = new Object();
         if (notices.putIfAbsent(player.getUniqueId(), ticket) != null) return;
@@ -232,6 +229,19 @@ public final class AnvilApplyListener implements Listener {
         });
     }
 
+    /** Core сам отменяет native-клик при дорогой операции; уведомляем только по факту commit. */
+    @EventHandler(priority=EventPriority.MONITOR)
+    public void paid(ru.cherdakmd.chrdkregister.api.events.AnvilPaidResultEvent event) {
+        if (event.getPlayer().isOnline() && addsCurse(plugin.items().read(event.left()),plugin.items().read(event.result()))) {
+            plugin.messages().send(event.getPlayer(),"anvil-curse-applied");
+        }
+    }
+    static boolean addsCurse(Map<String,Integer> before,Map<String,Integer> result) {
+        return result.entrySet().stream().anyMatch(entry -> {
+            var definition=EnchantRegistry.byId(entry.getKey());
+            return definition!=null && definition.curse() && entry.getValue()>before.getOrDefault(entry.getKey(),0);
+        });
+    }
     private void forget(UUID player) { quotes.remove(player); notices.remove(player); }
     @EventHandler public void onClose(InventoryCloseEvent event) { forget(event.getPlayer().getUniqueId()); }
     @EventHandler public void onQuit(PlayerQuitEvent event) { forget(event.getPlayer().getUniqueId()); }

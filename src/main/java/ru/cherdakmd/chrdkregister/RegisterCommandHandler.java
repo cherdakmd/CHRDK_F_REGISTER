@@ -27,7 +27,7 @@ import java.util.Set;
  */
 public final class RegisterCommandHandler implements CommandExecutor, TabCompleter {
     private static final List<String> ADMIN_SUBCOMMANDS =
-            List.of("add", "remove", "check", "unregister", "reset2fa", "status", "reload",
+            List.of("add", "remove", "check", "unregister", "reset2fa", "status", "tabcheck", "reload",
                     "pending", "donations", "health", "approve", "reject", "sessions", "logoutall", "stats", "doctor", "audit",
                     "backup", "gift", "testpay", "testpay-live", "shoppay", "recheck", "donationsgui",
                     "luckperms", "update", "shopbuy", "shoprevoke", "shopgift");
@@ -910,6 +910,12 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 } else {
                     messages.send(sender, "pass.two-factor-not-enabled", "target_name", targetName);
                 }
+                return true;
+            }
+            case "tabcheck" -> {
+                if (args.length > 2) { messages.send(sender, "tab.audit-offline"); return true; }
+                Player target = args.length == 2 ? Bukkit.getPlayerExact(args[1]) : sender instanceof Player p ? p : null;
+                plugin.tabList().audit(sender, target);
                 return true;
             }
             case "status" -> {
@@ -1830,7 +1836,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                     || "check".equals(sub) || "info".equals(sub)
                     || "unregister".equals(sub) || "resetpass".equals(sub)
                     || "reset2fa".equals(sub) || "disable2fa".equals(sub) || "un2fa".equals(sub)
-                    || "sessions".equals(sub) || "logoutall".equals(sub)) {
+                    || "sessions".equals(sub) || "logoutall".equals(sub) || "tabcheck".equals(sub)) {
                 return completePlayerNames(args[1]);
             }
             if ("gift".equals(sub)) {

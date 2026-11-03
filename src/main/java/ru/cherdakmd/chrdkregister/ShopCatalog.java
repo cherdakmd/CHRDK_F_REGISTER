@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -167,7 +168,7 @@ public final class ShopCatalog {
             List<String> permissions = strings(entry.get("permissions"));
             List<String> commands = strings(entry.get("commands"));
 
-            ShopProduct product = new ShopProduct(id, name, text(entry.get("description")),
+            ShopProduct product = new ShopProduct(id, name, clanStyleDescription(id, text(entry.get("description"))),
                     price, days, group, tag, permissions, commands, includes, List.of(), passDays, rank, includedDays);
             seen.put(id, product);
             products.add(product);
@@ -187,6 +188,18 @@ public final class ShopCatalog {
      * Циклы, ссылки на себя и на несуществующие товары отбрасываются с пояснением,
      * а не роняют каталог.</p>
      */
+    /** Миграция только точных старых stock-описаний; цены, сроки и авторские тексты не трогаем. */
+    static String clanStyleDescription(String id, String description) {
+        String old = "Личная лицензия на 30 дней для одного своего клана; перенос не чаще раза в 24 часа, применение с согласия главы. Только внешний вид. /clan style";
+        if (Set.of("clan-name-style", "clan-emblem", "clan-card-frame").contains(id) && old.equals(description))
+            return "Личная лицензия на 30 дней. Оформление меняет только глава по своим покупкам; смена и перенос без ожидания. Только внешний вид. /clan style";
+        String oldPack = "Цвет, значок и рамка на 30 дней; три анимации на выбор бонусом. Личные лицензии, один свой клан, перенос раз в 24 часа, согласие главы. /clan style";
+        String previousPack = "Цвет, значок и рамка на 30 дней; три анимации на выбор бонусом. Личные лицензии; применяет только глава по своим покупкам, без ожидания переноса. /clan style";
+        if ("clan-style-pack".equals(id) && (oldPack.equals(description) || previousPack.equals(description)))
+            return "Цвет, значок и рамка на 30 дней; пять анимаций на выбор бонусом. Личные лицензии; применяет только глава по своим покупкам, без ожидания переноса. /clan style";
+        return description;
+    }
+
     private static List<ShopProduct> resolveBundles(List<ShopProduct> products,
                                                     Map<String, ShopProduct> byId,
                                                     List<String> problems) {

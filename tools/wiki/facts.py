@@ -17,7 +17,6 @@ FIELDS = {
     "pay_tax": ("core", "economy.pay-tax-percent"),
     "goals_active": ("common-goals", "rotation.active-count"),
     "goals_days": ("common-goals", "rotation.period-days"),
-    "boost_bank": ("core", "reward-boost.max-bank-hours"),
     "welcome_boost": ("core", "reward-boost.welcome-hours"),
     "claim_price": ("claims", "pricing.chunk-price"),
     "rent_min": ("claims", "pricing.rental-min-per-day"),
@@ -57,6 +56,10 @@ FIELDS = {
     "vk_donut_bonus": ("vk", "rewards.donut-shop-bonus-percent"),
     "enchant_max": ("enchants", "rules.max-per-item"),
     "legendary_max": ("enchants", "rules.max-legendary-per-item"),
+    "artifact_pulse": ("artifacts", "general.passive-refresh-ticks"),
+    "artifact_traits_max": ("artifacts", "traits.max-per-item"),
+    "artifact_trait_chance": ("artifacts", "traits.chance-percent"),
+    "artifact_cross_chance": ("artifacts", "traits.cross-chance-percent"),
     "season_name": ("battlepass", "battlepass.season-name"),
     "season_start": ("battlepass", "battlepass.season-start"),
 }
@@ -169,6 +172,8 @@ class FactBook:
                 r.get("sell-enabled", True) is False
                 for r in self.configs["diamond-shop"]["items"]
             )
+        if name == "artifact_count":
+            return len(self.artifact_catalog())
         if name == "enchant_count":
             return len(self.configs["enchants"]["enchants"])
         if name == "daily_days":
@@ -219,13 +224,13 @@ class FactBook:
                 )
         return rows
 
-    def enchant_catalog(self):
+    def enchant_catalog(self, detailed=False):
         source = (
             self.root
             / "enchants/src/main/java/ru/cherdakmd/chrdkenchants/EnchantRegistry.java"
         ).read_text(encoding="utf-8")
         records = re.findall(
-            r'^\s*register\("([^"\n]+)", (COMMON|RARE|EPIC|LEGENDARY), (\d+), (?:"[^"\n]+"|null), (LIGHT|CURSE), ([A-Z_, ]+)\);',
+            r'^\s*register\("([^"\n]+)", (COMMON|RARE|EPIC|LEGENDARY), (\d+), ("[^"\n]+"|null), (LIGHT|CURSE), ([A-Z_, ]+)\);',
             source,
             re.M,
         )
@@ -244,7 +249,7 @@ class FactBook:
             "BOW": "лук",
             "CROSSBOW": "арбалет",
             "HELMET": "шлем",
-            "CHESTPLATE": "нагрудник",
+            "CHESTPLATE": "нагрудник или элитры",
             "LEGGINGS": "поножи",
             "BOOTS": "ботинки",
             "PICKAXE": "кирка",
@@ -259,12 +264,21 @@ class FactBook:
             "LEGENDARY": "легендарная",
         }
         rows = []
-        for id, rarity, level, polarity, supports in sorted(records):
-            title = messages.get("en", {}).get(id, {}).get("name") or messages.get(
-                "en." + id + ".name"
-            )
+        for id, rarity, level, conflict, polarity, supports in sorted(records):
+            title = messages.get("en." + id + ".name") or messages.get("en", {}).get(id, {}).get("name")
             if not title:
                 raise ValueError("Нет имени чары: " + id)
+            if detailed:
+                lore = messages.get("en." + id + ".lore", messages.get("en", {}).get(id, {}).get("lore"))
+                if not isinstance(lore, list) or len(lore) < 2 or not all(isinstance(line, str) and clean(line) for line in lore):
+                    raise ValueError("Нет подробного описания чары: " + id)
+                conflicts = [other[0] for other in records if conflict != "null" and other[3] == conflict and other[0] != id]
+                rows.append(f"### {clean(title)} — `{id}`\n\n"
+                            f"{rarities[rarity].capitalize()} · {'проклятие' if polarity == 'CURSE' else 'светлая'} · максимум {level}. "
+                            f"Снаряжение: {', '.join(groups[g.strip()] for g in supports.split(','))}.\n\n"
+                            + "\n".join("- " + clean(line) for line in lore)
+                            + "\n\nНесовместимо на одном предмете: " + (", ".join('`' + other + '`' for other in sorted(conflicts)) or "нет отдельной группы конфликтов") + ".")
+                continue
             rows.append(
                 (
                     f"`{id}`",
@@ -276,6 +290,28 @@ class FactBook:
                 )
             )
         return rows
+
+    def artifact_catalog(self):
+        base = self.root / "artifacts/src/main"
+        source = (base / "java/ru/cherdakmd/chrdkartifacts/ArtifactRegistry.java").read_text(encoding="utf-8")
+        records = re.findall(r'register\("([a-z-]+)", (GOOD|CURSED), (PASSIVE|ACTIVE), Material\.([A-Z_]+)(?:, (\d+), (\d+))?\);', source)
+        if not records or len(records) != len({r[0] for r in records}) or {r[0] for r in records} != set(self.configs["artifacts"]["artifacts"]):
+            raise ValueError("Реестр артефактов не совпадает с конфигурацией")
+        messages = yaml.safe_load((base / "resources/messages.yml").read_text(encoding="utf-8"))["messages"]["art"]
+        cards = []
+        for id, side, mode, material, cooldown, xp in sorted(records):
+            text = messages.get(id, {})
+            details = text.get("details")
+            if not text.get("name") or not isinstance(details, list) or len(details) < 2 or not all(isinstance(line, str) and clean(line) for line in details):
+                raise ValueError("Нет подробного описания артефакта: " + id)
+            settings = self.configs["artifacts"]["artifacts"][id]
+            use = "Пассивный: носить при себе, ПКМ не нужен."
+            if mode == "ACTIVE":
+                use = f"Активный: ПКМ из руки; цена {settings.get('xp-cost-levels', int(xp))} ур. XP; откат {settings.get('cooldown-seconds', int(cooldown))} сек."
+            cards.append(f"### {clean(text['name'])} — `{id}`\n\n"
+                         + ("Светлый" if side == "GOOD" else "Проклятый") + ". " + use + "\n\n"
+                         + "\n".join("- " + clean(line) for line in details))
+        return cards
 
     def render_table(self, name):
         c = self.configs
@@ -385,6 +421,39 @@ class FactBook:
                     )
                 ],
             )
+        if name == "forge_materials":
+            base = self.root / "tier-forge/src/main"
+            messages = yaml.safe_load((base / "resources/messages.yml").read_text(encoding="utf-8"))["tiers"]
+            java = (base / "java/ru/cherdakmd/chrdktierforge/ForgeMaterial.java").read_text(encoding="utf-8")
+            records = re.findall(r'[A-Z]+\("(ascend|temper|reforge)", "([A-Z_]+)"\)', java)
+            if len(records) != 3 or len(set(id for id, _ in records)) != 3:
+                raise ValueError("Изменена схема расходников кузни")
+            cards = []
+            for id, material in records:
+                key = "forge." + id
+                lines = messages.get(key + ".details")
+                if not messages.get(key + ".name") or not isinstance(lines, list) or len(lines) < 4 or not all(isinstance(line, str) and clean(line) for line in lines):
+                    raise ValueError("Нет инструкции расходника: " + id)
+                cards.append("### " + clean(messages[key + ".name"]) + " — `" + id + "`\n\n" + "\n".join("- " + clean(line) for line in lines))
+            return "\n\n".join(cards)
+        if name == "forge_costs":
+            java = (self.root / "tier-forge/src/main/java/ru/cherdakmd/chrdktierforge/ForgeMaterial.java").read_text(encoding="utf-8")
+            values = []
+            for field in ("ASCEND_COSTS", "ASCEND_XP"):
+                match = re.search(field + r' = java.util.List.of\(([0-9, ]+)\);', java)
+                if match is None: raise ValueError("Изменена схема цен возвышения")
+                row = [int(n) for n in match[1].split(",")]
+                if len(row) != 6 or any(n < 1 for n in row): raise ValueError("Неверные цены возвышения")
+                values.append(row)
+            registry = (self.root / "tier-forge/src/main/java/ru/cherdakmd/chrdktierforge/TierDef.java").read_text(encoding="utf-8")
+            match = re.search(r'LADDER = List.of\((.*?)\);', registry, re.S)
+            tiers = re.findall(r'"([a-z]+)"', match[1]) if match else []
+            if len(tiers) != 7 or set(tiers) != set(c["tier-forge"]["tiers"]): raise ValueError("Изменена лестница тиров")
+            messages = yaml.safe_load((self.root / "tier-forge/src/main/resources/messages.yml").read_text(encoding="utf-8"))["tiers"]
+            return table(["Целевой тир", "Кристаллов", "Уровней XP"], [(messages["tier"][tier]["name"], values[0][i], values[1][i]) for i, tier in enumerate(tiers[1:])])
+        if name == "forge_drops":
+            rates = c["tier-forge"]["forge-materials"]["drop-percent"]
+            return table(["Расходник", "Уровень 1", "Уровень 30", "Элитный уровня 30"], [(id, f"{rates[id]:g}%", f"{rates[id] * 2:g}%", f"{rates[id] * 6:g}%") for id in ("ascend", "temper", "reforge")])
         if name == "tiers":
             return table(
                 ["ID редкости", "Вес розыгрыша", "Базовый модификатор, %"],
@@ -405,13 +474,37 @@ class FactBook:
                     for r in c["daily-rewards"]["rewards"]
                 ],
             )
+        if name == "artifact_details":
+            return "\n\n".join(self.artifact_catalog())
+        if name == "artifact_sources":
+            sources = c["artifacts"]["sources"]
+            return table(["Этап источника", "Ключ / тип", "Шанс, %"],
+                         [("Генерация добычи", key, chance) for key, chance in sources["chests"].items()]
+                         + [("Убийство с зачтённым игроком", key, chance) for key, chance in sources["mobs"].items()]
+                         + [("Подходящее рыболовное сокровище", "Дополнительная находка", sources["fishing-treasure-percent"])])
+        if name == "artifact_rewards":
+            total = len(self.artifact_catalog())
+            return table(["Веха, %", "Нужно разных ID", "Часов буста", "Алмазов в /bal"],
+                         [(percent, (total * int(percent) + 99) // 100, reward.get("boost-hours", 0), reward.get("diamonds", 0))
+                          for percent, reward in sorted(c["artifacts"]["collection"]["rewards"].items(), key=lambda pair: int(pair[0]))])
+        if name == "artifact_traits":
+            base = self.root / "artifacts/src/main"
+            messages = yaml.safe_load((base / "resources/messages.yml").read_text(encoding="utf-8"))["messages"]
+            traits = {key.removeprefix("trait."): value for key, value in messages.items() if key.startswith("trait.") and isinstance(value, dict)}
+            registry = (base / "java/ru/cherdakmd/chrdkartifacts/ArtifactTraits.java").read_text(encoding="utf-8")
+            records = re.findall(r'^\s*(good|bad|badRaw)\("([a-z-]+)"', registry, re.M)
+            records += [("good" if sign == "GOOD" else "bad", id) for id, sign in re.findall(r'^\s*potion\("([a-z-]+)", Polarity\.(GOOD|BAD)', registry, re.M)]
+            if {id for _, id in records} != set(traits):
+                raise ValueError("Реестр свойств артефактов не совпадает с сообщениями")
+            return table(["ID свойства", "Название", "Знак", "Обзор уровней I–III"],
+                         [(id, traits[id]["name"], "▲ польза" if kind == "good" else "▼ вред", traits[id]["desc"]) for kind, id in sorted(records, key=lambda pair: pair[1])])
         if name == "enchant_sources":
             s = c["enchants"]["sources"]
             return table(
                 ["Источник", "Шанс по конфигу, %"],
                 [
                     ("Стол: дополнительная чара", s["table"]["chance-percent"]),
-                    ("Стол: проклятие", s["table"]["curse-chance-percent"]),
+                    ("Стол: доля проклятий среди успешных доп. бросков", s["table"]["curse-chance-percent"]),
                     ("Обычный моб", s["mobs"]["regular-chance-percent"]),
                     ("Элитный моб", s["mobs"]["elite-chance-percent"]),
                     (
@@ -420,6 +513,8 @@ class FactBook:
                     ),
                 ],
             )
+        if name == "enchant_details":
+            return "\n\n".join(self.enchant_catalog(detailed=True))
         if name == "enchants":
             return table(
                 ["ID", "Название", "Редкость", "Макс. уровень", "Полюс", "Снаряжение"],

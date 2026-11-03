@@ -214,7 +214,7 @@ public final class ArtifactItems {
         }
     }
 
-    private Component traitLine(ArtifactTraits.Def trait, int level, boolean exact) {
+    Component traitLine(ArtifactTraits.Def trait, int level, boolean exact) {
         int bounded = Math.max(1, Math.min(level, trait.maxLevel()));
         return plugin.messages().get(trait.polarity().good() ? "trait-line-good" : "trait-line-bad",
                 "name", plugin.messages().mini("trait." + trait.id() + ".name"),
@@ -239,6 +239,8 @@ public final class ArtifactItems {
         if (!desc.isEmpty()) {
             lore.add(plugin.messages().get("lore-desc", "text", Messages.trusted(desc)));
         }
+        lore.addAll(plugin.messages().getList("art." + def.id() + ".details"));
+        lore.add(plugin.messages().get("lore-reference", "id", def.id()));
         if (traits != null) {
             for (Map.Entry<String, Integer> entry : traits.entrySet()) {
                 ArtifactTraits.Def trait = ArtifactTraits.byId(entry.getKey());

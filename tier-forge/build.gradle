@@ -31,7 +31,10 @@ dependencies {
     compileOnly project(':')
     compileOnly "com.google.code.gson:gson:2.11.0"
     // PlaceholderAPI — мягкая интеграция: в рантайме плагина может не быть.
-    compileOnly "me.clip:placeholderapi:2.12.3"
+    // CI: официальный GitHub release той же версии, проверенный prepare_papi.py (compileOnly, не упаковка).
+    compileOnly(rootProject.findProperty('chrdk.papiJar')
+            ? files(rootProject.file(rootProject.property('chrdk.papiJar')))
+            : "me.clip:placeholderapi:2.12.3")
 
     testImplementation project(':')
     testImplementation "org.purpurmc.purpur:purpur-api:${project.purpur_api_version}"

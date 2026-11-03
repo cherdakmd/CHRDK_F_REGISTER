@@ -54,6 +54,7 @@ public final class TierCommandHandler implements TabExecutor {
             plugin.messages().send(player, "no-perm");
             return true;
         }
+        if (args.length >= 1 && "forge".equalsIgnoreCase(args[0])) return plugin.materials().command(player, args);
         if (args.length >= 1 && "stats".equalsIgnoreCase(args[0])) {
             return handleStats(player, args.length >= 2 && "reset".equalsIgnoreCase(args[1]));
         }
@@ -87,6 +88,8 @@ public final class TierCommandHandler implements TabExecutor {
 
     private boolean handleTiers(Player player) {
         plugin.messages().send(player, "list-header");
+        plugin.messages().send(player, "forge-hint", "forge", plugin.messages().plain(plugin.materials().enabled() ? "forge-state-on" : "forge-state-off"),
+                "reroll", plugin.messages().plain(plugin.materials().legacyRerollEnabled() ? "forge-state-on" : "forge-state-off"));
         // 1.4.80: показываем ДЕЙСТВУЮЩИЙ шанс каждой группы, а не только общий —
         // craft.weapons/armor/tools-chance-percent раньше никак не отражались в UI.
         // 1.4.142: четвёртая группа — утилита (щит, рог, фонарь, тотем).
@@ -267,7 +270,7 @@ public final class TierCommandHandler implements TabExecutor {
                     "xp", TierMath.upgradeXpCost(plugin.config().anvilBaseXp(),
                             TierDef.indexOf(next)));
         }
-        if (plugin.config().rerollEnabled()) {
+        if (plugin.materials().legacyRerollEnabled()) {
             plugin.messages().send(player,
                     plugin.config().rerollNoDowngrade() ? "info-reroll-safe" : "info-reroll",
                     "xp", TierMath.rerollXpCost(plugin.config().rerollBaseXp(),
@@ -517,6 +520,16 @@ public final class TierCommandHandler implements TabExecutor {
             return true;
         }
         if (plugin.awards().admin(sender,args)) return true;
+        if (args.length == 4 && "material".equalsIgnoreCase(args[0])) {
+            Player target = Bukkit.getPlayerExact(args[1]);
+            ForgeMaterial kind = ForgeMaterial.byId(args[2]);
+            int count;
+            try { count = Integer.parseInt(args[3]); } catch (NumberFormatException invalid) { count = 0; }
+            if (target == null || kind == null || count < 1 || count > 64) { plugin.messages().send(sender, "forge-admin-usage"); return true; }
+            var leftovers = target.getInventory().addItem(plugin.materials().item(kind, count));
+            leftovers.values().forEach(item -> target.getWorld().dropItemNaturally(target.getLocation(), item));
+            return true;
+        }
         if (args.length >= 1 && "reload".equalsIgnoreCase(args[0])) {
             plugin.reloadTierConfig();
             plugin.messages().send(sender, "admin-reloaded");
@@ -669,8 +682,9 @@ public final class TierCommandHandler implements TabExecutor {
         }
         String prefix = args[args.length - 1].toLowerCase(Locale.ROOT);
         if ("tiers".equalsIgnoreCase(command.getName())) {
+            if (args.length >= 2 && "forge".equalsIgnoreCase(args[0])) return plugin.materials().complete(sender, args);
             if (args.length == 1) {
-                List.of("info", "stats", "top", "effects", "collection").stream()
+                List.of("info", "stats", "top", "effects", "collection", "forge").stream()
                         .filter(x -> x.startsWith(prefix)).forEach(matches::add);
             } else if (args.length == 2 && "collection".equalsIgnoreCase(args[0])) {
                 List.of("top", "title").stream().filter(x -> x.startsWith(prefix))

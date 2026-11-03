@@ -41,3 +41,7 @@ config/chrdk_f_register-data.json
 
 # Локальные превью социальных публикаций
 /social-preview/
+
+# Локальные журналы bounded CI build wrapper
+/build.log
+/build-attempt-*.log

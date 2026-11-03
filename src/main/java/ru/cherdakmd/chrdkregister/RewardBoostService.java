@@ -24,8 +24,8 @@ final class RewardBoostService implements Listener {
     private final RewardBoostClock clock;
     private final Map<PlayerExpChangeEvent, Integer> bases = new WeakHashMap<>();
     private BukkitTask task;
-    private volatile int maxBankHours = 24;
-    void reload() { maxBankHours = Math.clamp(plugin.getConfig().getInt("reward-boost.max-bank-hours", 24), 1, 24 * 365); }
+    private static final int LEGACY_BANK_HOURS = 0;
+    void reload() { /* Старый reward-boost.max-bank-hours больше не ограничивает накопление. */ }
 
     RewardBoostService(RegisterPlugin plugin, AccessManager access) {
         this.plugin = plugin;
@@ -83,7 +83,7 @@ final class RewardBoostService implements Listener {
         Player player=Bukkit.getPlayer(uuid);
         if(!authenticated(player) || !player.getName().equals(name))return ChrdkRegisterApi.BoostGrant.FAILED;
         clock.settle(name,System.nanoTime());
-        return store.grantRewardBoostOnce(uuid,name,hours,maxBankHours,receipt);
+        return store.grantRewardBoostOnce(uuid,name,hours,LEGACY_BANK_HOURS,receipt);
     }
 
     void grant(String name, int hours, String source) {
@@ -92,12 +92,12 @@ final class RewardBoostService implements Listener {
         // На основной поток откладывается только сообщение, а не заслуженная награда.
         clock.settle(name, System.nanoTime());
         long before = store.rewardBoostRemaining(name);
-        long remaining = store.grantRewardBoost(name, hours, maxBankHours);
+        long remaining = store.grantRewardBoost(name, hours, LEGACY_BANK_HOURS);
         long added = Math.max(0L, remaining - before);
         Runnable notify = () -> {
             Player online = Bukkit.getPlayerExact(name);
             if (online != null) plugin.messages().send(online, added > 0 ? "reward-boost.granted" : "reward-boost.full",
-                    "minutes", (added + 59_999) / 60_000, "left", (remaining + 59_999) / 60_000);
+                    "minutes", minutes(added), "left", minutes(remaining));
         };
         if (Bukkit.isPrimaryThread()) notify.run();
         else Bukkit.getScheduler().runTask(plugin, notify);
@@ -105,6 +105,8 @@ final class RewardBoostService implements Listener {
                 AuditLog.details("source", source == null ? "reward" : source,
                         "addedMillis", added, "remainingMillis", remaining, "percent", RewardBoostMath.PERCENT));
     }
+
+    static long minutes(long millis) { return millis / 60_000 + (millis % 60_000 > 0 ? 1 : 0); }
 
     long experience(String name, String channel, long base, long current) {
         if (!AccessManager.isValidMinecraftName(name) || !Bukkit.isPrimaryThread()) return current;
@@ -130,6 +132,6 @@ final class RewardBoostService implements Listener {
     ChrdkRegisterApi.ProfileSection profile(ChrdkRegisterApi.ProfileContext context) {
         long left = store.rewardBoostRemaining(context.playerName());
         return new ChrdkRegisterApi.ProfileSection(plugin.messages().raw("reward-boost.title"), Material.EXPERIENCE_BOTTLE,
-                List.of(plugin.messages().get("reward-boost.profile", "left", (left + 59_999) / 60_000)));
+                List.of(plugin.messages().get("reward-boost.profile", "left", minutes(left))));
     }
 }

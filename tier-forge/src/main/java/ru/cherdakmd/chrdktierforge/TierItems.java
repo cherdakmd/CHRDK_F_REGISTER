@@ -685,6 +685,48 @@ public final class TierItems {
      * Поднимает уровень улучшения и пересобирает предмет по его текущему тиру
      * (атрибуты/лор/имя). Безопасно вызывать только для тир-предметов.
      */
+    List<TierProperty> storedPropertiesOf(ItemStack item) {
+        return rawPropertiesFromMeta(item.getItemMeta());
+    }
+
+    /** Платная кузня: изменяет только указанный слой, без выдачи имён/чар и нового UID. */
+    ItemStack forgeCopy(ItemStack original, TierDef.Snapshot tier, List<TierProperty> properties,
+                        ForgeUpgrade.Def upgrade, long sequence) {
+        ItemStack copy = original.clone();
+        ItemMeta before = original.getItemMeta();
+        ItemKind kind = ItemKind.classify(original.getType().name());
+        java.util.Set<String> owned = new java.util.HashSet<>();
+        var plain = PlainTextComponentSerializer.plainText();
+        var oldTier = plugin.config().find(tierOf(original));
+        owned.add(plain.serialize(tierLine(oldTier, kind)));
+        storedPropertiesOf(original).forEach(p -> owned.add(plain.serialize(propertyLine(p))));
+        affixesOf(original).forEach(p -> owned.add(plain.serialize(affixLine(p))));
+        upgradesOf(original).forEach((d, level) -> owned.add(plain.serialize(upgradeLine(d, level))));
+        ItemMeta meta = copy.getItemMeta();
+        meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, tier.id());
+        meta.getPersistentDataContainer().set(propertiesKey, PersistentDataType.STRING, TierProperties.serialize(properties));
+        if (upgrade != null) meta.getPersistentDataContainer().set(upgradeKey(upgrade.id()), PersistentDataType.INTEGER,
+                upgradeLevel(original, upgrade.id()) + 1);
+        meta.getPersistentDataContainer().set(new NamespacedKey(plugin, "forge_sequence"), PersistentDataType.LONG, sequence);
+        meta.getPersistentDataContainer().remove(modifiersKey);
+        var tierNames = TierDef.LADDER.stream().map(id -> plugin.messages().plain("tier." + id + ".name")).toList();
+        if (before.lore() != null) meta.lore(before.lore().stream().filter(line -> {
+            String text = plain.serialize(line);
+            return !owned.contains(text) && tierNames.stream().noneMatch(name -> TierLore.isTier(text, name));
+        }).toList());
+        copy.setItemMeta(meta);
+        refreshTierModifiers(copy); // Не apply: он может выдать новые чары и кличку.
+        meta = copy.getItemMeta();
+        List<Component> lore = meta.lore() == null ? new ArrayList<>() : new ArrayList<>(meta.lore());
+        lore.add(tierLine(tier, kind));
+        propertiesOf(copy).forEach(p -> lore.add(propertyLine(p)));
+        affixesOf(copy).forEach(p -> lore.add(affixLine(p)));
+        upgradesOf(copy).forEach((d, level) -> lore.add(upgradeLine(d, level)));
+        meta.lore(lore);
+        copy.setItemMeta(meta);
+        return copy;
+    }
+
     public void bumpUpgrade(ItemStack item, ForgeUpgrade.Def def, int newLevel) {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
@@ -733,6 +775,10 @@ public final class TierItems {
             target.getPersistentDataContainer()
                     .set(propertiesKey, PersistentDataType.STRING, properties);
         }
+        // История оплаченных операций переезжает вместе с UID, не сбрасывая выбор перековки.
+        var forgeSequence = new NamespacedKey(plugin, "forge_sequence");
+        Long sequence = source.getPersistentDataContainer().get(forgeSequence, PersistentDataType.LONG);
+        if (sequence != null) target.getPersistentDataContainer().set(forgeSequence, PersistentDataType.LONG, sequence);
         // Волна 17: uid задаёт аффиксы и зачарования. Незеритовый апгрейд — тот же
         // предмет, поэтому набор должен переехать, а не перероллиться.
         String uid = source.getPersistentDataContainer()

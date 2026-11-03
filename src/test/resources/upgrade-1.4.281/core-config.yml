@@ -1,0 +1,26 @@
+# Public stock fixture extracted from df63af78c86a18f04f6dee278f4322aefbd499d5 (stable 1.4.281).
+tablist:
+  enabled: true
+  refresh-ticks: 40
+  animation-refresh-ticks: 10
+  header:
+  - ''
+  - <gradient:gold:yellow><bold>CHERDAK • ВЫЖИВАНИЕ</bold></gradient>
+  - <gray>Онлайн <white>%online%/%max%</white> <dark_gray>•</dark_gray> TPS <green>%tps%</green>
+  - <gray>%player% <dark_gray>•</dark_gray> <white>%auth_status%</white>
+  - ''
+  footer:
+  - ''
+  - <gold>%pass_type%</gold> <dark_gray>•</dark_gray> <aqua>%pass_left%</aqua>
+  - <gray>%auth_hint%</gray>
+  - '<gray>2FA: <white>%security%</white> <dark_gray>•</dark_gray> <yellow>%ping%
+    мс</yellow> <dark_gray>•</dark_gray> %world%'
+  - <gold>↪</gold> <aqua>%navigation%</aqua>
+  - ''
+  player-name-format: '%player_tagged%'
+  show-rank-name: true
+  pinned-names:
+  - kalinin_play
+reward-boost:
+  max-bank-hours: 24
+  welcome-hours: 3

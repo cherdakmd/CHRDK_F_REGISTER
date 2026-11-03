@@ -29,6 +29,9 @@ public final class TierForgePlugin extends JavaPlugin {
     private volatile TierForgeConfig config;
     private volatile ForgeNamePool namePool;
     private TierItems items;
+    private ForgeMaterials materials;
+    private ForgeAnvilListener forgeAnvil;
+    ForgeMaterials materials() { return materials; }
     /** Аура редкости (1.4.119): частицы и блеск по тиру предмета. */
     private TierVisualService visuals;
     private final TierStatsKeeper stats = new TierStatsKeeper();
@@ -64,13 +67,17 @@ public final class TierForgePlugin extends JavaPlugin {
         saveDefaultConfig();
         reloadTierConfig();
         try {
-            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 38) throw new IllegalStateException("Нужен Core API 38+");
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 40) throw new IllegalStateException("Нужен Core API 40+");
             this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"tierforge-awards",ru.cherdakmd.chrdkregister.api.MilestoneMigration.tierForge(getDataFolder().toPath().resolve("stats.yml")));
         } catch (Exception | LinkageError error) {
             getLogger().log(java.util.logging.Level.SEVERE,"Модуль остановлен без сброса прогресса/наград",error);
             Bukkit.getPluginManager().disablePlugin(this); return;
         }
         this.items = new TierItems(this);
+        this.materials = new ForgeMaterials(this);
+        Bukkit.getPluginManager().registerEvents(materials, this);
+        forgeAnvil=new ForgeAnvilListener(this);
+        Bukkit.getPluginManager().registerEvents(forgeAnvil, this);
         this.visuals = new TierVisualService(this);
         this.visuals.restart();
         loadStats();
@@ -227,6 +234,7 @@ public final class TierForgePlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (forgeAnvil!=null) forgeAnvil.close();
         if (awards != null) awards.close();
         if (refreshListener != null) refreshListener.close();
         unregisterCollectionNameTag();

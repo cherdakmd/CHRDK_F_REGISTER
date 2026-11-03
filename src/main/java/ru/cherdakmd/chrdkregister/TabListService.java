@@ -23,7 +23,7 @@ import java.util.Locale;
  *
  * Значения подстановок экранируются ({@link Messages#escape(Object)}), поэтому
  * ник игрока не сломает разметку. Если {@code player-name-format} пуст — имя в
- * списке не трогаем, чтобы не конфликтовать с менеджерами префиксов (LuckPerms-TAB).
+ * списке не трогаем, кроме активной оплаченной клановой анимации: она обязательна.
  */
 public final class TabListService implements Listener {
 
@@ -47,7 +47,13 @@ public final class TabListService implements Listener {
     /** Значения подстановок одного игрока — ровно то, что знает юнит-тест. */
     record TabContext(String playerName, int online, int maxPlayers, double tps, int ping,
                       String world, String passStatus, String passLeft, long passDaysLeft,
-                      PresentationContext presentation, String taggedName, String rankTag) {
+                      PresentationContext presentation, String taggedName, String rankTag, TabDashboard.Frame dashboard) {
+        TabContext(String playerName, int online, int maxPlayers, double tps, int ping, String world,
+                   String passStatus, String passLeft, long passDaysLeft, PresentationContext presentation,
+                   String taggedName, String rankTag) {
+            this(playerName, online, maxPlayers, tps, ping, world, passStatus, passLeft, passDaysLeft,
+                    presentation, taggedName, rankTag, TabDashboard.Frame.empty());
+        }
         TabContext(String playerName, int online, int maxPlayers, double tps, int ping, String world,
                    String passStatus, String passLeft, long passDaysLeft, PresentationContext presentation,
                    String taggedName) {
@@ -73,7 +79,7 @@ public final class TabListService implements Listener {
                     "player", playerName,
                     "online", online,
                     "max", maxPlayers,
-                    "tps", String.format(Locale.ROOT, "%.1f", Math.min(20.0, Math.max(0.0, tps))),
+                    "tps", String.format(Locale.ROOT, "%.1f", Double.isFinite(tps) ? Math.min(20.0, Math.max(0.0, tps)) : 0.0),
                     "ping", ping,
                     "world", world,
                     "pass_status", passStatus,
@@ -83,7 +89,10 @@ public final class TabListService implements Listener {
                     // разметка, поэтому Trusted, а не строка.
                     "player_tagged", Messages.trusted(taggedName),
                     "rank_tag", Messages.trusted(rankTag)};
-            Object[] extra = presentation.placeholders();
+            Object[] legacyExtra = presentation.placeholders();
+            Object[] animatedExtra = dashboard.placeholders();
+            Object[] extra = java.util.Arrays.copyOf(legacyExtra, legacyExtra.length + animatedExtra.length);
+            System.arraycopy(animatedExtra, 0, extra, legacyExtra.length, animatedExtra.length);
             Object[] result = java.util.Arrays.copyOf(base, base.length + extra.length);
             System.arraycopy(extra, 0, result, base.length, extra.length);
             return result;
@@ -92,16 +101,53 @@ public final class TabListService implements Listener {
 
     private final RegisterPlugin plugin;
     private final AccessManager accessManager;
+    private final Runtime runtime;
+    /** Узкий порт для детерминированного прогона реального lifecycle без Minecraft-сервера. */
+    interface Runtime {
+        java.util.Collection<? extends Player> online();
+        Messages messages();
+        org.bukkit.configuration.file.FileConfiguration config();
+        AccessManager.PlayerStage stage(Player player);
+        TabContext context(Player player, long now, boolean withName);
+        long now();
+        BukkitTask timer(Runnable callback, int period);
+        BukkitTask later(Runnable callback, long delay);
+        Scoreboard board();
+    }
+    private final class GameRuntime implements Runtime {
+        public java.util.Collection<? extends Player> online() { return Bukkit.getOnlinePlayers(); }
+        public Messages messages() { return plugin.messages(); }
+        public org.bukkit.configuration.file.FileConfiguration config() { return plugin.getConfig(); }
+        public AccessManager.PlayerStage stage(Player player) { return accessManager.getStage(player); }
+        public TabContext context(Player player, long now, boolean withName) { return contextOf(player, now, withName); }
+        public long now() { return System.currentTimeMillis(); }
+        public BukkitTask timer(Runnable callback, int period) { return Bukkit.getScheduler().runTaskTimer(plugin, callback, period, period); }
+        public BukkitTask later(Runnable callback, long delay) { return Bukkit.getScheduler().runTaskLater(plugin, callback, delay); }
+        public Scoreboard board() { return Bukkit.getScoreboardManager() == null ? null : Bukkit.getScoreboardManager().getMainScoreboard(); }
+    }
     private Settings settings = Settings.disabled();
     private BukkitTask refreshTask;
     private BukkitTask animationTask;
+    private BukkitTask rosterTask;
+    private boolean headerNeedsName;
+    private final java.util.Map<java.util.UUID, AccessManager.PlayerStage> presentedStages = new java.util.HashMap<>();
     private java.util.function.Predicate<String> animationPredicate = name -> false;
     private final java.util.Set<java.util.UUID> animatedNames = new java.util.HashSet<>();
 
     public void setAnimationPredicate(java.util.function.Predicate<String> predicate) {
         animationPredicate = predicate == null ? name -> false : predicate;
     }
-    static int animationTicks(int ticks) { return Math.clamp(ticks, 5, 40); }
+    static int animationTicks(int ticks) { return Math.clamp(ticks, 5, 20); }
+    static int refreshTicks(int ticks) { return ticks <= 0 ? 0 : Math.max(10, ticks); }
+    static boolean animationEnabled(Settings settings) {
+        return settings.enabled();
+    }
+    private record Headers(Component header, Component footer) { }
+    private final java.util.Map<java.util.UUID, Headers> headerFrames = new java.util.HashMap<>();
+    private final java.util.Map<java.util.UUID, TabFrameState> nameFrames = new java.util.HashMap<>();
+    private final java.util.Map<java.util.UUID, BukkitTask> audits = new java.util.HashMap<>();
+    private long pulse;
+    private boolean dashboardAnimation;
     private final java.util.Set<java.util.UUID> managedNames = new java.util.HashSet<>();
     private final java.util.Set<java.util.UUID> managedHeaders = new java.util.HashSet<>();
     /** Оформление ника из ядра (тег каталога + метки аддонов) для {@code %player_tagged%}. */
@@ -112,6 +158,12 @@ public final class TabListService implements Listener {
     public TabListService(RegisterPlugin plugin, AccessManager accessManager) {
         this.plugin = plugin;
         this.accessManager = accessManager;
+        this.runtime = new GameRuntime();
+    }
+    TabListService(Runtime runtime) {
+        this.plugin = null;
+        this.accessManager = null;
+        this.runtime = java.util.Objects.requireNonNull(runtime);
     }
 
     /**
@@ -139,16 +191,19 @@ public final class TabListService implements Listener {
 
     /** Перечитывает {@code tablist.*} из конфига, пересоздаёт задачу и применяет к онлайну. */
     public void reload() {
-        var cfg = plugin.getConfig();
+        var cfg = runtime.config();
         String root = "tablist";
         this.settings = new Settings(
                 cfg.getBoolean(root + ".enabled", true),
-                Math.max(10, cfg.getInt(root + ".refresh-ticks", 40)),
+                refreshTicks(cfg.getInt(root + ".refresh-ticks", 40)),
                 cfg.getStringList(root + ".header"),
                 cfg.getStringList(root + ".footer"),
                 cfg.getString(root + ".player-name-format", ""),
                 cfg.getStringList(root + ".pinned-names"),
                 cfg.getBoolean(root + ".show-rank-name", true));
+        headerNeedsName = java.util.stream.Stream.concat(settings.header().stream(), settings.footer().stream())
+                .anyMatch(line -> line.contains("%player_tagged%"));
+        dashboardAnimation = cfg.getBoolean(root + ".dashboard-animation", true);
         reschedule();
         syncPinned();
         if (settings.enabled()) {
@@ -159,98 +214,160 @@ public final class TabListService implements Listener {
     }
 
     public void shutdown() {
-        if (animationTask != null) { animationTask.cancel(); animationTask = null; }
-        animatedNames.clear();
-        if (refreshTask != null) {
-            refreshTask.cancel();
-            refreshTask = null;
-        }
-        clearPinned();
+        settings = Settings.disabled();
+        cancelTasks();
         resetAll();
+        clearPinned();
     }
 
-    @EventHandler
-    public void onJoin(PlayerJoinEvent event) {
-        if (!settings.enabled()) {
-            return;
-        }
-        // тик спустя: игрок уже в списке онлайн-игроков, проходка прогружена
-        plugin.getServer().getScheduler().runTask(plugin, this::applyAll);
+    private void cancelTasks() {
+        if (animationTask != null) { animationTask.cancel(); animationTask = null; }
+        if (refreshTask != null) { refreshTask.cancel(); refreshTask = null; }
+        if (rosterTask != null) { rosterTask.cancel(); rosterTask = null; }
+        audits.values().forEach(BukkitTask::cancel); audits.clear();
     }
+    private void scheduleRosterRefresh() {
+        if (!settings.enabled() || rosterTask != null) return;
+        rosterTask = runtime.later(() -> { rosterTask = null; applyAll(); }, 1L);
+    }
+    @EventHandler
+    public void onJoin(PlayerJoinEvent event) { scheduleRosterRefresh(); }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        animatedNames.remove(event.getPlayer().getUniqueId());
-        managedNames.remove(event.getPlayer().getUniqueId());
-        managedHeaders.remove(event.getPlayer().getUniqueId());
-        if (!settings.enabled()) {
-            return;
-        }
-        plugin.getServer().getScheduler().runTask(plugin, this::applyAll);
+        var id = event.getPlayer().getUniqueId();
+        animatedNames.remove(id); nameFrames.remove(id); headerFrames.remove(id); presentedStages.remove(id);
+        BukkitTask audit = audits.remove(id); if (audit != null) audit.cancel();
+        managedNames.remove(id); managedHeaders.remove(id);
+        scheduleRosterRefresh();
     }
 
     private void reschedule() {
-        if (animationTask != null) { animationTask.cancel(); animationTask = null; }
-        animatedNames.clear();
-        if (refreshTask != null) { refreshTask.cancel(); refreshTask = null; }
+        cancelTasks();
+        // Сначала освобождаем ещё принадлежащие нам кадры; чужую перезапись не стираем.
+        resetAll(); pulse = 0;
         clearPinned();
-        if (settings.enabled() && settings.refreshTicks() > 0) {
-            refreshTask = Bukkit.getScheduler().runTaskTimer(plugin, this::applyAll,
-                    settings.refreshTicks(), settings.refreshTicks());
-            if (!settings.nameFormat().isBlank()) {
-                int period = animationTicks(plugin.getConfig().getInt("tablist.animation-refresh-ticks", 10));
-                animationTask = Bukkit.getScheduler().runTaskTimer(plugin, this::animateNames, period, period);
-            }
+        if (settings.enabled() && settings.refreshTicks() > 0)
+            refreshTask = runtime.timer(this::applyAll, settings.refreshTicks());
+        if (animationEnabled(settings)) {
+            int period = animationTicks(runtime.config().getInt("tablist.animation-refresh-ticks", 5));
+            animationTask = runtime.timer(this::animateNames, period);
         }
     }
 
-    /** Один общий таймер: меняются только действительно анимированные имена, не шапки/команды. */
+    /** Один общий heartbeat. Смена стадии входа обновляет приватные поля даже при refresh=0. */
     private void animateNames() {
-        if (!settings.enabled() || settings.nameFormat().isBlank()) return;
-        for (Player player : Bukkit.getOnlinePlayers()) {
+        if (!settings.enabled()) return;
+        long now = runtime.now(); pulse++;
+        for (Player player : runtime.online()) {
             boolean active = animationPredicate.test(player.getName());
             boolean previous = animatedNames.contains(player.getUniqueId());
-            if (active) animatedNames.add(player.getUniqueId()); else animatedNames.remove(player.getUniqueId());
-            if (active || previous) applyName(player, contextOf(player, System.currentTimeMillis()));
+            var stage = runtime.stage(player);
+            boolean changedStage = stage != presentedStages.get(player.getUniqueId());
+            update(player, now, active || previous || changedStage || pulse % 8 == 0,
+                    changedStage || dashboardAnimation && pulse % 2 == 0, active, stage);
         }
     }
 
     private void applyAll() {
+        if (!settings.enabled()) return;
         ensurePinned();
-        for (Player player : Bukkit.getOnlinePlayers()) {
+        for (Player player : runtime.online()) {
             apply(player);
         }
     }
 
     private void resetAll() {
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            if (managedNames.remove(player.getUniqueId())) player.playerListName(null);
-            if (managedHeaders.remove(player.getUniqueId())) player.sendPlayerListHeaderAndFooter(Component.empty(), Component.empty());
+        for (Player player : runtime.online()) {
+            releaseName(player);
+            Headers previous = headerFrames.get(player.getUniqueId());
+            if (managedHeaders.contains(player.getUniqueId()) && previous != null) {
+                Headers actual = actualHeaders(player);
+                // Header/footer могут иметь разных владельцев: освобождаем каждую часть отдельно.
+                Headers released = new Headers(previous.header().equals(actual.header()) ? Component.empty() : actual.header(),
+                        previous.footer().equals(actual.footer()) ? Component.empty() : actual.footer());
+                if (!released.equals(actual)) player.sendPlayerListHeaderAndFooter(released.header(), released.footer());
+            }
         }
+        animatedNames.clear(); nameFrames.clear(); headerFrames.clear(); presentedStages.clear();
+        managedNames.clear(); managedHeaders.clear();
     }
-
     private void apply(Player player) {
-        boolean showHeader = visible(player, LabelPreferences.Label.HEADER);
-        TabContext context = contextOf(player, System.currentTimeMillis());
-        Messages messages = plugin.messages();
-        // 1.4.183: игрок может спрятать шапку и подвал — тогда список остаётся
-        // чистым, а не «с дырками» в полэкрана.
-        Component header = showHeader
-                ? joinLines(renderLines(messages, settings.header(), context)) : Component.empty();
-        Component footer = showHeader
-                ? joinLines(renderLines(messages, settings.footer(), context)) : Component.empty();
-        player.sendPlayerListHeaderAndFooter(header, footer);
+        update(player, runtime.now(), true, true, animationPredicate.test(player.getName()), runtime.stage(player));
+    }
+    private void update(Player player, long now, boolean name, boolean header, boolean active, AccessManager.PlayerStage stage) {
+        String format = effectiveNameFormat(settings.nameFormat(), active);
+        boolean nameContext = name && format != null && !format.isBlank() && !format.equals("%player_tagged%");
+        boolean headerContext = header && visible(player, LabelPreferences.Label.HEADER)
+                && (!settings.header().isEmpty() || !settings.footer().isEmpty());
+        TabContext context = nameContext || headerContext ? runtime.context(player, now,
+                nameContext && format.contains("%player_tagged%") || headerContext && headerNeedsName) : null;
+        if (name) applyName(player, active, context, format);
+        if (header) applyHeaders(player, context, stage);
+    }
+    private static Headers actualHeaders(Player player) {
+        return new Headers(java.util.Objects.requireNonNullElse(player.playerListHeader(), Component.empty()),
+                java.util.Objects.requireNonNullElse(player.playerListFooter(), Component.empty()));
+    }
+    private void applyHeaders(Player player, TabContext context, AccessManager.PlayerStage stage) {
+        boolean show = visible(player, LabelPreferences.Label.HEADER);
+        Messages messages = runtime.messages();
+        Headers next = new Headers(show && !settings.header().isEmpty() ? joinLines(renderLines(messages, settings.header(), context)) : Component.empty(),
+                show && !settings.footer().isEmpty() ? joinLines(renderLines(messages, settings.footer(), context)) : Component.empty());
+        if (!next.equals(headerFrames.put(player.getUniqueId(), next)) || !next.equals(actualHeaders(player)))
+            player.sendPlayerListHeaderAndFooter(next.header(), next.footer());
         managedHeaders.add(player.getUniqueId());
-        applyName(player, context);
+        presentedStages.put(player.getUniqueId(), stage);
+    }
+    static String effectiveNameFormat(String configured, boolean activeClanAnimation) {
+        // Внешняя обёртка-gradient или формат без player_tagged не могут стереть оплаченный кадр.
+        return activeClanAnimation ? "%player_tagged%" : nameFormat(configured, true);
+    }
+    private void applyName(Player player, boolean active, TabContext context, String format) {
+        // Общий refresh/join тоже фиксирует состояние: эффект может закончиться ДО первого heartbeat.
+        if (active) animatedNames.add(player.getUniqueId()); else animatedNames.remove(player.getUniqueId());
+        if (format == null || format.isBlank()) releaseName(player);
+        else deliverName(player, format.equals("%player_tagged%")
+                ? runtime.messages().markup(nameDecorator.decorate(player.getName()))
+                : renderName(runtime.messages(), format, context));
+    }
+    private void releaseName(Player player) {
+        var id = player.getUniqueId();
+        TabFrameState previous = nameFrames.remove(id);
+        if (managedNames.remove(id) && previous != null && !previous.needsDelivery(player.playerListName())) player.playerListName(null);
+    }
+    private void deliverName(Player player, Component name) {
+        Component actual = player.playerListName();
+        TabFrameState next = TabFrameState.next(nameFrames.get(player.getUniqueId()), name, actual);
+        nameFrames.put(player.getUniqueId(), next);
+        if (next.needsDelivery(actual)) player.playerListName(name);
+        managedNames.add(player.getUniqueId());
     }
 
-    private void applyName(Player player, TabContext context) {
-        if (!settings.nameFormat().isBlank()) {
-            Component name = renderName(plugin.messages(), nameFormat(settings.nameFormat(), settings.showRankName()), context);
-            if (!name.equals(player.playerListName())) player.playerListName(name);
-            managedNames.add(player.getUniqueId());
-        } else if (managedNames.remove(player.getUniqueId())) player.playerListName(null);
+    /** Консоль/admin: фактические серверные кадры за 30 тиков, не обещание клиентского FPS. */
+    void audit(org.bukkit.command.CommandSender sender, Player target) {
+        Messages messages = runtime.messages();
+        if (!sender.hasPermission("chrdkregister.admin")) { messages.send(sender, "common.no-permission"); return; }
+        if (target == null || !target.isOnline()) { messages.send(sender, "tab.audit-offline"); return; }
+        var id = target.getUniqueId();
+        if (audits.containsKey(id) || audits.size() >= 16) { messages.send(sender, "tab.audit-busy"); return; }
+        if (settings.enabled()) apply(target);
+        TabFrameState before = nameFrames.get(id);
+        messages.send(sender, "tab.audit-start", "player", target.getName());
+        audits.put(id, runtime.later(() -> {
+            audits.remove(id);
+            if (!sender.hasPermission("chrdkregister.admin")) return;
+            if (!target.isOnline()) { runtime.messages().send(sender, "tab.audit-offline"); return; }
+            String state = TabFrameState.audit(settings.enabled(), animationPredicate.test(target.getName()),
+                    before, nameFrames.get(id), target.playerListName());
+            String stateKey = "tab.audit-" + state;
+            runtime.messages().send(sender, "tab.audit-result", "player", target.getName(),
+                    "state", runtime.messages().plain(stateKey));
+        }, 30L));
     }
+
+    record CacheSizes(int names, int headers, int stages, int animated, int audits) { }
+    CacheSizes cacheSizes() { return new CacheSizes(nameFrames.size(), headerFrames.size(), presentedStages.size(), animatedNames.size(), audits.size()); }
 
     /** Видна ли надпись у этого игрока: без хранилища — всё видно. */
     private boolean visible(Player player, LabelPreferences.Label label) {
@@ -296,7 +413,7 @@ public final class TabListService implements Listener {
         }
         for (String name : settings.pinnedNames()) {
             if (name != null && !name.isBlank()) {
-                String exact = Bukkit.getOnlinePlayers().stream().map(Player::getName)
+                String exact = runtime.online().stream().map(Player::getName)
                         .filter(n -> n.equalsIgnoreCase(name.trim())).findFirst().orElse(name.trim());
                 pin(board, team, exact);
             }
@@ -316,7 +433,7 @@ public final class TabListService implements Listener {
         if (team == null) {
             team = board.registerNewTeam(PIN_TEAM_NAME);
         }
-        for (Player player : Bukkit.getOnlinePlayers()) {
+        for (Player player : runtime.online()) {
             String name = player.getName();
             if (isPinned(settings.pinnedNames(), name) && !team.hasEntry(name)) {
                 pin(board, team, name);
@@ -358,11 +475,7 @@ public final class TabListService implements Listener {
         }
     }
 
-    private static Scoreboard mainScoreboard() {
-        return Bukkit.getScoreboardManager() == null
-                ? null
-                : Bukkit.getScoreboardManager().getMainScoreboard();
-    }
+    private Scoreboard mainScoreboard() { return runtime.board(); }
 
     /** Есть ли ник в закрепе (регистронезависимо) — чистая логика для тестов. */
     static boolean isPinned(List<String> pinnedNames, String playerName) {
@@ -392,9 +505,11 @@ public final class TabListService implements Listener {
     }
 
     static List<Component> renderLines(Messages messages, List<String> templates, TabContext context) {
+        if (templates.isEmpty()) return List.of();
         List<Component> out = new ArrayList<>(templates.size());
+        Object[] placeholders = context.placeholders();
         for (String template : templates) {
-            out.add(messages.renderTemplate(template, context.placeholders()));
+            out.add(messages.renderTemplate(template, placeholders));
         }
         return out;
     }
@@ -410,14 +525,14 @@ public final class TabListService implements Listener {
 
     // ------------------------------ сборка контекста -----------------------------
 
-    private TabContext contextOf(Player player, long nowMillis) {
+    private TabContext contextOf(Player player, long nowMillis, boolean withName) {
         RegistrationStore.PlayerAccount account =
                 accessManager.store().getAccount(player.getName()).orElse(null);
         double tps;
         try {
             tps = Bukkit.getTPS()[0];
         } catch (Throwable ignored) {
-            tps = 20.0;
+            tps = Double.NaN;
         }
         return new TabContext(
                 player.getName(),
@@ -434,8 +549,21 @@ public final class TabListService implements Listener {
                 PresentationContext.of(account, accessManager.getStage(player), nowMillis,
                         accessManager.config().trialEnabled() && accessManager.store().isTrialEligible(player.getName(), player.getUniqueId()),
                         accessManager.config().trialDays(), plugin.messages(), navigation(player)),
-                nameDecorator.decorate(player.getName()),
-                "");
+                withName ? nameDecorator.decorate(player.getName()) : Messages.escape(player.getName()),
+                "", TabDashboard.frame(plugin.messages(), nowMillis,
+                        accessManager.getStage(player) == AccessManager.PlayerStage.AUTHENTICATED,
+                        accessManager.getStage(player) == AccessManager.PlayerStage.AUTHENTICATED && plugin.bank() != null && plugin.bank().enabled()
+                                ? plugin.bank().balance(player) : -1,
+                        accessManager.getStage(player) == AccessManager.PlayerStage.AUTHENTICATED ? accessManager.store().rewardBoostRemaining(player.getName()) : 0,
+                        tps, Bukkit.getAverageTickTime(), player.getPing(), worldName(player)));
+
+    }
+
+    private String worldName(Player player) {
+        return plugin.messages().plain(switch (player.getWorld().getEnvironment()) {
+            case NORMAL -> "tab.world-normal"; case NETHER -> "tab.world-nether"; case THE_END -> "tab.world-end";
+            default -> "tab.world-other";
+        });
     }
 
     private String navigation(Player player) {

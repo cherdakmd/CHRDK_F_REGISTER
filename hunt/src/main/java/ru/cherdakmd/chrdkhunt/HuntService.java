@@ -118,6 +118,9 @@ public final class HuntService {
         }
         feedback(killer, family, coins, rolled.shards(), rolled.keys(), rule.boss(), config.actionbar());
         recordBestiary(killer, dead.getType());
+        var progression = plugin.progression() == null ? null : plugin.progression().view(dead);
+        if (progression != null) org.bukkit.Bukkit.getPluginManager().callEvent(
+                new ru.cherdakmd.chrdkregister.api.events.QualifiedHuntKillEvent(killer, progression.level(), progression.elite()));
         return true;
     }
 

@@ -31,8 +31,8 @@ import java.util.UUID;
  */
 public interface ChrdkRegisterApi {
 
-    /** Версия контракта API. API38: MobRewardPolicy временных мобов; API37: общие helpers ExplorationCatalog/ExplorationStore/ExplorationAtlas; API 33: мосты внешних интеграций (слушатели безопасности, уведомлений и глобального чата с фильтром получателей, бонус длительности покупок, заморозка входа и сброс сессий без смены пароля); API 32: общий владелец непрерывных пассивных зелий PassivePotions; API 30: общий helper одноразового согласия с котировкой; API 29: точный остаток выручки магазина; API 28: индекс членства кланов; API 27: снят источник оформления удалённого аддона; API 26: сняты контракты удалённых аддонов; API 25: durable checkpoint игровых наград; API 24 — Claims domain settlement. */
-    int API_VERSION = 38;
+    /** Версия контракта API. API41: уведомление AnvilPaidResultEvent после ручной полной оплаты; API40: AnvilCosts/AnvilUse — полная цена без клиентского запрета 40; API39: денежная награда BP once и накопление буста без игрового потолка; API38: MobRewardPolicy временных мобов; API37: общие helpers ExplorationCatalog/ExplorationStore/ExplorationAtlas; API 33: мосты внешних интеграций (слушатели безопасности, уведомлений и глобального чата с фильтром получателей, бонус длительности покупок, заморозка входа и сброс сессий без смены пароля); API 32: общий владелец непрерывных пассивных зелий PassivePotions; API 30: общий helper одноразового согласия с котировкой; API 29: точный остаток выручки магазина; API 28: индекс членства кланов; API 27: снят источник оформления удалённого аддона; API 26: сняты контракты удалённых аддонов; API 25: durable checkpoint игровых наград; API 24 — Claims domain settlement. */
+    int API_VERSION = 41;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -140,6 +140,12 @@ public interface ChrdkRegisterApi {
 
     /** Результат атомарной игровой награды API36: FULL ничего не обрезает. */
     enum BoostGrant { ADDED, ALREADY, FULL, FAILED }
+
+    enum MoneyGrant { ADDED, ALREADY, FULL, FAILED }
+    /** API39: целые алмазы в личный /bal, баланс и неизменяемая квитанция одним durable commit. */
+    default MoneyGrant grantBattlePassMoneyOnce(UUID player, String name, long diamonds, String receipt) {
+        return MoneyGrant.FAILED;
+    }
 
     /** UUID + стабильный receipt; буст и receipt сохраняются одним checkpoint до ACK. */
     default BoostGrant grantRewardBoostOnce(java.util.UUID player, String name, int hours, String receipt) {

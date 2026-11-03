@@ -776,6 +776,29 @@ public final class BankStore {
         var receipt = entitlementCredits.get(source + ":" + key);
         return receipt == null ? 0 : receipt.owner().equals(owner) ? receipt.credited() : -1;
     }
+    /** Награда BP целиком или никак: receipt фиксирует первую сумму, повтор её не увеличивает. */
+    public synchronized ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.MoneyGrant grantBattlePassMoneyOnce(
+            UUID owner, long diamonds, String receipt) {
+        var failed = ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.MoneyGrant.FAILED;
+        if (!available || owner == null || diamonds <= 0 || diamonds > MAX_BALANCE
+                || receipt == null || !receipt.matches("bp:[a-f0-9]{64}")) return failed;
+        String source = "battlepass-rewards", key = source + ":" + receipt.replace(':', '_');
+        UUID lineage = UUID.nameUUIDFromBytes("CHRDK:BattlePass:money:v1".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        UUID registered = entitlementSources.get(source);
+        if (!lineage.equals(registered)) return failed;
+        Entitlement previous = entitlementCredits.get(key);
+        if (previous != null) return previous.owner().equals(owner)
+                ? ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.MoneyGrant.ALREADY : failed;
+        if (cashLocked(owner)) return failed;
+        if (balance(owner) > MAX_BALANCE - diamonds)
+            return ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.MoneyGrant.FULL;
+        var next = envelope();
+        adjust(next.accounts.computeIfAbsent(owner.toString(), ignored -> new Account()), diamonds);
+        next.entitlementSources.put(source, lineage);
+        next.entitlementCredits.put(key, new Entitlement(owner, diamonds));
+        return publishAuction(next) ? ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.MoneyGrant.ADDED : failed;
+    }
+
     /** Источник — долговечный монотонный total, не расходуемый кошелёк. Кредитуется только delta. */
     public synchronized boolean creditEntitlement(String source, UUID lineage, String key, UUID owner, long total) {
         long credited = creditedEntitlement(source, lineage, key, owner);

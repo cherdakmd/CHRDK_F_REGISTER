@@ -9,7 +9,8 @@ depend: [CHRDK_Core]
 softdepend: [CHRDK_Enchants]
 commands:
   artifacts:
-    description: Каталог и карточки артефактов, коллекция, свойства ▲/▼
+    description: Справочник артефактов, inspect экземпляра, текущие источники, коллекция и свойства
+    usage: /artifacts [страница|id|help|inspect|sources|collection|traits]
   artifactsadmin:
     description: Выдача и управление артефактами
     permission: chrdkartifacts.admin
