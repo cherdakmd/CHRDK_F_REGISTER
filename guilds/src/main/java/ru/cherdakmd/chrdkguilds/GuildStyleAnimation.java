@@ -14,25 +14,31 @@ final class GuildStyleAnimation {
         // Общая фаза повторяется через 12 секунд. Внутри — разные ритмы эффектов;
         // floorMod сохраняет корректный кадр даже для отрицательного времени.
         double phase = Math.floorMod(now, 12_000L) / 12_000.0;
-        int[] points = text.codePoints().toArray();
-        StringBuilder name = new StringBuilder();
-        for (int i = 0; i < points.length; i++) {
-            double offset = i / (double) Math.max(1, points.length);
-            int rgb = switch (animation) {
-                // Широкий перелив и вторая ледяная лента: не просто смена общего цвета.
-                case "aurora" -> aurora(phase, offset);
-                // Один направленный узкий блик за проход; тёплая основа не гаснет.
-                case "shine" -> mix(0xffb000, 0xfffacd,
-                        Math.pow(intensity(phase * 2 - offset * .85), 6));
-                // Всё название дышит синхронно, без бегущих полос.
-                case "pulse" -> mix(0xa344ff, 0xffd0ff, smooth(intensity(phase * 2)));
-                case "prism" -> prism(phase, offset);
-                // Две связанные волны тепла дают языки пламени без случайного мерцания.
-                case "flame" -> flame(phase, offset);
-                default -> throw new IllegalStateException("Неизвестная серверная анимация");
-            };
-            // Явный RGB каждого символа переживает сериализацию и выделение метки в Core.
-            name.append(colored(Character.toString(points[i]), rgb));
+        String name;
+        if (animation.equals("pulse")) {
+            // Синхронному дыханию достаточно одного компонента: не раздуваем TAB-пакет
+            // одинаковыми RGB-тегами на каждую букву.
+            name = colored(text, mix(0xa344ff, 0xffd0ff, smooth(intensity(phase * 2))));
+        } else {
+            int[] points = text.codePoints().toArray();
+            StringBuilder frame = new StringBuilder();
+            for (int i = 0; i < points.length; i++) {
+                double offset = i / (double) Math.max(1, points.length);
+                int rgb = switch (animation) {
+                    // Широкий перелив и вторая ледяная лента: не просто смена общего цвета.
+                    case "aurora" -> aurora(phase, offset);
+                    // Один направленный узкий блик за проход; тёплая основа не гаснет.
+                    case "shine" -> mix(0xffb000, 0xfffacd,
+                            Math.pow(intensity(phase * 2 - offset * .85), 6));
+                    case "prism" -> prism(phase, offset);
+                    // Две связанные волны тепла дают языки пламени без случайного мерцания.
+                    case "flame" -> flame(phase, offset);
+                    default -> throw new IllegalStateException("Неизвестная серверная анимация");
+                };
+                // Явный RGB каждого символа переживает сериализацию и выделение метки в Core.
+                frame.append(colored(Character.toString(points[i]), rgb));
+            }
+            name = frame.toString();
         }
         String icon = GuildStyleDefs.EMBLEMS.getOrDefault(emblem == null ? "" : emblem, "");
         return (icon.isEmpty() ? "" : "<gold>" + icon + "</gold> ") + name;

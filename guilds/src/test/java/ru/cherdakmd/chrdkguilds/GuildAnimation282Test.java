@@ -150,6 +150,13 @@ class GuildAnimation282Test {
                     GuildStyleAnimation.render("Я🚀", "gold", "crown", animation, Long.MIN_VALUE));
     }
 
+    @Test void uniformPulseDoesNotExpandIntoOneRgbTagPerCharacter() {
+        String tag = "ДЛИННЫЙКЛАН🚀<red>";
+        String markup = GuildStyleAnimation.render(tag, null, null, "pulse", 1500);
+        assertEquals(1, markup.split("</#", -1).length - 1);
+        assertEquals(tag, PLAIN.serialize(MINI.deserialize(markup)));
+    }
+
     @Test void everyAnimationHasADistinctGuiIcon() {
         assertEquals(5, GuildStyleDefs.ANIMATIONS.stream().map(GuildStyleGui::animationIcon).distinct().count());
         assertEquals(org.bukkit.Material.PAPER, GuildStyleGui.animationIcon("unknown"));
