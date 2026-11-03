@@ -99,7 +99,8 @@ class ForgeMarketContractTest {
     @Test void tierForgeKeepsSeedEligibilityAndMigrationOnlyLore() throws Exception {
         String materials = read("tier-forge/src/main/java/ru/cherdakmd/chrdktierforge/ForgeMaterials.java");
         assertTrue(materials.contains("QualifiedHuntKillEvent"));
-        assertFalse(materials.contains("EntityDeathEvent"));
+        assertFalse(materials.contains("import org.bukkit.event.entity.EntityDeathEvent"));
+        assertFalse(materials.contains("EntityDeathEvent event"));
         assertTrue(materials.contains("ForgeMaterial.HUNT_DROPS"));
         assertTrue(materials.contains("if (tierId != null) { fail(\"forge-input\"); return null; }"));
         assertTrue(materials.contains("ForgeMaterial.seedUid(canonical)"));

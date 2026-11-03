@@ -167,18 +167,24 @@ class ForgeMaterialTest {
             assertEquals(yaml,java.nio.file.Files.readString(path));
         }
     }
+    /** Gradle запускает :tier-forge:test из каталога модуля, а локальный запуск — из корня. */
+    private static String source(String name) throws Exception {
+        java.nio.file.Path cwd = java.nio.file.Path.of("").toAbsolutePath();
+        java.nio.file.Path inModule = cwd.resolve("src/main/java/ru/cherdakmd/chrdktierforge/" + name);
+        if (java.nio.file.Files.isRegularFile(inModule)) return java.nio.file.Files.readString(inModule);
+        java.nio.file.Path fromRoot = cwd.resolve("tier-forge/src/main/java/ru/cherdakmd/chrdktierforge/" + name);
+        if (java.nio.file.Files.isRegularFile(fromRoot)) return java.nio.file.Files.readString(fromRoot);
+        throw new java.nio.file.NoSuchFileException(name);
+    }
     @Test void rc16LoreAppendIsSingleAndRefreshOwnedLoreStaysMigrationOnly() throws Exception {
-        String items = java.nio.file.Files.readString(java.nio.file.Path.of(
-                "tier-forge/src/main/java/ru/cherdakmd/chrdktierforge/TierItems.java"));
+        String items = source("TierItems.java");
         assertTrue(items.contains("ItemStack forgeMaterialCopy("));
         assertTrue(items.contains("refreshTierModifiers(copy); // migration-only"));
         int start = items.indexOf("private ItemStack assemble");
         int end = items.indexOf("public void bumpUpgrade(", start);
         assertTrue(start >= 0 && end > start);
         assertEquals(1, items.substring(start, end).split("lore.add\\(tierLine\\(tier, kind\\)\\);", -1).length - 1);
-        String lore = java.nio.file.Files.readString(java.nio.file.Path.of(
-                "tier-forge/src/main/java/ru/cherdakmd/chrdktierforge/TierLore.java"));
-        assertTrue(lore.contains("if (!recognized) return before;"));
+        assertTrue(source("TierLore.java").contains("if (!recognized) return before;"));
     }
     @Test void propertyReplacementPoolStaysInTierRoleAndAvoidsExistingProperties() {
         for (String tier : TierDef.LADDER) for (ItemKind kind : ItemKind.values()) {
