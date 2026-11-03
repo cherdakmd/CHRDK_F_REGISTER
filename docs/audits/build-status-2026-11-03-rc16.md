@@ -234,7 +234,8 @@ Core API42, `ForgeMarketCatalog`, nullable frozen grant, восемь SKU, `/sho
   `ForgeShop*`, `ShopQuantityGui` — то есть собран именно RC16, а не RC14.
 - `ОБНОВЛЕНИЕ.txt` содержит раздел RC16 и явное предупреждение: игровой smoke,
   native `CraftItemStack` codec на живом сервере, серверная проверка и установка
-  **НЕ проводились**; Release и merge PR не выполнялись; общая crash-atomic
+  **НЕ проводились**; на момент сборки Release и merge PR не выполнялись
+  (GitHub-пререлиз опубликован позже, см. раздел 10); общая crash-atomic
   гарантия playerdata не обещается.
 - Локально после `6966f70`: `tools/wiki/build.py --check` — «33 страниц …
   (v1.4.282-rc.16); данные и ссылки проверены; сверка источников: проверена»;
@@ -248,4 +249,41 @@ Core API42, `ForgeMarketCatalog`, nullable frozen grant, восемь SKU, `/sho
 **Не проверялось / не реализовано:** живой серверный smoke матрицы из
 `docs/audits/forge-shop-rc16.md`, native NBT/`CraftItemStack` codec (тесты —
 source-inspection, а не рантайм-кодек), WAL-recovery в проде, дропы/цены на
-живом сервере и crash-atomic guarantee. Выпуск Release и merge PR не делались.
+живом сервере и crash-atomic guarantee. Раздел 9 фиксирует состояние на момент
+сборки комплекта: стабильный Release и merge PR не делались; позже опубликован
+только GitHub-пререлиз (раздел 10).
+
+## 10. Предрелиз `v1.4.282-rc.16` (2026-11-03)
+
+По команде пользователя «Давай предрелиз» опубликован GitHub **pre-release**, а не
+стабильный выпуск. Стабильной остаётся `1.4.281`; `main` не объединялся, PR не
+открывался, сервер/RCON/TradeMC не изменялись.
+
+- Релиз: <https://github.com/cherdakmd/CHRDK_F_REGISTER/releases/tag/v1.4.282-rc.16>
+  — `isPrerelease=true`, `isDraft=false`, `targetCommitish=71aa86e…`.
+  Тег `v1.4.282-rc.16` указывает ровно на `71aa86e54288c57722d25b30d834f8e9b3d69e54`.
+- Публикация через `gh release create … --prerelease --notes-file` вызвала штатный
+  `release.yml` (`release: published`), run `41667298126` — `success`, все 13 шагов:
+  сверка тега с `plugin_version` и обязательности prerelease для RC, проверки
+  сообщений/упаковщика/TradeMC/вики/clan_shop, `gradle_build.py` полный
+  `build --continue` с JUnit, `report_tests.py`, `verify_release.py`,
+  `pack_release.py`, `unzip -t`, standalone VK и `gh release upload --clobber`.
+- Ассеты, приложенные workflow (размер и SHA-256 по `digest` GitHub Release Assets):
+  `chrdk-plugins-1.4.282-rc.16.zip` — 4 406 366 байт,
+  `bd8ad6d4272f5c904fd6ec1982ff83d5bafbd117f5007345b3f4c018dcdd247c`;
+  `chrdk-vk-1.4.282-rc.16.jar` — 128 940 байт,
+  `41d7923149efed3a0f99a1891d1949072b7617513dfe175de45466e119b0c1b7`.
+  SHA-256 записаны в тело релиза; точный текст примечаний сохранён в
+  `docs/releases/prerelease-1.4.282-rc.16.md`.
+- Локальный ZIP из раздела 9 собран тем же `pack_release.py` из того же коммита,
+  но отличается временными метками записей ZIP, поэтому его SHA-256
+  `6d51d75c…` не равен хэшу GitHub-ассета; standalone VK совпадает побайтно
+  (`41d79231…`). Ассеты GitHub в песочницу не скачиваются (`release-assets…`
+  недоступен), их целостность проверена в CI через `verify_release.py`,
+  `unzip -t` и `verify_release.py --standalone`.
+- Тело релиза явно описывает восемь SKU, `/shop forge`, API42, frozen grant,
+  прежний путь оплаты и WAL, а также **непроверенное**: живой серверный smoke,
+  native `CraftItemStack`/NBT codec, WAL-recovery в проде и crash-atomic
+  гарантию. Матрица `docs/audits/forge-shop-rc16.md` по-прежнему помечена
+  «НЕ ПРОВОДИЛСЯ».
+
