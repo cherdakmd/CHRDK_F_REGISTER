@@ -122,7 +122,7 @@
     },
     "profile": {
       "reason": "Единый плагин ВК+MAX: обязательная привязка, общие коды входа, webhook MAX на отдельном порту, мост чата, автопостинг новостей и офлайн-тесты",
-      "sources": "6552e224f3007c05a93c2e1bcf0d987627a9f57ee8b29f00e1f8987e43b8d8cb",
+      "sources": "a2c07960cef920cfce78761be6ec37fbd0e4471391d8761f12387da0165b760c",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
@@ -147,7 +147,7 @@
     },
     "social-link": {
       "reason": "Единый плагин ВК+MAX: обязательная привязка, общие коды входа, webhook MAX на отдельном порту, мост чата, автопостинг новостей и офлайн-тесты",
-      "sources": "c6fa4c660ca10abc5fcd7fe884f3908b1e8272e478d6952b756fab5538061c2d",
+      "sources": "73a6e8f62e97a8242c04d4ff4cb29823ef993a3b88ebddd9b7645edd0f7f35d9",
       "text": "59bde8558361fbdec694293f42bc5fc11246a0c4161f1aafed759e9d63b8f9ba"
     },
     "start": {
@@ -177,7 +177,7 @@
     },
     "vk": {
       "reason": "Единый плагин ВК+MAX: обязательная привязка, общие коды входа, webhook MAX на отдельном порту, мост чата, автопостинг новостей и офлайн-тесты",
-      "sources": "c6fa4c660ca10abc5fcd7fe884f3908b1e8272e478d6952b756fab5538061c2d",
+      "sources": "73a6e8f62e97a8242c04d4ff4cb29823ef993a3b88ebddd9b7645edd0f7f35d9",
       "text": "837f09be941b49d216ee03340a1fb905538d70a9c0a4553dcebf6159c6e5cadf"
     }
   },

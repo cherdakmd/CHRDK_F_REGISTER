@@ -45,7 +45,8 @@ public final class MaxBotRouter {
                 if (type.equals("bot_started")) {
                     long userId = longField(update, "user_id");
                     if (userId > 0L) {
-                        backend.onCallback("max:" + userId, userId, "start", nowMillis);
+                        String reply = backend.onCallback("max:" + userId, userId, "start", nowMillis);
+                        if (reply != null && !reply.isBlank()) backend.sendDirectReply(userId, reply);
                     }
                 }
             }
