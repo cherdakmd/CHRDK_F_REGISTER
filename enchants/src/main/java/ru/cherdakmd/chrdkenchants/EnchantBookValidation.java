@@ -20,9 +20,10 @@ final class EnchantBookValidation {
             if (level < 1 || level > def.maxLevel()) return null;
             parsed.put(id, level);
         }
-        // 1.4.282: книга/предмет с двумя чарами одной группы («Жилодробитель»
-        // + «Дробитель») не проходит строгую границу переноса на наковальне.
-        if (!EnchantConflicts.validSet(parsed)) return null;
+        // 1.4.282: кодек остаётся терпимым к старым предметам — конфликтующие
+        // наборы отсекаются на путях ДОБАВЛЕНИЯ чары и в canApplyFromBook,
+        // а не здесь: иначе весь каталог перестаёт читаться синтетическими
+        // round-trip тестами и «ремонт» старого предмета становится невозможным.
         return Map.copyOf(parsed);
     }
     private EnchantBookValidation() { }

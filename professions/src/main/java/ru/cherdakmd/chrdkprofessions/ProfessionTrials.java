@@ -24,7 +24,7 @@ public final class ProfessionTrials {
                 &&service.level(id,profession)>=trial.level()&&units>=trial.units()&&sources>=trial.sources()&&works>=trial.works());
     }
     public boolean claim(UUID id,Profession profession,int index){
-        if(id==null||profession==null||index<0||index>=ALL.size()||service.active(id)!=profession)return false;
+        if(id==null||profession==null||index<0||index>=ALL.size()||!service.isActive(id,profession))return false;
         return progress(id,profession,index).ready()&&store.claimTrial(id,profession,index);
     }
     public int rank(UUID id,Profession profession){return Integer.bitCount(store.trials(id,profession));}

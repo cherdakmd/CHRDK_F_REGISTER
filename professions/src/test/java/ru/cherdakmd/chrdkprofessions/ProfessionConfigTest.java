@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Разбор {@code config.yml} профессий (1.4.165).
+ * Разбор {@code config.yml} ремёсел (1.4.282).
  *
  * <p>Опечатка в YAML не должна давать лишний опыт или отключать суточный
  * потолок: всё, что выходит за границы, зажимается, а в лог уходит
@@ -35,8 +35,14 @@ class ProfessionConfigTest {
         assertTrue(config.joinHint());
         assertTrue(config.xpFeedback());
         assertEquals(1200, config.dailyXpCap());
-        assertEquals(24, config.chooseCooldownHours());
-        assertEquals(86_400_000L, config.chooseCooldownMillis());
+        assertEquals(0, config.chooseCooldownHours(), "выбор отменён — кулдауна нет");
+        assertEquals(0L, config.chooseCooldownMillis());
+        assertFalse(config.onboarding().required());
+        assertFalse(config.onboardingRequired());
+        assertTrue(config.incomeEnabled());
+        assertEquals(100, config.xpPerDiamond());
+        assertEquals(9999, config.dailyIncomeCap());
+        assertTrue(config.incomeRankBonus());
         assertEquals(1.0, config.xpMultiplier());
         assertTrue(config.perksEnabled());
         assertTrue(config.perkSmithAnvil());
@@ -46,14 +52,14 @@ class ProfessionConfigTest {
     }
 
     @Test
-    void onboardingIsRequiredAndClamped() throws Exception {
+    void onboardingIsDisabledAndStillClamped() throws Exception {
         ProfessionConfig defaults = parse("");
-        assertTrue(defaults.onboarding().required(), "выбор профессии обязателен по умолчанию");
+        assertFalse(defaults.onboarding().required(), "онбординг выбора отключён");
         assertEquals(40, defaults.onboarding().openDelayTicks());
         assertEquals(10, defaults.onboarding().reopenSeconds());
-        assertEquals(30, defaults.onboarding().remindSeconds());
+        assertEquals(0, defaults.onboarding().remindSeconds());
         assertEquals(10 * 20L, defaults.onboarding().reopenTicks());
-        assertEquals(30 * 20L, defaults.onboarding().remindTicks());
+        assertEquals(0L, defaults.onboarding().remindTicks());
 
         ProfessionConfig custom = parse("onboarding:\n"
                 + "  required: false\n"
@@ -75,8 +81,10 @@ class ProfessionConfigTest {
     void emptyConfigUsesDefaults() throws Exception {
         ProfessionConfig config = parse("");
         assertEquals(1200, config.dailyXpCap());
-        assertEquals(24, config.chooseCooldownHours());
+        assertEquals(0, config.chooseCooldownHours());
         assertEquals(1.0, config.xpMultiplier());
+        assertEquals(100, config.xpPerDiamond());
+        assertEquals(9999, config.dailyIncomeCap());
         assertEquals("ru", config.locale());
         assertTrue(config.perkEnabled(Profession.SMITH));
     }
@@ -109,6 +117,28 @@ class ProfessionConfigTest {
         assertEquals(0, low.dailyXpCap(), "0 — суточный потолок выключен");
         assertEquals(0, low.chooseCooldownHours(), "0 — смена без кулдауна");
         assertEquals(ProfessionConfig.MIN_MULTIPLIER, low.xpMultiplier(), 0.0001);
+    }
+
+    @Test
+    void incomeValuesAreClampedToSafeRange() throws Exception {
+        ProfessionConfig high = parse("""
+                income:
+                  xp-per-diamond: 99999
+                  daily-cap: 99999
+                """);
+        assertEquals(ProfessionConfig.MAX_XP_PER_DIAMOND, high.xpPerDiamond());
+        assertEquals(ProfessionConfig.MAX_DAILY_INCOME, high.dailyIncomeCap());
+        ProfessionConfig low = parse("""
+                income:
+                  xp-per-diamond: 1
+                  daily-cap: -5
+                  enabled: false
+                  rank-bonus: false
+                """);
+        assertEquals(ProfessionConfig.MIN_XP_PER_DIAMOND, low.xpPerDiamond());
+        assertEquals(0, low.dailyIncomeCap());
+        assertFalse(low.incomeEnabled());
+        assertFalse(low.incomeRankBonus());
     }
 
     @Test

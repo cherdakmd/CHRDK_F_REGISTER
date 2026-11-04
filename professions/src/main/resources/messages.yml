@@ -1,4 +1,4 @@
-# CHRDK_Professions — тексты профессий, меню и команд (1.4.165).
+# CHRDK_Professions — тексты ремёсел, меню и команд (1.4.282).
 #
 # Ключи без префикса: код обращается к ним как "profession-chosen" и т.п.
 # Разметка — MiniMessage, подстановки — %имя%.
@@ -14,13 +14,14 @@ professions:
   unknown-subcommand: "<red>Неизвестная подкоманда «%sub%». Смотрите <yellow>/prof help</yellow>.</red>"
 
   # -------------------------------- справка ---------------------------------
-  help-header: "<gold>Профессии</gold> <dark_gray>·</dark_gray> <gray>ремесло, опыт за работу и тихие прибавки</gray>"
-  help-menu: "<yellow>/prof</yellow> <gray>— меню профессий</gray>"
-  help-choose: "<yellow>/prof choose <ремесло></yellow> <gray>— выбрать или сменить ремесло</gray>"
+  help-header: "<gold>Ремёсла</gold> <dark_gray>·</dark_gray> <gray>все восемь активны: опыт, прибавки и алмазы за работу</gray>"
+  help-menu: "<yellow>/prof</yellow> <gray>— меню ремёсел</gray>"
+  help-income: "<yellow>/prof income</yellow> <gray>— заработанные алмазы, курс и бонус ранга</gray>"
   help-info: "<yellow>/prof info [ремесло]</yellow> <gray>— карточка, прибавка и остаток на сегодня</gray>"
   help-stats: "<yellow>/prof stats</yellow> <gray>— уровни всех восьми ремёсел</gray>"
   help-top: "<yellow>/prof top</yellow> <gray>— сколько игроков в каждом ремесле</gray>"
-  help-footer: "<gray>Опыт даёт работа: крафт, печь, варка, добыча, камнерез, наковальня и стол кузнеца. Суточный потолок: <white>%cap%</white> опыта, смена ремесла — раз в <white>%hours%</white> ч.</gray>"
+  help-footer: "<gray>Опыт и алмазы даёт работа: крафт, печь, варка, добыча, камнерез, рыбалка, наковальня и стол кузнеца. Суточный потолок опыта на ремесло: <white>%cap%</white>.</gray>"
+  choose-removed: "<yellow>Выбор профессии отменён: все восемь ремёсел доступны и качаются одновременно. Смотрите <white>/prof income</white>.</yellow>"
 
   # -------------------------------- выбор -----------------------------------
   choose-usage: "<gray>/prof choose <yellow><smith|alchemist|cook|mason|forester|miner|farmer|fisher></yellow></gray>"
@@ -34,8 +35,14 @@ professions:
   # 1.4.177: сразу после выбора — за какую работу идёт опыт.
   chosen-hint: "%profession% <dark_gray>·</dark_gray> <gray>опыт за:</gray> %hint%"
 
+  # --------------------------- заработок (1.4.282) -------------------------
+  income-header: "<gold>Заработок ремёсел</gold> <dark_gray>·</dark_gray> <gray>1 алмаз за <white>%xp%</white> опыта · опыт и доход с бонусом ранга <white>%rank%</white>%</gray>"
+  income-today: "<gray>Сегодня: <white>%amount%</white> алм. <dark_gray>(дневной потолок %cap%)</dark_gray></gray>"
+  income-total: "<gray>Всего заработано: <white>%amount%</white> алм. · дробный остаток: <white>%micro%</white>/1000</gray>"
+  income-earned: "<green>+<white>%amount%</white> алм.</green> <gray>за работу ремёсел — на личный счёт</gray>"
+
   # ------------------------------ опыт и уровни ------------------------------
-  join-hint: "<gray>Ремесло ещё не выбрано: <yellow>/prof</yellow> — восемь профессий и их прибавки.</gray>"
+  join-hint: "<gray>Все восемь ремёсел активны: работайте и получайте опыт и алмазы. <yellow>/prof income</yellow></gray>"
   # 1.4.182: обязательный выбор профессии — меню, напоминание и закрытие без выбора.
   onboarding-start: "<gold>Профессия</gold> <dark_gray>·</dark_gray> <white>Выбери ремесло</white> <dark_gray>—</dark_gray> <gray>меню откроется через пару секунд. Это бесплатно.</gray>"
   onboarding-remind: "<gold>Выбери профессию</gold> <dark_gray>·</dark_gray> <yellow>/prof</yellow>"
@@ -68,7 +75,8 @@ professions:
   stats-header: "<gold>Ремёсла игрока</gold>"
   stats-current: "<green>✓ <white>%profession%</white></green> <dark_gray>·</dark_gray> <gray>ур. %level% · %rank% · %xp%/%needed%</gray>"
   stats-line: "<gray>· <white>%profession%</white> <dark_gray>·</dark_gray> ур. %level% · %rank% · %xp%/%needed%</gray>"
-  stats-footer: "<dark_gray>Опыт копится только у выбранного ремесла.</dark_gray>"
+  stats-footer: "<dark_gray>Опыт и заработок идут по всем восьми ремёслам сразу.</dark_gray>"
+  stats-income: "<gray>Алмазов сегодня: <white>%amount%</white> · всего заработано: <white>%total%</white></gray>"
 
   # ------------------------------ распределение ------------------------------
   top-header: "<gold>Профессии на сервере</gold> <dark_gray>·</dark_gray> <gray>выбрали %count% игроков</gray>"
@@ -79,7 +87,13 @@ professions:
   info-title: "<dark_gray>Профессия: %profession%</dark_gray>"
   menu-close: "<red>Закрыть</red>"
   menu-back: "<gray>Назад</gray>"
-  menu-current: "<gold>Текущее ремесло</gold>"
+  menu-current: "<gold>Все ремёсла активны</gold>"
+  menu-all-active: "<green>Выбор отменён — всё доступно</green>"
+  menu-all-active-hint: "<gray>Опыт, прибавки и алмазы идут по всем восьми ремёслам.</gray>"
+  menu-all-active-lore: "<gray>Ремёсел: <white>%count%</white> · 1 алмаз за <white>%xp%</white> опыта · бонус ранга: <white>%rank%</white>%</gray>"
+  menu-income-rate: "<gray>Курс: 1 алмаз за <white>%xp%</white> опыта.</gray>"
+  menu-income-today: "<gray>Заработано сегодня: <white>%amount%</white> алм.</gray>"
+  menu-income-total: "<gray>Всего заработано: <white>%amount%</white> алм.</gray>"
   menu-current-none: "<gray>Ремесло не выбрано</gray>"
   menu-current-hint: "<gray>Выберите одно из четырёх ниже</gray>"
   menu-profession-level: "<gray>Уровень <white>%level%</white> · %rank%</gray>"
@@ -99,7 +113,11 @@ professions:
   menu-confirm-keeps: "<gray>Сохранится: <white>%profession%</white></gray>"
 
   # ------------------------------- профиль ----------------------------------
-  profile-title: "<gold>Профессия</gold>"
+  profile-title: "<gold>Ремёсла</gold>"
+  profile-all-active: "<gray>Активны все <white>%count%</white> ремёсел · 1 алмаз за <white>%xp%</white> опыта · бонус ранга <white>%rank%</white>%</gray>"
+  profile-profession-line: "<gray>· <white>%profession%</white> <dark_gray>·</dark_gray> ур. <white>%level%</white> <dark_gray>·</dark_gray> <white>%percent%</white>%</gray>"
+  profile-income-today: "<gray>Алмазов сегодня: <white>%amount%</white> <dark_gray>(потолок %cap%)</dark_gray></gray>"
+  profile-income-total: "<gray>Всего заработано: <white>%amount%</white> алм.</gray>"
   profile-none: "<gray>Ремесло не выбрано</gray>"
   profile-none-hint: "<gray>Выбор бесплатный: <yellow>/prof</yellow>, смена — раз в %hours% ч.</gray>"
   profile-profession: "<gray>Ремесло: <white>%profession%</white></gray>"
@@ -147,7 +165,7 @@ professions:
   profession.mason.desc: "<gray>Камень, кирпич и распил. Опыт — за добычу камня, камнерез и обжиг.</gray>"
 
   # --------------------------- администрирование ----------------------------
-  admin-usage: "<gray>/profadmin <yellow>reload</yellow> | <yellow>info <ник></yellow> | <yellow>set <ник> <ремесло></yellow> | <yellow>xp <ник> <ремесло> <кол-во></yellow> | <yellow>reset <ник></yellow></gray>"
+  admin-usage: "<gray>/profadmin <yellow>reload</yellow> | <yellow>info <ник></yellow> | <yellow>xp <ник> <ремесло> <кол-во></yellow> | <yellow>reset <ник></yellow></gray>"
   admin-reloaded: "<green>Конфиг профессий перечитан: ремёсел %count%.</green>"
   admin-target-none: "<red>Игрок «%player%» не найден.</red>"
   admin-info-header: "<gold>Профессии игрока <white>%player%</white></gold>"

@@ -8,19 +8,20 @@ import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 
+import java.util.UUID;
+
 /**
- * CHRDK_Professions — четыре ремесла и тихие прибавки к работе (1.4.165).
+ * CHRDK_Professions — восемь ремёсел, тихие прибавки и заработок алмазов (1.4.282).
  *
- * <p>Профессия не даёт силы: она возвращает время и материалы. Кузнец платит
- * меньше уровней в наковальне, алхимик получает лишнюю склянку, повар сытнее
- * ест, камнерез получает второй блок при плавке. Всё это зажато потолками в
- * {@link ProfessionMath}, поэтому профессия не становится скрытой веткой
- * прокачки и не продаёт преимущество за деньги.</p>
+ * <p>Выбор профессии отменён: все ремесла доступны каждому игроку и качаются
+ * параллельно. Опыт начисляется только за события, которые нельзя подделать
+ * клиентом (крафт, выплавка, варка, добыча, распил, рыбалка, наковальня),
+ * креатив не считается, а суточный потолок не даёт превратить работу в бесконечную
+ * ферму. За тот же честно начисленный опыт игрок получает алмазы на личный счёт;
+ * донатный ранг через {@code RankBonus.xpPercent} усиливает и опыт, и доход.</p>
  *
- * <p>Опыт начисляется только за события, которые нельзя подделать клиентом:
- * крафт, выплавку и завершённую варку. Креатив не считается, шифт-крафт даёт
- * опыт за один результат рецепта, а суточный потолок не даёт превратить
- * профессию в бесконечную ферму.</p>
+ * <p>Выплаты идут через накопительный WAL ядра ({@link ProfessionIncome}), чтобы
+ * рестарт или недоступный банк не удваивали и не теряли алмазы.</p>
  */
 public final class ProfessionsPlugin extends JavaPlugin {
 
@@ -33,8 +34,9 @@ public final class ProfessionsPlugin extends JavaPlugin {
     private ProfessionWorkshop workshop;
     private ProfessionGuide guide;
     ProfessionGuide guide(){return guide;}
-    /** 1.4.182: обязательный выбор профессии — меню и напоминания. */
-    private ProfessionOnboarding onboarding;
+    /** 1.4.282: доставка заработанных алмазов в банк ядра. */
+    private ProfessionIncome income;
+    private BukkitTask incomeTask;
     private BukkitTask saveTask;
     private BukkitTask queuedSave;
     private boolean saveQueued;
@@ -52,21 +54,33 @@ public final class ProfessionsPlugin extends JavaPlugin {
             this.workshop = new ProfessionWorkshop(this);
             this.guide=new ProfessionGuide(this);
             getServer().getPluginManager().registerEvents(guide,this);
-            this.onboarding = new ProfessionOnboarding(this);
+            // 1.4.282: принудительный онбординг и меню выбора больше не регистрируются.
+            this.income = new ProfessionIncome(store, new ProfessionIncome.Bank() {
+                public boolean available() { return coreApi != null && coreApi.personalBankAvailable(); }
+                public boolean registered(UUID lineage) { return coreApi != null && coreApi.incomeSourceAvailable(ProfessionIncome.SOURCE, lineage); }
+                public boolean register(UUID lineage) { return coreApi != null && coreApi.registerIncomeSource(ProfessionIncome.SOURCE, lineage); }
+                public boolean known(UUID owner) { return coreApi != null && coreApi.canReceiveBankIncome(owner); }
+                public long credited(UUID lineage, UUID owner) {
+                    return coreApi == null ? -1L : coreApi.creditedEntitlement(ProfessionIncome.SOURCE, lineage, owner.toString(), owner);
+                }
+                public boolean credit(UUID lineage, UUID owner, long total) {
+                    return coreApi != null && coreApi.creditEntitlement(ProfessionIncome.SOURCE, lineage, owner.toString(), owner, total);
+                }
+            });
 
             getServer().getPluginManager().registerEvents(new ProfessionListener(this), this);
             getServer().getPluginManager().registerEvents(gui, this);
-            getServer().getPluginManager().registerEvents(onboarding, this);
             registerCommands();
             registerPlaceholders();
             registerProfile();
 
             this.saveTask = getServer().getScheduler().runTaskTimerAsynchronously(this,
                     this::saveNow, 200L, 200L);
-            onboarding.start();
+            this.incomeTask = getServer().getScheduler().runTaskTimer(this,
+                    () -> { if (income != null) income.tick(16); }, 600L, 600L);
 
-            getLogger().info("CHRDK_Professions включён: профессий " + Profession.values().length
-                    + ", игроков в файле " + store.size() + ".");
+            getLogger().info("CHRDK_Professions включён: ремёсел " + Profession.values().length
+                    + " (все активны), игроков в файле " + store.size() + ".");
         } catch (RuntimeException exception) {
             getLogger().severe("CHRDK_Professions не смог запуститься: " + exception.getMessage());
             exception.printStackTrace();
@@ -92,8 +106,9 @@ public final class ProfessionsPlugin extends JavaPlugin {
             queuedSave.cancel();
             queuedSave = null;
         }
-        if (onboarding != null) {
-            onboarding.stop();
+        if (incomeTask != null) {
+            incomeTask.cancel();
+            incomeTask = null;
         }
         if (store != null) {
             store.flush();
@@ -107,10 +122,6 @@ public final class ProfessionsPlugin extends JavaPlugin {
         this.config = ProfessionConfig.parse(getConfig(), getLogger());
         this.messages = Messages.load(this, config.locale(), getLogger());
         service.applyConfig(config);
-        // 1.4.182: период напоминания мог измениться — перезапускаем задачи.
-        if (onboarding != null) {
-            onboarding.start();
-        }
     }
 
     ProfessionWorkshop workshop() { return workshop; }
@@ -238,5 +249,10 @@ public final class ProfessionsPlugin extends JavaPlugin {
 
     public ProfessionsGui gui() {
         return gui;
+    }
+
+    /** Доставщик заработанных алмазов (null до onEnable). */
+    public ProfessionIncome income() {
+        return income;
     }
 }

@@ -65,12 +65,15 @@ final class EnchantConflictsTest {
     }
 
     @Test
-    void strictBookBoundaryRejectsConflictingPdc() {
-        assertNull(EnchantBookValidation.read("excavator:2;veinminer:3"));
-        assertNull(EnchantBookValidation.read("bulwark:1;second_skin:1"));
+    void tolerantCodecStillReadsConflictingPdcButRulesRejectIt() {
+        // Терпимый кодек нужен для старых предметов и round-trip всего каталога.
+        assertNotNull(EnchantBookValidation.read("excavator:2;veinminer:3"));
         assertEquals(Map.of("seer", 1, "scholar", 1), EnchantBookValidation.read("seer:1;scholar:1"));
-        assertFalse(WorkshopPolicy.valid(Map.of("veinminer", 3, "excavator", 2)));
-        assertTrue(WorkshopPolicy.valid(Map.of("seer", 1, "scholar", 1)));
+        assertTrue(WorkshopPolicy.valid(Map.of("veinminer", 3, "excavator", 2)));
+        // А вот добавить/перенести такой набор уже нельзя.
+        assertFalse(EnchantConflicts.validSet(Map.of("veinminer", 3, "excavator", 2)));
+        assertFalse(EnchantConflicts.validSet(Map.of("bulwark", 1, "second_skin", 1)));
+        assertTrue(EnchantConflicts.conflictsWith(Map.of("veinminer", 3), "excavator"));
     }
 
     @Test
