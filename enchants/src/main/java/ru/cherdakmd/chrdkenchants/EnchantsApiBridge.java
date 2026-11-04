@@ -123,8 +123,9 @@ public final class EnchantsApiBridge implements ChrdkEnchantsApi {
         if (source.isEmpty()) {
             return;
         }
-        Map<String, Integer> merged = new LinkedHashMap<>(plugin.items().read(to));
-        source.forEach((id, level) -> merged.merge(id, level, Math::max));
+        // 1.4.282: незеритовый апгрейд переносит чары, но не может склеить
+        // «Жилодробитель» с «Дробителем» (или любую другую conflictGroup).
+        Map<String, Integer> merged = EnchantConflicts.merge(source, plugin.items().read(to));
         plugin.items().write(to, merged);
     }
 

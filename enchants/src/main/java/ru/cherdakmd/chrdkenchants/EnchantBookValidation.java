@@ -20,6 +20,9 @@ final class EnchantBookValidation {
             if (level < 1 || level > def.maxLevel()) return null;
             parsed.put(id, level);
         }
+        // 1.4.282: книга/предмет с двумя чарами одной группы («Жилодробитель»
+        // + «Дробитель») не проходит строгую границу переноса на наковальне.
+        if (!EnchantConflicts.validSet(parsed)) return null;
         return Map.copyOf(parsed);
     }
     private EnchantBookValidation() { }

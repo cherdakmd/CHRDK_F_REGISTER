@@ -6,7 +6,9 @@ import java.util.*;
 final class WorkshopPolicy {
     record Split(Map<String, Integer> remainder, Map<String, Integer> extracted) { }
     static boolean valid(Map<String, Integer> data) {
-        if (data == null || data.isEmpty()) return false;
+        // 1.4.282: мастерская не «ремонтирует» предмет, на котором уже стоят
+        // две несовместимые чары, и не создаёт такой набор разделением.
+        if (data == null || data.isEmpty() || !EnchantConflicts.validSet(data)) return false;
         for (var entry : data.entrySet()) {
             var def = EnchantRegistry.byId(entry.getKey());
             if (def == null || !def.id().equals(entry.getKey()) || entry.getValue() == null

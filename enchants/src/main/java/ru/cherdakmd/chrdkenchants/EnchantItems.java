@@ -147,11 +147,24 @@ public final class EnchantItems {
         return true;
     }
 
-    /** Добавляет чару с уровнем (правила применимости — на вызывающем). */
-    public void apply(ItemStack item, EnchantDef def, int level) {
+    /**
+     * Добавляет чару с уровнем. 1.4.282: даже низкоуровневый вызов больше не
+     * может поставить две чары одной conflictGroup на один предмет — это
+     * последняя граница перед записью PDC (стол, API, админ-выдача, мастерская).
+     *
+     * @return {@code false}, если чара conflicts с уже стоящими (PDC не тронут)
+     */
+    public boolean apply(ItemStack item, EnchantDef def, int level) {
+        if (item == null || def == null) {
+            return false;
+        }
         Map<String, Integer> enchants = new LinkedHashMap<>(read(item));
+        if (!enchants.containsKey(def.id()) && EnchantConflicts.conflictsWith(enchants, def.id())) {
+            return false;
+        }
         enchants.put(def.id(), Math.min(def.maxLevel(), Math.max(1, level)));
         write(item, enchants);
+        return true;
     }
 
     /** Книга чар (жители, выдача админом, наковальня). */

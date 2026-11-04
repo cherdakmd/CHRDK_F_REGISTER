@@ -71,7 +71,9 @@ public final class EnchantService {
             return null;
         }
         int level = EnchantRoller.rollLevel(picked, costTier, random);
-        items.apply(item, picked, level);
+        if (!items.apply(item, picked, level)) {
+            return null; // 1.4.282: конфликт, обнаруженный на границе записи, не считается выдачей
+        }
         return new RollResult(picked, level);
     }
 
@@ -109,6 +111,11 @@ public final class EnchantService {
         }
         Map<String, Integer> bookEnchants = items.read(book);
         Map<String, Integer> itemEnchants = new java.util.LinkedHashMap<>(items.read(item));
+        // 1.4.282: книга-«мутант» и уже испорченный предмет не проходят проверку
+        // целиком, даже если по одной чаре конфликт маскируется порядком обхода.
+        if (!EnchantConflicts.validSet(bookEnchants) || !EnchantConflicts.validSet(itemEnchants)) {
+            return "blocked";
+        }
         for (String id : bookEnchants.keySet()) {
             EnchantDef def = EnchantRegistry.byId(id);
             if (def == null || !plugin.config().isEnabled(id)) {
@@ -133,6 +140,10 @@ public final class EnchantService {
         }
         if (item.getType() == Material.BOOK || item.getType() == Material.AIR) {
             return "mismatch";
+        }
+        // Итоговый набор после всех переносов тоже должен быть без конфликтов.
+        if (!EnchantConflicts.validSet(itemEnchants)) {
+            return "blocked";
         }
         return null;
     }
