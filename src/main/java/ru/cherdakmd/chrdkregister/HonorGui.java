@@ -293,8 +293,8 @@ public final class HonorGui implements Listener {
         Messages messages = plugin.messages();
         List<HonorGrant> grants = honors.ledger().allGrants().stream()
                 .filter(grant -> holder.filter.isEmpty()
-                        || grant.player.toLowerCase(Locale.ROOT).contains(holder.filter.toLowerCase(Locale.ROOT))
-                        || grant.reason.toLowerCase(Locale.ROOT).contains(holder.filter.toLowerCase(Locale.ROOT))
+                        || grant.player().toLowerCase(Locale.ROOT).contains(holder.filter.toLowerCase(Locale.ROOT))
+                        || grant.reason().toLowerCase(Locale.ROOT).contains(holder.filter.toLowerCase(Locale.ROOT))
                         || honors.ledger().display(grant.honorId()).toLowerCase(Locale.ROOT)
                                 .contains(holder.filter.toLowerCase(Locale.ROOT)))
                 .toList();
@@ -454,8 +454,8 @@ public final class HonorGui implements Listener {
             case GRANTS -> {
                 List<HonorGrant> grants = honors.ledger().allGrants().stream()
                         .filter(grant -> holder.filter.isEmpty()
-                                || grant.player.toLowerCase(Locale.ROOT).contains(holder.filter.toLowerCase(Locale.ROOT))
-                                || grant.reason.toLowerCase(Locale.ROOT).contains(holder.filter.toLowerCase(Locale.ROOT))
+                                || grant.player().toLowerCase(Locale.ROOT).contains(holder.filter.toLowerCase(Locale.ROOT))
+                                || grant.reason().toLowerCase(Locale.ROOT).contains(holder.filter.toLowerCase(Locale.ROOT))
                                 || honors.ledger().display(grant.honorId()).toLowerCase(Locale.ROOT)
                                         .contains(holder.filter.toLowerCase(Locale.ROOT)))
                         .toList();
