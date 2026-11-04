@@ -1,8 +1,6 @@
 package ru.cherdakmd.chrdkregister;
 
-import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -29,7 +27,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Админ-панель аудита игроков ({@code /adminpanel}).
@@ -60,6 +57,8 @@ public final class AdminPanelGui implements Listener {
     static final int SLOT_JOURNAL = 2;
     static final int SLOT_MUTES = 3;
     static final int SLOT_INFO = 4;
+    /** Кнопка редактора особых званий (отдельный GUI, не страница этой панели). */
+    static final int SLOT_HONORS = 5;
     static final int SLOT_FILTER = 6;
     static final int SLOT_REFRESH = 8;
     static final int SLOT_PREV = 45;
@@ -127,7 +126,8 @@ public final class AdminPanelGui implements Listener {
     private final RegisterPlugin plugin;
     private final ModerationService service;
     /** Ожидание ввода причины: один запрос на администратора. */
-    private final Map<UUID, Pending> pending = new ConcurrentHashMap<>();
+    /** Владелец ввода в чате — общий координатор, а не локальная карта. */
+    private static final String OWNER = "adminpanel";
 
     public AdminPanelGui(RegisterPlugin plugin, ModerationService service) {
         this.plugin = plugin;
@@ -167,7 +167,7 @@ public final class AdminPanelGui implements Listener {
     }
 
     public void shutdown() {
-        pending.clear();
+        plugin.chatInput().clearOwner(OWNER);
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (player.getOpenInventory().getTopInventory().getHolder() instanceof Holder) {
                 player.closeInventory();
@@ -190,6 +190,8 @@ public final class AdminPanelGui implements Listener {
                 messages.get("admin.button-journal"), List.of()));
         inventory.setItem(SLOT_MUTES, icon(Material.NAME_TAG,
                 messages.get("admin.button-mutes"), List.of()));
+        inventory.setItem(SLOT_HONORS, icon(Material.NETHER_STAR,
+                messages.get("admin.button-honors"), List.of()));
         inventory.setItem(SLOT_FILTER, icon(Material.HOPPER,
                 messages.get("admin.button-filter", "filter",
                         holder.filter.isEmpty() ? messages.plain("admin.value-none") : holder.filter),
@@ -585,6 +587,17 @@ public final class AdminPanelGui implements Listener {
         if (slot == SLOT_MODERATORS) { open(viewer, Page.MODERATORS, "", 0, holder.filter); return; }
         if (slot == SLOT_JOURNAL) { open(viewer, Page.JOURNAL, "", 0, holder.filter); return; }
         if (slot == SLOT_MUTES) { open(viewer, Page.MUTES, "", 0, holder.filter); return; }
+        if (slot == SLOT_HONORS) {
+            HonorGui gui = plugin.honorsGui();
+            if (gui != null) {
+                if (holder.page == Page.PROFILE && !holder.target.isBlank()) {
+                    gui.openForPlayer(viewer, holder.target);
+                } else {
+                    gui.open(viewer, HonorGui.Page.DEFINITIONS, "");
+                }
+            }
+            return;
+        }
         if (slot == SLOT_REFRESH) { paint(viewer, holder); return; }
         if (slot == SLOT_BACK) {
             if (holder.page == Page.PUNISH || holder.page == Page.CHAT_HISTORY) {
@@ -731,44 +744,34 @@ public final class AdminPanelGui implements Listener {
     }
 
     private void startInput(Player viewer, Input type, Holder holder, long minutes) {
-        pending.put(viewer.getUniqueId(),
-                new Pending(type, holder.page, holder.target, holder.index, holder.filter, minutes));
-        viewer.closeInventory();
+        queueInput(viewer, new Pending(type, holder.page, holder.target,
+                holder.index, holder.filter, minutes));
+    }
+
+    /** Подсказка и регистрация ожидания в общем координаторе ввода. */
+    private void queueInput(Player viewer, Pending request) {
         Messages messages = plugin.messages();
-        switch (type) {
-            case WARN -> messages.send(viewer, "admin.input-warn", "player", holder.target);
-            case BAN -> messages.send(viewer, "admin.input-ban", "player", holder.target);
+        switch (request.type()) {
+            case WARN -> messages.send(viewer, "admin.input-warn", "player", request.target());
+            case BAN -> messages.send(viewer, "admin.input-ban", "player", request.target());
             case MODERATOR_ADD -> messages.send(viewer, "admin.input-moderator");
             case FILTER -> messages.send(viewer, "admin.input-filter");
             case MUTE_REASON -> messages.send(viewer, "admin.input-mute-reason",
-                    "player", holder.target,
-                    "duration", AccessManager.describeRemaining(minutes * 60_000L));
+                    "player", request.target(),
+                    "duration", AccessManager.describeRemaining(request.minutes() * 60_000L));
             case MUTE_CUSTOM_DURATION -> messages.send(viewer, "admin.input-mute-custom",
-                    "player", holder.target);
+                    "player", request.target());
             case KICK_REASON -> messages.send(viewer, "admin.input-kick-reason",
-                    "player", holder.target);
+                    "player", request.target());
             case IP_BAN_REASON -> messages.send(viewer, "admin.input-ip-ban-reason",
-                    "player", holder.target);
+                    "player", request.target());
             case IP_UNBAN_TARGET -> messages.send(viewer, "admin.input-ip-unban");
         }
+        plugin.chatInput().begin(viewer, OWNER, text -> applyInput(viewer, request, text));
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void onChat(AsyncChatEvent event) {
-        Player player = event.getPlayer();
-        if (pending.get(player.getUniqueId()) == null) return;
-        try {
-            event.setCancelled(true);
-        } catch (Throwable ignored) {
-            // Не все сборки Paper позволяют отменять AsyncChatEvent: ввод всё равно обработаем.
-        }
-        String text = PlainTextComponentSerializer.plainText().serialize(event.message());
-        Bukkit.getScheduler().runTask(plugin, () -> applyInput(player, text));
-    }
-
-    private void applyInput(Player player, String raw) {
-        Pending request = pending.remove(player.getUniqueId());
-        if (request == null || !player.isOnline() || !service.isStaff(player)) return;
+    private void applyInput(Player player, Pending request, String raw) {
+        if (!player.isOnline() || !service.isStaff(player)) return;
         String text = raw == null ? "" : raw.trim();
         if (text.isEmpty() || text.equalsIgnoreCase("отмена") || text.equalsIgnoreCase("cancel")) {
             plugin.messages().send(player, "admin.input-cancelled");
@@ -788,11 +791,8 @@ public final class AdminPanelGui implements Listener {
                     return;
                 }
                 // Двухшаговый ввод: сначала срок, затем причина. Меню остаётся закрытым.
-                pending.put(player.getUniqueId(), new Pending(Input.MUTE_REASON, request.page,
+                queueInput(player, new Pending(Input.MUTE_REASON, request.page,
                         request.target, request.index, request.filter, minutes));
-                plugin.messages().send(player, "admin.input-mute-reason",
-                        "player", request.target,
-                        "duration", AccessManager.describeRemaining(minutes * 60_000L));
                 return;
             }
             case KICK_REASON -> service.kick(player, request.target, text);

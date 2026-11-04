@@ -28,6 +28,14 @@ public final class LabelStyleService {
         /** Оформление ступени игрока; {@code null} — ранга нет. */
         Rank view(String playerName);
 
+        /**
+         * То же, но с контекстом отрисовки: {@code tab=true} для TAB-листа.
+         * Реализации, которым контекст не важен, переопределять не обязаны.
+         */
+        default Rank view(String playerName, boolean tab) {
+            return view(playerName);
+        }
+
         /** Исторический порядок регистрации; назначения мест больше от него не зависят. */
         List<String> registrationOrder();
     }
@@ -105,7 +113,7 @@ public final class LabelStyleService {
 
     /** Клан в TAB — статус PvP, а не платное косметическое место. Чат не меняется. */
     public String decorateForTab(String playerName, String base, String customColor) {
-        Rank rank=ranks.view(playerName);
+        Rank rank=ranks.view(playerName, true);
         Selection selected=selection(playerName,rank,customColor);
         List<Decoration> shown=selected.shown().stream()
                 .filter(entry -> entry.source()!=LabelPreferences.Label.GUILDS).toList();

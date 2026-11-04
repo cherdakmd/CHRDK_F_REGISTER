@@ -69,9 +69,10 @@ groups:
   - vk
 - id: staff
   title: Администрирование
-  description: Аудит игроков, варны, баны и журнал модерации.
+  description: Аудит игроков, варны, баны, журнал модерации и особые звания.
   pages:
   - moderation
+  - honors
 - id: reference
   title: Версия и источники
   description: Как обновляется справочник и чему доверять.

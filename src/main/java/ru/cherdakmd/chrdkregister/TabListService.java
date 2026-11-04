@@ -66,15 +66,9 @@ public final class TabListService implements Listener {
 
     /** Снимок настроек из {@code config.yml}. */
     record Settings(boolean enabled, int refreshTicks, List<String> header, List<String> footer,
-                    String nameFormat, List<String> pinnedNames, boolean showRankName) {
-        Settings {
-            // Пустой формат — не трогаем чужие префиксы; название ранга без
-            // формата никчему.
-            showRankName = showRankName && nameFormat != null && !nameFormat.isBlank();
-        }
-
+                    String nameFormat, List<String> pinnedNames) {
         static Settings disabled() {
-            return new Settings(false, 40, List.of(), List.of(), "", List.of(), false);
+            return new Settings(false, 40, List.of(), List.of(), "", List.of());
         }
     }
 
@@ -245,8 +239,9 @@ public final class TabListService implements Listener {
                 cfg.getStringList(root + ".header"),
                 cfg.getStringList(root + ".footer"),
                 cfg.getString(root + ".player-name-format", ""),
-                cfg.getStringList(root + ".pinned-names"),
-                cfg.getBoolean(root + ".show-rank-name", true));
+                // tablist.show-rank-name читает RegisterPlugin → ChatService.setRankNameInTab;
+                // второй parse в Settings был мёртвым полем и удалён.
+                cfg.getStringList(root + ".pinned-names"));
         headerNeedsName = java.util.stream.Stream.concat(settings.header().stream(), settings.footer().stream())
                 .anyMatch(line -> line.contains("%player_tagged%"));
         dashboardAnimation = cfg.getBoolean(root + ".dashboard-animation", true);

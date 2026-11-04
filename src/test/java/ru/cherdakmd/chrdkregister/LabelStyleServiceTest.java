@@ -201,6 +201,35 @@ class LabelStyleServiceTest {
     }
 
     @Test
+    void chatUsesPlainLookupButTabUsesTabAwareLookup() {
+        int[] tabCalls = {0};
+        LabelStyleService styles = new LabelStyleService(LabelStyleServiceTest::tag,
+                new LabelPreferences(Path.of("build", "never-written"), LOGGER),
+                new LabelStyleService.RankLookup() {
+                    @Override
+                    public LabelStyleService.Rank view(String playerName) {
+                        return null;
+                    }
+
+                    @Override
+                    public LabelStyleService.Rank view(String playerName, boolean tab) {
+                        assertTrue(tab, "в tab-контексте флаг должен быть true");
+                        tabCalls[0]++;
+                        return view(playerName);
+                    }
+
+                    @Override
+                    public List<String> registrationOrder() {
+                        return List.of();
+                    }
+                });
+        styles.decorate("Имя", "Имя", "");
+        assertEquals(0, tabCalls[0], "чат не требует tab-контекста");
+        styles.decorateForTab("Имя", "Имя", "");
+        assertEquals(1, tabCalls[0], "TAB обязан передавать tab=true");
+    }
+
+    @Test
     void customColorBeatsRankColor() {
         LabelStyleService.Rank rank =
                 new LabelStyleService.Rank(1, "✦", "<gray>%name%</gray>", "Странник", false);

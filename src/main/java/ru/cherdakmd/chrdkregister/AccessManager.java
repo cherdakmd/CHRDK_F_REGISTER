@@ -1931,13 +1931,33 @@ public final class AccessManager {
         }
     }
 
+    /** Эффективная ступень привилегий: купленный ранг или особое звание. */
+    public int effectiveRankLevel(String playerName) {
+        int paid = store.rankLevel(playerName, System.currentTimeMillis());
+        HonorService honors = plugin.honors();
+        return honors == null ? paid : honors.effectiveLevel(playerName, paid);
+    }
+
     /** Строка входа ранга III+: «Хранитель Имя вернулся в гильдию» (1.4.167). */
     private void announceRankJoin(Player player) {
+        HonorService honors = plugin.honors();
+        if (honors != null && honors.enabled()) {
+            String honorLine = honors.joinLine(player.getName());
+            // Осознанно одна строка на вход: строка звания заменяет строку ранга,
+            // а не склеивается с ней. Флаг дедупликации общий для обеих ветвей.
+            if (!honorLine.isBlank() && !rankJoinAnnounced.contains(player.getUniqueId())) {
+                rankJoinAnnounced.add(player.getUniqueId());
+                Bukkit.getServer().broadcast(Messages.format(honorLine.replace("%player%", player.getName())));
+                return;
+            }
+        }
         RankSettings ranks = config.ranks();
         if (ranks == null || !ranks.enabled() || !ranks.announceJoin()) {
             return;
         }
-        int level = store.rankLevel(player.getName(), System.currentTimeMillis());
+        // Строка ранга считается по эффективной ступени: звание тоже «входит»
+        // на своей ступени, но историю платежей при этом не подделывает.
+        int level = effectiveRankLevel(player.getName());
         if (rankJoinAnnounced.contains(player.getUniqueId())) return;
         String line = ranks.nextJoinLine(level, player.getName());
         if (line.isBlank()) {

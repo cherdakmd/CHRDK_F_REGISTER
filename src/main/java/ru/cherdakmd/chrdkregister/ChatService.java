@@ -63,6 +63,8 @@ public final class ChatService implements Listener {
     private final JavaPlugin plugin;
     private final AccessManager accessManager;
     private final Logger logger;
+    /** Особые звания: подменяют оформление ника и поднимают эффективную ступень. */
+    private volatile HonorService honors;
 
     private volatile ChatConfig config;
     private volatile Messages messages;
@@ -155,8 +157,36 @@ public final class ChatService implements Listener {
         }
         // Купленный тег каталога главнее выбора игрока: оплаченное вперёд не
         // отбираем. Иначе свой цвет из палитры, затем цвет ступени.
-        return tab ? styles.decorateForTab(playerName,base,catalogTag ? null : customColor(playerName))
-                : styles.decorate(playerName, base, catalogTag ? null : customColor(playerName), nameTags.animated("guilds-chat", playerName));
+        String custom = catalogTag ? null : customColor(playerName);
+        // Особое звание главнее выбранного цвета: иначе градиент «Старого цитруса»
+        // теряется, как только звание открывает игроку палитру 5-й ступени.
+        // Оплаченный цвет из каталога не отбираем; в TAB звание можно скрыть
+        // настройкой honors.show-in-tab.
+        HonorService honorService = this.honors;
+        if (honorService != null && honorService.enabled()
+                && (!tab || honorService.config().showInTab())
+                && honorService.config().overrideColor()
+                && !chosenPaidColor(playerName)) {
+            HonorDefinition honor = honorService.active(playerName);
+            if (honor != null) custom = honor.format();
+        }
+        return tab ? styles.decorateForTab(playerName, base, custom)
+                : styles.decorate(playerName, base, custom, nameTags.animated("guilds-chat", playerName));
+    }
+
+    /** Игрок выбрал цвет, купленный в каталоге: его звание не отбирает. */
+    private boolean chosenPaidColor(String playerName) {
+        LabelPalette colors = palette;
+        LabelPreferences preferences = labelPreferences;
+        if (colors == null || !colors.enabled() || preferences == null) return false;
+        LabelPalette.Color color = colors.byId(preferences.color(playerName));
+        if (color == null || !color.inCatalog()) return false;
+        try {
+            Set<String> owned = purchaseLookup.apply(playerName);
+            return owned != null && owned.contains(color.product());
+        } catch (RuntimeException ignored) {
+            return false;
+        }
     }
 
     /**
@@ -175,7 +205,7 @@ public final class ChatService implements Listener {
         if (colors == null || !colors.enabled()) {
             return "";
         }
-        int level = accessManager.store().rankLevel(playerName, System.currentTimeMillis());
+        int level = accessManager.effectiveRankLevel(playerName);
         Set<String> owned;
         try {
             owned = purchaseLookup.apply(playerName);
@@ -183,6 +213,11 @@ public final class ChatService implements Listener {
             owned = Set.of();
         }
         return styles.colorFormat(playerName, colors, level, owned == null ? Set.of() : owned);
+    }
+
+    /** Подключает особые звания (1.4.286+). */
+    public void setHonors(HonorService service) {
+        this.honors = service;
     }
 
     /** Подключает палитру цветов ника (1.4.187). */
@@ -203,7 +238,15 @@ public final class ChatService implements Listener {
                 preferences, new LabelStyleService.RankLookup() {
                     @Override
                     public LabelStyleService.Rank view(String playerName) {
-                        return rankView(playerName);
+                        return rankView(playerName, true);
+                    }
+
+                    @Override
+                    public LabelStyleService.Rank view(String playerName, boolean tab) {
+                        HonorService honorService = honors;
+                        boolean includeHonor = !tab || honorService == null
+                                || honorService.config().showInTab();
+                        return rankView(playerName, includeHonor);
                     }
 
                     @Override
@@ -214,12 +257,23 @@ public final class ChatService implements Listener {
     }
 
     /** Чистый снимок ступени для сборки ника: без Bukkit-команд и кэшей. */
-    private LabelStyleService.Rank rankView(String playerName) {
+    private LabelStyleService.Rank rankView(String playerName, boolean includeHonor) {
+        HonorService honorService = this.honors;
+        if (includeHonor && honorService != null && honorService.enabled()) {
+            HonorDefinition honor = honorService.active(playerName);
+            if (honor != null) {
+                // Звание главнее купленной ступени в оформлении, но не в истории платежей.
+                return new LabelStyleService.Rank(accessManager.effectiveRankLevel(playerName),
+                        honor.badge(), honor.format(), honor.name(), true);
+            }
+        }
         RankSettings ranks = accessManager.config().ranks();
         if (ranks == null || !ranks.enabled()) {
             return null;
         }
-        int level = accessManager.store().rankLevel(playerName, System.currentTimeMillis());
+        // В TAB с honors.show-in-tab=false показываем оплаченный ранг без звания.
+        int level = includeHonor ? accessManager.effectiveRankLevel(playerName)
+                : accessManager.store().rankLevel(playerName, System.currentTimeMillis());
         RankTier tier = level <= 0 ? null : ranks.tier(level);
         if (tier == null) {
             return null;

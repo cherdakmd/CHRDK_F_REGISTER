@@ -150,9 +150,7 @@ public final class LabelsCommandHandler implements CommandExecutor, TabCompleter
             messages.send(player, "labels.color-unknown", "id", id);
             return;
         }
-        RegistrationStore store = plugin.store();
-        int level = store == null ? 0
-                : store.rankLevel(player.getName(), System.currentTimeMillis());
+        int level = plugin.effectiveRankLevel(player.getName());
         if (!palette.allowed(color, level, plugin.purchasedProducts(player.getName()))) {
             messages.send(player,
                     LabelPalette.lockReason(color, plugin.purchasedProducts(player.getName()))
@@ -218,9 +216,7 @@ public final class LabelsCommandHandler implements CommandExecutor, TabCompleter
             messages.send(player, "labels.preset-usage", "label", label);
             return;
         }
-        RegistrationStore store = plugin.store();
-        int level = store == null ? 0
-                : store.rankLevel(player.getName(), System.currentTimeMillis());
+        int level = plugin.effectiveRankLevel(player.getName());
         int slots = plugin.labelLimits().slotsFor(level);
         if (number > slots) {
             messages.send(player, "labels.preset-no-slot",

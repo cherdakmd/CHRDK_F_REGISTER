@@ -489,8 +489,7 @@ public final class LabelsStyleMenuService implements Listener {
     }
 
     private int rankLevel(String playerName) {
-        RegistrationStore store = plugin.store();
-        return store == null ? 0 : store.rankLevel(playerName, System.currentTimeMillis());
+        return plugin.effectiveRankLevel(playerName);
     }
 
     static String slotId(int index) {

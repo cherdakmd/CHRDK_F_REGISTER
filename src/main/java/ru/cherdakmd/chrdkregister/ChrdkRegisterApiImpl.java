@@ -259,12 +259,13 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
 
     @Override
     public int rankLevel(String playerName) {
-        return accessManager.store().rankLevel(playerName, System.currentTimeMillis());
+        // Аддоны видят привилегии звания, но rankUntil/rankId остаются данными покупки.
+        return plugin.effectiveRankLevel(playerName);
     }
 
     @Override
     public String rankId(String playerName) {
-        int level = rankLevel(playerName);
+        int level = accessManager.store().rankLevel(playerName, System.currentTimeMillis());
         if (level <= 0) {
             return "";
         }
