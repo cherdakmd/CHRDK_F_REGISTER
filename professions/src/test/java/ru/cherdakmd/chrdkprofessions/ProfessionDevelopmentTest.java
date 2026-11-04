@@ -36,13 +36,16 @@ class ProfessionDevelopmentTest {
         store.setActive(id,"mason",now);store.addXp(id,Profession.MASON,1_000_000);assertEquals(15,service.masonChance(id));
         store.setActive(id,"cook",now);store.addXp(id,Profession.COOK,1_000_000);assertEquals(2,service.cookSaturation(id));
     }
-    @Test void onlyActiveWorkCreatesPracticeAndAdminXpDoesNot(){
-        var store=store();var service=new ProfessionService(ProfessionConfig.defaults(),store);store.setActive(id,"forester",now);
-        assertEquals(0,service.awardSource(id,Profession.MINER,"harvest",Material.IRON_ORE,1,4,now).added());
-        assertTrue(store.practice(id,Profession.MINER).isEmpty());
+    @Test void everyProfessionEarnsXpAndAdminGrantDoesNotCreatePractice(){
+        var store=store();var service=new ProfessionService(ProfessionConfig.defaults(),store);
+        // 1.4.282: выбор отменён — шахтёр и лесоруб работают одновременно.
+        assertTrue(service.isActive(id,Profession.MINER));assertTrue(service.isActive(id,Profession.FORESTER));
+        assertEquals(4,service.awardSource(id,Profession.MINER,"harvest",Material.IRON_ORE,1,4,now).added());
+        assertEquals(1,store.practice(id,Profession.MINER).get("harvest:iron_ore"));
         assertEquals(12,service.awardSource(id,Profession.FORESTER,"harvest",Material.OAK_LOG,4,3,now).added());
         assertEquals(4,store.practice(id,Profession.FORESTER).get("harvest:oak_log"));
-        service.grantByAdmin(id,"miner",10000);assertTrue(store.practice(id,Profession.MINER).isEmpty());
+        service.grantByAdmin(id,"miner",10000);
+        assertEquals(1,store.practice(id,Profession.MINER).get("harvest:iron_ore"),"админский XP не создаёт практику");
     }
     @Test void fullDailyCapDoesNotGeneratePhantomPractice(){
         var store=store();var service=new ProfessionService(ProfessionConfig.defaults(),store);store.setActive(id,"farmer",now);
@@ -62,7 +65,10 @@ class ProfessionDevelopmentTest {
         assertTrue(trials.claim(id,Profession.FORESTER,0));assertFalse(trials.claim(id,Profession.FORESTER,0));
         assertFalse(trials.claim(id,Profession.FORESTER,2));assertEquals(1,trials.rank(id,Profession.FORESTER));
         assertEquals(24,trials.batch(id,ProfessionMastery.SAWYER));assertEquals(108,trials.cooldown(id,ProfessionMastery.SAWYER));
-        store.setActive(id,"miner",now);assertFalse(trials.claim(id,Profession.FORESTER,1));
+        // Смена «активной» профессии больше не отключает разряды: отказ здесь
+        // только из-за невыполненной нормы 400 единиц для разряда 1.
+        assertTrue(service.isActive(id,Profession.FORESTER));assertTrue(service.isActive(id,Profession.MINER));
+        assertFalse(trials.claim(id,Profession.FORESTER,1));
     }
     @Test void workReceiptAndTrialsSurviveRoundtripWithoutDoubleCounting(){
         var store=store();store.setActive(id,"fisher",now);store.completeWork(id,Profession.FISHER,now+180000,"receipt");
