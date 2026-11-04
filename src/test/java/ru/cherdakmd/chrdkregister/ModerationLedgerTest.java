@@ -64,6 +64,7 @@ class ModerationLedgerTest {
     @Test
     void rolesAndBansAreIdempotentAndPersistentInSnapshot() {
         ModerationLedger ledger = new ModerationLedger();
+        ledger.issueWarn("Alex", "Owner", "тест", 5L);
         assertTrue(ledger.addModerator("Mod", "Owner", 10L));
         assertFalse(ledger.addModerator("mod", "Owner", 11L), "дубль по регистру");
         assertTrue(ledger.isModerator("MOD"));
@@ -79,8 +80,9 @@ class ModerationLedgerTest {
         ModerationLedger copy = new ModerationLedger();
         copy.restore(ledger.snapshot());
         assertTrue(copy.isModerator("mod"));
-        assertEquals(5, copy.journal("", 500).size());
-        assertEquals(2L, copy.issueWarn("Alex", "Mod", "тест", 30L).id,
+        assertEquals(4, copy.journal("", 500).size(), "варн, роль, бан и разбан");
+        assertEquals(1, copy.activeCount("Alex"));
+        assertEquals(2L, copy.issueWarn("Alex", "Mod", "после загрузки", 30L).id,
                 "курсоры id продолжаются после загрузки");
     }
 
