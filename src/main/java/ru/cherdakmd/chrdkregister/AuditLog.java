@@ -65,6 +65,14 @@ public final class AuditLog {
     public static final String CHAT_FILTER = "chat.filter";
     public static final String CHAT_BROADCAST = "chat.broadcast";
     public static final String ADMIN_COMMAND = "admin.command";
+    /** Админ-панель: варны, автобан, разбан и роли модераторов. */
+    public static final String MODERATION_WARN = "moderation.warn";
+    public static final String MODERATION_UNWARN = "moderation.unwarn";
+    public static final String MODERATION_BAN = "moderation.ban";
+    public static final String MODERATION_UNBAN = "moderation.unban";
+    public static final String MODERATION_AUTO_BAN = "moderation.auto_ban";
+    public static final String MODERATION_ROLE_ADD = "moderation.moderator.add";
+    public static final String MODERATION_ROLE_REMOVE = "moderation.moderator.remove";
     /** Покупка товара каталога (витрина TradeMC или ручная выдача). */
     public static final String SHOP_BUY = "shop.buy";
     /** Покупка ступени ниже текущей: платёж ушёл в очередь ручного разбора (1.4.167). */

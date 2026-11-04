@@ -67,6 +67,11 @@ groups:
   - guilds
   - profile
   - vk
+- id: staff
+  title: Администрирование
+  description: Аудит игроков, варны, баны и журнал модерации.
+  pages:
+  - moderation
 - id: reference
   title: Версия и источники
   description: Как обновляется справочник и чему доверять.

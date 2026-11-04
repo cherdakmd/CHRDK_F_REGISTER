@@ -1,168 +1,173 @@
 {
   "pages": {
     "about": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "3c3db94d559964ecb53a4b982a9b9f2b7eb49ccfeae10f1f7a43baf8ed43863f",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "f7b6913ebe691733a57dfb3cf3915ac208877441cd53f3d73b88e3177fe67264",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "f3242e2032e47429d7e8ca196e9646c5d383b01ba49b54a9eb93d4147b1e0ae0",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "7eef3f0a6ac8015632702b96419f3a505b259b19a8d4c8a52b71c40ab799e11d",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "8d0fc2173bd12613ed8a008549615dc0b24581f581cb20f23e6472925640f339",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "550bede3eac5f3e9a2de934b8aea99ea9810af66ff622a03906e67be431d08f4",
       "text": "fcdffb1098428fac2bd42d1c4acb73bb9a024d1823d5398b8845bb2f415a506f"
     },
     "auction": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "9621ba21c3cf0c29dfd3f6e3993445b527087ce4512b8a2432dda36cc78f354b",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "31a0c5be9604d0991416b03b972068a3e8e375b4e456aeb209bf7280857de8a8",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "1714170661b91d481e8b804e186c5190432cd0b5838d922c3113ec3f2411437d",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "5b5eb75423691484a55ca3a87fc4afd910e8f22e9cc3e58730c0193073f8dcfd",
       "text": "f368077b5f1961a1982957afe3b8523b60c8330f3dfd1891003d01ea1c4fd6db"
     },
     "chat": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "3c3db94d559964ecb53a4b982a9b9f2b7eb49ccfeae10f1f7a43baf8ed43863f",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "f7b6913ebe691733a57dfb3cf3915ac208877441cd53f3d73b88e3177fe67264",
       "text": "ca6c93fc33fca52eecc7d38744bc86f619ea0b6a7bcc2314b84ca6c5399d8a1c"
     },
     "claims": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "d24e05dc22cbbd9172f9c292c9f6657896d432193cefe6cd19ea96cb4fa87a3a",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "fcbd1da659c40956b503aa6a7c255996531e00b5b060ab3f4dfe327debc40781",
       "text": "bf1b24b85ecdaee84580c0d5ea4b9c1120b8dd072e38aa68b52e49fc2a0c472c"
     },
     "classes": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "46e8d235126d103fd284928fcceae826a1477f60b032948a0d9e234bc523b132",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "d0021eb3833bafb756772ce60f8eba426597230e93d6e7d820e04783a86e9d08",
       "text": "ee29d92bd4e9527924d14405057fd62402857c1a688439c7b9d86d4c9bf3b546"
     },
     "commands": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "f1b42c0553b4c20723db1e28660694c8c7c69f53da123d2d15e3cb5a6508d43b",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "965111cd1fb978826ec2fc65e118e08d6d148e917ead3de4eb2c0ab96700ddfd",
       "text": "b210ff00d9d9a82a7663a9ddc5fac3491e03b244a72217f81c997ec39bc03928"
     },
     "cosmetics": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "bbd982bf991dbb9b163acf27b0d10f833501dd7314ff7e61ae1b965fbe8a3a2f",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "203044d2cca87bb0fa998d5ab7ff2a4d0333ea29d8ed8ef746e05a98cd9b49ea",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "6770bbd8cb6df4ef3d2a10c6d095ac53c4a3186c121dd4e87db6e6b09dbd63cc",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "a743ed90e5eaae81751bfa9262d2156c9fa91d661909b667dc93c9b3357bf9eb",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "economy": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "895144325721e0bd75ee452bfa84bc7e8b0baa29f9d05d1e032941c6ffa38d51",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "3e3987b185075d9a88c49a6f8cf837644368f86c99a20a6992e59e8a1e80a6dc",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "d93050180ef14ba2aecebd07100a0994264a0be45562699a770a28b90ca55c7d",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "512351dd15ffa65bcf1637da95de760fa62fca60cf8c9fbea495e4a4c54978ba",
       "text": "daba8068188cc03ac1ee0f787eb1322c4d33b14da0bdffe35c17b473843dc5aa"
     },
     "faq": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "ff703df495f0e681a3321f4511d7d8f12c89044f889ad3da6608d28b48656e6d",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "2a95b85087d53a2b8622d4254d235becea990b88608f62f25380a286b4443a3e",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "8f39f3380255ade972ff396c44ec08a15dfd5fbef98eb2d1d56cbe357cd2deda",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "71167a58e25b7fd01c7a50dbf456f5906a0b10abfa862d0583f234b2b98f9c6d",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "d24e05dc22cbbd9172f9c292c9f6657896d432193cefe6cd19ea96cb4fa87a3a",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "fcbd1da659c40956b503aa6a7c255996531e00b5b060ab3f4dfe327debc40781",
       "text": "e166f2671aabcdf55ecf59d1465ddb19a36343f6d07983eb8b8821b3a63cce34"
     },
     "hunt": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "da0aa1206fef122d2c09a5329c65300e6b165a0445715471b1317a08bfd09427",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "093dccee9556900db4abea313ddb90119db3ca5ed1162d99999133af7757228b",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "5296b85921cdcbc09b82f3259925f1fef71b66b75856a076506c51f141514311",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "c33a3492969ca9d183b4faacc350292658c4834cf060b486f15b403f0c69dc85",
       "text": "1417660c5793d86ddfab16c8b2203cbd2dd6b47a245ffa219c71898485b9c39f"
     },
     "menu": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "e0ca62757ed4582d121a9b56cf7017bd735e0902ca9eb6cbab431aa7964358f6",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "0652fb17b00e288e0746646ed959cf6faa22c767a1a4b8370a17264a5083aff2",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
+    "moderation": {
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "f7b6913ebe691733a57dfb3cf3915ac208877441cd53f3d73b88e3177fe67264",
+      "text": "22ba0c5d23833c79caf63077c7a4d4868bcba831b847feb50ba6f7aa5c5c9f71"
+    },
     "orders": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "d5a287ef0a818033a5bf52220e6ba479d903f47c0c4669bd9798448eeb8bd8db",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "25b70fed25df5c99ef1127eb727f960be126a0920fa41ff0694121be0b9f9a02",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "pets": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "30cd14f7e9b14241254af63e854d201081b0e9a60121e0e2e1867a125ad72687",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "b51ac3d8e338361b6d1ef38f83c78e05a06ffbb967241fb0f79429c333097714",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "1ed94fc2c9ee4166c97e9d3c1f1c2159f389711208da776c9e9b2f11d99c2a8b",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "aa64c6824544a4f84c4148f5db737919ece697f28975ea075ba7a874f8c398de",
       "text": "b66278597912053a64a4f192bf0cf63795a8720263d4283683b9458eec8f0bff"
     },
     "profile": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "82537e38479d40216ec6d2d6d15906b19d5be46c5b27c9d27d6688686b53bc11",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "88a464e4ce55f1292e70d8e0bd7451a8e51149f11a429318aba90d5e31bfc752",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "351f5eb2a88f4d7384a83a2824e961836ce4ab8f144bfbad07e00450f95b67a2",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "58bb0c849d2d7755c207988585ce9e4e14910acfadf3fa2661e05f4ab8be029e",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "67d8fa1e1a4b3ea9fc3478dffcd5284f9c64f51b7e1cce90c1ae557376cc2301",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "3901ea55f204d1f97d1525993cde5968fa0e01d5ed892fa8c8a2f0ba305e0b58",
       "text": "83fdfb3ddc5551875ec1f031676a80e3adb73e448dffae614c489441ea6f2c33"
     },
     "shop": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "5296b85921cdcbc09b82f3259925f1fef71b66b75856a076506c51f141514311",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "c33a3492969ca9d183b4faacc350292658c4834cf060b486f15b403f0c69dc85",
       "text": "62ef5965cc091b6cbd7e6af58d21e58ba2e8dd65d9e704cec710768ff7a47099"
     },
     "skills": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "a000ac3cbc02023151a32e13bdef0d0b680a1904548cd4ee893e95c9cc6dfbaf",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "cb9ef4e9844ed41dec689d61ff8a1021ea1555f961056f4ad162bfaac2e186ee",
       "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
     },
     "start": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "8c65ab91273f23a8afcff0f057902e0b4e6d62e9560a0497b080850f55538d67",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "4714a480c5defec0dbd8e4d93837d4d0437083f7b5c454d0d40640a83450df02",
       "text": "c2835fdf2d1945079115e6a252d472ce72ad9ad79f4ed47ad58e269b467d595f"
     },
     "teleports": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "ae0191b77631ba7be24aa1577fd2f22509930d12b59877a66d9e76ecbe690750",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "2c1c67acb7b397798f59cf954d5a0eefd48c682b7d3fc02d09017a46b92d6a90",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "d93050180ef14ba2aecebd07100a0994264a0be45562699a770a28b90ca55c7d",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "512351dd15ffa65bcf1637da95de760fa62fca60cf8c9fbea495e4a4c54978ba",
       "text": "a4d12cf48881e623761e39d44e627b95975f839a8737cfd76b9ee138317a4c07"
     },
     "titles": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "f8830c65f9d3a7dff02ff56a8bbe71f14160e36d4432d59e96d362a35e4ea0a8",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "1ffd79a7532aafb8bc05378bd73d0db925ff3aa844317a65ca29f9243dcd3712",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "5296b85921cdcbc09b82f3259925f1fef71b66b75856a076506c51f141514311",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "c33a3492969ca9d183b4faacc350292658c4834cf060b486f15b403f0c69dc85",
       "text": "2a5bea290303628eb56534b6c6049b53ccfd668b53366b515d16867a5b3cbb60"
     },
     "vk": {
-      "reason": "1.4.285: стабильный выпуск с RC16, PAPI-кадры TAB и тихий доход ремёсел",
-      "sources": "efca50af96956928024bf7b89f5012abf5f491207c3cc5b4677ef993f58553a6",
+      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
+      "sources": "d8eb654e331597d32365b20de7b4cc549dafdc6732dd0cb68c5c43eef29eb44f",
       "text": "2b67feb5684b14875601ba47314694afa598ff87f6dd74350a06f65029a735eb"
     }
   },

@@ -25,7 +25,7 @@ class TabPlaceholderIntegrationTest {
         assertEquals("1.4.285", expansion.getVersion());
         assertTrue(expansion.persist(), "/papi reload не должен сбрасывать expansion");
         for (String key : List.of("brand", "separator", "tip", "clock", "balance",
-                "boost", "health", "ping", "world", "mspt")) {
+                "boost", "health", "ping", "world", "mspt", "warns")) {
             String value = expansion.onRequest(null, key);
             assertNotNull(value, key + " не зарегистрирован");
             assertFalse(value.contains("%tab_"), key + " оставил сырой токен: " + value);
@@ -55,7 +55,8 @@ class TabPlaceholderIntegrationTest {
             var matcher = token.matcher(line);
             while (matcher.find()) found.add(matcher.group(1));
         }
-        assertEquals(10, found.size(), "набор токенов в конфиге изменился: " + found);
+        assertEquals(11, found.size(), "набор токенов в конфиге изменился: " + found);
+        assertTrue(found.contains("warns"), "%tab_warns% должен быть в stock-подвале TAB");
         for (String key : found) {
             assertTrue(TabPlaceholderIntegration.isTabKey(key), key + " нет в expansion");
         }

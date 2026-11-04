@@ -1377,6 +1377,22 @@ auto-messages:
     - {"text": "<gray>CHERDAK рядом и вне игры: <white>/vk link</white> выдаёт код для личных сообщений сообщества. Входы и самозащита — в ЛС; беседа — для общения и новостей. Пароли и коды 2FA боту не отправляйте.</gray>", "plugin": "CHRDK_VK", "permission": "chrdkvk.use"}
     - {"text": "<gray>На CHERDAK работает <white>Plasmo Voice</white>: голосовой чат с учётом расстояния между игроками. Нужен клиентский мод Plasmo Voice и настроенный микрофон; текстовые каналы и правила общения остаются прежними.</gray>"}
 
+# ================================================================
+# Админ-панель аудита игроков (/adminpanel). Варны, роли и журнал лежат в
+# отдельном moderation.json; бан дублируется в ванильный BanList по имени.
+# Пятый активный варн кикает игрока и банит его без срока.
+moderation:
+  # Выключить всю модерацию: панель остаётся доступной, автобан не срабатывает.
+  enabled: true
+  # Сколько активных варнов до автобана. Диапазон 1..50.
+  warn-limit: 5
+  # Причина бана: %player%, %count%, %limit% подставляются ядром.
+  ban-reason: "%player%: %count%/%limit% активных варнов — бан по правилам сервера"
+  # Показывать %tab_warns% в таб-листе всем игрокам.
+  warns-in-tab: true
+  # Сколько последних действий держим в moderation.json (полная история — в audit/*.jsonl).
+  journal-limit: 500
+
 tablist:
   # Таб-лист (TAB): шапка/подвал списка игроков и формат имени в нём.
   # Разметка — MiniMessage либо &-коды. Подстановки:
@@ -1384,7 +1400,8 @@ tablist:
   #   %tps% — TPS сервера, %ping% — пинг игрока, %world% — его мир,
   #   %player_tagged% — общая строка ника и меток с учётом /labels и лимита,
   #   %pass_status% — активен/истёк/нет ранга, %pass_left% — «12 дн. 3 ч.»,
-  #   %pass_days% — осталось целых дней ранга.
+  #   %pass_days% — осталось целых дней ранга,
+  #   %tab_warns% — активные варны и порог автобана игрока («3/5»), видны всем.
   #   %pass_type% — приветственный/обычный/нет, %auth_status% — состояние входа,
   #   %auth_hint% — следующий шаг, %security% — состояние 2FA,
   #   %navigation% — доступные ссылки после входа (до входа: пустая строка).
@@ -1409,6 +1426,7 @@ tablist:
     - "<gold>%pass_type%</gold> <dark_gray>│</dark_gray> <gray>%pass_left%</gray>"
     - "<gray>Банк <aqua>%tab_balance% 💠</aqua> <dark_gray>│</dark_gray> XP-буст <green>%tab_boost%</green>"
     - "<gray>%auth_status%</gray> <dark_gray>│</dark_gray> <gray>2FA: %security%</gray>"
+    - "<gray>Варны <yellow>%tab_warns%</yellow> <dark_gray>│</dark_gray> <gray>порог — автобан</gray>"
     - "<gray>%auth_hint%</gray>"
     - "<yellow>✦</yellow> <gray>%tab_tip%</gray>"
     - "%tab_separator%"

@@ -31,13 +31,21 @@ public final class TabPlaceholderIntegration extends PlaceholderExpansion {
     private final Messages messages;
     private final AccessManager access;
     private final BankService bank;
+    private final @Nullable ModerationService moderation;
 
     public TabPlaceholderIntegration(String version, Messages messages,
                                      @Nullable AccessManager access, @Nullable BankService bank) {
+        this(version, messages, access, bank, null);
+    }
+
+    public TabPlaceholderIntegration(String version, Messages messages,
+                                     @Nullable AccessManager access, @Nullable BankService bank,
+                                     @Nullable ModerationService moderation) {
         this.version = version;
         this.messages = messages;
         this.access = access;
         this.bank = bank;
+        this.moderation = moderation;
     }
 
     @Override
@@ -110,6 +118,12 @@ public final class TabPlaceholderIntegration extends PlaceholderExpansion {
             case "world" -> authenticated ? world : hidden;
             case "mspt" -> Double.isFinite(mspt) && mspt >= 0
                     ? String.format(Locale.ROOT, "%.1f", mspt) : "—";
+            case "warns" -> {
+                String player = offlinePlayer == null ? null : offlinePlayer.getName();
+                yield moderation == null || player == null
+                        ? "0/" + ModerationLedger.DEFAULT_WARN_LIMIT
+                        : moderation.warnText(player);
+            }
             default -> null;
         };
     }
@@ -118,7 +132,7 @@ public final class TabPlaceholderIntegration extends PlaceholderExpansion {
     static boolean isTabKey(String key) {
         return switch (key) {
             case "brand", "separator", "tip", "clock", "balance", "boost",
-                 "health", "ping", "world", "mspt" -> true;
+                 "health", "ping", "world", "mspt", "warns" -> true;
             default -> false;
         };
     }
