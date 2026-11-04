@@ -1,35 +1,39 @@
 package ru.cherdakmd.diamondshop;
 
 /**
- * Раскладка витрины: вкладки разделов сверху, товары в середине, управление снизу.
+ * Раскладка витрины: вкладки разделов сверху, кнопки во втором ряду, товары ниже.
  *
  * <pre>
- * 0..7   — вкладки разделов (динамически, по числу непустых)
- * 8      — закрыть
- * 9..44  — товары (36 на страницу)
+ * 0..9   — вкладки разделов (динамически, по числу непустых), до 10
+ * 10..16 — свободный ряд-разделитель
+ * 17     — закрыть
+ * 18..44 — товары (27 на страницу, три ряда по девять)
  * 45     — назад, 49 — баланс, 53 — далее
  * </pre>
  *
- * <p>Константы вынесены из {@link ShopGui}, чтобы прокликивание и пагинация
- * проверялись юнит-тестами без Bukkit.</p>
+ * <p>Два раздела книг чар увеличили число вкладок до десяти. Ванильный клиент
+ * поддерживает максимум 54 слота, поэтому вместо недоступного окна на 72 слота
+ * вкладки занимают два ряда, а страница товаров сокращена до 27 позиций. Кнопки
+ * управления остались в нижнем ряду. Константы вынесены из {@link ShopGui},
+ * чтобы прокликивание и пагинация проверялись юнит-тестами без Bukkit.</p>
  */
 public final class ShopLayout {
 
     public static final int SIZE = 54;
 
     /** Слот кнопки «Закрыть». */
-    public static final int SLOT_CLOSE = 8;
+    public static final int SLOT_CLOSE = 17;
     /** Первый слот товаров. */
-    public static final int FIRST_ITEM_SLOT = 9;
-    /** Товаров на страницу (четыре ряда по девять). */
-    public static final int ITEMS_PER_PAGE = 36;
+    public static final int FIRST_ITEM_SLOT = 18;
+    /** Товаров на страницу (три ряда по девять). */
+    public static final int ITEMS_PER_PAGE = 27;
     /** Последний слот товаров включительно. */
     public static final int LAST_ITEM_SLOT = FIRST_ITEM_SLOT + ITEMS_PER_PAGE - 1;
     public static final int SLOT_PREV = 45;
     public static final int SLOT_BALANCE = 49;
     public static final int SLOT_NEXT = 53;
-    /** Сколько вкладок влезает в верхний ряд до кнопки закрытия. */
-    public static final int MAX_TABS = SLOT_CLOSE;
+    /** Сколько вкладок влезает в два верхних ряда до кнопки закрытия. */
+    public static final int MAX_TABS = 10;
 
     private ShopLayout() {
     }
@@ -47,7 +51,7 @@ public final class ShopLayout {
         return Math.clamp(page, 0, pages(itemCount) - 1);
     }
 
-    /** Слот верхнего ряда — вкладка раздела (0..7)? */
+    /** Слоты верхних рядов — вкладка раздела (0..9)? */
     public static boolean isTabSlot(int slot) {
         return slot >= 0 && slot < MAX_TABS;
     }

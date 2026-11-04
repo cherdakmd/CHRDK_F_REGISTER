@@ -17,14 +17,12 @@ import java.util.logging.Logger;
 public final class ProfessionConfig {
 
     /**
-     * Обязательный выбор профессии (1.4.182).
+     * Историческая секция принудительного выбора (1.4.182). С 1.4.282 выбор
+     * профессии отменён: все восемь ремёсел активны у каждого игрока, поэтому
+     * меню больше не открывается само и не переоткрывается. Запись оставлена
+     * только для чтения старых config.yml без предупреждений.
      *
-     * <p>Без ремесла не идёт ни опыт, ни прибавки: игрок просто не видит
-     * системы. Меню профессий поэтому открывается само и переоткрывается, пока
-     * выбор не сделан, но играть это не мешает — блоки и команды не
-     * блокируются.</p>
-     *
-     * @param required       обязателен ли выбор профессии
+     * @param required       устаревший флаг, всегда {@code false}
      * @param openDelayTicks задержка первого открытия после входа, тики
      * @param reopenSeconds  пауза перед повторным открытием закрытого меню, сек
      * @param remindSeconds  период напоминания в экшен-баре, сек (0 — молчать)
@@ -32,8 +30,8 @@ public final class ProfessionConfig {
     public record Onboarding(boolean required, int openDelayTicks, int reopenSeconds,
                              int remindSeconds) {
 
-        /** Умолчания: включено, меню через 2 сек, переоткрытие через 10 сек. */
-        public static final Onboarding DEFAULT = new Onboarding(true, 40, 10, 30);
+        /** С 1.4.282 принудительный онбординг выключен. */
+        public static final Onboarding DEFAULT = new Onboarding(false, 40, 10, 0);
 
         public Onboarding {
             openDelayTicks = Math.clamp(openDelayTicks, 0, 600);
@@ -61,6 +59,28 @@ public final class ProfessionConfig {
     public static final int MAX_CHOOSE_HOURS = 720;
     public static final double MIN_MULTIPLIER = 0.1;
     public static final double MAX_MULTIPLIER = 5.0;
+    /** 1.4.282: заработок алмазов за профессиональные действия. */
+    public static final int MIN_XP_PER_DIAMOND = 10;
+    public static final int MAX_XP_PER_DIAMOND = 10_000;
+    /** Верхняя граница выплаты на игрока в сутки: «хотя бы 9999». */
+    public static final int MAX_DAILY_INCOME = 9_999;
+
+    /**
+     * Правила денежного дохода ремесел.
+     *
+     * @param enabled       начислять ли алмазы
+     * @param xpPerDiamond  сколько фактически начисленного опыта стоит 1 алмаз
+     * @param dailyCap      потолок алмазов в сутки на игрока (0 — без потолка)
+     * @param rankBonus     считать доход из опыта с бонусом ранга
+     */
+    public record Income(boolean enabled, int xpPerDiamond, int dailyCap, boolean rankBonus) {
+        public static final Income DEFAULT = new Income(true, 100, MAX_DAILY_INCOME, true);
+
+        public Income {
+            xpPerDiamond = Math.clamp(xpPerDiamond, MIN_XP_PER_DIAMOND, MAX_XP_PER_DIAMOND);
+            dailyCap = Math.clamp(dailyCap, 0, MAX_DAILY_INCOME);
+        }
+    }
 
     private final boolean enabled;
     private final String locale;
@@ -75,15 +95,18 @@ public final class ProfessionConfig {
     private final boolean perkAlchemistBottle;
     private final boolean perkCookSaturation;
     private final boolean perkMasonBlock;
-    /** 1.4.182: обязательный выбор профессии. */
+    /** 1.4.182: обязательный выбор профессии (отменён в 1.4.282). */
     private final Onboarding onboarding;
     private final boolean masteryEnabled;
+    /** 1.4.282: накопительный доход алмазами. */
+    private final Income income;
 
     private ProfessionConfig(boolean enabled, String locale, boolean actionbar, boolean joinHint,
                              boolean xpFeedback, int dailyXpCap, int chooseCooldownHours,
                              double xpMultiplier, boolean perksEnabled, boolean perkSmithAnvil,
                              boolean perkAlchemistBottle, boolean perkCookSaturation,
-                             boolean perkMasonBlock, Onboarding onboarding, boolean masteryEnabled) {
+                             boolean perkMasonBlock, Onboarding onboarding, boolean masteryEnabled,
+                             Income income) {
         this.masteryEnabled = masteryEnabled;
         this.enabled = enabled;
         this.locale = locale;
@@ -99,12 +122,13 @@ public final class ProfessionConfig {
         this.perkCookSaturation = perkCookSaturation;
         this.perkMasonBlock = perkMasonBlock;
         this.onboarding = onboarding == null ? Onboarding.DEFAULT : onboarding;
+        this.income = income == null ? Income.DEFAULT : income;
     }
 
     /** Умолчания — те же, что в ресурсном config.yml. */
     public static ProfessionConfig defaults() {
-        return new ProfessionConfig(true, "ru", true, true, true, 1200, 24, 1.0,
-                true, true, true, true, true, Onboarding.DEFAULT, true);
+        return new ProfessionConfig(true, "ru", true, true, true, 1200, 0, 1.0,
+                true, true, true, true, true, Onboarding.DEFAULT, true, Income.DEFAULT);
     }
 
     /** Разбирает конфиг; {@code null} допустим — тогда действуют умолчания. */
@@ -140,7 +164,14 @@ public final class ProfessionConfig {
                 source.getBoolean("perks.alchemist-extra-bottle", fallback.perkAlchemistBottle),
                 source.getBoolean("perks.cook-saturation", fallback.perkCookSaturation),
                 source.getBoolean("perks.mason-extra-block", fallback.perkMasonBlock),
-                parseOnboarding(source), source.getBoolean("mastery.enabled", true));
+                parseOnboarding(source), source.getBoolean("mastery.enabled", true),
+                new Income(
+                        source.getBoolean("income.enabled", Income.DEFAULT.enabled()),
+                        (int) clamp(source, "income.xp-per-diamond", Income.DEFAULT.xpPerDiamond(),
+                                MIN_XP_PER_DIAMOND, MAX_XP_PER_DIAMOND, logger),
+                        (int) clamp(source, "income.daily-cap", Income.DEFAULT.dailyCap(),
+                                0, MAX_DAILY_INCOME, logger),
+                        source.getBoolean("income.rank-bonus", Income.DEFAULT.rankBonus())));
     }
 
     /**
@@ -162,11 +193,41 @@ public final class ProfessionConfig {
                         0, 3600, null));
     }
 
-    /** Обязательный выбор профессии (1.4.182). */
+    /** Специализация ремесла (выбор ветки сохранён, выбор ремесла — нет). */
     public boolean masteryEnabled() { return masteryEnabled; }
 
+    /** Устаревшая секция: принудительного онбординга больше нет. */
     public Onboarding onboarding() {
         return onboarding;
+    }
+
+    /** @deprecated выбор профессии отменён; всегда {@code false}. */
+    @Deprecated
+    public boolean onboardingRequired() {
+        return false;
+    }
+
+    /** Правила заработка алмазов. */
+    public Income income() {
+        return income;
+    }
+
+    public boolean incomeEnabled() {
+        return enabled && income.enabled();
+    }
+
+    public int xpPerDiamond() {
+        return income.xpPerDiamond();
+    }
+
+    /** Потолок алмазов в сутки на игрока; 0 — без потолка. */
+    public int dailyIncomeCap() {
+        return income.dailyCap();
+    }
+
+    /** Учитывать ли бонус ранга при расчёте алмазов. */
+    public boolean incomeRankBonus() {
+        return income.rankBonus();
     }
 
     private static long clamp(FileConfiguration source, String path, long fallback, long min,

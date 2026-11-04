@@ -91,7 +91,7 @@ class AddonRetirement271Test {
                 .map(product -> { var terms = new LinkedHashMap<>(product); terms.remove("description"); return terms; }).toList();
         assertEquals(previous, retained, "условия прежних товаров не меняются");
         assertEquals(48,fresh.getMapList("server-menu.items").size());
-        assertEquals(41,fresh.getMapList("auto-messages.messages").size());
+        assertEquals(42,fresh.getMapList("auto-messages.messages").size());
         for(String key:changes)old.set(key,fresh.get(key));
         assertTrue(PresentationMigration.replacements(old,List.of(yaml("presentation-legacy-1.4.270.yml")),fresh).isEmpty());
         assertEquals(777,old.getInt("auto-messages.interval-seconds"));assertEquals(List.of("Admin"),old.getStringList("tablist.pinned-names"));

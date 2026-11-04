@@ -48,12 +48,19 @@ final class ProfessionWorkshop {
             boolean recovered=journal.recover(player);plugin.messages().send(player,recovered?"work-recovered":"work-pending");return;
         }
         var service = plugin.service();
-        var check = service.checkMastery(player.getUniqueId());
+        // 1.4.282: ремесло не выбирается, поэтому приём берёт специализацию
+        // того ремесла, где она задана; без неё — самое прокачанное.
+        Profession profession = null;
+        for (Profession candidate : Profession.values()) {
+            if (service.mastery(player.getUniqueId(), candidate) != null) { profession = candidate; break; }
+        }
+        if (profession == null) profession = service.primary(player.getUniqueId());
+        var check = service.checkMastery(player.getUniqueId(), profession);
         if (!check.ok()) { send(player, check); return; }
-        ProfessionMastery mastery = service.mastery(player.getUniqueId());
+        ProfessionMastery mastery = service.mastery(player.getUniqueId(), profession);
         if (mastery == null) { plugin.messages().send(player, "mastery-needed"); return; }
         long now = System.currentTimeMillis();
-        long left = service.workCooldownLeft(player.getUniqueId(), now);
+        long left = service.workCooldownLeft(player.getUniqueId(), profession, now);
         if (left > 0) {
             plugin.messages().send(player, "work-cooldown", "time", ProfessionMath.clock(left));
             return;

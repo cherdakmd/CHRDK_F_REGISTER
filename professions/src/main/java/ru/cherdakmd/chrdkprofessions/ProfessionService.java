@@ -79,65 +79,51 @@ public final class ProfessionService {
 
     /* --------------------------------- выбор ---------------------------------- */
 
-    /** Выбранная профессия или {@code null}. */
+    /**
+     * Все восемь ремёсел активны у каждого игрока (1.4.282): выбор отменён,
+     * опыт и заработок идут сразу по всем подходящим профессиям.
+     */
+    public boolean isActive(UUID player, Profession profession) {
+        return config.enabled() && profession != null;
+    }
+
+    /**
+     * Ранее выбранная профессия из старого файла прогресса. Оставлена только
+     * для обратной совместимости отображения: геймплей её не использует.
+     *
+     * @deprecated выбор профессии отменён
+     */
+    @Deprecated
     public Profession active(UUID player) {
         return player == null ? null : store.active(player);
     }
 
-    /** Сколько секунд осталось до смены профессии (0 — можно менять). */
+    /** Смены профессии больше нет: кулдаун всегда нулевой. */
     public long chooseCooldownLeft(UUID player, long now) {
-        if (player == null || store.active(player) == null) {
-            return 0L;
-        }
-        long until = store.changedAt(player) + config.chooseCooldownMillis();
-        return until <= now ? 0L : (until - now + 999) / 1_000L;
+        return 0L;
     }
 
-    /** Проверка выбора без записи. */
+    /** @deprecated выбор профессии отменён; всегда отказ. */
+    @Deprecated
     public ProfessionResult checkChoose(UUID player, String professionId, long now) {
-        if (!config.enabled()) {
-            return ProfessionResult.fail("disabled");
-        }
-        Profession target = Profession.parse(professionId);
-        if (target == null) {
-            return ProfessionResult.fail("profession-unknown",
-                    "profession", professionId == null ? "?" : professionId);
-        }
-        Profession current = active(player);
-        if (current == target) {
-            return ProfessionResult.fail("profession-same", "profession", target.id());
-        }
-        long left = chooseCooldownLeft(player, now);
-        if (left > 0) {
-            return ProfessionResult.fail("profession-cooldown",
-                    "time", ProfessionMath.clock(left));
-        }
-        return current == null
-                ? ProfessionResult.ok("profession-choose-ready", "profession", target.id())
-                : ProfessionResult.ok("profession-change-ready", "from", current.id(),
-                        "to", target.id());
+        return ProfessionResult.fail("choose-removed");
     }
 
-    /**
-     * Выбирает профессию. Опыт прежней сохраняется: возвращение к ремеслу
-     * продолжает его, а не начинает заново.
-     */
+    /** @deprecated выбор профессии отменён; всегда отказ. */
+    @Deprecated
     public ProfessionResult choose(UUID player, String professionId, long now) {
-        ProfessionResult check = checkChoose(player, professionId, now);
-        if (!check.ok()) {
-            return check;
-        }
-        Profession target = Profession.parse(professionId);
-        Profession current = active(player);
-        store.setActive(player, target.id(), now);
-        return current == null
-                ? ProfessionResult.ok("profession-chosen", "profession", target.id())
-                : ProfessionResult.ok("profession-changed", "from", current.id(),
-                        "to", target.id());
+        return ProfessionResult.fail("choose-removed");
     }
 
+    /** Специализация конкретного ремесла: выбор ремесла отменён, ветка — нет. */
+    public ProfessionMastery mastery(UUID player, Profession profession) {
+        return player == null || profession == null ? null : store.mastery(player, profession);
+    }
+
+    /** @deprecated укажите ремесло явно. */
+    @Deprecated
     public ProfessionMastery mastery(UUID player) {
-        return player == null ? null : store.mastery(player, active(player));
+        return mastery(player, active(player));
     }
 
     public long masteryCooldownLeft(UUID player, Profession profession, long now) {
@@ -148,31 +134,37 @@ public final class ProfessionService {
         return remaining(until, now);
     }
 
+    public long workCooldownLeft(UUID player, Profession profession, long now) {
+        return player == null || profession == null ? 0 : remaining(store.workUntil(player, profession), now);
+    }
+
+    /** @deprecated укажите ремесло явно. */
+    @Deprecated
     public long workCooldownLeft(UUID player, long now) {
-        return player == null ? 0 : remaining(store.workUntil(player, active(player)), now);
+        return workCooldownLeft(player, active(player), now);
     }
 
     private static long remaining(long until, long now) {
         return until <= now ? 0 : (until - Math.max(0, now)) / 1000 + ((until - Math.max(0, now)) % 1000 > 0 ? 1 : 0);
     }
 
-    public ProfessionResult checkMastery(UUID player) {
+    public ProfessionResult checkMastery(UUID player, Profession profession) {
         if (!config.enabled() || !config.perksEnabled() || !config.masteryEnabled()) return ProfessionResult.fail("mastery-disabled");
         if (!store.canTrack(player)) return ProfessionResult.fail("mastery-storage-full");
-        Profession current = active(player);
-        if (current == null) return ProfessionResult.fail("mastery-no-profession");
-        if (level(player, current) < ProfessionMastery.UNLOCK_LEVEL)
+        if (profession == null) return ProfessionResult.fail("mastery-wrong");
+        if (level(player, profession) < ProfessionMastery.UNLOCK_LEVEL)
             return ProfessionResult.fail("mastery-locked", "level", String.valueOf(ProfessionMastery.UNLOCK_LEVEL));
         return ProfessionResult.ok("mastery-ready");
     }
 
     public ProfessionResult chooseMastery(UUID player, String id, long now) {
-        ProfessionResult check = checkMastery(player);
-        if (!check.ok()) return check;
         ProfessionMastery target = ProfessionMastery.parse(id);
-        if (target == null || target.profession() != active(player)) return ProfessionResult.fail("mastery-wrong");
-        if (target == mastery(player)) return ProfessionResult.fail("mastery-same");
-        long left = masteryCooldownLeft(player, target.profession(), now);
+        if (target == null) return ProfessionResult.fail("mastery-wrong");
+        Profession profession = target.profession();
+        ProfessionResult check = checkMastery(player, profession);
+        if (!check.ok()) return check;
+        if (target == mastery(player, profession)) return ProfessionResult.fail("mastery-same");
+        long left = masteryCooldownLeft(player, profession, now);
         if (left > 0) return ProfessionResult.fail("mastery-change-cooldown", "time", ProfessionMath.clock(left));
         if (!store.setMastery(player, target, now)) return ProfessionResult.fail("mastery-storage-full");
         return ProfessionResult.ok("mastery-chosen", "specialization", target.id());
@@ -192,9 +184,27 @@ public final class ProfessionService {
         return ProfessionMath.levelFor(xp(player, profession), maxLevel(player));
     }
 
+    /** Лучший уровень среди всех ремёсел: «главной» профессии больше нет. */
     public int level(UUID player) {
-        Profession active = active(player);
-        return active == null ? 1 : level(player, active);
+        int best = 1;
+        for (Profession profession : Profession.values()) {
+            best = Math.max(best, level(player, profession));
+        }
+        return best;
+    }
+
+    /**
+     * Ремесло с наибольшим опытом — только фокус меню/плейсхолдеров, не выбор
+     * и не ограничение: опыт и заработок идут по всем восьми всегда.
+     */
+    public Profession primary(UUID player) {
+        Profession best = Profession.SMITH;
+        int bestXp = -1;
+        for (Profession profession : Profession.values()) {
+            int xp = xp(player, profession);
+            if (xp > bestXp) { bestXp = xp; best = profession; }
+        }
+        return best;
     }
 
     public int progress(UUID player, Profession profession) {
@@ -247,34 +257,81 @@ public final class ProfessionService {
      * был ли упор в потолок, и стоит ли один раз предупредить игрока.</p>
      */
     public Award award(UUID player, Profession profession, int rawXp, long now) {
-        if (!config.enabled() || player == null || profession == null || rawXp <= 0) {
-            return Award.none();
-        }
-        if (store.active(player) != profession) {
+        if (!isActive(player, profession) || rawXp <= 0) {
             return Award.none();
         }
         int cap = maxLevel(player);
         int before = store.xp(player, profession);
         int levelBefore = ProfessionMath.levelFor(before, cap);
-        // Опыт: множитель сервера × бонус ранга (1.4.167). Оба множителя
-        // умножаются до округления, чтобы 10 % ранга не терялись на мелких наградах.
+        // Базовый опыт и опыт с бонусом ранга считаем отдельно: суточный потолок
+        // ограничивает только базу, так что донатный ранг реально получает
+        // больше опыта за день, а не просто быстрее упирается в тот же лимит.
         double factor = config.xpMultiplier() * bonus(player).xpFactor();
         long base = Math.max(1L, Math.round(rawXp * config.xpMultiplier()));
-        long current = Math.max(1L, Math.round(rawXp * factor));
-        int scaled = (int) Math.min(Integer.MAX_VALUE, Math.max(current, rewardScaler.apply(player, base, current)));
+        long boosted = Math.max(1L, Math.round(rawXp * factor));
+        long current = Math.max(boosted, rewardScaler.apply(player, base, boosted));
         int left = dailyLeft(player, profession, now);
-        int granted = left < 0 ? scaled : Math.min(scaled, left);
-        boolean capped = left >= 0 && granted < scaled;
+        long grantedBase = left < 0 ? base : Math.min(base, (long) Math.max(0, left));
+        long granted = Math.min(Integer.MAX_VALUE, grantedBase + Math.max(0L, current - base));
+        boolean capped = left >= 0 && grantedBase < base;
         if (granted <= 0) {
             return new Award(0, levelBefore, levelBefore, Math.max(0, left), true);
         }
-        int after = store.addXp(player, profession, granted);
+        int after = store.addXp(player, profession, (int) granted);
         int added = Math.max(0, after - before);
         int levelAfter = ProfessionMath.levelFor(after, cap);
-        if (left >= 0 && granted > 0) {
-            store.setDaily(player, profession, utcDay(now), dailyUsed(player, profession, now) + granted);
+        if (left >= 0 && grantedBase > 0) {
+            store.setDaily(player, profession, utcDay(now),
+                    (int) Math.min(Integer.MAX_VALUE, dailyUsed(player, profession, now) + grantedBase));
         }
-        return new Award(added, levelBefore, levelAfter, dailyLeft(player, profession, now), capped);
+        // Заработок считается из фактически начисленного опыта: xpPercent ранга
+        // автоматически усиливает и алмазы, без второго умножения.
+        long diamonds = accrueIncome(player, grantedBase, granted, now);
+        return new Award(added, levelBefore, levelAfter, dailyLeft(player, profession, now), capped, diamonds);
+    }
+
+    /**
+     * Дробное накопление алмазов. Один алмаз стоит {@code xpPerDiamond} опыта,
+     * остаток хранится в тысячных. {@code store.creditIncome} фиксирует
+     * кумулятивный total ДО обращения к банку — повтор доставки не удваивает
+     * выплату. Потолок 9999 алмазов в сутки — защита от ферм, а не цель темпа.
+     */
+    private long accrueIncome(UUID player, long baseXp, long grantedXp, long now) {
+        if (!config.incomeEnabled() || grantedXp <= 0) return 0L;
+        long xp = config.incomeRankBonus() ? grantedXp : baseXp;
+        if (xp <= 0) return 0L;
+        long micro = store.incomeMicro(player) + xp * 1000L / config.xpPerDiamond();
+        long whole = micro / 1000L;
+        if (whole <= 0) {
+            store.setIncomeMicro(player, micro % 1000L);
+            return 0L;
+        }
+        int cap = config.dailyIncomeCap();
+        String today = utcDay(now);
+        long paid = store.incomeToday(player, today);
+        if (cap > 0 && paid + whole > cap) whole = Math.max(0L, cap - paid);
+        if (whole <= 0) {
+            store.setIncomeMicro(player, micro % 1000L);
+            return 0L;
+        }
+        store.setIncomeMicro(player, micro % 1000L);
+        store.creditIncome(player, whole, today);
+        return whole;
+    }
+
+    /** Сколько алмазов заработано за сегодня (для /prof и профиля). */
+    public long incomeToday(UUID player, long now) {
+        return player == null ? 0L : store.incomeToday(player, utcDay(now));
+    }
+
+    /** Кумулятивный total, уже переданный в банк. */
+    public long incomeTotal(UUID player) {
+        return player == null ? 0L : store.incomeTotal(player);
+    }
+
+    /** Дробный остаток в тысячных алмаза (0..999). */
+    public long incomeMicro(UUID player) {
+        return player == null ? 0L : store.incomeMicro(player);
     }
 
     /**
@@ -286,7 +343,13 @@ public final class ProfessionService {
      * @param dailyLeft   сколько ещё можно получить сегодня ({@code -1} — без потолка)
      * @param capped      упёрлись ли в суточный потолок
      */
-    public record Award(int added, int levelBefore, int levelAfter, int dailyLeft, boolean capped) {
+    public record Award(int added, int levelBefore, int levelAfter, int dailyLeft,
+                        boolean capped, long diamonds) {
+
+        /** Старые вызывающие места, которым доход не нужен. */
+        public Award(int added, int levelBefore, int levelAfter, int dailyLeft, boolean capped) {
+            this(added, levelBefore, levelAfter, dailyLeft, capped, 0L);
+        }
 
         static Award none() {
             return new Award(0, 1, 1, -1, false);
@@ -299,7 +362,7 @@ public final class ProfessionService {
     }
 
     public Award awardSource(UUID player,Profession profession,String action,org.bukkit.Material material,int units,int xp,long now){
-        if(!config.enabled()||player==null||profession==null||material==null||units<=0||xp<=0||active(player)!=profession)return Award.none();
+        if(!config.enabled()||player==null||profession==null||material==null||units<=0||xp<=0||!isActive(player,profession))return Award.none();
         int before=store.xp(player,profession),daily=dailyUsed(player,profession,now);
         Award award=award(player,profession,(int)Math.min(Integer.MAX_VALUE,(long)units*xp),now);
         if(award.added()>0||(before>=ProfessionStore.MAX_XP&&(config.dailyXpCap()==0||dailyUsed(player,profession,now)>daily)))store.practice(player,profession,action+":"+material.name().toLowerCase(java.util.Locale.ROOT),units);
@@ -333,9 +396,10 @@ public final class ProfessionService {
         if (!config.enabled() || !enabled || player == null) {
             return 0;
         }
-        if (store.active(player) != profession) {
+        if (!isActive(player, profession)) {
             return 0;
         }
+        // 1.4.282: прибавки всех ремёсел работают одновременно — выбор отменён.
         return ProfessionMath.perkValue(profession, Math.min(level(player, profession),powerCap(player)), powerCap(player));
     }
 
@@ -346,15 +410,10 @@ public final class ProfessionService {
 
     /* -------------------------------- служебное -------------------------------- */
 
-    /** Админская выдача профессии в обход кулдауна. */
+    /** @deprecated выбор профессии отменён; всегда отказ. */
+    @Deprecated
     public ProfessionResult setByAdmin(UUID player, String professionId, long now) {
-        Profession target = Profession.parse(professionId);
-        if (target == null) {
-            return ProfessionResult.fail("profession-unknown",
-                    "profession", professionId == null ? "?" : professionId);
-        }
-        store.setActive(player, target.id(), now);
-        return ProfessionResult.ok("admin-profession-set", "profession", target.id());
+        return ProfessionResult.fail("choose-removed");
     }
 
     /** Админская выдача опыта: суточный потолок не действует, потолок файла — да. */

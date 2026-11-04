@@ -42,8 +42,15 @@ public final class ShopQuantityGui implements Listener {
     }
     private void render(Player player,Holder h){
         Inventory inv=h.inventory;inv.clear();
-        Material material=Material.matchMaterial(h.item.material());
-        var icon=new ItemStack(material==null?Material.BARRIER:material);
+        var spec=h.item.spec();
+        ItemStack icon;
+        if(spec!=null){
+            icon=ru.cherdakmd.chrdkregister.api.ShopBooks.create(spec);
+            if(icon==null)icon=new ItemStack(Material.BARRIER);
+        }else{
+            Material material=Material.matchMaterial(h.item.material());
+            icon=new ItemStack(material==null?Material.BARRIER:material);
+        }
         icon.setAmount(Math.min(h.units,icon.getMaxStackSize()));inv.setItem(4,icon);
         int[] slots={10,11,12,14,15,16};int[] changes={-64,-8,-1,1,8,64};
         for(int i=0;i<slots.length;i++)inv.setItem(slots[i],named(changes[i]<0?Material.RED_DYE:Material.LIME_DYE,"quantity.change","amount",(changes[i]>0?"+":"")+changes[i]));
@@ -53,7 +60,7 @@ public final class ShopQuantityGui implements Listener {
         long money=TradeAmounts.quote(h.batch,h.price,h.units,h.buy);
         var quote=named(Material.PAPER,"quantity.total","amount",h.units,"money",money<0?"—":money);
         ItemMeta meta=quote.getItemMeta();
-        if(meta!=null){meta.lore(plugin.messages().getList(h.buy?"quantity.buy-details":"quantity.details","batch",h.batch,"price",h.price,"minimum",minimum,"have",material==null?0:ShopService.countItems(player.getInventory(),material),"balance",h.service.balance(player),"physical",h.service.physical(player)));quote.setItemMeta(meta);}inv.setItem(22,quote);
+        if(meta!=null){meta.lore(plugin.messages().getList(h.buy?"quantity.buy-details":"quantity.details","batch",h.batch,"price",h.price,"minimum",minimum,"have",ShopService.countSellable(player.getInventory(),h.item),"balance",h.service.balance(player),"physical",h.service.physical(player)));quote.setItemMeta(meta);}inv.setItem(22,quote);
         inv.setItem(40,named(money>0?Material.LIME_DYE:Material.BARRIER,money>0?"quantity.confirm":"quantity.unavailable"));
         inv.setItem(45,named(Material.ARROW,"quantity.back"));
         if(!h.buy)inv.setItem(49,named(Material.CHEST,"quantity.maximum"));

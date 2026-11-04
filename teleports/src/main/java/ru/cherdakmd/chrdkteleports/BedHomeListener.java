@@ -51,6 +51,12 @@ public final class BedHomeListener implements Listener {
         if (bed == null || !plugin.config().worldAllowed(bed.getWorld().getName())) {
             return;
         }
+        // 1.4.282: бесплатная кровать не должна обходить запрет /sethome.
+        if (!HomeClaimGuard.allowed(HomeClaimGuard.policy(), player.getName(),
+                bed.getWorld().getName(), bed.getX(), bed.getZ())) {
+            plugin.messages().send(player, "home.foreign-claim-bed");
+            return;
+        }
         HomeLocation home = BedHome.at(bed, player.getLocation().getYaw());
         if (home == null) {
             return;
@@ -96,6 +102,11 @@ public final class BedHomeListener implements Listener {
         if (!Tag.BEDS.isTagged(block.getType())) {
             return;
         }
+        // Импорт ванильной кровати при входе молчаливый: в чужом привате просто не создаём точку.
+        if (!HomeClaimGuard.allowed(HomeClaimGuard.policy(), player.getName(),
+                respawn.getWorld().getName(), block.getX(), block.getZ())) {
+            return;
+        }
         HomeLocation home = BedHome.at(block, player.getLocation().getYaw());
         if (home != null) {
             try { store.put(player.getUniqueId(), home); }
@@ -128,6 +139,11 @@ public final class BedHomeListener implements Listener {
         }
         Location spot = BedHome.safeSpot(world, home);
         if (spot == null) {
+            return;
+        }
+        // Не подменяем возрождение в чужом привате: оставляем решение сервера.
+        if (!HomeClaimGuard.allowed(HomeClaimGuard.policy(), player.getName(), home.world(),
+                HomeClaimGuard.blockOf(spot.getX()), HomeClaimGuard.blockOf(spot.getZ()))) {
             return;
         }
         event.setRespawnLocation(spot);

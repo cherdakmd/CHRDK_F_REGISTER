@@ -7,7 +7,9 @@ public enum EnchantBookSource {
     @Deprecated TREASURE,
     /** Только чтение происхождения уже выданных книг; обменника больше нет. */
     @Deprecated SHARDS,
-    ADMIN, API, WORKSHOP;
+    ADMIN, API, WORKSHOP,
+    /** Книга куплена в алмазном магазине; только такие книги принимаются обратно. */
+    SHOP;
 
     /** Старые подписи читаются, но не создают новый источник наград. */
     public boolean retired() { return this == TREASURE || this == SHARDS; }

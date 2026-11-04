@@ -9,11 +9,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Раздел «Профессия» в {@code /profile} (1.4.165).
+ * Раздел «Ремёсла» в {@code /profile} (1.4.282).
  *
- * <p>Раздел виден и тем, кто ещё не выбрал ремесло: пустая карточка объясняет,
- * что выбор бесплатный, а смена — раз в сутки. Иначе о механике узнают только
- * по слухам, а профессия выглядит как скрытая привилегия.</p>
+ * <p>Выбор профессии отменён: показываем все восемь ремёсел сразу, их уровни
+ * и заработанные алмазы. Никаких «выберите ремесло», кулдаунов смены и пустой
+ * карточки — profession доступна каждому с первого входа.</p>
  */
 final class ProfessionsProfile implements ChrdkRegisterApi.ProfileProvider {
 
@@ -34,53 +34,27 @@ final class ProfessionsProfile implements ChrdkRegisterApi.ProfileProvider {
             return null;
         }
         Messages messages = plugin.messages();
-        Profession profession = plugin.service().active(context.playerId());
+        ProfessionService service = plugin.service();
+        long now = System.currentTimeMillis();
         List<Component> lines = new ArrayList<>();
-        if (profession == null) {
-            lines.add(messages.get("profile-none"));
-            lines.add(messages.get("profile-none-hint",
-                    "hours", String.valueOf(plugin.config().chooseCooldownHours())));
-        } else {
-            ProfessionMastery mastery = plugin.store().mastery(context.playerId(), profession);
-            lines.add(messages.get("mastery-status", "specialization", mastery == null
-                    ? messages.get("mastery-none") : messages.get(mastery.nameKey())));
-            int level = plugin.service().level(context.playerId(), profession);
-            int maxLevel = plugin.service().maxLevel(context.playerId());
-            int needed = ProfessionMath.needed(level, maxLevel);
-            lines.add(messages.get("profile-profession", "profession",
-                    Messages.trusted(messages.raw("profession." + profession.id() + ".name"))));
-            lines.add(messages.get("profile-level",
+        lines.add(messages.get("profile-all-active",
+                "count", String.valueOf(Profession.values().length),
+                "xp", String.valueOf(plugin.config().xpPerDiamond()),
+                "rank", String.valueOf(Math.round(service.bonus(context.playerId()).xpFactor() * 100))));
+        for (Profession profession : Profession.values()) {
+            int level = service.level(context.playerId(), profession);
+            int percent = service.progressPercent(context.playerId(), profession);
+            lines.add(messages.get("profile-profession-line",
+                    "profession", Messages.trusted(messages.raw("profession." + profession.id() + ".name")),
                     "level", String.valueOf(level),
-                    "rank", Messages.trusted(messages.raw(ProfessionMath.rankKey(level)))));
-            lines.add(messages.get("guide.profile","rank",plugin.service().trials().rank(context.playerId(),profession)));
-            int percent = plugin.service().progressPercent(context.playerId(), profession);
-            lines.add(messages.get("profile-progress",
-                    "xp", String.valueOf(plugin.service().progress(context.playerId(), profession)),
-                    "needed", needed <= 0 ? "∞" : String.valueOf(needed),
                     "percent", String.valueOf(percent)));
-            if (needed > 0) {
-                lines.add(messages.get("profile-bar", "bar", ProfessionText.bar(percent)));
-            }
-            String next = ProfessionText.nextStepRaw(messages, profession, level,plugin.service().powerCap(context.playerId()));
-            if (!next.isBlank()) {
-                lines.add(messages.get("profile-next", "next", Messages.trusted(next)));
-            }
-            lines.add(messages.get("profile-perk", "perk",
-                    Messages.trusted(ProfessionText.perkRaw(messages, profession, level,plugin.service().powerCap(context.playerId())))));
-            lines.add(messages.get("profile-hint",
-                    "hint", ProfessionText.hintComponent(messages, profession)));
-            int left = plugin.service().dailyLeft(context.playerId(), profession,
-                    System.currentTimeMillis());
-            if (left >= 0) {
-                lines.add(messages.get("profile-daily", "left", String.valueOf(left)));
-            }
-            long cooldown = plugin.service().chooseCooldownLeft(context.playerId(),
-                    System.currentTimeMillis());
-            if (cooldown > 0) {
-                lines.add(messages.get("profile-cooldown", "time", ProfessionMath.clock(cooldown)));
-            }
         }
+        lines.add(messages.get("profile-income-today",
+                "amount", String.valueOf(service.incomeToday(context.playerId(), now)),
+                "cap", String.valueOf(plugin.config().dailyIncomeCap())));
+        lines.add(messages.get("profile-income-total",
+                "amount", String.valueOf(service.incomeTotal(context.playerId()))));
         return new ChrdkRegisterApi.ProfileSection(messages.raw("profile-title"),
-                Material.SMITHING_TABLE, lines);
+                Material.DIAMOND, lines);
     }
 }

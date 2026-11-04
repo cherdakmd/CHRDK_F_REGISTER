@@ -1332,7 +1332,7 @@ auto-messages:
   # %pass_type%, %trial_days%, %balance% (баланс банка /bal).
   # Здесь %online% — размер авторизованной аудитории, не весь онлайн сервера.
   # Проверка без ожидания: /pass automessages list|next|test <номер>.
-  # Набор 1.4.276: все 41 подсказка сверена с текущими системами; условия показа сохранены.
+  # Набор 1.4.282: 42 подсказки сверены с текущими системами; добавлен Plasmo Voice.
   messages:
     - {"text": "<gray>С чего начнётся ваша история? Откройте <white>/menu</white>: стройка, ремесло, приключения и развитие собраны по разделам.</gray>", "permission": "chrdkregister.menu"}
     - {"text": "<gray>Не гадайте о правилах: <white>/wiki</white> открывает справочник CHERDAK. Точные цены, требования и доступность проверяйте в игре.</gray>"}
@@ -1348,7 +1348,7 @@ auto-messages:
     - {"text": "<gray>Ваш ранг действует ещё <white>%pass_left%</white>. Срок и возможности — <white>/rank my</white>. Ранг не заменяет пароль и подключённую 2FA.</gray>", "condition": "paid"}
     - {"text": "<gray>Сделайте ник своим: <white>/labels</white> управляет метками и их местами. Ник всегда первый; премиальные цвета покупаются отдельно, в том числе при V ранге.</gray>", "permission": "chrdkregister.labels"}
     - {"text": "<gray>Награда за игру — не платный ранг: отдельный XP-буст усиливает опыт Minecraft, профессий и навыков. Запас смотрите в <white>/profile</white>; время расходуется онлайн после входа. Платный ранг не продлевается.</gray>", "permission": "chrdkregister.profile"}
-    - {"text": "<gray>Найдите своё ремесло: <white>/profession menu</white> предлагает 8 профессий. Рабочий XP и бонусы получает только активная; при смене прогресс сохраняется. Развитие — <white>/profession mastery</white>.</gray>", "plugin": "CHRDK_Professions", "permission": "chrdkprofessions.use"}
+    - {"text": "<gray>Все 8 ремёсел активны сразу: <white>/profession menu</white> показывает уровни и прибавки без выбора. За рабочий XP начисляются алмазы на <white>/bal</white>; развитие — <white>/profession mastery</white>.</gray>", "plugin": "CHRDK_Professions", "permission": "chrdkprofessions.use"}
     - {"text": "<gray>Каждое дело оставляет опыт: <white>/skills</white> показывает навыки CHRDK. Читайте требования и откаты в карточках; повторная установка блока не гарантирует новый XP.</gray>", "plugin": "CHRDK_Skills", "permission": "chrdkskills.use"}
     - {"text": "<gray>Воин, стрелок, маг или жрец? Выбор — <white>/class menu</white>, развитие — <white>/class talents</white>. Умения работают в PvE; класс и профессия — разные пути.</gray>", "plugin": "CHRDK_Classes", "permission": "chrdkclasses.use"}
     - {"text": "<gray>Нужна цель для путешествия? <white>/quests menu</white> — задания и фракции. Условия: <white>/quests info id</white>, сдача: <white>/quests claim id</white>. Награды — опыт, предметы и репутация, не алмазы.</gray>", "plugin": "CHRDK_Quests", "permission": "chrdkquests.use"}
@@ -1375,6 +1375,7 @@ auto-messages:
     - {"text": "<gray>Последний штрих к образу: <white>/cosmetics trails</white> — доступные шлейфы, <white>/cosmetics off</white> — отключение. Открытый каталог не означает владение; у права может быть срок.</gray>", "plugin": "CHRDK_Cosmetics", "permission": "chrdkcosmetics.use"}
     - {"text": "<gray>Хотите поддержать CHERDAK? <click:run_command:'/donate'><white>/donate</white></click> даст официальную ссылку. Не переводите деньги по реквизитам из чужих личных сообщений.</gray>", "permission": "chrdkregister.donate"}
     - {"text": "<gray>CHERDAK рядом и вне игры: <white>/vk link</white> выдаёт код для личных сообщений сообщества. Входы и самозащита — в ЛС; беседа — для общения и новостей. Пароли и коды 2FA боту не отправляйте.</gray>", "plugin": "CHRDK_VK", "permission": "chrdkvk.use"}
+    - {"text": "<gray>На CHERDAK работает <white>Plasmo Voice</white>: голосовой чат с учётом расстояния между игроками. Нужен клиентский мод Plasmo Voice и настроенный микрофон; текстовые каналы и правила общения остаются прежними.</gray>"}
 
 tablist:
   # Таб-лист (TAB): шапка/подвал списка игроков и формат имени в нём.

@@ -157,8 +157,9 @@ public final class ShopService {
         long money=carry ? exact.money() : TradeAmounts.quote(batch,price,units,buy);
         if(money<0 || money>WholeTrades.MAX)return fail("trading.invalid-number",0);
         if(money==0 && !carry)return fail("quantity.too-small",0);
-        Material material = Material.matchMaterial(item.material());
-        if (material == null || !material.isItem()) return fail("trading.unknown-item", 0);
+        var spec = item.spec();
+        Material material = spec == null ? Material.matchMaterial(item.material()) : null;
+        if (spec == null && (material == null || !material.isItem())) return fail("trading.unknown-item", 0);
         var before = copy(player.getInventory().getStorageContents()); var after = copy(before);
         long debit = 0, credit = buy ? 0 : money, spent = 0, change = 0;
         if (buy) {
@@ -176,16 +177,25 @@ public final class ShopService {
             var payment = WholeTrades.payment(money, wallet, spent);
             if (payment == null) return fail("trading.not-enough-balance", money);
             debit = payment.account(); credit = payment.change(); change = credit;
-            if (!insert(after, material, units)) return fail("trading.no-space", money);
+            if (spec != null) {
+                String error = insertBooks(after, spec, units);
+                if (error != null) return fail(error, money);
+            } else if (!insert(after, material, units)) {
+                return fail("trading.no-space", money);
+            }
         } else {
-            if (!remove(after, material, units)) return fail("quantity.not-enough-items", money);
+            if (spec != null ? !removeBooks(after, spec, units) : !remove(after, material, units))
+                return fail("quantity.not-enough-items", money);
         }
         long now = System.currentTimeMillis();
         if (money>0 && !store.canRecordTurnover(player.getUniqueId(), money, config.dailyTurnoverLimit(), now)) return fail(store.legacyAvailable() ? "trading.daily-limit" : "trading.unavailable", money);
         var frozenRates=new LinkedHashMap<String,Integer>();
         config.currencyRates().forEach((key,value)->{ var m=Material.matchMaterial(key); if(m!=null&&m.isItem()&&m.name().equals(key)) frozenRates.put(key,value); });
-        var t=new ShopExchange(UUID.randomUUID(),store.market(),store.sequence()+1,player.getUniqueId(),buy,item.material(),units,money,debit,credit,spent,frozenRates,ChargeInventory.encode(before),ChargeInventory.encode(after));
-        if(carry) t=new ShopExchange(t.transaction(),t.market(),t.sequence(),t.owner(),false,t.material(),t.units(),t.money(),0,t.credit(),0,t.rates(),t.before(),t.after(),batch,price,remainderBefore,exact.remainder());
+        String beforeSnapshot=ChargeInventory.encode(before), afterSnapshot=ChargeInventory.encode(after);
+        var t = spec == null
+                ? new ShopExchange(UUID.randomUUID(),store.market(),store.sequence()+1,player.getUniqueId(),buy,item.material(),units,money,debit,credit,spent,frozenRates,beforeSnapshot,afterSnapshot)
+                : new ShopExchange(UUID.randomUUID(),store.market(),store.sequence()+1,player.getUniqueId(),buy,item.material(),units,money,debit,credit,spent,frozenRates,beforeSnapshot,afterSnapshot,0,0,null,null,spec.key());
+        if(carry) t=new ShopExchange(t.transaction(),t.market(),t.sequence(),t.owner(),false,t.material(),t.units(),t.money(),0,t.credit(),0,t.rates(),t.before(),t.after(),batch,price,remainderBefore,exact.remainder(),t.book());
         if(!ShopInventory.valid(t)) return fail("trading.unavailable",money);
         long stock=store.stockOf(item,now,config.stockRecoveryPerHour());
         long afterStock; try { afterStock=Math.max(1,Math.addExact(stock,buy?-units:units)); } catch(ArithmeticException e) { return fail("trading.unavailable",money); }
@@ -202,10 +212,9 @@ public final class ShopService {
     public record SellAllResult(long income, long units, int kinds) { }
     private TradeAmounts.Sale maximumSalePlan(Player player,ShopConfig.ShopItem item,int batch,long bid) {
         if (!item.sellEnabled() || config.item(item.material()).filter(item::equals).isEmpty()) return null;
-        var material=Material.matchMaterial(item.material()); if(material==null)return null;
         long budget=Math.max(0,WholeTrades.MAX-balance(player));
         if(config.dailyTurnoverLimit()>0)budget=Math.min(budget,(long)Math.floor(Math.max(0,config.dailyTurnoverLimit()-store.usedToday(player.getUniqueId(),System.currentTimeMillis()))));
-        return TradeAmounts.selectSale(batch,bid,countItems(player.getInventory(),material),budget);
+        return TradeAmounts.selectSale(batch,bid,countSellable(player.getInventory(),item),budget);
     }
     public int maximumSale(Player player,ShopConfig.ShopItem item,int batch,long bid) {
         var plan=maximumSalePlan(player,item,batch,bid);
@@ -225,12 +234,14 @@ public final class ShopService {
     }
     private TradeResult sellAllUnits(Player player, ShopConfig.ShopItem item) {
         if(!ready(player)||player.getGameMode()!=GameMode.SURVIVAL) return fail("trading.unavailable",0);
-        var material=Material.matchMaterial(item.material());
-        if(material==null || config.currencyRates().containsKey(item.material())) return fail("quantity.sellall-none",0);
+        if(item.spec()==null){
+            var material=Material.matchMaterial(item.material());
+            if(material==null || config.currencyRates().containsKey(item.material())) return fail("quantity.sellall-none",0);
+        }
         int batch=batchSize(item); long price=bidPrice(item);
         long budget=Math.max(0,WholeTrades.MAX-balance(player));
         if(config.dailyTurnoverLimit()>0) budget=Math.min(budget,(long)Math.floor(Math.max(0,config.dailyTurnoverLimit()-store.usedToday(player.getUniqueId(),System.currentTimeMillis()))));
-        int units=CarrySale.maximum(saleRemainder(player),batch,price,countItems(player.getInventory(),material),budget);
+        int units=CarrySale.maximum(saleRemainder(player),batch,price,countSellable(player.getInventory(),item),budget);
         return units==0 ? fail("quantity.sellall-none",0) : trade(player,item,units,false,batch,price,true);
     }
     public SellAllResult sellAll(Player player) {
@@ -266,5 +277,46 @@ public final class ShopService {
         }
         return units == 0;
     }
+    /** Сколько товара реально можно продать: обычные предметы или помеченные книги. */
+    public static long countSellable(PlayerInventory inventory, ShopConfig.ShopItem item) {
+        var spec = item.spec();
+        if (spec != null) return countBooks(inventory, spec);
+        Material material = Material.matchMaterial(item.material());
+        return material == null ? 0 : countItems(inventory, material);
+    }
+
+    /** Только книги с меткой магазина и точным совпадением чары и уровня. */
+    public static long countBooks(PlayerInventory inventory, ShopBookKey.Spec spec) {
+        if (spec == null) return 0;
+        long count = 0;
+        for (var stack : inventory.getStorageContents()) if (ShopBooks.matches(stack, spec)) count++;
+        return count;
+    }
+
+    /** {@code null} — успех, иначе ключ ошибки. Книги с NBT не стакаются: по слоту на книгу. */
+    private static String insertBooks(ItemStack[] items, ShopBookKey.Spec spec, long units) {
+        ItemStack template = ShopBooks.create(spec);
+        if (template == null) return "trading.unknown-item";
+        long left = units;
+        for (int i = 0; i < items.length && left > 0; i++) {
+            if (items[i] == null || items[i].getType().isAir()) {
+                items[i] = template.clone();
+                left--;
+            }
+        }
+        return left == 0 ? null : "trading.no-space";
+    }
+
+    private static boolean removeBooks(ItemStack[] items, ShopBookKey.Spec spec, long units) {
+        long left = units;
+        for (int i = 0; i < items.length && left > 0; i++) {
+            if (ShopBooks.matches(items[i], spec)) {
+                items[i] = null;
+                left--;
+            }
+        }
+        return left == 0;
+    }
+
     public Optional<ShopConfig.ShopItem> findItem(String input) { return config.item(input); }
 }

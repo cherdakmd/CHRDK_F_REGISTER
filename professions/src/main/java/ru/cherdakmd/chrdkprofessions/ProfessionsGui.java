@@ -22,12 +22,11 @@ import java.util.Locale;
 import java.util.UUID;
 
 /**
- * Меню профессий: выбор ремесла и карточка (1.4.165).
+ * Меню ремёсел: обзор всех восьми профессий (1.4.282).
  *
- * <p>Два экрана: главный (кто я сейчас и четыре ремесла) и карточка выбранной
- * профессии с подтверждением. Меню ничего не решает само: клик зовёт
- * {@link ProfessionService}, поэтому выбрать профессию в обход кулдауна нельзя
- * ни из чата, ни из GUI.</p>
+ * <p>Выбор ремесла отменён: карточка теперь только показывает уровень,
+ * прибавку и заработок, а клик ведёт в гид. Никаких подтверждений выбора и
+ * кулдаунов смены больше нет — все ремесла активны у каждого игрока.</p>
  *
  * <p>Класс игрока берётся из владельца инвентаря, а игрок — из события: GUI
  * один на плагин, и держать в нём «текущего игрока» значило бы смешать двух
@@ -75,7 +74,7 @@ final class ProfessionsGui implements Listener {
 
     /* --------------------------------- экраны --------------------------------- */
 
-    /** Главное меню: текущая профессия и четыре варианта. */
+    /** Главное меню: сводка дохода и все восемь ремёсел. */
     void open(Player player) {
         if (player == null) {
             return;
@@ -96,7 +95,7 @@ final class ProfessionsGui implements Listener {
         player.openInventory(inventory);
     }
 
-    /** Карточка профессии с подтверждением выбора. */
+    /** Карточка ремесла без подтверждения выбора. */
     void openInfo(Player player, Profession profession) {
         if (player == null || profession == null) {
             return;
@@ -108,7 +107,7 @@ final class ProfessionsGui implements Listener {
         holder.inventory = inventory;
 
         inventory.setItem(SUMMARY_SLOT, professionItem(player, profession));
-        inventory.setItem(CONFIRM_SLOT, confirmItem(player, profession));
+        inventory.setItem(CONFIRM_SLOT, allActiveItem(player));
         inventory.setItem(BACK_SLOT, button(Material.ARROW, "menu-back", List.of()));
         inventory.setItem(MASTERY_SLOT, button(Material.SMITHING_TABLE, "mastery-menu", List.of(plugin.messages().get("mastery-menu-hint"))));
         guideButtons(inventory);
@@ -117,20 +116,19 @@ final class ProfessionsGui implements Listener {
     }
 
     void openMastery(Player player) {
-        Profession profession = plugin.service().active(player.getUniqueId());
-        if (profession == null) { plugin.messages().send(player, "mastery-no-profession"); return; }
+        Profession profession = plugin.service().primary(player.getUniqueId());
         Holder holder = new Holder(player.getUniqueId(), Screen.MASTERY, profession.id());
         holder.inventory = Bukkit.createInventory(holder, SIZE, plugin.messages().get("mastery-menu"));
         holder.inventory.setItem(SUMMARY_SLOT, professionItem(player, profession));
         var choices = ProfessionMastery.of(profession);
         for (int i = 0; i < choices.size(); i++) holder.inventory.setItem(20 + i * 4, masteryItem(player, choices.get(i)));
-        ProfessionMastery current = plugin.service().mastery(player.getUniqueId());
+        ProfessionMastery current = plugin.service().mastery(player.getUniqueId(), profession);
         List<Component> lore = new ArrayList<>();
         if (current == null) lore.add(plugin.messages().get("mastery-needed"));
         else {
             lore.add(plugin.messages().get(current.descKey()));
             lore.add(plugin.messages().get(current.costKey()));
-            long left = plugin.service().workCooldownLeft(player.getUniqueId(), System.currentTimeMillis());
+            long left = plugin.service().workCooldownLeft(player.getUniqueId(), profession, System.currentTimeMillis());
             lore.add(plugin.messages().get(left > 0 ? "work-cooldown" : "mastery-ready", "time", ProfessionMath.clock(left)));
         }
         holder.inventory.setItem(CONFIRM_SLOT, button(Material.CRAFTING_TABLE, "work-button", lore));
@@ -156,22 +154,27 @@ final class ProfessionsGui implements Listener {
         lore.add(plugin.messages().get("guide.batch","amount",plugin.service().trials().batch(player.getUniqueId(),choice)));
         lore.add(plugin.messages().get("mastery-requirement", "level", ProfessionMastery.UNLOCK_LEVEL));
         lore.add(plugin.messages().get("mastery-interval", "time", ProfessionMath.clock(plugin.service().trials().cooldown(player.getUniqueId(),choice))));
-        if (choice == plugin.service().mastery(player.getUniqueId())) lore.add(plugin.messages().get("mastery-active"));
+        if (choice == plugin.service().mastery(player.getUniqueId(), choice.profession())) lore.add(plugin.messages().get("mastery-active"));
         else lore.add(plugin.messages().get("mastery-pick"));
         return button(material(choice.icon()), choice.nameKey(), lore);
     }
 
     /* --------------------------------- предметы -------------------------------- */
 
+    /** Сводка: все ремесла активны + заработано алмазов за сегодня. */
     private ItemStack summaryItem(Player player) {
-        Profession active = plugin.service().active(player.getUniqueId());
-        if (active == null) {
-            List<Component> lore = new ArrayList<>();
-            lore.add(plugin.messages().get("menu-current-none"));
-            lore.add(plugin.messages().get("menu-current-hint"));
-            return button(Material.BARRIER, "menu-current", lore);
-        }
-        return professionItem(player, active);
+        UUID id = player.getUniqueId();
+        long now = System.currentTimeMillis();
+        List<Component> lore = new ArrayList<>();
+        lore.add(plugin.messages().get("menu-all-active-lore",
+                "count", String.valueOf(Profession.values().length),
+                "xp", String.valueOf(plugin.config().xpPerDiamond()),
+                "rank", String.valueOf(Math.round(plugin.service().bonus(id).xpFactor() * 100))));
+        lore.add(plugin.messages().get("menu-income-today",
+                "amount", String.valueOf(plugin.service().incomeToday(id, now))));
+        lore.add(plugin.messages().get("menu-income-total",
+                "amount", String.valueOf(plugin.service().incomeTotal(id))));
+        return button(Material.DIAMOND, "menu-current", lore);
     }
 
     private ItemStack professionItem(Player player, Profession profession) {
@@ -206,35 +209,17 @@ final class ProfessionsGui implements Listener {
                 "hint", ProfessionText.hintComponent(plugin.messages(), profession)));
         lore.add(plugin.messages().get("guide.profile","rank",plugin.service().trials().rank(id,profession)));
         lore.add(Component.empty());
-        lore.add(profession == plugin.service().active(id)
-                ? plugin.messages().get("menu-profession-current")
-                : plugin.messages().get("menu-profession-click"));
+        lore.add(plugin.messages().get("menu-profession-click"));
         return button(material(profession.iconName()),
                 "profession." + profession.id() + ".name", lore);
     }
 
-    private ItemStack confirmItem(Player player, Profession profession) {
-        UUID id = player.getUniqueId();
-        Profession current = plugin.service().active(id);
-        if (current == profession) {
-            return button(Material.GRAY_DYE, "menu-confirm-name",
-                    List.of(plugin.messages().get("menu-confirm-same")));
-        }
-        long left = plugin.service().chooseCooldownLeft(id, System.currentTimeMillis());
-        if (left > 0) {
-            return button(Material.CLOCK, "menu-confirm-name",
-                    List.of(plugin.messages().get("menu-confirm-cooldown",
-                            "time", ProfessionMath.clock(left))));
-        }
-        List<Component> lore = new ArrayList<>();
-        lore.add(plugin.messages().get(current == null
-                ? "menu-confirm-lore" : "menu-confirm-change-lore"));
-        if (current != null) {
-            lore.add(plugin.messages().get("menu-confirm-keeps",
-                    "profession", ProfessionText.nameComponent(plugin.messages(), current)));
-        }
-        return button(current == null ? Material.LIME_DYE : Material.ORANGE_DYE,
-                "menu-confirm-name", lore);
+    /** Информационная кнопка вместо подтверждения выбора. */
+    private ItemStack allActiveItem(Player player) {
+        return button(Material.LIME_DYE, "menu-all-active",
+                List.of(plugin.messages().get("menu-all-active-hint"),
+                        plugin.messages().get("menu-income-rate",
+                                "xp", String.valueOf(plugin.config().xpPerDiamond()))));
     }
 
     /* ---------------------------------- клики --------------------------------- */
@@ -253,7 +238,7 @@ final class ProfessionsGui implements Listener {
         if (!player.hasPermission("chrdkprofessions.use")||!plugin.authenticated(player)||!plugin.config().enabled()) return;
         int slot = event.getRawSlot();
         if(slot>=46&&slot<=48||slot==50||slot==51){
-            Profession target=Profession.parse(holder.professionId);if(target==null)target=plugin.service().active(player.getUniqueId());
+            Profession target=Profession.parse(holder.professionId);if(target==null)target=plugin.service().primary(player.getUniqueId());
             ProfessionGuide.Page page=slot==46?ProfessionGuide.Page.SOURCES:slot==47?ProfessionGuide.Page.ROADMAP:slot==48?ProfessionGuide.Page.ABILITIES:slot==50?ProfessionGuide.Page.TRIALS:ProfessionGuide.Page.PASSPORT;
             plugin.guide().open(player,target,page,0);return;
         }
@@ -287,7 +272,7 @@ final class ProfessionsGui implements Listener {
             if (slot == BACK_SLOT) {
                 open(player);
             } else if (slot == CONFIRM_SLOT) {
-                confirm(player, holder.professionId);
+                open(player);
             }
             return;
         }
@@ -305,18 +290,6 @@ final class ProfessionsGui implements Listener {
         if (event.getInventory().getHolder() instanceof Holder) {
             event.setCancelled(true);
         }
-    }
-
-    private void confirm(Player player, String professionId) {
-        ProfessionResult result = plugin.service().choose(player.getUniqueId(), professionId,
-                System.currentTimeMillis());
-        plugin.messages().send(player, result.key(),
-                ProfessionText.localise(plugin.messages(), result).toArray());
-        if (result.ok()) {
-            plugin.requestSave();
-            plugin.hint(player, Profession.parse(professionId));
-        }
-        open(player);
     }
 
     /* -------------------------------- помощники -------------------------------- */

@@ -1,11 +1,9 @@
 package ru.cherdakmd.chrdkenchants;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 
 /**
  * Чистые правила выдачи: фильтрация применимых чар (поддержка предмета, лимиты, конфликты),
@@ -31,16 +29,12 @@ public final class EnchantRoller {
                 .map(EnchantRegistry::byId)
                 .filter(def -> def != null && def.rarity() == EnchantDef.Rarity.LEGENDARY)
                 .count();
-        Set<String> groups = new HashSet<>();
-        present.keySet().stream().map(EnchantRegistry::byId).forEach(def -> {
-            if (def != null && def.conflictGroup() != null) {
-                groups.add(def.conflictGroup());
-            }
-        });
         List<EnchantDef> result = new ArrayList<>();
         for (EnchantDef def : enabled) {
             if (present.containsKey(def.id())) continue; // уникальность; апгрейд уровней — отдельная механика, не трогаем
-            if (def.conflictGroup() != null && groups.contains(def.conflictGroup())) continue;
+            // 1.4.282: единые правила несовместимости, чтобы мега-добыча и прочие
+            // группы не проскакивали ни в одном источнике выдачи.
+            if (EnchantConflicts.conflictsWith(present, def.id())) continue;
             if (def.rarity() == EnchantDef.Rarity.LEGENDARY && legendary >= maxLegendaryPerItem) continue;
             if (!def.supports(materialName)) continue;
             result.add(def);

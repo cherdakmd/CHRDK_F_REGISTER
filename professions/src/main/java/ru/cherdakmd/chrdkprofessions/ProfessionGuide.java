@@ -69,8 +69,8 @@ final class ProfessionGuide implements Listener {
     private ItemStack ability(Player player,Profession profession,int index){
         UUID id=player.getUniqueId();
         if(index==0)return item(Material.SHIELD,"guide.passive",List.of(
-                plugin.messages().get("guide.passive-effect","effect",plugin.service().active(id)!=profession?plugin.messages().get("guide.inactive"):!plugin.service().perkEnabled(profession)?plugin.messages().get("guide.effects-disabled"):ProfessionText.perk(plugin.messages(),profession,plugin.service().level(id,profession),plugin.service().powerCap(id))),
-                plugin.messages().get(plugin.service().active(id)==profession?"guide.active":"guide.inactive"),plugin.messages().get("guide.power-cap")));
+                plugin.messages().get("guide.passive-effect","effect",!plugin.service().perkEnabled(profession)?plugin.messages().get("guide.effects-disabled"):ProfessionText.perk(plugin.messages(),profession,plugin.service().level(id,profession),plugin.service().powerCap(id))),
+                plugin.messages().get("guide.active"),plugin.messages().get("guide.power-cap")));
         var mastery=ProfessionMastery.of(profession).get(index-1);
         return item(Material.matchMaterial(mastery.icon()),mastery.nameKey(),List.of(plugin.messages().get(mastery.descKey()),plugin.messages().get(mastery.costKey()),
                 plugin.messages().get("guide.batch","amount",plugin.service().trials().batch(id,mastery)),
@@ -83,7 +83,7 @@ final class ProfessionGuide implements Listener {
         return item(Material.matchMaterial(profession.iconName()),"guide.passport",List.of(
                 plugin.messages().get("guide.passport-level","level",plugin.service().level(id,profession),"xp",plugin.service().xp(id,profession),"rank",plugin.service().trials().rank(id,profession)),
                 plugin.messages().get("mastery-status","specialization",mastery==null?plugin.messages().get("mastery-none"):plugin.messages().get(mastery.nameKey())),
-                plugin.messages().get(plugin.service().active(id)==profession?"guide.active":"guide.inactive"),plugin.messages().get("guide.passport-open")),"profession",ProfessionText.nameComponent(plugin.messages(),profession));
+                plugin.messages().get("guide.active"),plugin.messages().get("guide.passport-open")),"profession",ProfessionText.nameComponent(plugin.messages(),profession));
     }
     private ItemStack item(Material material,String name,List<Component> lore,Object... args){
         if(material!=null&&!material.isItem())material=switch(material){case CARROTS->Material.CARROT;case POTATOES->Material.POTATO;case BEETROOTS->Material.BEETROOT;case COCOA->Material.COCOA_BEANS;case SWEET_BERRY_BUSH->Material.SWEET_BERRIES;default->Material.PAPER;};

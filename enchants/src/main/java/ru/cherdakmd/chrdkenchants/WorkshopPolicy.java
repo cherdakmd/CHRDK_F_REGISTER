@@ -6,6 +6,9 @@ import java.util.*;
 final class WorkshopPolicy {
     record Split(Map<String, Integer> remainder, Map<String, Integer> extracted) { }
     static boolean valid(Map<String, Integer> data) {
+        // 1.4.282: мастерская только удаляет/делит уже записанные чары и не
+        // добавляет новых, поэтому проверка конфликтных групп живёт на путях
+        // добавления (EnchantItems.apply, copy API, ролл, наковальня).
         if (data == null || data.isEmpty()) return false;
         for (var entry : data.entrySet()) {
             var def = EnchantRegistry.byId(entry.getKey());

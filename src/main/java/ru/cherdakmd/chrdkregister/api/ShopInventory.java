@@ -10,10 +10,11 @@ public final class ShopInventory {
     public static boolean valid(ShopExchange t) {
         try {
             if(t==null||!t.valid()) return false;
-            Material material=Material.matchMaterial(t.material()); if(material==null||!material.isItem()) return false;
             for(String currency:t.rates().keySet()) { var m=Material.matchMaterial(currency); if(m==null||!m.isItem()) return false; }
             var items=ChargeInventory.decode(t.before());
             if(ChargeInventory.matches(items,t.after())) return false;
+            if(t.isBook()) return validBook(t,items);
+            Material material=Material.matchMaterial(t.material()); if(material==null||!material.isItem()) return false;
             if(t.buy()) {
                 long left=t.money()-t.debit(),paid=0; var order=new ArrayList<Integer>();
                 for(int i=0;i<36;i++) if(plain(items[i])&&t.rates().containsKey(items[i].getType().name())) order.add(i);
@@ -41,6 +42,41 @@ public final class ShopInventory {
             }
             return ChargeInventory.matches(items,t.after());
         } catch(RuntimeException error) { return false; }
+    }
+
+    /**
+     * Книги чар не стакаются и не пересоздаются здесь: сверяем снимки по слотам.
+     * Добавленная/изъятая книга обязана быть помеченной магазином и точно
+     * соответствовать ключу товара (см. {@link ShopBooks}).
+     */
+    private static boolean validBook(ShopExchange t,ItemStack[] working) {
+        if(!t.material().equals(t.book())||ShopBookKey.fromKey(t.book())==null) return false;
+        long units=t.units();
+        if(units>36) return false;
+        long left=t.money()-t.debit(),paid=0;
+        if(t.buy()) {
+            var order=new ArrayList<Integer>();
+            for(int i=0;i<36;i++) if(plain(working[i])&&t.rates().containsKey(working[i].getType().name())) order.add(i);
+            order.sort(Comparator.comparingInt(i->t.rates().get(working[i].getType().name())));
+            for(int slot:order) {
+                if(left<=0) break;
+                var i=working[slot]; long rate=t.rates().get(i.getType().name()); int n=(int)Math.min(i.getAmount(),(left+rate-1)/rate);
+                paid+=n*rate; left-=n*rate; i.setAmount(i.getAmount()-n); if(i.getAmount()==0) working[slot]=null;
+            }
+            if(left>0||paid!=t.physical()) return false;
+        } else if(t.physical()!=0) return false;
+        var after=ChargeInventory.decode(t.after());
+        long changed=0;
+        for(int i=0;i<36;i++) {
+            if(Objects.equals(working[i],after[i])) continue;
+            if(t.buy()) {
+                if(working[i]!=null||after[i]==null||after[i].getAmount()!=1||!ShopBooks.matchesKey(after[i],t.book())) return false;
+            } else {
+                if(after[i]!=null||working[i]==null||working[i].getAmount()!=1||!ShopBooks.matchesKey(working[i],t.book())) return false;
+            }
+            working[i]=after[i]; changed++;
+        }
+        return changed==units&&ChargeInventory.matches(working,t.after());
     }
     private ShopInventory() { }
 }

@@ -258,8 +258,17 @@ class VK:
         data = (f'--{boundary}\r\nContent-Disposition: form-data; name="photo"; filename="card.png"\r\n'
                 'Content-Type: image/png\r\n\r\n').encode() + image + f'\r\n--{boundary}--\r\n'.encode()
         uploaded = self.transport.request(url, 'POST', data, {'Content-Type': 'multipart/form-data; boundary=' + boundary})
+        # photos.saveMessagesPhoto принимает photo/hash строками и server числом.
+        # Нестандартный ответ загрузчика не должен уходить в API безликим «код 100»:
+        # сообщение ещё не отправлялось, поэтому безопаснее остановиться с ясной причиной.
+        server = uploaded.get('server') if isinstance(uploaded, dict) else None
+        if (not isinstance(uploaded, dict)
+                or not isinstance(uploaded.get('photo'), str) or not uploaded['photo']
+                or not isinstance(uploaded.get('hash'), str) or not uploaded['hash']
+                or not (type(server) is int or (isinstance(server, str) and server.isdigit()))):
+            raise SafetyError('VK не подтвердил загрузку карточки: сохранение фото не вызывалось')
         photo = self.call('photos.saveMessagesPhoto', {'photo': uploaded['photo'],
-                                                      'server': uploaded['server'], 'hash': uploaded['hash']})
+                                                      'server': server, 'hash': uploaded['hash']})
         if (not isinstance(photo, list) or len(photo) != 1 or type(photo[0].get('owner_id')) is not int
                 or type(photo[0].get('id')) is not int or photo[0]['owner_id'] == 0 or photo[0]['id'] <= 0):
             raise SafetyError('VK не подтвердил сохранение карточки для сообщения')

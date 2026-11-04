@@ -33,7 +33,7 @@ import ru.cherdakmd.chrdkregister.storage.SafeJsonWriter;
  */
 public final class ProfessionStore {
 
-    public static final int VERSION = 3;
+    public static final int VERSION = 4;
     /** Потолок числа игроков в файле: защита от мусора. */
     public static final int MAX_PLAYERS = 200_000;
     /** Потолок опыта одной профессии: защита от правки файла руками. */
@@ -71,6 +71,11 @@ public final class ProfessionStore {
         private final Map<String, String> mastery = new LinkedHashMap<>();
         private final Map<String, Long> masteryChanged = new LinkedHashMap<>();
         private final Map<String, Long> workUntil = new LinkedHashMap<>();
+        /** 1.4.282: дробный остаток дохода (тысячные алмаза) и кумулятивный WAL total. */
+        private long incomeMicro;
+        private long incomeTotal;
+        private String incomeDate = "";
+        private long incomeToday;
 
         Player(UUID id, String name) {
             this.id = id;
@@ -83,6 +88,8 @@ public final class ProfessionStore {
     private final Map<UUID, Player> players = new LinkedHashMap<>();
     private boolean dirty;
     private boolean healthy=true;
+    /** Один lineage источника дохода на весь файл прогресса. */
+    private UUID incomeLineage = UUID.randomUUID();
     private final Object ioLock=new Object();
     public synchronized boolean healthy(){return healthy;}
 
@@ -107,6 +114,9 @@ public final class ProfessionStore {
             if (data == null)throw new IllegalArgumentException("null professions file");
             long version=number(data.get("version"));
             if(version<1||version>VERSION||!(data.get("players") instanceof Map<?,?>))throw new IllegalArgumentException("profession schema");
+            if (data.get("income-lineage") instanceof String text) {
+                try { incomeLineage = UUID.fromString(text); } catch (IllegalArgumentException broken) { /* старый файл */ }
+            }
             int skipped = 0;
             if (data.get("players") instanceof Map<?, ?> rows) {
                 for (Map.Entry<?, ?> entry : rows.entrySet()) {
@@ -189,6 +199,10 @@ public final class ProfessionStore {
             if(n>0)player.trials.put(profession.id(),(int)n);
         }
         player.workReceipt=row.get("work-receipt") instanceof String text?text:"";
+        player.incomeMicro = Math.max(0L, Math.min(999L, number(row.get("income-micro"))));
+        player.incomeTotal = Math.max(0L, number(row.get("income-total")));
+        player.incomeDate = row.get("income-date") instanceof String text ? text : "";
+        player.incomeToday = Math.max(0L, number(row.get("income-today")));
         player.changedAt = Math.max(0L, number(row.get("changed-at")));
         return player;
     }
@@ -429,6 +443,11 @@ public final class ProfessionStore {
         player.masteryChanged.clear();
         player.workUntil.clear();
         player.changedAt = 0L;
+        // Кумулятивный incomeTotal не обнуляем: это WAL-долг перед банком,
+        // его сброс создал бы рассинхронизацию с creditEntitlement.
+        player.incomeMicro = 0L;
+        player.incomeDate = "";
+        player.incomeToday = 0L;
         dirty = true;
         return true;
     }
@@ -450,18 +469,61 @@ public final class ProfessionStore {
         return null;
     }
 
-    /** Сколько игроков выбрали эту профессию — для сводки админа и топа. */
+    /** Сколько игроков прокачивают это ремесло (раньше — «выбрали»). */
     public synchronized int countOf(Profession profession) {
         if (profession == null) {
             return 0;
         }
         int count = 0;
         for (Player player : players.values()) {
-            if (profession.id().equals(player.active)) {
+            if (player.xp.getOrDefault(profession.id(), 0) > 0) {
                 count++;
             }
         }
         return count;
+    }
+
+    /* -------------------------- доход алмазами (1.4.282) -------------------- */
+
+    public synchronized UUID incomeLineage() { return incomeLineage; }
+
+    public synchronized long incomeMicro(UUID id) { return of(id).incomeMicro; }
+
+    /** Остаток строго меньше одного алмаза (0..999 thousandths). */
+    public synchronized void setIncomeMicro(UUID id, long micro) {
+        long value = Math.max(0L, Math.min(999L, micro));
+        Player player = of(id);
+        if (player.incomeMicro != value) { player.incomeMicro = value; dirty = true; }
+    }
+
+    /** Кумулятивно начислено игроку: именно это передаётся в creditEntitlement. */
+    public synchronized long incomeTotal(UUID id) { return of(id).incomeTotal; }
+
+    public synchronized String incomeDate(UUID id) { return of(id).incomeDate; }
+
+    /** Алмазов за указанный UTC-день; 0, если день сменился. */
+    public synchronized long incomeToday(UUID id, String today) {
+        Player player = of(id);
+        return today.equals(player.incomeDate) ? player.incomeToday : 0L;
+    }
+
+    /** Фиксирует total ДО вызова банка: повтор не начисляет те же алмазы дважды. */
+    public synchronized void creditIncome(UUID id, long whole, String today) {
+        if (whole <= 0) return;
+        Player player = of(id);
+        player.incomeTotal = Math.max(0L, player.incomeTotal + whole);
+        if (!today.equals(player.incomeDate)) { player.incomeDate = today; player.incomeToday = 0L; }
+        player.incomeToday += whole;
+        dirty = true;
+    }
+
+    /** Игроки с непустым доходом — для повторной доставки после рестарта. */
+    public synchronized List<UUID> incomeOwners() {
+        List<UUID> result = new ArrayList<>();
+        for (Map.Entry<UUID, Player> entry : players.entrySet()) {
+            if (entry.getValue().incomeTotal > 0) result.add(entry.getKey());
+        }
+        return result;
     }
 
     /** Суммарный уровень всех игроков по профессии — для «среднего» в топе. */
@@ -489,6 +551,7 @@ public final class ProfessionStore {
     public synchronized String snapshotJson() {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("version", VERSION);
+        data.put("income-lineage", incomeLineage.toString());
         Map<String, Object> rows = new LinkedHashMap<>();
         for (Player player : players.values()) {
             Map<String, Object> row = new LinkedHashMap<>();
@@ -519,6 +582,10 @@ public final class ProfessionStore {
             if (player.changedAt > 0) {
                 row.put("changed-at", player.changedAt);
             }
+            if (player.incomeMicro > 0) row.put("income-micro", player.incomeMicro);
+            if (player.incomeTotal > 0) row.put("income-total", player.incomeTotal);
+            if (!player.incomeDate.isEmpty()) row.put("income-date", player.incomeDate);
+            if (player.incomeToday > 0) row.put("income-today", player.incomeToday);
             rows.put(player.id.toString(), row);
         }
         data.put("players", rows);

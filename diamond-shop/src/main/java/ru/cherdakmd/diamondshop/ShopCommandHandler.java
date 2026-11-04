@@ -177,8 +177,7 @@ public final class ShopCommandHandler implements TabExecutor {
         }
         ShopConfig.ShopItem item = requireItem(player, args[1]);
         if (item == null) return;
-        Material material = Material.matchMaterial(item.material());
-        long have = material == null ? 0 : ShopService.countItems(player.getInventory(), material);
+        long have = ShopService.countSellable(player.getInventory(), item);
         boolean all=args.length>=3&&"all".equalsIgnoreCase(args[2]);
         long units=all?0:args.length>=3?parseLong(args[2],-1):1;
         if (have <= 0) {

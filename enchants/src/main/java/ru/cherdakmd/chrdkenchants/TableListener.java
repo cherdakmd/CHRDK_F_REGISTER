@@ -67,7 +67,8 @@ public final class TableListener implements Listener {
                     : plugin.service().rollOnto(result, tier, EnchantDef.Polarity.LIGHT, tier);
             if (roll == null) return;
             if (book) {
-                plugin.items().apply(result, roll.def(), roll.level());
+                // 1.4.282: чара, конфликтующая с уже записанной в книге, не выдаётся.
+                if (!plugin.items().apply(result, roll.def(), roll.level())) return;
                 plugin.items().stampBook(result, ru.cherdakmd.chrdkregister.api.EnchantBookSource.TABLE);
             }
             inventory.setItem(0, result);

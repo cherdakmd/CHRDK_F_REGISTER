@@ -9,12 +9,12 @@ import java.util.Locale;
 import java.util.UUID;
 
 /**
- * Плейсхолдеры PlaceholderAPI: {@code %chrdkprofessions_...%} (1.4.165).
+ * Плейсхолдеры PlaceholderAPI: {@code %chrdkprofessions_...%} (1.4.282).
  *
  * <p>Таб и скорборд спрашивают их часто, поэтому здесь только чтение готового
- * состояния: без записи и без создания записи игрока. У игрока без профессии —
- * пустая строка, а не «0»: иначе условие в скорборде срабатывало бы ложно и
- * показывало «кузнец 0 уровня» всем подряд.</p>
+ * состояния. Выбор профессии отменён: {@code profession}, {@code level},
+ * {@code xp} и соседние ключи показывают ремесло с наибольшим опытом, а
+ * {@code income_today}/{@code income_total} — заработок по всем восьми сразу.</p>
  */
 public final class ProfessionsPlaceholders extends PlaceholderExpansion {
 
@@ -62,26 +62,38 @@ public final class ProfessionsPlaceholders extends PlaceholderExpansion {
             return profession == null ? "" : Integer.toString(plugin.store().countOf(profession));
         }
         UUID id = player == null ? null : player.getUniqueId();
-        Profession active = id == null ? null : service.active(id);
+        Profession active = id == null ? null : service.primary(id);
         if (key.equals("profession")) {
             return active == null ? "" : plugin.messages().plain("profession." + active.id() + ".name");
         }
         if (key.equals("profession_id")) {
             return active == null ? "" : active.id();
         }
-        if (id == null || active == null) {
+        if (id == null) {
             return "";
+        }
+        if (key.equals("income_today")) {
+            return Long.toString(service.incomeToday(id, System.currentTimeMillis()));
+        }
+        if (key.equals("income_total")) {
+            return Long.toString(service.incomeTotal(id));
+        }
+        if (key.equals("income_micro")) {
+            return Long.toString(service.incomeMicro(id));
+        }
+        if (key.equals("income_rate")) {
+            return Integer.toString(plugin.config().xpPerDiamond());
         }
         int level = service.level(id, active);
         int maxLevel = service.maxLevel(id);
         int needed = ProfessionMath.needed(level, maxLevel);
         return switch (key) {
             case "mastery" -> {
-                var mastery = service.mastery(id);
+                var mastery = service.mastery(id, active);
                 yield mastery == null ? "" : plugin.messages().plain(mastery.nameKey());
             }
-            case "mastery_id" -> service.mastery(id) == null ? "" : service.mastery(id).id();
-            case "work_cooldown" -> Long.toString(service.workCooldownLeft(id, System.currentTimeMillis()));
+            case "mastery_id" -> service.mastery(id, active) == null ? "" : service.mastery(id, active).id();
+            case "work_cooldown" -> Long.toString(service.workCooldownLeft(id, active, System.currentTimeMillis()));
             case "profession_rank" -> Integer.toString(service.trials().rank(id,active));
             case "max_level" -> "100";
             case "power_cap" -> Integer.toString(service.powerCap(id));
@@ -102,8 +114,7 @@ public final class ProfessionsPlaceholders extends PlaceholderExpansion {
                         "value", String.valueOf(value));
             }
             case "daily_left" -> dailyLeft(service, id, active);
-            case "cooldown" -> Long.toString(service.chooseCooldownLeft(id,
-                    System.currentTimeMillis()));
+            case "cooldown" -> "0";
             default -> "";
         };
     }
