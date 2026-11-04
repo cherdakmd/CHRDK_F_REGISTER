@@ -1,6 +1,45 @@
 CHRDK — обновление плагинов
 ===========================
 
+Комплект 1.4.287 — СТАБИЛЬНЫЙ выпуск
+-------------------------------------
+22 JAR одной версии + памятка; optional chrdk-vk-1.4.287.jar отдельно.
+Стабильный выпуск: Latest становится v1.4.287; v1.4.286 и все прежние теги
+остаются в истории и не переписываются. Core API42.
+Новое: особые звания за выслугу лет — редактор привилегий в GUI /adminpanel
+и командах /honoradmin, публичный реестр /honor list (ник, звание, дата,
+публичная причина, автор) и audit/*.jsonl на каждое действие.
+honors.json лежит отдельно от data.json: сроки рангов, платежи, /rank my,
+/rank top и /pass paidaudit не меняются. Привилегии = max(оплаченный ранг,
+grant-level звания 0..5); «Старый цитрус» даёт пятую ступень и градиент
+#32CD32 → #40E0D0. Право chrdkregister.honors.admin или op.
+honors.initial-grants применяется ТОЛЬКО при первом запуске; плагин сразу
+сохраняет honors.json и пишет honor.grant с source=honors.initial-grants.
+Существующий honors.json конфиг не переписывает: для работающего сервера
+используйте /honoradmin grant <ник> <id> <публичная причина>.
+Первая благодарность в config.yml — StaveLime / old-citrus. Правка причины
+уже выданного звания: /honoradmin reason <ник> <причина> или Shift+клик.
+Градиент главнее цвета из /labels (honors.override-color), но не отбирает
+оплаченный цвет каталога; honors.show-in-tab управляет показом в TAB.
+Ввод значений в чат для панели и редактора идёт через один GuiChatInput:
+одно ожидание на игрока, таймаут, сброс при выходе/открытии инвентаря.
+Настройки config.yml: honors.enabled, announce-grant, max-reason-length,
+default-reason, show-in-tab, override-color, initial-grants.
+Обновлять весь комплект совместно: Core, DiamondShop, TierForge, Hunt,
+BattlePass, Guilds, Enchants. Не смешивать версии модулей.
+CHRDK_Queue и другие снятые JAR убрать вручную из plugins/, plugins/update/ и staging,
+сохраняя данные и финансовые обязательства. Пароль/TOTP/ВК-2FA не отключать.
+Backup Core data.json/bank.json со всеми SHA/журналами, moderation.json,
+honors.json, professions.json, shop-data.json, tierforge stats.yml,
+battlepass-data.json, clan-styles.json, миры и playerdata. НЕ обещается
+общая crash-atomic гарантия playerdata.
+Модельные/source-тесты не заменяют живой smoke GUI, градиента в чате и TAB,
+RCON и Minecraft-клиент. Игровой клиент, RCON, TradeMC, /papi reload и
+production MSPT не проверялись; публикация ВК не подтверждена.
+Подробности и ограничения: docs/releases/1.4.287.md.
+
+Ниже — предыдущие изменения (история).
+
 Комплект 1.4.286 — СТАБИЛЬНЫЙ выпуск
 -------------------------------------
 22 JAR одной версии + памятка; optional chrdk-vk-1.4.286.jar отдельно.
@@ -32,8 +71,6 @@ clan-styles.json, миры и playerdata. НЕ обещается общая cra
 Модельные/source-тесты не заменяют живой smoke GUI, Bukkit BanList и PDC.
 Игровой клиент, RCON, TradeMC, /papi reload и production MSPT не проверялись.
 Подробности и ограничения: docs/releases/1.4.286.md.
-
-Ниже — предыдущие изменения (история).
 
 Комплект 1.4.284-rc.1 — ПРЕРЕЛИЗ, не стабильное обновление
 -----------------------------------------------------------
