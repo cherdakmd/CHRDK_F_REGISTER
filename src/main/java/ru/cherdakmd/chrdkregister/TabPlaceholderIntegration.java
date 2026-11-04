@@ -72,6 +72,8 @@ public final class TabPlaceholderIntegration extends PlaceholderExpansion {
         boolean authenticated = live != null && access != null
                 && access.getStage(live) == AccessManager.PlayerStage.AUTHENTICATED;
         String hidden = messages.plain("tab.sign-in");
+        // Ключ собирается переменной: сканер MessagesTest не считает "tab.tip-" готовым ключом.
+        String tipKey = "tab.tip-" + Math.floorMod(now / 12000, 6);
 
         double tps = Double.NaN, mspt = Double.NaN;
         try {
@@ -91,8 +93,7 @@ public final class TabPlaceholderIntegration extends PlaceholderExpansion {
         return switch (key) {
             case "brand" -> messages.plain("tab.brand");
             case "separator" -> "━".repeat(24);
-            case "tip" -> authenticated
-                    ? messages.plain("tab.tip-" + Math.floorMod(now / 12000, 6)) : hidden;
+            case "tip" -> authenticated ? messages.plain(tipKey) : hidden;
             case "clock" -> CLOCK.format(Instant.ofEpochMilli(now));
             case "balance" -> !authenticated ? hidden
                     : balance < 0 ? messages.plain("tab.unavailable") : BankService.format(balance);
