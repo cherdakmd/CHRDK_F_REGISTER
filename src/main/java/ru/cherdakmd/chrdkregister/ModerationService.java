@@ -81,7 +81,7 @@ public final class ModerationService {
 
     /** Значение {@code %tab_warns%}: «3/5» — счётчик и порог рядом. */
     public String warnText(String name) {
-        return warnCount(name) + "/" + config.warnLimit();
+        return config.warnsInTab() ? warnCount(name) + "/" + config.warnLimit() : "";
     }
 
     public boolean isBanned(String name) {
@@ -93,9 +93,14 @@ public final class ModerationService {
         }
     }
 
+    /** Причина из нашего журнала; для чужого ванильного бана — подставленный шаблон без сырых %..%. */
     public String banReason(String name) {
         ModerationLedger.Ban ban = ledger.banOf(name);
-        return ban == null || ban.reason.isBlank() ? config.banReason() : ban.reason;
+        if (ban != null && !ban.reason.isBlank()) return ban.reason;
+        return config.banReason()
+                .replace("%player%", name == null ? "" : name)
+                .replace("%count%", Integer.toString(warnCount(name)))
+                .replace("%limit%", Integer.toString(config.warnLimit()));
     }
 
     public List<ModerationLedger.JournalEntry> journal(String filter, int limit) {
@@ -131,7 +136,9 @@ public final class ModerationService {
         int active = ledger.activeCount(target);
         boolean banned = false;
         if (config.enabled() && active >= config.warnLimit() && !ledger.isBanned(target)) {
-            applyBan(actor, target, formatBanReason(target, active), now);
+            String banReason = formatBanReason(target, active);
+            applyBan(actor, target, banReason, now);
+            audit(AuditLog.MODERATION_AUTO_BAN, actor, target, Map.of("reason", banReason));
             banned = true;
         }
         save();
@@ -224,7 +231,6 @@ public final class ModerationService {
         if (online != null) {
             online.kick(plugin.messages().get("admin.ban-kick", "reason", reason));
         }
-        audit(AuditLog.MODERATION_AUTO_BAN, actor, target, Map.of("reason", reason));
     }
 
     private Player findOnline(String name) {

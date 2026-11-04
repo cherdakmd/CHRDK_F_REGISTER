@@ -2,12 +2,16 @@ package ru.cherdakmd.chrdkregister;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import ru.cherdakmd.chrdkregister.storage.SafeJsonWriter;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -20,6 +24,12 @@ import java.util.logging.Logger;
  * перенос, как у остальных JSON Core. Поверх этого в
  * {@link ModerationService} каждое действие дублируется в append-only
  * {@code audit/audit-YYYY-MM-DD.jsonl}.</p>
+ *
+ * <p>Файл защищён контрольной суммой SHA-256 по каноническому JSON без поля
+ * {@code checksum}. Ручная правка или обрыв записи детектируется при чтении:
+ * копия уходит в {@code moderation.json.broken}, а панель стартует с пустым
+ * состоянием вместо тихой загрузки подделанных варнов. Файлы старого формата
+ * без checksum принимаются и переписываются уже с контрольной суммой.</p>
  */
 public final class ModerationStore {
 
@@ -43,6 +53,15 @@ public final class ModerationStore {
         try {
             String text = Files.readString(file, StandardCharsets.UTF_8);
             if (text == null || text.isBlank()) return ledger;
+
+            JsonObject root = JsonParser.parseString(text).getAsJsonObject();
+            String declared = root.has("checksum") && !root.get("checksum").isJsonNull()
+                    ? root.get("checksum").getAsString() : "";
+            root.remove("checksum");
+            if (!declared.isEmpty() && !sha256(gson.toJson(root)).equals(declared)) {
+                throw new IllegalStateException("контрольная сумма не совпадает");
+            }
+
             ModerationLedger.State state = gson.fromJson(text, ModerationLedger.State.class);
             if (state == null) return ledger;
             ledger.restore(state);
@@ -51,22 +70,49 @@ public final class ModerationStore {
                         + " → " + ModerationLedger.SCHEMA_VERSION + ", миграция по полям");
             }
         } catch (IOException | RuntimeException exception) {
+            preserveBroken();
             logger.log(Level.WARNING,
                     "[CHRDK_Core] Не удалось прочитать moderation.json: " + exception.getMessage()
-                            + ". Сохраните файл как moderation.json.broken и проверьте вручную.",
+                            + ". Копия сохранена как moderation.json.broken; панель стартует с пустым состоянием.",
                     exception);
         }
         return ledger;
     }
 
-    /** Атомарно сохраняет снимок. Возвращает false при ошибке ввода-вывода. */
+    /** Атомарно сохраняет снимок с контрольной суммой. Возвращает false при ошибке ввода-вывода. */
     public boolean save(ModerationLedger ledger) {
         if (ledger == null) return false;
         try {
-            return SafeJsonWriter.write(file, gson.toJson(ledger.snapshot()), logger, "[CHRDK_Core]");
+            JsonObject root = gson.toJsonTree(ledger.snapshot()).getAsJsonObject();
+            root.remove("checksum");
+            String body = gson.toJson(root);
+            root.addProperty("checksum", sha256(body));
+            return SafeJsonWriter.write(file, gson.toJson(root), logger, "[CHRDK_Core]");
         } catch (RuntimeException exception) {
             logger.log(Level.WARNING, "[CHRDK_Core] Не удалось записать moderation.json", exception);
             return false;
+        }
+    }
+
+    /** Не даём следующему save() безвозвратно затереть подозрительный файл. */
+    private void preserveBroken() {
+        try {
+            Files.copy(file, file.resolveSibling(file.getFileName() + ".broken"),
+                    StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException | RuntimeException ignored) {
+            // Нет прав или нет места — оригинал всё равно остаётся на диске.
+        }
+    }
+
+    private static String sha256(String text) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(text.getBytes(StandardCharsets.UTF_8));
+            StringBuilder out = new StringBuilder(digest.length * 2);
+            for (byte value : digest) out.append(String.format("%02x", value & 0xff));
+            return out.toString();
+        } catch (java.security.NoSuchAlgorithmException impossible) {
+            throw new IllegalStateException("SHA-256 недоступен", impossible);
         }
     }
 }

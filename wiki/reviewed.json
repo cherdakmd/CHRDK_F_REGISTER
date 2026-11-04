@@ -1,173 +1,173 @@
 {
   "pages": {
     "about": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "f7b6913ebe691733a57dfb3cf3915ac208877441cd53f3d73b88e3177fe67264",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "fca9fe0ebc7ace46b580d1e0184e332e1d1a31212c30f2e753d3dbe93378d069",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "7eef3f0a6ac8015632702b96419f3a505b259b19a8d4c8a52b71c40ab799e11d",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "ab9ea9bcd59b0a1bda3c35b0702b8a3e277e04e0927caff935eb19ee4a07ad86",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "550bede3eac5f3e9a2de934b8aea99ea9810af66ff622a03906e67be431d08f4",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "6d8bc40814de6d98721432359e225a1229ab24875ca6b8d60a700d35e2be3865",
       "text": "fcdffb1098428fac2bd42d1c4acb73bb9a024d1823d5398b8845bb2f415a506f"
     },
     "auction": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "31a0c5be9604d0991416b03b972068a3e8e375b4e456aeb209bf7280857de8a8",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "537bf7f9692aa78134e3ac9d5fe4fd96a3294eab40dc9fec15c8dfe0ace7c133",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "5b5eb75423691484a55ca3a87fc4afd910e8f22e9cc3e58730c0193073f8dcfd",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "62070169d3af755aae15785b54b57f7152d26da681e6b45c5ac2922ff34d040b",
       "text": "f368077b5f1961a1982957afe3b8523b60c8330f3dfd1891003d01ea1c4fd6db"
     },
     "chat": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "f7b6913ebe691733a57dfb3cf3915ac208877441cd53f3d73b88e3177fe67264",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "fca9fe0ebc7ace46b580d1e0184e332e1d1a31212c30f2e753d3dbe93378d069",
       "text": "ca6c93fc33fca52eecc7d38744bc86f619ea0b6a7bcc2314b84ca6c5399d8a1c"
     },
     "claims": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "fcbd1da659c40956b503aa6a7c255996531e00b5b060ab3f4dfe327debc40781",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "ff444cf513c3af95e5569bcb7e2c13a22312d81c2f0a8cf7dfb8ed905943b702",
       "text": "bf1b24b85ecdaee84580c0d5ea4b9c1120b8dd072e38aa68b52e49fc2a0c472c"
     },
     "classes": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "d0021eb3833bafb756772ce60f8eba426597230e93d6e7d820e04783a86e9d08",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "323a4d2cb4e341287203c93c2f79cac8c5a0c935e1fe80c112853860e24dfc61",
       "text": "ee29d92bd4e9527924d14405057fd62402857c1a688439c7b9d86d4c9bf3b546"
     },
     "commands": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "965111cd1fb978826ec2fc65e118e08d6d148e917ead3de4eb2c0ab96700ddfd",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "011def88f7f65ae42baf624f7aae17c14d5070348c48d6db8bad4a9a7bf1347d",
       "text": "b210ff00d9d9a82a7663a9ddc5fac3491e03b244a72217f81c997ec39bc03928"
     },
     "cosmetics": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "203044d2cca87bb0fa998d5ab7ff2a4d0333ea29d8ed8ef746e05a98cd9b49ea",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "cabfe03d6c78f8335abe564b0fc96087131fab0bc222c4ef96937499e533a2ab",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "a743ed90e5eaae81751bfa9262d2156c9fa91d661909b667dc93c9b3357bf9eb",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "8a71471529382474ab7170544c91e46d71ca2a95fbc554b64ac8d23f963ba0c4",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "economy": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "3e3987b185075d9a88c49a6f8cf837644368f86c99a20a6992e59e8a1e80a6dc",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "12ecbd402e5d85016d808b58ee60bd154bd095303bf8d3a8c8677c647980c07e",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "512351dd15ffa65bcf1637da95de760fa62fca60cf8c9fbea495e4a4c54978ba",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "7607c6e4e2d3bd5a650640e732702493d64feff6fe9714685d83b73c3365a407",
       "text": "daba8068188cc03ac1ee0f787eb1322c4d33b14da0bdffe35c17b473843dc5aa"
     },
     "faq": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "2a95b85087d53a2b8622d4254d235becea990b88608f62f25380a286b4443a3e",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "1a334bd460763e066e6bff2033c23bd69d2c7f031ee07ef98e33dd19e69150d8",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "71167a58e25b7fd01c7a50dbf456f5906a0b10abfa862d0583f234b2b98f9c6d",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "696ae90c0aa6171f6f5fe1dcaf380f7afd9826c29c263ae5b674a8e82156577b",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "fcbd1da659c40956b503aa6a7c255996531e00b5b060ab3f4dfe327debc40781",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "ff444cf513c3af95e5569bcb7e2c13a22312d81c2f0a8cf7dfb8ed905943b702",
       "text": "e166f2671aabcdf55ecf59d1465ddb19a36343f6d07983eb8b8821b3a63cce34"
     },
     "hunt": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "093dccee9556900db4abea313ddb90119db3ca5ed1162d99999133af7757228b",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "29a29a2018e948b9c9d2a2a77ccfcb5844f217d486e546e4ad4f2ddbfa5902c9",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "c33a3492969ca9d183b4faacc350292658c4834cf060b486f15b403f0c69dc85",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "dc65e3c39c8bb37b3acbeeb320a7bf0447cc2586c3080f1349faaa243257ea09",
       "text": "1417660c5793d86ddfab16c8b2203cbd2dd6b47a245ffa219c71898485b9c39f"
     },
     "menu": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "0652fb17b00e288e0746646ed959cf6faa22c767a1a4b8370a17264a5083aff2",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "e91ba5613e0a5f277feb0896a66a66cf399392956a8878e9a3e7be6c26327c74",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "moderation": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "f7b6913ebe691733a57dfb3cf3915ac208877441cd53f3d73b88e3177fe67264",
-      "text": "22ba0c5d23833c79caf63077c7a4d4868bcba831b847feb50ba6f7aa5c5c9f71"
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "fca9fe0ebc7ace46b580d1e0184e332e1d1a31212c30f2e753d3dbe93378d069",
+      "text": "0a1ff869e250561210d9e01557da7e5784cc4f12cf2255b8a6253ec1c969771c"
     },
     "orders": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "25b70fed25df5c99ef1127eb727f960be126a0920fa41ff0694121be0b9f9a02",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "2e30f5599accb6cd30d6ad6023383f4e987e02ff4423e8c365e1a9ae51e1d983",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "pets": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "b51ac3d8e338361b6d1ef38f83c78e05a06ffbb967241fb0f79429c333097714",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "e7b768c62937a260d51b409dc3fefffac7c3ed1a7a3d9cd5a9117af2308348ec",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "aa64c6824544a4f84c4148f5db737919ece697f28975ea075ba7a874f8c398de",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "1b22611aa76b9a3133598858ae6961749293fc85e1007be0ba08141ca347350a",
       "text": "b66278597912053a64a4f192bf0cf63795a8720263d4283683b9458eec8f0bff"
     },
     "profile": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "88a464e4ce55f1292e70d8e0bd7451a8e51149f11a429318aba90d5e31bfc752",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "a05310e8b9f170b49707856fa0c72a769c04b3976aaf274317f457ac41bee2f3",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "58bb0c849d2d7755c207988585ce9e4e14910acfadf3fa2661e05f4ab8be029e",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "ec091d74db3faf39d56b8c62d9324c13ddf6c98d7f3c88c3d04a49718fe62522",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "3901ea55f204d1f97d1525993cde5968fa0e01d5ed892fa8c8a2f0ba305e0b58",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "f7e9d13fff7c619d9cea1640a04664042c946160d59ab986258015a06a24aa50",
       "text": "83fdfb3ddc5551875ec1f031676a80e3adb73e448dffae614c489441ea6f2c33"
     },
     "shop": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "c33a3492969ca9d183b4faacc350292658c4834cf060b486f15b403f0c69dc85",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "dc65e3c39c8bb37b3acbeeb320a7bf0447cc2586c3080f1349faaa243257ea09",
       "text": "62ef5965cc091b6cbd7e6af58d21e58ba2e8dd65d9e704cec710768ff7a47099"
     },
     "skills": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "cb9ef4e9844ed41dec689d61ff8a1021ea1555f961056f4ad162bfaac2e186ee",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "97130c8624927a95f20f7fdc2f8287cb143ffa0a0baa3e84afb212137e52c424",
       "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
     },
     "start": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "4714a480c5defec0dbd8e4d93837d4d0437083f7b5c454d0d40640a83450df02",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "0afbc8a37ce1d8850b937b59f0335b9a7093c4a350e53288f73247a10b18b745",
       "text": "c2835fdf2d1945079115e6a252d472ce72ad9ad79f4ed47ad58e269b467d595f"
     },
     "teleports": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "2c1c67acb7b397798f59cf954d5a0eefd48c682b7d3fc02d09017a46b92d6a90",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "2cb4d9725a8d01242308c49517462169658911a8bf3f8ac70e2cb499fe8f273c",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "512351dd15ffa65bcf1637da95de760fa62fca60cf8c9fbea495e4a4c54978ba",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "7607c6e4e2d3bd5a650640e732702493d64feff6fe9714685d83b73c3365a407",
       "text": "a4d12cf48881e623761e39d44e627b95975f839a8737cfd76b9ee138317a4c07"
     },
     "titles": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "1ffd79a7532aafb8bc05378bd73d0db925ff3aa844317a65ca29f9243dcd3712",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "3d0596af800e1d2ecb1e7be2bcd414bf162c9954d8a1a34cc9b32243b10a8663",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "c33a3492969ca9d183b4faacc350292658c4834cf060b486f15b403f0c69dc85",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "dc65e3c39c8bb37b3acbeeb320a7bf0447cc2586c3080f1349faaa243257ea09",
       "text": "2a5bea290303628eb56534b6c6049b53ccfd668b53366b515d16867a5b3cbb60"
     },
     "vk": {
-      "reason": "Админ-панель аудита игроков: варны, автобан через BanList, роли модераторов, полный профиль, журнал и %tab_warns%",
-      "sources": "d8eb654e331597d32365b20de7b4cc549dafdc6732dd0cb68c5c43eef29eb44f",
+      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
+      "sources": "371df9b88b8cc95f07627ceae2ef10ec44f928e309ca8a58b952991018a95156",
       "text": "2b67feb5684b14875601ba47314694afa598ff87f6dd74350a06f65029a735eb"
     }
   },

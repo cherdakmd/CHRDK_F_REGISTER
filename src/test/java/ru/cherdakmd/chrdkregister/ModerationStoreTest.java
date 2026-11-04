@@ -30,6 +30,9 @@ class ModerationStoreTest {
         assertTrue(Files.isRegularFile(store.file()));
         assertFalse(Files.exists(folder.resolve("moderation.json.tmp")),
                 "временный файл должен быть перенесён");
+        String saved = Files.readString(store.file(), StandardCharsets.UTF_8);
+        assertTrue(saved.contains("\"checksum\""), "файл обязан хранить контрольную сумму");
+        assertFalse(saved.contains("\"checksum\":\"\""), "контрольная сумма не должна быть пустой");
 
         ModerationLedger second = store.load();
         assertEquals(1, second.activeCount("Steve"));
@@ -53,6 +56,43 @@ class ModerationStoreTest {
         ModerationLedger ledger = store.load();
         assertEquals(0, ledger.warnTotal());
         assertNotNull(ledger.snapshot());
+        assertTrue(Files.exists(folder.resolve("moderation.json.broken")),
+                "подозрительный файл сохраняем до перезаписи");
         assertTrue(store.save(ledger), "после сбоя чтения запись продолжает работать");
+    }
+
+    @Test
+    void tamperedWarnIsRejectedByChecksum() throws Exception {
+        Files.createDirectories(folder);
+        ModerationStore store = new ModerationStore(folder, Logger.getAnonymousLogger());
+        ModerationLedger ledger = store.load();
+        ledger.issueWarn("Steve", "Mod", "грифинг", 1000L);
+        assertTrue(store.save(ledger));
+
+        var root = com.google.gson.JsonParser
+                .parseString(Files.readString(store.file(), StandardCharsets.UTF_8))
+                .getAsJsonObject();
+        root.getAsJsonArray("warns").get(0).getAsJsonObject()
+                .addProperty("reason", "подмена без пересчёта суммы");
+        Files.writeString(store.file(), root.toString(), StandardCharsets.UTF_8);
+
+        ModerationLedger rejected = store.load();
+        assertEquals(0, rejected.warnTotal(), "подделанный варн не должен загрузиться");
+        assertTrue(Files.exists(folder.resolve("moderation.json.broken")));
+    }
+
+    @Test
+    void legacyFileWithoutChecksumIsAccepted() throws Exception {
+        Files.createDirectories(folder);
+        Files.writeString(folder.resolve("moderation.json"),
+                "{\"version\":1,\"warns\":[{\"id\":7,\"target\":\"steve\",\"issuer\":\"mod\","
+                        + "\"reason\":\"старый\",\"at\":1000}],\"nextWarnId\":8}",
+                StandardCharsets.UTF_8);
+        ModerationStore store = new ModerationStore(folder, Logger.getAnonymousLogger());
+        ModerationLedger ledger = store.load();
+        assertEquals(1, ledger.activeCount("Steve"));
+        assertEquals(8L, ledger.issueWarn("Steve", "Mod", "новый", 2000L).id);
+        assertTrue(store.save(ledger));
+        assertEquals(2, store.load().activeCount("Steve"), "после перезаписи файл уже с checksum");
     }
 }

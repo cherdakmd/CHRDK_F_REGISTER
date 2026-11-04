@@ -25,7 +25,7 @@ public final class ModerationLedger {
     public static final int SCHEMA_VERSION = 1;
     public static final int DEFAULT_WARN_LIMIT = 5;
     /** Журнал в moderation.json не растёт бесконечно; старое уже есть в audit.jsonl. */
-    public static final int MAX_JOURNAL = 500;
+    public static final int MAX_JOURNAL = 5000;
 
     public static final String ACTION_WARN = "warn";
     public static final String ACTION_UNWARN = "unwarn";
@@ -134,6 +134,8 @@ public final class ModerationLedger {
         public List<Moderator> moderators = new ArrayList<>();
         public List<Ban> bans = new ArrayList<>();
         public List<JournalEntry> journal = new ArrayList<>();
+        /** SHA-256 канонического JSON без этого поля; пустая строка — файл старого формата. */
+        public String checksum = "";
     }
 
     private final List<Warn> warns = new ArrayList<>();
