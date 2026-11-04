@@ -24,6 +24,9 @@ import java.util.UUID;
  * завершение авторизации). Контракт: интерфейс расширяется только добавлением методов,
  * {@link #API_VERSION} растёт на каждое такое расширение.</p>
  *
+ * <p>API42 добавляет замороженный грант Кузни ({@link ShopExchange}, {@link ForgeMarketCatalog})
+ * и мягкий мост к производителю расходников ({@link ForgeMaterialSource}).</p>
+ *
  * <p>Методы {@link #economy()}, {@link #permissions()} и {@link #luckPerms()} возвращают
  * {@link Optional#empty()}, когда соответствующий плагин не установлен; типы Vault и
  * LuckPerms присутствуют только в дженериках (стирание типов), поэтому сам API загружается
@@ -31,8 +34,8 @@ import java.util.UUID;
  */
 public interface ChrdkRegisterApi {
 
-    /** Версия контракта API. API38: MobRewardPolicy временных мобов; API37: общие helpers ExplorationCatalog/ExplorationStore/ExplorationAtlas; API 33: мосты внешних интеграций (слушатели безопасности, уведомлений и глобального чата с фильтром получателей, бонус длительности покупок, заморозка входа и сброс сессий без смены пароля); API 32: общий владелец непрерывных пассивных зелий PassivePotions; API 30: общий helper одноразового согласия с котировкой; API 29: точный остаток выручки магазина; API 28: индекс членства кланов; API 27: снят источник оформления удалённого аддона; API 26: сняты контракты удалённых аддонов; API 25: durable checkpoint игровых наград; API 24 — Claims domain settlement. */
-    int API_VERSION = 38;
+    /** Версия контракта API. API42: восемь PDC-расходников Кузни, ForgeMarketCatalog, nullable frozen grant в ShopExchange и ForgeMaterialSource; API41: уведомление AnvilPaidResultEvent после ручной полной оплаты; API40: AnvilCosts/AnvilUse — полная цена без клиентского запрета 40; API39: денежная награда BP once и накопление буста без игрового потолка; API38: MobRewardPolicy временных мобов; API37: общие helpers ExplorationCatalog/ExplorationStore/ExplorationAtlas; API 33: мосты внешних интеграций (слушатели безопасности, уведомлений и глобального чата с фильтром получателей, бонус длительности покупок, заморозка входа и сброс сессий без смены пароля); API 32: общий владелец непрерывных пассивных зелий PassivePotions; API 30: общий helper одноразового согласия с котировкой; API 29: точный остаток выручки магазина; API 28: индекс членства кланов; API 27: снят источник оформления удалённого аддона; API 26: сняты контракты удалённых аддонов; API 25: durable checkpoint игровых наград; API 24 — Claims domain settlement. */
+    int API_VERSION = 42;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -141,6 +144,12 @@ public interface ChrdkRegisterApi {
     /** Результат атомарной игровой награды API36: FULL ничего не обрезает. */
     enum BoostGrant { ADDED, ALREADY, FULL, FAILED }
 
+    enum MoneyGrant { ADDED, ALREADY, FULL, FAILED }
+    /** API39: целые алмазы в личный /bal, баланс и неизменяемая квитанция одним durable commit. */
+    default MoneyGrant grantBattlePassMoneyOnce(UUID player, String name, long diamonds, String receipt) {
+        return MoneyGrant.FAILED;
+    }
+
     /** UUID + стабильный receipt; буст и receipt сохраняются одним checkpoint до ACK. */
     default BoostGrant grantRewardBoostOnce(java.util.UUID player, String name, int hours, String receipt) {
         return BoostGrant.FAILED;
@@ -229,6 +238,10 @@ public interface ChrdkRegisterApi {
     default boolean registerShop(java.util.UUID market) { return false; }
     default ShopExchange.Status shopExchangeStatus(ShopExchange trade) { return ShopExchange.Status.UNAVAILABLE; }
     default ShopExchange.Status commitShopExchange(Player player,ShopExchange trade) { return ShopExchange.Status.UNAVAILABLE; }
+
+    /** API42: мягкий мост к живому производителю расходников Кузни; null — производитель не загружен.
+     * Принятые сделки от этого моста не зависят. */
+    default ForgeMaterialSource forgeMaterialSource() { return null; }
 
     default boolean exchangeDiamonds(Player player, long debit, long credit,
                                      org.bukkit.inventory.ItemStack[] expected, org.bukkit.inventory.ItemStack[] replacement) { return false; }

@@ -67,6 +67,29 @@ public final class ArtifactCommandHandler implements CommandExecutor, TabComplet
             return handleList(player, 1);
         }
         String arg = args[0];
+        if (arg.equalsIgnoreCase("help")) {
+            String key = args.length == 1 ? "guide-overview" : args.length == 2 ? ArtifactGuide.topic(args[1]) : null;
+            if (key == null) plugin.messages().send(player, "guide-unknown");
+            else plugin.messages().sendList(player, key);
+            return true;
+        }
+        if (args.length == 1 && arg.equalsIgnoreCase("sources")) {
+            new ArtifactSourceReport(plugin).send(player);
+            return true;
+        }
+        if (args.length == 1 && arg.equalsIgnoreCase("inspect")) {
+            ItemStack held = player.getInventory().getItemInMainHand();
+            String id = plugin.items().idOf(held);
+            if (id == null) { plugin.messages().send(player, "inspect-empty"); return true; }
+            handleCard(player, ArtifactRegistry.byId(id));
+            var traits = plugin.items().traitsOf(held);
+            plugin.messages().send(player, "inspect-traits", "count", traits.size());
+            traits.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(entry -> {
+                var trait = ArtifactTraits.byId(entry.getKey());
+                if (trait != null) player.sendMessage(plugin.items().traitLine(trait, entry.getValue(), true));
+            });
+            return true;
+        }
         if (arg.equalsIgnoreCase("traits")) {
             return handleTraits(player);
         }
@@ -139,16 +162,25 @@ public final class ArtifactCommandHandler implements CommandExecutor, TabComplet
             case CURSED -> def.mode() == ArtifactDef.Mode.ACTIVE
                     ? "card-cursed-active" : "card-cursed-passive";
         });
+        plugin.messages().send(player, "card-id", "id", def.id(), "carried", plugin.messages().mini(
+                plugin.items().carriedIds(player).contains(def.id()) ? "guide-yes" : "guide-no"));
         String desc = ArtifactText.loreOrEmpty(
                 plugin.messages().raw("art." + def.id() + ".lore"));
         if (!desc.isEmpty()) {
             plugin.messages().send(player, "card-desc", "text", Messages.trusted(desc));
         }
+        plugin.messages().sendList(player, "art." + def.id() + ".details");
         if (def.mode() == ArtifactDef.Mode.ACTIVE) {
+            plugin.messages().send(player, "card-active-use");
+            plugin.messages().send(player, "card-cooldown", "seconds", plugin.cooldowns().remainingSeconds(
+                    player.getUniqueId(), def.id(), System.currentTimeMillis()));
             plugin.messages().send(player, "card-active",
                     "cooldown", String.valueOf(plugin.config().cooldownSeconds(def)),
                     "xp", String.valueOf(plugin.config().xpCostLevels(def)));
         }
+        if (def.id().equals("pero-feniksa")) plugin.messages().send(player, "card-cooldown", "seconds",
+                plugin.cooldowns().remainingSeconds(player.getUniqueId(), def.id(), System.currentTimeMillis()));
+        if (def.mode() == ArtifactDef.Mode.PASSIVE) plugin.messages().send(player, "card-passive-use");
         plugin.messages().send(player, "card-source");
         if (!plugin.config().isEnabled(def.id())) {
             plugin.messages().send(player, "card-disabled");
@@ -260,8 +292,11 @@ public final class ArtifactCommandHandler implements CommandExecutor, TabComplet
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (command.getName().equalsIgnoreCase("artifacts")) {
+            if (!(sender instanceof Player player) || !sender.hasPermission("chrdkartifacts.use")
+                    || plugin.coreApi() == null || !plugin.coreApi().isAuthenticated(player)) return List.of();
+            if (args.length == 2 && args[0].equalsIgnoreCase("help")) return filter(ArtifactGuide.TOPICS, args[1]);
             if (args.length == 1) {
-                List<String> options = new ArrayList<>(List.of("collection", "traits"));
+                List<String> options = new ArrayList<>(List.of("help", "inspect", "sources", "collection", "traits"));
                 int pages = Math.max(1, (ArtifactRegistry.size() + PAGE_SIZE - 1) / PAGE_SIZE);
                 for (int page = 2; page <= pages; page++) {
                     options.add(String.valueOf(page));

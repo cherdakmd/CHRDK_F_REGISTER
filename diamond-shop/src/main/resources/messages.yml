@@ -185,6 +185,30 @@ messages:
       - '<gray>Запас: %stock% / %ref%   Тренд: %trend% <aqua>%history%</aqua></gray>'
       - '<yellow>ЛКМ — выбрать количество покупки</yellow>'
 
+  # RC16: раздел «Кузня» (/shop forge). Только покупка, обратной скупки нет.
+  "forge.shop":
+    title: '<gold>Кузня · расходники</gold>'
+    tab: '<yellow>⚒ Кузня (/shop forge)</yellow>'
+    back-name: '<yellow>← Вернуться в магазин</yellow>'
+    empty: '<yellow>Раздел Кузня недоступен: производитель не загружен, операция отключена или цена задана неверно.</yellow>'
+    max-one: '<yellow>Искра выдаётся строго по одной: максимум 1 за покупку.</yellow>'
+    no-buyback: '<yellow>Обратной скупки расходников Кузни нет.</yellow>'
+    closed: '<yellow>Товар Кузни закрыт: изменилась цена, раздел выключен или производитель недоступен. Ничего не списано.</yellow>'
+    quantity: '<red>Для искры можно выбрать только 1 штуку; остальные расходники — от 1 до 64.</red>'
+    quantity-title: '<gold>Подтверждение покупки · Кузня</gold>'
+    quantity-details:
+      - '<gray>SKU: <aqua>%sku%</aqua> · цена за штуку: <gold>%price% ⛁</gold></gray>'
+      - '<gray>Выбрано: %units% шт. · максимум: %maximum%</gray>'
+      - '<gray>Личный /bal: %balance% ⛁ · физически: %physical% ⛁</gray>'
+      - '<yellow>Оплата сначала со счёта, затем предметы; сдача целыми алмазами на /bal.</yellow>'
+      - '<dark_gray>Выдача — один frozen native-снимок, без addItem и без отдельной команды.</dark_gray>'
+    item-lore:
+      - '<gray>SKU: <aqua>%sku%</aqua></gray>'
+      - '<gold>Цена: %price% ⛁ за штуку</gold>'
+      - '<yellow>ЛКМ — выбрать количество и подтвердить</yellow>'
+      - '<dark_gray>Только покупка · обратной скупки нет</dark_gray>'
+    done: '<green>Куплено <aqua>%sku%</aqua> ×%units% за </green><gold>%cost% ⛁</gold><green>. Личный /bal: %balance% ⛁; физически: %physical% ⛁.</green>'
+
   tools:
     permission: '<red>Недостаточно прав.</red>'
     quote-usage: '<yellow>/shop quote buy|sell <товар> <количество 1–2304>. Только расчёт, без сделки.</yellow>'

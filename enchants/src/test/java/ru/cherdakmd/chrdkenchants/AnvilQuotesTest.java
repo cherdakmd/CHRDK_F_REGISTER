@@ -61,7 +61,9 @@ class AnvilQuotesTest {
     @Test void listenerUsesViewApiNativeConsumptionAndCleanupContracts() throws Exception {
         String source = source("AnvilApplyListener");
         assertTrue(source.contains("view.setRepairItemCountCost(1)"));
-        assertTrue(source.contains("view.setRepairCost(cost)"));
+        assertTrue(source.contains("AnvilCosts.price(view, cost)"));
+        assertTrue(source.contains("AnvilCosts.actual(view,event.getResult())"));
+        assertTrue(source.contains("AnvilCosts.actual(view)"));
         assertFalse(source.contains("setMaximumRepairCost("));
         assertFalse(source.contains("setBypassCost("));
         assertFalse(source.contains("giveExp"));

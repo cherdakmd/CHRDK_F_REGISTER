@@ -1,168 +1,168 @@
 {
   "pages": {
     "about": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "614d6b21e6be9238d6dd8421c0e2bb11f82919b35cf9a4bb091b1479a91573d1",
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "abfec3953010ad01371a02f82a0f45382918418aba63f6830fa34ddbacfdb6b3",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "daa6859f23640cd93df2952951cc79c67baa1bcbeb3f038ed784bb832b844f9c",
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "f945c446c01f21e625208fe60fd568476b4be80767bd4d289c7effbbe9977060",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "fe8cb31cf9768bd57628c0f92649670bb7e797badee850dc44c4ad186dc63962",
-      "text": "a4a922729b6635a6d286fcc3c9f18c8c57a0c98a19ec05c44f8d448dc422a84f"
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "328cd53ffc0d7b2bc656692a75aebc8876b72016cf2987e0c31e75e70d62c668",
+      "text": "fcdffb1098428fac2bd42d1c4acb73bb9a024d1823d5398b8845bb2f415a506f"
     },
     "auction": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "b75ded6daa0a133033fb6a09a656ccc7443b06ffcb61b347d1d309e469b6ed67",
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "3fea3d1c65cbaf8c9f0b16e1a498535461172f335770a844ba73b8893fb3842a",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "904e0594b79aca1dfbafe59b0e925ecb43e17af13015d7110d788d0f828bcb5a",
-      "text": "8c59b8f155d7cd9cd41bfb109879b7a18f51b84d24bb86ba4dd49980a2ac4b03"
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "251d2862eb7136c6dffe0b329bda2cab256c3409806b0ad968f49005c4c9ceb3",
+      "text": "f368077b5f1961a1982957afe3b8523b60c8330f3dfd1891003d01ea1c4fd6db"
     },
     "chat": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "614d6b21e6be9238d6dd8421c0e2bb11f82919b35cf9a4bb091b1479a91573d1",
-      "text": "5105d8801b3d6a9a81b1cae3622728807aa58e3be6ed2925219257f030e46920"
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "abfec3953010ad01371a02f82a0f45382918418aba63f6830fa34ddbacfdb6b3",
+      "text": "ca6c93fc33fca52eecc7d38744bc86f619ea0b6a7bcc2314b84ca6c5399d8a1c"
     },
     "claims": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "cbb44d5753805bc8db74db1fd5b8f531a7272f4e6fd8e83f169d6fe21e0c4ca8",
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "5aa96851b199b3388798bb144c6bb2b61170e619d07b90ed5c87bb772925ee0b",
       "text": "bf1b24b85ecdaee84580c0d5ea4b9c1120b8dd072e38aa68b52e49fc2a0c472c"
     },
     "classes": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "ce997e7a7e0734f3ffa606728451004a08fe60f312e088b19a3bc17476c61ccc",
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "72f26b445ec5634d26121f3a516c931afe4ea29116c469dc8100ac05e87df8df",
       "text": "ee29d92bd4e9527924d14405057fd62402857c1a688439c7b9d86d4c9bf3b546"
     },
     "commands": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "247be4d731f655940fb05dcd4c566cc8f0e546b397ba47156ed0affcf3f17b68",
-      "text": "7cad9d77bd280628e514082fba018af5aaee1e7e0db4f648354e18f1399a47e8"
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "2ce2953474e5072c8fe22b2d5ba16931ff32253b4643fe2b3a2713b8fddf7239",
+      "text": "b210ff00d9d9a82a7663a9ddc5fac3491e03b244a72217f81c997ec39bc03928"
     },
     "cosmetics": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "b97814b53106bd9eec3d8765c374be808adf824f5c54ce1567e18aeda00cfc2a",
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "002fa1805c3d995d08c10682bb74b87ce05ce99d9629bff7217d65717f64c489",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "b8a094dc38d2341f1ac1140bdc1c5c8cd557628d196b332a294e1eed2be7267f",
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "a17254f7e3d565c9a4ef7263c8221c5cac509f8b25c5ae565d0e5056939c17fa",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "economy": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "a0b55c976f2345f95037b319fa27c70593abbfd313a1da7c6267bb5d46d3ea12",
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "b2e39c28868c82b5741867f44a1a6d90d8645828dabf2dbcf601fde02378d4a2",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "cc497b11117f618b892886f01129d3684eb87d9b1e99f5ecb3c6979ae2d1a52d",
-      "text": "4a00a06a712e25215f728c5a01f69eead65612e80ce6ad303969b1a83424336e"
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "b71eda3d49bd6b57d0839eba9e7961e1fbba3683f8a18bdad8c0a252203fd15e",
+      "text": "daba8068188cc03ac1ee0f787eb1322c4d33b14da0bdffe35c17b473843dc5aa"
     },
     "faq": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "247be4d731f655940fb05dcd4c566cc8f0e546b397ba47156ed0affcf3f17b68",
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "16029e63642f67191fc59c012cf627dc389706f0afe08b4186df8a9085885834",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "6102c4eaa6b1295e27cc5d7d453823d9c69c0e243f923a566d4e51f068fccdc4",
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "054dba5e57898fb2868db7b9d05d3d1a47b37ecc58064c46e9eb3883bf94000c",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "cbb44d5753805bc8db74db1fd5b8f531a7272f4e6fd8e83f169d6fe21e0c4ca8",
-      "text": "ec70e9288fed4df23e0069944b09928f9fcadbe4d08509ecceba85df191560fb"
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "5aa96851b199b3388798bb144c6bb2b61170e619d07b90ed5c87bb772925ee0b",
+      "text": "e166f2671aabcdf55ecf59d1465ddb19a36343f6d07983eb8b8821b3a63cce34"
     },
     "hunt": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "8dee9b4b4c2f04e519d300c7bad5a5ad71c069a285bac01846fff7e636577619",
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "d97022f0287a15f8d2fe2ba75fd2b65cef93b7d1e640dd663bcca8a48e41e36e",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "f7302cba7a1e48314ee56164774121ff3e5d969b3004e0f07fe436b57b98cec2",
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "041af6e4cef4f99a25dccc47bcb68c07f45a759c01d687420281d3ed312527d5",
       "text": "1417660c5793d86ddfab16c8b2203cbd2dd6b47a245ffa219c71898485b9c39f"
     },
     "menu": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "0f8c76c48424ea1823dd55e6cd3a32546f80109d3cc34e3f51e94dc0e3077222",
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "e4cddae0ef1d087eb749bd4525571d25a97ca2d02466e9b46b386f0bbbc8bb1e",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "orders": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "3dbdcd6a4a0f5a5730fa0f23c950a3512066bc15a8efee103f9c5bdf81bcdba1",
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "10547327216d5e1d1e4178b9e8bf95b87bb9cff5faabec16a6a2d81376017470",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "pets": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "d98345a0d674c24c8db02a01047b2deabf6a188b8bced47b3e53bfc15806fb6f",
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "c0124f83ac5dff92c7200f7c14bdb9663b73d6f8d5d52d97f6addc8f537daf27",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "9dfa207f6cd141973afdf596444468df3ad9b18eef96d5cf0ecddfdd065b35d5",
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "4e7f93ed3aa033f4774508ddb544304b4bfe84991b99cc66ba4b54b797bbfda3",
       "text": "b66278597912053a64a4f192bf0cf63795a8720263d4283683b9458eec8f0bff"
     },
     "profile": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "751a5e2b8e08a812e9261c3f23e66f31701c248ae99b4b67e7eeb1f78962bbd8",
-      "text": "54e3f32931d043add66cd8c79174f90ac3597ce659e68de8f5ed05a6e37a45e8"
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "8b98b5890765e5cf3a5b7072db918f426a4e56ec9bc3f87439bba0501fd4fd6a",
+      "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "a65fd39a44ab434df760f047c46dd3fa591873c85fc51ba63961c8741adb9cd8",
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "0e77002f77b1566e0489aeef55bdbf6f53a216b702f812fa90bc157cacb42c2a",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "f403ed7913ba0f5c55d618d7480fdde846de6b62da8f88f4a48630b099df39b2",
-      "text": "c7aa463665be522c2f69c0eafd2844684e5fdf656825e6b80b86235ad4bc3be6"
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "27d821384030380e5cc112b5918eb32b4a09a849d958e5ebb419a38ee838ea29",
+      "text": "83fdfb3ddc5551875ec1f031676a80e3adb73e448dffae614c489441ea6f2c33"
     },
     "shop": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "f7302cba7a1e48314ee56164774121ff3e5d969b3004e0f07fe436b57b98cec2",
-      "text": "42dd63a6b9370c06261a326419d270aa0a0f28b0c4dad7182c83501956cf36f4"
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "041af6e4cef4f99a25dccc47bcb68c07f45a759c01d687420281d3ed312527d5",
+      "text": "62ef5965cc091b6cbd7e6af58d21e58ba2e8dd65d9e704cec710768ff7a47099"
     },
     "skills": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "48dcefaf8e1903c058c9a2fdab644e37f1762666351540172fd6c45a740cffaa",
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "65fd9d5e3d67e5c02eacd19e6069f319a90fab7a2a9079e2e80fe4471fbf9b9f",
       "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
     },
     "start": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "b81b73160779c383ccc39040f8ac9b1984e801db02619ce5d51fce5f079b189c",
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "41704704f8c98e0a219dc96f18a6b04fa947fb7f5bc2d825e360b257456455dd",
       "text": "c2835fdf2d1945079115e6a252d472ce72ad9ad79f4ed47ad58e269b467d595f"
     },
     "teleports": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "8c5c99e5ed93a35d8bf8fae0e75ab8f63421606cd6164e6ea17f10b566cfa374",
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "5083fc41565a0e13429f1a048f60017b67716576721a29a8b20afa107318f373",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "45a196763b22715013cbaf783db0c329cef2a8f97b805cc62667c0a90faf77b0",
-      "text": "bb59e5c05ec16e1951d67e444a35885ce8a38805d367f3e73f09a0fd74cce12c"
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "b71eda3d49bd6b57d0839eba9e7961e1fbba3683f8a18bdad8c0a252203fd15e",
+      "text": "a4d12cf48881e623761e39d44e627b95975f839a8737cfd76b9ee138317a4c07"
     },
     "titles": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "16f2512d7bf6958787a2350086fd0ff6448c01dfd31a7fd6e42660b359181d28",
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "968037d13b75b3164356a5b634a2201921ca0b1c93b55175636fcbe49a718228",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "f7302cba7a1e48314ee56164774121ff3e5d969b3004e0f07fe436b57b98cec2",
-      "text": "6caea025862eca59a229543aa0c8285fa02d732096ef1602b8d080c73614556c"
+      "reason": "1.4.284-rc.1: пререлиз RC16 поверх 1.4.283, сверка фактов и границ",
+      "sources": "041af6e4cef4f99a25dccc47bcb68c07f45a759c01d687420281d3ed312527d5",
+      "text": "eedb10a80c527fcbd716d60ec23c7758f46a83865a1f8ec4fa1530b9625c7384"
     },
     "vk": {
-      "reason": "1.4.283: стабильный релиз — книги чар, доход ремёсел, Plasmo Voice и дома в своих приватах",
-      "sources": "26f5060e6c682dbc5ee90c82b196cae54512e642bfb18a1cd76d4dcac034e2ee",
+      "reason": "1.4.284-rc.1: влиты RC1–RC16 поверх 1.4.283, книги и frozen grant сведены в один ShopExchange",
+      "sources": "2879b4f66a2117b36f0f8ece285ddfd33c948ceeb5ecb751bd2ca7cd905cf9de",
       "text": "2b67feb5684b14875601ba47314694afa598ff87f6dd74350a06f65029a735eb"
     }
   },

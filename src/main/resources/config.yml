@@ -807,7 +807,7 @@ shop:
       price: 189
       days: 30
       group: ""
-      description: "Личная лицензия на 30 дней для одного своего клана; перенос не чаще раза в 24 часа, применение с согласия главы. Только внешний вид. /clan style"
+      description: "Личная лицензия на 30 дней. Оформление меняет только глава по своим покупкам; смена и перенос без ожидания. Только внешний вид. /clan style"
       tag: ""
       permissions: []
       commands: []
@@ -818,7 +818,7 @@ shop:
       price: 179
       days: 30
       group: ""
-      description: "Личная лицензия на 30 дней для одного своего клана; перенос не чаще раза в 24 часа, применение с согласия главы. Только внешний вид. /clan style"
+      description: "Личная лицензия на 30 дней. Оформление меняет только глава по своим покупкам; смена и перенос без ожидания. Только внешний вид. /clan style"
       tag: ""
       permissions: []
       commands: []
@@ -829,7 +829,7 @@ shop:
       price: 219
       days: 30
       group: ""
-      description: "Личная лицензия на 30 дней для одного своего клана; перенос не чаще раза в 24 часа, применение с согласия главы. Только внешний вид. /clan style"
+      description: "Личная лицензия на 30 дней. Оформление меняет только глава по своим покупкам; смена и перенос без ожидания. Только внешний вид. /clan style"
       tag: ""
       permissions: []
       commands: []
@@ -845,7 +845,7 @@ shop:
       tag: ""
       permissions: []
       commands: []
-      description: "Цвет, значок и рамка на 30 дней; три анимации на выбор бонусом. Личные лицензии, один свой клан, перенос раз в 24 часа, согласие главы. /clan style"
+      description: "Цвет, значок и рамка на 30 дней; пять анимаций на выбор бонусом. Личные лицензии; применяет только глава по своим покупкам, без ожидания переноса. /clan style"
       trademc-export: false
 
     # --- Наборы -------------------------------------------------------------
@@ -1389,27 +1389,34 @@ tablist:
   #   %auth_hint% — следующий шаг, %security% — состояние 2FA,
   #   %navigation% — доступные ссылки после входа (до входа: пустая строка).
   enabled: true
-  # Как часто (в тиках, 20 = 1 сек) обновлять таб-лист всем игрокам. Минимум 10.
+  # Общее обновление TAB: тики (20 = 1 сек), минимум 10; 0 — только при событиях.
+  # Анимация активных клановых тегов работает независимо от общего обновления.
   refresh-ticks: 40
-  # Только имена с активной анимацией: 5..40 тиков, без повторной отправки шапки.
-  animation-refresh-ticks: 10
-  # Строки шапки списка (каждая с новой строки экрана)
+  # Общий heartbeat: 5..20 тиков. Активные имена не зависят от refresh-ticks/пустого формата.
+  animation-refresh-ticks: 5
+  # Шапка/подвал: кадр каждые два heartbeat; выключатель не гасит клановые имена.
+  dashboard-animation: true
+  # Все строки можно менять. Новые tab_* — кадры и безопасные личные данные после входа.
   header:
     - ""
-    - "<gradient:gold:yellow><bold>CHERDAK • ВЫЖИВАНИЕ</bold></gradient>"
-    - "<gray>Онлайн <white>%online%/%max%</white> <dark_gray>•</dark_gray> TPS <green>%tps%</green>"
-    - "<gray>%player% <dark_gray>•</dark_gray> <white>%auth_status%</white>"
+    - "<bold>%tab_brand%</bold> <dark_gray>•</dark_gray> <white>ВЫЖИВАНИЕ</white>"
+    - "%tab_separator%"
+    - "<gray>Игроки <white>%online%/%max%</white> <dark_gray>│</dark_gray> %tab_health% <gray>%tps% TPS · %tab_mspt% мс</gray>"
+    - "<white>%player%</white> <dark_gray>│</dark_gray> %tab_ping% <dark_gray>│</dark_gray> <aqua>%tab_world%</aqua>"
     - ""
   footer:
     - ""
-    - "<gold>%pass_type%</gold> <dark_gray>•</dark_gray> <aqua>%pass_left%</aqua>"
+    - "<gold>%pass_type%</gold> <dark_gray>│</dark_gray> <gray>%pass_left%</gray>"
+    - "<gray>Банк <aqua>%tab_balance% 💠</aqua> <dark_gray>│</dark_gray> XP-буст <green>%tab_boost%</green>"
+    - "<gray>%auth_status%</gray> <dark_gray>│</dark_gray> <gray>2FA: %security%</gray>"
     - "<gray>%auth_hint%</gray>"
-    - "<gray>2FA: <white>%security%</white> <dark_gray>•</dark_gray> <yellow>%ping% мс</yellow> <dark_gray>•</dark_gray> %world%"
-    - "<gold>↪</gold> <aqua>%navigation%</aqua>"
+    - "<yellow>✦</yellow> <gray>%tab_tip%</gray>"
+    - "%tab_separator%"
+    - "<aqua>%navigation%</aqua> <dark_gray>│</dark_gray> <gray>%tab_clock% МСК</gray>"
     - ""
   # Общая строка: ник первым, затем выбранные метки на открытых местах.
   # Старый %rank_tag% удаляется из формата на лету: ранг уже учтён в лимите.
-  # Пустой формат — не менять имя (для внешнего TAB-плагина).
+  # Пустой формат — не менять обычное имя; активная анимация клана ВСЕГДА использует player_tagged.
   # Сортировка CHRDK_Ranks не меняется; это только внешний вид.
   player-name-format: "%player_tagged%"
   # Название ранга в ОБЩЕЙ строке чата и TAB. Для одного знака выключите
@@ -1488,7 +1495,7 @@ labels:
 # Повторная награда продлевает только время, процент не складывается.
 # Офлайн и выключенный сервер время не расходуют; остаток хранится в data.json.
 reward-boost:
-  max-bank-hours: 24
+  # Лимита накопленного времени больше нет. Старый max-bank-hours игнорируется.
   # Однократно после первой регистрации; 0 — не выдавать приветственный буст.
   welcome-hours: 3
 

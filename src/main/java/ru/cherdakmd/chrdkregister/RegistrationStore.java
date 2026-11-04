@@ -378,7 +378,7 @@ public final class RegistrationStore {
         if (loaded.paymentCodes == null) loaded.paymentCodes = new LinkedHashMap<>();
         if (loaded.trialUsedUuids == null) loaded.trialUsedUuids = new LinkedHashSet<>();
         for (PlayerAccount account : loaded.accounts.values()) {
-            account.rewardBoostMillis = Math.clamp(account.rewardBoostMillis, 0L, 365 * 24 * RewardBoostMath.HOUR);
+            account.rewardBoostMillis = Math.max(0L, account.rewardBoostMillis);
             Map<String, Double> fractions = new LinkedHashMap<>();
             if (account.rewardBoostFractions != null) account.rewardBoostFractions.forEach((key, value) -> {
                 if (Set.of("vanilla", "professions", "skills").contains(key) && value != null && Double.isFinite(value))
@@ -2034,8 +2034,8 @@ public final class RegistrationStore {
         if(account.rewardBoostReceipts.containsKey(receipt))
             return checkpointGameplayRewards()?ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.BoostGrant.ALREADY:failed;
         if(account.rewardBoostReceipts.size()>=100_000)return failed;
-        long amount=hours*RewardBoostMath.HOUR, cap=Math.clamp(bankHours,1,24*365)*RewardBoostMath.HOUR;
-        if(account.rewardBoostMillis>cap-amount)return ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.BoostGrant.FULL;
+        long amount=hours*RewardBoostMath.HOUR;
+        if(account.rewardBoostMillis>Long.MAX_VALUE-amount)return ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.BoostGrant.FULL;
         account.rewardBoostMillis+=amount;account.rewardBoostReceipts.put(receipt,hours);dirty=true;
         return checkpointGameplayRewards()?ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.BoostGrant.ADDED:failed;
     }

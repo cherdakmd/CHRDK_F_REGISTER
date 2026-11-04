@@ -88,7 +88,7 @@ class ClanShopTest(unittest.TestCase):
     def test_each_customer_description_explains_limits_without_power(self):
         for p in self.products:
             text = "\n".join(kit.descriptions(p))
-            for phrase in ("30 дней", "Срок начинается с выдачи", "24 часа", "2 минут", "не заменяет", "Только внешний вид", "365 дней", "художественная иллюстрация"):
+            for phrase in ("30 дней", "Срок начинается с выдачи", "только текущий глава", "без ожидания", "не заменяет", "Только внешний вид", "365 дней", "художественная иллюстрация"):
                 self.assertIn(phrase, text)
             self.assertIn(f"/clan style {p['kind']} {p['example']}", text)
             self.assertNotIn("безлимит", text.lower())
@@ -107,7 +107,7 @@ class ClanShopTest(unittest.TestCase):
     def test_committed_documents_and_manifest_match_catalog(self):
         kit.check()
         saved = json.loads((kit.OUT / "manifest.json").read_text(encoding="utf-8"))
-        self.assertEqual("1.4.278", saved["sourcePluginVersion"])
+        self.assertEqual(kit.SOURCE_VERSION, saved["sourcePluginVersion"])
         self.assertIs(False, saved["publishedToStore"])
         self.assertEqual(3, len(saved["products"]))
         for row, p in zip(saved["products"], self.products):

@@ -50,7 +50,13 @@ public final class EnchantCommandHandler implements TabExecutor {
             return true;
         }
         if (args.length == 2 && "info".equalsIgnoreCase(args[0])) {
-            return showInfo(player, args[1]);
+            return showInfo(plugin, player, args[1]);
+        }
+        if (args.length >= 1 && "help".equalsIgnoreCase(args[0])) {
+            String key = args.length == 1 ? "help-overview" : args.length == 2 ? EnchantHelp.topic(args[1]) : null;
+            if (key == null) plugin.messages().send(player, "help-unknown");
+            else plugin.messages().sendList(player, key);
+            return true;
         }
         if (args.length == 0) {
             plugin.gui().open(player);
@@ -63,12 +69,14 @@ public final class EnchantCommandHandler implements TabExecutor {
         return true;
     }
 
-    private boolean showInfo(Player player, String id) {
+    static boolean showInfo(EnchantsPlugin plugin, Player player, String id) {
         EnchantDef def = EnchantRegistry.byId(id);
         if (def == null) {
             plugin.messages().send(player, "not-found", "id", id);
             return true;
         }
+        plugin.messages().send(player, "info-id", "id", def.id(), "state", plugin.messages().mini(
+                plugin.config().isEnabled(def.id()) ? "catalog-on" : "catalog-off"));
         plugin.messages().send(player, "info-header",
                 "name", plugin.messages().mini("en." + def.id() + ".name"),
                 "rarity", plugin.messages().mini(def.rarity().labelKey()),
@@ -82,12 +90,15 @@ public final class EnchantCommandHandler implements TabExecutor {
                     "conflicts", Messages.trusted(plugin.gui().conflictsLabel(def)));
         }
         if (def.curse()) {
-            plugin.messages().send(player, "info-curse-warning");
+            plugin.messages().send(player, "info-curse-warning", "id", def.id());
         }
         for (net.kyori.adventure.text.Component line
                 : plugin.messages().getList("en." + def.id() + ".lore")) {
             player.sendMessage(line);
         }
+        plugin.messages().send(player, "info-levels");
+        plugin.messages().send(player, "info-rules", "max", plugin.config().maxPerItem(), "legendary", plugin.config().maxLegendaryPerItem());
+        plugin.messages().send(player, "info-read-more");
         return true;
     }
 
@@ -134,9 +145,13 @@ public final class EnchantCommandHandler implements TabExecutor {
     private void inspect(Player player) {
         Map<String, Integer> present = plugin.items().read(player.getInventory().getItemInMainHand());
         if (present.isEmpty()) { plugin.messages().send(player, "catalog-inspect-empty"); return; }
-        if (player.getInventory().getItemInMainHand().getType() == org.bukkit.Material.ENCHANTED_BOOK)
+        if (player.getInventory().getItemInMainHand().getType() == org.bukkit.Material.ENCHANTED_BOOK) {
+            // Только явная команда: обновление описания старой книги, без перезаписи чар/атрибутов.
+            ItemStack described = player.getInventory().getItemInMainHand().clone();
+            if (plugin.items().refreshBookDescription(described)) player.getInventory().setItemInMainHand(described);
             plugin.messages().send(player, "book-source", "source", plugin.messages().mini(
                     plugin.items().bookSourceKey(player.getInventory().getItemInMainHand())));
+        }
         plugin.messages().send(player, "catalog-inspect-header", "count", present.size());
         present.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(entry -> {
             EnchantDef def = EnchantRegistry.byId(entry.getKey());
@@ -144,6 +159,7 @@ public final class EnchantCommandHandler implements TabExecutor {
             plugin.messages().send(player, "catalog-inspect-line", "name", plugin.messages().mini("en." + def.id() + ".name"),
                     "level", entry.getValue(), "max", def.maxLevel(), "state", plugin.config().isEnabled(def.id())
                             ? plugin.messages().mini("catalog-on") : plugin.messages().mini("catalog-off"));
+            plugin.messages().sendList(player, "en." + def.id() + ".lore");
         });
     }
     private void cooldowns(Player player) {
@@ -245,10 +261,11 @@ public final class EnchantCommandHandler implements TabExecutor {
         String prefix = args[args.length - 1].toLowerCase(Locale.ROOT);
         if ("enchants".equalsIgnoreCase(command.getName())) {
             if (!sender.hasPermission("chrdkenchants.use")) return matches;
-            if (args.length == 1) return List.of("guard", "library", "sources", "info", "find", "group", "rarity", "light", "curses", "hand", "sort", "inspect", "preview", "cleanse", "combine", "split", "confirm", "cooldowns")
+            if (args.length == 1) return List.of("help", "guard", "library", "sources", "info", "find", "group", "rarity", "light", "curses", "hand", "sort", "inspect", "preview", "cleanse", "combine", "split", "confirm", "cooldowns")
                     .stream().filter(value -> value.startsWith(prefix)).toList();
             if (args.length == 2) {
                 List<String> values = switch (args[0].toLowerCase(Locale.ROOT)) {
+                    case "help" -> EnchantHelp.TOPICS;
                     case "guard" -> List.of("auto", "briar_guard", "faltering_guard", "signal_guard", "pve_anchor");
                     case "library" -> java.util.stream.IntStream.rangeClosed(1, EnchantLibrary.pages(EnchantRegistry.size())).mapToObj(Integer::toString).toList();
                     case "cleanse" -> EnchantRegistry.curses().stream().map(EnchantDef::id).toList();

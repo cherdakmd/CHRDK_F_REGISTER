@@ -437,15 +437,9 @@ final class ProfessionListener implements Listener {
             return;
         }
         try {
-            AnvilView view = event.getView();
-            int cost = view.getRepairCost();
-            if (cost <= 0) {
-                return;
-            }
-            int discounted = (int) Math.max(0L, Math.round(cost * (100 - percent) / 100.0));
-            if (discounted < cost) {
-                view.setRepairCost(discounted);
-            }
+            // HIGH зарегистрирован до Enchants/Forge (softdepend): скидка native-части,
+            // а не фиксированной цены расходников или повторного готового preview.
+            ru.cherdakmd.chrdkregister.api.AnvilCosts.discount(event.getView(),event.getResult(),percent);
         } finally {
             adjustingAnvil.set(false);
         }

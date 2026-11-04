@@ -20,9 +20,10 @@ class BundleCardTest(unittest.TestCase):
         self.assertEqual(449, kit.product()["price"])
         data = json.loads(kit.manifest())
         self.assertEqual(30, data['days'])
+        self.assertEqual('1.4.282-rc.12', data['minimumPluginVersion'])
         self.assertEqual(kit.PARTS, set(data['parts']))
         self.assertEqual('clan-style-pack', data['bonusEntitlement'])
-        self.assertEqual(['aurora', 'shine', 'pulse'], data['bonusAnimations'])
+        self.assertEqual(['aurora', 'shine', 'pulse', 'prism', 'flame'], data['bonusAnimations'])
         self.assertFalse(data['publishedToStore'])
 
     def test_one_delivery_command_not_four(self):

@@ -30,6 +30,8 @@ public final class ShopLayout {
     /** Последний слот товаров включительно. */
     public static final int LAST_ITEM_SLOT = FIRST_ITEM_SLOT + ITEMS_PER_PAGE - 1;
     public static final int SLOT_PREV = 45;
+    /** RC16: кнопка раздела «Кузня» (/shop forge) в нижнем ряду. */
+    public static final int SLOT_FORGE = 46;
     public static final int SLOT_BALANCE = 49;
     public static final int SLOT_NEXT = 53;
     /** Сколько вкладок влезает в два верхних ряда до кнопки закрытия. */

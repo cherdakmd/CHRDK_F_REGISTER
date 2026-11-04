@@ -7,9 +7,10 @@ final class RewardBoostMath {
     private RewardBoostMath() { }
 
     static long grant(long remaining, int hours, int bankHours) {
-        long cap = Math.clamp(bankHours, 1, 24 * 365) * HOUR;
-        long safe = Math.clamp(remaining, 0L, cap);
-        return hours <= 0 ? safe : safe + Math.min(cap - safe, Math.min(hours, 24 * 365) * HOUR);
+        // bankHours сохранён только для бинарной совместимости старых вызовов.
+        long safe = Math.max(0, remaining);
+        long amount = Math.max(0L, hours) * HOUR;
+        return amount > Long.MAX_VALUE - safe ? Long.MAX_VALUE : safe + amount;
     }
 
     static long limit(long base, long current) {

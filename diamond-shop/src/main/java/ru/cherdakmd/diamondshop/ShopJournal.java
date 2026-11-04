@@ -5,14 +5,22 @@ import ru.cherdakmd.chrdkregister.api.ShopExchange;
 /** Frozen source effect. One global pending prevents virtual stock/quota interleaving. */
 final class ShopJournal {
     record Pending(ShopExchange trade,long stock,long sold,long bought,long time,long day,double used,double turnover,
-                   double price,int historyPoints,long historyInterval) {
+                   double price,int historyPoints,long historyInterval,boolean forge) {
+        /** Прежние receipts без поля forge остаются валидными. */
+        Pending(ShopExchange trade,long stock,long sold,long bought,long time,long day,double used,double turnover,
+                double price,int historyPoints,long historyInterval) {
+            this(trade,stock,sold,bought,time,day,used,turnover,price,historyPoints,historyInterval,false);
+        }
         boolean valid() {
             return trade!=null&&trade.valid()&&stock>=1&&sold>=0&&bought>=0&&time>=0&&day==time-Math.floorMod(time,86400000L)
                     &&(used==-1||Double.isFinite(used)&&used>=trade.money())&&Double.isFinite(turnover)&&turnover>=trade.money()
-                    &&Double.isFinite(price)&&price>0&&historyPoints>=4&&historyPoints<=168&&historyInterval>=0;
+                    &&Double.isFinite(price)&&price>0&&historyPoints>=4&&historyPoints<=168&&historyInterval>=0
+                    &&(!forge||(trade.carriesGrant()&&stock==1&&sold==0&&bought==0));
         }
         boolean matches(ShopStore.ItemState state,double oldUsed,double oldTurnover) {
             try {
+                if(forge) return valid()&&turnover==PriceEngine.round(oldTurnover+trade.money())
+                        &&(used==-1||used==PriceEngine.round(oldUsed+trade.money()));
                 return valid()&&state!=null&&stock==Math.max(1,Math.addExact(state.stock,trade.buy()?-trade.units():trade.units()))
                     &&sold==Math.addExact(state.soldByPlayers,trade.buy()?0:trade.units())
                     &&bought==Math.addExact(state.boughtByPlayers,trade.buy()?trade.units():0)

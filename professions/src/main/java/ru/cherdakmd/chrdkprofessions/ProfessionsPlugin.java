@@ -44,6 +44,9 @@ public final class ProfessionsPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         try {
+            try {
+                if (ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<40) throw new IllegalStateException("Нужен Core API 40+");
+            } catch (ReflectiveOperationException failure) { throw new IllegalStateException("Нужен Core API 40+",failure); }
             saveDefaultConfig();
             this.config = ProfessionConfig.parse(getConfig(), getLogger());
             this.messages = Messages.load(this, config.locale(), getLogger());

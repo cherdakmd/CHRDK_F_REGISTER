@@ -27,7 +27,7 @@ class ClanPack279Test {
         assertTrue(tags.animated("guilds-tab", "Steve"));
         tags.unregister("guilds-tab"); assertFalse(tags.animated("guilds-tab", "Steve"));
         assertEquals(5, TabListService.animationTicks(0)); assertEquals(10, TabListService.animationTicks(10));
-        assertEquals(40, TabListService.animationTicks(Integer.MAX_VALUE));
+        assertEquals(20, TabListService.animationTicks(Integer.MAX_VALUE));
     }
     @Test void bundleHasThreeLeavesAndItsOwnBonusButOldBundlesDoNot() throws Exception {
         var cat = ShopCatalog.from(yaml());

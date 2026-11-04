@@ -22,7 +22,7 @@ final class GuildStyleDefs {
             "ocean", "CYAN_STAINED_GLASS_PANE", "forest", "GREEN_STAINED_GLASS_PANE",
             "ember", "ORANGE_STAINED_GLASS_PANE", "frost", "LIGHT_BLUE_STAINED_GLASS_PANE");
 
-    static final List<String> ANIMATIONS = List.of("aurora", "shine", "pulse");
+    static final List<String> ANIMATIONS = List.of("aurora", "shine", "pulse", "prism", "flame");
 
     static List<String> options(String kind) {
         return switch (kind) {
