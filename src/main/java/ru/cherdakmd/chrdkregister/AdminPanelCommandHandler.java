@@ -22,8 +22,11 @@ import java.util.Locale;
 public final class AdminPanelCommandHandler implements CommandExecutor, TabCompleter {
 
     private static final List<String> SUBCOMMANDS = List.of(
-            "players", "profile", "moderators", "journal",
-            "warn", "unwarn", "ban", "unban", "moderator");
+            "players", "profile", "moderators", "journal", "mutes", "chat",
+            "warn", "unwarn", "ban", "unban", "moderator",
+            "mute", "unmute", "kick", "ipban", "ipunban");
+
+    private static final List<String> DURATIONS = List.of("10m", "1h", "1d", "7d", "30");
 
     private final RegisterPlugin plugin;
     private final ModerationService service;
@@ -89,6 +92,54 @@ public final class AdminPanelCommandHandler implements CommandExecutor, TabCompl
                 }
                 service.unban(sender, args[1]);
             }
+            case "mutes" -> gui(sender, AdminPanelGui.Page.MUTES, "");
+            case "chat" -> {
+                if (args.length < 2) {
+                    plugin.messages().send(sender, "admin.usage");
+                    return true;
+                }
+                gui(sender, AdminPanelGui.Page.CHAT_HISTORY, args[1]);
+            }
+            case "mute" -> {
+                if (args.length < 4) {
+                    plugin.messages().send(sender, "admin.usage");
+                    return true;
+                }
+                long minutes = ModerationService.muteDurationMinutes(args[2]);
+                if (minutes <= 0) {
+                    plugin.messages().send(sender, "admin.mute-bad-duration");
+                    return true;
+                }
+                service.mute(sender, args[1], minutes, join(args, 3));
+            }
+            case "unmute" -> {
+                if (args.length < 2) {
+                    plugin.messages().send(sender, "admin.usage");
+                    return true;
+                }
+                service.unmute(sender, args[1]);
+            }
+            case "kick" -> {
+                if (args.length < 3) {
+                    plugin.messages().send(sender, "admin.usage");
+                    return true;
+                }
+                service.kick(sender, args[1], join(args, 2));
+            }
+            case "ipban" -> {
+                if (args.length < 3) {
+                    plugin.messages().send(sender, "admin.usage");
+                    return true;
+                }
+                service.ipBan(sender, args[1], join(args, 2));
+            }
+            case "ipunban" -> {
+                if (args.length < 2) {
+                    plugin.messages().send(sender, "admin.usage");
+                    return true;
+                }
+                service.ipUnban(sender, args[1]);
+            }
             case "moderator" -> {
                 if (args.length < 3) {
                     plugin.messages().send(sender, "admin.usage");
@@ -118,8 +169,14 @@ public final class AdminPanelCommandHandler implements CommandExecutor, TabCompl
             String prefix = args[1].toLowerCase(Locale.ROOT);
             return List.of("add", "remove").stream().filter(value -> value.startsWith(prefix)).toList();
         }
+        if (args.length == 3 && action.equals("mute")) {
+            String prefix = args[2].toLowerCase(Locale.ROOT);
+            return DURATIONS.stream().filter(value -> value.startsWith(prefix)).toList();
+        }
         if ((args.length == 2 && (action.equals("profile") || action.equals("warn")
-                || action.equals("ban") || action.equals("unban")))
+                || action.equals("ban") || action.equals("unban") || action.equals("mute")
+                || action.equals("unmute") || action.equals("kick") || action.equals("ipban")
+                || action.equals("ipunban") || action.equals("chat")))
                 || (args.length == 3 && action.equals("moderator"))) {
             String prefix = args[args.length - 1].toLowerCase(Locale.ROOT);
             List<String> out = new ArrayList<>();

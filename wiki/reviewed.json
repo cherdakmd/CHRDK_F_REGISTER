@@ -1,173 +1,173 @@
 {
   "pages": {
     "about": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "fca9fe0ebc7ace46b580d1e0184e332e1d1a31212c30f2e753d3dbe93378d069",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "8f12b7af13cdb6083ad03120bcd37625312169de7c324751c62f8c1b23f86959",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "ab9ea9bcd59b0a1bda3c35b0702b8a3e277e04e0927caff935eb19ee4a07ad86",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "7dc2ddc55db9045d47fda94a5a731be1d40516c664f90d43e1bc5d6fe4973fae",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "6d8bc40814de6d98721432359e225a1229ab24875ca6b8d60a700d35e2be3865",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "6793f5e3f11b6a2475207122d817c7ce163ae55a8084784d7e02509cf7d096bf",
       "text": "fcdffb1098428fac2bd42d1c4acb73bb9a024d1823d5398b8845bb2f415a506f"
     },
     "auction": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "537bf7f9692aa78134e3ac9d5fe4fd96a3294eab40dc9fec15c8dfe0ace7c133",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "527d1cc5ae7873056998048331bff1b22a6c85ad3801295f548a316aa63d6755",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "62070169d3af755aae15785b54b57f7152d26da681e6b45c5ac2922ff34d040b",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "1e2dabd28ae9de094d883561e1c1ea372ecf9b962dbca8d637bf418fd40382a8",
       "text": "f368077b5f1961a1982957afe3b8523b60c8330f3dfd1891003d01ea1c4fd6db"
     },
     "chat": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "fca9fe0ebc7ace46b580d1e0184e332e1d1a31212c30f2e753d3dbe93378d069",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "8f12b7af13cdb6083ad03120bcd37625312169de7c324751c62f8c1b23f86959",
       "text": "ca6c93fc33fca52eecc7d38744bc86f619ea0b6a7bcc2314b84ca6c5399d8a1c"
     },
     "claims": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "ff444cf513c3af95e5569bcb7e2c13a22312d81c2f0a8cf7dfb8ed905943b702",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "e6648e128ae8698ae08127819c97f0bf04af80e419daf86ae5c64904f9999837",
       "text": "bf1b24b85ecdaee84580c0d5ea4b9c1120b8dd072e38aa68b52e49fc2a0c472c"
     },
     "classes": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "323a4d2cb4e341287203c93c2f79cac8c5a0c935e1fe80c112853860e24dfc61",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "e8f1e189b9d5c1dd60e115cfd4a6599f37f31474280775a747a94f463e744a49",
       "text": "ee29d92bd4e9527924d14405057fd62402857c1a688439c7b9d86d4c9bf3b546"
     },
     "commands": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "011def88f7f65ae42baf624f7aae17c14d5070348c48d6db8bad4a9a7bf1347d",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "cc08236c601ae079f161d235970bd012cb747c68c9decf2865466f17ac747a43",
       "text": "b210ff00d9d9a82a7663a9ddc5fac3491e03b244a72217f81c997ec39bc03928"
     },
     "cosmetics": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "cabfe03d6c78f8335abe564b0fc96087131fab0bc222c4ef96937499e533a2ab",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "172d42c58a6b8be50a46e254f957b86469497ecdce94d6d91c03bc6a86da258f",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "8a71471529382474ab7170544c91e46d71ca2a95fbc554b64ac8d23f963ba0c4",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "612b412bd644c119843bfda51184befe5f698fdd0f1de335610cbbfd947cfef3",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "economy": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "12ecbd402e5d85016d808b58ee60bd154bd095303bf8d3a8c8677c647980c07e",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "a4f20d980c724ef33f0f65ddb50a82cb1342efddfa6f52129e0637f8afa3b1fb",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "7607c6e4e2d3bd5a650640e732702493d64feff6fe9714685d83b73c3365a407",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "3ccff1975590184b145f5b39418081e778124b11578ab7a670ef38a017130fd0",
       "text": "daba8068188cc03ac1ee0f787eb1322c4d33b14da0bdffe35c17b473843dc5aa"
     },
     "faq": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "1a334bd460763e066e6bff2033c23bd69d2c7f031ee07ef98e33dd19e69150d8",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "b505cc07b6e2d98b3030610d791b19644413ce6ac43eac62207286e0785cd359",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "696ae90c0aa6171f6f5fe1dcaf380f7afd9826c29c263ae5b674a8e82156577b",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "c05e0e1d5f2135571919ef9089f55f4defd43d3c6303ded8833185a09d72a073",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "ff444cf513c3af95e5569bcb7e2c13a22312d81c2f0a8cf7dfb8ed905943b702",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "e6648e128ae8698ae08127819c97f0bf04af80e419daf86ae5c64904f9999837",
       "text": "e166f2671aabcdf55ecf59d1465ddb19a36343f6d07983eb8b8821b3a63cce34"
     },
     "hunt": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "29a29a2018e948b9c9d2a2a77ccfcb5844f217d486e546e4ad4f2ddbfa5902c9",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "ed2c9fc02d38df04826a9a3dfd172b5c48ec30bca6ee6213b57cec7c54b41a13",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "dc65e3c39c8bb37b3acbeeb320a7bf0447cc2586c3080f1349faaa243257ea09",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "59145152e7a29b909ffde3210044a088da1a22af07fee3addb2644ee1db77b4b",
       "text": "1417660c5793d86ddfab16c8b2203cbd2dd6b47a245ffa219c71898485b9c39f"
     },
     "menu": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "e91ba5613e0a5f277feb0896a66a66cf399392956a8878e9a3e7be6c26327c74",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "11eedfb07e84040da32469e81b0f17cead9d79650fc72ccf4347a504c612def0",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "moderation": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "fca9fe0ebc7ace46b580d1e0184e332e1d1a31212c30f2e753d3dbe93378d069",
-      "text": "0a1ff869e250561210d9e01557da7e5784cc4f12cf2255b8a6253ec1c969771c"
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "8f12b7af13cdb6083ad03120bcd37625312169de7c324751c62f8c1b23f86959",
+      "text": "1bc92e4c97e80aa6e773940d0b09a1682de13c5118c99da2fd77759b24213b54"
     },
     "orders": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "2e30f5599accb6cd30d6ad6023383f4e987e02ff4423e8c365e1a9ae51e1d983",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "e5a90c33c5771c6bd30a67dd1454907385a9911c440b1a1d0a6ee571e0842cdb",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "pets": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "e7b768c62937a260d51b409dc3fefffac7c3ed1a7a3d9cd5a9117af2308348ec",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "4bb9ea316bc56adf135b30afb4c673099b11d1d2a67a442ac3b4de5ec9365df4",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "1b22611aa76b9a3133598858ae6961749293fc85e1007be0ba08141ca347350a",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "b2bbbea1169443e6df2224e393f5bfdef23908225458be6e58ba87a0f8ab6e05",
       "text": "b66278597912053a64a4f192bf0cf63795a8720263d4283683b9458eec8f0bff"
     },
     "profile": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "a05310e8b9f170b49707856fa0c72a769c04b3976aaf274317f457ac41bee2f3",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "807e1efbc99af96a6b9923933e1973fbc8b279e35252e38daa54dc694586d922",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "ec091d74db3faf39d56b8c62d9324c13ddf6c98d7f3c88c3d04a49718fe62522",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "d6b4311806304e564c141bfcf6a463458c8ddb299f03f3aaca22b7061db021ac",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "f7e9d13fff7c619d9cea1640a04664042c946160d59ab986258015a06a24aa50",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "34a3924381dd7142f4a0f19c0b787e2fde5c8a5e96472994e85a807829fd30d9",
       "text": "83fdfb3ddc5551875ec1f031676a80e3adb73e448dffae614c489441ea6f2c33"
     },
     "shop": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "dc65e3c39c8bb37b3acbeeb320a7bf0447cc2586c3080f1349faaa243257ea09",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "59145152e7a29b909ffde3210044a088da1a22af07fee3addb2644ee1db77b4b",
       "text": "62ef5965cc091b6cbd7e6af58d21e58ba2e8dd65d9e704cec710768ff7a47099"
     },
     "skills": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "97130c8624927a95f20f7fdc2f8287cb143ffa0a0baa3e84afb212137e52c424",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "bebb088ff8f22a745069c30e14f47495df7b9740a581fc2be25bdd85c4ed6f98",
       "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
     },
     "start": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "0afbc8a37ce1d8850b937b59f0335b9a7093c4a350e53288f73247a10b18b745",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "68632fa708e02cc2eeb553436d64b4f1f29bc1605fa46c51b2704cba0d54c497",
       "text": "c2835fdf2d1945079115e6a252d472ce72ad9ad79f4ed47ad58e269b467d595f"
     },
     "teleports": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "2cb4d9725a8d01242308c49517462169658911a8bf3f8ac70e2cb499fe8f273c",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "1dd78d7c7a63bb4634ffec055cd4c52704552e3a11928c4d6cb44774dd1017fd",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "7607c6e4e2d3bd5a650640e732702493d64feff6fe9714685d83b73c3365a407",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "3ccff1975590184b145f5b39418081e778124b11578ab7a670ef38a017130fd0",
       "text": "a4d12cf48881e623761e39d44e627b95975f839a8737cfd76b9ee138317a4c07"
     },
     "titles": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "3d0596af800e1d2ecb1e7be2bcd414bf162c9954d8a1a34cc9b32243b10a8663",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "d787e777a77e53e265390088eb3989ff45dc288babe3b5215ba800a248987bdc",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "dc65e3c39c8bb37b3acbeeb320a7bf0447cc2586c3080f1349faaa243257ea09",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "59145152e7a29b909ffde3210044a088da1a22af07fee3addb2644ee1db77b4b",
       "text": "2a5bea290303628eb56534b6c6049b53ccfd668b53366b515d16867a5b3cbb60"
     },
     "vk": {
-      "reason": "Админ-панель: контрольная сумма moderation.json, защита .broken, автобан BanList, роли, профили и %tab_warns%",
-      "sources": "371df9b88b8cc95f07627ceae2ef10ec44f928e309ca8a58b952991018a95156",
+      "reason": "Админ-панель: муты, размут, кик, IP-бан через BanList, история чата и кнопки сроков",
+      "sources": "81a82d72521bdfec2294c138c0cc42251b59a2a5417afefb3bed9cc2ad81f7f3",
       "text": "2b67feb5684b14875601ba47314694afa598ff87f6dd74350a06f65029a735eb"
     }
   },

@@ -21,6 +21,22 @@ class ModerationConfigTest {
     }
 
     @Test
+    void mutePresetsComeFromConfigAndNeverLeaveThePanelEmpty() {
+        assertEquals(java.util.List.of(10L, 60L, 1_440L, 10_080L),
+                ModerationConfig.DEFAULT.mutePresets());
+        YamlConfiguration yaml = new YamlConfiguration();
+        yaml.set("moderation.mute-presets-minutes", java.util.List.of(5, 30));
+        assertEquals(java.util.List.of(5L, 30L),
+                ModerationConfig.fromConfig(yaml).mutePresets());
+        yaml.set("moderation.mute-presets-minutes", java.util.List.of("15", "120"));
+        assertEquals(java.util.List.of(15L, 120L),
+                ModerationConfig.fromConfig(yaml).mutePresets(), "строки тоже разбираются");
+        yaml.set("moderation.mute-presets-minutes", java.util.List.of(0, -5, 99_999_999));
+        assertEquals(ModerationConfig.DEFAULT_MUTE_PRESETS,
+                ModerationConfig.fromConfig(yaml).mutePresets(), "мусор откатывается к дефолту");
+    }
+
+    @Test
     void clampsExtremeValuesAndRestoresEmptyReason() {
         YamlConfiguration yaml = new YamlConfiguration();
         yaml.set("moderation.enabled", false);

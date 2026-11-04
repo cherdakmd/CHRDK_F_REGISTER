@@ -33,6 +33,11 @@ public final class ModerationLedger {
     public static final String ACTION_UNBAN = "unban";
     public static final String ACTION_ROLE_ADD = "moderator.add";
     public static final String ACTION_ROLE_REMOVE = "moderator.remove";
+    public static final String ACTION_MUTE = "mute";
+    public static final String ACTION_UNMUTE = "unmute";
+    public static final String ACTION_KICK = "kick";
+    public static final String ACTION_IP_BAN = "ip_ban";
+    public static final String ACTION_IP_UNBAN = "ip_unban";
 
     /** Одна запись о варне. Снятие — пометка, а не удаление. */
     public static final class Warn {

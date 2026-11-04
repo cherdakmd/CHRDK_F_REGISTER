@@ -119,8 +119,8 @@ commands:
     aliases: [balancetop, topbal]
 
   adminpanel:
-    description: "Админ-панель аудита игроков: профили, варны, бан, модераторы и журнал"
-    usage: /<command> [players|profile <ник>|moderators|journal|warn <ник> <причина>|unwarn <id>|ban <ник> <причина>|unban <ник>|moderator <add|remove> <ник>]
+    description: "Админ-панель аудита игроков: профили, варны, муты, кик, бан по имени и IP, модераторы и журнал"
+    usage: /<command> [players|profile <ник>|moderators|journal|mutes|chat <ник>|warn <ник> <причина>|unwarn <id>|ban <ник> <причина>|unban <ник>|mute <ник> <срок> <причина>|unmute <ник>|kick <ник> <причина>|ipban <ник> <причина>|ipunban <ip|ник>|moderator <add|remove> <ник>]
     aliases: [apanel, staffpanel]
 permissions:
   chrdkregister.donate:

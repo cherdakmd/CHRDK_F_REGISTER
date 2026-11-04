@@ -295,6 +295,174 @@ public final class ModerationService {
         return true;
     }
 
+    /* --------------------- мут, кик и бан по IP ---------------------------- */
+
+    /** Наказания из панели доступны старшим: /mute, операторам или выданному праву. */
+    public boolean canPunish(CommandSender sender) {
+        return sender != null && (sender.hasPermission(ChatService.PERMISSION_MUTE) || sender.isOp());
+    }
+
+    private boolean punishAllowed(CommandSender actor) {
+        if (!isStaff(actor)) {
+            plugin.messages().send(actor, "admin.no-permission");
+            return false;
+        }
+        if (!canPunish(actor)) {
+            plugin.messages().send(actor, "admin.punish-denied");
+            return false;
+        }
+        return true;
+    }
+
+    public boolean mute(CommandSender actor, String targetName, long minutes, String reason) {
+        if (!punishAllowed(actor)) return false;
+        String target = ModerationLedger.display(targetName);
+        if (target.isEmpty() || minutes <= 0 || reason == null || reason.isBlank()) {
+            plugin.messages().send(actor, "admin.mute-failed", "player", target);
+            return false;
+        }
+        if (!plugin.chatService().applyMuteFromPanel(actor, target, minutes, reason.trim())) {
+            plugin.messages().send(actor, "admin.mute-failed", "player", target);
+            return false;
+        }
+        long now = System.currentTimeMillis();
+        ledger.record(ModerationLedger.ACTION_MUTE, actor.getName(), target,
+                reason.trim() + " (" + minutes + " мин.)", now);
+        save();
+        audit(AuditLog.MODERATION_MUTE, actor, target,
+                Map.of("minutes", minutes, "reason", reason.trim()));
+        return true;
+    }
+
+    public boolean unmute(CommandSender actor, String targetName) {
+        if (!punishAllowed(actor)) return false;
+        String target = ModerationLedger.display(targetName);
+        if (!plugin.chatService().clearMuteFromPanel(actor, target)) return false;
+        ledger.record(ModerationLedger.ACTION_UNMUTE, actor.getName(), target, "",
+                System.currentTimeMillis());
+        save();
+        audit(AuditLog.MODERATION_UNMUTE, actor, target, Map.of());
+        return true;
+    }
+
+    public java.util.List<RegistrationStore.MuteEntry> activeMutes() {
+        return plugin.chatService().activeMutesFromPanel();
+    }
+
+    public static long muteDurationMinutes(String raw) {
+        return ChatService.muteDurationMinutes(raw);
+    }
+
+    public boolean kick(CommandSender actor, String targetName, String reason) {
+        if (!punishAllowed(actor)) return false;
+        String target = ModerationLedger.display(targetName);
+        Player online = findOnline(target);
+        if (online == null) {
+            plugin.messages().send(actor, "admin.player-offline", "player", target);
+            return false;
+        }
+        String text = reason == null || reason.isBlank()
+                ? plugin.messages().plain("admin.value-none") : reason.trim();
+        online.kick(plugin.messages().get("admin.kick-message", "reason", text));
+        ledger.record(ModerationLedger.ACTION_KICK, actor.getName(), target, text,
+                System.currentTimeMillis());
+        save();
+        audit(AuditLog.MODERATION_KICK, actor, target, Map.of("reason", text));
+        plugin.messages().send(actor, "admin.kick-applied", "player", target, "reason", text);
+        return true;
+    }
+
+    public boolean ipBan(CommandSender actor, String targetName, String reason) {
+        if (!punishAllowed(actor)) return false;
+        String target = ModerationLedger.display(targetName);
+        String ip = resolveIp(target);
+        if (ip.isEmpty()) {
+            plugin.messages().send(actor, "admin.ip-unknown", "player", target);
+            return false;
+        }
+        String text = reason == null || reason.isBlank()
+                ? plugin.messages().plain("admin.value-none") : reason.trim();
+        try {
+            BanList list = Bukkit.getBanList(BanList.Type.IP);
+            if (list.isBanned(ip)) list.pardon(ip);
+            list.addBan(ip, text, (Date) null, BAN_SOURCE);
+        } catch (RuntimeException | LinkageError exception) {
+            plugin.getLogger().log(Level.WARNING,
+                    "[CHRDK_Core] Не удалось забанить IP " + ip, exception);
+        }
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (ip.equals(ipOf(player))) {
+                player.kick(plugin.messages().get("admin.ip-ban-kick", "reason", text));
+            }
+        }
+        ledger.record(ModerationLedger.ACTION_IP_BAN, actor.getName(), target,
+                ip + " · " + text, System.currentTimeMillis());
+        save();
+        audit(AuditLog.MODERATION_IP_BAN, actor, target, Map.of("ip", ip, "reason", text));
+        plugin.messages().send(actor, "admin.ip-ban-applied",
+                "player", target, "ip", ip, "reason", text);
+        return true;
+    }
+
+    public boolean ipUnban(CommandSender actor, String ipOrName) {
+        if (!punishAllowed(actor)) return false;
+        String value = ModerationLedger.display(ipOrName);
+        String ip = value.contains(".") || value.contains(":") ? value : resolveIp(value);
+        if (ip.isEmpty()) {
+            plugin.messages().send(actor, "admin.ip-unknown", "player", value);
+            return false;
+        }
+        try {
+            Bukkit.getBanList(BanList.Type.IP).pardon(ip);
+        } catch (RuntimeException exception) {
+            plugin.getLogger().log(Level.WARNING,
+                    "[CHRDK_Core] Не удалось снять IP-бан " + ip, exception);
+        }
+        ledger.record(ModerationLedger.ACTION_IP_UNBAN, actor.getName(), value, ip,
+                System.currentTimeMillis());
+        save();
+        audit(AuditLog.MODERATION_IP_UNBAN, actor, value, Map.of("ip", ip));
+        plugin.messages().send(actor, "admin.ip-unban-applied", "ip", ip);
+        return true;
+    }
+
+    /** Причина IP-бана для профиля; пусто, если адрес не забанен. */
+    public String ipBanReason(String target) {
+        String ip = resolveIp(target);
+        if (ip.isEmpty()) return "";
+        try {
+            var entry = Bukkit.getBanList(BanList.Type.IP).getBanEntry(ip);
+            return entry == null || entry.getReason() == null ? "" : entry.getReason();
+        } catch (RuntimeException | LinkageError ignored) {
+            return "";
+        }
+    }
+
+    public java.util.List<String> chatHistory(String target, int limit) {
+        return plugin.chatService().readChatHistory(target, limit);
+    }
+
+    private String resolveIp(String target) {
+        Player online = findOnline(target);
+        String live = ipOf(online);
+        if (!live.isEmpty()) return live;
+        var account = plugin.store().getAccount(target).orElse(null);
+        if (account == null) return "";
+        if (account.lastAuthIp != null && !account.lastAuthIp.isBlank()) return account.lastAuthIp;
+        if (account.sessions != null) {
+            for (int i = account.sessions.size() - 1; i >= 0; i--) {
+                String ip = account.sessions.get(i).ip;
+                if (ip != null && !ip.isBlank()) return ip;
+            }
+        }
+        return "";
+    }
+
+    private static String ipOf(Player player) {
+        if (player == null || player.getAddress() == null || player.getAddress().getAddress() == null) return "";
+        return player.getAddress().getAddress().getHostAddress();
+    }
+
     /* ------------------------------- аудит --------------------------------- */
 
     private void audit(String event, CommandSender actor, String target, Map<String, Object> details) {

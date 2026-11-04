@@ -58,20 +58,33 @@ public final class AdminPanelGui implements Listener {
     static final int SLOT_PLAYERS = 0;
     static final int SLOT_MODERATORS = 1;
     static final int SLOT_JOURNAL = 2;
+    static final int SLOT_MUTES = 3;
     static final int SLOT_INFO = 4;
     static final int SLOT_FILTER = 6;
     static final int SLOT_REFRESH = 8;
     static final int SLOT_PREV = 45;
     static final int SLOT_NEXT = 47;
     static final int SLOT_WARN = 48;
+    /** Слот 49: на странице профиля — «Наказания», на странице модераторов — «Добавить». */
+    static final int SLOT_PUNISH = 49;
+    static final int SLOT_ADD_MODERATOR = 49;
     static final int SLOT_BAN = 50;
     static final int SLOT_ROLE = 51;
     static final int SLOT_BACK = 52;
     static final int SLOT_CLOSE = 53;
+    /** Кнопки страницы «Наказания»: пресеты занимают первые пять слотов списка. */
+    static final int PUNISH_UNMUTE = 19;
+    static final int PUNISH_KICK = 20;
+    static final int PUNISH_IP_BAN = 21;
+    static final int PUNISH_IP_UNBAN = 22;
+    static final int PUNISH_CHAT = 23;
 
-    public enum Page { PLAYERS, PROFILE, MODERATORS, JOURNAL }
+    public enum Page { PLAYERS, PROFILE, MODERATORS, JOURNAL, MUTES, PUNISH, CHAT_HISTORY }
 
-    private enum Input { WARN, BAN, MODERATOR_ADD, FILTER }
+    private enum Input {
+        WARN, BAN, MODERATOR_ADD, FILTER,
+        MUTE_REASON, MUTE_CUSTOM_DURATION, KICK_REASON, IP_BAN_REASON, IP_UNBAN_TARGET
+    }
 
     private static final DateTimeFormatter DATE =
             DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm").withZone(ZoneId.systemDefault());
@@ -101,9 +114,13 @@ public final class AdminPanelGui implements Listener {
         public @NotNull Inventory getInventory() { return inventory; }
     }
 
-    private record Pending(Input type, Page page, String target, int index, String filter) {
+    private record Pending(Input type, Page page, String target, int index, String filter, long minutes) {
         Pending withFilter(String value) {
-            return new Pending(type, page, target, index, value);
+            return new Pending(type, page, target, index, value, minutes);
+        }
+
+        Pending withType(Input value) {
+            return new Pending(value, page, target, index, filter, minutes);
         }
     }
 
@@ -140,6 +157,9 @@ public final class AdminPanelGui implements Listener {
             case PROFILE -> messages.get("admin.panel-title", "page", messages.plain("admin.page-profile"));
             case MODERATORS -> messages.get("admin.panel-title", "page", messages.plain("admin.page-moderators"));
             case JOURNAL -> messages.get("admin.panel-title", "page", messages.plain("admin.page-journal"));
+            case MUTES -> messages.get("admin.panel-title", "page", messages.plain("admin.page-mutes"));
+            case PUNISH -> messages.get("admin.panel-title", "page", messages.plain("admin.page-punish"));
+            case CHAT_HISTORY -> messages.get("admin.panel-title", "page", messages.plain("admin.page-chat"));
         };
         holder.inventory = Bukkit.createInventory(holder, SIZE, title);
         paint(viewer, holder);
@@ -168,6 +188,8 @@ public final class AdminPanelGui implements Listener {
                 messages.get("admin.button-moderators"), List.of()));
         inventory.setItem(SLOT_JOURNAL, icon(Material.BOOK,
                 messages.get("admin.button-journal"), List.of()));
+        inventory.setItem(SLOT_MUTES, icon(Material.NAME_TAG,
+                messages.get("admin.button-mutes"), List.of()));
         inventory.setItem(SLOT_FILTER, icon(Material.HOPPER,
                 messages.get("admin.button-filter", "filter",
                         holder.filter.isEmpty() ? messages.plain("admin.value-none") : holder.filter),
@@ -188,6 +210,9 @@ public final class AdminPanelGui implements Listener {
             case PROFILE -> paintProfile(viewer, holder);
             case MODERATORS -> paintModerators(viewer, holder);
             case JOURNAL -> paintJournal(viewer, holder);
+            case MUTES -> paintMutes(viewer, holder);
+            case PUNISH -> paintPunish(viewer, holder);
+            case CHAT_HISTORY -> paintChatHistory(viewer, holder);
         }
     }
 
@@ -199,6 +224,9 @@ public final class AdminPanelGui implements Listener {
                     case PROFILE -> messages.plain("admin.page-profile");
                     case MODERATORS -> messages.plain("admin.page-moderators");
                     case JOURNAL -> messages.plain("admin.page-journal");
+                    case MUTES -> messages.plain("admin.page-mutes");
+                    case PUNISH -> messages.plain("admin.page-punish");
+                    case CHAT_HISTORY -> messages.plain("admin.page-chat");
                 }),
                 messages.getList("admin.panel-info-lore",
                         "players", players.size(),
@@ -255,6 +283,8 @@ public final class AdminPanelGui implements Listener {
                 ? messages.get("admin.button-role-remove", "player", name)
                 : messages.get("admin.button-role-add", "player", name);
         holder.inventory.setItem(SLOT_ROLE, icon(Material.GOLDEN_AXE, roleName, List.of()));
+        inventorySet(holder, SLOT_PUNISH, icon(Material.GOLDEN_AXE,
+                messages.get("admin.button-punish", "player", name), List.of()));
 
         List<ModerationLedger.Warn> history = service.ledger().warnHistory(name);
         paintSlots(viewer, holder, history.size(), (slot, offset) -> {
@@ -286,7 +316,7 @@ public final class AdminPanelGui implements Listener {
                             "actor", moderator.addedBy, "at", date(moderator.addedAt),
                             "hint", messages.plain("admin.button-role-remove")));
         });
-        inventorySet(holder, 49, icon(Material.EMERALD,
+        inventorySet(holder, SLOT_ADD_MODERATOR, icon(Material.EMERALD,
                 messages.get("admin.button-role-add", "player", messages.plain("admin.value-none")), List.of()));
         if (staff.isEmpty()) {
             empty(holder, Material.PAPER, messages.get("admin.moderators-empty"));
@@ -310,6 +340,103 @@ public final class AdminPanelGui implements Listener {
         });
         if (entries.isEmpty()) {
             empty(holder, Material.PAPER, messages.get("admin.journal-empty"));
+        }
+    }
+
+    private void paintMutes(Player viewer, Holder holder) {
+        Messages messages = plugin.messages();
+        paintInfo(viewer, holder, players());
+        long now = System.currentTimeMillis();
+        String needle = holder.filter.toLowerCase(Locale.ROOT);
+        List<RegistrationStore.MuteEntry> mutes = service.activeMutes().stream()
+                .filter(entry -> needle.isEmpty()
+                        || (entry.playerName != null
+                        && entry.playerName.toLowerCase(Locale.ROOT).contains(needle))
+                        || muteReason(entry).toLowerCase(Locale.ROOT).contains(needle))
+                .toList();
+        paintSlots(viewer, holder, mutes.size(), (slot, offset) -> {
+            RegistrationStore.MuteEntry mute = mutes.get(offset);
+            String name = mute.playerName == null || mute.playerName.isBlank()
+                    ? messages.plain("admin.value-none") : mute.playerName;
+            return icon(Material.BOOK,
+                    messages.get("admin.mutes-entry", "player", name),
+                    messages.getList("admin.mutes-entry-lore",
+                            "remaining", AccessManager.describeRemaining(mute.remainingMillis(now)),
+                            "reason", muteReason(mute).isBlank()
+                                    ? messages.plain("admin.value-none") : muteReason(mute),
+                            "actor", mute.author == null || mute.author.isBlank()
+                                    ? messages.plain("admin.value-none") : mute.author));
+        });
+        if (mutes.isEmpty()) {
+            empty(holder, Material.PAPER, messages.get("admin.mutes-empty"));
+        }
+    }
+
+    private void paintPunish(Player viewer, Holder holder) {
+        Messages messages = plugin.messages();
+        String name = holder.target;
+        paintInfo(viewer, holder, players());
+        String ipBan = service.ipBanReason(name);
+        holder.inventory.setItem(SLOT_INFO, icon(Material.GOLDEN_AXE,
+                messages.get("admin.punish-head", "player", name),
+                messages.getList("admin.punish-head-lore",
+                        "mute", currentMuteText(name),
+                        "ip", ipBan.isEmpty() ? messages.plain("admin.value-none") : ipBan,
+                        "rights", service.canPunish(viewer)
+                                ? messages.plain("admin.value-yes") : messages.plain("admin.value-no"))));
+
+        List<Long> presets = service.config().mutePresets();
+        for (int i = 0; i < presets.size() && i < ENTRY_SLOTS.length - 1; i++) {
+            long minutes = presets.get(i);
+            inventorySet(holder, ENTRY_SLOTS[i], icon(Material.CLOCK,
+                    messages.get("admin.button-mute-preset", "duration",
+                            AccessManager.describeRemaining(minutes * 60_000L)), List.of()));
+        }
+        inventorySet(holder, ENTRY_SLOTS[Math.min(presets.size(), ENTRY_SLOTS.length - 1)],
+                icon(Material.WRITABLE_BOOK, messages.get("admin.button-mute-custom"), List.of()));
+        inventorySet(holder, PUNISH_UNMUTE, icon(Material.EMERALD,
+                messages.get("admin.button-unmute"), List.of()));
+        inventorySet(holder, PUNISH_KICK, icon(Material.ARROW,
+                messages.get("admin.button-kick", "player", name), List.of()));
+        inventorySet(holder, PUNISH_IP_BAN, icon(Material.REDSTONE_BLOCK,
+                messages.get("admin.button-ip-ban", "player", name), List.of()));
+        inventorySet(holder, PUNISH_IP_UNBAN, icon(Material.LIME_DYE,
+                messages.get("admin.button-ip-unban"), List.of()));
+        inventorySet(holder, PUNISH_CHAT, icon(Material.PAPER,
+                messages.get("admin.button-chat-history", "player", name), List.of()));
+    }
+
+    private static String muteReason(RegistrationStore.MuteEntry mute) {
+        return mute.reason == null ? "" : mute.reason;
+    }
+
+    private String currentMuteText(String name) {
+        for (RegistrationStore.MuteEntry mute : service.activeMutes()) {
+            if (mute.playerName != null && mute.playerName.equalsIgnoreCase(name)) {
+                String reason = mute.reason == null || mute.reason.isBlank()
+                        ? plugin.messages().plain("admin.value-none") : mute.reason;
+                return AccessManager.describeRemaining(
+                        mute.remainingMillis(System.currentTimeMillis())) + " · " + reason;
+            }
+        }
+        return plugin.messages().plain("admin.value-none");
+    }
+
+    private void paintChatHistory(Player viewer, Holder holder) {
+        Messages messages = plugin.messages();
+        paintInfo(viewer, holder, players());
+        String needle = holder.filter.toLowerCase(Locale.ROOT);
+        List<String> lines = service.chatHistory(holder.target, 200).stream()
+                .filter(line -> needle.isEmpty() || line.toLowerCase(Locale.ROOT).contains(needle))
+                .toList();
+        paintSlots(viewer, holder, lines.size(), (slot, offset) -> {
+            String line = lines.get(offset);
+            if (line.length() > 64) line = line.substring(0, 64) + "…";
+            return icon(Material.PAPER, messages.get("admin.chat-entry", "line", line), List.of());
+        });
+        if (lines.isEmpty()) {
+            empty(holder, Material.PAPER,
+                    messages.get("admin.chat-empty", "player", holder.target));
         }
     }
 
@@ -413,6 +540,9 @@ public final class AdminPanelGui implements Listener {
         rows.add(row(messages.plain("admin.field-moderator"),
                 service.ledger().isModerator(name)
                         ? messages.plain("admin.value-yes") : messages.plain("admin.value-no")));
+        String ipBan = service.ipBanReason(name);
+        rows.add(row(messages.plain("admin.field-ip-ban"),
+                ipBan.isEmpty() ? messages.plain("admin.value-no") : ipBan));
 
         // Разделы аддонов (клан, дома, приваты, профессии) приходят через ProfileProvider API.
         UUID id;
@@ -454,8 +584,16 @@ public final class AdminPanelGui implements Listener {
         if (slot == SLOT_PLAYERS) { open(viewer, Page.PLAYERS, "", holder.index, holder.filter); return; }
         if (slot == SLOT_MODERATORS) { open(viewer, Page.MODERATORS, "", 0, holder.filter); return; }
         if (slot == SLOT_JOURNAL) { open(viewer, Page.JOURNAL, "", 0, holder.filter); return; }
+        if (slot == SLOT_MUTES) { open(viewer, Page.MUTES, "", 0, holder.filter); return; }
         if (slot == SLOT_REFRESH) { paint(viewer, holder); return; }
-        if (slot == SLOT_BACK) { open(viewer, Page.PLAYERS, "", 0, holder.filter); return; }
+        if (slot == SLOT_BACK) {
+            if (holder.page == Page.PUNISH || holder.page == Page.CHAT_HISTORY) {
+                open(viewer, Page.PROFILE, holder.target);
+            } else {
+                open(viewer, Page.PLAYERS, "", 0, holder.filter);
+            }
+            return;
+        }
         if (slot == SLOT_FILTER) { startInput(viewer, Input.FILTER, holder); return; }
         if (slot == SLOT_PREV) {
             if (holder.index > 0) { holder.index--; paint(viewer, holder); }
@@ -488,8 +626,47 @@ public final class AdminPanelGui implements Listener {
             paint(viewer, holder);
             return;
         }
-        if (slot == 49 && holder.page == Page.MODERATORS) {
+        if (slot == SLOT_PUNISH && holder.page == Page.PROFILE) {
+            open(viewer, Page.PUNISH, holder.target);
+            return;
+        }
+        if (slot == SLOT_ADD_MODERATOR && holder.page == Page.MODERATORS) {
             startInput(viewer, Input.MODERATOR_ADD, holder);
+            return;
+        }
+        if (holder.page == Page.PUNISH) {
+            List<Long> presets = service.config().mutePresets();
+            for (int i = 0; i < presets.size() && i < ENTRY_SLOTS.length - 1; i++) {
+                if (slot == ENTRY_SLOTS[i]) {
+                    startInput(viewer, Input.MUTE_REASON, holder, presets.get(i));
+                    return;
+                }
+            }
+            if (slot == ENTRY_SLOTS[Math.min(presets.size(), ENTRY_SLOTS.length - 1)]) {
+                startInput(viewer, Input.MUTE_CUSTOM_DURATION, holder);
+                return;
+            }
+            if (slot == PUNISH_UNMUTE) {
+                service.unmute(viewer, holder.target);
+                paint(viewer, holder);
+                return;
+            }
+            if (slot == PUNISH_KICK) {
+                startInput(viewer, Input.KICK_REASON, holder);
+                return;
+            }
+            if (slot == PUNISH_IP_BAN) {
+                startInput(viewer, Input.IP_BAN_REASON, holder);
+                return;
+            }
+            if (slot == PUNISH_IP_UNBAN) {
+                startInput(viewer, Input.IP_UNBAN_TARGET, holder);
+                return;
+            }
+            if (slot == PUNISH_CHAT) {
+                open(viewer, Page.CHAT_HISTORY, holder.target);
+                return;
+            }
             return;
         }
 
@@ -517,7 +694,19 @@ public final class AdminPanelGui implements Listener {
                     paint(viewer, holder);
                 }
             }
-            case JOURNAL -> { /* запись журнала только для чтения */ }
+            case MUTES -> {
+                String needle = holder.filter.toLowerCase(Locale.ROOT);
+                List<RegistrationStore.MuteEntry> mutes = service.activeMutes().stream()
+                        .filter(entry -> needle.isEmpty()
+                                || (entry.playerName != null
+                                && entry.playerName.toLowerCase(Locale.ROOT).contains(needle))
+                                || muteReason(entry).toLowerCase(Locale.ROOT).contains(needle))
+                        .toList();
+                if (offset < mutes.size() && mutes.get(offset).playerName != null) {
+                    open(viewer, Page.PROFILE, mutes.get(offset).playerName);
+                }
+            }
+            case JOURNAL, PUNISH, CHAT_HISTORY -> { /* только чтение либо кнопки выше */ }
         }
     }
 
@@ -538,8 +727,12 @@ public final class AdminPanelGui implements Listener {
     /* -------------------------- ввод причины в чате ------------------------ */
 
     private void startInput(Player viewer, Input type, Holder holder) {
+        startInput(viewer, type, holder, 0L);
+    }
+
+    private void startInput(Player viewer, Input type, Holder holder, long minutes) {
         pending.put(viewer.getUniqueId(),
-                new Pending(type, holder.page, holder.target, holder.index, holder.filter));
+                new Pending(type, holder.page, holder.target, holder.index, holder.filter, minutes));
         viewer.closeInventory();
         Messages messages = plugin.messages();
         switch (type) {
@@ -547,6 +740,16 @@ public final class AdminPanelGui implements Listener {
             case BAN -> messages.send(viewer, "admin.input-ban", "player", holder.target);
             case MODERATOR_ADD -> messages.send(viewer, "admin.input-moderator");
             case FILTER -> messages.send(viewer, "admin.input-filter");
+            case MUTE_REASON -> messages.send(viewer, "admin.input-mute-reason",
+                    "player", holder.target,
+                    "duration", AccessManager.describeRemaining(minutes * 60_000L));
+            case MUTE_CUSTOM_DURATION -> messages.send(viewer, "admin.input-mute-custom",
+                    "player", holder.target);
+            case KICK_REASON -> messages.send(viewer, "admin.input-kick-reason",
+                    "player", holder.target);
+            case IP_BAN_REASON -> messages.send(viewer, "admin.input-ip-ban-reason",
+                    "player", holder.target);
+            case IP_UNBAN_TARGET -> messages.send(viewer, "admin.input-ip-unban");
         }
     }
 
@@ -576,6 +779,25 @@ public final class AdminPanelGui implements Listener {
             case WARN -> service.warn(player, request.target, text);
             case BAN -> service.ban(player, request.target, text);
             case MODERATOR_ADD -> service.addModerator(player, text);
+            case MUTE_REASON -> service.mute(player, request.target, request.minutes, text);
+            case MUTE_CUSTOM_DURATION -> {
+                long minutes = ModerationService.muteDurationMinutes(text);
+                if (minutes <= 0) {
+                    plugin.messages().send(player, "admin.mute-bad-duration");
+                    reopen(player, request);
+                    return;
+                }
+                // Двухшаговый ввод: сначала срок, затем причина. Меню остаётся закрытым.
+                pending.put(player.getUniqueId(), new Pending(Input.MUTE_REASON, request.page,
+                        request.target, request.index, request.filter, minutes));
+                plugin.messages().send(player, "admin.input-mute-reason",
+                        "player", request.target,
+                        "duration", AccessManager.describeRemaining(minutes * 60_000L));
+                return;
+            }
+            case KICK_REASON -> service.kick(player, request.target, text);
+            case IP_BAN_REASON -> service.ipBan(player, request.target, text);
+            case IP_UNBAN_TARGET -> service.ipUnban(player, text);
             case FILTER -> { /* фильтр применяется при повторном открытии */ }
         }
         reopen(player, request.type == Input.FILTER ? request.withFilter(text) : request);
