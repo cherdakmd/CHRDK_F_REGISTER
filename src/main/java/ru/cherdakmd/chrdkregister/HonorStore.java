@@ -42,12 +42,17 @@ public final class HonorStore {
         return file;
     }
 
-    /** Нет файла — шаблон «Старый цитрус» без выданных игроков. */
+    /** Совместимость с тестами и вызовами без настроек. */
     public HonorLedger load() {
-        if (!Files.isRegularFile(file)) return HonorLedger.withDefaults();
+        return load(HonorConfig.DEFAULT);
+    }
+
+    /** Нет файла — шаблон и благодарности из honors.initial-grants. */
+    public HonorLedger load(HonorConfig config) {
+        if (!Files.isRegularFile(file)) return HonorLedger.withDefaults(config);
         try {
             String text = Files.readString(file, StandardCharsets.UTF_8);
-            if (text == null || text.isBlank()) return HonorLedger.withDefaults();
+            if (text == null || text.isBlank()) return HonorLedger.withDefaults(config);
             JsonObject root = JsonParser.parseString(text).getAsJsonObject();
             String declared = root.has("checksum") && !root.get("checksum").isJsonNull()
                     ? root.get("checksum").getAsString() : "";
@@ -65,7 +70,7 @@ public final class HonorStore {
                     "[CHRDK_Core] Не удалось прочитать honors.json: " + exception.getMessage()
                             + ". Копия сохранена как honors.json.broken; звания стартуют с шаблона по умолчанию.",
                     exception);
-            return HonorLedger.withDefaults();
+            return HonorLedger.withDefaults(config);
         }
     }
 

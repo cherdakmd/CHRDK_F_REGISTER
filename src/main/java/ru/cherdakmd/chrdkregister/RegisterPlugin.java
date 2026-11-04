@@ -149,8 +149,8 @@ public final class RegisterPlugin extends JavaPlugin {
         }
         // honors.json лежит отдельно от data.json: решение владельца не подделывает покупку.
         this.honorStore = new HonorStore(getDataFolder().toPath(), getLogger());
-        this.honors = new HonorService(this, honorStore.load(), honorStore,
-                HonorConfig.fromConfig(getConfig()));
+        HonorConfig honorConfig = HonorConfig.fromConfig(getConfig());
+        this.honors = new HonorService(this, honorStore.load(honorConfig), honorStore, honorConfig);
         this.honorGui = new HonorGui(this, honors);
         getServer().getPluginManager().registerEvents(honorGui, this);
         if (chatService != null) chatService.setHonors(honors);

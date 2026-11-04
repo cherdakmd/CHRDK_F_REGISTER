@@ -60,6 +60,21 @@ class HonorStoreTest {
     }
 
     @Test
+    void missingFileSeedsStaveLimeButExistingFileWins() {
+        HonorStore store = store();
+        HonorConfig config = new HonorConfig(true, false, 160, HonorConfig.DEFAULT_REASON, true,
+                java.util.List.of(new HonorConfig.InitialGrant("StaveLime", "old-citrus",
+                        "За выслугу лет")));
+        HonorLedger fresh = store.load(config);
+        assertEquals(5, fresh.grantLevel("StaveLime"));
+
+        assertTrue(store.save(HonorLedger.withDefaults()), "файл без выдач");
+        HonorLedger existing = store.load(config);
+        assertTrue(existing.allGrants().isEmpty(),
+                "существующий honors.json не переписывается настройками конфига");
+    }
+
+    @Test
     void legacyWithoutChecksumIsAccepted() throws Exception {
         HonorStore store = store();
         String legacy = "{\"version\":1,\"definitions\":[{\"id\":\"old-citrus\","

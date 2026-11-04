@@ -83,6 +83,22 @@ class HonorLedgerTest {
     }
 
     @Test
+    void firstRunSeedsConfiguredStaveLimeAndSkipsUnknownHonors() {
+        HonorConfig config = new HonorConfig(true, false, 160, HonorConfig.DEFAULT_REASON, true,
+                java.util.List.of(
+                        new HonorConfig.InitialGrant("StaveLime", "old-citrus", "За выслугу лет"),
+                        new HonorConfig.InitialGrant("Alex", "missing", "неизвестное звание")));
+        HonorLedger ledger = HonorLedger.withDefaults(config);
+        assertEquals(1, ledger.allGrants().size(), "неизвестное звание не выдаётся");
+        assertEquals(5, ledger.grantLevel("StaveLime"));
+        assertEquals("old-citrus", ledger.active("StaveLime").id());
+        assertEquals("настройки сервера", ledger.grantOf("StaveLime").grantedBy());
+        assertEquals("За выслугу лет", ledger.grantOf("StaveLime").reason());
+        assertEquals(1, ledger.publicGrants().size(), "выдача видна в публичном реестре");
+        assertEquals(0, ledger.grantLevel("Alex"));
+    }
+
+    @Test
     void revokeIsCaseInsensitiveAndRespectsHonorId() {
         HonorLedger ledger = HonorLedger.withDefaults();
         ledger.grant(new HonorGrant("Steve", "", "old-citrus", "Owner", 1L, "причина"));

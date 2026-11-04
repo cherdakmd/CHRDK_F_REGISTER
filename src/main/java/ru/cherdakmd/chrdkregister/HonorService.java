@@ -62,7 +62,7 @@ public final class HonorService {
 
     /** Перечитать honors.json с диска (явная команда администратора). */
     public void reloadStore() {
-        this.ledger = store.load();
+        this.ledger = store.load(config);
     }
 
     public boolean save() {

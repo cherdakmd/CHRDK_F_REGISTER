@@ -54,10 +54,32 @@ public final class HonorLedger {
     private final Map<String, HonorDefinition> definitions = new LinkedHashMap<>();
     private final Map<String, HonorGrant> grants = new LinkedHashMap<>();
 
-    /** Первый запуск: шаблон «Старый цитрус» без привязки к игроку. */
+    /** Первый запуск без конфига: только шаблон, без выданных игроков. */
     public static HonorLedger withDefaults() {
+        return withDefaults(HonorConfig.DEFAULT);
+    }
+
+    /**
+     * Первый запуск: шаблон «Старый цитрус» плюс благодарности, явно
+     * прописанные владельцем в {@code honors.initial-grants}.
+     *
+     * <p>Существующий {@code honors.json} этим методом не затрагивается:
+     * решения администрации на диске всегда главнее конфига.</p>
+     */
+    public static HonorLedger withDefaults(HonorConfig config) {
         HonorLedger ledger = new HonorLedger();
         ledger.define(HonorDefinition.oldCitrus());
+        if (config == null) return ledger;
+        long now = System.currentTimeMillis();
+        for (HonorConfig.InitialGrant entry : config.initialGrants()) {
+            if (ledger.definition(entry.honorId()) == null) continue;
+            String reason = entry.reason();
+            if (reason.length() > config.maxReasonLength()) {
+                reason = reason.substring(0, config.maxReasonLength()).trim();
+            }
+            ledger.grant(new HonorGrant(entry.player(), "", entry.honorId(),
+                    "настройки сервера", now, reason));
+        }
         return ledger;
     }
 
