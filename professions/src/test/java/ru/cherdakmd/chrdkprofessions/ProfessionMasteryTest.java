@@ -45,11 +45,11 @@ class ProfessionMasteryTest {
         store.setActive(PLAYER, "smith", NOW);
         assertEquals("mastery-locked", service.chooseMastery(PLAYER, "restorer", NOW).key());
         unlock(store, Profession.SMITH);
-        assertEquals("mastery-wrong", service.chooseMastery(PLAYER, "chef", NOW).key());
+        assertEquals("mastery-locked", service.chooseMastery(PLAYER, "chef", NOW).key());
         assertTrue(service.chooseMastery(PLAYER, "restorer", NOW).ok());
         assertEquals("mastery-same", service.chooseMastery(PLAYER, "restorer", NOW).key());
         assertEquals("mastery-change-cooldown", service.chooseMastery(PLAYER, "field-smith", NOW + 1).key());
-        assertEquals(ProfessionMastery.RESTORER, service.mastery(PLAYER));
+        assertEquals(ProfessionMastery.RESTORER, service.mastery(PLAYER, Profession.SMITH));
         assertTrue(service.chooseMastery(PLAYER, "field-smith", NOW + ProfessionMastery.CHANGE_MILLIS).ok());
         assertEquals(5, service.level(PLAYER, Profession.SMITH));
     }
@@ -62,14 +62,14 @@ class ProfessionMasteryTest {
         store.setWorkUntil(PLAYER, Profession.SMITH, NOW + 600_000);
         store.setActive(PLAYER, "cook", NOW + 1);
         store.setActive(PLAYER, "smith", NOW + 2);
-        assertEquals(600, service.workCooldownLeft(PLAYER, NOW + 2));
-        assertEquals(ProfessionMastery.RESTORER, service.mastery(PLAYER));
+        assertEquals(600, service.workCooldownLeft(PLAYER, Profession.SMITH, NOW + 2));
+        assertEquals(ProfessionMastery.RESTORER, service.mastery(PLAYER, Profession.SMITH));
         store.flush();
         var loaded = store();
         loaded.load();
         var after = new ProfessionService(ProfessionConfig.defaults(), loaded);
-        assertEquals(600, after.workCooldownLeft(PLAYER, NOW));
-        assertEquals(ProfessionMastery.RESTORER, after.mastery(PLAYER));
+        assertEquals(600, after.workCooldownLeft(PLAYER, Profession.SMITH, NOW));
+        assertEquals(ProfessionMastery.RESTORER, after.mastery(PLAYER, Profession.SMITH));
         assertEquals(5, after.level(PLAYER, Profession.SMITH));
         assertTrue(loaded.reset(PLAYER));
         assertNull(loaded.mastery(PLAYER, Profession.SMITH));
@@ -89,7 +89,7 @@ class ProfessionMasteryTest {
         String snapshot = loaded.snapshotJson();
         assertTrue(snapshot.contains("2026-10-27"));
         assertTrue(snapshot.contains("250"));
-        assertTrue(snapshot.contains("\"version\": 3"));
+        assertTrue(snapshot.contains("\"version\": 4"));
     }
 
     @Test void malformedOrCrossProfessionChoicesAreNotActivated() throws Exception {
@@ -109,12 +109,12 @@ class ProfessionMasteryTest {
         var yaml = new YamlConfiguration();
         yaml.set("mastery.enabled", false);
         var service = new ProfessionService(ProfessionConfig.parse(yaml, LOG), store);
-        assertEquals("mastery-disabled", service.checkMastery(PLAYER).key());
+        assertEquals("mastery-disabled", service.checkMastery(PLAYER, Profession.SMITH).key());
         yaml.set("mastery.enabled", true);
         yaml.set("perks.enabled", false);
         service.applyConfig(ProfessionConfig.parse(yaml, LOG));
         assertFalse(service.chooseMastery(PLAYER, "restorer", NOW).ok());
-        assertNull(service.mastery(PLAYER));
+        assertNull(service.mastery(PLAYER, Profession.SMITH));
         assertTrue(ProfessionConfig.parse(new YamlConfiguration(), LOG).masteryEnabled());
     }
 
