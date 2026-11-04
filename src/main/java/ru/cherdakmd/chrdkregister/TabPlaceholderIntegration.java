@@ -71,7 +71,9 @@ public final class TabPlaceholderIntegration extends PlaceholderExpansion {
         Player live = offlinePlayer == null ? null : offlinePlayer.getPlayer();
         boolean authenticated = live != null && access != null
                 && access.getStage(live) == AccessManager.PlayerStage.AUTHENTICATED;
-        String hidden = messages.plain("tab.sign-in");
+        // null/live == null — голограмма или оффлайн-запрос без игрока: личных
+        // полей нет, «после входа» там было бы помехой. Онлайн, но до входа — честно скрываем.
+        String hidden = live == null ? "" : messages.plain("tab.sign-in");
         // Ключ собирается переменной: сканер MessagesTest не считает "tab.tip-" готовым ключом.
         String tipKey = "tab.tip-" + Math.floorMod(now / 12000, 6);
 

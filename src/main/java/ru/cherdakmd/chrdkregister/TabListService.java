@@ -19,8 +19,11 @@ import java.util.Locale;
  * Таб-лист (TAB): периодическое обновление шапки/подвала списка игроков и формата
  * имени в списке. Шаблоны — в {@code config.yml} (секция {@code tablist}), разметка —
  * MiniMessage/&amp;-коды, подстановки: {@code %player% %online% %max% %tps% %ping%
- * %world% %pass_status% %pass_left% %pass_days%}.
+ * %world% %pass_status% %pass_left% %pass_days%}, кадры {@code %tab_*%} и любые
+ * внешние плейсхолдеры PlaceholderAPI ({@code %chrdk_*%} и других плагинов).
  *
+ * Кадры {@code %tab_*%} маскируются на время PAPI-прохода: их анимированные
+ * значения подставляет {@code Messages.fill}, а не внешний expansion.
  * Значения подстановок экранируются ({@link Messages#escape(Object)}), поэтому
  * ник игрока не сломает разметку. Если {@code player-name-format} пуст — имя в
  * списке не трогаем, кроме активной оплаченной клановой анимации: она обязательна.
@@ -29,6 +32,37 @@ public final class TabListService implements Listener {
 
     /** Команда «вверх таба»: клиент ставит игроков с командой выше остальных, а '!' сортируется первым. */
     static final String PIN_TEAM_NAME = "!chrdk-pin";
+
+    /** PAPI не должен перетирать кадры CHRDK: на время его прохода знаки % снимаем. */
+    private static final java.util.regex.Pattern TAB_TOKEN =
+            java.util.regex.Pattern.compile("%(tab_[a-z_]+)%");
+    private static final char TAB_MASK = '\u0001';
+
+    static String maskTabTokens(String template) {
+        return TAB_TOKEN.matcher(template).replaceAll(TAB_MASK + "$1" + TAB_MASK);
+    }
+
+    static String unmaskTabTokens(String text) {
+        return text.indexOf(TAB_MASK) < 0 ? text : text.replace(TAB_MASK, '%');
+    }
+
+    /**
+     * Резолвит плейсхолдеры PlaceholderAPI в шаблонах TAB. Внутренние кадры
+     * {@code %tab_*%} защищены маской: после PAPI они восстанавливаются и их
+     * подставляет Messages.fill с цветной анимацией. Без PAPI или вне сервера
+     * шаблон возвращается без изменений — это честный детерминированный fallback.
+     */
+    static String resolveExternalPlaceholders(String template, Player player) {
+        if (player == null || template == null || template.indexOf('%') < 0) return template;
+        try {
+            if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) return template;
+            String masked = maskTabTokens(template);
+            String resolved = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, masked);
+            return resolved == null ? template : unmaskTabTokens(resolved);
+        } catch (Throwable ignored) {
+            return template;
+        }
+    }
 
     /** Снимок настроек из {@code config.yml}. */
     record Settings(boolean enabled, int refreshTicks, List<String> header, List<String> footer,
@@ -313,8 +347,8 @@ public final class TabListService implements Listener {
     private void applyHeaders(Player player, TabContext context, AccessManager.PlayerStage stage) {
         boolean show = visible(player, LabelPreferences.Label.HEADER);
         Messages messages = runtime.messages();
-        Headers next = new Headers(show && !settings.header().isEmpty() ? joinLines(renderLines(messages, settings.header(), context)) : Component.empty(),
-                show && !settings.footer().isEmpty() ? joinLines(renderLines(messages, settings.footer(), context)) : Component.empty());
+        Headers next = new Headers(show && !settings.header().isEmpty() ? joinLines(renderLines(messages, settings.header(), context, player)) : Component.empty(),
+                show && !settings.footer().isEmpty() ? joinLines(renderLines(messages, settings.footer(), context, player)) : Component.empty());
         if (!next.equals(headerFrames.put(player.getUniqueId(), next)) || !next.equals(actualHeaders(player)))
             player.sendPlayerListHeaderAndFooter(next.header(), next.footer());
         managedHeaders.add(player.getUniqueId());
@@ -330,7 +364,7 @@ public final class TabListService implements Listener {
         if (format == null || format.isBlank()) releaseName(player);
         else deliverName(player, format.equals("%player_tagged%")
                 ? runtime.messages().markup(nameDecorator.decorate(player.getName()))
-                : renderName(runtime.messages(), format, context));
+                : renderName(runtime.messages(), format, context, player));
     }
     private void releaseName(Player player) {
         var id = player.getUniqueId();
@@ -506,17 +540,25 @@ public final class TabListService implements Listener {
     }
 
     static List<Component> renderLines(Messages messages, List<String> templates, TabContext context) {
+        return renderLines(messages, templates, context, null);
+    }
+
+    static List<Component> renderLines(Messages messages, List<String> templates, TabContext context, Player player) {
         if (templates.isEmpty()) return List.of();
         List<Component> out = new ArrayList<>(templates.size());
         Object[] placeholders = context.placeholders();
         for (String template : templates) {
-            out.add(messages.renderTemplate(template, placeholders));
+            out.add(messages.renderTemplate(resolveExternalPlaceholders(template, player), placeholders));
         }
         return out;
     }
 
     static Component renderName(Messages messages, String format, TabContext context) {
-        return messages.renderTemplate(format, context.placeholders());
+        return renderName(messages, format, context, null);
+    }
+
+    static Component renderName(Messages messages, String format, TabContext context, Player player) {
+        return messages.renderTemplate(resolveExternalPlaceholders(format, player), context.placeholders());
     }
 
     /** Старый отдельный %rank_tag% не должен дублировать ранг и обходить лимит. */

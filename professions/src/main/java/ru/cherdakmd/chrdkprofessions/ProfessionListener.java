@@ -504,34 +504,36 @@ final class ProfessionListener implements Listener {
     /** 1.4.282: одно действие кормит все ремёсла, чья таблица опыта его знает. */
     private void sourceAll(Player player, String action, Material material, int units,
                            java.util.function.ToIntFunction<Profession> rate) {
+        boolean earned = false;
         for (Profession profession : Profession.values()) {
             int per = rate.applyAsInt(profession);
-            if (per > 0) source(player, profession, action, material, units, per);
+            if (per > 0) earned |= source(player, profession, action, material, units, per);
         }
+        // Одно действие кормит до восьми ремёсел. WAL идемпотентен, но дёргать банк
+        // восемь раз подряд незачем: доставляем накопленный total один раз за действие,
+        // а фоновый tick(16) по-прежнему подбирает «зависшие» выплаты.
+        if (earned && plugin.income() != null) plugin.income().deliver(player.getUniqueId());
     }
 
     /** Начисляет опыт и сообщает о новом уровне; про потолок — один раз в день. */
-    private void source(Player player,Profession profession,String action,Material material,int units,int per){
-        if(per<=0||units<=0)return;
-        processAward(player,profession,plugin.service().awardSource(player.getUniqueId(),profession,action,material,units,per,System.currentTimeMillis()));
+    private boolean source(Player player,Profession profession,String action,Material material,int units,int per){
+        if(per<=0||units<=0)return false;
+        return processAward(player,profession,plugin.service().awardSource(player.getUniqueId(),profession,action,material,units,per,System.currentTimeMillis()));
     }
-    private void processAward(Player player,Profession profession,ProfessionService.Award award){
+    private boolean processAward(Player player,Profession profession,ProfessionService.Award award){
         if (award.added() <= 0) {
             if (award.capped()) {
                 noticeCap(player, profession);
             }
-            return;
+            return false;
         }
         plugin.requestSave();
         queueFeedback(player, profession, award.added());
-        if (award.diamonds() > 0) {
-            // Доход начисляется тихо: одно действие кормит до восьми ремёсел, поэтому
-            // уведомление за каждое начисление превращалось в поток одинаковых строк в чате.
-            // Итог всегда виден в /prof income (income-today / income-total).
-            if (plugin.income() != null) plugin.income().deliver(player.getUniqueId());
-        }
+        // Доход начисляется тихо: уведомление за каждое начисление превращалось
+        // в поток одинаковых строк в чате. Итог виден в /prof income.
+        boolean earned = award.diamonds() > 0;
         if (!award.leveled()) {
-            return;
+            return earned;
         }
         cappedNotice.remove(player.getUniqueId());
         plugin.messages().send(player, "level-up",
@@ -546,6 +548,7 @@ final class ProfessionListener implements Listener {
         if (plugin.config().xpFeedback()) {
             player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.6f, 1.4f);
         }
+        return earned;
     }
 
     /**

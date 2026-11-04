@@ -1,168 +1,168 @@
 {
   "pages": {
     "about": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "336a48c4442160a609fa8d88ababc8b210b4c1fb9cb8697c144068d50ec83df4",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "104c9a5201844a186968b8bc09727aef7ee5969be7e3faa2efd4781a189c7083",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "d40bb125800357eea309fd9da2fe4e48834a28c67458a6505e0beae4eb1ab2aa",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "f558b587eb859550d06f6f81494b65d4856fc2a3a6712107a5d1180c035939d6",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "2b1dce8ee6823ae03ed69a9f24d884bd4bfebf4c82f90728d3cb092d62b20776",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "ed588e0bb2101ae65828f6eaa5d409a72c4540093da4c8e458c8317594bb671d",
       "text": "fcdffb1098428fac2bd42d1c4acb73bb9a024d1823d5398b8845bb2f415a506f"
     },
     "auction": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "fd40119ae5ac1cad47007ca6eb28059124daf2f2f589b59a49e288bfb3e3abd8",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "aaad7cbc6987744998d1eacbcfe0735fb7fe2c3b6f9265ddfb84cd5c349e483d",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "1ace7e970e08989e449f3fa319b39fc7e23f7faf39024d25adc74a9c2a8c566d",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "d0f562d6ca9126e1fc66d6214278abdf72ac822fec27d4660cc89bf9a70a3f81",
       "text": "f368077b5f1961a1982957afe3b8523b60c8330f3dfd1891003d01ea1c4fd6db"
     },
     "chat": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "336a48c4442160a609fa8d88ababc8b210b4c1fb9cb8697c144068d50ec83df4",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "104c9a5201844a186968b8bc09727aef7ee5969be7e3faa2efd4781a189c7083",
       "text": "ca6c93fc33fca52eecc7d38744bc86f619ea0b6a7bcc2314b84ca6c5399d8a1c"
     },
     "claims": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "1a08b1222e9c6528330c82e305ef05d7bd8ab7408af0c72c750eee3ac0974ada",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "0d70f1e7ddc578e2a8d89401d21c58e2c9cb886263a33c83d84eeb5cdda62ebe",
       "text": "bf1b24b85ecdaee84580c0d5ea4b9c1120b8dd072e38aa68b52e49fc2a0c472c"
     },
     "classes": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "29f76f4c4ff171ba4be3c7627002251f9d35c38fdb7c9a78de794225484b6aba",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "3005025e2d7cb68edfbfc85a6e49babb5b70d2ce590f5d6c7de016b725e06605",
       "text": "ee29d92bd4e9527924d14405057fd62402857c1a688439c7b9d86d4c9bf3b546"
     },
     "commands": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "a65e2a8cb2adade09e2b2f6179260d0b9abc63df98b01673b6b01193b16db255",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "43eb0fddcbc73c29d7681eb7240c3b6be7b0802b2f21eecf13a5a876161ea0fa",
       "text": "b210ff00d9d9a82a7663a9ddc5fac3491e03b244a72217f81c997ec39bc03928"
     },
     "cosmetics": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "36ad33ae3534298d22f7af9b32087e5915f830f32a66d59d14183a71e9910449",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "adbc170395adc2e81669c6678893d1710c272567960415147ce349e97f97ccde",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "e0c464ec02bb1ca694d6300fd0ace69ded9b46776772db1f08ca1192ab718f1c",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "dd8b38a70810e4ae863df4e7431163494612e04a7e36a74288653cefbb2cbc3c",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "economy": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "c2f0682f1ede9983a7ee897ebd8b29fb3bd424745a7f43e900f08898497c6426",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "4553d245849a7681db552c2d90d17e4d3f2f2c4687addb85befd9ccaf8f3a15c",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "4ba13aecc9e513ead83ac92af5bedce46b7fb6f1c9bc94f4e5bf75401e9c6af6",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "aacbf85bf4360f675ef584083fd1efd56947238679314e23f443e9bf67f0200d",
       "text": "daba8068188cc03ac1ee0f787eb1322c4d33b14da0bdffe35c17b473843dc5aa"
     },
     "faq": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "8900a2060f9b313925ae26442237452adf4139c8bb45e7a2e034f2cf5fb6f774",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "a48973e4b001336d12f0a52554d13642aaef1e33f21dd4b4134e2f055a7232ac",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "cd35db0d5a881a1fcbcb12948db6b1fd7d51cc9af4220a2d7489c614387fea0b",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "80ba8f0851849e08b1abf41bc232267cc615f142e8989df38d13dd2b1a333ac7",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "1a08b1222e9c6528330c82e305ef05d7bd8ab7408af0c72c750eee3ac0974ada",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "0d70f1e7ddc578e2a8d89401d21c58e2c9cb886263a33c83d84eeb5cdda62ebe",
       "text": "e166f2671aabcdf55ecf59d1465ddb19a36343f6d07983eb8b8821b3a63cce34"
     },
     "hunt": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "413d41ca56b1776b14076694a185afe067f2f8c09b5bf7a57500d735a96a6d5f",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "a6676bb251694a443f4b062c44f5b5dbad65b092f14c1d7000376ba71faf2643",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "79403e4201be7ee614527458fd1d0310d838cdecf7ec4f82f8ae36d18c2074be",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "7edb20db3c1a0f982d67d235dc49a4a80c9c1e4dbbbb5ebed22c4cea8fc5bf95",
       "text": "1417660c5793d86ddfab16c8b2203cbd2dd6b47a245ffa219c71898485b9c39f"
     },
     "menu": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "bcd3db68cef451ffd75f779d3a3b15546c2c4c74fcebb59de4859b6ab9dfb606",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "5ffedbd1fae034306bcbe7da1fd50c10dcb98e726cd46f35167dd810e0a74a28",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "orders": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "8421a4174432938ab0c1e096a5c7594318627844cba315b5ea59df7a85c2c684",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "347f3d62c4ecc58255e704497c2be86c2a4379b3ea291eebbaf5792444b2b303",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "pets": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "1ded807ae1a20fb7d39eb1c2c2bc27fbae92da82775be8ddca7b960e73a3e30f",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "6bc907030387da93f83fe94f911731a183771efee1fef8c6980c726dccf6e16f",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "5842f109b09ccf5c4dd70b1d0ca52c892a708116033b4de1ba290199238d417a",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "6950df84d7c829a58784ed199b6ee83b02a051c35df9331caf74cd15411e073b",
       "text": "b66278597912053a64a4f192bf0cf63795a8720263d4283683b9458eec8f0bff"
     },
     "profile": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "2e9874ea535c5cb534a2aca1e9a01d102c779ea0e51531937c7c3f2c3bc63599",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "3387d34d9123d30a4d98d118ace1076bda5c4be08047566127a1238eafa37663",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "8ffc8fb0c7e802b6e4e5ca726dd261db293c4fb6d556380dc1047d6994339f66",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "8d4a70299f43fa2e8fdf2b07e1c298e8b57a5897c1cadc4c9be42b0e296cf249",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "595c72e5c92a57bbcceb4faa6100ad482891f8f83a446f067c2d10bc84e44e66",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "251adafeb5057e4f5f95ec8ed6c180e74cdf72d76bc33e73155cd3bbf592fdb5",
       "text": "83fdfb3ddc5551875ec1f031676a80e3adb73e448dffae614c489441ea6f2c33"
     },
     "shop": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "79403e4201be7ee614527458fd1d0310d838cdecf7ec4f82f8ae36d18c2074be",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "7edb20db3c1a0f982d67d235dc49a4a80c9c1e4dbbbb5ebed22c4cea8fc5bf95",
       "text": "62ef5965cc091b6cbd7e6af58d21e58ba2e8dd65d9e704cec710768ff7a47099"
     },
     "skills": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "0d406efac9a3aa5c98f113aa6998c21d27c8c5239a77e5843baff59807ce344e",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "6d68abadabbf94f2ec4acd7522144f2fd75422a3fb7a02c00c40aaec59d8b0dd",
       "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
     },
     "start": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "85bb9ccbaccf3c0bcd0ea1f3478152c00ed26bb0c4f665f27eebe6bb38f54c8c",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "11fa08c4cbb2728aefc4d679338aabb8d4216b4ebd408791cbcd9fa0892dba00",
       "text": "c2835fdf2d1945079115e6a252d472ce72ad9ad79f4ed47ad58e269b467d595f"
     },
     "teleports": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "ebfa4ee51708dd5a24f3023af1b2bab507caadeaa32ea244a3c3b010d0e7633d",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "7731147a706c2537a452eb4a15faaec4371a988161601d06655906c2660cb29f",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "4ba13aecc9e513ead83ac92af5bedce46b7fb6f1c9bc94f4e5bf75401e9c6af6",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "aacbf85bf4360f675ef584083fd1efd56947238679314e23f443e9bf67f0200d",
       "text": "a4d12cf48881e623761e39d44e627b95975f839a8737cfd76b9ee138317a4c07"
     },
     "titles": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "502277e25cdaaa7e20baf08a29c7fc7417e56946ae7f1d02733a6c30b5b268df",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "df391cd8ed6148309bfa01b87cc80e796f3a5daddd1a24c5cbe5fec561b7f425",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "79403e4201be7ee614527458fd1d0310d838cdecf7ec4f82f8ae36d18c2074be",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "7edb20db3c1a0f982d67d235dc49a4a80c9c1e4dbbbb5ebed22c4cea8fc5bf95",
       "text": "eedb10a80c527fcbd716d60ec23c7758f46a83865a1f8ec4fa1530b9625c7384"
     },
     "vk": {
-      "reason": "1.4.284-rc.1: зарегистрированы %tab_*% в PAPI и убрано чат-уведомление о доходе ремёсел",
-      "sources": "489f691124dc59170af9f265de496a5fed9431a27cfe8d3b188023ec8a27c8bf",
+      "reason": "1.4.284-rc.1: PAPI-проход в TAB с защитой кадров tab_*, дедупликация deliver(), конфликт identifier tab",
+      "sources": "2f2835ed31def2637ced8e2361e7374a6968d28b9791f5fe4ea16cc7a8b6c038",
       "text": "2b67feb5684b14875601ba47314694afa598ff87f6dd74350a06f65029a735eb"
     }
   },

@@ -32,6 +32,12 @@ class TabPlaceholderIntegrationTest {
         }
         assertNotNull(expansion.onRequest(null, ""));
         assertNull(expansion.onRequest(null, "unknown"), "чужой ключ не перехватывается");
+        // Голограмма/запрос без игрока: личных полей нет, «после входа» было бы помехой.
+        assertEquals("", expansion.onRequest(null, "balance"));
+        assertEquals("", expansion.onRequest(null, "boost"));
+        assertEquals("", expansion.onRequest(null, "world"));
+        assertEquals("", expansion.onRequest(null, "tip"));
+        assertNotNull(expansion.onRequest(null, "brand"), "глобальный кадр работает и без игрока");
         assertTrue(TabPlaceholderIntegration.isTabKey("brand"));
         assertFalse(TabPlaceholderIntegration.isTabKey("balance_raw"));
     }

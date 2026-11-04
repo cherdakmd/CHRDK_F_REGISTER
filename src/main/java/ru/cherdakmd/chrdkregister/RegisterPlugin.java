@@ -646,10 +646,21 @@ public final class RegisterPlugin extends JavaPlugin {
             getLogger().log(Level.WARNING, "Не удалось зарегистрировать плейсхолдеры %chrdk_*%", throwable);
         }
         // Отдельный try: коллизия identifier "tab" во внешнем плагине не должна
-        // маскировать успешную регистрацию основного expansion CHRDK.
+        // маскировать успешную регистрацию основного expansion CHRDK. Не перетираем
+        // чужое расширение — сообщаем владельцу, чей expansion резолвит %tab_*%.
         try {
-            new TabPlaceholderIntegration(version, messages(), accessManager, bank()).register();
-            getLogger().info("PlaceholderAPI обнаружен: плейсхолдеры %tab_*% зарегистрированы.");
+            var existing = me.clip.placeholderapi.PlaceholderAPI.getRegisteredExpansion("tab");
+            if (existing instanceof TabPlaceholderIntegration) {
+                getLogger().info("PlaceholderAPI: expansion %tab_*% уже зарегистрирован CHRDK.");
+            } else if (existing != null) {
+                getLogger().warning("PlaceholderAPI: идентификатор 'tab' занят expansion "
+                        + existing.getIdentifier() + "/" + existing.getAuthor()
+                        + "; %tab_*% во внешних плагинах резолвит чужое расширение. "
+                        + "Внутренний TAB CHRDK продолжает использовать свои кадры.");
+            } else {
+                new TabPlaceholderIntegration(version, messages(), accessManager, bank()).register();
+                getLogger().info("PlaceholderAPI обнаружен: плейсхолдеры %tab_*% зарегистрированы.");
+            }
         } catch (Throwable throwable) {
             getLogger().log(Level.WARNING, "Не удалось зарегистрировать плейсхолдеры %tab_*%", throwable);
         }
