@@ -31,7 +31,7 @@ public final class HonorCommandHandler implements CommandExecutor, TabCompleter 
 
     private static final List<String> PUBLIC = List.of("list", "my", "info", "rules", "help");
     private static final List<String> ADMIN = List.of(
-            "gui", "create", "edit", "delete", "grant", "revoke", "list", "info", "reload");
+            "gui", "create", "edit", "delete", "grant", "reason", "revoke", "list", "info", "reload");
     private static final List<String> FIELDS = List.of(
             "name", "format", "badge", "level", "description", "join", "listed");
 
@@ -136,6 +136,13 @@ public final class HonorCommandHandler implements CommandExecutor, TabCompleter 
                 }
                 honors.grant(sender, args[1], args[2], join(args, 3));
             }
+            case "reason", "причина" -> {
+                if (args.length < 3) {
+                    plugin.messages().send(sender, "honoradmin.usage-reason");
+                    return true;
+                }
+                honors.editGrantReason(sender, args[1], join(args, 2));
+            }
             case "revoke", "take", "снять" -> {
                 if (args.length < 2) {
                     plugin.messages().send(sender, "honoradmin.usage-revoke");
@@ -222,6 +229,9 @@ public final class HonorCommandHandler implements CommandExecutor, TabCompleter 
                     || action.equals("revoke") || action.equals("take") || action.equals("снять")) {
                 return filter(onlineNames(), args[1]);
             }
+            if (action.equals("reason") || action.equals("причина")) {
+                return filter(grantedNames(), args[1]);
+            }
             if (List.of("edit", "изменить", "delete", "remove", "удалить", "info", "карточка")
                     .contains(action)) {
                 return filter(ids(), args[1]);
@@ -239,6 +249,10 @@ public final class HonorCommandHandler implements CommandExecutor, TabCompleter 
 
     private List<String> ids() {
         return honors.ledger().definitions().stream().map(HonorDefinition::id).toList();
+    }
+
+    private List<String> grantedNames() {
+        return honors.ledger().allGrants().stream().map(HonorGrant::player).distinct().toList();
     }
 
     private static List<String> onlineNames() {

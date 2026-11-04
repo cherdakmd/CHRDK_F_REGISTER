@@ -1,8 +1,6 @@
 package ru.cherdakmd.chrdkregister;
 
-import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -23,9 +21,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Полноценный GUI-редактор особых званий, открываемый из админ-панели и
@@ -38,8 +34,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * открывается кнопкой из профиля админ-панели: администратор сам выбирает,
  * какое звание дать именно этому человеку.</p>
  *
- * <p>Текстовые поля вводятся следующим сообщением в чат и перехватываются на
- * LOWEST, как в админ-панели модерации. Все клики и drag отменяются.</p>
+ * <p>Текстовые поля вводятся следующим сообщением в чат через общий
+ * {@link GuiChatInput}: у игрока ровно одно активное ожидание на все панели
+ * ядра, с таймаутом и сбросом при выходе. Все клики и drag отменяются.</p>
  */
 public final class HonorGui implements Listener {
 
@@ -55,8 +52,11 @@ public final class HonorGui implements Listener {
 
     private enum Input {
         CREATE_ID, CREATE_NAME, HONOR_NAME, FORMAT, BADGE, DESCRIPTION, JOIN,
-        DELETE_CONFIRM, GRANT_PLAYER, GRANT_REASON, FILTER
+        DELETE_CONFIRM, GRANT_PLAYER, GRANT_REASON, GRANT_REASON_EDIT, FILTER
     }
+
+    /** Владелец ввода в чате — общий координатор, а не локальная карта. */
+    private static final String OWNER = "honors";
 
     static final int SLOT_DEFINITIONS = 0;
     static final int SLOT_GRANTS = 1;
@@ -117,7 +117,6 @@ public final class HonorGui implements Listener {
 
     private final RegisterPlugin plugin;
     private final HonorService honors;
-    private final Map<UUID, Pending> pending = new ConcurrentHashMap<>();
 
     public HonorGui(RegisterPlugin plugin, HonorService honors) {
         this.plugin = plugin;
@@ -169,7 +168,7 @@ public final class HonorGui implements Listener {
     }
 
     public void shutdown() {
-        pending.clear();
+        plugin.chatInput().clearOwner(OWNER);
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (player.getOpenInventory().getTopInventory().getHolder() instanceof Holder) {
                 player.closeInventory();
@@ -447,7 +446,14 @@ public final class HonorGui implements Listener {
             case DETAIL -> {
                 List<HonorGrant> grants = honors.ledger().grantsOfHonor(holder.target);
                 if (offset < grants.size()) {
-                    honors.revoke(viewer, grants.get(offset).player(), holder.target);
+                    HonorGrant grant = grants.get(offset);
+                    if (event.getClick().isShiftClick()) {
+                        queueInput(viewer, new Pending(Input.GRANT_REASON_EDIT, holder.page,
+                                grant.player(), holder.player, holder.index, holder.filter,
+                                grant.honorId()));
+                        return;
+                    }
+                    honors.revoke(viewer, grant.player(), holder.target);
                     paint(viewer, holder);
                 }
             }
@@ -460,7 +466,14 @@ public final class HonorGui implements Listener {
                                         .contains(holder.filter.toLowerCase(Locale.ROOT)))
                         .toList();
                 if (offset < grants.size()) {
-                    honors.revoke(viewer, grants.get(offset).player(), grants.get(offset).honorId());
+                    HonorGrant grant = grants.get(offset);
+                    if (event.getClick().isShiftClick()) {
+                        queueInput(viewer, new Pending(Input.GRANT_REASON_EDIT, holder.page,
+                                grant.player(), holder.player, holder.index, holder.filter,
+                                grant.honorId()));
+                        return;
+                    }
+                    honors.revoke(viewer, grant.player(), grant.honorId());
                     paint(viewer, holder);
                 }
             }
@@ -492,11 +505,14 @@ public final class HonorGui implements Listener {
     /* -------------------------- ввод значений в чате ----------------------- */
 
     private void startInput(Player viewer, Input type, Holder holder, String extra) {
-        pending.put(viewer.getUniqueId(), new Pending(type, holder.page, holder.target,
+        queueInput(viewer, new Pending(type, holder.page, holder.target,
                 holder.player, holder.index, holder.filter, extra));
-        viewer.closeInventory();
+    }
+
+    /** Подсказка и регистрация ожидания в общем координаторе ввода. */
+    private void queueInput(Player viewer, Pending request) {
         Messages messages = plugin.messages();
-        switch (type) {
+        switch (request.type()) {
             case CREATE_ID -> messages.send(viewer, "honor.gui.input-create-id");
             case CREATE_NAME -> messages.send(viewer, "honor.gui.input-create-name");
             case HONOR_NAME -> messages.send(viewer, "honor.gui.input-name");
@@ -505,31 +521,21 @@ public final class HonorGui implements Listener {
             case DESCRIPTION -> messages.send(viewer, "honor.gui.input-description");
             case JOIN -> messages.send(viewer, "honor.gui.input-join");
             case DELETE_CONFIRM -> messages.send(viewer, "honor.gui.input-delete",
-                    "id", holder.target);
+                    "id", request.target());
             case GRANT_PLAYER -> messages.send(viewer, "honor.gui.input-grant-player");
             case GRANT_REASON -> messages.send(viewer, "honor.gui.input-grant-reason",
-                    "player", holder.player.isEmpty() ? "—" : holder.player,
-                    "honor", honors.ledger().display(extra));
+                    "player", request.player().isEmpty() ? "—" : request.player(),
+                    "honor", honors.ledger().display(request.extra()));
+            case GRANT_REASON_EDIT -> messages.send(viewer, "honor.gui.input-reason",
+                    "player", request.target(),
+                    "honor", honors.ledger().display(request.extra()));
             case FILTER -> messages.send(viewer, "honor.gui.input-filter");
         }
+        plugin.chatInput().begin(viewer, OWNER, text -> applyInput(viewer, request, text));
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void onChat(AsyncChatEvent event) {
-        Player player = event.getPlayer();
-        if (pending.get(player.getUniqueId()) == null) return;
-        try {
-            event.setCancelled(true);
-        } catch (Throwable ignored) {
-            // Не все сборки Paper позволяют отменять AsyncChatEvent.
-        }
-        String text = PlainTextComponentSerializer.plainText().serialize(event.message());
-        Bukkit.getScheduler().runTask(plugin, () -> applyInput(player, text));
-    }
-
-    private void applyInput(Player player, String raw) {
-        Pending request = pending.remove(player.getUniqueId());
-        if (request == null || !player.isOnline() || !honors.canEdit(player)) return;
+    private void applyInput(Player player, Pending request, String raw) {
+        if (!player.isOnline() || !honors.canEdit(player)) return;
         String text = raw == null ? "" : raw.trim();
         if (text.isEmpty() || text.equalsIgnoreCase("отмена") || text.equalsIgnoreCase("cancel")) {
             plugin.messages().send(player, "honor.gui.input-cancelled");
@@ -543,9 +549,8 @@ public final class HonorGui implements Listener {
                     reopen(player, request);
                     return;
                 }
-                pending.put(player.getUniqueId(), new Pending(Input.CREATE_NAME, request.page,
-                        text, request.player, request.index, request.filter, ""));
-                plugin.messages().send(player, "honor.gui.input-create-name");
+                queueInput(player, new Pending(Input.CREATE_NAME, request.page(),
+                        text, request.player(), request.index(), request.filter(), ""));
                 return;
             }
             case CREATE_NAME -> honors.create(player, request.target, text);
@@ -576,6 +581,7 @@ public final class HonorGui implements Listener {
                 if (target.isEmpty()) target = request.target;
                 honors.grant(player, target, request.extra, text);
             }
+            case GRANT_REASON_EDIT -> honors.editGrantReason(player, request.target, text);
             case FILTER -> { /* фильтр применяется при повторном открытии */ }
         }
         reopen(player, request.type == Input.FILTER ? request.withFilter(text) : request);

@@ -41,4 +41,9 @@ public record HonorGrant(String player, String uuid, String honorId,
     public boolean belongsTo(String playerName) {
         return !key().isEmpty() && key().equals(key(playerName));
     }
+
+    /** Правка публичной причины: дата и автор выдачи сохраняются. */
+    public HonorGrant withReason(String newReason) {
+        return new HonorGrant(player, uuid, honorId, grantedBy, grantedAt, newReason);
+    }
 }

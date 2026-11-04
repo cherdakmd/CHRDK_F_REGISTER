@@ -55,18 +55,27 @@ public interface ChrdkRegisterApi {
     /* ------------------------------ ранги (v9) ------------------------------ */
 
     /**
-     * Ступень действующего донатного ранга: 0 — ранга нет, 1..5 — лестница.
-     * Работает и для оффлайн-ников.
+     * Эффективная ступень привилегий: 0 — нет ранга, 1..5 — лестница.
+     * Равна {@code max(оплаченный ранг, grant-level особого звания)}, поэтому
+     * может быть выше покупки. Работает и для оффлайн-ников.
      *
      * <p>Метод появился в API v9. Реализация по умолчанию выводит первую ступень
      * из {@link #hasActivePass(String)}, поэтому сторонние реализации интерфейса
      * остаются совместимыми.</p>
+     *
+     * <p>С 1.4.286 особые звания за выслугу лет входят в это значение, но не
+     * считаются покупкой: {@link #rankId(String)}, {@link #rankUntil(String)} и
+     * {@link #hasActivePass(String)} остаются данными {@code data.json}, а
+     * {@link #hasRank(String, int)} и {@link #rankBonus(String)} используют
+     * эффективную ступень. Аддону, которому нужна именно оплата, следует
+     * опираться на {@code rankId}/{@code hasActivePass}, а не на {@code rankLevel}.</p>
      */
     default int rankLevel(String playerName) {
         return hasActivePass(playerName) ? 1 : 0;
     }
 
-    /** Ид ступени (wanderer, pathfinder, keeper, patron, founder) или пустая строка. */
+    /** Ид оплаченной ступени (wanderer, pathfinder, keeper, patron, founder) или пустая строка.
+     *  У игрока только с особым званием — пустая строка. */
     default String rankId(String playerName) {
         return "";
     }
@@ -76,7 +85,7 @@ public interface ChrdkRegisterApi {
         return passUntil(playerName);
     }
 
-    /** Есть ли ранг не ниже указанной ступени. */
+    /** Есть ли привилегии не ниже указанной ступени (покупка или особое звание). */
     default boolean hasRank(String playerName, int minLevel) {
         return rankLevel(playerName) >= Math.max(1, minLevel);
     }

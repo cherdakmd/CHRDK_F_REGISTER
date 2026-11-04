@@ -6,7 +6,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class TabAnimation282Test {
     private TabListService.Settings settings(boolean enabled, int refresh, String format) {
-        return new TabListService.Settings(enabled, refresh, List.of(), List.of(), format, List.of(), false);
+        // tablist.show-rank-name читает RegisterPlugin → ChatService.setRankNameInTab,
+        // поэтому в Settings больше нет мёртвого поля showRankName.
+        return new TabListService.Settings(enabled, refresh, List.of(), List.of(), format, List.of());
     }
     @Test void animationDoesNotDependOnTheGeneralHeaderRefreshTimer() {
         assertTrue(TabListService.animationEnabled(settings(true, 0, "%player_tagged%")));

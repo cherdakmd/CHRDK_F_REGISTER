@@ -72,7 +72,7 @@ public record HonorDefinition(String id, String name, String format, String badg
             case "format", "gradient" -> format;
             case "badge" -> badge;
             case "level", "grant-level" -> Integer.toString(grantLevel);
-            case "description", "reason" -> description;
+            case "description" -> description;
             case "join", "join-line" -> joinLine;
             case "listed", "visible" -> Boolean.toString(listed);
             default -> "";
@@ -93,7 +93,7 @@ public record HonorDefinition(String id, String name, String format, String badg
                 yield parsed < 0 ? this
                         : new HonorDefinition(id, name, format, badge, parsed, description, joinLine, listed);
             }
-            case "description", "reason" ->
+            case "description" ->
                     new HonorDefinition(id, name, format, badge, grantLevel, value, joinLine, listed);
             case "join", "join-line" ->
                     new HonorDefinition(id, name, format, badge, grantLevel, description, value, listed);

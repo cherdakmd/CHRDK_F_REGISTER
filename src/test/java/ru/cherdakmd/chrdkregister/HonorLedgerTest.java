@@ -83,6 +83,18 @@ class HonorLedgerTest {
     }
 
     @Test
+    void editingGrantReasonKeepsDateAndActor() {
+        HonorGrant original = new HonorGrant("StaveLime", "uuid", "old-citrus",
+                "владелец", 12345L, "было");
+        HonorGrant edited = original.withReason("  стало  ");
+        assertEquals("стало", edited.reason());
+        assertEquals(original.grantedAt(), edited.grantedAt());
+        assertEquals(original.grantedBy(), edited.grantedBy());
+        assertEquals(original.uuid(), edited.uuid());
+        assertEquals(original.key(), edited.key());
+    }
+
+    @Test
     void firstRunSeedsConfiguredStaveLimeAndSkipsUnknownHonors() {
         HonorConfig config = new HonorConfig(true, false, 160, HonorConfig.DEFAULT_REASON, true,
                 java.util.List.of(

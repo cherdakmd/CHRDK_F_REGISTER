@@ -60,6 +60,26 @@ public final class HonorService {
         this.config = HonorConfig.fromConfig(file);
     }
 
+    /**
+     * Стартовые выдачи из {@code honors.initial-grants} тоже публичны: их
+     * появление дублируется в аудит, иначе первая благодарность была бы
+     * единственной выдачей без следа в {@code audit/*.jsonl}.
+     */
+    public void auditInitialGrants(List<HonorGrant> grants) {
+        AuditLog log = plugin.auditLog();
+        if (log == null || grants == null) return;
+        for (HonorGrant grant : grants) {
+            HonorDefinition def = ledger.definition(grant.honorId());
+            Map<String, Object> all = new LinkedHashMap<>();
+            all.put("honor", grant.honorId());
+            all.put("level", def == null ? 0 : def.grantLevel());
+            all.put("reason", grant.reason());
+            all.put("source", "honors.initial-grants");
+            all.put("actor", grant.grantedBy());
+            log.log(AuditLog.HONOR_GRANT, grant.grantedBy(), grant.player(), "", all);
+        }
+    }
+
     /** Перечитать honors.json с диска (явная команда администратора). */
     public void reloadStore() {
         this.ledger = store.load(config);
@@ -121,8 +141,10 @@ public final class HonorService {
             return false;
         }
         String name = rawName == null || rawName.isBlank() ? id : rawName.trim();
+        // Описание звания — не публичная причина выдачи: не подставляем сюда
+        // default-reason, чтобы в /honor info не появлялась чужая формулировка.
         HonorDefinition def = new HonorDefinition(id, name, HonorDefinition.DEFAULT_FORMAT,
-                "✦", 0, config.defaultReason(), "", true);
+                "✦", 0, "", "", true);
         if (!ledger.define(def)) {
             plugin.messages().send(actor, "honoradmin.limit");
             return false;
@@ -142,7 +164,7 @@ public final class HonorService {
         }
         String key = field == null ? "" : field.trim().toLowerCase(java.util.Locale.ROOT);
         if (!List.of("name", "format", "gradient", "badge", "level", "grant-level",
-                "description", "reason", "join", "join-line", "listed", "visible").contains(key)) {
+                "description", "join", "join-line", "listed", "visible").contains(key)) {
             plugin.messages().send(actor, "honoradmin.bad-field", "field", field);
             return false;
         }
@@ -162,15 +184,26 @@ public final class HonorService {
         return true;
     }
 
-    /** Удалить звание вместе со всеми выдачами. */
+    /**
+     * Удалить звание вместе со всеми выдачами. Каждое неявное снятие пишется
+     * отдельным {@code honor.revoke}: удаление не должно обходить аудит выдач.
+     */
     public boolean remove(CommandSender actor, String rawId) {
         if (!guard(actor)) return false;
         String id = HonorDefinition.normalizeId(rawId);
+        List<HonorGrant> revoked = ledger.grantsOfHonor(id);
         if (!ledger.remove(id)) {
             notFound(actor, rawId);
             return false;
         }
-        commit(actor, AuditLog.HONOR_REMOVE, id, Map.of());
+        persist(actor);
+        audit(actor, AuditLog.HONOR_REMOVE, id, Map.of(
+                "revoked", revoked.size(),
+                "players", String.join(", ", revoked.stream().map(HonorGrant::player).toList())));
+        for (HonorGrant grant : revoked) {
+            audit(actor, AuditLog.HONOR_REVOKE, grant.player(),
+                    Map.of("honor", id, "source", "honor.remove"));
+        }
         plugin.messages().send(actor, "honoradmin.deleted", "id", id);
         return true;
     }
@@ -220,6 +253,28 @@ public final class HonorService {
         return true;
     }
 
+    /** Изменить публичную причину уже выданного звания, сохранив дату и автора. */
+    public boolean editGrantReason(CommandSender actor, String rawPlayer, String rawReason) {
+        if (!guard(actor)) return false;
+        String player = rawPlayer == null ? "" : rawPlayer.trim();
+        HonorGrant current = ledger.grantOf(player);
+        if (current == null) {
+            plugin.messages().send(actor, "honoradmin.no-grant", "player", player);
+            return false;
+        }
+        String reason = reason(rawReason);
+        if (reason.isEmpty() || reason.equals(current.reason())) {
+            plugin.messages().send(actor, "honoradmin.bad-field", "field", "reason");
+            return false;
+        }
+        ledger.grant(current.withReason(reason));
+        commit(actor, AuditLog.HONOR_EDIT, player,
+                Map.of("field", "reason", "value", reason, "honor", current.honorId()));
+        plugin.messages().send(actor, "honoradmin.reason-updated",
+                "player", current.player(), "reason", reason);
+        return true;
+    }
+
     /** Снять звание; пустой id снимает любое. */
     public boolean revoke(CommandSender actor, String rawPlayer, String rawId) {
         if (!guard(actor)) return false;
@@ -266,10 +321,18 @@ public final class HonorService {
     }
 
     private void commit(CommandSender actor, String event, String target, Map<String, Object> details) {
+        persist(actor);
+        audit(actor, event, target, details);
+    }
+
+    private void persist(CommandSender actor) {
         if (!save()) {
             plugin.messages().send(actor, "honoradmin.save-failed");
-            plugin.getLogger().log(Level.WARNING, "[CHRDK_Core] honors.json не записан после " + event);
+            plugin.getLogger().log(Level.WARNING, "[CHRDK_Core] honors.json не записан после правки");
         }
+    }
+
+    private void audit(CommandSender actor, String event, String target, Map<String, Object> details) {
         AuditLog log = plugin.auditLog();
         if (log == null) return;
         String ip = "";

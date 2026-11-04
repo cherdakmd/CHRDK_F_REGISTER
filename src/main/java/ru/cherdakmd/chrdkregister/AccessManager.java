@@ -1943,6 +1943,8 @@ public final class AccessManager {
         HonorService honors = plugin.honors();
         if (honors != null && honors.enabled()) {
             String honorLine = honors.joinLine(player.getName());
+            // Осознанно одна строка на вход: строка звания заменяет строку ранга,
+            // а не склеивается с ней. Флаг дедупликации общий для обеих ветвей.
             if (!honorLine.isBlank() && !rankJoinAnnounced.contains(player.getUniqueId())) {
                 rankJoinAnnounced.add(player.getUniqueId());
                 Bukkit.getServer().broadcast(Messages.format(honorLine.replace("%player%", player.getName())));
@@ -1953,7 +1955,9 @@ public final class AccessManager {
         if (ranks == null || !ranks.enabled() || !ranks.announceJoin()) {
             return;
         }
-        int level = store.rankLevel(player.getName(), System.currentTimeMillis());
+        // Строка ранга считается по эффективной ступени: звание тоже «входит»
+        // на своей ступени, но историю платежей при этом не подделывает.
+        int level = effectiveRankLevel(player.getName());
         if (rankJoinAnnounced.contains(player.getUniqueId())) return;
         String line = ranks.nextJoinLine(level, player.getName());
         if (line.isBlank()) {

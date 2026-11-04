@@ -128,7 +128,7 @@ commands:
     aliases: [honors, zvanie]
   honoradmin:
     description: "Редактор особых званий: создать, оформить, привязать ступень, выдать и снять"
-    usage: /<command> <gui|create <id> [название]|edit <id> <поле> <значение>|delete <id>|grant <ник> <id> [причина]|revoke <ник> [id]|list|info <id>|reload>
+    usage: /<command> <gui|create <id> [название]|edit <id> <поле> <значение>|delete <id>|grant <ник> <id> [причина]|reason <ник> <причина>|revoke <ник> [id]|list|info <id>|reload>
     aliases: [honorsadmin]
 permissions:
   chrdkregister.donate:

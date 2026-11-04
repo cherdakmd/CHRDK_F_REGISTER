@@ -8,7 +8,7 @@ import java.util.Map;
 
 /** Настройки блока {@code honors:} в config.yml. Значения проверяются при чтении. */
 public record HonorConfig(boolean enabled, boolean announceGrant, int maxReasonLength,
-                          String defaultReason, boolean showInTab,
+                          String defaultReason, boolean showInTab, boolean overrideColor,
                           List<InitialGrant> initialGrants) {
 
     /**
@@ -25,7 +25,13 @@ public record HonorConfig(boolean enabled, boolean announceGrant, int maxReasonL
     public static final int MAX_INITIAL_GRANTS = 32;
 
     public static final HonorConfig DEFAULT =
-            new HonorConfig(true, false, 160, DEFAULT_REASON, true, List.of());
+            new HonorConfig(true, false, 160, DEFAULT_REASON, true, true, List.of());
+
+    /** Совместимость с вызовами, где приоритет оформления не задан явно. */
+    public HonorConfig(boolean enabled, boolean announceGrant, int maxReasonLength,
+                       String defaultReason, boolean showInTab, List<InitialGrant> initialGrants) {
+        this(enabled, announceGrant, maxReasonLength, defaultReason, showInTab, true, initialGrants);
+    }
 
     public static HonorConfig fromConfig(FileConfiguration config) {
         if (config == null) return DEFAULT;
@@ -35,7 +41,8 @@ public record HonorConfig(boolean enabled, boolean announceGrant, int maxReasonL
         String reason = config.getString("honors.default-reason", DEFAULT_REASON);
         if (reason == null || reason.isBlank()) reason = DEFAULT_REASON;
         boolean tab = config.getBoolean("honors.show-in-tab", true);
-        return new HonorConfig(enabled, announce, limit, reason.trim(), tab,
+        boolean override = config.getBoolean("honors.override-color", true);
+        return new HonorConfig(enabled, announce, limit, reason.trim(), tab, override,
                 initialGrants(config, reason.trim(), limit));
     }
 

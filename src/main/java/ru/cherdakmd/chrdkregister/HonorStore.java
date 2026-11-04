@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.security.MessageDigest;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -42,17 +43,31 @@ public final class HonorStore {
         return file;
     }
 
+    /** Результат загрузки: создан ли файл с нуля и какие выдачи посеяны из конфига. */
+    public record Load(HonorLedger ledger, List<HonorGrant> seeded, boolean created) {
+    }
+
     /** Совместимость с тестами и вызовами без настроек. */
     public HonorLedger load() {
         return load(HonorConfig.DEFAULT);
     }
 
-    /** Нет файла — шаблон и благодарности из honors.initial-grants. */
     public HonorLedger load(HonorConfig config) {
-        if (!Files.isRegularFile(file)) return HonorLedger.withDefaults(config);
+        return loadWithStatus(config).ledger();
+    }
+
+    /**
+     * Нет файла (или он пустой/битый) — шаблон и благодарности из
+     * {@code honors.initial-grants}. {@code created=true} означает, что состояние
+     * ещё не записано на диск: вызывающий должен сохранить его и продублировать
+     * стартовые выдачи в аудит, иначе дата перегенерируется при следующем старте.
+     */
+    public Load loadWithStatus(HonorConfig config) {
+        HonorConfig effective = config == null ? HonorConfig.DEFAULT : config;
+        if (!Files.isRegularFile(file)) return seeded(effective);
         try {
             String text = Files.readString(file, StandardCharsets.UTF_8);
-            if (text == null || text.isBlank()) return HonorLedger.withDefaults(config);
+            if (text == null || text.isBlank()) return seeded(effective);
             JsonObject root = JsonParser.parseString(text).getAsJsonObject();
             String declared = root.has("checksum") && !root.get("checksum").isJsonNull()
                     ? root.get("checksum").getAsString() : "";
@@ -63,15 +78,20 @@ public final class HonorStore {
             HonorLedger.State state = gson.fromJson(text, HonorLedger.State.class);
             HonorLedger ledger = new HonorLedger();
             if (state != null) ledger.restore(state);
-            return ledger;
+            return new Load(ledger, List.of(), false);
         } catch (IOException | RuntimeException exception) {
             preserveBroken();
             logger.log(Level.WARNING,
                     "[CHRDK_Core] Не удалось прочитать honors.json: " + exception.getMessage()
                             + ". Копия сохранена как honors.json.broken; звания стартуют с шаблона по умолчанию.",
                     exception);
-            return HonorLedger.withDefaults(config);
+            return seeded(effective);
         }
+    }
+
+    private Load seeded(HonorConfig config) {
+        HonorLedger ledger = HonorLedger.withDefaults(config);
+        return new Load(ledger, ledger.allGrants(), true);
     }
 
     /** Атомарно сохраняет снимок с контрольной суммой. */

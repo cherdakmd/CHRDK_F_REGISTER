@@ -75,6 +75,25 @@ class HonorStoreTest {
     }
 
     @Test
+    void firstLoadReportsSeededGrantsThatAreSavedAndAudited() {
+        HonorStore store = store();
+        HonorConfig config = new HonorConfig(true, false, 160, HonorConfig.DEFAULT_REASON, true,
+                java.util.List.of(new HonorConfig.InitialGrant("StaveLime", "old-citrus",
+                        "За выслугу лет")));
+        HonorStore.Load first = store.loadWithStatus(config);
+        assertTrue(first.created(), "стартовое состояние ещё не на диске");
+        assertEquals(1, first.seeded().size());
+        assertEquals("StaveLime", first.seeded().get(0).player());
+        assertTrue(store.save(first.ledger()), "плагин обязан сохранить сразу при старте");
+        HonorStore.Load second = store.loadWithStatus(config);
+        assertFalse(second.created(), "повторный старт не должен пересевать выдачи");
+        assertTrue(second.seeded().isEmpty());
+        assertEquals(first.seeded().get(0).grantedAt(),
+                second.ledger().grantOf("StaveLime").grantedAt(),
+                "публичная дата зафиксирована, а не перегенерирована");
+    }
+
+    @Test
     void legacyWithoutChecksumIsAccepted() throws Exception {
         HonorStore store = store();
         String legacy = "{\"version\":1,\"definitions\":[{\"id\":\"old-citrus\","
