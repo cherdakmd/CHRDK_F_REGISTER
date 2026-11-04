@@ -525,8 +525,10 @@ final class ProfessionListener implements Listener {
         plugin.requestSave();
         queueFeedback(player, profession, award.added());
         if (award.diamonds() > 0) {
+            // Доход начисляется тихо: одно действие кормит до восьми ремёсел, поэтому
+            // уведомление за каждое начисление превращалось в поток одинаковых строк в чате.
+            // Итог всегда виден в /prof income (income-today / income-total).
             if (plugin.income() != null) plugin.income().deliver(player.getUniqueId());
-            plugin.messages().send(player, "income-earned", "amount", award.diamonds());
         }
         if (!award.leveled()) {
             return;

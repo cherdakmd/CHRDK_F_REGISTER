@@ -38,6 +38,16 @@ class TabDashboard282Test {
         assertNotEquals(mini.deserialize(TabDashboard.wave("Я",0)),mini.deserialize(TabDashboard.wave("Я",2000)));
         assertEquals("Я🚀<red>&c",plain.serialize(mini.deserialize(TabDashboard.wave("Я🚀<red>&c",123))));
     }
+    @Test void shortContextStillResolvesEveryTabToken() throws Exception {
+        var messages = messages();
+        var config = YamlConfiguration.loadConfiguration(Path.of("src/main/resources/config.yml").toFile());
+        var context = new TabListService.TabContext("Alex", 10, 100, 20, 40, "world", "активен", "30 дней", 30,
+                new PresentationContext("Ранг I", "В игре", "Приятной игры", "включена", "/menu"));
+        Component header = TabListService.joinLines(TabListService.renderLines(messages, config.getStringList("tablist.header"), context));
+        Component footer = TabListService.joinLines(TabListService.renderLines(messages, config.getStringList("tablist.footer"), context));
+        assertFalse(plain.serialize(header).contains("%tab_"), "шапка оставила сырой кадр");
+        assertFalse(plain.serialize(footer).contains("%tab_"), "подвал оставил сырой кадр");
+    }
     @Test void privateFieldsAreGatedBeforeLoginAndTipsRotateOnlyAfterLogin() throws Exception {
         var messages=messages();Set<String> tips=new HashSet<>();
         for(long time=0;time<72000;time+=12000) {

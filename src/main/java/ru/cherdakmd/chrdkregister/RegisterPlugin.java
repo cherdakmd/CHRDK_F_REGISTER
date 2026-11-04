@@ -633,16 +633,25 @@ public final class RegisterPlugin extends JavaPlugin {
 
     /**
      * Wires PlaceholderAPI when the plugin is installed (soft dependency): registers the
-     * {@code %chrdk_*%} expansion for tab-lists, scoreboards and holograms.
+     * {@code %chrdk_*%} expansion for tab-lists, scoreboards and holograms, and the
+     * separate {@code %tab_*%} expansion used by the stock TAB header/footer.
      */
     private void hookPlaceholderApi() {
         if (!getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) return;
+        String version = getPluginMeta().getVersion();
         try {
-            String version = getPluginMeta().getVersion();
             new PlaceholderIntegration(version, accessManager, chatService, store, bankStore).register();
             getLogger().info("PlaceholderAPI обнаружен: плейсхолдеры %chrdk_*% зарегистрированы.");
         } catch (Throwable throwable) {
-            getLogger().log(Level.WARNING, "Не удалось зарегистрировать плейсхолдеры PlaceholderAPI", throwable);
+            getLogger().log(Level.WARNING, "Не удалось зарегистрировать плейсхолдеры %chrdk_*%", throwable);
+        }
+        // Отдельный try: коллизия identifier "tab" во внешнем плагине не должна
+        // маскировать успешную регистрацию основного expansion CHRDK.
+        try {
+            new TabPlaceholderIntegration(version, messages(), accessManager, bank()).register();
+            getLogger().info("PlaceholderAPI обнаружен: плейсхолдеры %tab_*% зарегистрированы.");
+        } catch (Throwable throwable) {
+            getLogger().log(Level.WARNING, "Не удалось зарегистрировать плейсхолдеры %tab_*%", throwable);
         }
     }
 

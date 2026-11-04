@@ -89,10 +89,11 @@ public final class TabListService implements Listener {
                     // разметка, поэтому Trusted, а не строка.
                     "player_tagged", Messages.trusted(taggedName),
                     "rank_tag", Messages.trusted(rankTag)};
-            Object[] legacyExtra = presentation.placeholders();
+            // Кадр tab_* идёт сразу после base: чётность legacy-пар не может сдвинуть его ключи.
             Object[] animatedExtra = dashboard.placeholders();
-            Object[] extra = java.util.Arrays.copyOf(legacyExtra, legacyExtra.length + animatedExtra.length);
-            System.arraycopy(animatedExtra, 0, extra, legacyExtra.length, animatedExtra.length);
+            Object[] legacyExtra = presentation.placeholders();
+            Object[] extra = java.util.Arrays.copyOf(animatedExtra, animatedExtra.length + legacyExtra.length);
+            System.arraycopy(legacyExtra, 0, extra, animatedExtra.length, legacyExtra.length);
             Object[] result = java.util.Arrays.copyOf(base, base.length + extra.length);
             System.arraycopy(extra, 0, result, base.length, extra.length);
             return result;
