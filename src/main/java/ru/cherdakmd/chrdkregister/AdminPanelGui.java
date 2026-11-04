@@ -697,10 +697,10 @@ public final class AdminPanelGui implements Listener {
             case MUTES -> {
                 String needle = holder.filter.toLowerCase(Locale.ROOT);
                 List<RegistrationStore.MuteEntry> mutes = service.activeMutes().stream()
-                        .filter(entry -> needle.isEmpty()
-                                || (entry.playerName != null
-                                && entry.playerName.toLowerCase(Locale.ROOT).contains(needle))
-                                || muteReason(entry).toLowerCase(Locale.ROOT).contains(needle))
+                        .filter(mute -> needle.isEmpty()
+                                || (mute.playerName != null
+                                && mute.playerName.toLowerCase(Locale.ROOT).contains(needle))
+                                || muteReason(mute).toLowerCase(Locale.ROOT).contains(needle))
                         .toList();
                 if (offset < mutes.size() && mutes.get(offset).playerName != null) {
                     open(viewer, Page.PROFILE, mutes.get(offset).playerName);
