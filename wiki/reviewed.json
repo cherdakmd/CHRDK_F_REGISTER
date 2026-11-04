@@ -41,8 +41,8 @@
       "text": "ee29d92bd4e9527924d14405057fd62402857c1a688439c7b9d86d4c9bf3b546"
     },
     "commands": {
-      "reason": "1.4.282: дома только на своей территории, проверка при сетхоме/хоме/кровати",
-      "sources": "704d7749816a10f11b202419628470b1ba74d977a4dc6fe9daac353342e44d53",
+      "reason": "1.4.282: сохранена структура consent-guard при проверке привата",
+      "sources": "247be4d731f655940fb05dcd4c566cc8f0e546b397ba47156ed0affcf3f17b68",
       "text": "7cad9d77bd280628e514082fba018af5aaee1e7e0db4f648354e18f1399a47e8"
     },
     "cosmetics": {
@@ -56,8 +56,8 @@
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "economy": {
-      "reason": "1.4.282: дома только на своей территории, проверка при сетхоме/хоме/кровати",
-      "sources": "592aa070b1620062747b453d7a910fb85442c1c5cb9ae047063c1921667bd3e2",
+      "reason": "1.4.282: сохранена структура consent-guard при проверке привата",
+      "sources": "a0b55c976f2345f95037b319fa27c70593abbfd313a1da7c6267bb5d46d3ea12",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
@@ -66,8 +66,8 @@
       "text": "4a00a06a712e25215f728c5a01f69eead65612e80ce6ad303969b1a83424336e"
     },
     "faq": {
-      "reason": "1.4.282: дома только на своей территории, проверка при сетхоме/хоме/кровати",
-      "sources": "704d7749816a10f11b202419628470b1ba74d977a4dc6fe9daac353342e44d53",
+      "reason": "1.4.282: сохранена структура consent-guard при проверке привата",
+      "sources": "247be4d731f655940fb05dcd4c566cc8f0e546b397ba47156ed0affcf3f17b68",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
@@ -91,8 +91,8 @@
       "text": "1417660c5793d86ddfab16c8b2203cbd2dd6b47a245ffa219c71898485b9c39f"
     },
     "menu": {
-      "reason": "1.4.282: дома только на своей территории, проверка при сетхоме/хоме/кровати",
-      "sources": "ebb65838c3edce681a1d7a3ac9ddb1a4f8d20f8e80fb1322c5f25c931e2e0c44",
+      "reason": "1.4.282: сохранена структура consent-guard при проверке привата",
+      "sources": "0f8c76c48424ea1823dd55e6cd3a32546f80109d3cc34e3f51e94dc0e3077222",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "orders": {
@@ -121,8 +121,8 @@
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "1.4.282: дома только на своей территории, проверка при сетхоме/хоме/кровати",
-      "sources": "8a744e8e8195bc4a4acb2f9d2658fd89409638ea93552ee8f61cc63ce5872ccb",
+      "reason": "1.4.282: сохранена структура consent-guard при проверке привата",
+      "sources": "f403ed7913ba0f5c55d618d7480fdde846de6b62da8f88f4a48630b099df39b2",
       "text": "c7aa463665be522c2f69c0eafd2844684e5fdf656825e6b80b86235ad4bc3be6"
     },
     "shop": {
@@ -136,13 +136,13 @@
       "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
     },
     "start": {
-      "reason": "1.4.282: дома только на своей территории, проверка при сетхоме/хоме/кровати",
-      "sources": "29090893346b259c0d1a96b9495738a57013dbfa0a76283711488ac79d748d84",
+      "reason": "1.4.282: сохранена структура consent-guard при проверке привата",
+      "sources": "b81b73160779c383ccc39040f8ac9b1984e801db02619ce5d51fce5f079b189c",
       "text": "c2835fdf2d1945079115e6a252d472ce72ad9ad79f4ed47ad58e269b467d595f"
     },
     "teleports": {
-      "reason": "1.4.282: дома только на своей территории, проверка при сетхоме/хоме/кровати",
-      "sources": "9a51be9e14f74979b94193e30c8add2f2a25ce0e4386ff4e18a681f271cc58ba",
+      "reason": "1.4.282: сохранена структура consent-guard при проверке привата",
+      "sources": "8c5c99e5ed93a35d8bf8fae0e75ab8f63421606cd6164e6ea17f10b566cfa374",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {

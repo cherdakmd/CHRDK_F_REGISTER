@@ -362,19 +362,19 @@ public final class TeleportCommandHandler implements TabExecutor {
             String key=HomeStore.financeKey(player.getUniqueId(),name);
             var quote=new HomeQuote(key,HomeStore.financeValue(point),String.valueOf(store.get(player.getUniqueId(),HomeStore.normalize(name))),price);
             boolean confirmRequested=args.length==2&&args[1].equalsIgnoreCase("confirm");
-            if(confirmRequested) {
-                if(!confirmations.consume(player.getUniqueId(),player,quote,System.nanoTime())) {
-                    plugin.messages().send(player,"finance.confirm-missing");return true;
-                }
-                Location current = player.getLocation();
-                if(!HomeClaimGuard.allowed(claimPolicy, player.getName(), current.getWorld().getName(),
-                        current.getBlockX(), current.getBlockZ())) {
-                    plugin.messages().send(player,"home.foreign-claim");return true;
-                }
+            if(confirmRequested&&!confirmations.consume(player.getUniqueId(),player,quote,System.nanoTime())) {
+                plugin.messages().send(player,"finance.confirm-missing");return true;
             }
             if(!confirmRequested) {
                 if(!confirmations.offer(player.getUniqueId(),player,quote,System.nanoTime())) {plugin.messages().send(player,"finance.confirm-busy");return true;}
                 plugin.messages().send(player,"finance.home-preview","name",name,"cost",price,"replace",exists);return true;
+            }
+            // 1.4.282: успешный confirm повторно проверяем на приват: за 30 с
+            // чанк мог сменить владельца. Структуру consent-guard не меняем.
+            Location current = player.getLocation();
+            if(!HomeClaimGuard.allowed(claimPolicy, player.getName(), current.getWorld().getName(),
+                    current.getBlockX(), current.getBlockZ())) {
+                plugin.messages().send(player,"home.foreign-claim");return true;
             }
         }
         if (!plugin.payments().putValue(player,price,HomeStore.financeKey(player.getUniqueId(),name),HomeStore.financeValue(point))) return true;
