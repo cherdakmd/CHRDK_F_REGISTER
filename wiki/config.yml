@@ -67,6 +67,7 @@ groups:
   - guilds
   - profile
   - vk
+  - social-link
 - id: staff
   title: Администрирование
   description: Аудит игроков, варны, баны, журнал модерации и особые звания.

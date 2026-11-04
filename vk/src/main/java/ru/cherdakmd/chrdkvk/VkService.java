@@ -439,6 +439,14 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
         if (!cfg.enabled()) {
             return "Интеграция ВКонтакте временно отключена на сервере.";
         }
+        // Один плагин на два мессенджера: код входа из игры гасится общим реестром
+        // привязок, куда бы его ни отправили — в ВК или в MAX.
+        var social = plugin.socialService();
+        if (social != null && social.config().enabled()) {
+            String gateReply = social.handleIncomingCode(code, "vk", vkUserId,
+                    Long.toString(vkUserId), "vk:" + vkUserId, nowMillis, false);
+            if (gateReply != null) return gateReply;
+        }
         Optional<String> matched = codeManager.consume(code, nowMillis);
         if (matched.isEmpty()) {
             return "❌ Код не найден или уже истёк. Запросите новый код в игре: /vk link";
@@ -451,6 +459,7 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
                     + cfg.maxAccountsPerVk() + ").";
             case INVALID_ARGUMENT -> "Не удалось выполнить привязку.";
             case LINKED -> {
+                if (social != null) social.clearFailures("vk:" + vkUserId);
                 boolean isMember = queryMembershipSafe(vkUserId);
                 if (isMember) {
                     store.updateMemberStatus(vkUserId, true);

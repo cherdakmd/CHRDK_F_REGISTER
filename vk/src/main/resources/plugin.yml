@@ -4,7 +4,7 @@ main: ru.cherdakmd.chrdkvk.VkPlugin
 api-version: '26.3'
 depend:
   - CHRDK_Core
-description: "Интеграция с группой ВКонтакте: привязка аккаунта, защита сессий, VK Donut и новости стены"
+description: "Единый социальный плагин: обязательная привязка через ВКонтакте или MAX, защита сессий, мосты чата и новости релизов"
 commands:
   vk:
     aliases: [vkontakte, вк]
@@ -15,7 +15,29 @@ commands:
     description: "Администрирование интеграции и беседы ВКонтакте"
     usage: "/<command> [status|lookup|chatban|unlink|setchat|testchat|sync|reload]"
     permission: chrdkvk.admin
+  link:
+    description: "Показать одноразовый код входа (ВК или MAX)"
+    usage: "/<command>"
+    permission: chrdksocial.use
+  social:
+    aliases: [socialadmin]
+    description: "Управление обязательной привязкой и чатами MAX"
+    usage: "/<command> [status [ник]|unlink <ник>|emergency <минуты|off>|setchat <bot|news|bridge> <id>|chats|testnews|reload]"
+    permission: chrdksocial.use
+  max:
+    description: "MAX: статус привязки, код входа и известные чаты"
+    usage: "/<command> [status|link|chats]"
+    permission: chrdksocial.use
 permissions:
+  chrdksocial.use:
+    description: "Просмотр своего кода входа и статуса привязки"
+    default: true
+  chrdksocial.admin:
+    description: "Отвязка игроков, аварийный режим, настройка чатов MAX и перезагрузка"
+    default: op
+  chrdksocial.bypass:
+    description: "Вход без обязательной привязки к мессенджеру"
+    default: op
   chrdkvk.use:
     description: "Использование команды /vk"
     default: true
