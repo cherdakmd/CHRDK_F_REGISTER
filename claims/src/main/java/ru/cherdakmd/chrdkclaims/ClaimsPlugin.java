@@ -131,6 +131,14 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
             getLogger().warning("[CHRDK_Claims] мост случайного спавна недоступен "
                     + "(нужно ядро 1.4.106+): " + throwable);
         }
+        // 1.4.282: точки дома только на своей территории (владелец/арендатор).
+        // Отдельный мост: со старым ядром приваты продолжают работать без этой связи.
+        try {
+            ClaimsHomeBridge.register(this);
+        } catch (Throwable throwable) {
+            getLogger().warning("[CHRDK_Claims] мост точек дома недоступен "
+                    + "(нужно ядро 1.4.282+): " + throwable);
+        }
         if (coreApi == null) {
             getLogger().warning("[CHRDK_Claims] API CHRDK_Core не найден (нужно ядро 1.4.6+): "
                     + "проверка авторизации и бонус лимита за ранг недоступны.");

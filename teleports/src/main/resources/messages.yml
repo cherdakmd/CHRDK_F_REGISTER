@@ -43,6 +43,9 @@ tpa:
 home:
   saved: "<green>Точка дома <yellow>%name%</yellow> сохранена (%used%/%max%).</green>"
   saved-paid: "<green>Точка дома <yellow>%name%</yellow> сохранена (%used%/%max%). Списано %cost% алмазов.</green>"
+  foreign-claim: "<red>Точку дома можно поставить только на своей территории: вы владелец привата или его действующий арендатор. В чужом привате — нельзя.</red>"
+  foreign-claim-teleport: "<red>Точка дома <yellow>%name%</yellow> находится в чужом привате — телепорт к ней закрыт. Удалите её через <yellow>/delhome</yellow> или поставьте новую на своей земле.</red>"
+  foreign-claim-bed: "<red>Кровать в чужом привате не станет точкой дома.</red>"
   limit: "<red>Достигнут лимит точек дома (%max%). Удалите лишние: <yellow>/delhome</yellow>.</red>"
   bad-name: "<red>Имя — буквы, цифры и «_», 1–16 знаков.</red>"
   not-found: "<red>Точка дома <yellow>%name%</yellow> не найдена.</red>"

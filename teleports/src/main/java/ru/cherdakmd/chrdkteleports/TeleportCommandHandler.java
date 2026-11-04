@@ -10,6 +10,7 @@ import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import ru.cherdakmd.chrdkregister.Messages;
+import ru.cherdakmd.chrdkregister.api.HomeClaimPolicy;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -347,14 +348,29 @@ public final class TeleportCommandHandler implements TabExecutor {
             return true;
         }
         Location loc = player.getLocation();
+        // 1.4.282: точка дома — только на своей территории. Проверяем до котировки
+        // и повторно после confirm: за 30 секунд чанк мог сменить владельца.
+        HomeClaimPolicy claimPolicy = HomeClaimGuard.policy();
+        if (!HomeClaimGuard.allowed(claimPolicy, player.getName(), loc.getWorld().getName(),
+                loc.getBlockX(), loc.getBlockZ())) {
+            plugin.messages().send(player, "home.foreign-claim");
+            return true;
+        }
         HomeLocation point = new HomeLocation(name,player.getWorld().getName(),loc.getX(),loc.getY(),loc.getZ(),loc.getYaw(),loc.getPitch());
         int price=chargedCost(player,plugin.config().costSethome());
         if (price > 0) {
             String key=HomeStore.financeKey(player.getUniqueId(),name);
             var quote=new HomeQuote(key,HomeStore.financeValue(point),String.valueOf(store.get(player.getUniqueId(),HomeStore.normalize(name))),price);
             boolean confirmRequested=args.length==2&&args[1].equalsIgnoreCase("confirm");
-            if(confirmRequested&&!confirmations.consume(player.getUniqueId(),player,quote,System.nanoTime())) {
-                plugin.messages().send(player,"finance.confirm-missing");return true;
+            if(confirmRequested) {
+                if(!confirmations.consume(player.getUniqueId(),player,quote,System.nanoTime())) {
+                    plugin.messages().send(player,"finance.confirm-missing");return true;
+                }
+                Location current = player.getLocation();
+                if(!HomeClaimGuard.allowed(claimPolicy, player.getName(), current.getWorld().getName(),
+                        current.getBlockX(), current.getBlockZ())) {
+                    plugin.messages().send(player,"home.foreign-claim");return true;
+                }
             }
             if(!confirmRequested) {
                 if(!confirmations.offer(player.getUniqueId(),player,quote,System.nanoTime())) {plugin.messages().send(player,"finance.confirm-busy");return true;}
@@ -461,6 +477,13 @@ public final class TeleportCommandHandler implements TabExecutor {
             plugin.messages().send(player, "home.world-missing", "world", home.world());
             return true;
         }
+        // 1.4.282: уже сохранённая точка в чужом привате не удаляется, но
+        // телепорт к ней закрыт — иначе прошлые точки обходили бы запрет.
+        if (!HomeClaimGuard.allowed(HomeClaimGuard.policy(), player.getName(), home.world(),
+                HomeClaimGuard.blockOf(home.x()), HomeClaimGuard.blockOf(home.z()))) {
+            plugin.messages().send(player, "home.foreign-claim-teleport", "name", home.name());
+            return true;
+        }
         if (!gates(player, COOLDOWN_HOME, 0)) return true; // без собственного кулдауна; только мир/занятость
         int cost=chargedCost(player,plugin.config().costHome());
         plugin.messages().send(player,"finance.service-quote","cost",cost);
@@ -485,6 +508,12 @@ public final class TeleportCommandHandler implements TabExecutor {
                 : new Location(world, home.x(), home.y(), home.z(), home.yaw(), home.pitch());
         if (target == null) {
             plugin.messages().send(player, "home.world-missing", "world", home.world());
+            return;
+        }
+        // Повторная проверка перед списанием: приват мог появиться во время warmup.
+        if (!HomeClaimGuard.allowed(HomeClaimGuard.policy(), player.getName(), world.getName(),
+                target.getBlockX(), target.getBlockZ())) {
+            plugin.messages().send(player, "home.foreign-claim-teleport", "name", home.name());
             return;
         }
         if (!paidTeleport(player, player, cost, "home", target)) return;
