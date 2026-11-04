@@ -19,10 +19,10 @@ class TabPlaceholderIntegrationTest {
         try (InputStream stream = Files.newInputStream(Path.of("src/main/resources/messages.yml"))) {
             messages = Messages.from(stream, null, Logger.getAnonymousLogger());
         }
-        var expansion = new TabPlaceholderIntegration("1.4.284-rc.1", messages, null, null);
+        var expansion = new TabPlaceholderIntegration("1.4.285", messages, null, null);
         assertEquals("tab", expansion.getIdentifier());
         assertEquals("cherdakmd", expansion.getAuthor());
-        assertEquals("1.4.284-rc.1", expansion.getVersion());
+        assertEquals("1.4.285", expansion.getVersion());
         assertTrue(expansion.persist(), "/papi reload не должен сбрасывать expansion");
         for (String key : List.of("brand", "separator", "tip", "clock", "balance",
                 "boost", "health", "ping", "world", "mspt")) {
