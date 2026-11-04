@@ -462,6 +462,22 @@ public final class RegistrationStore {
         return account == null ? Optional.empty() : Optional.of(copy(account));
     }
 
+    /**
+     * Имена всех известных аккаунтов для админ-панели (без копий данных).
+     * Возвращает отображаемый ник, отсортированный без учёта регистра.
+     */
+    public synchronized List<String> accountNames() {
+        List<String> names = new ArrayList<>();
+        for (PlayerAccount account : data.accounts.values()) {
+            if (account == null) continue;
+            String name = account.playerName == null || account.playerName.isBlank()
+                    ? account.canonicalName : account.playerName;
+            if (name != null && !name.isBlank()) names.add(name);
+        }
+        names.sort(String.CASE_INSENSITIVE_ORDER);
+        return List.copyOf(names);
+    }
+
     public synchronized boolean hasActivePass(String playerName, long nowMillis) {
         if (playerName == null || playerName.isBlank()) return false;
         PlayerAccount account = data.accounts.get(canonicalName(playerName));

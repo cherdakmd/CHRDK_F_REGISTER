@@ -1,35 +1,37 @@
 CHRDK — обновление плагинов
 ===========================
 
-Комплект 1.4.285 — СТАБИЛЬНЫЙ выпуск
+Комплект 1.4.286 — СТАБИЛЬНЫЙ выпуск
 -------------------------------------
-22 JAR одной версии + памятка; optional chrdk-vk-1.4.285.jar отдельно.
-Стабильный выпуск: Latest становится v1.4.285; v1.4.283 и пререлиз
-v1.4.284-rc.1 остаются в истории и не переписываются. Core API42.
-Впервые в стабильной линейке вся RC1–RC16: Кузня /shop forge, 8 whitelist-SKU
-(128/96/160/64/24/192/32/16 алмазов), frozen grant и WAL prepareForge,
-наковальня, анимации клана, handbook 65 артефактов, BP-деньги ×10.
-Исправлены плейсхолдеры TAB: %tab_*% зарегистрированы в PlaceholderAPI как
-отдельный expansion, шапка/подвал резолвят %chrdk_*% и внешние PAPI,
-внутренние кадры защищены маской от перетирания анимации.
-Убран чат-спам «+1 алм. за работу ремёсел»: доход начисляется тихо, итог
-виден в /prof income; суммы, потолок 9999 и WAL не менялись.
-Доставка дохода в банк один раз за действие вместо восьми; конфликт
-PAPI-идентификатора tab не перетирает чужое расширение.
-Из 1.4.283 сохранены: книги чар (118, метка SHOP), общий conflictGroup,
-все 8 активных ремёсел с доходом алмазов, Plasmo Voice, дома в своих приватах.
+22 JAR одной версии + памятка; optional chrdk-vk-1.4.286.jar отдельно.
+Стабильный выпуск: Latest становится v1.4.286; v1.4.285 и все прежние теги
+остаются в истории и не переписываются. Core API42.
+Новое: /adminpanel (/apanel, /staffpanel) — GUI аудита игроков на 7 страниц:
+профиль Core, варны и автобан на пятом активном через BanList, модераторы,
+журнал, активные муты, наказания и история чата.
+Мут на 10 мин / 1 ч / 1 д / 7 д или свой срок, причина — следующим сообщением
+в чат; размут, кик с причиной, бан и разбан по IP через BanList.Type.IP.
+Муты переиспользуют штатный ChatService: уведомление игроку, оповещение
+администрации и chat.mute/chat.unmute в audit/*.jsonl, хранилище не дублируется.
+Права: панель — chrdkregister.admin.panel, наказания — chrdkregister.chat.mute
+или op, состав модераторов — chrdkregister.admin.moderators. Обычный модератор
+видит данные, но не меняет муты, кик и IP-баны.
+moderation.json пишется атомарно с SHA-256; ручная правка или битый файл
+уходят в moderation.json.broken, а не загружаются; legacy без checksum
+принимается и переписывается. Варны постоянные, снятие фиксируется в журнале.
+Настройки config.yml: moderation.warn-limit, ban-reason, warns-in-tab,
+journal-limit, mute-presets-minutes. %tab_warns% и %chrdk_warns% сохранены.
 Обновлять весь комплект совместно: Core, DiamondShop, TierForge, Hunt,
-BattlePass, Guilds, Enchants. Не смешивать версии модулей — рассинхрон
-конфига и JAR давал сырые %tab_*% в табе.
+BattlePass, Guilds, Enchants. Не смешивать версии модулей.
 CHRDK_Queue и другие снятые JAR убрать вручную из plugins/, plugins/update/ и staging,
 сохраняя данные и финансовые обязательства. Пароль/TOTP/ВК-2FA не отключать.
-Backup Core data.json/bank.json со всеми SHA/журналами, professions.json,
-shop-data.json, tierforge stats.yml, battlepass-data.json, clan-styles.json,
-миры и playerdata. НЕ обещается общая crash-atomic гарантия playerdata.
-Модельные/source-тесты не заменяют native CraftItemStack codec и живой smoke.
-Матрица НЕПРОВЕДЁННОГО серверного smoke: docs/audits/forge-shop-rc16.md.
+Backup Core data.json/bank.json со всеми SHA/журналами, moderation.json,
+professions.json, shop-data.json, tierforge stats.yml, battlepass-data.json,
+clan-styles.json, миры и playerdata. НЕ обещается общая crash-atomic
+гарантия playerdata.
+Модельные/source-тесты не заменяют живой smoke GUI, Bukkit BanList и PDC.
 Игровой клиент, RCON, TradeMC, /papi reload и production MSPT не проверялись.
-Подробности и ограничения: docs/releases/1.4.285.md.
+Подробности и ограничения: docs/releases/1.4.286.md.
 
 Ниже — предыдущие изменения (история).
 

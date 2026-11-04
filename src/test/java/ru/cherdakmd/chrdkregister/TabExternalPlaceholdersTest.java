@@ -28,7 +28,7 @@ class TabExternalPlaceholdersTest {
     @Test
     void everyStockTabTokenIsMaskedReversibly() {
         for (String key : List.of("brand", "separator", "tip", "clock", "balance",
-                "boost", "health", "ping", "world", "mspt")) {
+                "boost", "health", "ping", "world", "mspt", "warns")) {
             String token = "%tab_" + key + "%";
             String masked = TabListService.maskTabTokens(token);
             assertFalse(masked.contains("%"), key + " остался видимым для PAPI");

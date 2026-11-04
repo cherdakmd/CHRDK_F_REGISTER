@@ -81,7 +81,16 @@ public final class TabListService implements Listener {
     /** Значения подстановок одного игрока — ровно то, что знает юнит-тест. */
     record TabContext(String playerName, int online, int maxPlayers, double tps, int ping,
                       String world, String passStatus, String passLeft, long passDaysLeft,
-                      PresentationContext presentation, String taggedName, String rankTag, TabDashboard.Frame dashboard) {
+                      PresentationContext presentation, String taggedName, String rankTag,
+                      TabDashboard.Frame dashboard, String warnText) {
+        /** Контекст без счётчика варнов (юнит-тесты и кадры без модерации). */
+        TabContext(String playerName, int online, int maxPlayers, double tps, int ping, String world,
+                   String passStatus, String passLeft, long passDaysLeft, PresentationContext presentation,
+                   String taggedName, String rankTag, TabDashboard.Frame dashboard) {
+            this(playerName, online, maxPlayers, tps, ping, world, passStatus, passLeft, passDaysLeft,
+                    presentation, taggedName, rankTag, dashboard,
+                    "0/" + ModerationLedger.DEFAULT_WARN_LIMIT);
+        }
         TabContext(String playerName, int online, int maxPlayers, double tps, int ping, String world,
                    String passStatus, String passLeft, long passDaysLeft, PresentationContext presentation,
                    String taggedName, String rankTag) {
@@ -122,7 +131,9 @@ public final class TabListService implements Listener {
                     // Ник с метками аддонов и хвост с названием ранга — доверенная
                     // разметка, поэтому Trusted, а не строка.
                     "player_tagged", Messages.trusted(taggedName),
-                    "rank_tag", Messages.trusted(rankTag)};
+                    "rank_tag", Messages.trusted(rankTag),
+                    // Счётчик активных варнов и порог автобана видны всем игрокам.
+                    "tab_warns", warnText};
             // Кадр tab_* идёт сразу после base: чётность legacy-пар не может сдвинуть его ключи.
             Object[] animatedExtra = dashboard.placeholders();
             Object[] legacyExtra = presentation.placeholders();
@@ -598,7 +609,10 @@ public final class TabListService implements Listener {
                         accessManager.getStage(player) == AccessManager.PlayerStage.AUTHENTICATED && plugin.bank() != null && plugin.bank().enabled()
                                 ? plugin.bank().balance(player) : -1,
                         accessManager.getStage(player) == AccessManager.PlayerStage.AUTHENTICATED ? accessManager.store().rewardBoostRemaining(player.getName()) : 0,
-                        tps, Bukkit.getAverageTickTime(), player.getPing(), worldName(player)));
+                        tps, Bukkit.getAverageTickTime(), player.getPing(), worldName(player)),
+                plugin.moderation() == null
+                        ? "0/" + ModerationLedger.DEFAULT_WARN_LIMIT
+                        : plugin.moderation().warnText(player.getName()));
 
     }
 

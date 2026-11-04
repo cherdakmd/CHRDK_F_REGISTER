@@ -39,6 +39,7 @@ public final class PlaceholderIntegration extends PlaceholderExpansion {
     private final RegistrationStore store;
     private final BankStore bank;
     private final String version;
+    private final @Nullable ModerationService moderation;
 
     public PlaceholderIntegration(
             String pluginVersion,
@@ -47,11 +48,23 @@ public final class PlaceholderIntegration extends PlaceholderExpansion {
             RegistrationStore store,
             BankStore bank
     ) {
+        this(pluginVersion, accessManager, chatService, store, bank, null);
+    }
+
+    public PlaceholderIntegration(
+            String pluginVersion,
+            AccessManager accessManager,
+            ChatService chatService,
+            RegistrationStore store,
+            BankStore bank,
+            @Nullable ModerationService moderation
+    ) {
         this.version = pluginVersion;
         this.accessManager = accessManager;
         this.chatService = chatService;
         this.store = store;
         this.bank = bank;
+        this.moderation = moderation;
     }
 
     @Override
@@ -144,6 +157,10 @@ public final class PlaceholderIntegration extends PlaceholderExpansion {
                 java.util.UUID id = bank == null ? null : bank.idByName(name);
                 yield Long.toString(id == null ? 0L : bank.receivedOf(id));
             }
+            case "warns" -> Integer.toString(moderation == null || name == null
+                    ? 0 : moderation.warnCount(name));
+            case "warns_limit" -> Integer.toString(moderation == null
+                    ? ModerationLedger.DEFAULT_WARN_LIMIT : moderation.warnLimit());
             default -> null; // неизвестный плейсхолдер — PlaceholderAPI оставит его как есть
         };
     }

@@ -60,6 +60,12 @@ public final class RegisterPlugin extends JavaPlugin {
     private ExecutionService executor;
     private RegisterCommandHandler commandHandler;
     private volatile Messages messages;
+    /** Админ-панель аудита игроков: отдельное хранилище и сервис модерации. */
+    private ModerationStore moderationStore;
+    private ModerationLedger moderationLedger;
+    private ModerationService moderation;
+    private AdminPanelGui adminPanelGui;
+    private AdminPanelCommandHandler adminPanelCommand;
 
     /** Имя папки данных до переименования ядра (1.4.44). */
     private static final String LEGACY_DATA_FOLDER = "CHRDK_F_REGISTER";
@@ -123,6 +129,20 @@ public final class RegisterPlugin extends JavaPlugin {
         this.passwordKeypad = new PasswordKeypadService(this, accessManager, messages);
         this.labelPreferences = new LabelPreferences(getDataFolder().toPath(), getLogger());
         labelPreferences.load();
+        // Админ-панель: moderation.json живёт отдельно от data.json аккаунтов.
+        this.moderationStore = new ModerationStore(getDataFolder().toPath(), getLogger());
+        this.moderationLedger = moderationStore.load();
+        this.moderation = new ModerationService(this, moderationLedger, moderationStore,
+                ModerationConfig.fromConfig(getConfig()));
+        this.adminPanelGui = new AdminPanelGui(this, moderation);
+        this.adminPanelCommand = new AdminPanelCommandHandler(this, moderation, adminPanelGui);
+        getServer().getPluginManager().registerEvents(adminPanelGui, this);
+        getServer().getPluginManager().registerEvents(new ModerationListener(this, moderation), this);
+        PluginCommand adminPanelPlugin = getCommand("adminpanel");
+        if (adminPanelPlugin != null) {
+            adminPanelPlugin.setExecutor(adminPanelCommand);
+            adminPanelPlugin.setTabCompleter(adminPanelCommand);
+        }
         this.tabListService = new TabListService(this, accessManager);
         this.tabListService.setNameDecorator(chatService::decoratedTabName);
         this.tabListService.setAnimationPredicate(chatService::animatedTabName);
@@ -321,6 +341,8 @@ public final class RegisterPlugin extends JavaPlugin {
         ru.cherdakmd.chrdkregister.api.PassivePotions.stop();
         ru.cherdakmd.chrdkregister.api.CropReplanting.clear();
         if (pluginUpdater != null) pluginUpdater.close();
+        if (adminPanelGui != null) adminPanelGui.shutdown();
+        if (moderation != null) moderation.save();
         if (serverMenuService != null) serverMenuService.shutdown();
         if (rankMenuService != null) rankMenuService.shutdown();
         if (labelsMenu != null) labelsMenu.shutdown();
@@ -392,6 +414,9 @@ public final class RegisterPlugin extends JavaPlugin {
         }
         if (tabListService != null) {
             tabListService.reload();
+        }
+        if (moderation != null) {
+            moderation.reload(getConfig());
         }
         if (externalHooks != null) {
             externalHooks.resolve();
@@ -510,6 +535,21 @@ public final class RegisterPlugin extends JavaPlugin {
 
     public RegistrationStore store() {
         return store;
+    }
+
+    /** Сырые переводы банка для полного профиля в админ-панели. */
+    public BankStore bankStore() {
+        return bankStore;
+    }
+
+    /** Append-only журнал безопасности: дублирует действия админ-панели. */
+    public AuditLog auditLog() {
+        return accessManager == null ? null : accessManager.audit();
+    }
+
+    /** Варны, баны, роли модераторов и журнал действий. */
+    public ModerationService moderation() {
+        return moderation;
     }
 
     /** Случайный спавн новичков и после смерти ({@code spawn.*}). */
@@ -642,7 +682,7 @@ public final class RegisterPlugin extends JavaPlugin {
         if (!getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) return;
         String version = getPluginMeta().getVersion();
         try {
-            new PlaceholderIntegration(version, accessManager, chatService, store, bankStore).register();
+            new PlaceholderIntegration(version, accessManager, chatService, store, bankStore, moderation).register();
             getLogger().info("PlaceholderAPI обнаружен: плейсхолдеры %chrdk_*% зарегистрированы.");
         } catch (Throwable throwable) {
             getLogger().log(Level.WARNING, "Не удалось зарегистрировать плейсхолдеры %chrdk_*%", throwable);
@@ -654,7 +694,7 @@ public final class RegisterPlugin extends JavaPlugin {
             if (tabExpansionRegistered) {
                 getLogger().info("PlaceholderAPI: expansion %tab_*% уже зарегистрирован CHRDK.");
             } else {
-                var expansion = new TabPlaceholderIntegration(version, messages(), accessManager, bank());
+                var expansion = new TabPlaceholderIntegration(version, messages(), accessManager, bank(), moderation);
                 tabExpansionRegistered = expansion.register();
                 if (tabExpansionRegistered) {
                     getLogger().info("PlaceholderAPI обнаружен: плейсхолдеры %tab_*% зарегистрированы.");

@@ -1205,6 +1205,21 @@ public final class ChatService implements Listener {
             messages.send(sender, "mute.bad-duration");
             return true;
         }
+        applyMute(sender, targetName, minutes, reason);
+        return true;
+    }
+
+    /**
+     * Тот же мут для админ-панели: право уже проверено {@link ModerationService},
+     * поэтому здесь не дублируем permission, а сохраняем штатные уведомление
+     * игроку, оповещение администрации и запись {@code chat.mute} в audit.jsonl.
+     */
+    public boolean applyMuteFromPanel(CommandSender sender, String targetName, long minutes, String reason) {
+        if (minutes <= 0 || store() == null) return false;
+        return applyMute(sender, targetName, minutes, reason);
+    }
+
+    private boolean applyMute(CommandSender sender, String targetName, long minutes, String reason) {
         long until = System.currentTimeMillis() + minutes * 60_000L;
         String target = resolveKnownPlayerName(targetName);
         store().setMute(target, until, reason, sender.getName());
@@ -1241,6 +1256,17 @@ public final class ChatService implements Listener {
             messages.send(sender, "mute.usage-unmute");
             return true;
         }
+        clearMute(sender, targetName);
+        return true;
+    }
+
+    /** Размут из админ-панели: право проверено панелью, аудит и тексты — штатные. */
+    public boolean clearMuteFromPanel(CommandSender sender, String targetName) {
+        if (targetName == null || targetName.isBlank() || store() == null) return false;
+        return clearMute(sender, targetName);
+    }
+
+    private boolean clearMute(CommandSender sender, String targetName) {
         boolean cleared = store().clearMute(resolveKnownPlayerName(targetName));
         if (cleared) {
             accessManager.audit().log(AuditLog.CHAT_UNMUTE, sender.getName(), targetName, null);
@@ -1248,7 +1274,17 @@ public final class ChatService implements Listener {
         } else {
             messages.send(sender, "mute.not-muted", "target_name", targetName);
         }
-        return true;
+        return cleared;
+    }
+
+    /** Активные муты для вкладки админ-панели. */
+    public List<RegistrationStore.MuteEntry> activeMutesFromPanel() {
+        return store() == null ? List.of() : store().listMutes(System.currentTimeMillis(), true);
+    }
+
+    /** Разбор «10m / 2h / 1d / 30» для кнопки «свой срок» в GUI. */
+    public static long muteDurationMinutes(String raw) {
+        return parseDurationMinutes(raw);
     }
 
     /** Returns the active mute of a player, if any (used by private messages). */
