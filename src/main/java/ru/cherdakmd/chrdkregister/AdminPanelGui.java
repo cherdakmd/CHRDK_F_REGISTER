@@ -60,6 +60,8 @@ public final class AdminPanelGui implements Listener {
     static final int SLOT_JOURNAL = 2;
     static final int SLOT_MUTES = 3;
     static final int SLOT_INFO = 4;
+    /** Кнопка редактора особых званий (отдельный GUI, не страница этой панели). */
+    static final int SLOT_HONORS = 5;
     static final int SLOT_FILTER = 6;
     static final int SLOT_REFRESH = 8;
     static final int SLOT_PREV = 45;
@@ -190,6 +192,8 @@ public final class AdminPanelGui implements Listener {
                 messages.get("admin.button-journal"), List.of()));
         inventory.setItem(SLOT_MUTES, icon(Material.NAME_TAG,
                 messages.get("admin.button-mutes"), List.of()));
+        inventory.setItem(SLOT_HONORS, icon(Material.NETHER_STAR,
+                messages.get("admin.button-honors"), List.of()));
         inventory.setItem(SLOT_FILTER, icon(Material.HOPPER,
                 messages.get("admin.button-filter", "filter",
                         holder.filter.isEmpty() ? messages.plain("admin.value-none") : holder.filter),
@@ -585,6 +589,17 @@ public final class AdminPanelGui implements Listener {
         if (slot == SLOT_MODERATORS) { open(viewer, Page.MODERATORS, "", 0, holder.filter); return; }
         if (slot == SLOT_JOURNAL) { open(viewer, Page.JOURNAL, "", 0, holder.filter); return; }
         if (slot == SLOT_MUTES) { open(viewer, Page.MUTES, "", 0, holder.filter); return; }
+        if (slot == SLOT_HONORS) {
+            HonorGui gui = plugin.honorsGui();
+            if (gui != null) {
+                if (holder.page == Page.PROFILE && !holder.target.isBlank()) {
+                    gui.openForPlayer(viewer, holder.target);
+                } else {
+                    gui.open(viewer, HonorGui.Page.DEFINITIONS, "");
+                }
+            }
+            return;
+        }
         if (slot == SLOT_REFRESH) { paint(viewer, holder); return; }
         if (slot == SLOT_BACK) {
             if (holder.page == Page.PUNISH || holder.page == Page.CHAT_HISTORY) {

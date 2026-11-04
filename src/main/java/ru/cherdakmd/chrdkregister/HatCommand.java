@@ -46,7 +46,7 @@ public final class HatCommand implements CommandExecutor {
             return true;
         }
         int minLevel = Math.max(1, access.config().ranks().hatMinLevel());
-        int level = access.store().rankLevel(player.getName(), System.currentTimeMillis());
+        int level = access.effectiveRankLevel(player.getName());
         if (!allowed(level, minLevel, player.hasPermission("chrdkregister.hat"))) {
             messages.send(player, "hat.locked", "level", minLevel,
                     "rank", Messages.trusted(access.config().ranks().decorate(minLevel,

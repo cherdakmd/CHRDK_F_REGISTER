@@ -1931,8 +1931,24 @@ public final class AccessManager {
         }
     }
 
+    /** Эффективная ступень привилегий: купленный ранг или особое звание. */
+    public int effectiveRankLevel(String playerName) {
+        int paid = store.rankLevel(playerName, System.currentTimeMillis());
+        HonorService honors = plugin.honors();
+        return honors == null ? paid : honors.effectiveLevel(playerName, paid);
+    }
+
     /** Строка входа ранга III+: «Хранитель Имя вернулся в гильдию» (1.4.167). */
     private void announceRankJoin(Player player) {
+        HonorService honors = plugin.honors();
+        if (honors != null && honors.enabled()) {
+            String honorLine = honors.joinLine(player.getName());
+            if (!honorLine.isBlank() && !rankJoinAnnounced.contains(player.getUniqueId())) {
+                rankJoinAnnounced.add(player.getUniqueId());
+                Bukkit.getServer().broadcast(Messages.format(honorLine.replace("%player%", player.getName())));
+                return;
+            }
+        }
         RankSettings ranks = config.ranks();
         if (ranks == null || !ranks.enabled() || !ranks.announceJoin()) {
             return;

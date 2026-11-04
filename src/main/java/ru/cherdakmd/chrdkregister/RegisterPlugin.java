@@ -66,6 +66,10 @@ public final class RegisterPlugin extends JavaPlugin {
     private ModerationService moderation;
     private AdminPanelGui adminPanelGui;
     private AdminPanelCommandHandler adminPanelCommand;
+    /** Особые звания за выслугу лет: редактор, реестр и эффективные привилегии. */
+    private HonorStore honorStore;
+    private HonorService honors;
+    private HonorGui honorGui;
 
     /** Имя папки данных до переименования ядра (1.4.44). */
     private static final String LEGACY_DATA_FOLDER = "CHRDK_F_REGISTER";
@@ -142,6 +146,24 @@ public final class RegisterPlugin extends JavaPlugin {
         if (adminPanelPlugin != null) {
             adminPanelPlugin.setExecutor(adminPanelCommand);
             adminPanelPlugin.setTabCompleter(adminPanelCommand);
+        }
+        // honors.json лежит отдельно от data.json: решение владельца не подделывает покупку.
+        this.honorStore = new HonorStore(getDataFolder().toPath(), getLogger());
+        this.honors = new HonorService(this, honorStore.load(), honorStore,
+                HonorConfig.fromConfig(getConfig()));
+        this.honorGui = new HonorGui(this, honors);
+        getServer().getPluginManager().registerEvents(honorGui, this);
+        if (chatService != null) chatService.setHonors(honors);
+        HonorCommandHandler honorHandler = new HonorCommandHandler(this, honors, honorGui);
+        PluginCommand honorCommand = getCommand("honor");
+        if (honorCommand != null) {
+            honorCommand.setExecutor(honorHandler);
+            honorCommand.setTabCompleter(honorHandler);
+        }
+        PluginCommand honorAdminCommand = getCommand("honoradmin");
+        if (honorAdminCommand != null) {
+            honorAdminCommand.setExecutor(honorHandler);
+            honorAdminCommand.setTabCompleter(honorHandler);
         }
         this.tabListService = new TabListService(this, accessManager);
         this.tabListService.setNameDecorator(chatService::decoratedTabName);
@@ -342,6 +364,8 @@ public final class RegisterPlugin extends JavaPlugin {
         ru.cherdakmd.chrdkregister.api.CropReplanting.clear();
         if (pluginUpdater != null) pluginUpdater.close();
         if (adminPanelGui != null) adminPanelGui.shutdown();
+        if (honorGui != null) honorGui.shutdown();
+        if (honors != null) honors.save();
         if (moderation != null) moderation.save();
         if (serverMenuService != null) serverMenuService.shutdown();
         if (rankMenuService != null) rankMenuService.shutdown();
@@ -417,6 +441,12 @@ public final class RegisterPlugin extends JavaPlugin {
         }
         if (moderation != null) {
             moderation.reload(getConfig());
+        }
+        if (honors != null) {
+            honors.reload(getConfig());
+        }
+        if (honorGui != null) {
+            honorGui.refreshAll();
         }
         if (externalHooks != null) {
             externalHooks.resolve();
@@ -550,6 +580,21 @@ public final class RegisterPlugin extends JavaPlugin {
     /** Варны, баны, роли модераторов и журнал действий. */
     public ModerationService moderation() {
         return moderation;
+    }
+
+    /** Особые звания за выслугу лет. */
+    public HonorService honors() {
+        return honors;
+    }
+
+    /** GUI-редактор званий, открываемый из админ-панели. */
+    public HonorGui honorsGui() {
+        return honorGui;
+    }
+
+    /** Эффективная ступень привилегий: оплата или звание, что выше. */
+    public int effectiveRankLevel(String playerName) {
+        return accessManager == null ? 0 : accessManager.effectiveRankLevel(playerName);
     }
 
     /** Случайный спавн новичков и после смерти ({@code spawn.*}). */

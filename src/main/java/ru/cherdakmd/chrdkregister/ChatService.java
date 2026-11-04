@@ -63,6 +63,8 @@ public final class ChatService implements Listener {
     private final JavaPlugin plugin;
     private final AccessManager accessManager;
     private final Logger logger;
+    /** Особые звания: подменяют оформление ника и поднимают эффективную ступень. */
+    private volatile HonorService honors;
 
     private volatile ChatConfig config;
     private volatile Messages messages;
@@ -175,7 +177,7 @@ public final class ChatService implements Listener {
         if (colors == null || !colors.enabled()) {
             return "";
         }
-        int level = accessManager.store().rankLevel(playerName, System.currentTimeMillis());
+        int level = accessManager.effectiveRankLevel(playerName);
         Set<String> owned;
         try {
             owned = purchaseLookup.apply(playerName);
@@ -183,6 +185,11 @@ public final class ChatService implements Listener {
             owned = Set.of();
         }
         return styles.colorFormat(playerName, colors, level, owned == null ? Set.of() : owned);
+    }
+
+    /** Подключает особые звания (1.4.286+). */
+    public void setHonors(HonorService service) {
+        this.honors = service;
     }
 
     /** Подключает палитру цветов ника (1.4.187). */
@@ -215,11 +222,20 @@ public final class ChatService implements Listener {
 
     /** Чистый снимок ступени для сборки ника: без Bukkit-команд и кэшей. */
     private LabelStyleService.Rank rankView(String playerName) {
+        HonorService honorService = this.honors;
+        if (honorService != null && honorService.enabled()) {
+            HonorDefinition honor = honorService.active(playerName);
+            if (honor != null) {
+                // Звание главнее купленной ступени в оформлении, но не в истории платежей.
+                return new LabelStyleService.Rank(accessManager.effectiveRankLevel(playerName),
+                        honor.badge(), honor.format(), honor.name(), true);
+            }
+        }
         RankSettings ranks = accessManager.config().ranks();
         if (ranks == null || !ranks.enabled()) {
             return null;
         }
-        int level = accessManager.store().rankLevel(playerName, System.currentTimeMillis());
+        int level = accessManager.effectiveRankLevel(playerName);
         RankTier tier = level <= 0 ? null : ranks.tier(level);
         if (tier == null) {
             return null;

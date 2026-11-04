@@ -78,6 +78,12 @@ public final class AuditLog {
     public static final String MODERATION_KICK = "moderation.kick";
     public static final String MODERATION_IP_BAN = "moderation.ip_ban";
     public static final String MODERATION_IP_UNBAN = "moderation.ip_unban";
+    /** Особые звания за выслугу лет: создание, правка, выдача и снятие. */
+    public static final String HONOR_DEFINE = "honor.define";
+    public static final String HONOR_EDIT = "honor.edit";
+    public static final String HONOR_REMOVE = "honor.remove";
+    public static final String HONOR_GRANT = "honor.grant";
+    public static final String HONOR_REVOKE = "honor.revoke";
     /** Покупка товара каталога (витрина TradeMC или ручная выдача). */
     public static final String SHOP_BUY = "shop.buy";
     /** Покупка ступени ниже текущей: платёж ушёл в очередь ручного разбора (1.4.167). */

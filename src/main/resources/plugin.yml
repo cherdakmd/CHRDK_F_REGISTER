@@ -122,6 +122,14 @@ commands:
     description: "Админ-панель аудита игроков: профили, варны, муты, кик, бан по имени и IP, модераторы и журнал"
     usage: /<command> [players|profile <ник>|moderators|journal|mutes|chat <ник>|warn <ник> <причина>|unwarn <id>|ban <ник> <причина>|unban <ник>|mute <ник> <срок> <причина>|unmute <ник>|kick <ник> <причина>|ipban <ник> <причина>|ipunban <ip|ник>|moderator <add|remove> <ник>]
     aliases: [apanel, staffpanel]
+  honor:
+    description: "Публичный реестр особых званий: кто, когда и за что получил"
+    usage: /<command> [list|my [ник]|info <id>|rules]
+    aliases: [honors, zvanie]
+  honoradmin:
+    description: "Редактор особых званий: создать, оформить, привязать ступень, выдать и снять"
+    usage: /<command> <gui|create <id> [название]|edit <id> <поле> <значение>|delete <id>|grant <ник> <id> [причина]|revoke <ник> [id]|list|info <id>|reload>
+    aliases: [honorsadmin]
 permissions:
   chrdkregister.donate:
     description: "Получить ссылку на донат-магазин сервера"
@@ -185,4 +193,7 @@ permissions:
     default: op
   chrdkregister.admin.moderators:
     description: "Назначение и снятие модераторов в админ-панели; иначе роль меняет только старший администратор"
+    default: op
+  chrdkregister.honors.admin:
+    description: "Создавать и править особые звания, выдавать и снимать их (/honoradmin)"
     default: op
