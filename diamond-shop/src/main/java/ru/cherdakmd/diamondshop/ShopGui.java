@@ -14,6 +14,7 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
+import ru.cherdakmd.chrdkregister.api.ShopBooks;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,8 +23,8 @@ import java.util.Locale;
 /**
  * Инвентарная витрина магазина с вкладками разделов (1.4.125).
  *
- * <p>Раскладка — {@link ShopLayout}: верхний ряд занимают вкладки разделов и
- * кнопка закрытия, в середине 36 товаров на страницу, снизу пагинация и баланс.
+ * <p>Раскладка — {@link ShopLayout}: верхний ряд занимают вкладки разделов,
+ * второй ряд — разделитель и кнопка закрытия, ниже 27 товаров на страницу (всего 54 слота).
  * ЛКМ — выбор количества покупки, ПКМ — выбор количества продажи. Содержимое
  * перечитывается при каждом действии, поэтому динамические цены всегда актуальны.</p>
  */
@@ -108,15 +109,26 @@ public final class ShopGui implements Listener {
     }
 
     /**
-     * Иконка товара. Имя не переопределяется — клиент показывает локализованное
-     * название материала; в лоре остаются цены, тренд и id для {@code /shop buy}.
+     * Иконка товара. Для обычных предметов имя не переопределяется — клиент
+     * показывает локализованное название материала. Книги чар показываются
+     * настоящим предметом с PDC; если ванильного зачарования нет в реестре
+     * сервера, вместо книги будет барьер (такой товар нельзя купить).
      */
     private ItemStack iconOf(ShopConfig.ShopItem item, Offer offer) {
-        Material material = Material.matchMaterial(item.material());
-        if (material == null || !material.isItem()) {
-            material = Material.BARRIER;
+        var spec = item.spec();
+        ItemStack icon;
+        if (spec != null) {
+            icon = ShopBooks.create(spec);
+            if (icon == null) {
+                icon = new ItemStack(Material.BARRIER);
+            }
+        } else {
+            Material material = Material.matchMaterial(item.material());
+            if (material == null || !material.isItem()) {
+                material = Material.BARRIER;
+            }
+            icon = new ItemStack(material);
         }
-        ItemStack icon = new ItemStack(material);
         ItemMeta meta = icon.getItemMeta();
         if (meta != null) {
             ShopService service = plugin.shopService();

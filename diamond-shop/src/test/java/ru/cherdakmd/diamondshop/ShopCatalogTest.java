@@ -59,17 +59,17 @@ class ShopCatalogTest {
     void layoutMapsSlotsAndPages() {
         assertEquals(1, ShopLayout.pages(0));
         assertEquals(1, ShopLayout.pages(1));
-        assertEquals(1, ShopLayout.pages(36));
-        assertEquals(2, ShopLayout.pages(37));
-        assertEquals(4, ShopLayout.pages(142));
+        assertEquals(1, ShopLayout.pages(27));
+        assertEquals(2, ShopLayout.pages(28));
+        assertEquals(6, ShopLayout.pages(142));
 
         assertEquals(0, ShopLayout.clampPage(-5, 100));
-        assertEquals(2, ShopLayout.clampPage(99, 100));
+        assertEquals(3, ShopLayout.clampPage(99, 100));
         assertEquals(3, ShopLayout.clampPage(3, 142));
 
         assertEquals(0, ShopLayout.itemIndex(0, ShopLayout.FIRST_ITEM_SLOT));
-        assertEquals(35, ShopLayout.itemIndex(0, ShopLayout.LAST_ITEM_SLOT));
-        assertEquals(36, ShopLayout.itemIndex(1, ShopLayout.FIRST_ITEM_SLOT));
+        assertEquals(26, ShopLayout.itemIndex(0, ShopLayout.LAST_ITEM_SLOT));
+        assertEquals(27, ShopLayout.itemIndex(1, ShopLayout.FIRST_ITEM_SLOT));
         assertEquals(-1, ShopLayout.itemIndex(0, ShopLayout.SLOT_CLOSE));
         assertEquals(-1, ShopLayout.itemIndex(0, ShopLayout.SLOT_PREV));
         assertEquals(-1, ShopLayout.itemIndex(0, ShopLayout.SLOT_NEXT));

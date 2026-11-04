@@ -1,168 +1,168 @@
 {
   "pages": {
     "about": {
-      "reason": "RC.3: все новые ray-trace/LOS предварительно проверяют также промежуточные чанки малой области, не только концы; pending IO/ownership/лимиты/отсутствие новых валют и сохранение PvP сверены.",
-      "sources": "4eca58b96f73ed9650e118aedcfca9e907463a24b83c56ee975b30b4c5ffdc28",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "6371f9a1ee53bec7faa0cf5e25ffb143506243009f471b428e5202b6614d64d8",
       "text": "17788b7b4007e90c62acd266f95cec124e0a53b603a1b2e5d9a7c19fb304c7d9"
     },
     "achievements": {
-      "reason": "RC.3: все новые ray-trace/LOS предварительно проверяют также промежуточные чанки малой области, не только концы; pending IO/ownership/лимиты/отсутствие новых валют и сохранение PvP сверены.",
-      "sources": "247f9aa11167bb2b1a51986a58fc64072b878318a8e03cc7535053711ead8bc5",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "ae0455f9dda8313d7165d877ff7288c10e0339817c7a430bee5cd62194b2053c",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "RC.3: все новые ray-trace/LOS предварительно проверяют также промежуточные чанки малой области, не только концы; pending IO/ownership/лимиты/отсутствие новых валют и сохранение PvP сверены.",
-      "sources": "3966de0286b8115f3af0a427e08b17ed4bb3881d5e5bea842a77529ceb9390a5",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "d7caea915b14f7349dc7bc998c21278a48e9b97a05be129a51243b32469be2e6",
       "text": "a4a922729b6635a6d286fcc3c9f18c8c57a0c98a19ec05c44f8d448dc422a84f"
     },
     "auction": {
-      "reason": "RC.3: все новые ray-trace/LOS предварительно проверяют также промежуточные чанки малой области, не только концы; pending IO/ownership/лимиты/отсутствие новых валют и сохранение PvP сверены.",
-      "sources": "18c1adac6c90f3f20a524f300ba8d444c81883029f3f377c978ab3ac1bb5ba0c",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "8b2ccbaaff7c67b0beedfe613ccb3f90c352022e4c6c21dd32bf3d6008aeb3e7",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "RC.3: все новые ray-trace/LOS предварительно проверяют также промежуточные чанки малой области, не только концы; pending IO/ownership/лимиты/отсутствие новых валют и сохранение PvP сверены.",
-      "sources": "595d8c4120fb809f209adab3b152ab95254d8a7be1338761cec0a4a581d31d7d",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "af6bf70b5a711b97271c8720fdf0f5c23f713f7dea6b004962f41ccf980363bf",
       "text": "8c59b8f155d7cd9cd41bfb109879b7a18f51b84d24bb86ba4dd49980a2ac4b03"
     },
     "chat": {
-      "reason": "RC.3: все новые ray-trace/LOS предварительно проверяют также промежуточные чанки малой области, не только концы; pending IO/ownership/лимиты/отсутствие новых валют и сохранение PvP сверены.",
-      "sources": "4eca58b96f73ed9650e118aedcfca9e907463a24b83c56ee975b30b4c5ffdc28",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "6371f9a1ee53bec7faa0cf5e25ffb143506243009f471b428e5202b6614d64d8",
       "text": "57513afb6138ab9df3d1e2e450db3738a1a61aa9e06071d1fc217a719537604b"
     },
     "claims": {
-      "reason": "RC.3: все новые ray-trace/LOS предварительно проверяют также промежуточные чанки малой области, не только концы; pending IO/ownership/лимиты/отсутствие новых валют и сохранение PvP сверены.",
-      "sources": "68c1ccadf1b1da88ba0b40426dc03bba3e3cb575744f42dcf942fa0d32eafe4b",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "0d2d674026144c3eba30dc8e7712aae401ee84d41876b1b03bce3baa2a89f16b",
       "text": "2a1634efadca1810c82bc496b30432d553c72fb226a5e051443232224a366538"
     },
     "classes": {
-      "reason": "RC.3: все новые ray-trace/LOS предварительно проверяют также промежуточные чанки малой области, не только концы; pending IO/ownership/лимиты/отсутствие новых валют и сохранение PvP сверены.",
-      "sources": "d73b7f075f8be428698b0d56823c5048076bdd0e7277abebbcb39282865257b1",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "a5037dcc41aca1b18a01f464b88dd48231d2bbefd6f61aea23fc15471444459f",
       "text": "ee29d92bd4e9527924d14405057fd62402857c1a688439c7b9d86d4c9bf3b546"
     },
     "commands": {
-      "reason": "RC.3: все новые ray-trace/LOS предварительно проверяют также промежуточные чанки малой области, не только концы; pending IO/ownership/лимиты/отсутствие новых валют и сохранение PvP сверены.",
-      "sources": "fcac3be1f0001bdd063cb1095d06b45b4c03297aad521349f3e30d3ace64344a",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "ae3862da15c4f85ef4ffc6b71a2207a983277cf040fa79e3844371d300551762",
       "text": "7cad9d77bd280628e514082fba018af5aaee1e7e0db4f648354e18f1399a47e8"
     },
     "cosmetics": {
-      "reason": "RC.3: все новые ray-trace/LOS предварительно проверяют также промежуточные чанки малой области, не только концы; pending IO/ownership/лимиты/отсутствие новых валют и сохранение PvP сверены.",
-      "sources": "edd2dfebbbd67b84301703b02f843d41b1e2dbf330ea1d07d6e0206f1d388cd5",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "d4745641f4a9bf33ee7a45a2137aa1782751bb335c7e565e35b49a5f9b5059a0",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "RC.3: все новые ray-trace/LOS предварительно проверяют также промежуточные чанки малой области, не только концы; pending IO/ownership/лимиты/отсутствие новых валют и сохранение PvP сверены.",
-      "sources": "1b8ca9afd819e29b24044730951abe8740ace0b9c2ddf5e9853141e1b9d052a6",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "ae07e65caa5c17b57a5589618e6e5be763c470d67a82768cc0224545d2bcca7b",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "economy": {
-      "reason": "RC.4: сверены главное меню охоты, отдельное полнолуние, возврат из новых окон, многострочные подсказки, доступ/UUID и отсутствие фоновых обновлений. Экономика и бой не меняются.",
-      "sources": "ef74e6a27cbe3ca6b09344d16e615c92d0cc6bf876b4dce2f00aa6461982a26d",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "c38235a5d53ff45ddee49542e88dfe76d3ad1afb44ed1d46696d1bd4fa1d1e53",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "RC.4: сверены главное меню охоты, отдельное полнолуние, возврат из новых окон, многострочные подсказки, доступ/UUID и отсутствие фоновых обновлений. Экономика и бой не меняются.",
-      "sources": "5c4b7171401db09ca91062ae9783c8730dd423eddc616a4d174cebe46382db4c",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "8ab41f2f0b1b4667beb10b3d7d11f835ba31de0f0d6445ac9a1639b60045718e",
       "text": "70b6bd31d749073c4e4144ebb536661042f7f925d3ccb838f294fb031e4a8558"
     },
     "faq": {
-      "reason": "RC.3: все новые ray-trace/LOS предварительно проверяют также промежуточные чанки малой области, не только концы; pending IO/ownership/лимиты/отсутствие новых валют и сохранение PvP сверены.",
-      "sources": "fcac3be1f0001bdd063cb1095d06b45b4c03297aad521349f3e30d3ace64344a",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "ae3862da15c4f85ef4ffc6b71a2207a983277cf040fa79e3844371d300551762",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "RC.3: все новые ray-trace/LOS предварительно проверяют также промежуточные чанки малой области, не только концы; pending IO/ownership/лимиты/отсутствие новых валют и сохранение PvP сверены.",
-      "sources": "abb6c69c6bd6307c2fa670d9e3d6bfddd7caedc9623488cffcb6557174781e7b",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "2d425ef296f0978c41388a72e6e25a7ddf4ffb93f55020b78968b0a42e7bb161",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "RC.3: все новые ray-trace/LOS предварительно проверяют также промежуточные чанки малой области, не только концы; pending IO/ownership/лимиты/отсутствие новых валют и сохранение PvP сверены.",
-      "sources": "68c1ccadf1b1da88ba0b40426dc03bba3e3cb575744f42dcf942fa0d32eafe4b",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "0d2d674026144c3eba30dc8e7712aae401ee84d41876b1b03bce3baa2a89f16b",
       "text": "ec70e9288fed4df23e0069944b09928f9fcadbe4d08509ecceba85df191560fb"
     },
     "hunt": {
-      "reason": "RC.4: сверены главное меню охоты, отдельное полнолуние, возврат из новых окон, многострочные подсказки, доступ/UUID и отсутствие фоновых обновлений. Экономика и бой не меняются.",
-      "sources": "9d103dba7dccae0a639fbd9d0b2fa400eef0df66f6f4f69b3c47758d3e1b85fb",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "8a85acb0d3cb2a904ffd18b85308ab794017ecc24e9a38ec914701053d4c7404",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "RC.3: все новые ray-trace/LOS предварительно проверяют также промежуточные чанки малой области, не только концы; pending IO/ownership/лимиты/отсутствие новых валют и сохранение PvP сверены.",
-      "sources": "d7cca716d88301d1fa70f6fae7a18ae14ffd1ea3076215749da9be12a62295be",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "e42df781a6ee04386e6cf881364a4ccbb685049ecf82eafaf5e5d153fe7d4986",
       "text": "9e4a54959f53e85f3e1076c43f2f7863fbaf499584948d064d72367538e0dbd2"
     },
     "menu": {
-      "reason": "RC.4: сверены главное меню охоты, отдельное полнолуние, возврат из новых окон, многострочные подсказки, доступ/UUID и отсутствие фоновых обновлений. Экономика и бой не меняются.",
-      "sources": "cd5fd7b27bffcb6faa1da5d609a15b295848feaf666f3ba94a7c8df3c34fa6da",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "59eb36452942d7182e31bdc8978b7f01c3fddb5191571256f0e914d2c6a7392f",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "orders": {
-      "reason": "RC.3: все новые ray-trace/LOS предварительно проверяют также промежуточные чанки малой области, не только концы; pending IO/ownership/лимиты/отсутствие новых валют и сохранение PvP сверены.",
-      "sources": "a139bdc45e1be90459d6c2a10e5de3a8b1469cd68861d82f573c4866298b6870",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "c22de5e9eeca921df084b23c3199dc2b033f197f27276a895acee751b15976e6",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "pets": {
-      "reason": "RC.3: все новые ray-trace/LOS предварительно проверяют также промежуточные чанки малой области, не только концы; pending IO/ownership/лимиты/отсутствие новых валют и сохранение PvP сверены.",
-      "sources": "a544baa9342225b0e5041db6a6096b75eb63552bef91985c212c54ef3ac4cddb",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "42cdf174160a424ec8906f80dbd110d52f81eb7eb1370f423897884fefcc71d9",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "RC.3: все новые ray-trace/LOS предварительно проверяют также промежуточные чанки малой области, не только концы; pending IO/ownership/лимиты/отсутствие новых валют и сохранение PvP сверены.",
-      "sources": "2bad6f8370bff8ed3b9d5c97b000dd7d5b45b12d0f28b984db0e1fb9f59fbcf0",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "9ce979f7e9693a956420dadbc1c63e87981eb6452b0d11f2c03dc9fef0370bc6",
       "text": "ced22f9d3bdafb0c5f5e4027849d8cf32dd0530d5a937f0c409e07546439d01a"
     },
     "profile": {
-      "reason": "RC.3: все новые ray-trace/LOS предварительно проверяют также промежуточные чанки малой области, не только концы; pending IO/ownership/лимиты/отсутствие новых валют и сохранение PvP сверены.",
-      "sources": "9f684c3cabd75fc10a6a86102b51dfded55fb2b0006d5d20d34f6b30bedef095",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "0657072e6302ed9ad0892426cdd5b667fe1b6bc765be5414512b37b27280543e",
       "text": "54e3f32931d043add66cd8c79174f90ac3597ce659e68de8f5ed05a6e37a45e8"
     },
     "quests": {
-      "reason": "RC.3: все новые ray-trace/LOS предварительно проверяют также промежуточные чанки малой области, не только концы; pending IO/ownership/лимиты/отсутствие новых валют и сохранение PvP сверены.",
-      "sources": "3d2081de8c60a71e1a0d382e43c87cd611d5f7eb3dec19b06a4f14c6c111d5ad",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "442acb5c0308d3fcabdaafeae7314f5584c06a514f51ae62e43be4ef33016642",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "RC.3: все новые ray-trace/LOS предварительно проверяют также промежуточные чанки малой области, не только концы; pending IO/ownership/лимиты/отсутствие новых валют и сохранение PvP сверены.",
-      "sources": "233d518227ad681217d83d350e5df7425b05ee734db5de103167b6a423724f22",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "f226c142afb962e8a51b0c5cadf1969c59a166e76123611342b8149c4c982f9f",
       "text": "c7aa463665be522c2f69c0eafd2844684e5fdf656825e6b80b86235ad4bc3be6"
     },
     "shop": {
-      "reason": "RC.3: все новые ray-trace/LOS предварительно проверяют также промежуточные чанки малой области, не только концы; pending IO/ownership/лимиты/отсутствие новых валют и сохранение PvP сверены.",
-      "sources": "d7cca716d88301d1fa70f6fae7a18ae14ffd1ea3076215749da9be12a62295be",
-      "text": "8a9f3417fcec3f9dc08115a0508ded1d695be00f7792ea97644f177c8ab0d05d"
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "e42df781a6ee04386e6cf881364a4ccbb685049ecf82eafaf5e5d153fe7d4986",
+      "text": "42dd63a6b9370c06261a326419d270aa0a0f28b0c4dad7182c83501956cf36f4"
     },
     "skills": {
-      "reason": "RC.3: все новые ray-trace/LOS предварительно проверяют также промежуточные чанки малой области, не только концы; pending IO/ownership/лимиты/отсутствие новых валют и сохранение PvP сверены.",
-      "sources": "a0bd65cc0fd336e01d5e01d56dae071965cc9da4741709db56c88ef8355a00b1",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "83b4603f9e34a548ca29965f5e8a4149f9abf281499c84c9eb1ad5a5549cd4fb",
       "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
     },
     "start": {
-      "reason": "RC.3: все новые ray-trace/LOS предварительно проверяют также промежуточные чанки малой области, не только концы; pending IO/ownership/лимиты/отсутствие новых валют и сохранение PvP сверены.",
-      "sources": "2cfd04c10471bced85246f018b8810924a88d711ed442c127fdd1b1b688ac655",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "b5b1fa2b5517968536f346762b6a4db24e7a49e7db7fb3e1e5199b7b004b912d",
       "text": "3f26288c52ae35e92097798a9a413933351e8e8422d33230a6322c69aedbb238"
     },
     "teleports": {
-      "reason": "RC.3: все новые ray-trace/LOS предварительно проверяют также промежуточные чанки малой области, не только концы; pending IO/ownership/лимиты/отсутствие новых валют и сохранение PvP сверены.",
-      "sources": "c69fa8ed4b44d9ee787d6724ba890a8c7c8d18f32f0ad9dc012b79005ab76cb9",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "4b83faf6c019f6e94701a5fee9d05df62c964a22233b61bc0b51735e705b411f",
       "text": "896b72de8b56b3374b3a6346a701f45defae6e6ecff688868e02233aa040d1fa"
     },
     "tierforge": {
-      "reason": "RC.3: все новые ray-trace/LOS предварительно проверяют также промежуточные чанки малой области, не только концы; pending IO/ownership/лимиты/отсутствие новых валют и сохранение PvP сверены.",
-      "sources": "b9eba80350d3209d43e1c9a41d9f5d3f26794081eb8416f11b78945184da0973",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "09aa43fc8db699c2f0ccf92d5f74403695cebb9f209a88c49f1704a9c686473b",
       "text": "bb59e5c05ec16e1951d67e444a35885ce8a38805d367f3e73f09a0fd74cce12c"
     },
     "titles": {
-      "reason": "RC.3: все новые ray-trace/LOS предварительно проверяют также промежуточные чанки малой области, не только концы; pending IO/ownership/лимиты/отсутствие новых валют и сохранение PvP сверены.",
-      "sources": "ea60a9d44427aa86b5e363217c3b8f34141648c0a577747d3ae605e1d7fb9c0b",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "300a029413975fdf332897a42764fe7a0d10bb7944ce93cb2072e88633baaa89",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "1.4.281 stable: старые статусы RC.1/RC.2 обозначены как история, а не текущий запрет выпуска. Установка по-прежнему отдельная, версия комплекта 1.4.281.",
-      "sources": "d7cca716d88301d1fa70f6fae7a18ae14ffd1ea3076215749da9be12a62295be",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "e42df781a6ee04386e6cf881364a4ccbb685049ecf82eafaf5e5d153fe7d4986",
       "text": "6123981cc86b0e34592242228decc80ba0995a6258032b64c21c502c1fd670e3"
     },
     "vk": {
-      "reason": "RC.3: все новые ray-trace/LOS предварительно проверяют также промежуточные чанки малой области, не только концы; pending IO/ownership/лимиты/отсутствие новых валют и сохранение PvP сверены.",
-      "sources": "22b562a25793ae500367117c4073d149014a7e1a2e9e3934b092390f62ffb6e1",
+      "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
+      "sources": "a5c6861212875dfaec1741386a6c7eea28747a88f107b9c62b1a6a09cb8d198b",
       "text": "2b67feb5684b14875601ba47314694afa598ff87f6dd74350a06f65029a735eb"
     }
   },

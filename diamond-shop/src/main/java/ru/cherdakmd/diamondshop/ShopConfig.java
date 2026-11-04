@@ -28,6 +28,8 @@ public final class ShopConfig {
      * @param refStock       эталонный запас для динамической цены
      * @param minMultiplier  нижняя граница множителя цены
      * @param maxMultiplier  верхняя граница множителя цены
+     * @param purchaseMultiplier тариф покупки игроком (1..100)
+     * @param book           ключ книги чар каталога или {@code null} для обычного предмета
      */
     public record ShopItem(
             String material,
@@ -37,8 +39,13 @@ public final class ShopConfig {
             double minMultiplier,
             double maxMultiplier,
             boolean sellEnabled,
-            double purchaseMultiplier
+            double purchaseMultiplier,
+            String book
     ) {
+        public ShopItem(String material, String category, double basePrice, long refStock,
+                        double minMultiplier, double maxMultiplier, boolean sellEnabled, double purchaseMultiplier) {
+            this(material, category, basePrice, refStock, minMultiplier, maxMultiplier, sellEnabled, purchaseMultiplier, null);
+        }
         public ShopItem(String material, String category, double basePrice, long refStock,
                         double minMultiplier, double maxMultiplier, boolean sellEnabled) {
             this(material, category, basePrice, refStock, minMultiplier, maxMultiplier, sellEnabled, 1);
@@ -46,6 +53,26 @@ public final class ShopConfig {
         public ShopItem(String material, String category, double basePrice, long refStock,
                         double minMultiplier, double maxMultiplier) {
             this(material, category, basePrice, refStock, minMultiplier, maxMultiplier, true);
+        }
+
+        /** Книга чар, а не обычный предмет без метаданных. */
+        public boolean isBook() {
+            return book != null;
+        }
+
+        /** Модель книги из ключа каталога; {@code null} для обычного товара. */
+        public ru.cherdakmd.chrdkregister.api.ShopBookKey.Spec spec() {
+            return book == null ? null : ru.cherdakmd.chrdkregister.api.ShopBookKey.fromKey(book);
+        }
+
+        /** Читаемое имя для сообщений и витрины. */
+        public String label() {
+            if (book == null) {
+                return material.toLowerCase(java.util.Locale.ROOT);
+            }
+            var spec = spec();
+            return spec == null ? book.toLowerCase(java.util.Locale.ROOT)
+                    : "книга " + spec.id() + " " + spec.level();
         }
     }
 
@@ -117,8 +144,84 @@ public final class ShopConfig {
             }
             items.add(item);
         }
+        // Книги чар живут в отдельной секции books: пользовательский каталог items
+        // не перезаписывается миграцией, поэтому новые разделы появляются у всех.
+        for (ShopItem book : parseBooks(config, logger)) {
+            if (!seen.add(book.material())) {
+                logger.warning("[DiamondShop] books: дубликат товара '" + book.material()
+                        + "' — запись пропущена.");
+                continue;
+            }
+            items.add(book);
+        }
         return new ShopConfigData(rates, recovery, maxWithdraw, minMult, maxMult, List.copyOf(items),
                 spread, dailyLimit, historyPoints, historyInterval);
+    }
+
+    /**
+     * Книги чар из {@code books.custom.enchants} ({@code id:редкость:уровень}) и
+     * {@code books.vanilla.enchants} ({@code id:уровень:цена}). Один товар — одна
+     * книга максимального уровня. Цена фиксированная (multiplier 1..1), скупка
+     * разрешена, но ограничена собственной нижней ask в {@link RecipeEconomy}.
+     */
+    private static List<ShopItem> parseBooks(FileConfiguration config, Logger logger) {
+        if (!config.getBoolean("books.enabled", true)) {
+            return List.of();
+        }
+        long refStock = Math.max(1, config.getLong("books.ref-stock", 200));
+        List<ShopItem> result = new ArrayList<>();
+        ConfigurationSection custom = config.getConfigurationSection("books.custom");
+        if (custom != null) {
+            ConfigurationSection prices = custom.getConfigurationSection("prices");
+            for (String raw : custom.getStringList("enchants")) {
+                String[] parts = raw.trim().toLowerCase(java.util.Locale.ROOT).split(":", -1);
+                if (parts.length != 3) {
+                    logger.warning("[DiamondShop] books.custom: неверная запись '" + raw + "' — пропускаю.");
+                    continue;
+                }
+                double price = prices == null ? 0 : prices.getDouble(parts[1], 0);
+                addBook(result, config, logger, parts[0], parseInt(parts[2]), true, price, refStock);
+            }
+        }
+        ConfigurationSection vanilla = config.getConfigurationSection("books.vanilla");
+        if (vanilla != null) {
+            for (String raw : vanilla.getStringList("enchants")) {
+                String[] parts = raw.trim().toLowerCase(java.util.Locale.ROOT).split(":", -1);
+                if (parts.length != 3) {
+                    logger.warning("[DiamondShop] books.vanilla: неверная запись '" + raw + "' — пропускаю.");
+                    continue;
+                }
+                addBook(result, config, logger, parts[0], parseInt(parts[1]), false,
+                        numberOf(parts[2], 0), refStock);
+            }
+        }
+        return result;
+    }
+
+    private static int parseInt(String raw) {
+        try {
+            return Integer.parseInt(raw.trim());
+        } catch (NumberFormatException error) {
+            return 0;
+        }
+    }
+
+    private static void addBook(List<ShopItem> result, FileConfiguration config, Logger logger,
+                                String id, int level, boolean custom, double price, long refStock) {
+        if (!(price > 0) || !Double.isFinite(price) || level < 1) {
+            logger.warning("[DiamondShop] books: неверная цена или уровень для '" + id + "' — пропускаю.");
+            return;
+        }
+        ru.cherdakmd.chrdkregister.api.ShopBookKey.Spec spec;
+        try {
+            spec = new ru.cherdakmd.chrdkregister.api.ShopBookKey.Spec(id, level, custom);
+        } catch (IllegalArgumentException error) {
+            logger.warning("[DiamondShop] books: неверный идентификатор '" + id + "' — пропускаю.");
+            return;
+        }
+        String category = spec.category();
+        result.add(new ShopItem(spec.key(), category, price, refStock, 1d, 1d, true,
+                purchaseMultiplier(config, category), spec.key()));
     }
 
     private static ShopItem parseItem(Map<?, ?> raw, double defMin, double defMax, FileConfiguration config, Logger logger) {
@@ -174,6 +277,7 @@ public final class ShopConfig {
         double fallback = switch (category) {
             case "blocks", "wood", "food" -> 4;
             case "minerals", "utility" -> 8;
+            case "books-custom", "books-vanilla" -> 2;
             default -> 6;
         };
         double value = config.getDouble("pricing.purchase-multipliers." + category, fallback);

@@ -383,6 +383,7 @@ enchants:
   book-source-shards: "<light_purple>Обмен осколков</light_purple>"
   book-source-admin: "<yellow>Выдача администратора</yellow>"
   book-source-api: "<gray>Внешний API</gray>"
+  book-source-shop: "<gold>Алмазный магазин</gold>"
   book-source-legacy: "<gray>Не записан (старая книга)</gray>"
   book-source-unknown: "<gray>Неизвестный формат метки</gray>"
   library-header: "<gold>Библиотека чар: %count%/%total% · страница %page%/%pages%</gold>"

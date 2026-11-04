@@ -4,11 +4,17 @@ import java.util.*;
 
 /** Frozen whole-diamond market exchange, with an exact item count. Canonical market sequence is not a second wallet. */
 public record ShopExchange(UUID transaction,UUID market,long sequence,UUID owner,boolean buy,String material,
-        long units,long money,long debit,long credit,long physical,Map<String,Integer> rates,String before,String after, int saleBatch,long salePrice,String remainderBefore,String remainderAfter) {
+        long units,long money,long debit,long credit,long physical,Map<String,Integer> rates,String before,String after, int saleBatch,long salePrice,String remainderBefore,String remainderAfter,String book) {
     /** Старые сделки сохраняют прежнюю проверку: нулевая выручка без точного остатка запрещена. */
     public ShopExchange(UUID t,UUID m,long s,UUID o,boolean buy,String material,long units,long money,long debit,long credit,long physical,Map<String,Integer> rates,String before,String after) {
-        this(t,m,s,o,buy,material,units,money,debit,credit,physical,rates,before,after,0,0,null,null);
+        this(t,m,s,o,buy,material,units,money,debit,credit,physical,rates,before,after,0,0,null,null,null);
     }
+    /** Сделки с обычными предметами (полная форма без скидки на книги). */
+    public ShopExchange(UUID t,UUID m,long s,UUID o,boolean buy,String material,long units,long money,long debit,long credit,long physical,Map<String,Integer> rates,String before,String after,int saleBatch,long salePrice,String remainderBefore,String remainderAfter) {
+        this(t,m,s,o,buy,material,units,money,debit,credit,physical,rates,before,after,saleBatch,salePrice,remainderBefore,remainderAfter,null);
+    }
+    /** Ключ книги каталога или {@code null} для обычного предмета. */
+    public boolean isBook() { return book != null; }
     public boolean carriesRemainder() { return saleBatch != 0 || salePrice != 0 || remainderBefore != null || remainderAfter != null; }
     private boolean validRemainder() {
         if(!carriesRemainder()) return money>0;
@@ -22,6 +28,7 @@ public record ShopExchange(UUID transaction,UUID market,long sequence,UUID owner
     public ShopExchange { if(rates!=null) rates=Map.copyOf(rates); }
     public boolean valid() {
         if(transaction==null||market==null||owner==null||sequence<1||sequence>=Long.MAX_VALUE||material==null||!material.matches("[A-Z][A-Z0-9_:]{0,127}")
+                ||(book!=null&&(!book.equals(material)||!ShopBookKey.isKey(material)))
                 ||units<1||units>2304||money<0||money>1_000_000_000L||debit<0||debit>money||credit<0||credit>1_000_000_000L||physical<0||physical>36L*64*Integer.MAX_VALUE
                 ||rates==null||rates.size()>4096||before==null||after==null||before.equals(after)||before.length()>4*1024*1024||after.length()>4*1024*1024) return false;
         for(var r:rates.entrySet()) if(!r.getKey().matches("[A-Z][A-Z0-9_]{0,127}")||r.getValue()==null||r.getValue()<1) return false;
@@ -42,6 +49,9 @@ public record ShopExchange(UUID transaction,UUID market,long sequence,UUID owner
         for(String key:List.of("sequence","units","money","debit","credit","physical")) number(row.get(key)).longValueExact();
         for(String key:List.of("transaction","market","owner","material","before","after")) {
             var v=row.get(key); if(v==null||!v.isJsonPrimitive()||!v.getAsJsonPrimitive().isString()) throw new IllegalArgumentException("shop text "+key);
+        }
+        if(row.has("book")&&!row.get("book").isJsonNull()) {
+            var v=row.get("book"); if(!v.isJsonPrimitive()||!v.getAsJsonPrimitive().isString()) throw new IllegalArgumentException("shop book");
         }
         for(String key:List.of("transaction","market","owner")) MilestoneMigration.uuid(row.get(key).getAsString());
         var buy=row.get("buy"); if(buy==null||!buy.isJsonPrimitive()||!buy.getAsJsonPrimitive().isBoolean()) throw new IllegalArgumentException("shop buy");
