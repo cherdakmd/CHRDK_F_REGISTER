@@ -20,13 +20,17 @@ class AutoMessages276Test {
         var fresh = yaml("config.yml");
         var before = old.getMapList("auto-messages.messages");
         var after = fresh.getMapList("auto-messages.messages");
-        assertEquals(41, after.size());
-        for (int i = 0; i < after.size(); i++) {
+        assertEquals(41, before.size(), "сток 275 остаётся эталоном");
+        assertEquals(42, after.size(), "1.4.282 добавляет подсказку о Plasmo Voice в конец");
+        for (int i = 0; i < before.size(); i++) {
             var a = new LinkedHashMap<>(before.get(i));
             var b = new LinkedHashMap<>(after.get(i));
             assertNotEquals(a.remove("text"), b.remove("text"), "Текст №" + (i + 1));
             assertEquals(a, b, "Фильтры аудитории №" + (i + 1));
         }
+        var voice = after.get(41);
+        assertTrue(String.valueOf(voice.get("text")).contains("Plasmo Voice"));
+        assertEquals(Set.of("text"), voice.keySet(), "внешняя интеграция не требует фильтра аддона");
         old.set("auto-messages.enabled", false);
         old.set("auto-messages.interval-seconds", 987);
         old.set("auto-messages.prefix", "Мой префикс");

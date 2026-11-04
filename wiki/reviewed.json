@@ -1,168 +1,168 @@
 {
   "pages": {
     "about": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "135ff3230358a1bcd3d603b625b9f245c504332aab9286f3b14ce1a59ddc75d6",
-      "text": "17788b7b4007e90c62acd266f95cec124e0a53b603a1b2e5d9a7c19fb304c7d9"
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "9c77ada330e6df7d01ff07eaeeadcc57cab0b136e96e315445bbebe73c0fcbd9",
+      "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "bbd54687de6776bb2c70fb4e04df692db906e987ba630f0f60fee7b78bfcc6ba",
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "ca8f6fd83a19c0f685a62612dc129f88fe1b71f5ec7f5a6544d4cda486c9f975",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "843700d2a7d3e3afba7933af5946f028322e024be9414757be20a7c7d3378d2f",
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "dac51c017e2d0f19a13540f508e904e3e4ec4b2ad26f507264a3b0d5c4d4c367",
       "text": "a4a922729b6635a6d286fcc3c9f18c8c57a0c98a19ec05c44f8d448dc422a84f"
     },
     "auction": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "1991e59aaee1d08767134e7e9473c5acc3dd869087237452df647cf0e66c3d5a",
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "9d1e47f8fd78f696681a9a37b265fc677f5df69cc7c459fa816c2a9c6465897b",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "92a7da554ab242b867f8dc87130ff8b812a936fad57dfee75af363dfb8dac36f",
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "f3125e96991797fba45a47e1a916d93754d15512ae06e6c4ee60c4a3382506e9",
       "text": "8c59b8f155d7cd9cd41bfb109879b7a18f51b84d24bb86ba4dd49980a2ac4b03"
     },
     "chat": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "135ff3230358a1bcd3d603b625b9f245c504332aab9286f3b14ce1a59ddc75d6",
-      "text": "57513afb6138ab9df3d1e2e450db3738a1a61aa9e06071d1fc217a719537604b"
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "9c77ada330e6df7d01ff07eaeeadcc57cab0b136e96e315445bbebe73c0fcbd9",
+      "text": "5105d8801b3d6a9a81b1cae3622728807aa58e3be6ed2925219257f030e46920"
     },
     "claims": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "7b4458e8518e44fc58352458c7b4f67b04bc7973ec931765f5499d488df5c575",
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "e0ce009288d784e15ddd7365f50d32391d3973369b8217f58ab77dfb64440c3f",
       "text": "2a1634efadca1810c82bc496b30432d553c72fb226a5e051443232224a366538"
     },
     "classes": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "7bda495b15762902820c551f1a5eb34eb4884c69db5a529048e71a09ce2b9a2f",
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "4f3ee9c95b2b5e1ed1432abad54b42faffa1c72137b5046d6b683399f79e1380",
       "text": "ee29d92bd4e9527924d14405057fd62402857c1a688439c7b9d86d4c9bf3b546"
     },
     "commands": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "233473aab4cdc59e7a58301ed3076ab6647263b128a474bd07f48b94623fba22",
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "82ffe38c569413885e6b0f208bd11b5d4c10d776baa5057d6b0aa9c3dcf15f93",
       "text": "7cad9d77bd280628e514082fba018af5aaee1e7e0db4f648354e18f1399a47e8"
     },
     "cosmetics": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "645d92078a1e846685dd9388165220ef79d36dab9d2a573aeafc5d2ccaf6ba33",
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "db52a89e4650403708be81d85c01ba4212e57f18edc5205659dd296210f80210",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "1d9b619d424210a377958bace1f5c47c78f5fc23770d11930065c2f7c1c4b4e1",
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "509fcf6086aa8b70ef9c567fed1a0ffe440e4ec4c9960ec4ef3d22dcddad9906",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "economy": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "79c03f74934cdfbb93e5705fd5b65bd3759d848414f0e66bb898b56b865845c7",
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "069ca2853b440204274619ad3f43e998f94d140073b01c12c649ed3558713ecf",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "b6bff917b33b0bd40ff630243b3b7df689288915c23a2e34156a46434cb89d09",
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "5ee39cf0b901a143934ef545b79e021da21875bcc861611159b227a237600b49",
       "text": "4a00a06a712e25215f728c5a01f69eead65612e80ce6ad303969b1a83424336e"
     },
     "faq": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "233473aab4cdc59e7a58301ed3076ab6647263b128a474bd07f48b94623fba22",
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "82ffe38c569413885e6b0f208bd11b5d4c10d776baa5057d6b0aa9c3dcf15f93",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "2353ca1cd33abf51661f844b5462ecb74fc77937d3c32c062b7667c457b81192",
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "eda34a062f94ae30b1aecf361c3c1efc5443a54553ba40385c9daf43e906a676",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "7b4458e8518e44fc58352458c7b4f67b04bc7973ec931765f5499d488df5c575",
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "e0ce009288d784e15ddd7365f50d32391d3973369b8217f58ab77dfb64440c3f",
       "text": "ec70e9288fed4df23e0069944b09928f9fcadbe4d08509ecceba85df191560fb"
     },
     "hunt": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "c103b6990f2de684a1efdaae8a3d9459953cd5fcff6193ea937945addcdb6fea",
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "cc1cf4092d72d43d0af45e33784577c2261c8a40d51b6272b947f9e8962ca582",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "2edd831c4b56dcd3b3a497c47941cbc704f001188fc36d5e1fd6805fb94e3720",
-      "text": "9e4a54959f53e85f3e1076c43f2f7863fbaf499584948d064d72367538e0dbd2"
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "7881c0b5cce611ec812c5abecf982b1404d9d1e8a61180161877caef760f86da",
+      "text": "1417660c5793d86ddfab16c8b2203cbd2dd6b47a245ffa219c71898485b9c39f"
     },
     "menu": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "f63a5d095c2dac35d2ce38a5c560a4a1fd34c22dace46cd6b271c60fb37cd8e2",
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "d13b39aaa3527d71fa27cbfc962ce7e91b6ed83c56d8b994feb22fd86e7db258",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "orders": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "0bd1523edcfcf9590e71de6b8646ad189e4505c4c47e7f6aa56f710734d05ddb",
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "7da70260321140afdb3dc80f05267b2f9e0375877681ecca32346913680c6e53",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "pets": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "9b0cd8d274a4ee264fd577e1b06a15dabc2ee761699d6044f43c7e97aa477af5",
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "809989d836bc2e46fdab2a7a05ff52e0b50277217750bafbdf815b68fd080f5e",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "1.4.282: фикс несовместимости чар; все ремёсла активны, заработок алмазов и бонус ранга (финальная сверка)",
-      "sources": "5b57f3c874b219995a6297fd809c38c5d3f69abb7066d542d18f781b58dd9234",
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "566804b210007443326708102503d238e58aa1d9f2806bc8086833507e40d818",
       "text": "b66278597912053a64a4f192bf0cf63795a8720263d4283683b9458eec8f0bff"
     },
     "profile": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "efcd32d08974181cfe95754defe9cbbef55a3e489f1f2789f2dc8add127c3589",
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "6f6780699cc6886a116800b4800d28ba97ef6d1aa5323bcc0c3135bd5b3d74d0",
       "text": "54e3f32931d043add66cd8c79174f90ac3597ce659e68de8f5ed05a6e37a45e8"
     },
     "quests": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "c16a875be261fac66922b63e70b98c8ea1d4e38453b3c0c1390c63f1db62bf56",
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "eb13498280df6296f094fd955c00bbf98e2ac24ee0fa64d0a4880e06d5856dd8",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "f12e18c91c671ed5aaab90e0d33669c9df65126856a40a1465e4e5f2bfca46da",
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "aabaa60dcb77e23e77245cd5cedfe5b423c214d477ac728b5c1e9ac32a70238f",
       "text": "c7aa463665be522c2f69c0eafd2844684e5fdf656825e6b80b86235ad4bc3be6"
     },
     "shop": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "2edd831c4b56dcd3b3a497c47941cbc704f001188fc36d5e1fd6805fb94e3720",
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "7881c0b5cce611ec812c5abecf982b1404d9d1e8a61180161877caef760f86da",
       "text": "42dd63a6b9370c06261a326419d270aa0a0f28b0c4dad7182c83501956cf36f4"
     },
     "skills": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "61140e90c518a0793c5d3d3fe7bf0d9d6974231fd85022c3a532ffda95c216f1",
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "1644485608d80606c1734c850212728e37dda1b6770d4718e5aa8926401a6307",
       "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
     },
     "start": {
-      "reason": "1.4.282: фикс несовместимости чар; все ремёсла активны, заработок алмазов и бонус ранга (финальная сверка)",
-      "sources": "3fcf415c793d0dedc1c8f9d3d2efd0b057e98b06cbd0e9ec9081d03f5ffdeaa7",
-      "text": "3f26288c52ae35e92097798a9a413933351e8e8422d33230a6322c69aedbb238"
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "863dd09db6ea615eb7a5f5a37d7ca2d69be1c7d21e21a4e28e86fcba6dcf463f",
+      "text": "c2835fdf2d1945079115e6a252d472ce72ad9ad79f4ed47ad58e269b467d595f"
     },
     "teleports": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "a9542d889e6be4208ea870cbbf995964f019dc2543532fdfaec96b483db2da28",
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "71c0d8273fefea212a24ade56c1ba66a8c7a688bdd003886eb8c59a2f8b39082",
       "text": "896b72de8b56b3374b3a6346a701f45defae6e6ecff688868e02233aa040d1fa"
     },
     "tierforge": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "95cec85c5c5172f70471e5b2a5a955611c1280a0bb9e97e32cfe30783986a30e",
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "43ded570983dfa2f63aa1cf53304f4118ab7501fa00374553d21b1bf6ee84299",
       "text": "bb59e5c05ec16e1951d67e444a35885ce8a38805d367f3e73f09a0fd74cce12c"
     },
     "titles": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "97e72e64f8e1cc7bcbf57851d3692fffa99fe26c5a51c12924384611c1666ed6",
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "eaddacb2de68c8927f02d31a16002b24a43725b281435e3485584c6debff6e03",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "2edd831c4b56dcd3b3a497c47941cbc704f001188fc36d5e1fd6805fb94e3720",
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "7881c0b5cce611ec812c5abecf982b1404d9d1e8a61180161877caef760f86da",
       "text": "6123981cc86b0e34592242228decc80ba0995a6258032b64c21c502c1fd670e3"
     },
     "vk": {
-      "reason": "1.4.282: единая проверка conflictGroup чар; все профессии активны, заработок алмазов и бонус ранга",
-      "sources": "9402bd3331db2d6680947b3371b84e6ed6461435cf40d3b014129dcc021f74ee",
+      "reason": "1.4.282: сервер использует Plasmo Voice — автосообщения, книга-гид, вики и советы",
+      "sources": "b8c73dee76a828934f2fdd1d729af0e7b7f600dac7bce98c8bda5c6aee2492d4",
       "text": "2b67feb5684b14875601ba47314694afa598ff87f6dd74350a06f65029a735eb"
     }
   },
