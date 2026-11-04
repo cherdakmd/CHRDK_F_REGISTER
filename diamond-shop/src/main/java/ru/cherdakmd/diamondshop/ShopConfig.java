@@ -164,7 +164,8 @@ public final class ShopConfig {
      * книга максимального уровня. Цена фиксированная (multiplier 1..1), скупка
      * разрешена, но ограничена собственной нижней ask в {@link RecipeEconomy}.
      */
-    private static List<ShopItem> parseBooks(FileConfiguration config, Logger logger) {
+    /** Доступен юнит-тестам: не вызывает Material#isItem() и не требует Bukkit Registry. */
+    static List<ShopItem> parseBooks(FileConfiguration config, Logger logger) {
         if (!config.getBoolean("books.enabled", true)) {
             return List.of();
         }
