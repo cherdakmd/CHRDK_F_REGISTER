@@ -55,10 +55,16 @@ final class EnchantConflictsTest {
         assertEquals(Map.of("veinminer", 2, "lifesteal", 3), merged);
         assertTrue(EnchantConflicts.validSet(merged));
 
-        // Конфликт и внутри самой переносимой карты: остаётся первая чара группы.
-        Map<String, Integer> both = EnchantConflicts.merge(
-                new LinkedHashMap<>(Map.of("excavator", 1, "veinminer", 1)), Map.of());
-        assertEquals(Map.of("excavator", 1), both);
+        // Конфликт и внутри самой переносимой карты: остаётся ровно одна чара
+        // группы (Map.of не гарантирует порядок, поэтому конкретный id не важен).
+        Map<String, Integer> ordered = new LinkedHashMap<>();
+        ordered.put("excavator", 1);
+        ordered.put("veinminer", 1);
+        Map<String, Integer> both = EnchantConflicts.merge(ordered, Map.of());
+        assertEquals(1, both.size());
+        assertTrue(EnchantConflicts.validSet(both));
+        assertEquals(Map.of("excavator", 1),
+                EnchantConflicts.merge(new LinkedHashMap<>(Map.of("excavator", 1)), Map.of()));
         assertEquals(Map.of("veinminer", 3),
                 EnchantConflicts.merge(Map.of("veinminer", 3), Map.of("veinminer", 1)),
                 "одинаковые чары сливаются по максимуму");
