@@ -78,7 +78,7 @@ public final class ShopBooks {
         if (spec.custom()) {
             data.set(CUSTOM_ENCHANTS, PersistentDataType.STRING, spec.id() + ":" + spec.level());
         } else {
-            Enchantment enchant = Registry.ENCHANTMENT.get(NamespacedKey.minecraft(spec.id()));
+            Enchantment enchant = vanilla(spec.id());
             if (enchant == null || !(meta instanceof EnchantmentStorageMeta storage)) {
                 return null;
             }
@@ -115,12 +115,30 @@ public final class ShopBooks {
             if (!(meta instanceof EnchantmentStorageMeta storage)) {
                 return false;
             }
-            Enchantment enchant = Registry.ENCHANTMENT.get(NamespacedKey.minecraft(spec.id()));
             Map<Enchantment, Integer> stored = storage.getStoredEnchants();
-            return enchant != null && stored.size() == 1
-                    && stored.getOrDefault(enchant, 0) == spec.level();
+            if (stored.size() != 1) {
+                return false;
+            }
+            for (Map.Entry<Enchantment, Integer> entry : stored.entrySet()) {
+                return entry.getKey() != null && spec.id().equals(entry.getKey().getKey().getKey())
+                        && entry.getValue() == spec.level();
+            }
+            return false;
         }
         return (spec.id() + ":" + spec.level()).equals(data.get(CUSTOM_ENCHANTS, PersistentDataType.STRING));
+    }
+
+    /**
+     * Ванильное зачарование по ключу. {@code Registry} доступен только на рабочем
+     * сервере: в юнит-тестах без Bukkit его инициализация бросает Error, и книга
+     * просто не создаётся — сделка отклоняется, а не роняет плагин.
+     */
+    private static Enchantment vanilla(String id) {
+        try {
+            return Registry.ENCHANTMENT.get(NamespacedKey.minecraft(id));
+        } catch (Throwable unavailable) {
+            return null;
+        }
     }
 
     /** Точное совпадение предмета с ключом товара (для проверки сделки в ядре). */
