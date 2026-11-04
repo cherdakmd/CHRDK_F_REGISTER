@@ -2,167 +2,167 @@
   "pages": {
     "about": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "6371f9a1ee53bec7faa0cf5e25ffb143506243009f471b428e5202b6614d64d8",
+      "sources": "862b223487b444e2ff48b2ba6d83afcc64737eb09469c89735d9c28418adca4a",
       "text": "17788b7b4007e90c62acd266f95cec124e0a53b603a1b2e5d9a7c19fb304c7d9"
     },
     "achievements": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "ae0455f9dda8313d7165d877ff7288c10e0339817c7a430bee5cd62194b2053c",
+      "sources": "5fe5bbb6e9a59b7412d0033e0cc589743623a7a22972900dd6fdef3d0428ba95",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "d7caea915b14f7349dc7bc998c21278a48e9b97a05be129a51243b32469be2e6",
+      "sources": "90e835a68a2c6e3143d726497baaecd38b21f4e2b5b8430120e2470186a3655f",
       "text": "a4a922729b6635a6d286fcc3c9f18c8c57a0c98a19ec05c44f8d448dc422a84f"
     },
     "auction": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "8b2ccbaaff7c67b0beedfe613ccb3f90c352022e4c6c21dd32bf3d6008aeb3e7",
+      "sources": "dfa92874e0844b01ca7a26c0795f4d66744f2f8a34dd4787bdb8f1d072c1d3c8",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "af6bf70b5a711b97271c8720fdf0f5c23f713f7dea6b004962f41ccf980363bf",
+      "sources": "3d809586aa539bddf4ce81c9fb64a2f7334ad72970a79d0c9ae064a2839c8f27",
       "text": "8c59b8f155d7cd9cd41bfb109879b7a18f51b84d24bb86ba4dd49980a2ac4b03"
     },
     "chat": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "6371f9a1ee53bec7faa0cf5e25ffb143506243009f471b428e5202b6614d64d8",
+      "sources": "862b223487b444e2ff48b2ba6d83afcc64737eb09469c89735d9c28418adca4a",
       "text": "57513afb6138ab9df3d1e2e450db3738a1a61aa9e06071d1fc217a719537604b"
     },
     "claims": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "0d2d674026144c3eba30dc8e7712aae401ee84d41876b1b03bce3baa2a89f16b",
+      "sources": "bbf060f4c69d104ccf4cde6c70ba50e3f9992b7e85fe6953b3bb71b5eab69f67",
       "text": "2a1634efadca1810c82bc496b30432d553c72fb226a5e051443232224a366538"
     },
     "classes": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "a5037dcc41aca1b18a01f464b88dd48231d2bbefd6f61aea23fc15471444459f",
+      "sources": "38241597fe9631c67ce5a5dde0ec24b1f6d34d914d18b090ec0564ca7a325b3a",
       "text": "ee29d92bd4e9527924d14405057fd62402857c1a688439c7b9d86d4c9bf3b546"
     },
     "commands": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "ae3862da15c4f85ef4ffc6b71a2207a983277cf040fa79e3844371d300551762",
+      "sources": "f7286fc1358031663441dae32290973be0da973878e2a0be175074bab08f7293",
       "text": "7cad9d77bd280628e514082fba018af5aaee1e7e0db4f648354e18f1399a47e8"
     },
     "cosmetics": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "d4745641f4a9bf33ee7a45a2137aa1782751bb335c7e565e35b49a5f9b5059a0",
+      "sources": "96651df1d6483618a95254e22a07907607233a6fe9fe56132865e27159227c3a",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "ae07e65caa5c17b57a5589618e6e5be763c470d67a82768cc0224545d2bcca7b",
+      "sources": "640ccfa91f98dd4b7494cda5c01844134e6f11efbb0d94f43821f848718dbdad",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "economy": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "c38235a5d53ff45ddee49542e88dfe76d3ad1afb44ed1d46696d1bd4fa1d1e53",
+      "sources": "1249f7aca1cef680247193d0cb3eb62dae3b0dcf02de4f3bab6363f8a1bea428",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "8ab41f2f0b1b4667beb10b3d7d11f835ba31de0f0d6445ac9a1639b60045718e",
+      "sources": "36c9c6d9e7d409eef254a50fb83bf53dc7c2fc30f66f26276c8d2a4f4a6e8339",
       "text": "70b6bd31d749073c4e4144ebb536661042f7f925d3ccb838f294fb031e4a8558"
     },
     "faq": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "ae3862da15c4f85ef4ffc6b71a2207a983277cf040fa79e3844371d300551762",
+      "sources": "f7286fc1358031663441dae32290973be0da973878e2a0be175074bab08f7293",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "2d425ef296f0978c41388a72e6e25a7ddf4ffb93f55020b78968b0a42e7bb161",
+      "sources": "06d0c4168bc599b23c0f4071bc4bcc0b4d10b09fbe781790f69fd911f9ef46c0",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "0d2d674026144c3eba30dc8e7712aae401ee84d41876b1b03bce3baa2a89f16b",
+      "sources": "bbf060f4c69d104ccf4cde6c70ba50e3f9992b7e85fe6953b3bb71b5eab69f67",
       "text": "ec70e9288fed4df23e0069944b09928f9fcadbe4d08509ecceba85df191560fb"
     },
     "hunt": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "8a85acb0d3cb2a904ffd18b85308ab794017ecc24e9a38ec914701053d4c7404",
+      "sources": "c31e10f2e624e1179bf53e0ce96517751919800115097a6c2c3a2e40364a0f8c",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "e42df781a6ee04386e6cf881364a4ccbb685049ecf82eafaf5e5d153fe7d4986",
+      "sources": "a00d9653906762cc04e9d2d169cd99a4be5277b5617f0b22971c46243056439c",
       "text": "9e4a54959f53e85f3e1076c43f2f7863fbaf499584948d064d72367538e0dbd2"
     },
     "menu": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "59eb36452942d7182e31bdc8978b7f01c3fddb5191571256f0e914d2c6a7392f",
+      "sources": "f11fdb5c8026ff8706f40f51cc45f98fc1e3455c679cb2a7c8280bd7acefc4d5",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "orders": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "c22de5e9eeca921df084b23c3199dc2b033f197f27276a895acee751b15976e6",
+      "sources": "6f857db44080578276541910cd939e3d0612ed2acfeee29f504b36f915917f97",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "pets": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "42cdf174160a424ec8906f80dbd110d52f81eb7eb1370f423897884fefcc71d9",
+      "sources": "0005c0cbec9db692bd9e96c1a5e46d4f47bcb4eec806b31e080c53132a173a48",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "9ce979f7e9693a956420dadbc1c63e87981eb6452b0d11f2c03dc9fef0370bc6",
+      "sources": "8fcdc58ba96085fcca0410821833d0df612aa394445cb80d6d5eff3cf231664d",
       "text": "ced22f9d3bdafb0c5f5e4027849d8cf32dd0530d5a937f0c409e07546439d01a"
     },
     "profile": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "0657072e6302ed9ad0892426cdd5b667fe1b6bc765be5414512b37b27280543e",
+      "sources": "4ff19421b40bc2ac085a435206584520b1b5de0d9eef462db7c49356182c78d9",
       "text": "54e3f32931d043add66cd8c79174f90ac3597ce659e68de8f5ed05a6e37a45e8"
     },
     "quests": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "442acb5c0308d3fcabdaafeae7314f5584c06a514f51ae62e43be4ef33016642",
+      "sources": "87d6e3a32f0e9ca4425faf3df41c4611cf3ed0bd6881fbd1f4621040cd80e27a",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "f226c142afb962e8a51b0c5cadf1969c59a166e76123611342b8149c4c982f9f",
+      "sources": "df9486f90cd20548c51b90a2496a1db249a0a71a442ac8c51d0d4d79b9546ec9",
       "text": "c7aa463665be522c2f69c0eafd2844684e5fdf656825e6b80b86235ad4bc3be6"
     },
     "shop": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "e42df781a6ee04386e6cf881364a4ccbb685049ecf82eafaf5e5d153fe7d4986",
+      "sources": "a00d9653906762cc04e9d2d169cd99a4be5277b5617f0b22971c46243056439c",
       "text": "42dd63a6b9370c06261a326419d270aa0a0f28b0c4dad7182c83501956cf36f4"
     },
     "skills": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "83b4603f9e34a548ca29965f5e8a4149f9abf281499c84c9eb1ad5a5549cd4fb",
+      "sources": "b69affb2b42308a4c1df58caafb5f3f22a8f0b62a0d8651e13b2d9b174b0448b",
       "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
     },
     "start": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "b5b1fa2b5517968536f346762b6a4db24e7a49e7db7fb3e1e5199b7b004b912d",
+      "sources": "1f8a4b229654483794fed3e6f3c32f6e0cb5b0666e2e1670a8b715c564fe2b9c",
       "text": "3f26288c52ae35e92097798a9a413933351e8e8422d33230a6322c69aedbb238"
     },
     "teleports": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "4b83faf6c019f6e94701a5fee9d05df62c964a22233b61bc0b51735e705b411f",
+      "sources": "55f3864794094ded50b83605b375fddcfaef1df8ff1dd81b81c10904f7ac82dd",
       "text": "896b72de8b56b3374b3a6346a701f45defae6e6ecff688868e02233aa040d1fa"
     },
     "tierforge": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "09aa43fc8db699c2f0ccf92d5f74403695cebb9f209a88c49f1704a9c686473b",
+      "sources": "2d8c12d286e9defb088f37077f33dc52bc456a1a8adbec3d11c3208077bca216",
       "text": "bb59e5c05ec16e1951d67e444a35885ce8a38805d367f3e73f09a0fd74cce12c"
     },
     "titles": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "300a029413975fdf332897a42764fe7a0d10bb7944ce93cb2072e88633baaa89",
+      "sources": "c681a6dad9e528dfc33178026815ee1157aba9786dfa65d1a341f0f8a9ecee8d",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "e42df781a6ee04386e6cf881364a4ccbb685049ecf82eafaf5e5d153fe7d4986",
+      "sources": "a00d9653906762cc04e9d2d169cd99a4be5277b5617f0b22971c46243056439c",
       "text": "6123981cc86b0e34592242228decc80ba0995a6258032b64c21c502c1fd670e3"
     },
     "vk": {
       "reason": "Книги чар в алмазном магазине: два раздела books-custom/books-vanilla, ShopBookKey/ShopBooks и ShopExchange.book в ядре, витрина 54 слота с 10 вкладками и 27 товарами на страницу, тариф x2, скупка только магазинных книг; факты shop_count/book_count и таблицы сверены с конфигом.",
-      "sources": "a5c6861212875dfaec1741386a6c7eea28747a88f107b9c62b1a6a09cb8d198b",
+      "sources": "02ded4f7a94510abe013b40cdea45fd9aa3362a08d6e7dec8b9da67f746377f8",
       "text": "2b67feb5684b14875601ba47314694afa598ff87f6dd74350a06f65029a735eb"
     }
   },

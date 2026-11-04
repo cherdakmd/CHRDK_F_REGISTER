@@ -59,7 +59,7 @@ public final class ShopBookKey {
         try {
             int level = Integer.parseInt(body.substring(split + 1));
             return new Spec(body.substring(0, split).toLowerCase(Locale.ROOT), level, custom);
-        } catch (NumberFormatException | IllegalArgumentException error) {
+        } catch (IllegalArgumentException error) {
             return null;
         }
     }
@@ -75,7 +75,7 @@ public final class ShopBookKey {
         }
         try {
             return new Spec(parts[1], Integer.parseInt(parts[2]), parts[0].equals("custom"));
-        } catch (NumberFormatException | IllegalArgumentException error) {
+        } catch (IllegalArgumentException error) {
             return null;
         }
     }
