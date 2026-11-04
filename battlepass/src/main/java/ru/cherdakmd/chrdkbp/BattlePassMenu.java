@@ -140,10 +140,10 @@ final class BattlePassMenu implements Listener {
                         BattlePassConfig.isUnlocked(season, index, now), new BattlePassView.Mission(
                         mission,
                         plugin.store().progressOf(uuid, mission.id()),
-                        plugin.store().isClaimed(uuid, mission.id(), "FREE"),
-                        plugin.store().isClaimed(uuid, mission.id(), "VIP"),
+                        BattlePassClaims.claimed(plugin.store(),uuid,mission,"FREE"),
+                        BattlePassClaims.claimed(plugin.store(),uuid,mission,"VIP"),
                         vipActive,
-                        plugin.store().isClaimed(uuid, mission.id(), "PREMIUM"),
+                        BattlePassClaims.claimed(plugin.store(),uuid,mission,"PREMIUM"),
                         premiumActive)));
             }
         }

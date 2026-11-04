@@ -5,9 +5,11 @@ import importlib.util
 import io
 import json
 from pathlib import Path
+from unittest.mock import patch
 import sys
 import tempfile
 import unittest
+import yaml
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
@@ -27,6 +29,77 @@ class WikiBuildTest(unittest.TestCase):
                 raise AssertionError("Сайт не прошёл контракт")
         cls.root = HERE.parents[1]
         cls.book = FactBook(cls.root)
+
+    def test_forge_consumables_share_game_instructions_and_exact_prices(self):
+        book = FactBook()
+        cards = book.render_table("forge_materials")
+        self.assertEqual(8, cards.count("### "))
+        for name in ("Кристалл возвышения", "Кузнечное ядро", "Печать перековки",
+                     "Искра первого тира", "Кузнечный лом", "Резец ковки",
+                     "Смывка ковки", "Чернила клички"):
+            self.assertIn(name, cards)
+        for sku in ("ascend", "temper", "reforge", "seed", "repair", "inscribe", "remove", "name"):
+            self.assertIn("`" + sku + "`", cards)
+        self.assertEqual(8, cards.count("В наковальне"))
+        self.assertNotIn("/tiers forge confirm", cards)
+        self.assertEqual(8, cards.count("ЛКМ с пустым курсором"))
+        self.assertIn("Легендарный | 16 | 24", book.render_table("forge_costs"))
+        drops = book.render_table("forge_drops")
+        self.assertIn("4.2%", drops)
+        self.assertIn("seed | 0.5%", drops)
+        self.assertIn("1%", drops)
+        self.assertIn("3%", drops)
+        self.assertNotIn("999999", drops)
+        shop = book.render_table("forge_shop")
+        for row in ("ascend | ECHO_SHARD | 128", "temper | NAUTILUS_SHELL | 96",
+                    "reforge | PAPER | 160", "seed | NETHER_STAR | 64",
+                    "repair | IRON_INGOT | 24", "inscribe | GOLD_NUGGET | 192",
+                    "remove | GUNPOWDER | 32", "name | INK_SAC | 16"):
+            self.assertIn(row, shop)
+        self.assertEqual(8, shop.count("Hunt + /shop forge") + shop.count("| /shop forge |"))
+
+    def test_forge_missing_item_instruction_fails_closed(self):
+        book = FactBook()
+        data = yaml.safe_load((self.root / "tier-forge/src/main/resources/messages.yml").read_text())
+        data["tiers"].pop("forge.temper.details")
+        with patch("facts.yaml.safe_load", return_value=data):
+            with self.assertRaisesRegex(ValueError, "Нет инструкции расходника"):
+                book.render_table("forge_materials")
+
+    def test_artifact_catalog_has_all_65_shared_details_and_live_config_costs(self):
+        book = FactBook()
+        cards = book.artifact_catalog()
+        self.assertEqual(65, len(cards))
+        self.assertEqual(65, book.value("artifact_count"))
+        self.assertEqual(33, sum("Светлый." in card for card in cards))
+        self.assertEqual(30, sum("Активный:" in card for card in cards))
+        self.assertTrue(all(card.count("\n- ") >= 1 for card in cards))
+        settings = book.configs["artifacts"]["artifacts"]["grozovoj-kolokol"]
+        settings["xp-cost-levels"] = 19
+        settings["cooldown-seconds"] = 777
+        changed = next(card for card in book.artifact_catalog() if "`grozovoj-kolokol`" in card)
+        self.assertIn("19 ур. XP; откат 777 сек.", changed)
+
+    def test_artifact_tables_cover_sources_traits_and_ceil_collection_thresholds(self):
+        book = FactBook()
+        sources = book.render_table("artifact_sources")
+        self.assertIn("minecraft:chests/ancient_city | 12", sources)
+        self.assertIn("ENDER_DRAGON | 100", sources)
+        self.assertIn("Дополнительная находка | 3", sources)
+        traits = book.render_table("artifact_traits")
+        self.assertEqual(32, len(traits.splitlines()))
+        self.assertIn("silnyj-zahvat", traits)
+        rewards = book.render_table("artifact_rewards")
+        for row in ("25 | 17 | 1 | 8", "50 | 33 | 2 | 16", "75 | 49 | 3 | 24", "100 | 65 | 7 | 32"):
+            self.assertIn(row, rewards)
+
+    def test_artifact_missing_details_fail_closed(self):
+        book = FactBook()
+        source = yaml.safe_load((HERE.parents[1] / "artifacts/src/main/resources/messages.yml").read_text())
+        source["messages"]["art"]["pero-feniksa"].pop("details")
+        with patch("facts.yaml.safe_load", return_value=source):
+            with self.assertRaisesRegex(ValueError, "Нет подробного описания артефакта"):
+                book.artifact_catalog()
 
     def test_economy_guides_keep_consent_and_carry_distinct(self):
         faq = (self.root / "wiki/faq.md").read_text()
@@ -110,6 +183,37 @@ class WikiBuildTest(unittest.TestCase):
             self.assertIn(row[0].strip("`"), page)
         self.assertIn("Бережная пересадка", page)
         self.assertIn("PvE-якорь", page)
+
+    def test_detailed_enchant_cards_publish_all_game_descriptions_and_conflicts(self):
+        details = self.book.enchant_catalog(detailed=True)
+        self.assertEqual(76, len(details))
+        page = (self.root / "site/enchants.html").read_text()
+        for card in details:
+            self.assertIn("Несовместимо на одном предмете:", card)
+            self.assertGreaterEqual(card.count("\n- "), 2)
+            self.assertNotIn("<gray>", card)
+        self.assertIn("Начальная скорость полёта стрелы: +4/6/8%", page)
+        self.assertIn("0,5/0,75/1 ед. HP", page)
+        chain = next(card for card in details if "— `chainspark`" in card)
+        self.assertIn("`thunderstrike`", chain)
+        self.assertNotIn("`lifesteal`", chain)
+        self.assertIn("не потолок уровня I/II/III", page)
+
+    def test_enchant_handbook_and_end_of_catalog_remain_searchable(self):
+        index = json.loads((self.root / "site/search-index.json").read_text())
+        text = next(p["text"] for p in index if p["url"] == "enchants.html")
+        for word in ("quickdraw", "время натяжения", "vitality", "физический алмаз", "мастерская", "veinminer", "до 6/10/14"):
+            self.assertIn(word, text)
+
+    def test_missing_or_shallow_enchant_descriptions_stop_publication(self):
+        import yaml
+        resource = self.root / "enchants/src/main/resources/messages.yml"
+        for invalid in (None, "старый краткий текст", ["только одна строка"], ["строка", ""]):
+            messages = yaml.safe_load(resource.read_text())
+            messages["enchants"]["en"]["quickdraw"]["lore"] = invalid
+            with patch("facts.yaml.safe_load", return_value=messages):
+                with self.assertRaisesRegex(ValueError, "quickdraw"):
+                    self.book.enchant_catalog(detailed=True)
 
     def test_bundle_terms_match_public_configuration(self):
         page = (self.root / "site/ranks.html").read_text()

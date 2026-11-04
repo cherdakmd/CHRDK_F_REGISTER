@@ -73,6 +73,10 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
     @Override public ru.cherdakmd.chrdkregister.api.ShopExchange.Status commitShopExchange(Player p,ru.cherdakmd.chrdkregister.api.ShopExchange t) {
         return plugin==null||plugin.bank()==null?ru.cherdakmd.chrdkregister.api.ShopExchange.Status.UNAVAILABLE:plugin.bank().shopExchange(p,t);
     }
+    @Override public ru.cherdakmd.chrdkregister.api.ForgeMaterialSource forgeMaterialSource() {
+        try { return org.bukkit.Bukkit.getServicesManager().load(ru.cherdakmd.chrdkregister.api.ForgeMaterialSource.class); }
+        catch(RuntimeException | LinkageError unavailable) { return null; }
+    }
     @Override public boolean exchangeDiamonds(Player player, long debit, long credit,
             org.bukkit.inventory.ItemStack[] expected, org.bukkit.inventory.ItemStack[] replacement) {
         if (plugin == null || plugin.bank() == null || !plugin.bank().enabled() || bank == null
@@ -349,6 +353,14 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
     @Override
     public void grantRewardBoostHours(String playerName, int hours, String source) {
         plugin.rewardBoosts().grant(playerName, hours, source);
+    }
+
+    @Override public MoneyGrant grantBattlePassMoneyOnce(java.util.UUID uuid, String name, long diamonds, String receipt) {
+        if (!org.bukkit.Bukkit.isPrimaryThread() || !personalBankAvailable() || uuid == null) return MoneyGrant.FAILED;
+        Player player = org.bukkit.Bukkit.getPlayer(uuid);
+        if (player == null || !isAuthenticated(player) || !player.getName().equals(name)
+                || !uuid.equals(knownBankPlayer(name))) return MoneyGrant.FAILED;
+        return bank.grantBattlePassMoneyOnce(uuid, diamonds, receipt);
     }
 
     @Override public BoostGrant grantRewardBoostOnce(java.util.UUID player,String name,int hours,String receipt) {

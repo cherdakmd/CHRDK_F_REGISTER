@@ -48,6 +48,7 @@ final class BattlePassAdminCommandHandler implements CommandExecutor, TabComplet
         switch (args[0].toLowerCase(Locale.ROOT)) {
             case "reload" -> {
                 plugin.reloadBattlePassConfig();
+                if (!plugin.configReady()) { plugin.messages().send(sender, "reload-config-failed"); return true; }
                 int missions = plugin.missionCount();
                 plugin.messages().send(sender, "admin-reloaded",
                         "weeks", plugin.season().weeks().size(), "missions", missions);
@@ -179,7 +180,7 @@ final class BattlePassAdminCommandHandler implements CommandExecutor, TabComplet
                 for (BattlePassConfig.MissionDef mission : season.weeks().get(index).missions()) {
                     if (row.getOrDefault(mission.id(), 0) >= mission.target()
                             && mission.freeHours() > 0
-                            && !plugin.store().isClaimed(player.getUniqueId(), mission.id(), "FREE")) {
+                            && !BattlePassClaims.claimed(plugin.store(),player.getUniqueId(),mission,"FREE")) {
                         ready++;
                     }
                 }

@@ -1,0 +1,30 @@
+{
+  "version": 4,
+  "rankSchemaVersion": 1,
+  "accounts": {
+    "steve": {
+      "uuid": "b36f38cb-5e91-4e5a-a9b6-0fbbf4b2af07",
+      "playerName": "Steve",
+      "canonicalName": "Steve",
+      "rankLevel": 3,
+      "rankPermanent": true,
+      "lastGrantSource": "shop:fixture",
+      "passwordHash": "fixture-only-not-a-real-password-hash",
+      "totpSecret": "JBSWY3DPEHPK3PXP",
+      "totpEnabledAt": 1700000000000,
+      "lastTotpStep": 12345,
+      "rewardBoostMillis": 86400000,
+      "rewardBoostReceipts": {
+        "bp:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": 6
+      },
+      "rewardBoostFractions": {
+        "skills": 0.5
+      },
+      "paymentsCount": 2,
+      "totalPaidKopecks": 50000,
+      "entitlements": {
+        "clan-style-pack": 1800000000000
+      }
+    }
+  }
+}

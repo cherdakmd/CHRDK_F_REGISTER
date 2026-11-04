@@ -91,10 +91,14 @@ public final class LabelStyleService {
      * @param customColor выбранный игроком цвет-разметка или {@code null}
      */
     public String decorate(String playerName, String base, String customColor) {
+        return decorate(playerName, base, customColor, false);
+    }
+    /** Включённая оплаченная анимация клана не скрывается личными местами/переключателем метки. */
+    public String decorate(String playerName, String base, String customColor, boolean activeClanAnimation) {
         Rank rank = ranks.view(playerName);
         Selection selected = selection(playerName, rank, customColor);
         String name = assemble(colorize(base, customColor, rank), selected);
-        if (selected.displayed(LabelPreferences.Label.GUILDS) || !preferences.visible(playerName, LabelPreferences.Label.GUILDS)) return name;
+        if (selected.displayed(LabelPreferences.Label.GUILDS) || (!activeClanAnimation && !preferences.visible(playerName, LabelPreferences.Label.GUILDS))) return name;
         String clan = project(tags.apply("guilds-chat", playerName, ANCHOR), true);
         return clan.isBlank() ? name : name + SEPARATOR + "<reset>" + clan + "<reset>";
     }

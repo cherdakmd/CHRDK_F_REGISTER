@@ -19,11 +19,14 @@ class BattlePassReward281Test {
         reboot.consumeRewardBoost("Steve",8*RewardBoostMath.HOUR);
         assertEquals(ALREADY,reboot.grantRewardBoostOnce(player,"Steve",24,24,key));assertEquals(0,reboot.rewardBoostRemaining("Steve"));
     }
-    @Test void fullBankDoesNotTruncateRewardOrBurnReceipt() {
+    @Test void accumulatedBoostCanExceedTheOldCapWithoutTruncationAndSurviveRestart() {
         var s=store();s.grantRewardBoost("Steve",20,24);
-        assertEquals(FULL,s.grantRewardBoostOnce(player,"Steve",8,24,key));assertEquals(20*RewardBoostMath.HOUR,s.rewardBoostRemaining("Steve"));
-        s.consumeRewardBoost("Steve",4*RewardBoostMath.HOUR);
-        assertEquals(ADDED,s.grantRewardBoostOnce(player,"Steve",8,24,key));assertEquals(24*RewardBoostMath.HOUR,s.rewardBoostRemaining("Steve"));
+        assertEquals(ADDED,s.grantRewardBoostOnce(player,"Steve",8,24,key));
+        assertEquals(28*RewardBoostMath.HOUR,s.rewardBoostRemaining("Steve"));
+        assertEquals(ALREADY,s.grantRewardBoostOnce(player,"Steve",8,24,key));
+        assertEquals(28*RewardBoostMath.HOUR,new RegistrationStore(dir,Logger.getAnonymousLogger()).rewardBoostRemaining("Steve"));
+        s.grantRewardBoost("Steve",100000,1);s.flushBlocking();
+        assertEquals(100028L*RewardBoostMath.HOUR,new RegistrationStore(dir,Logger.getAnonymousLogger()).rewardBoostRemaining("Steve"));
     }
     @Test void identityBoundsAndReceiptValidationFailClosed() {
         var s=store();assertEquals(FAILED,s.grantRewardBoostOnce(UUID.randomUUID(),"Steve",8,24,key));

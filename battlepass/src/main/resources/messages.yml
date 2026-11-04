@@ -158,7 +158,7 @@ battlepass:
   "usage-admin": "<yellow>Использование: /bpadmin <reload|info|stats|list|validate|reset <ник>|resetall|addprogress <ник> <id> <n>|setprogress <ник> <id> <n>></yellow>"
   "admin-usage-progress": "<yellow>Использование: /bpadmin addprogress|setprogress <ник> <id> <n></yellow>"
   "access-unavailable": "<yellow>Пропуск недоступен: войдите в аккаунт и проверьте состояние аддона.</yellow>"
-  "reward-bank-full": "<yellow>Наград ждут места в банке буста: %count%. Ничего не сгорело — потратьте онлайн-время и заберите позже.</yellow>"
+  "reward-bank-full": "<yellow>Наград ждут повторного получения: %count%. Проверьте место на личном /bal. Уже выданные части не повторятся; остальные не сгорят.</yellow>"
   "reward-retry": "<red>Выдача не подтверждена. Не удаляйте данные; повторите получение после проверки Core. Повтор не начислит награду дважды.</red>"
   "reward-locked": "<yellow>Готовых закрытых наград: %count%. Бесплатная ветка доступна всем; VIP — рангу, золотая — премиуму.</yellow>"
   "menu-filter": "<aqua>Фильтр: %filter%</aqua>"
@@ -183,7 +183,7 @@ battlepass:
   "guide-claim-lore": ["<gray>Забрать выполненные доступные ветки.</gray>", "<gray>Права и прогресс проверяются заново.</gray>", "<yellow>Целый приз не помещается? Он подождёт.</yellow>"]
   "guide-tracks": ["<green>Бесплатная дорожка: всем.</green>", "<light_purple>VIP: дополнительно при активном ранге.</light_purple>", "<gold>Премиум: покупка пропуска или ранг IV–V.</gold>", "<gray>Премиум не выполняет задания за вас.</gray>", "<yellow>Нажмите: магазин. Это не покупка.</yellow>"]
   "guide-bank": "<green>Что даёт приз и где он хранится?</green>"
-  "guide-bank-lore": ["<gray>Отдельный игровой буст: +10% XP.</gray>", "<gray>Работает на обычный XP, профессии и навыки.</gray>", "<gray>Остаток в банке: %minutes% минут.</gray>", "<gray>Время идёт только онлайн после входа.</gray>", "<gray>Не продлевает ранг и платные покупки.</gray>", "<gray>Стоковый банк Core: до 24 часов.</gray>", "<gray>Неполученные призы ждут в заданиях.</gray>", "<gray>Пустые слоты инвентаря не требуются.</gray>"]
+  "guide-bank-lore": ["<gray>Отдельный игровой буст: +10% XP.</gray>", "<gray>Работает на обычный XP, профессии и навыки.</gray>", "<gray>Остаток в банке: %minutes% минут.</gray>", "<gray>Время идёт только онлайн после входа.</gray>", "<gray>Не продлевает ранг и платные покупки.</gray>", "<gray>Время буста копится без игрового потолка.</gray>", "<gray>Алмазы зачисляются на личный /bal.</gray>", "<gray>Неполученные призы ждут в заданиях.</gray>", "<gray>Пустые слоты инвентаря не требуются.</gray>"]
   "guide-recommended": "<yellow>Что сделать сейчас?</yellow>"
   "guide-recommended-lore": ["%desc%", "<gray>Счётчик: %progress%/%target%</gray>", "<yellow>Нажмите: условия и награды.</yellow>"]
   "guide-reward-page": "<gold>Награды · страница %page%/%pages%</gold>"
@@ -198,8 +198,8 @@ battlepass:
   "guide-access-locked": "Нужен доступ к дорожке"
   "guide-in-progress": "Сначала выполните цель"
   "guide-ready": "Можно забрать"
-  "guide-track-reward": "<gold>%track% · %hours% ч. буста</gold>"
-  "guide-track-lore": ["<gray>Статус: %state%</gray>", "<gray>Часы отдельного +10% XP-буста.</gray>", "<yellow>Нажмите: условия задания.</yellow>"]
+  "guide-track-reward": "<gold>%track% · %hours% ч. буста · %diamonds% 💠</gold>"
+  "guide-track-lore": ["<gray>Статус: %state%</gray>", "<gray>Приз: %hours% ч. буста + %diamonds% 💠 в /bal.</gray>", "<yellow>Нажмите: условия задания.</yellow>"]
   "guide-detail": "<dark_gray>Задание · условия и награды</dark_gray>"
   "guide-conditions": ["<gray>Прогресс: %progress%/%target% · осталось: %remaining%</gray>", "<gray>За выполнение: %points% очков сезона.</gray>", "<gray>Миры: %worlds%</gray>", "<gray>Право: %permission%</gray>", "<gray>Открытие: день %day% · %date% UTC</gray>", "<yellow>Точные цели — значок подзорной трубы справа.</yellow>"]
   "guide-any-world": "Любой мир"
@@ -211,7 +211,7 @@ battlepass:
   "guide-fair": "<yellow>Почему счётчик может не расти?</yellow>"
   "guide-fair-lore": ["<gray>Проверьте дату открытия и список целей.</gray>", "<gray>Мир и права могут ограничивать задание.</gray>", "<gray>Креатив по умолчанию не засчитывается.</gray>", "<gray>Свои недавно поставленные блоки не добыча.</gray>", "<gray>Плавка — выемка результата из печи.</gray>", "<gray>Рыбалка — пойманный улов, не взмах удочки.</gray>", "<gray>После конца сезона прогресс заморожен.</gray>", "<gray>Готовые призы остаются доступны.</gray>"]
   "menu-filter-empty": "<gray>Заданий в этом фильтре пока нет</gray>"
-  "guide-track-claim-lore": ["<gray>Статус: %state%</gray>", "<gray>Приз: %hours% ч. отдельного +10% XP-буста.</gray>", "<yellow>Нажмите: забрать только эту дорожку.</yellow>", "<gray>Можно выбрать крупный приз первым.</gray>"]
+  "guide-track-claim-lore": ["<gray>Статус: %state%</gray>", "<gray>Приз: %hours% ч. буста + %diamonds% 💠 в /bal.</gray>", "<yellow>Нажмите: забрать только эту дорожку.</yellow>", "<gray>Можно выбрать крупный приз первым.</gray>"]
 
   # Биомный атлас и наградные ранги — 1.4.281-rc.2
   "atlas-title-lifetime": "<dark_gray>Биомные достижения · навсегда</dark_gray>"
@@ -298,3 +298,8 @@ battlepass:
   "exp-saved-route-lore": ["<gray>%marks%</gray>", "<yellow>Левая кнопка: начать навигацию.</yellow>", "<gray>Правая: удалить этот маршрут и остановить навигацию.</gray>"]
   "exp-route-create": "<green>Новый маршрут по всем меткам</green>"
   "exp-route-create-lore": ["<gray>В порядке создания меток, без замены старых маршрутов.</gray>", "<gray>Другая последовательность: /bp expedition route имя метка1 метка2…</gray>"]
+
+  reward-money: "<green>%track%: %diamonds% 💠 в /bal</green>"
+  money-granted: "<green>BattlePass: +%diamonds% 💠 на личный /bal.</green>"
+
+  reload-config-failed: "<red>Конфигурация BP не подтверждена: награды приостановлены, прогресс сохранён. Проверьте журнал, config.yml и backup, исправьте причину и повторите /bpadmin reload.</red>"

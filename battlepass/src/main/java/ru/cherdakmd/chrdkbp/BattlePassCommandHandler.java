@@ -205,10 +205,10 @@ final class BattlePassCommandHandler implements CommandExecutor, TabCompleter {
         for (BattlePassConfig.MissionDef mission : week.missions()) {
             views.add(new BattlePassView.Mission(mission,
                     plugin.store().progressOf(uuid, mission.id()),
-                    plugin.store().isClaimed(uuid, mission.id(), "FREE"),
-                    plugin.store().isClaimed(uuid, mission.id(), "VIP"),
+                    BattlePassClaims.claimed(plugin.store(),uuid,mission,"FREE"),
+                    BattlePassClaims.claimed(plugin.store(),uuid,mission,"VIP"),
                     vipActive,
-                    plugin.store().isClaimed(uuid, mission.id(), "PREMIUM"),
+                    BattlePassClaims.claimed(plugin.store(),uuid,mission,"PREMIUM"),
                     premiumActive));
         }
         return views;
@@ -273,10 +273,10 @@ final class BattlePassCommandHandler implements CommandExecutor, TabCompleter {
         int progress = Math.min(plugin.store().progressOf(uuid, mission.id()), mission.target());
         int percent = mission.target() <= 0 ? 0 : progress * 100 / mission.target();
         BattlePassView.Mission view = new BattlePassView.Mission(mission, progress,
-                plugin.store().isClaimed(uuid, mission.id(), "FREE"),
-                plugin.store().isClaimed(uuid, mission.id(), "VIP"),
+                BattlePassClaims.claimed(plugin.store(),uuid,mission,"FREE"),
+                BattlePassClaims.claimed(plugin.store(),uuid,mission,"VIP"),
                 plugin.vipActive(player),
-                plugin.store().isClaimed(uuid, mission.id(), "PREMIUM"),
+                BattlePassClaims.claimed(plugin.store(),uuid,mission,"PREMIUM"),
                 plugin.premiumActive(player));
         plugin.messages().send(player, "info-header",
                 "desc", BattlePassScreen.described(mission));

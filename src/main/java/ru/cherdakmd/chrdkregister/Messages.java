@@ -144,6 +144,16 @@ public final class Messages {
                 "guild-admission-messages-legacy-1.4.279.yml", logger));
         migrateStockOverrides(defaults, overrides, readResource(plugin,
                 "battlepass-messages-legacy-1.4.280.yml", logger));
+        migrateStockOverrides(defaults, overrides, readResource(plugin,
+                "guild-style-messages-legacy-1.4.282.yml", logger));
+        migrateStockOverrides(defaults, overrides, readResource(plugin,
+                "battlepass-messages-legacy-1.4.282.yml", logger));
+        migrateStockOverrides(defaults, overrides, readResource(plugin,
+                "artifacts-messages-legacy-1.4.282-rc7.yml", logger));
+        migrateStockOverrides(defaults, overrides, readResource(plugin,
+                "tierforge-messages-legacy-1.4.282-rc8.yml", logger));
+        migrateStockOverrides(defaults, overrides, readResource(plugin,
+                "tierforge-messages-legacy-1.4.282-rc9.yml", logger));
         overrides.replaceAll((key, text) -> GameplayRewardTexts.message(moduleName, key, text));
         Messages messages = new Messages(defaults, overrides, logger);
         messages.logMissingKeys(fileName);
@@ -171,6 +181,8 @@ public final class Messages {
         // Только первый запуск создаёт шаблон. На reload удалённый/недоступный файл — ошибка, не fallback.
         if (createMissing && !Files.exists(file)) plugin.saveResource(fileName, false);
         Map<String, String> overrides = checkedOverrides(base, file);
+        migrateCheckedStock(defaults, overrides, plugin.getResource("enchants-messages-legacy-1.4.282-rc6.yml"));
+        migrateCheckedStock(defaults, overrides, plugin.getResource("enchants-messages-legacy-1.4.282-rc9.yml"));
         overrides.replaceAll((key, text) -> GameplayRewardTexts.message(plugin.getName(), key, text));
         return checkedMessages(defaults, overrides, logger);
     }
@@ -178,8 +190,23 @@ public final class Messages {
     /** Строгий файловый контракт для загрузчиков/тестов, без JavaPlugin и без записи на диск. */
     public static Messages fromChecked(InputStream defaultsStream, Path userFile, Logger logger)
             throws IOException, org.bukkit.configuration.InvalidConfigurationException {
-        YamlConfiguration base = readChecked(defaultsStream);
-        return checkedMessages(flatten(base), checkedOverrides(base, userFile), logger);
+        return fromChecked(defaultsStream, userFile, null, logger);
+    }
+
+    /** Строгая загрузка с точным прежним stock; меняется только эффективный текст, не файл владельца. */
+    public static Messages fromChecked(InputStream defaultsStream, Path userFile, InputStream legacyStream, Logger logger)
+            throws IOException, org.bukkit.configuration.InvalidConfigurationException {
+        try (InputStream legacy = legacyStream) {
+            YamlConfiguration base = readChecked(defaultsStream);
+            var defaults = flatten(base);
+            var overrides = checkedOverrides(base, userFile);
+            migrateCheckedStock(defaults, overrides, legacy);
+            return checkedMessages(defaults, overrides, logger);
+        }
+    }
+    private static void migrateCheckedStock(Map<String, String> defaults, Map<String, String> overrides, InputStream legacy)
+            throws IOException, org.bukkit.configuration.InvalidConfigurationException {
+        if (legacy != null) migrateStockOverrides(defaults, overrides, flatten(readChecked(legacy)));
     }
     private static YamlConfiguration readChecked(InputStream stream)
             throws IOException, org.bukkit.configuration.InvalidConfigurationException {

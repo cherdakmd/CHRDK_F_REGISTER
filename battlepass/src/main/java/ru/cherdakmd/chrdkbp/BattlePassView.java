@@ -52,11 +52,11 @@ final class BattlePassView {
         }
 
         boolean hasFree() {
-            return def.freeHours() > 0;
+            return def.freeHours() > 0 || def.freeDiamonds() > 0;
         }
 
         boolean hasVip() {
-            return def.vipHours() > 0;
+            return def.vipHours() > 0 || def.vipDiamonds() > 0;
         }
 
         boolean freeLeft() {

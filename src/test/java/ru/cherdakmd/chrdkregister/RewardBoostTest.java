@@ -39,11 +39,11 @@ class RewardBoostTest {
         assertEquals(before.entitlements, after.entitlements);
     }
 
-    @Test void newPlayerGetsOnlySeparateBoostAndBankIsBounded() {
+    @Test void newPlayerGetsOnlySeparateBoostAndTimeHasNoGameplayCeiling() {
         var store = store();
         assertEquals(3 * RewardBoostMath.HOUR, store.grantRewardBoost("Free", 3, 24));
-        assertEquals(24 * RewardBoostMath.HOUR, store.grantRewardBoost("Free", Integer.MAX_VALUE, 24));
-        assertEquals(24 * RewardBoostMath.HOUR, store.grantRewardBoost("Free", 1, 24));
+        assertEquals((3L + Integer.MAX_VALUE) * RewardBoostMath.HOUR, store.grantRewardBoost("Free", Integer.MAX_VALUE, 24));
+        assertEquals((4L + Integer.MAX_VALUE) * RewardBoostMath.HOUR, store.grantRewardBoost("Free", 1, 24));
         assertFalse(store.hasActivePass("Free", NOW));
         assertEquals(0, store.rankLevel("Free", NOW));
         assertEquals(0, store.getAccount("Free").orElseThrow().paymentsCount);
@@ -86,7 +86,7 @@ class RewardBoostTest {
     }
 
     @Test void repeatedRewardAddsTimeNotStrengthAndHandlesInvalidInput() {
-        assertEquals(24 * RewardBoostMath.HOUR, RewardBoostMath.grant(Long.MAX_VALUE, Integer.MAX_VALUE, 24));
+        assertEquals(Long.MAX_VALUE, RewardBoostMath.grant(Long.MAX_VALUE, Integer.MAX_VALUE, 24));
         assertEquals(RewardBoostMath.HOUR, RewardBoostMath.grant(-100, 1, 24));
         assertEquals(0, RewardBoostMath.grant(0, -1, 24));
         var store = store();

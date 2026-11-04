@@ -41,7 +41,7 @@ final class TierLore {
         return result;
     }
 
-    private static boolean isTier(String text, String name) {
+    static boolean isTier(String text, String name) {
         return text.equals(name) || text.startsWith(name + " · ");
     }
 }

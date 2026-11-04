@@ -107,9 +107,9 @@ final class BattlePassScreen {
             } else if (vip) {
                 text = messages.raw("reward-vip", "hours", mission.vipHours());
             } else {
-                return Messages.trusted("");
+                return trustedRaw(money(mission));
             }
-            return trustedRaw(text);
+            return trustedRaw(text + " " + money(mission));
         }
 
         StringBuilder text = new StringBuilder();
@@ -135,7 +135,18 @@ final class BattlePassScreen {
             text.append(messages.raw("reward-premium-item",
                     "count", mission.premiumProducts().size()));
         }
-        return trustedRaw(text.toString());
+        return trustedRaw(text + " " + money(mission));
+    }
+
+    private String money(BattlePassConfig.MissionDef mission) {
+        StringBuilder text = new StringBuilder();
+        for (String track : java.util.List.of("FREE", "VIP", "PREMIUM")) {
+            if (mission.diamonds(track) <= 0) continue;
+            if (!text.isEmpty()) text.append(' ');
+            text.append(messages.raw("reward-money", "track", messages.plain("guide-" + track.toLowerCase(java.util.Locale.ROOT)),
+                    "diamonds", mission.diamonds(track)));
+        }
+        return text.toString();
     }
 
     /** Кнопка «забрать» для готовой награды или подсказка «нужен ранг». */

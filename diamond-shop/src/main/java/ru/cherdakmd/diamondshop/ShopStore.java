@@ -387,6 +387,18 @@ public final class ShopStore {
             pending=p; dirty=false; return true;
         } catch(ArithmeticException e) { return false; }
     }
+    /** RC16: тот же WAL, но без виртуального склада/истории цены — грант заморожен в сделке. */
+    synchronized boolean prepareForge(ru.cherdakmd.chrdkregister.api.ShopExchange t,long now,double limit) {
+        if(!legacyAvailable||!registered||pending!=null||!market.equals(t.market())||t.sequence()!=sequence+1
+                ||!t.valid()||!t.buy()||!t.carriesGrant()||!canRecordTurnover(t.owner(),t.money(),limit,now)) return false;
+        var p=new ShopJournal.Pending(t,1,0,0,now,now-Math.floorMod(now,86400000L),
+                limit==0?-1:PriceEngine.round(usedToday(t.owner(),now)+t.money()),
+                PriceEngine.round(turnover+t.money()),1.0,4,0L,true);
+        if(!p.valid()||!exactIncrease(turnover,p.turnover(),t.money())||p.used()!=-1&&!exactIncrease(usedToday(t.owner(),now),p.used(),t.money())) return false;
+        var json=com.google.gson.JsonParser.parseString(snapshotJson()).getAsJsonObject(); json.add("pending",GSON.toJsonTree(p));
+        if(!writeJson(GSON.toJson(json))) return false;
+        pending=p; dirty=false; return true;
+    }
     /** Caller has just received authoritative MISSING from healthy Core; no item/money effect exists. */
     synchronized boolean cancelUnaccepted(ShopJournal.Pending p) {
         if(!legacyAvailable||!p.equals(pending)) return false;
@@ -401,14 +413,20 @@ public final class ShopStore {
         var state=items.get(p.trade().material());
         if(!p.matches(state,usedToday(p.trade().owner(),p.time()),turnover)) { stop("Не совпадает frozen effect рынка"); return false; }
         var json=com.google.gson.JsonParser.parseString(snapshotJson()).getAsJsonObject(); json.remove("pending"); json.addProperty("sequence",p.trade().sequence()); json.addProperty("turnover",p.turnover());
-        var row=json.getAsJsonObject("items").getAsJsonObject(p.trade().material()); row.addProperty("stock",p.stock()); row.addProperty("recoveryAt",p.time()); row.addProperty("soldByPlayers",p.sold()); row.addProperty("boughtByPlayers",p.bought());
-        double[] history=state.history.clone(); long historyAt=state.historyAt;
-        if(history.length>0&&p.time()-historyAt<p.historyInterval()) history[history.length-1]=p.price();
-        else { int keep=Math.min(p.historyPoints()-1,history.length); var next=new double[keep+1]; System.arraycopy(history,history.length-keep,next,0,keep); next[keep]=p.price(); history=next; historyAt=p.time(); }
-        row.add("history",GSON.toJsonTree(history)); row.addProperty("historyAt",historyAt);
+        double[] history=null; long historyAt=0;
+        if(!p.forge()) {
+            var row=json.getAsJsonObject("items").getAsJsonObject(p.trade().material()); row.addProperty("stock",p.stock()); row.addProperty("recoveryAt",p.time()); row.addProperty("soldByPlayers",p.sold()); row.addProperty("boughtByPlayers",p.bought());
+            history=state.history.clone(); historyAt=state.historyAt;
+            if(history.length>0&&p.time()-historyAt<p.historyInterval()) history[history.length-1]=p.price();
+            else { int keep=Math.min(p.historyPoints()-1,history.length); var next=new double[keep+1]; System.arraycopy(history,history.length-keep,next,0,keep); next[keep]=p.price(); history=next; historyAt=p.time(); }
+            row.add("history",GSON.toJsonTree(history)); row.addProperty("historyAt",historyAt);
+        }
         if(p.used()!=-1) { var limit=new JsonObject(); limit.addProperty("dayStart",p.day()); limit.addProperty("used",p.used()); json.getAsJsonObject("limits").add(p.trade().owner().toString(),limit); }
         if(!writeJson(GSON.toJson(json))) return false;
-        state.stock=p.stock(); state.recoveryAt=p.time(); state.soldByPlayers=p.sold(); state.boughtByPlayers=p.bought(); state.history=history; state.historyAt=historyAt;
+        if(!p.forge()) {
+            state.stock=p.stock(); state.recoveryAt=p.time(); state.soldByPlayers=p.sold(); state.boughtByPlayers=p.bought();
+            state.history=history; state.historyAt=historyAt;
+        }
         if(p.used()!=-1) { var limit=new LimitRow(); limit.dayStart=p.day(); limit.used=p.used(); limits.put(p.trade().owner(),limit); }
         turnover=p.turnover(); sequence=p.trade().sequence(); pending=null; dirty=false; return true;
     }

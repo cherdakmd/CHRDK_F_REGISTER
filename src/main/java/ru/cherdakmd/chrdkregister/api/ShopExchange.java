@@ -2,20 +2,24 @@ package ru.cherdakmd.chrdkregister.api;
 
 import java.util.*;
 
-/** Frozen whole-diamond market exchange, with an exact item count. Canonical market sequence is not a second wallet. */
+/** Frozen whole-diamond market exchange, with an exact item count. Canonical market sequence is not a second wallet.
+ * API42: nullable frozen grant — native-снимок одного PDC-прототипа Кузни; nullable book — ключ книги чар магазина.
+ * Прежние конструкторы и receipts без grant/book сохранены. Одна сделка не может нести и книгу, и грант. */
 public record ShopExchange(UUID transaction,UUID market,long sequence,UUID owner,boolean buy,String material,
-        long units,long money,long debit,long credit,long physical,Map<String,Integer> rates,String before,String after, int saleBatch,long salePrice,String remainderBefore,String remainderAfter,String book) {
+        long units,long money,long debit,long credit,long physical,Map<String,Integer> rates,String before,String after, int saleBatch,long salePrice,String remainderBefore,String remainderAfter,String book,String grant) {
     /** Старые сделки сохраняют прежнюю проверку: нулевая выручка без точного остатка запрещена. */
     public ShopExchange(UUID t,UUID m,long s,UUID o,boolean buy,String material,long units,long money,long debit,long credit,long physical,Map<String,Integer> rates,String before,String after) {
-        this(t,m,s,o,buy,material,units,money,debit,credit,physical,rates,before,after,0,0,null,null,null);
+        this(t,m,s,o,buy,material,units,money,debit,credit,physical,rates,before,after,0,0,null,null,null,null);
     }
-    /** Сделки с обычными предметами (полная форма без скидки на книги). */
+    /** Сделки с обычными предметами: полная форма без книги и без гранта. */
     public ShopExchange(UUID t,UUID m,long s,UUID o,boolean buy,String material,long units,long money,long debit,long credit,long physical,Map<String,Integer> rates,String before,String after,int saleBatch,long salePrice,String remainderBefore,String remainderAfter) {
-        this(t,m,s,o,buy,material,units,money,debit,credit,physical,rates,before,after,saleBatch,salePrice,remainderBefore,remainderAfter,null);
+        this(t,m,s,o,buy,material,units,money,debit,credit,physical,rates,before,after,saleBatch,salePrice,remainderBefore,remainderAfter,null,null);
     }
     /** Ключ книги каталога или {@code null} для обычного предмета. */
     public boolean isBook() { return book != null; }
     public boolean carriesRemainder() { return saleBatch != 0 || salePrice != 0 || remainderBefore != null || remainderAfter != null; }
+    /** Принятая сделка Кузни не требует живого производителя или действующих цен. */
+    public boolean carriesGrant() { return grant != null; }
     private boolean validRemainder() {
         if(!carriesRemainder()) return money>0;
         if(buy) return false;
@@ -29,11 +33,17 @@ public record ShopExchange(UUID transaction,UUID market,long sequence,UUID owner
     public boolean valid() {
         if(transaction==null||market==null||owner==null||sequence<1||sequence>=Long.MAX_VALUE||material==null||!material.matches("[A-Z][A-Z0-9_:]{0,127}")
                 ||(book!=null&&(!book.equals(material)||!ShopBookKey.isKey(material)))
+                ||(book!=null&&grant!=null)
                 ||units<1||units>2304||money<0||money>1_000_000_000L||debit<0||debit>money||credit<0||credit>1_000_000_000L||physical<0||physical>36L*64*Integer.MAX_VALUE
                 ||rates==null||rates.size()>4096||before==null||after==null||before.equals(after)||before.length()>4*1024*1024||after.length()>4*1024*1024) return false;
         for(var r:rates.entrySet()) if(!r.getKey().matches("[A-Z][A-Z0-9_]{0,127}")||r.getValue()==null||r.getValue()<1) return false;
         if(!validRemainder()) return false;
-        return buy?debit+physical-credit==money:debit==0&&physical==0&&credit==money;
+        if(!(buy?debit+physical-credit==money:debit==0&&physical==0&&credit==money)) return false;
+        if(carriesGrant()) {
+            // Только покупка, без остатка от распродажи; искра дополнительно ограничена в GUI/сервисе.
+            if(!buy||carriesRemainder()||!ForgeMarketCatalog.validTradeGrant(grant,material,units)) return false;
+        }
+        return true;
     }
     public boolean fits(long balance) { return valid()&&balance>=debit&&balance-debit<=1_000_000_000L-credit; }
     /** JSON adapters must not coerce quoted/fractional counters to longs. */
@@ -45,6 +55,11 @@ public record ShopExchange(UUID transaction,UUID market,long sequence,UUID owner
             for(String field:List.of("remainderBefore","remainderAfter")) if(row.has(field)) {
                 var v=row.get(field); if(!v.isJsonPrimitive() || !v.getAsJsonPrimitive().isString() || !ShopSaleRemainder.valid(v.getAsString())) throw new IllegalArgumentException("sale remainder");
             }
+        }
+        if(row.has("grant") && !row.get("grant").isJsonNull()) {
+            var v=row.get("grant");
+            if(!v.isJsonPrimitive()||!v.getAsJsonPrimitive().isString()||!ForgeMarketCatalog.validPrototype(v.getAsString()))
+                throw new IllegalArgumentException("frozen forge grant");
         }
         for(String key:List.of("sequence","units","money","debit","credit","physical")) number(row.get(key)).longValueExact();
         for(String key:List.of("transaction","market","owner","material","before","after")) {

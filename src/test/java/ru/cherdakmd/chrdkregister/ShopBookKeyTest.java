@@ -59,6 +59,6 @@ class ShopBookKeyTest {
     private static ShopExchange exchange(String material, String book) {
         return new ShopExchange(UUID.randomUUID(), UUID.randomUUID(), 1, UUID.randomUUID(),
                 true, material, 1, 10, 10, 0, 0, Map.of("DIAMOND", 1),
-                "before", "after", 0, 0, null, null, book);
+                "before", "after", 0, 0, null, null, book, null);
     }
 }

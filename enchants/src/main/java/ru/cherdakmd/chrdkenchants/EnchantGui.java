@@ -40,11 +40,12 @@ public final class EnchantGui implements Listener {
                 .stream().map(EnchantDef::id).collect(Collectors.toSet()) : Set.of();
         List<EnchantDef> selected = EnchantCatalog.select(query, names, applicable);
         int page = EnchantCatalog.page(requested, selected.size());
-        var holder = new EnchantsHolder(player.getUniqueId(), plugin.sourceGeneration(), query, page);
+        List<EnchantDef> items = EnchantCatalog.slice(selected, page);
+        var holder = new EnchantsHolder(player.getUniqueId(), plugin.sourceGeneration(), query, page,
+                items.stream().map(EnchantDef::id).toList());
         Inventory inventory = Bukkit.createInventory(holder, 54, plugin.messages().get("gui-title",
                 "page", page + 1, "pages", EnchantCatalog.pages(selected.size())));
         holder.inventory = inventory;
-        List<EnchantDef> items = EnchantCatalog.slice(selected, page);
         for (int slot = 0; slot < items.size(); slot++) inventory.setItem(slot, enchantIcon(items.get(slot)));
         if (items.isEmpty()) inventory.setItem(22, button(Material.PAPER, "catalog-empty"));
         if (page > 0) inventory.setItem(45, button(Material.ARROW, "gui-prev"));
@@ -68,7 +69,7 @@ public final class EnchantGui implements Listener {
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             meta.displayName(plugin.messages().get(key, args));
-            meta.lore(List.of(plugin.messages().get("catalog-hint")));
+            meta.lore(List.of(plugin.messages().get(key.equals("catalog-result") ? "catalog-help" : "catalog-hint")));
             item.setItemMeta(meta);
         }
         return item;
@@ -105,7 +106,10 @@ public final class EnchantGui implements Listener {
                 lore.add(plugin.messages().get("info-conflicts",
                         "conflicts", Messages.trusted(conflictsLabel(def))));
             }
+            lore.add(plugin.messages().get("info-id", "id", def.id(), "state", plugin.messages().mini(
+                    plugin.config().isEnabled(def.id()) ? "catalog-on" : "catalog-off")));
             lore.addAll(plugin.messages().getList("en." + def.id() + ".lore"));
+            lore.add(plugin.messages().get("catalog-detail"));
             meta.lore(lore);
             item.setItemMeta(meta);
         }
@@ -137,6 +141,18 @@ public final class EnchantGui implements Listener {
                 || event.getRawSlot() < 0 || event.getRawSlot() >= 54 || holder.generation != plugin.sourceGeneration()) return;
         EnchantCatalog.Query query = holder.query;
         int page = holder.page;
+        // ID берётся из серверного снимка страницы, не из имени/PDC нажатой клиентской иконки.
+        if (event.getRawSlot() < holder.entries.size() || event.getRawSlot() == 49) {
+            String id = event.getRawSlot() == 49 ? null : holder.entries.get(event.getRawSlot());
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (!eligible(player) || holder.generation != plugin.sourceGeneration()
+                        || player.getOpenInventory().getTopInventory().getHolder() != holder) return;
+                player.closeInventory();
+                if (id == null) plugin.messages().sendList(player, "help-overview");
+                else EnchantCommandHandler.showInfo(plugin, player, id);
+            });
+            return;
+        }
         switch (event.getRawSlot()) {
             case 45 -> { if (page == 0) return; page--; }
             case 53 -> { if (event.getInventory().getItem(53) == null) return; page++; }
@@ -163,9 +179,10 @@ public final class EnchantGui implements Listener {
         final long generation;
         final EnchantCatalog.Query query;
         final int page;
+        final List<String> entries;
         Inventory inventory;
-        EnchantsHolder(UUID owner, long generation, EnchantCatalog.Query query, int page) {
-            this.owner = owner; this.generation = generation; this.query = query; this.page = page;
+        EnchantsHolder(UUID owner, long generation, EnchantCatalog.Query query, int page, List<String> entries) {
+            this.owner = owner; this.generation = generation; this.query = query; this.page = page; this.entries = List.copyOf(entries);
         }
         @Override public @NotNull Inventory getInventory() { return inventory; }
     }

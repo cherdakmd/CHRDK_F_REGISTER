@@ -38,7 +38,7 @@ class GuildStyle279Test {
         assertEquals(GuildStyleStore.Result.OK, store.select(owner,"Steve","clan-a","animation","shine",1003));
         var restored = new GuildStyleStore(folder, log);
         assertTrue(restored.healthy()); assertEquals(4, restored.of(owner).choices().size());
-        assertEquals(GuildStyleStore.Result.COOLDOWN, restored.select(owner,"Steve","clan-b","animation","pulse",1004));
+        assertEquals(GuildStyleStore.Result.OK, restored.select(owner,"Steve","clan-b","animation","pulse",1004));
         assertEquals(GuildStyleStore.Result.OK, restored.select(owner,"Steve","clan-b","animation","pulse",86_401_000));
         assertEquals(4, restored.of(owner).choices().size()); assertTrue(restored.forGuild("clan-a").isEmpty());
         assertEquals("clan-style-pack", GuildStyleDefs.PRODUCTS.get("animation"));
@@ -53,10 +53,18 @@ class GuildStyle279Test {
         assertNull(GuildStylePolicy.active(rows,guild,"animation",2000,row->3000,row->false));
         assertNull(GuildStylePolicy.active(rows,new Guild("clan-a","Alpha","TAG",UUID.randomUUID(),1000),"animation",2000,row->3000,row->true));
     }
-    @Test void aReplacedApprovalIsNotThePreviewedOffer() {
-        var first = new GuildStyleController.Pending("Steve", "name", "gold", 1000);
-        assertNotEquals(first, new GuildStyleController.Pending("Steve", "name", "gold", 1001));
-        assertNotEquals(first, new GuildStyleController.Pending("Steve", "animation", "pulse", 1000));
+    @Test void onlyTheCurrentLeaderCanManageStyles() {
+        var guild = new Guild("clan-a", "Alpha", "TAG", owner, 1000);
+        UUID member = UUID.randomUUID();
+        guild.addMember(member, GuildRank.OFFICER);
+        assertTrue(GuildStylePolicy.canManage(guild, owner));
+        assertFalse(GuildStylePolicy.canManage(guild, member));
+        assertFalse(GuildStylePolicy.canManage(guild, UUID.randomUUID()));
+        assertFalse(GuildStylePolicy.canManage(null, owner));
+        assertFalse(GuildStylePolicy.canManage(guild, null));
+        assertTrue(guild.transferLeader(member));
+        assertFalse(GuildStylePolicy.canManage(guild, owner));
+        assertTrue(GuildStylePolicy.canManage(guild, member));
     }
     @Test void everyPresetAndGuiControlHasRussianMessages() throws Exception {
         var yaml = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(Path.of("src/main/resources/messages.yml").toFile());

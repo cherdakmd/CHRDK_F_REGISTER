@@ -37,6 +37,7 @@ public final class RegisterPlugin extends JavaPlugin {
     private AdminDonationsGuiService adminDonationsGui;
     private PasswordKeypadService passwordKeypad;
     private TabListService tabListService;
+    TabListService tabList() { return tabListService; }
     /** 1.4.183: личные переключатели надписей в нике и табе. */
     private LabelPreferences labelPreferences;
     private LabelsCommandHandler labelsCommand;
@@ -157,6 +158,7 @@ public final class RegisterPlugin extends JavaPlugin {
         PluginCommand guardCommand = getCommand("guard");
         if (guardCommand != null) guardCommand.setExecutor((sender, command, label, args) -> serverGuard.status(sender));
         getServer().getPluginManager().registerEvents(chatService, this);
+        getServer().getPluginManager().registerEvents(new AnvilCostListener(this), this);
         getServer().getPluginManager().registerEvents(passMenuService, this);
         getServer().getPluginManager().registerEvents(donateMenuService, this);
         getServer().getPluginManager().registerEvents(serverMenuService, this);
@@ -309,6 +311,11 @@ public final class RegisterPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        // Нельзя оставить готовый результат с клиентским cost=39 после снятия full-price guard.
+        getServer().getOnlinePlayers().forEach(player -> {
+            if (player.getOpenInventory() instanceof org.bukkit.inventory.view.AnvilView) player.closeInventory();
+        });
+        ru.cherdakmd.chrdkregister.api.AnvilCosts.clearAll();
         ru.cherdakmd.chrdkregister.api.PassivePotions.stop();
         ru.cherdakmd.chrdkregister.api.CropReplanting.clear();
         if (pluginUpdater != null) pluginUpdater.close();

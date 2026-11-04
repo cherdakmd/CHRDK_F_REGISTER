@@ -50,6 +50,8 @@ jobs:
           python3 .github/scripts/check_retired_addons.py
           python3 -m unittest discover -s .github/scripts -p 'test_retired_addons.py' -v
           python3 -m unittest discover -s .github/scripts -p 'test_*release.py' -v
+          python3 -m unittest discover -s .github/scripts -p 'test_gradle_build.py' -v
+          python3 -m unittest discover -s .github/scripts -p 'test_prepare_papi.py' -v
           python3 .github/scripts/check_messages.py
 
       - name: Verify TradeMC kit and regression tests
@@ -72,8 +74,8 @@ jobs:
         shell: bash
         run: |
           set +e
-          ./gradlew --no-daemon build 2>&1 | tee build.log
-          status=${PIPESTATUS[0]}
+          python3 .github/scripts/gradle_build.py
+          status=$?
           if [[ $status -ne 0 ]]; then
             {
               echo '### Gradle failure excerpt'
@@ -95,6 +97,15 @@ jobs:
         shell: bash
         run: python3 .github/scripts/report_tests.py
 
+      - name: Upload build diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-build-logs-${{ github.sha }}
+          path: build*.log
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Pack general plugin ZIP and prepare standalone CHRDK_VK JAR
         shell: bash
         run: |
@@ -114,7 +125,7 @@ jobs:
           fi
           cp docs/releases/update-memo.txt 'release/ОБНОВЛЕНИЕ.txt'
           printf '\nВерсия: %s\nПлатформа: Purpur 26.3 / Java 25\n' "$version" >> 'release/ОБНОВЛЕНИЕ.txt'
-          for notes in docs/releases/1.4.{200,201,{220..283}}.md; do
+          for notes in docs/releases/1.4.{200,201,{220..284}}.md; do
             printf '\n\n' >> 'release/ОБНОВЛЕНИЕ.txt'
             cat "$notes" >> 'release/ОБНОВЛЕНИЕ.txt'
           done

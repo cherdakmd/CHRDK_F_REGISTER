@@ -194,8 +194,8 @@ public final class ShopService {
         String beforeSnapshot=ChargeInventory.encode(before), afterSnapshot=ChargeInventory.encode(after);
         var t = spec == null
                 ? new ShopExchange(UUID.randomUUID(),store.market(),store.sequence()+1,player.getUniqueId(),buy,item.material(),units,money,debit,credit,spent,frozenRates,beforeSnapshot,afterSnapshot)
-                : new ShopExchange(UUID.randomUUID(),store.market(),store.sequence()+1,player.getUniqueId(),buy,item.material(),units,money,debit,credit,spent,frozenRates,beforeSnapshot,afterSnapshot,0,0,null,null,spec.key());
-        if(carry) t=new ShopExchange(t.transaction(),t.market(),t.sequence(),t.owner(),false,t.material(),t.units(),t.money(),0,t.credit(),0,t.rates(),t.before(),t.after(),batch,price,remainderBefore,exact.remainder(),t.book());
+                : new ShopExchange(UUID.randomUUID(),store.market(),store.sequence()+1,player.getUniqueId(),buy,item.material(),units,money,debit,credit,spent,frozenRates,beforeSnapshot,afterSnapshot,0,0,null,null,spec.key(),null);
+        if(carry) t=new ShopExchange(t.transaction(),t.market(),t.sequence(),t.owner(),false,t.material(),t.units(),t.money(),0,t.credit(),0,t.rates(),t.before(),t.after(),batch,price,remainderBefore,exact.remainder(),t.book(),null);
         if(!ShopInventory.valid(t)) return fail("trading.unavailable",money);
         long stock=store.stockOf(item,now,config.stockRecoveryPerHour());
         long afterStock; try { afterStock=Math.max(1,Math.addExact(stock,buy?-units:units)); } catch(ArithmeticException e) { return fail("trading.unavailable",money); }

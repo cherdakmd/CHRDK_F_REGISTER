@@ -39,7 +39,7 @@ final class PresentationMigration {
      * снимок 1.4.170 — без обеих (50 пунктов); снимок 1.4.169 — последний со
      * старой плоской структурой (6 разделов, 42 пункта).
      */
-    static final List<String> LEGACY_RESOURCES = List.of("presentation-legacy-1.4.275.yml", "presentation-legacy-1.4.270.yml", "presentation-legacy-1.4.267.yml", "presentation-legacy-1.4.261.yml", "presentation-legacy-1.4.254.yml", "presentation-legacy-1.4.253.yml", "presentation-legacy-1.4.247.yml", "presentation-legacy-1.4.246.yml", "presentation-legacy-1.4.244.yml", "presentation-legacy-1.4.241.yml", "presentation-legacy-1.4.240.yml", "presentation-legacy-1.4.239.yml", "presentation-legacy-1.4.238.yml", "presentation-legacy-1.4.192.yml", "presentation-legacy-1.4.185.yml",
+    static final List<String> LEGACY_RESOURCES = List.of("presentation-legacy-1.4.282-rc3.yml", "presentation-legacy-1.4.275.yml", "presentation-legacy-1.4.270.yml", "presentation-legacy-1.4.267.yml", "presentation-legacy-1.4.261.yml", "presentation-legacy-1.4.254.yml", "presentation-legacy-1.4.253.yml", "presentation-legacy-1.4.247.yml", "presentation-legacy-1.4.246.yml", "presentation-legacy-1.4.244.yml", "presentation-legacy-1.4.241.yml", "presentation-legacy-1.4.240.yml", "presentation-legacy-1.4.239.yml", "presentation-legacy-1.4.238.yml", "presentation-legacy-1.4.192.yml", "presentation-legacy-1.4.185.yml",
             "presentation-legacy-1.4.182.yml", "presentation-legacy-1.4.170.yml",
             "presentation-legacy-1.4.169.yml", "presentation-legacy-pre-1.4.138.yml",
             "presentation-legacy.yml");
@@ -63,6 +63,11 @@ final class PresentationMigration {
                 continue;
             }
             Object value = live.get(key);
+            // Пустой TAB — явный выбор владельца, даже если когда-то это был старый stock.
+            // Иначе сравнение со всеми историческими снимками отменяет выключение имени/шапки.
+            if (key.equals("tablist.player-name-format") && value instanceof String text && text.isBlank()) continue;
+            if ((key.equals("tablist.header") || key.equals("tablist.footer")) && value instanceof List<?> lines
+                    && lines.stream().allMatch(line -> line == null || line instanceof String text && text.isBlank())) continue;
             // Снятие старой рекламы не должно обновлять цены/сроки из более ранних снимков.
             if (key.equals("shop.products") && !sameCatalogTerms(value, fresh.get(key))) continue;
             boolean stock = false;
