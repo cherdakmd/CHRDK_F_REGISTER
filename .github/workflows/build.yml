@@ -78,13 +78,22 @@ jobs:
               echo '```'
             } >> "$GITHUB_STEP_SUMMARY"
 
-            grep -A 4 -E 'error:|Could not find|Could not resolve|What went wrong|Execution failed|FAILURE:' build.log \
-              | head -n 50 \
+            grep -A 20 -E 'error:|Could not find|Could not resolve|What went wrong|Execution failed|FAILURE:' build.log \
+              | head -n 150 \
               | while IFS= read -r line; do
                   printf '::error title=Gradle build output::%s\n' "$line"
                 done
           fi
           exit "$status"
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-${{ github.sha }}
+          path: build.log
+          if-no-files-found: ignore
+          retention-days: 3
 
       - name: Report test failures
         if: always()
