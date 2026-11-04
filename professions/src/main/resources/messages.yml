@@ -39,7 +39,6 @@ professions:
   income-header: "<gold>Заработок ремёсел</gold> <dark_gray>·</dark_gray> <gray>1 алмаз за <white>%xp%</white> опыта · опыт и доход с бонусом ранга <white>%rank%</white>%</gray>"
   income-today: "<gray>Сегодня: <white>%amount%</white> алм. <dark_gray>(дневной потолок %cap%)</dark_gray></gray>"
   income-total: "<gray>Всего заработано: <white>%amount%</white> алм. · дробный остаток: <white>%micro%</white>/1000</gray>"
-  income-earned: "<green>+<white>%amount%</white> алм.</green> <gray>за работу ремёсел — на личный счёт</gray>"
 
   # ------------------------------ опыт и уровни ------------------------------
   join-hint: "<gray>Все восемь ремёсел активны: работайте и получайте опыт и алмазы. <yellow>/prof income</yellow></gray>"

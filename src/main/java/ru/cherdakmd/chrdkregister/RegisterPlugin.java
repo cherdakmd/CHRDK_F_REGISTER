@@ -37,6 +37,8 @@ public final class RegisterPlugin extends JavaPlugin {
     private AdminDonationsGuiService adminDonationsGui;
     private PasswordKeypadService passwordKeypad;
     private TabListService tabListService;
+    /** persist()-expansion переживает /papi reload: не регистрируем его повторно. */
+    private boolean tabExpansionRegistered;
     TabListService tabList() { return tabListService; }
     /** 1.4.183: личные переключатели надписей в нике и табе. */
     private LabelPreferences labelPreferences;
@@ -633,16 +635,37 @@ public final class RegisterPlugin extends JavaPlugin {
 
     /**
      * Wires PlaceholderAPI when the plugin is installed (soft dependency): registers the
-     * {@code %chrdk_*%} expansion for tab-lists, scoreboards and holograms.
+     * {@code %chrdk_*%} expansion for tab-lists, scoreboards and holograms, and the
+     * separate {@code %tab_*%} expansion used by the stock TAB header/footer.
      */
     private void hookPlaceholderApi() {
         if (!getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) return;
+        String version = getPluginMeta().getVersion();
         try {
-            String version = getPluginMeta().getVersion();
             new PlaceholderIntegration(version, accessManager, chatService, store, bankStore).register();
             getLogger().info("PlaceholderAPI обнаружен: плейсхолдеры %chrdk_*% зарегистрированы.");
         } catch (Throwable throwable) {
-            getLogger().log(Level.WARNING, "Не удалось зарегистрировать плейсхолдеры PlaceholderAPI", throwable);
+            getLogger().log(Level.WARNING, "Не удалось зарегистрировать плейсхолдеры %chrdk_*%", throwable);
+        }
+        // Отдельный try: коллизия identifier "tab" во внешнем плагине не должна
+        // маскировать успешную регистрацию основного expansion CHRDK. register()
+        // сам отказывает при занятом идентификаторе — чужое расширение не перетираем.
+        try {
+            if (tabExpansionRegistered) {
+                getLogger().info("PlaceholderAPI: expansion %tab_*% уже зарегистрирован CHRDK.");
+            } else {
+                var expansion = new TabPlaceholderIntegration(version, messages(), accessManager, bank());
+                tabExpansionRegistered = expansion.register();
+                if (tabExpansionRegistered) {
+                    getLogger().info("PlaceholderAPI обнаружен: плейсхолдеры %tab_*% зарегистрированы.");
+                } else {
+                    getLogger().warning("PlaceholderAPI: идентификатор 'tab' занят другим expansion; "
+                            + "%tab_*% во внешних плагинах резолвит чужое расширение. "
+                            + "Внутренний TAB CHRDK продолжает использовать свои кадры.");
+                }
+            }
+        } catch (Throwable throwable) {
+            getLogger().log(Level.WARNING, "Не удалось зарегистрировать плейсхолдеры %tab_*%", throwable);
         }
     }
 
