@@ -1,177 +1,177 @@
 {
   "pages": {
     "about": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "fab6bcbcbb14b1ce63de9e87ecbe34be96cf5b490c7fb292a5d19d100decf265",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "4b103d17ad24371a883c076e1bd951203787e4adae7b4de6b4f0555ce672c13a",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "78b4fa73ff18a6e2d1072275ee31c22271a80cfebdc0370de30f7f3033b7ea9a",
       "text": "fcdffb1098428fac2bd42d1c4acb73bb9a024d1823d5398b8845bb2f415a506f"
     },
     "auction": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "cbd93bf0e1ba6a31493a5aa425492732ba165fa0c7ad5e17616b2b7a423911e8",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "ef0c0e2aa36729c71f15d032f1ca7de08c465822486d798c724f91164724b037",
       "text": "f368077b5f1961a1982957afe3b8523b60c8330f3dfd1891003d01ea1c4fd6db"
     },
     "chat": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "fab6bcbcbb14b1ce63de9e87ecbe34be96cf5b490c7fb292a5d19d100decf265",
       "text": "ca6c93fc33fca52eecc7d38744bc86f619ea0b6a7bcc2314b84ca6c5399d8a1c"
     },
     "claims": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "343e91fd88719b3744ad0799df3f7cf8d7da2d11c0dd46f66177b72c79598a5a",
       "text": "bf1b24b85ecdaee84580c0d5ea4b9c1120b8dd072e38aa68b52e49fc2a0c472c"
     },
     "classes": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "e36e5b2d7f54c98fd0f0087c3487083b4dd9439844d1661ef692b95338fd720c",
       "text": "ee29d92bd4e9527924d14405057fd62402857c1a688439c7b9d86d4c9bf3b546"
     },
     "commands": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "5c26b4f6b550756b898e828fbf584b633353da19ef57878f4610e2ede3961f9f",
       "text": "b210ff00d9d9a82a7663a9ddc5fac3491e03b244a72217f81c997ec39bc03928"
     },
     "cosmetics": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "ac8928c108912b4446823494196fdc36b8fdbd8a1ec9a4d468ba8426123ad811",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "89ea1ef7626127eb57b05fad8331f8e5b1bfdeb946a3cd894d0f2df8627cb274",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "economy": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "fe9b68aaa19d58228b14bb3a4d667f907edb12be67eade0b324bd8a1fa42380d",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "e37171b811a8b64c5bed0ccc21b05df749d849b6fd413b7b2199480c998b3139",
       "text": "daba8068188cc03ac1ee0f787eb1322c4d33b14da0bdffe35c17b473843dc5aa"
     },
     "faq": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "814ce0bedef34785bdf0a8f4e05c19e31f937229ee9a65c0547b3ca4543cced9",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "1efed2cd4ae357531dabb19e1565b282d1c18e74a94c11b577a9b40f6704fa7f",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "343e91fd88719b3744ad0799df3f7cf8d7da2d11c0dd46f66177b72c79598a5a",
       "text": "e166f2671aabcdf55ecf59d1465ddb19a36343f6d07983eb8b8821b3a63cce34"
     },
     "honors": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "fab6bcbcbb14b1ce63de9e87ecbe34be96cf5b490c7fb292a5d19d100decf265",
-      "text": "cbf2b1d7b48a51682a4bbe5e17faca444f16ed09994cd40d9d9a4bb530ef693e"
+      "text": "0c17187171ce92f7fdab4189894362cf1b68d898748f8f4227891f2926ee15fa"
     },
     "hunt": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "ce2827c9f8444f6192c0601334bdcac604ff82d010d1a817dd95d4c805c2d3e2",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "22c59cf783f0c1bb807e72b2b204e538a3cdfdbbd4da0d8441d42a046b01c424",
       "text": "1417660c5793d86ddfab16c8b2203cbd2dd6b47a245ffa219c71898485b9c39f"
     },
     "menu": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "a566ad5b0cb7c675fb81d0628042902e7ab402f1a311c4191975ff06a9d6fd92",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "moderation": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "fab6bcbcbb14b1ce63de9e87ecbe34be96cf5b490c7fb292a5d19d100decf265",
       "text": "1bc92e4c97e80aa6e773940d0b09a1682de13c5118c99da2fd77759b24213b54"
     },
     "orders": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "7757120b87a226d6c7191654d808b11fe8dedafed44f34d470f867803bccddb2",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "pets": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "bd88cb3c46db0b8bbb66ca71a7d40b572c54f085ab72b44457325802bcb30a31",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "fa53ecf115bc931a0804073d78e114acd323461063d2a8381aa39478e6e3ad40",
       "text": "b66278597912053a64a4f192bf0cf63795a8720263d4283683b9458eec8f0bff"
     },
     "profile": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "8bfda92872b5defda0acc2070c3a8b5ec5b2fbdd0f14a069e54dfed31e55c920",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "e3be0f39cb741ddbe3478091878a3979e139d284cda90fda3cbe3447853f6b26",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "d690176c7cc7854fa0fee0519f039eaea581c6500f68a3ab9d5364170b5c2300",
       "text": "83fdfb3ddc5551875ec1f031676a80e3adb73e448dffae614c489441ea6f2c33"
     },
     "shop": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "22c59cf783f0c1bb807e72b2b204e538a3cdfdbbd4da0d8441d42a046b01c424",
       "text": "62ef5965cc091b6cbd7e6af58d21e58ba2e8dd65d9e704cec710768ff7a47099"
     },
     "skills": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "290890ea935f189eb1b09252f55944a8a3b93ab5a1422ad384964a9a2a994a68",
       "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
     },
     "start": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "95654f4fc6dc8a62857fe1a9c6130e7d91608d902639ad45ced1173fde37ad9b",
       "text": "c2835fdf2d1945079115e6a252d472ce72ad9ad79f4ed47ad58e269b467d595f"
     },
     "teleports": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "c9110024221d9e8cfc3d817e6502896d50ba463b0bd238cb20176e06605cc2d7",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "e37171b811a8b64c5bed0ccc21b05df749d849b6fd413b7b2199480c998b3139",
       "text": "a4d12cf48881e623761e39d44e627b95975f839a8737cfd76b9ee138317a4c07"
     },
     "titles": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "2f9829511f1e0382bddb2dd9519eb56e64a85e9770d496eae7b548a8ca8873a5",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "22c59cf783f0c1bb807e72b2b204e538a3cdfdbbd4da0d8441d42a046b01c424",
       "text": "ea452a8a7eb7efa20c98de8b965c85ec90dd521be97cce16c2995874886ad5ce"
     },
     "vk": {
-      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; существующий honors.json не переписывается",
+      "reason": "Старый цитрус выдан StaveLime через honors.initial-grants; причина по умолчанию сверена с config.yml",
       "sources": "9e4053dde3acd34e7e1b63650aa5aa1c840839826f965b1e5b3108ad6f989a99",
       "text": "2b67feb5684b14875601ba47314694afa598ff87f6dd74350a06f65029a735eb"
     }
