@@ -7,6 +7,9 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import ru.cherdakmd.chrdkregister.pve.PveAwardContract;
+import ru.cherdakmd.chrdkregister.pve.PveAwardLedger;
+import ru.cherdakmd.chrdkregister.pve.PveRecipient;
 
 /**
  * Слушает смерть мобов и передаёт добычу в {@link HuntService} (1.4.155).
@@ -31,6 +34,14 @@ public final class HuntListener implements Listener {
         }
         Player killer = dead.getKiller();
         if (killer == null) {
+            return;
+        }
+        // Общий реестр PvE-наград: квитанция на смерть и общий дневной бюджет.
+        // Численные награды охоты не меняются; дубликат или исчерпание бюджета
+        // просто пропускают начисление.
+        if (!PveAwardLedger.shared().register(killer.getUniqueId(),
+                PveAwardContract.receipt(dead.getUniqueId(), PveRecipient.HUNT_COINS,
+                        PveAwardContract.today()))) {
             return;
         }
         plugin.service().handleDeath(killer, dead);

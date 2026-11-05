@@ -26,6 +26,11 @@ public final class PveAwardContract {
     private PveAwardContract() {
     }
 
+    /** Единый календарный день UTC для квитанций и дневных бюджетов всех модулей. */
+    public static String today() {
+        return java.time.LocalDate.now(java.time.ZoneOffset.UTC).toString();
+    }
+
     public static double requiredContribution(double maxHealth) {
         return Math.min(CONTRIBUTION_FLAT_CAP, Math.max(0.0, maxHealth) * CONTRIBUTION_FRACTION);
     }

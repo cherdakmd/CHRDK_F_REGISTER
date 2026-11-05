@@ -20,6 +20,9 @@ import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
+import ru.cherdakmd.chrdkregister.pve.PveAwardContract;
+import ru.cherdakmd.chrdkregister.pve.PveAwardLedger;
+import ru.cherdakmd.chrdkregister.pve.PveRecipient;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
@@ -276,6 +279,12 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
         if (ru.cherdakmd.chrdkregister.api.MobRewardPolicy.temporary(event.getEntity())) return;
         Player killer = event.getEntity().getKiller();
         if (killer == null) {
+            return;
+        }
+        // Общий реестр PvE-наград: одна квитанция на смерть, общий дневной бюджет.
+        if (!PveAwardLedger.shared().register(killer.getUniqueId(),
+                PveAwardContract.receipt(event.getEntity().getUniqueId(),
+                        PveRecipient.BATTLEPASS, PveAwardContract.today()))) {
             return;
         }
         recordProgress(killer, BattlePassConfig.MissionType.KILL,

@@ -9,8 +9,11 @@ import org.bukkit.persistence.PersistentDataType;
 import java.util.*;
 import ru.cherdakmd.chrdkregister.api.MobRewardPolicy;
 import ru.cherdakmd.chrdkregister.pve.PveAwardContract;
+import ru.cherdakmd.chrdkregister.pve.PveAwardLedger;
 import ru.cherdakmd.chrdkregister.pve.PveDeathEvidence;
+import ru.cherdakmd.chrdkregister.pve.PveRecipient;
 import ru.cherdakmd.chrdkregister.pve.PveVerdict;
+import ru.cherdakmd.chrdkskills.tree.PerkTreeStore;
 import ru.cherdakmd.chrdkskills.tree.TreeDomain;
 
 /** Только подтверждённые естественные враги и реальный вклад. Никакого XP за AFK-пульс. */
@@ -21,15 +24,20 @@ final class PveProgressListener implements Listener {
     private record Shield(double amount, long until) { }
     private final Map<UUID,Hit> hits = new LinkedHashMap<>();
     private final PveContributionLedger ledger = new PveContributionLedger();
-    /** Первый получатель общего PvE-контракта: пыль деревьев перков. */
-    private final PveAwardPowderRouter powder = new PveAwardPowderRouter();
+    /** Получатель общего PvE-контракта: пыль деревьев перков, состояние на диске. */
+    private final PveAwardPowderRouter powder;
     private final Map<UUID,Shield> shields = new HashMap<>();
     private final Map<UUID,Long> pvp = new LinkedHashMap<>();
     PveProgressListener(ClassesPlugin plugin) {
         this.plugin=plugin;
         natural=new NamespacedKey(plugin,"natural-v1"); rewarded=new NamespacedKey(plugin,"rewarded-v1");
         projectile=new NamespacedKey(plugin,"ability-projectile");
+        PerkTreeStore trees=new PerkTreeStore(plugin.getDataFolder().toPath(),plugin.getLogger());
+        trees.load();
+        this.powder=new PveAwardPowderRouter(trees);
     }
+    /** Снимок деревьев пишется общим асинхронным сохранением плагина. */
+    void flushPowder() { powder.flush(); }
     boolean honest(Player p) {
         return p != null && p.isOnline() && !p.isDead() && (p.getGameMode()==GameMode.SURVIVAL || p.getGameMode()==GameMode.ADVENTURE)
                 && plugin.coreApi() != null && plugin.coreApi().isAuthenticated(p) && plugin.config().enabled();
@@ -131,8 +139,12 @@ final class PveProgressListener implements Listener {
         // Общий контракт PvE: пыль деревьев из уже подтверждённой смерти,
         // без отдельного листенера на каждый удар. Проверки происхождения выше
         // не повторяются, а фиксируются в снимке для единого валидатора.
+        String day=dayKey();
+        // Классовый XP теперь тоже проходит через общий реестр квитанций.
+        PveAwardLedger.shared().register(hit.player(),
+                PveAwardContract.receipt(mob.getUniqueId(),PveRecipient.CLASS_XP,day));
         PveDeathEvidence evidence=new PveDeathEvidence(
-                hit.player(),mob.getUniqueId(),System.currentTimeMillis(),dayKey(),
+                hit.player(),mob.getUniqueId(),System.currentTimeMillis(),day,
                 plugin.coreApi()!=null && plugin.coreApi().isAuthenticated(p),
                 p.getGameMode()==GameMode.SURVIVAL || p.getGameMode()==GameMode.ADVENTURE,
                 mob.getPersistentDataContainer().has(natural,PersistentDataType.BYTE),
@@ -144,7 +156,7 @@ final class PveProgressListener implements Listener {
     }
     /** Календарный день UTC — ключ общего дневного бюджета наград. */
     private String dayKey() {
-        return java.time.LocalDate.now(java.time.ZoneOffset.UTC).toString();
+        return PveAwardContract.today();
     }
     private double debt(Player p) {
         return ledger.debt(p.getUniqueId(),System.currentTimeMillis());

@@ -1,19 +1,15 @@
 package ru.cherdakmd.chrdkclasses;
 
 import ru.cherdakmd.chrdkregister.pve.PveAwardContract;
+import ru.cherdakmd.chrdkregister.pve.PveAwardLedger;
 import ru.cherdakmd.chrdkregister.pve.PveDeathEvidence;
-import ru.cherdakmd.chrdkregister.pve.PveReceipt;
 import ru.cherdakmd.chrdkregister.pve.PveRecipient;
 import ru.cherdakmd.chrdkregister.pve.PveVerdict;
 import ru.cherdakmd.chrdkskills.tree.PerkTreePowderSource;
 import ru.cherdakmd.chrdkskills.tree.PerkTreeState;
+import ru.cherdakmd.chrdkskills.tree.PerkTreeStore;
 import ru.cherdakmd.chrdkskills.tree.TreeDomain;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -25,89 +21,71 @@ import java.util.UUID;
  * перепроверяются заново: их уже собрал листенер, а решение принимает
  * {@link PveAwardContract}.</p>
  *
- * <p>Состояние <b>в памяти</b> до Фазы 2 ({@code PerkTreeStore}): пыль,
- * квитанции и дневные счётчики не переживают рестарт сервера. Это прототип
- * контракта, а не публикация баланса: персистентность, общий потолок активных
- * деревьев и GUI появятся отдельно. Журнал ограничен днём и числом игроков,
- * бесконечной истории каждого удара нет.</p>
+ * <p>Фаза 2: состояние, квитанции и дневные счётчики живут в
+ * {@link PerkTreeStore} на диске, а не в памяти. Дубликат смерти проверяется
+ * дважды — общим реестром {@link PveAwardLedger} (все шесть получателей, общий
+ * дневной бюджет) и долговечной квитанцией самого дерева (защита после
+ * рестарта). Запись на диск идёт снимком через пульс плагина, а не на каждого
+ * убитого моба.</p>
  */
 final class PveAwardPowderRouter {
 
     static final long DAILY_POWDER_CAP = 2_000L;
-    private static final int MAX_TRACKED = 8_192;
 
-    /** Ключ — игрок + домен: у каждого дерева своё состояние, чужое не перетирается. */
-    private final Map<String, PerkTreeState> states = new LinkedHashMap<>();
-    private final Map<String, List<PveReceipt>> receiptsByPlayerDay = new HashMap<>();
-    private final Map<String, Long> creditedByPlayerDay = new HashMap<>();
-    private String currentDay;
+    private final PerkTreeStore store;
 
-    synchronized long accept(PveDeathEvidence evidence, PveVerdict verdict,
-                             TreeDomain domain, int classLevel) {
+    PveAwardPowderRouter(PerkTreeStore store) {
+        this.store = store;
+    }
+
+    long accept(PveDeathEvidence evidence, PveVerdict verdict,
+                TreeDomain domain, int classLevel) {
         if (evidence == null || verdict == null || !verdict.allowed() || domain == null
-                || !ClassPerkTreeBridge.isClassSourced(domain)) {
+                || !ClassPerkTreeBridge.isClassSourced(domain) || !store.available()) {
             return 0L;
         }
-        rollDay(evidence.dayKey());
-        String playerDay = evidence.playerId() + "|" + evidence.dayKey();
-        List<PveReceipt> today = receiptsByPlayerDay.computeIfAbsent(playerDay, k -> new ArrayList<>());
-        PveReceipt candidate = PveAwardContract.receipt(evidence.deathId(),
-                PveRecipient.PERK_POWDER, evidence.dayKey());
-        if (!PveAwardContract.canAward(today, candidate, PveAwardContract.DAILY_AWARD_CAP)) {
+        store.beginDay(evidence.dayKey());
+        if (!PveAwardLedger.shared().register(evidence.playerId(),
+                PveAwardContract.receipt(evidence.deathId(), PveRecipient.PERK_POWDER,
+                        evidence.dayKey()))) {
             return 0L;
         }
-        String stateKey = evidence.playerId() + "|" + domain.id();
-        PerkTreeState state = states.get(stateKey);
+        if (store.hasReceipt(evidence.playerId(), evidence.dayKey(), evidence.deathId())) {
+            return 0L;
+        }
+        PerkTreeState state = store.state(evidence.playerId(), domain);
         if (state == null) {
             state = ClassPerkTreeBridge.initialState(domain, classLevel);
         }
-        long creditedToday = creditedByPlayerDay.getOrDefault(playerDay, 0L);
+        long creditedToday = store.creditedToday(evidence.playerId(), evidence.dayKey());
         PerkTreePowderSource.Result result = PerkTreePowderSource.credit(state, domain, verdict,
                 PerkTreePowderSource.BASE_POWDER, DAILY_POWDER_CAP, creditedToday);
         if (!result.applied()) {
             return 0L;
         }
-        states.put(stateKey, result.state());
-        today.add(candidate);
-        creditedByPlayerDay.put(playerDay, creditedToday + result.credited());
-        trim();
+        store.putState(evidence.playerId(), result.state());
+        store.addReceipt(evidence.playerId(), evidence.dayKey(), evidence.deathId());
+        store.addCredited(evidence.playerId(), evidence.dayKey(), result.credited());
         return result.credited();
     }
 
-    /** Смена дня UTC сбрасывает только квитанции и счётчики, не запас пыли дерева. */
-    private void rollDay(String dayKey) {
-        if (dayKey.equals(currentDay)) {
-            return;
-        }
-        currentDay = dayKey;
-        receiptsByPlayerDay.clear();
-        creditedByPlayerDay.clear();
+    void flush() {
+        store.flush();
     }
 
-    private void trim() {
-        while (states.size() > MAX_TRACKED) {
-            String oldest = states.keySet().iterator().next();
-            states.remove(oldest);
-        }
+    void forget(UUID player) {
+        store.forget(player);
     }
 
-    synchronized PerkTreeState stateOf(UUID player, TreeDomain domain) {
-        return states.get(player + "|" + domain.id());
+    PerkTreeState stateOf(UUID player, TreeDomain domain) {
+        return store.state(player, domain);
     }
 
-    synchronized int receipts(UUID player, String day) {
-        List<PveReceipt> list = receiptsByPlayerDay.get(player + "|" + day);
-        return list == null ? 0 : list.size();
+    int receipts(UUID player, String day) {
+        return store.receiptCount(player, day);
     }
 
-    synchronized long creditedToday(UUID player, String day) {
-        return creditedByPlayerDay.getOrDefault(player + "|" + day, 0L);
-    }
-
-    synchronized void forget(UUID player) {
-        String prefix = player.toString();
-        states.keySet().removeIf(key -> key.startsWith(prefix + "|"));
-        receiptsByPlayerDay.keySet().removeIf(key -> key.startsWith(prefix + "|"));
-        creditedByPlayerDay.keySet().removeIf(key -> key.startsWith(prefix + "|"));
+    long creditedToday(UUID player, String day) {
+        return store.creditedToday(player, day);
     }
 }

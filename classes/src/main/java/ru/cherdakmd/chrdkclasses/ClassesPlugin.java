@@ -312,6 +312,14 @@ public final class ClassesPlugin extends JavaPlugin {
         } catch (RuntimeException error) {
             getLogger().warning("Не удалось сохранить classes.json: " + error.getMessage());
         }
+        // Деревья перков пишутся тем же асинхронным снимком, что и классы.
+        if (gameplay != null) {
+            try {
+                gameplay.flushPowder();
+            } catch (RuntimeException error) {
+                getLogger().warning("Не удалось сохранить perk-trees.json: " + error.getMessage());
+            }
+        }
     }
 
     /* ---------------------------------- доступ -------------------------------- */
