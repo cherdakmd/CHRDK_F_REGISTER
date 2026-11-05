@@ -39,6 +39,7 @@ groups:
   - professions
   - skills
   - classes
+  - perktree
   - quests
   - battlepass
   - achievements

@@ -7,6 +7,15 @@ import org.bukkit.event.entity.*;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.persistence.PersistentDataType;
 import java.util.*;
+import ru.cherdakmd.chrdkregister.api.MobRewardPolicy;
+import ru.cherdakmd.chrdkregister.pve.PveAwardContract;
+import ru.cherdakmd.chrdkregister.pve.PveAwardLedger;
+import ru.cherdakmd.chrdkregister.pve.PveContributionContract;
+import ru.cherdakmd.chrdkregister.pve.PveDeathEvidence;
+import ru.cherdakmd.chrdkregister.pve.PveRecipient;
+import ru.cherdakmd.chrdkregister.pve.PveVerdict;
+import ru.cherdakmd.chrdkskills.tree.PerkTreeStore;
+import ru.cherdakmd.chrdkskills.tree.TreeDomain;
 
 /** Только подтверждённые естественные враги и реальный вклад. Никакого XP за AFK-пульс. */
 final class PveProgressListener implements Listener {
@@ -16,13 +25,23 @@ final class PveProgressListener implements Listener {
     private record Shield(double amount, long until) { }
     private final Map<UUID,Hit> hits = new LinkedHashMap<>();
     private final PveContributionLedger ledger = new PveContributionLedger();
+    /** Состояния деревьев перков на диске: ими же пользуются GUI и команды. */
+    private final PerkTreeStore trees;
+    /** Получатель общего PvE-контракта: пыль деревьев перков. */
+    private final PveAwardPowderRouter powder;
     private final Map<UUID,Shield> shields = new HashMap<>();
     private final Map<UUID,Long> pvp = new LinkedHashMap<>();
     PveProgressListener(ClassesPlugin plugin) {
         this.plugin=plugin;
         natural=new NamespacedKey(plugin,"natural-v1"); rewarded=new NamespacedKey(plugin,"rewarded-v1");
         projectile=new NamespacedKey(plugin,"ability-projectile");
+        this.trees=new PerkTreeStore(plugin.getDataFolder().toPath(),plugin.getLogger());
+        trees.load();
+        this.powder=new PveAwardPowderRouter(trees);
     }
+    PerkTreeStore perkTrees() { return trees; }
+    /** Снимок деревьев пишется общим асинхронным сохранением плагина. */
+    void flushPowder() { powder.flush(); }
     boolean honest(Player p) {
         return p != null && p.isOnline() && !p.isDead() && (p.getGameMode()==GameMode.SURVIVAL || p.getGameMode()==GameMode.ADVENTURE)
                 && plugin.coreApi() != null && plugin.coreApi().isAuthenticated(p) && plugin.config().enabled();
@@ -121,6 +140,33 @@ final class PveProgressListener implements Listener {
         if(role==null || (role==PlayerClass.ARCHER && !hit.ranged()) || (role==PlayerClass.WARRIOR && hit.ranged())) return;
         mob.getPersistentDataContainer().set(rewarded,PersistentDataType.BYTE,(byte)1);
         award(p,ClassDevelopment.Source.COMBAT,25,1);
+        // Общий контракт PvE: пыль деревьев из уже подтверждённой смерти,
+        // без отдельного листенера на каждый удар. Проверки происхождения выше
+        // не повторяются, а фиксируются в снимке для единого валидатора.
+        String day=dayKey();
+        PveDeathEvidence evidence=new PveDeathEvidence(
+                hit.player(),mob.getUniqueId(),System.currentTimeMillis(),day,
+                plugin.coreApi()!=null && plugin.coreApi().isAuthenticated(p),
+                p.getGameMode()==GameMode.SURVIVAL || p.getGameMode()==GameMode.ADVENTURE,
+                mob.getPersistentDataContainer().has(natural,PersistentDataType.BYTE),
+                MobRewardPolicy.temporary(mob),false,inPvp(hit.player()),
+                plugin.ready(p) && plugin.config().enabled(),hit.damage(),max);
+        PveVerdict verdict=PveAwardContract.verify(evidence);
+        // Реестр пополняется только по подтверждённому вердикту. Раньше
+        // CLASS_XP регистрировался до verify и расходовал общий дневной бюджет
+        // даже при отказе (например, игрок не авторизован в Core).
+        if(verdict.allowed()) PveAwardLedger.shared().register(hit.player(),
+                PveAwardContract.receipt(mob.getUniqueId(),PveRecipient.CLASS_XP,day));
+        // SKILL_XP получает квитанцию из того же подтверждённого контекста:
+        // отдельного валидатора, death-листенера и второго XP-начисления нет.
+        // Численный опыт по-прежнему начисляется в skills на событиях урона.
+        PveContributionContract.register(evidence,verdict);
+        TreeDomain domain=ClassPerkTreeBridge.primaryDomain(role);
+        if(domain!=null) powder.accept(evidence,verdict,domain,plugin.service().level(hit.player()));
+    }
+    /** Календарный день UTC — ключ общего дневного бюджета наград. */
+    private String dayKey() {
+        return PveAwardContract.today();
     }
     private double debt(Player p) {
         return ledger.debt(p.getUniqueId(),System.currentTimeMillis());
@@ -156,6 +202,7 @@ final class PveProgressListener implements Listener {
     }
     @EventHandler public void quit(PlayerQuitEvent e) {
         ledger.forgetWound(e.getPlayer().getUniqueId()); shields.remove(e.getPlayer().getUniqueId());
+        powder.forget(e.getPlayer().getUniqueId());
         // Недавний PvP не очищается релогом; таблица ограничена по размеру.
     }
 }

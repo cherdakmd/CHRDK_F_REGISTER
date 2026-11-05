@@ -135,9 +135,17 @@ class ReleaseWorkflowContractTest(unittest.TestCase):
         import re
         notes = re.search(r"1\.4\.\{200,201,\{220\.\.(\d+)\}\}\.md", source)
         self.assertIsNotNone(notes, "Release должен включать подробные инструкции перехода")
-        version = re.search(r"^plugin_version=1\.4\.(\d+)(?:-rc\.[1-9]\d*)?$", (root / "gradle.properties").read_text(), re.M)
+        version = re.search(r"^plugin_version=(\d+)\.(\d+)\.(\d+)(?:-rc\.[1-9]\d*)?$", (root / "gradle.properties").read_text(), re.M)
         self.assertIsNotNone(version)
-        self.assertGreaterEqual(int(notes.group(1)), int(version.group(1)), "Инструкция текущего релиза должна войти в ZIP")
+        major, minor, patch = (int(part) for part in version.groups())
+        if (major, minor) == (1, 4):
+            self.assertGreaterEqual(int(notes.group(1)), patch,
+                                    "Инструкция текущего релиза должна войти в ZIP")
+        else:
+            # Минорный выпуск лежит вне жёсткого списка 1.4.200..289: workflow
+            # обязан дописать его заметки в ОБНОВЛЕНИЕ.txt отдельно.
+            self.assertIn('docs/releases/${version}.md', source,
+                          "Заметки минорного выпуска должны входить в ZIP")
         self.assertIn("! -name 'chrdk-vk-*.jar'", source)
         self.assertIn('unzip -t "chrdk-plugins-${version}.zip"', source)
         self.assertIn('python3 .github/scripts/pack_release.py release "$version" "chrdk-plugins-${version}.zip"', source)

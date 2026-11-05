@@ -44,6 +44,9 @@ dependencies {
     testImplementation "org.purpurmc.purpur:purpur-api:${project.purpur_api_version}"
     // Тесты текстов используют Messages ядра (как в battlepass и streams).
     testImplementation project(':')
+    // Мост к деревьям перков (ClassPerkTreeBridge) тестируется против каркаса
+    // Skills; обратной зависимости нет, прецедент — hunt/build.gradle.
+    testImplementation project(':skills')
     testImplementation "com.google.code.gson:gson:2.11.0"
     testImplementation "org.junit.jupiter:junit-jupiter:5.11.3"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"

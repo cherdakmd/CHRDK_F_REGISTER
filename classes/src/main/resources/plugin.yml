@@ -13,6 +13,10 @@ commands:
     usage: "/class [menu|passport|choose <класс>|info [класс]|talents|learn <талант>|respec|points|top|abilities|builds|ability [1|2]]"
     aliases: [classes, klass, klassy]
     permission: chrdkclasses.use
+  perktree:
+    description: "Дерево перков: узлы, приём и сброс с подтверждением"
+    usage: "/perktree [open [домен]|info [домен]|unlock <домен> <узел>|select <домен> <приём>|reset [домен]|confirm <токен>]"
+    permission: chrdkclasses.use
   ability:
     description: "Умение своего класса: /ability — первое, /ability 2 — второе"
     usage: "/<command> [1|2]"

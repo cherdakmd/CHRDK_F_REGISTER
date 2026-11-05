@@ -18,6 +18,9 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityTameEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
+import ru.cherdakmd.chrdkregister.pve.PveAwardContract;
+import ru.cherdakmd.chrdkregister.pve.PveAwardLedger;
+import ru.cherdakmd.chrdkregister.pve.PveRecipient;
 import org.bukkit.event.inventory.BrewEvent;
 import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.inventory.FurnaceExtractEvent;
@@ -56,6 +59,12 @@ public final class GoalListeners implements Listener {
         if (ru.cherdakmd.chrdkregister.api.MobRewardPolicy.temporary(event.getEntity())) return;
         Player killer = event.getEntity().getKiller();
         if (killer == null) {
+            return;
+        }
+        // Общий реестр PvE-наград: одна квитанция на смерть, общий дневной бюджет.
+        if (!PveAwardLedger.shared().register(killer.getUniqueId(),
+                PveAwardContract.receipt(event.getEntity().getUniqueId(),
+                        PveRecipient.COMMON_GOALS, PveAwardContract.today()))) {
             return;
         }
         if (event.getEntity() instanceof Monster) {

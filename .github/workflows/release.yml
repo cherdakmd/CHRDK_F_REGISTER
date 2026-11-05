@@ -130,6 +130,11 @@ jobs:
             printf '\n\n' >> 'release/ОБНОВЛЕНИЕ.txt'
             cat "$notes" >> 'release/ОБНОВЛЕНИЕ.txt'
           done
+          # Минорный выпуск (1.5.0+) лежит вне исторического списка 1.4.x.
+          if [[ "$version" != 1.4.* ]]; then
+            printf '\n\n' >> 'release/ОБНОВЛЕНИЕ.txt'
+            cat "docs/releases/${version}.md" >> 'release/ОБНОВЛЕНИЕ.txt'
+          fi
           python3 .github/scripts/verify_release.py release "$version"
           python3 .github/scripts/pack_release.py release "$version" "chrdk-plugins-${version}.zip"
           unzip -t "chrdk-plugins-${version}.zip"

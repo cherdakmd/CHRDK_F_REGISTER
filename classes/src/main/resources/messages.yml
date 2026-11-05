@@ -751,3 +751,18 @@ classes:
   development-xp-bar: "%bar%"
   development-bar-filled: "<green>▰</green>"
   development-bar-empty: "<dark_gray>▱</dark_gray>"
+
+  # --------------------------- деревья перков -------------------------------
+  perktree-title: "<gold>Дерево перков: <white>%domain%</white></gold>"
+  perktree-usage: "<gray>/perktree open|info|unlock|select|reset|confirm</gray>"
+  perktree-unknown-domain: "<red>Неизвестный домен дерева.</red>"
+  perktree-no-tree: "<red>Дерево недоступно. Проверьте perk-trees.json.</red>"
+  perktree-info: "<gold>%domain%</gold> <gray>· ур. <white>%level%</white> · пыль <white>%powder%</white> · токены <white>%tokens%</white> · приём <white>%ability%</white></gray>"
+  perktree-unlocked: "<green>Узел <white>%node%</white> открыт.</green>"
+  perktree-selected: "<green>Приём <white>%node%</white> выбран.</green>"
+  perktree-locked: "<red>Недоступно: <white>%reason%</white></red>"
+  perktree-reset-button: "<red>Сбросить дерево</red>"
+  perktree-close-button: "<gray>Закрыть</gray>"
+  perktree-reset-pending: "<yellow>Подтвердите сброс: <white>/perktree confirm %token%</white> (30 сек)</yellow>"
+  perktree-reset-done: "<green>Дерево сброшено, пыль и токены возвращены.</green>"
+  perktree-reset-failed: "<red>Сброс не выполнен: подтверждение недействительно.</red>"

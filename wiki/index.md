@@ -20,7 +20,7 @@ CHRDK — выживание с ремеслом, исследованием и 
 | Начать без лишних ошибок | [Вход и защита](start.html) → [меню](menu.html) |
 | Обустроить базу | [Дома и телепорты](teleports.html) → [территории](claims.html) |
 | Заработать или купить ресурсы | [Экономика](economy.html) → [магазин](shop.html) → [заказы](orders.html) |
-| Развивать персонажа | [Профессия](professions.html) → [навыки](skills.html) → [класс](classes.html) |
+| Развивать персонажа | [Профессия](professions.html) → [навыки](skills.html) → [класс](classes.html) → [дерево перков](perktree.html) |
 | Найти снаряжение | [Охота](hunt.html) → [редкости](tierforge.html) → [чары](enchants.html) |
 | Играть вместе | [Клан](guilds.html) → [общение](chat.html) → голос Plasmo Voice |
 

@@ -4,6 +4,8 @@ import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.cherdakmd.chrdkskills.tree.PerkTreeState;
+import ru.cherdakmd.chrdkskills.tree.TreeDomain;
 
 import java.util.Locale;
 import java.util.Map;
@@ -62,6 +64,20 @@ public final class ClassesPlaceholders extends PlaceholderExpansion {
         }
         if (id == null) {
             return "";
+        }
+        PerkTreePlaceholders.Parsed tree = PerkTreePlaceholders.parse(key);
+        if (tree != null) {
+            PerkTreeService trees = plugin.perkTrees();
+            if (trees == null) {
+                return "";
+            }
+            TreeDomain domain = tree.domain() != null ? tree.domain()
+                    : playerClass == null ? null : ClassPerkTreeBridge.primaryDomain(playerClass);
+            if (domain == null) {
+                return PerkTreePlaceholders.resolve(null, null, tree.field());
+            }
+            PerkTreeState state = trees.state(id, domain, service.level(id));
+            return PerkTreePlaceholders.resolve(state, domain, tree.field());
         }
         if(plugin.store().development(id)==null && java.util.Set.of("level","points","spent","talents","next","xp","earned","trials","ability","ability2","ability_ready","ability2_ready").contains(key))return "";
         Map<EffectKind, Double> effects = service.effects(id);
