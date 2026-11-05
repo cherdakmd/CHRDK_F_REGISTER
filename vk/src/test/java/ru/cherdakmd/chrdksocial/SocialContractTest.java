@@ -86,6 +86,32 @@ class SocialContractTest {
     }
 
     @Test
+    void socialUsageMatchesHandlerIncludingDonor() throws Exception {
+        String pluginYml = read("src/main/resources/plugin.yml");
+        int socialBlock = pluginYml.indexOf("\n  social:\n");
+        assertTrue(socialBlock >= 0, "в plugin.yml нет команды /social");
+        int usageAt = pluginYml.indexOf("usage:", socialBlock);
+        assertTrue(usageAt > socialBlock, "у /social нет usage");
+        String pluginUsage = pluginYml.substring(usageAt, pluginYml.indexOf('\n', usageAt));
+        String handler = read("src/main/java/ru/cherdakmd/chrdksocial/SocialCommandHandler.java");
+        String handlerUsage = handler.lines()
+                .filter(line -> line.contains("§e/social ["))
+                .findFirst().orElseThrow(() -> new AssertionError("нет подсказки usage в обработчике"));
+        assertEquals(section(pluginUsage), section(handlerUsage),
+                "plugin.yml и обработчик должны перечислять одни и те же подкоманды");
+        assertTrue(section(pluginUsage).contains("donor"), "подкоманда /social donor должна быть в usage");
+        assertTrue(handler.contains("return List.of(\"status\", \"unlink\", \"emergency\", \"setchat\", \"chats\", \"donor\", \"testnews\", \"reload\")"));
+    }
+
+    /** Содержимое внешних квадратных скобок подсказки, включая вложенные [ник]. */
+    private static String section(String line) {
+        int open = line.indexOf('[');
+        int close = line.lastIndexOf(']');
+        assertTrue(open >= 0 && close > open, "битая подсказка: " + line);
+        return line.substring(open + 1, close);
+    }
+
+    @Test
     void playersWithoutSocialNetworksHaveAThirdPath() throws Exception {
         String service = read("src/main/java/ru/cherdakmd/chrdksocial/SocialService.java");
         assertTrue(service.contains("recordFirstSeen(player.getName(), now)"),

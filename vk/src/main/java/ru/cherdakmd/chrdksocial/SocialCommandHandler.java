@@ -154,7 +154,7 @@ public final class SocialCommandHandler implements CommandExecutor, TabCompleter
                 return true;
             }
             default -> {
-                sender.sendMessage("§e/social [status [ник]|unlink <ник>|emergency <минуты|off>|setchat <вид> <id>|chats|donor|testnews|reload]");
+                sender.sendMessage("§e/social [status [ник]|unlink <ник>|emergency <минуты|off>|setchat <bot|news|bridge> <id>|chats|donor|testnews|reload]");
                 return true;
             }
         }

@@ -21,8 +21,8 @@ commands:
     permission: chrdksocial.use
   social:
     aliases: [socialadmin]
-    description: "Управление обязательной привязкой и чатами MAX"
-    usage: "/<command> [status [ник]|unlink <ник>|emergency <минуты|off>|setchat <bot|news|bridge> <id>|chats|testnews|reload]"
+    description: "Управление обязательной привязкой, чатами MAX и доступом по донату"
+    usage: "/<command> [status [ник]|unlink <ник>|emergency <минуты|off>|setchat <bot|news|bridge> <id>|chats|donor|testnews|reload]"
     permission: chrdksocial.use
   max:
     description: "MAX: статус привязки, код входа и известные чаты"
@@ -33,7 +33,7 @@ permissions:
     description: "Просмотр своего кода входа и статуса привязки"
     default: true
   chrdksocial.admin:
-    description: "Отвязка игроков, аварийный режим, настройка чатов MAX и перезагрузка"
+    description: "Отвязка игроков, аварийный режим, донат-доступ, настройка чатов MAX и перезагрузка"
     default: op
   chrdksocial.bypass:
     description: "Вход без обязательной привязки к мессенджеру"
