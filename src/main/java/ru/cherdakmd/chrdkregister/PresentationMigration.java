@@ -75,11 +75,11 @@ final class PresentationMigration {
             if ((key.equals("tablist.header") || key.equals("tablist.footer")) && value instanceof List<?> lines
                     && lines.stream().allMatch(line -> line == null || line instanceof String text && text.isBlank())) continue;
             // Снятие старой рекламы не должно обновлять цены/сроки из более ранних снимков.
-            // Исключение: если каталог сервера сам совпадает по условиям с одним из
-            // известных стоковых снимков, то отличие цен объясняется сменой тарифов
-            // в новой поставке, а не правкой владельца — такой каталог обновляем.
+            // Исключение: если в каталоге сервера стоят ровно тарифы предыдущей
+            // поставки, владелец цены не правил — отличие от fresh объясняется
+            // сменой тарифов в новом config.yml, и каталог можно обновить.
             if (key.equals("shop.products") && !sameCatalogTerms(value, fresh.get(key))
-                    && !isHistoricalStockCatalog(value, legacies)) continue;
+                    && !isPreviousStockCatalog(value)) continue;
             boolean stock = false;
             for (YamlConfiguration legacy : legacies) {
                 if (legacy != null && legacy.contains(key, true) && Objects.equals(value, legacy.get(key))) {
@@ -137,29 +137,30 @@ final class PresentationMigration {
     }
 
     /**
-     * Условия каталога сервера совпадают с одним из historical stock-снимков.
-     * Тогда владелец цены не правил, и смена тарифов в новой поставке должна
-     * дойти до него вместе с остальными стоковыми изменениями.
+     * Тарифы предыдущей поставки. Служат только для отличия «владелец правил
+     * цены» от «поставка сменила тарифы»: любое другое значение цены считается
+     * владельческой правкой и каталог миграция не трогает.
      */
-    private static boolean isHistoricalStockCatalog(Object value, List<YamlConfiguration> legacies) {
-        if (!(value instanceof List<?> current)) return false;
-        for (YamlConfiguration legacy : legacies) {
-            if (legacy == null || !(legacy.get("shop.products") instanceof List<?> stock)) continue;
-            if (stock.size() != current.size()) continue;
-            boolean equal = true;
-            for (int i = 0; i < current.size() && equal; i++) {
-                if (!(current.get(i) instanceof Map<?, ?> left) || !(stock.get(i) instanceof Map<?, ?> right)) {
-                    equal = false;
-                    break;
-                }
-                var a = new HashMap<Object, Object>(left);
-                var b = new HashMap<Object, Object>(right);
-                a.remove("description"); b.remove("description");
-                equal = a.equals(b);
-            }
-            if (equal) return true;
+    private static final Map<String, Integer> PREVIOUS_STOCK_PRICES = Map.ofEntries(
+            Map.entry("rank-wanderer", 99), Map.entry("rank-wanderer-year", 990),
+            Map.entry("rank-pathfinder", 159), Map.entry("rank-pathfinder-year", 1590),
+            Map.entry("rank-keeper", 229), Map.entry("rank-keeper-year", 2290),
+            Map.entry("rank-patron", 299), Map.entry("rank-patron-year", 2990),
+            Map.entry("rank-founder", 365), Map.entry("rank-founder-year", 3650),
+            Map.entry("all-inclusive", 899));
+
+    private static boolean isPreviousStockCatalog(Object value) {
+        if (!(value instanceof List<?> catalog)) return false;
+        Map<Object, Object> prices = new HashMap<>();
+        for (Object entry : catalog) {
+            if (!(entry instanceof Map<?, ?> product)) return false;
+            prices.put(product.get("id"), product.get("price"));
         }
-        return false;
+        for (var expected : PREVIOUS_STOCK_PRICES.entrySet()) {
+            if (!(prices.get(expected.getKey()) instanceof Number actual)
+                    || actual.intValue() != expected.getValue()) return false;
+        }
+        return true;
     }
 
     static void apply(JavaPlugin plugin) {
