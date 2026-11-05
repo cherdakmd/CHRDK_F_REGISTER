@@ -67,8 +67,8 @@ review: [vk, core]
 **150 ₽ на 30 дней**, команда выдачи для сайта
 `pass shopbuy %username% social-access`, карточка и картинка лежат в
 `docs/shop/social-access.md` и `docs/shop/social-access.png` репозитория. Режим
-`mode: product-list`, `product-ids: [social-access]` — другие товары и ранги
-сами по себе обхода не дают. Повторная покупка продлевает срок с общим
+`mode: either`, `product-ids: [social-access]` — доступ даёт любой
+активный донатный ранг/проходка **или** карточка проходки. Повторная покупка продлевает срок с общим
 потолком 365 дней. `pass shoppay %username% 150` для этого товара **не**
 используется: он выдаёт ранг по сумме, а не entitlement.
 
@@ -78,8 +78,8 @@ review: [vk, core]
 | `social.donate-access.mode` | Что открывает доступ |
 | --- | --- |
 | `any-rank` | любой активный донатный ранг/проходка |
-| `product-list` (по умолчанию) | активный товар из `product-ids` каталога `shop.products` |
-| `either` | ранг **или** товар из списка |
+| `product-list` | активный товар из `product-ids` каталога `shop.products` |
+| `either` (по умолчанию) | ранг **или** товар из списка |
 | `off` | платного доступа нет |
 
 - `permanent: false` (по умолчанию) — доступ действует, **пока активна

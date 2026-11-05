@@ -543,7 +543,7 @@ shop:
     # ранга (см. RankLadder.carryDays). Меняйте цены парами: месяц и год.
     - id: rank-wanderer
       name: "<gray>Странник</gray>"
-      price: 99
+      price: 300
       days: 30
       rank: 1
       group: ""
@@ -554,7 +554,7 @@ shop:
 
     - id: rank-wanderer-year
       name: "<gray>Странник — год</gray>"
-      price: 990
+      price: 3000
       days: 365
       rank: 1
       group: ""
@@ -565,7 +565,7 @@ shop:
 
     - id: rank-pathfinder
       name: "<green>Следопыт</green>"
-      price: 159
+      price: 450
       days: 30
       rank: 2
       group: ""
@@ -576,7 +576,7 @@ shop:
 
     - id: rank-pathfinder-year
       name: "<green>Следопыт — год</green>"
-      price: 1590
+      price: 4500
       days: 365
       rank: 2
       group: ""
@@ -587,7 +587,7 @@ shop:
 
     - id: rank-keeper
       name: "<aqua>Хранитель</aqua>"
-      price: 229
+      price: 600
       days: 30
       rank: 3
       group: ""
@@ -598,7 +598,7 @@ shop:
 
     - id: rank-keeper-year
       name: "<aqua>Хранитель — год</aqua>"
-      price: 2290
+      price: 6000
       days: 365
       rank: 3
       group: ""
@@ -609,7 +609,7 @@ shop:
 
     - id: rank-patron
       name: "<gradient:#ffd700:#ff8800>Меценат</gradient>"
-      price: 299
+      price: 750
       days: 30
       rank: 4
       group: ""
@@ -620,7 +620,7 @@ shop:
 
     - id: rank-patron-year
       name: "<gradient:#ffd700:#ff8800>Меценат — год</gradient>"
-      price: 2990
+      price: 7500
       days: 365
       rank: 4
       group: ""
@@ -631,7 +631,7 @@ shop:
 
     - id: rank-founder
       name: "<gradient:#b388ff:#ffd700>Покровитель</gradient>"
-      price: 365
+      price: 900
       days: 30
       rank: 5
       group: ""
@@ -642,7 +642,7 @@ shop:
 
     - id: rank-founder-year
       name: "<gradient:#b388ff:#ffd700>Покровитель — год</gradient>"
-      price: 3650
+      price: 9000
       days: 365
       rank: 5
       group: ""
@@ -891,10 +891,10 @@ shop:
     # Полный набор: ранг задаётся НА КОРНЕ, не как лист includes.
     # includes-days задаёт единый оплаченный период дополнений (пропуск здесь 30,
     # а отдельная карточка battlepass-premium по-прежнему 90 дней).
-    # Одно выполнение команды — одна продажа 899 ₽; не вызывайте команды частей.
+    # Одно выполнение команды — одна продажа 1499 ₽; не вызывайте команды частей.
     - id: all-inclusive
       name: "<gradient:#ffd700:#b388ff>Всё включено</gradient>"
-      price: 899
+      price: 1499
       days: 30
       rank: 5
       includes-days: 30

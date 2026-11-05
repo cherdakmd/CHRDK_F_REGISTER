@@ -350,8 +350,8 @@ GitHub Release, пропускает черновики и пререлизы, �
 Товар лежит в `plugins/CHRDK_Core/config.yml` → `shop.products` с
 `trademc-export: false`: он **не** переиздаёт исторический комплект из 26
 карточек `docs/trademc/`. В `plugins/CHRDK_VK/config.yml` включён
-`social.donate-access.mode: product-list` и
-`product-ids: [social-access]`, поэтому другие ранги и товары обхода не дают.
+`social.donate-access.mode: either` и
+`product-ids: [social-access]`, поэтому любой донатный ранг (от 300 ₽) тоже снимает ограничение, а карточка за 150 ₽ остаётся для игроков без ВК/MAX.
 
 В `tablist.footer` ядра добавлены два плейсхолдера, которые регистрирует этот
 же JAR через PlaceholderAPI:

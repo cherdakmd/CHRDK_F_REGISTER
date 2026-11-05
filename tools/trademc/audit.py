@@ -73,8 +73,8 @@ def validate(root, cfg, products):
     require(sum(by_id[x]['price'] for x in color_ids) == 705, 'color savings text stale')
     require(by_id['trails-pack']['price'] == 199 and by_id['look-pack']['price'] == 599, 'bundle savings text stale')
     full = by_id['all-inclusive']
-    require(full['price'] == 899 and full['days'] == 30 and full['rank'] == 5 and full['includes-days'] == 30,
-            'all-inclusive must grant V and all extras for 899 / 30 days')
+    require(full['price'] == 1499 and full['days'] == 30 and full['rank'] == 5 and full['includes-days'] == 30,
+            'all-inclusive must grant V and all extras for 1499 / 30 days')
     require(leaves('all-inclusive', by_id) == trail_ids | color_ids | {'homes-plus', 'join-effect', 'battlepass-premium'},
             'all-inclusive contents mismatch')
     require(len(leaves('all-inclusive', by_id)) == 13, 'full pack needs 13 distinct extra rights')
@@ -96,7 +96,7 @@ def report(root, cfg, products, version):
     for p in products:
         name = re.sub(r'<[^>]+>', '', p['name'])
         if p['id'] == 'all-inclusive':
-            behavior = 'Покровитель V + 13 дополнений по 30 дней; одна продажа 899 ₽'
+            behavior = 'Покровитель V + 13 дополнений по 30 дней; одна продажа 1499 ₽'
         elif p.get('rank'):
             behavior = f"Ранг {p['rank']}; продление/повышение с сохранением остатка, без понижения"
         elif p['id'] == 'homes-plus':
@@ -115,7 +115,7 @@ def report(root, cfg, products, version):
     lines.append('''
 ## Добавлено в 1.4.198: «Всё включено»
 
-899 ₽ / 30 дней: ранг V на корне + пакет +8 домов, пять каталожных шлейфов,
+1499 ₽ / 30 дней: ранг V на корне + пакет +8 домов, пять каталожных шлейфов,
 пять платных цветов, эффект входа и премиум-пропуск. Все 13 дополнительных
 прав в этом наборе выдаются на 30 дней; отдельный пропуск остаётся на 90 дней.
 Стандартный V даёт 12 домов: с первым пакетом будет 20; старые пакеты также

@@ -155,12 +155,13 @@ class SocialContractTest {
         assertTrue(core.contains("price: 150"));
         assertTrue(core.contains("days: 30"));
         assertTrue(core.contains("trademc-export: false"),
-                "исторический комплект из 26 карточек не переиздаётся");
+                "проходка не добавляет 27-й экспортируемый SKU в комплект TradeMC");
         assertFalse(core.lines().anyMatch(line -> line.contains("id: social-access") && line.contains("rank:")),
                 "товар не должен выдавать ранг");
 
         String vkConfig = read("src/main/resources/config.yml");
-        assertTrue(vkConfig.contains("mode: product-list"));
+        assertTrue(vkConfig.contains("mode: either"),
+                "ранг ИЛИ проходка: ранги дороже карточки и должны снимать ограничение");
         assertTrue(vkConfig.contains("product-ids: [social-access]"));
 
         String card = read("../docs/shop/social-access.md");
