@@ -67,8 +67,30 @@ class SocialAccessPolicyTest {
         assertEquals("не требуется", SocialAccessPolicy.linkCounter("", now, now, false, false));
         assertEquals("аварийный вход", SocialAccessPolicy.linkCounter("", now, now, true, true));
         assertEquals("обязательна", SocialAccessPolicy.linkCounter("", now - DAY, now, true, false));
-        assertEquals("ещё 3 дн.", SocialAccessPolicy.linkCounter("", now + 3 * DAY, now, true, false));
+        assertEquals("осталось 3 дн.", SocialAccessPolicy.linkCounter("", now + 3 * DAY, now, true, false));
         assertEquals(3, SocialAccessPolicy.remainingDays(now + 3 * DAY, now));
+    }
+
+    @Test
+    void tabStatusNamesTheChoiceExplicitly() {
+        long now = ROLLOUT;
+        long deadline = now + 14 * DAY;
+        assertEquals("✅ привязан (ВК)",
+                SocialAccessPolicy.tabStatus(true, "vk", 0, deadline, now, true, false, false));
+        assertEquals("✅ привязан (MAX)",
+                SocialAccessPolicy.tabStatus(true, "max", 0, deadline, now, true, false, false));
+        assertEquals("✅ проход: 27 дн.",
+                SocialAccessPolicy.tabStatus(false, "", now + 27 * DAY, deadline, now, true, false, false));
+        assertEquals("✅ проход: ∞",
+                SocialAccessPolicy.tabStatus(false, "", 0, deadline, now, true, false, true));
+        assertEquals("⚠ БЕЗ ПРИВЯЗКИ: осталось 14 дн.",
+                SocialAccessPolicy.tabStatus(false, "", 0, deadline, now, true, false, false));
+        assertEquals("⛔ ВХОД ЗАКРЫТ",
+                SocialAccessPolicy.tabStatus(false, "", 0, now - DAY, now, true, false, false));
+        assertEquals("✅ привязка не требуется",
+                SocialAccessPolicy.tabStatus(false, "", 0, deadline, now, false, false, false));
+        assertEquals("⚠ аварийный вход",
+                SocialAccessPolicy.tabStatus(false, "", 0, now - DAY, now, true, true, false));
     }
 
     @Test

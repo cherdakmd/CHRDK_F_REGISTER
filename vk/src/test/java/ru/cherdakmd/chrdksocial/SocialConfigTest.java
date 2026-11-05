@@ -40,6 +40,12 @@ class SocialConfigTest {
         assertFalse(cfg.donatePermanent(), "по умолчанию доступ привязан к активной покупке");
         assertEquals("https://chrdk.trademc.org/", cfg.donateUrl());
         assertTrue(cfg.donateActive());
+        assertEquals(30, cfg.reminderSeconds(), "напоминание в чате каждые 30 с, включая grace");
+        assertTrue(cfg.reminderNagging());
+        assertEquals(5, cfg.reminderActionBarSeconds());
+        assertEquals(20, cfg.reminderActionNagSeconds());
+        assertTrue(cfg.reminderTitleOnJoin());
+        assertTrue(cfg.reminderSound());
     }
 
     @Test

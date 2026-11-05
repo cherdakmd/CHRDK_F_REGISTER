@@ -1452,10 +1452,12 @@ tablist:
   #   %pass_status% — активен/истёк/нет ранга, %pass_left% — «12 дн. 3 ч.»,
   #   %pass_days% — осталось целых дней ранга,
   #   %tab_warns% — активные варны и порог автобана игрока («3/5»), видны всем.
+  #   %chrdksocial_status% — ЯВНЫЙ выбор игрока: «✅ привязан (ВК)»,
+  #   «✅ проход: 27 дн.» или «⚠ БЕЗ ПРИВЯЗКИ: осталось 14 дн.» / «⛔ ВХОД ЗАКРЫТ».
   #   %chrdksocial_access% — остаток товара «Вход без ВК и MAX» («27 дн.», «нет»),
-  #   %chrdksocial_link% — персональный статус привязки ВК/MAX («ВК», «MAX»,
-  #   «ещё 12 дн.», «обязательна»). Оба приходят из CHRDK_VK через PlaceholderAPI;
-  #   без CHRDK_VK/PlaceholderAPI в TAB будет пустая строка.
+  #   %chrdksocial_link% — статус привязки («ВК», «MAX», «осталось 12 дн.»).
+  #   Все три приходят из CHRDK_VK через PlaceholderAPI; без CHRDK_VK/PlaceholderAPI
+  #   в TAB будет пустая строка, а в логе CHRDK_VK — громкое предупреждение.
   #   %pass_type% — приветственный/обычный/нет, %auth_status% — состояние входа,
   #   %auth_hint% — следующий шаг, %security% — состояние 2FA,
   #   %navigation% — доступные ссылки после входа (до входа: пустая строка).
@@ -1481,7 +1483,8 @@ tablist:
     - "<gray>Банк <aqua>%tab_balance% 💠</aqua> <dark_gray>│</dark_gray> XP-буст <green>%tab_boost%</green>"
     - "<gray>%auth_status%</gray> <dark_gray>│</dark_gray> <gray>2FA: %security%</gray>"
     - "<gray>Варны <yellow>%tab_warns%</yellow> <dark_gray>│</dark_gray> <gray>порог — автобан</gray>"
-    - "<gray>Вход <aqua>%chrdksocial_access%</aqua> <dark_gray>│</dark_gray> Привязка <green>%chrdksocial_link%</green></gray>"
+    - "<gold>%chrdksocial_status%</gold>"
+    - "<gray>Привязка <green>%chrdksocial_link%</green> <dark_gray>│</dark_gray> Проход <aqua>%chrdksocial_access%</aqua></gray>"
     - "<gray>%auth_hint%</gray>"
     - "<yellow>✦</yellow> <gray>%tab_tip%</gray>"
     - "%tab_separator%"

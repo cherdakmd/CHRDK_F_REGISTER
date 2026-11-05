@@ -1,183 +1,183 @@
 {
   "pages": {
     "about": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "506e1ef14b295b666cba46607c243c85e995ff792ab6c4650c73353ce76da4d4",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "32a192fb980c96de33caf5c91600c959df0e6d45a81a38d1604380e07b0bccfd",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "168d42ec77fa540ddacdb901df018bd45a03f641d8557f761b5377f10852e1ea",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "f050380c7237983245760a68e9ff3d390ce9662fd70689ef7ad09ba415e9e1be",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "b470ec02cc77efe555399c01ed36d524d0f634b3151d92d98a70485f4d812eef",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "64c1dc9535b66d892ea1ccfd7d018581fcfea32311cae7eb1d72c2c69a946893",
       "text": "fcdffb1098428fac2bd42d1c4acb73bb9a024d1823d5398b8845bb2f415a506f"
     },
     "auction": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "e830c2b4fc516fb0c0ffc7fa42085e3562c3a3968d21fd94d087c6ddf16fefa8",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "f7918ad017974709aa020597555c5ebf58d1d3a46aa0c20bc07cd58a6610d1b2",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "32a8394974d046b2ae08334e3b29b01012183d2175f1d51c056b4f8c1c1ec93e",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "b9a8c482849e9e91645bde11dea646d0ad0430e2c8ac9b2454ab31543287fa39",
       "text": "f368077b5f1961a1982957afe3b8523b60c8330f3dfd1891003d01ea1c4fd6db"
     },
     "chat": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "506e1ef14b295b666cba46607c243c85e995ff792ab6c4650c73353ce76da4d4",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "32a192fb980c96de33caf5c91600c959df0e6d45a81a38d1604380e07b0bccfd",
       "text": "ca6c93fc33fca52eecc7d38744bc86f619ea0b6a7bcc2314b84ca6c5399d8a1c"
     },
     "claims": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "959263cf0bb9da8647564355bf6fed076195a65ad1a7d3900d16dc4fccea9cc4",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "3d927cb9703fccf48a9270b2b66aea3bab1e6d0c91201046f40a1fa19cc15107",
       "text": "bf1b24b85ecdaee84580c0d5ea4b9c1120b8dd072e38aa68b52e49fc2a0c472c"
     },
     "classes": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "9b43485a7d0231dd0700afa46451bee42bc4c370dbe610fe717a8563468a30e6",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "dd30c01507dd9b52b0c4c829871d2b4c1a479774e19fac5cb2ed583839da398e",
       "text": "ee29d92bd4e9527924d14405057fd62402857c1a688439c7b9d86d4c9bf3b546"
     },
     "commands": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "e3318c7b96ec1d6fccd34379735b049bfd1fe2091e4f4d152594140d9eab0bc3",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "8ccac44402862740e49b96984320c97f67eb78002358dcfb5e0e3cd87a55dfdd",
       "text": "b210ff00d9d9a82a7663a9ddc5fac3491e03b244a72217f81c997ec39bc03928"
     },
     "cosmetics": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "d17727b2a4089bf331b2de586e52e0fcddd6a4b8a41b1d62303c43ad6f2358e0",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "f8fccab9ca72507e451608de567b92403f3da115bc309f19a66988ac2b40242a",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "9e09827d508e5ec253ab9fdd620b33c8ad07593e39cfe79789a0d3cdd6be1873",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "bf27eb4b8df1c25cd264b5e9474f856a707e1aeb99ca705bbd0949b105dc3729",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "economy": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "1be3c265d768da4ebefada7ffaf79a0b48bc03b385be1acf60b01edf66809841",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "4786a4784db161de5cb241aadb29517f1760d78cf6712e3cc891a0622bbcff8a",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "e169d56114f660896402154d29e16b63d4db2a98c1bd5777a753ab034e5b06ad",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "cf87b87b17c546b8660701aa885f40afe6857b2ed725d6ef506842cd080820f0",
       "text": "daba8068188cc03ac1ee0f787eb1322c4d33b14da0bdffe35c17b473843dc5aa"
     },
     "faq": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "007f8e891b6836565ea31897e41efc00523932d820ac004103b650544662aaf7",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "a0499ea3ddf5dbbe5ebc9b3c980105bd21542f2027d14b99a521b3bf877e5f0d",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "a916b3e722ceecaefe5235324c0c4a49e19b36f1cb64e40c6a0cdfd713d92c70",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "238fa458d4308f0d4bb440b53d15612735a2f3b6a00ffb388c51b57ff86464eb",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "959263cf0bb9da8647564355bf6fed076195a65ad1a7d3900d16dc4fccea9cc4",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "3d927cb9703fccf48a9270b2b66aea3bab1e6d0c91201046f40a1fa19cc15107",
       "text": "e166f2671aabcdf55ecf59d1465ddb19a36343f6d07983eb8b8821b3a63cce34"
     },
     "honors": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "506e1ef14b295b666cba46607c243c85e995ff792ab6c4650c73353ce76da4d4",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "32a192fb980c96de33caf5c91600c959df0e6d45a81a38d1604380e07b0bccfd",
       "text": "6bc29d5a2d7783845f8b3d9b085e85982faec5b3029d841092386f36b1d4c4b0"
     },
     "hunt": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "c1dd8410e71edc125fc5fc69347fd35d64e8f719c39eb5c1b535ec976001ea3e",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "f9871f8493c04ff983a5549f970e18546a916530e64cd6d5542e921ded18c662",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "4e3cd6ba2249e24168efb2b766d1d4b1fb616fa2f616aa1c387f04010842cdd2",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "fcba7514dfd91ac35ed7af6c4610044fe0636582e65575fb234e82237631c7c6",
       "text": "1417660c5793d86ddfab16c8b2203cbd2dd6b47a245ffa219c71898485b9c39f"
     },
     "menu": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "f82952392c3fea2a60bf8f1ff352598ebb46f8e4180115d29d6ea70ea4748825",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "50a3f11fc5ddb0e1439ac42c2ae01ba424d12f4459e0aeb03986edf76a1b4b23",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "moderation": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "506e1ef14b295b666cba46607c243c85e995ff792ab6c4650c73353ce76da4d4",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "32a192fb980c96de33caf5c91600c959df0e6d45a81a38d1604380e07b0bccfd",
       "text": "1bc92e4c97e80aa6e773940d0b09a1682de13c5118c99da2fd77759b24213b54"
     },
     "orders": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "9cb4efd4743a9f2f70fa434595c50265c90a8fc2d70abcb85c61084d28cd9fd7",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "9a960ecd4a56026d9b7a45b33016e8249368fdbc167d237a9ee043e1a45b4bc7",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "pets": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "89faaccfc0de367e0985d752fe4204b884241c639d5d4a0273205c22a87c1d9a",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "1266d7d6b0694af86397355249337bbd5987cc08147789649f2afcb0f26e5dab",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "8af07cb39b43446dd4016e5997078c2154b2e385ebcd81254018a44be8acb332",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "0391cbb8c4e7abd5bef5220f3c4760673fa66de500399e32f8af55b0c58b9c2c",
       "text": "b66278597912053a64a4f192bf0cf63795a8720263d4283683b9458eec8f0bff"
     },
     "profile": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "ad473bd802d43b50ec4ccb806055527481655990014b12c4b7bbc2013a014df2",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "3584cd7e7f4e22f6967ae857e458b7362f737e7b2af9782f7f189b36984ca2c6",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "76dde08bded7d7d5abef0a81bead791ba27c95ed60ef173603d3a2c4c153f96c",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "13df2ea7d67ef4169ef56cd7daf998c5e09f744821a88074b405867605cd2df5",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "ede10c3c799672a4c2811319a1f294f8cd7fee84502b3b5fe7cd9e4b67e92e32",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "51e6f7dae802e34e2ed0884064c30e4c095fb21b5f060e63af75425dadbf1a77",
       "text": "83fdfb3ddc5551875ec1f031676a80e3adb73e448dffae614c489441ea6f2c33"
     },
     "shop": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "4e3cd6ba2249e24168efb2b766d1d4b1fb616fa2f616aa1c387f04010842cdd2",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "fcba7514dfd91ac35ed7af6c4610044fe0636582e65575fb234e82237631c7c6",
       "text": "62ef5965cc091b6cbd7e6af58d21e58ba2e8dd65d9e704cec710768ff7a47099"
     },
     "skills": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "867d719c6a44119cdffcc47f97fd16d6a42e7ffdb53323afd1ebe840c86b2285",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "faadb060a4b24f368bfc53e4e0f0513686e347281d6ae009957bd1249a7bdcd0",
       "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
     },
     "social-link": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "7705ea9100c75bb291f169274dfb3702218e2009d840b012e3d38f21e7be2f3d",
-      "text": "dc1156a2134d5164ab2e20b0c5849610ebbbec3e85084c303fe1c7bb8e56ebf5"
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "c0221bd02d45fe42e5bc78eeb68bf24403e35902bd5113ccb59be3e5a7502240",
+      "text": "65e8e5c60d6c6a544b20ec02390bac8846e3a10db5328dd3bfbd30a81d2c8b8f"
     },
     "start": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "269172afbe94810fbc9f8415ec7b5b6864d4a7ef13ad9e05d19e55cd6d4e01b3",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "a9c4bfebeff37e7fc395c9bd57a69206668de569b00af535fe70db5a88abcf47",
       "text": "c2835fdf2d1945079115e6a252d472ce72ad9ad79f4ed47ad58e269b467d595f"
     },
     "teleports": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "da27f2151375805d4bdaf979000c9df6b153489d30be22d1a0476b0e2f0e0e83",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "0c5719b7c0a474f7651cd3aba9f9d2695746f3bf6352b7c9b1db9f1f48461d67",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "e169d56114f660896402154d29e16b63d4db2a98c1bd5777a753ab034e5b06ad",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "cf87b87b17c546b8660701aa885f40afe6857b2ed725d6ef506842cd080820f0",
       "text": "a4d12cf48881e623761e39d44e627b95975f839a8737cfd76b9ee138317a4c07"
     },
     "titles": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "d415627b1c0e01f516840ec64e93a84f75868caaffa6f7b01e2a0741d611e1eb",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "d08ab28850d95a9c7033ff0d45dd63831cbfba5ca40dc2ec8c8914627f693dde",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "4e3cd6ba2249e24168efb2b766d1d4b1fb616fa2f616aa1c387f04010842cdd2",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "fcba7514dfd91ac35ed7af6c4610044fe0636582e65575fb234e82237631c7c6",
       "text": "595febb9e64d253581bf0755ce240ee399269c0b6a7eabdaea8c4b14888bcb10"
     },
     "vk": {
-      "reason": "social-access: поправлена миграция презентационного конфига (новые стоковые SKU), контрактные JVM-тесты на 31 товар и product-list, карточка и счётчики TAB: исходники и страницы сверены",
-      "sources": "7705ea9100c75bb291f169274dfb3702218e2009d840b012e3d38f21e7be2f3d",
+      "reason": "Назойливое информирование с первого входа (заголовок, звук, action bar, чат 30 с, пинг при действиях, staff не молчит), явный счётчик TAB %chrdksocial_status%, softdepend PlaceholderAPI: код, конфиги и страницы сверены",
+      "sources": "c0221bd02d45fe42e5bc78eeb68bf24403e35902bd5113ccb59be3e5a7502240",
       "text": "837f09be941b49d216ee03340a1fb905538d70a9c0a4553dcebf6159c6e5cadf"
     }
   },

@@ -59,6 +59,7 @@ public final class SocialPlaceholders extends PlaceholderExpansion {
         if (name == null || name.isBlank()) return "";
         long now = System.currentTimeMillis();
         return switch (params.toLowerCase(Locale.ROOT)) {
+            case "status" -> social.tabStatus(name, now);
             case "access" -> SocialAccessPolicy.accessCounter(
                     social.donateUntil(name), now, social.permanentDonorAccess(name));
             case "link" -> SocialAccessPolicy.linkCounter(

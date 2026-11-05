@@ -83,16 +83,28 @@ social:
 
 ## Два счётчика в TAB
 
-В `plugins/CHRDK_Core/config.yml` → `tablist.footer` добавлена строка:
-
-```yaml
-    - "<gray>Вход <aqua>%chrdksocial_access%</aqua> <dark_gray>│</dark_gray> Привязка <green>%chrdksocial_link%</green></gray>"
-```
+В `plugins/CHRDK_Core/config.yml` → `tablist.footer` добавлены две строки.
+Плейсхолдеры приходят из `CHRDK_VK` через PlaceholderAPI (`softdepend` в
+`plugin.yml` гарантирует порядок загрузки); без PAPI в лог пишется SEVERE.
 
 | Плейсхолдер | Что показывает | Примеры |
 | --- | --- | --- |
+| `%chrdksocial_status%` | **явный выбор игрока**, главная строка TAB | `⚠ БЕЗ ПРИВЯЗКИ: осталось 14 дн.`, `✅ привязан (ВК)`, `✅ проход: 27 дн.`, `⛔ ВХОД ЗАКРЫТ` |
 | `%chrdksocial_access%` | остаток срока товара, персонально | `27 дн.`, `1 дн.`, `нет`, `∞` (бессрочная ручная выдача) |
-| `%chrdksocial_link%` | персональный статус привязки | `ВК`, `MAX`, `ещё 12 дн.`, `обязательна`, `не требуется`, `аварийный вход` |
+| `%chrdksocial_link%` | персональный статус привязки | `ВК`, `MAX`, `осталось 12 дн.`, `обязательна`, `не требуется`, `аварийный вход` |
+
+В `tablist.footer` это две строки — крупный статус и сроки:
+
+```yaml
+    - "<gold>%chrdksocial_status%</gold>"
+    - "<gray>Привязка <green>%chrdksocial_link%</green> <dark_gray>│</dark_gray> Проход <aqua>%chrdksocial_access%</aqua></gray>"
+```
+
+Игрок также получает назойливое напоминание с первого входа: заголовок на
+экране, звук, блок «СПОСОБ 1 — привязка / СПОСОБ 2 — покупка 150 ₽ / 30 дней»,
+постоянный action bar, сообщение каждые 30 с и пинг при любом действии. В
+переходном периоде игра не блокируется, но напоминания идут до самого выбора.
+Настройки — `social.reminder.*` в `plugins/CHRDK_VK/config.yml`.
 
 Оба приходят из `CHRDK_VK` через PlaceholderAPI: expansion
 `ru.cherdakmd.chrdksocial.SocialPlaceholders` с идентификатором `chrdksocial`.

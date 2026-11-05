@@ -66,7 +66,12 @@ public record SocialConfig(
         String donateMode,
         List<String> donateProductIds,
         boolean donatePermanent,
-        String donateUrl
+        String donateUrl,
+        boolean reminderNagging,
+        int reminderActionBarSeconds,
+        int reminderActionNagSeconds,
+        boolean reminderTitleOnJoin,
+        boolean reminderSound
 ) {
 
     public static final String DEFAULT_MAX_API = "https://platform-api2.max.ru/";
@@ -148,6 +153,13 @@ public record SocialConfig(
         String donateUrl = sanitizeHttps(
                 cfg.getString("social.donate-access.url", DEFAULT_DONATE_URL), DEFAULT_DONATE_URL);
 
+        // Назойливое информирование: работает и В grace, а не только после заморозки.
+        boolean nagging = cfg.getBoolean("social.reminder.nagging", true);
+        int actionBarSeconds = Math.clamp(cfg.getInt("social.reminder.action-bar-seconds", 5), 2, 60);
+        int actionNagSeconds = Math.clamp(cfg.getInt("social.reminder.action-nag-seconds", 20), 5, 300);
+        boolean titleOnJoin = cfg.getBoolean("social.reminder.title-on-join", true);
+        boolean reminderSound = cfg.getBoolean("social.reminder.sound", true);
+
         return new SocialConfig(enabled, requireLink, graceDays, bypass, codeLength, ttl, cooldown,
                 attempts, maxAccounts, reminder, reward, emergency, failOpen, vkUrl, maxUrl,
                 maxEnabled, apiBase, token, transport, webhookEnabled, port, bind, path, secret,
@@ -155,7 +167,8 @@ public record SocialConfig(
                 pollingEnabled, waitSeconds, reconnect, limit, updateTypes, maxChatId,
                 bridgeEnabled, mcToMax, maxToMc, requireLinked, badge, format,
                 bridgeCooldown, bridgeMaxLength, newsEnabled, newsPoll, inGame, template, releaseApi,
-                newcomerGraceDays, donateEnabled, donateMode, productIds, donatePermanent, donateUrl);
+                newcomerGraceDays, donateEnabled, donateMode, productIds, donatePermanent, donateUrl,
+                nagging, actionBarSeconds, actionNagSeconds, titleOnJoin, reminderSound);
     }
 
     /** Достаточно ли данных для сетевых запросов MAX Bot API. */

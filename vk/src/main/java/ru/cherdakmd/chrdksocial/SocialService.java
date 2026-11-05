@@ -3,8 +3,10 @@ package ru.cherdakmd.chrdksocial;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
@@ -65,7 +67,10 @@ public final class SocialService {
 
     private volatile MaxService max;
     private BukkitTask reminderTask;
+    private BukkitTask actionBarTask;
     private BukkitTask newsTask;
+    /** Кулдаун пинга при игровых действиях: название не должно превращаться в спам каждого тика. */
+    private final ConcurrentHashMap<String, Long> lastActionNag = new ConcurrentHashMap<>();
 
     public SocialService(VkPlugin plugin, SocialConfig config) {
         this.plugin = plugin;
@@ -132,6 +137,9 @@ public final class SocialService {
         registerCoreBridges();
         long period = 20L * Math.max(10, config.reminderSeconds());
         reminderTask = Bukkit.getScheduler().runTaskTimer(plugin, this::remindPending, period, period);
+        // Постоянная строка над хотбаром у всех, кто ещё не выбрал способ входа.
+        actionBarTask = Bukkit.getScheduler().runTaskTimer(plugin, this::updateActionBars,
+                20L, 20L * config.reminderActionBarSeconds());
         long newsPeriod = 20L * 60L * Math.max(5, config.newsPollMinutes());
         newsTask = Bukkit.getScheduler().runTaskTimer(plugin, this::scheduleNewsCheck,
                 20L * 30L, newsPeriod);
@@ -150,6 +158,7 @@ public final class SocialService {
 
     public void shutdown() {
         if (reminderTask != null) reminderTask.cancel();
+        if (actionBarTask != null) actionBarTask.cancel();
         if (newsTask != null) newsTask.cancel();
         newsExecutor.shutdownNow();
         store.saveIfDirty();
@@ -322,6 +331,14 @@ public final class SocialService {
         return config.donatePermanent() && store.donorGranted(playerName);
     }
 
+    /** Явная строка для TAB: «привязан» / «проход» / «БЕЗ ПРИВЯЗКИ: осталось N дн.». */
+    public String tabStatus(String playerName, long now) {
+        String provider = linkProvider(playerName);
+        return SocialAccessPolicy.tabStatus(store.isLinked(playerName), provider,
+                donateUntil(playerName), graceDeadline(playerName, now), now,
+                config.mandatoryActive(), emergencyActive(now), permanentDonorAccess(playerName));
+    }
+
     private static String formatDeadline(long millis) {
         if (millis <= 0L) return "—";
         return Instant.ofEpochMilli(millis).atZone(MOSCOW).format(DEADLINE_FORMAT);
@@ -333,12 +350,19 @@ public final class SocialService {
         long now = System.currentTimeMillis();
         // Один раз фиксируем первый вход: от него считается личный переходный срок.
         store.recordFirstSeen(player.getName(), now);
-        if (store.isLinked(player.getName()) || staffBypass(player)) {
-            pending.remove(key);
+        if (store.isLinked(player.getName())) {
+            settle(player, key);
+            return;
+        }
+        if (staffBypass(player)) {
+            // Администрация не замораживается, но должна знать, что видят игроки:
+            // раньше op вообще выходил отсюда без единой строки.
+            settle(player, key);
+            plugin.messages().send(player, "social.gate-staff");
             return;
         }
         if (donateAccess(player.getName())) {
-            pending.remove(key);
+            settle(player, key);
             plugin.messages().send(player, "social.donate-welcome",
                     "url", config.donateUrl());
             audit.write("social.join-donor", player.getName(), "shop",
@@ -347,23 +371,102 @@ public final class SocialService {
         }
         pending.add(key);
         String code = issueCode(player);
-        plugin.messages().send(player, "social.gate-header");
+        long deadline = graceDeadline(player.getName(), now);
+        int days = SocialAccessPolicy.remainingDays(deadline, now);
+        String url = config.donateUrl();
+
+        // Крупный заголовок и звук: блок в чате легко потерять среди системных сообщений.
+        if (config.reminderTitleOnJoin()) showEntryTitle(player);
+        if (config.reminderSound()) playNagSound(player);
+
+        plugin.messages().send(player, "social.gate-choice");
         plugin.messages().send(player, "social.gate-code",
                 "code", code, "minutes", Math.max(1, config.codeTtlSeconds() / 60),
                 "vk", config.vkCommunityUrl(), "max", config.maxBotUrl());
         plugin.messages().send(player, "social.gate-howto");
         if (config.donateActive()) {
-            plugin.messages().send(player, "social.gate-donate", "url", config.donateUrl());
+            plugin.messages().send(player, "social.gate-donate", "url", url);
         }
-        if (!isFrozen(player)) {
+        if (isFrozen(player)) {
+            plugin.messages().send(player, "social.gate-closed", "url", url);
+        } else {
             plugin.messages().send(player, "social.gate-grace",
-                    "date", formatDeadline(graceDeadline(player.getName(), now)));
+                    "days", days, "date", formatDeadline(deadline));
         }
-        audit.write("social.join-pending", player.getName(), "", "выдан код входа");
+        player.sendActionBar(actionBarComponent(player, code, days));
+        audit.write("social.join-pending", player.getName(), "", "выдан код входа, требуется выбор способа входа");
     }
 
     public void onQuit(Player player) {
-        pending.remove(SocialLinkCodeManager.canonical(player.getName()));
+        String key = SocialLinkCodeManager.canonical(player.getName());
+        pending.remove(key);
+        lastActionNag.remove(key);
+    }
+
+    /* ------------------------- назойливое информирование ------------------------- */
+
+    /** Снимает все напоминания, как только игрок привязался или купил проход. */
+    private void settle(Player player, String key) {
+        pending.remove(key);
+        lastActionNag.remove(key);
+        clearActionBar(player);
+    }
+
+    /** @return {@code true}, если игрок уже выбрал способ входа и его не нужно беспокоить. */
+    private boolean settled(Player player, String key) {
+        if (store.isLinked(player.getName()) || staffBypass(player) || donateAccess(player.getName())) {
+            settle(player, key);
+            return true;
+        }
+        return false;
+    }
+
+    private void showEntryTitle(Player player) {
+        try {
+            Component title = plugin.messages().get("social.title");
+            Component subtitle = plugin.messages().get("social.subtitle");
+            player.showTitle(Title.title(title, subtitle,
+                    Title.Times.times(Duration.ofMillis(300), Duration.ofSeconds(5), Duration.ofSeconds(1))));
+        } catch (Throwable ignored) {
+            // Без поддержки showTitle(Title) остаётся блок сообщений в чате.
+        }
+    }
+
+    private void playNagSound(Player player) {
+        try {
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.0f);
+        } catch (Throwable ignored) {
+            // Звук — украшение, не условие доставки сообщения.
+        }
+    }
+
+    private void clearActionBar(Player player) {
+        try {
+            player.sendActionBar(Component.empty());
+        } catch (Throwable ignored) {
+            // Старые сборки Paper без sendActionBar.
+        }
+    }
+
+    private Component actionBarComponent(Player player, String code, int days) {
+        String key = isFrozen(player) ? "social.action-bar-closed" : "social.action-bar";
+        return plugin.messages().get(key, "code", code, "url", config.donateUrl(), "days", days);
+    }
+
+    /** Пинг при движении/команде/чате/действии. Игру в grace не блокирует. */
+    public void nagOnAction(Player player) {
+        if (player == null || !config.enabled() || !config.reminderNagging()) return;
+        String key = SocialLinkCodeManager.canonical(player.getName());
+        if (!pending.contains(key)) return;
+        long now = System.currentTimeMillis();
+        Long last = lastActionNag.get(key);
+        if (last != null && now - last < config.reminderActionNagSeconds() * 1000L) return;
+        if (settled(player, key)) return;
+        lastActionNag.put(key, now);
+        long deadline = graceDeadline(player.getName(), now);
+        int days = SocialAccessPolicy.remainingDays(deadline, now);
+        plugin.messages().send(player, "social.action-nag",
+                "url", config.donateUrl(), "days", days);
     }
 
     /** Возвращает живой код игрока, перевыпуская только по истечении паузы. */
@@ -379,22 +482,43 @@ public final class SocialService {
         return result.code();
     }
 
+    /** Периодическое напоминание в чате — ВСЕМ непривязанным, а не только замороженным. */
     private void remindPending() {
-        if (!config.enabled()) return;
+        if (!config.enabled() || !config.reminderNagging()) return;
         long now = System.currentTimeMillis();
         for (String key : pending) {
             Player player = Bukkit.getPlayerExact(key);
             if (player == null || !player.isOnline()) continue;
-            if (store.isLinked(player.getName())) {
-                pending.remove(key);
-                continue;
-            }
+            if (settled(player, key)) continue;
             Optional<String> code = codes.peek(player.getName(), now);
-            if (code.isEmpty()) {
-                code = Optional.of(issueCode(player));
+            if (code.isEmpty()) code = Optional.of(issueCode(player));
+            int days = SocialAccessPolicy.remainingDays(graceDeadline(player.getName(), now), now);
+            plugin.messages().send(player, "social.reminder-choice",
+                    "code", code.get(), "url", config.donateUrl(), "days", days);
+            if (config.reminderSound()) playNagSound(player);
+        }
+    }
+
+    /** Постоянная строка над хотбаром, пока игрок не привязался или не купил проход. */
+    private void updateActionBars() {
+        if (!config.enabled() || !config.reminderNagging()) {
+            for (String key : pending) {
+                Player player = Bukkit.getPlayerExact(key);
+                if (player != null) clearActionBar(player);
             }
-            if (isFrozen(player)) {
-                plugin.messages().send(player, "social.reminder", "code", code.get());
+            return;
+        }
+        long now = System.currentTimeMillis();
+        for (String key : pending) {
+            Player player = Bukkit.getPlayerExact(key);
+            if (player == null || !player.isOnline()) continue;
+            if (settled(player, key)) continue;
+            String code = codes.peek(player.getName(), now).orElse("?");
+            int days = SocialAccessPolicy.remainingDays(graceDeadline(player.getName(), now), now);
+            try {
+                player.sendActionBar(actionBarComponent(player, code, days));
+            } catch (Throwable ignored) {
+                // Action bar необязателен; чат и TAB продолжают работать.
             }
         }
     }
@@ -466,6 +590,7 @@ public final class SocialService {
         Bukkit.getScheduler().runTask(plugin, () -> {
             Player player = Bukkit.getPlayerExact(playerName);
             if (player == null || !player.isOnline()) return;
+            settle(player, SocialLinkCodeManager.canonical(playerName));
             plugin.messages().send(player, "social.linked",
                     "provider", PROVIDER_VK.equals(provider) ? "ВКонтакте" : "MAX");
             int reward = config.rewardXpLevels();

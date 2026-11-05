@@ -208,6 +208,61 @@ class SocialContractTest {
     }
 
     @Test
+    void everyNewcomerIsNaggedUntilTheyChooseLinkOrPurchase() throws Exception {
+        String service = read("src/main/java/ru/cherdakmd/chrdksocial/SocialService.java");
+        assertFalse(service.contains("if (isFrozen(player)) {\n                plugin.messages().send(player, \"social.reminder\""),
+                "напоминание не должно доставаться только уже замороженным");
+        assertTrue(service.contains("\"social.reminder-choice\""));
+        assertTrue(service.contains("updateActionBars"));
+        assertTrue(service.contains("nagOnAction"));
+        assertTrue(service.contains("showEntryTitle"));
+        assertTrue(service.contains("config.reminderTitleOnJoin()"));
+        assertTrue(service.contains("config.reminderSound()"));
+        assertTrue(service.contains("\"social.gate-staff\""),
+                "op/bypass больше не выходит из onJoin без единой строки");
+        assertTrue(service.contains("\"social.gate-choice\""));
+        assertTrue(service.contains("\"social.gate-closed\""));
+
+        String listener = read("src/main/java/ru/cherdakmd/chrdksocial/SocialGateListener.java");
+        assertTrue(listener.contains("service.nagOnAction(player)"));
+        assertTrue(listener.contains("nagOnAction(event.getPlayer())"));
+
+        String messages = read("src/main/resources/messages.yml");
+        for (String key : new String[]{"gate-choice", "gate-code", "gate-howto", "gate-donate",
+                "gate-grace", "gate-closed", "gate-staff", "reminder-choice", "action-bar",
+                "action-bar-closed", "action-nag", "title", "subtitle"}) {
+            assertTrue(messages.contains("\"" + key + "\""), "нет сообщения social." + key);
+        }
+        assertTrue(messages.contains("150 ₽ / 30 дней"), "оба варианта должны называть цену и срок");
+
+        String config = read("src/main/resources/config.yml");
+        assertTrue(config.contains("reminder-seconds: 30"));
+        assertTrue(config.contains("nagging: true"));
+        assertTrue(config.contains("action-bar-seconds: 5"));
+    }
+
+    @Test
+    void tabShowsExplicitUnlinkedCounterAndPapiLoadsBeforeVk() throws Exception {
+        String core = read("../src/main/resources/config.yml");
+        assertTrue(core.contains("%chrdksocial_status%"));
+        assertTrue(core.contains("%chrdksocial_link%"));
+        assertTrue(core.contains("%chrdksocial_access%"));
+        String expansion = read("src/main/java/ru/cherdakmd/chrdksocial/SocialPlaceholders.java");
+        assertTrue(expansion.contains("case \"status\""));
+        assertTrue(expansion.contains("social.tabStatus(name, now)"));
+        String policy = read("src/main/java/ru/cherdakmd/chrdksocial/SocialAccessPolicy.java");
+        assertTrue(policy.contains("⚠ БЕЗ ПРИВЯЗКИ"));
+        assertTrue(policy.contains("⛔ ВХОД ЗАКРЫТ"));
+        String pluginYml = read("src/main/resources/plugin.yml");
+        assertTrue(pluginYml.contains("softdepend:"));
+        assertTrue(pluginYml.contains("PlaceholderAPI"),
+                "без softdepend expansion может не зарегистрироваться");
+        String main = read("src/main/java/ru/cherdakmd/chrdkvk/VkPlugin.java");
+        assertTrue(main.contains("getLogger().severe"));
+        assertTrue(main.contains("runTaskLater(this, this::registerPlaceholders"));
+    }
+
+    @Test
     void ciPublisherIsWiredIntoRunAndWorkflow() throws Exception {
         String runner = read("../tools/social/run.py");
         assertTrue(runner.contains("from max_publisher import"));

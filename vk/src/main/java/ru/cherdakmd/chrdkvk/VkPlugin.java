@@ -46,6 +46,7 @@ public final class VkPlugin extends JavaPlugin {
     private SocialService socialService;
     private MaxService maxService;
     private SocialPlaceholders socialPlaceholders;
+    private boolean placeholdersRetryScheduled;
     private BukkitTask saveTask;
 
     @Override
@@ -114,14 +115,23 @@ public final class VkPlugin extends JavaPlugin {
      * плагин продолжает работать, а в TAB останутся пустые значения.
      */
     private void registerPlaceholders() {
+        if (socialPlaceholders != null) return;
         if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-            getLogger().info("[CHRDK_SOCIAL] PlaceholderAPI не найден — счётчики TAB недоступны.");
+            getLogger().severe("[CHRDK_SOCIAL] PlaceholderAPI не найден: счётчики привязки и прохода "
+                    + "(%chrdksocial_status%, %chrdksocial_link%, %chrdksocial_access%) в TAB НЕ работают. "
+                    + "Установите PlaceholderAPI и перезапустите сервер.");
+            // На случай нестандартного порядка загрузки — одна повторная попытка.
+            if (!placeholdersRetryScheduled) {
+                placeholdersRetryScheduled = true;
+                Bukkit.getScheduler().runTaskLater(this, this::registerPlaceholders, 20L * 5);
+            }
             return;
         }
         try {
             SocialPlaceholders expansion = new SocialPlaceholders(this, socialService);
             if (expansion.register()) {
                 this.socialPlaceholders = expansion;
+                getLogger().info("[CHRDK_SOCIAL] Счётчики TAB зарегистрированы (chrdksocial).");
             } else {
                 getLogger().warning("[CHRDK_SOCIAL] Идентификатор chrdksocial уже занят — счётчики TAB не зарегистрированы.");
             }

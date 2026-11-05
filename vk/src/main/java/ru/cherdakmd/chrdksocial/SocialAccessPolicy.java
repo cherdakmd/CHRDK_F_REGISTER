@@ -79,19 +79,39 @@ public final class SocialAccessPolicy {
      * Персональный статус привязки: «ВК» / «MAX», либо сколько дней осталось
      * до обязательной привязки. Возвращает обычный текст — PAPI не понимает MiniMessage.
      */
+    public static String providerLabel(String provider) {
+        if (provider == null || provider.isBlank()) return "привязан";
+        return switch (provider.trim().toLowerCase(Locale.ROOT)) {
+            case "vk" -> "ВК";
+            case "max" -> "MAX";
+            default -> "привязан";
+        };
+    }
+
     public static String linkCounter(String provider, long graceDeadline, long now,
                                      boolean required, boolean emergency) {
-        if (provider != null && !provider.isBlank()) {
-            return switch (provider.trim().toLowerCase(Locale.ROOT)) {
-                case "vk" -> "ВК";
-                case "max" -> "MAX";
-                default -> "привязан";
-            };
-        }
+        if (provider != null && !provider.isBlank()) return providerLabel(provider);
         if (!required) return "не требуется";
         if (emergency) return "аварийный вход";
         if (graceDeadline <= now) return "обязательна";
-        return "ещё " + remainingDays(graceDeadline, now) + " дн.";
+        return "осталось " + remainingDays(graceDeadline, now) + " дн.";
+    }
+
+    /**
+     * Готовая строка для TAB: игрок должен увидеть не безликое «14 дн.», а явный
+     * выбор — привязан, купил проход, либо «БЕЗ ПРИВЯЗКИ» со сроком до закрытия.
+     */
+    public static String tabStatus(boolean linked, String provider, long accessUntil,
+                                   long graceDeadline, long now, boolean required,
+                                   boolean emergency, boolean permanent) {
+        if (linked) return "✅ привязан (" + providerLabel(provider) + ")";
+        if (permanent || accessUntil > now) {
+            return "✅ проход: " + accessCounter(accessUntil, now, permanent);
+        }
+        if (!required) return "✅ привязка не требуется";
+        if (emergency) return "⚠ аварийный вход";
+        if (graceDeadline <= now) return "⛔ ВХОД ЗАКРЫТ";
+        return "⚠ БЕЗ ПРИВЯЗКИ: осталось " + remainingDays(graceDeadline, now) + " дн.";
     }
 
     /** Остаток дней с округлением вверх: 1 час — это ещё «1 дн.». */
