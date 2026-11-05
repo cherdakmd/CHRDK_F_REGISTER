@@ -52,24 +52,27 @@ public final class SocialGateListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
-        if (!service.isFrozen(player)) return;
         Location from = event.getFrom();
         Location to = event.getTo();
         if (to == null) return;
-        if (from.getWorld() != to.getWorld()
+        boolean moved = from.getWorld() != to.getWorld()
                 || Double.compare(from.getX(), to.getX()) != 0
                 || Double.compare(from.getY(), to.getY()) != 0
-                || Double.compare(from.getZ(), to.getZ()) != 0) {
-            Location locked = from.clone();
-            locked.setYaw(to.getYaw());
-            locked.setPitch(to.getPitch());
-            event.setTo(locked);
-        }
+                || Double.compare(from.getZ(), to.getZ()) != 0;
+        if (!moved) return;
+        // Напоминание при первом же движении, даже в переходный период (grace).
+        service.nagOnAction(player);
+        if (!service.isFrozen(player)) return;
+        Location locked = from.clone();
+        locked.setYaw(to.getYaw());
+        locked.setPitch(to.getPitch());
+        event.setTo(locked);
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onCommand(PlayerCommandPreprocessEvent event) {
         Player player = event.getPlayer();
+        service.nagOnAction(player);
         if (!service.isFrozen(player)) return;
         String label = label(event.getMessage());
         if (SocialService.allowedCommands().contains(label)) return;
@@ -84,6 +87,7 @@ public final class SocialGateListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onChat(AsyncChatEvent event) {
         Player player = event.getPlayer();
+        Bukkit.getScheduler().runTask(servicePlugin(), () -> service.nagOnAction(player));
         if (!service.isFrozen(player)) return;
         event.setCancelled(true);
         String code = service.codes().peek(player.getName(), System.currentTimeMillis()).orElse("");
@@ -92,6 +96,7 @@ public final class SocialGateListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onInteract(PlayerInteractEvent event) {
+        service.nagOnAction(event.getPlayer());
         if (service.isFrozen(event.getPlayer())) event.setCancelled(true);
     }
 
@@ -102,6 +107,7 @@ public final class SocialGateListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onDrop(PlayerDropItemEvent event) {
+        service.nagOnAction(event.getPlayer());
         if (service.isFrozen(event.getPlayer())) event.setCancelled(true);
     }
 
@@ -122,11 +128,13 @@ public final class SocialGateListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onBreak(BlockBreakEvent event) {
+        service.nagOnAction(event.getPlayer());
         if (service.isFrozen(event.getPlayer())) event.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onPlace(BlockPlaceEvent event) {
+        service.nagOnAction(event.getPlayer());
         if (service.isFrozen(event.getPlayer())) event.setCancelled(true);
     }
 

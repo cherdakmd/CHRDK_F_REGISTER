@@ -64,6 +64,6 @@ class PremiumPresentation278Test {
             assertFalse(product.containsKey("rank"));
         }
         var all=products.stream().filter(p->"all-inclusive".equals(p.get("id"))).findFirst().orElseThrow();
-        assertEquals(899,all.get("price")); assertFalse(all.get("includes").toString().contains("clan-"));
+        assertEquals(1499,all.get("price")); assertFalse(all.get("includes").toString().contains("clan-"));
     }
 }

@@ -19,16 +19,28 @@ repositories {
         name = 'papermc'
         url = 'https://repo.papermc.io/repository/maven-public/'
     }
+    maven {
+        name = 'placeholderapi'
+        url = 'https://repo.extendedclip.com/content/repositories/placeholderapi/'
+    }
 }
 
 dependencies {
     compileOnly "org.purpurmc.purpur:purpur-api:${project.purpur_api_version}"
     compileOnly project(':')
     compileOnly "com.google.code.gson:gson:2.11.0"
+    // Счётчики TAB (%chrdksocial_*%) реализованы как PlaceholderExpansion.
+    // Тот же pinned jar, что и в корневом проекте; compileOnly, в JAR не упаковывается.
+    compileOnly(rootProject.findProperty('chrdk.papiJar')
+            ? files(rootProject.file(rootProject.property('chrdk.papiJar')))
+            : "me.clip:placeholderapi:2.12.3")
 
     testImplementation "org.purpurmc.purpur:purpur-api:${project.purpur_api_version}"
     testImplementation project(':')
     testImplementation "com.google.code.gson:gson:2.11.0"
+    testImplementation(rootProject.findProperty('chrdk.papiJar')
+            ? files(rootProject.file(rootProject.property('chrdk.papiJar')))
+            : "me.clip:placeholderapi:2.12.3")
     testImplementation "org.junit.jupiter:junit-jupiter:5.11.3"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }

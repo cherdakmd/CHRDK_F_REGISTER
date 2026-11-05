@@ -34,11 +34,11 @@
 | Карточка | Ссылка | 30 дней | Год |
 |---|---|---|---|
 | Обложка раздела «Ранги» | [`00-vse-ranki.png`](https://github.com/cherdakmd/CHRDK_F_REGISTER/releases/download/v1.4.169/00-vse-ranki.png) | — | — |
-| ✦ Странник | [`1-strannik.png`](https://github.com/cherdakmd/CHRDK_F_REGISTER/releases/download/v1.4.169/1-strannik.png) | `pass shoppay %username% 99` | `pass shoppay %username% 990` |
-| ❖ Следопыт | [`2-sledopyt.png`](https://github.com/cherdakmd/CHRDK_F_REGISTER/releases/download/v1.4.169/2-sledopyt.png) | `pass shoppay %username% 159` | `pass shoppay %username% 1590` |
-| ✧ Хранитель | [`3-khranitel.png`](https://github.com/cherdakmd/CHRDK_F_REGISTER/releases/download/v1.4.169/3-khranitel.png) | `pass shoppay %username% 229` | `pass shoppay %username% 2290` |
-| ★ Меценат | [`4-metsenat.png`](https://github.com/cherdakmd/CHRDK_F_REGISTER/releases/download/v1.4.169/4-metsenat.png) | `pass shoppay %username% 299` | `pass shoppay %username% 2990` |
-| ⚜ Покровитель | [`5-pokrovitel.png`](https://github.com/cherdakmd/CHRDK_F_REGISTER/releases/download/v1.4.169/5-pokrovitel.png) | `pass shoppay %username% 365` | `pass shoppay %username% 3650` |
+| ✦ Странник | [`1-strannik.png`](https://github.com/cherdakmd/CHRDK_F_REGISTER/releases/download/v1.4.169/1-strannik.png) | `pass shoppay %username% 300` | `pass shoppay %username% 3000` |
+| ❖ Следопыт | [`2-sledopyt.png`](https://github.com/cherdakmd/CHRDK_F_REGISTER/releases/download/v1.4.169/2-sledopyt.png) | `pass shoppay %username% 450` | `pass shoppay %username% 4500` |
+| ✧ Хранитель | [`3-khranitel.png`](https://github.com/cherdakmd/CHRDK_F_REGISTER/releases/download/v1.4.169/3-khranitel.png) | `pass shoppay %username% 600` | `pass shoppay %username% 6000` |
+| ★ Меценат | [`4-metsenat.png`](https://github.com/cherdakmd/CHRDK_F_REGISTER/releases/download/v1.4.169/4-metsenat.png) | `pass shoppay %username% 750` | `pass shoppay %username% 7500` |
+| ⚜ Покровитель | [`5-pokrovitel.png`](https://github.com/cherdakmd/CHRDK_F_REGISTER/releases/download/v1.4.169/5-pokrovitel.png) | `pass shoppay %username% 900` | `pass shoppay %username% 9000` |
 
 Все шесть одним архивом:
 [`chrdk-shop-images.zip`](https://github.com/cherdakmd/CHRDK_F_REGISTER/releases/download/v1.4.169/chrdk-shop-images.zip).
@@ -79,7 +79,7 @@
 **Команда:**
 
 ```
-pass shoppay %username% 99
+pass shoppay %username% 300
 ```
 
 **Описание для страницы:**
@@ -103,7 +103,7 @@ pass shoppay %username% 99
 в течение нескольких секунд, перезаходить не нужно.
 ```
 
-**Год:** `✦ Странник — год` · Цена `990` · `pass shoppay %username% 990`
+**Год:** `✦ Странник — год` · Цена `3000` · `pass shoppay %username% 3000`
 Описание то же, плюс строка: «Год — это десять месяцев по цене: два месяца в подарок».
 
 ---
@@ -115,7 +115,7 @@ pass shoppay %username% 99
 **Команда:**
 
 ```
-pass shoppay %username% 159
+pass shoppay %username% 450
 ```
 
 **Описание для страницы:**
@@ -141,7 +141,7 @@ pass shoppay %username% 159
 Как купить: укажите свой точный игровой ник в поле «Ник».
 ```
 
-**Год:** `❖ Следопыт — год` · Цена `1590` · `pass shoppay %username% 1590`
+**Год:** `❖ Следопыт — год` · Цена `4500` · `pass shoppay %username% 4500`
 
 ---
 
@@ -152,7 +152,7 @@ pass shoppay %username% 159
 **Команда:**
 
 ```
-pass shoppay %username% 229
+pass shoppay %username% 600
 ```
 
 **Описание для страницы:**
@@ -175,7 +175,7 @@ pass shoppay %username% 229
 Как купить: укажите свой точный игровой ник в поле «Ник».
 ```
 
-**Год:** `✧ Хранитель — год` · Цена `2290` · `pass shoppay %username% 2290`
+**Год:** `✧ Хранитель — год` · Цена `6000` · `pass shoppay %username% 6000`
 
 ---
 
@@ -186,7 +186,7 @@ pass shoppay %username% 229
 **Команда:**
 
 ```
-pass shoppay %username% 299
+pass shoppay %username% 750
 ```
 
 **Описание для страницы:**
@@ -213,7 +213,7 @@ pass shoppay %username% 299
 Как купить: укажите свой точный игровой ник в поле «Ник».
 ```
 
-**Год:** `★ Меценат — год` · Цена `2990` · `pass shoppay %username% 2990`
+**Год:** `★ Меценат — год` · Цена `7500` · `pass shoppay %username% 7500`
 
 ---
 
@@ -224,7 +224,7 @@ pass shoppay %username% 299
 **Команда:**
 
 ```
-pass shoppay %username% 365
+pass shoppay %username% 900
 ```
 
 **Описание для страницы:**
@@ -248,13 +248,13 @@ pass shoppay %username% 365
 Это потолок темпа, который существует на сервере: опыт, добыча и навык
 дальше не растут ни у кого.
 
-Год стоит 3 650 ₽ — это 10 ₽ в день.
+Год стоит 9 000 ₽ — это около 25 ₽ в день.
 
 Как купить: укажите свой точный игровой ник в поле «Ник».
 ```
 
-**Год:** `⚜ Покровитель — год` · Цена `3650` · `pass shoppay %username% 3650`
-Добавить в описание: «Год — десять месяцев по цене (3 650 ₽ вместо 4 380 ₽)».
+**Год:** `⚜ Покровитель — год` · Цена `9000` · `pass shoppay %username% 9000`
+Добавить в описание: «Год — десять месяцев по цене (9 000 ₽ вместо 10 800 ₽)».
 
 ---
 
@@ -262,16 +262,16 @@ pass shoppay %username% 365
 
 | Товар | Цена, ₽ | Команда выдачи |
 |---|--:|---|
-| ✦ Странник — 30 дней | 99 | `pass shoppay %username% 99` |
-| ✦ Странник — год | 990 | `pass shoppay %username% 990` |
-| ❖ Следопыт — 30 дней | 159 | `pass shoppay %username% 159` |
-| ❖ Следопыт — год | 1590 | `pass shoppay %username% 1590` |
-| ✧ Хранитель — 30 дней | 229 | `pass shoppay %username% 229` |
-| ✧ Хранитель — год | 2290 | `pass shoppay %username% 2290` |
-| ★ Меценат — 30 дней | 299 | `pass shoppay %username% 299` |
-| ★ Меценат — год | 2990 | `pass shoppay %username% 2990` |
-| ⚜ Покровитель — 30 дней | 365 | `pass shoppay %username% 365` |
-| ⚜ Покровитель — год | 3650 | `pass shoppay %username% 3650` |
+| ✦ Странник — 30 дней | 300 | `pass shoppay %username% 300` |
+| ✦ Странник — год | 3000 | `pass shoppay %username% 3000` |
+| ❖ Следопыт — 30 дней | 450 | `pass shoppay %username% 450` |
+| ❖ Следопыт — год | 4500 | `pass shoppay %username% 4500` |
+| ✧ Хранитель — 30 дней | 600 | `pass shoppay %username% 600` |
+| ✧ Хранитель — год | 6000 | `pass shoppay %username% 6000` |
+| ★ Меценат — 30 дней | 750 | `pass shoppay %username% 750` |
+| ★ Меценат — год | 7500 | `pass shoppay %username% 7500` |
+| ⚜ Покровитель — 30 дней | 900 | `pass shoppay %username% 900` |
+| ⚜ Покровитель — год | 9000 | `pass shoppay %username% 9000` |
 
 ---
 
@@ -307,8 +307,8 @@ pass shoppay %username% 365
 ## Что проверить после настройки
 
 1. Купить тестовый товар на минимальную сумму (или выполнить из консоли
-   `pass shoppay TestPlayer 99`) — в консоли должно появиться
-   `[TradeMC] Покупка 99 ₽: «Странник» …`.
+   `pass shoppay TestPlayer 300`) — в консоли должно появиться
+   `[TradeMC] Покупка 300 ₽: «Странник» …`.
 2. Убедиться, что поле ника в форме витрины называется именно `%username%`
    (точное написание есть в подсказке панели TradeMC) и что оно передаётся
    в команду.

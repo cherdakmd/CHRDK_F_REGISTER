@@ -543,7 +543,7 @@ shop:
     # ранга (см. RankLadder.carryDays). Меняйте цены парами: месяц и год.
     - id: rank-wanderer
       name: "<gray>Странник</gray>"
-      price: 99
+      price: 300
       days: 30
       rank: 1
       group: ""
@@ -554,7 +554,7 @@ shop:
 
     - id: rank-wanderer-year
       name: "<gray>Странник — год</gray>"
-      price: 990
+      price: 3000
       days: 365
       rank: 1
       group: ""
@@ -565,7 +565,7 @@ shop:
 
     - id: rank-pathfinder
       name: "<green>Следопыт</green>"
-      price: 159
+      price: 450
       days: 30
       rank: 2
       group: ""
@@ -576,7 +576,7 @@ shop:
 
     - id: rank-pathfinder-year
       name: "<green>Следопыт — год</green>"
-      price: 1590
+      price: 4500
       days: 365
       rank: 2
       group: ""
@@ -587,7 +587,7 @@ shop:
 
     - id: rank-keeper
       name: "<aqua>Хранитель</aqua>"
-      price: 229
+      price: 600
       days: 30
       rank: 3
       group: ""
@@ -598,7 +598,7 @@ shop:
 
     - id: rank-keeper-year
       name: "<aqua>Хранитель — год</aqua>"
-      price: 2290
+      price: 6000
       days: 365
       rank: 3
       group: ""
@@ -609,7 +609,7 @@ shop:
 
     - id: rank-patron
       name: "<gradient:#ffd700:#ff8800>Меценат</gradient>"
-      price: 299
+      price: 750
       days: 30
       rank: 4
       group: ""
@@ -620,7 +620,7 @@ shop:
 
     - id: rank-patron-year
       name: "<gradient:#ffd700:#ff8800>Меценат — год</gradient>"
-      price: 2990
+      price: 7500
       days: 365
       rank: 4
       group: ""
@@ -631,7 +631,7 @@ shop:
 
     - id: rank-founder
       name: "<gradient:#b388ff:#ffd700>Покровитель</gradient>"
-      price: 365
+      price: 900
       days: 30
       rank: 5
       group: ""
@@ -642,7 +642,7 @@ shop:
 
     - id: rank-founder-year
       name: "<gradient:#b388ff:#ffd700>Покровитель — год</gradient>"
-      price: 3650
+      price: 9000
       days: 365
       rank: 5
       group: ""
@@ -891,10 +891,10 @@ shop:
     # Полный набор: ранг задаётся НА КОРНЕ, не как лист includes.
     # includes-days задаёт единый оплаченный период дополнений (пропуск здесь 30,
     # а отдельная карточка battlepass-premium по-прежнему 90 дней).
-    # Одно выполнение команды — одна продажа 899 ₽; не вызывайте команды частей.
+    # Одно выполнение команды — одна продажа 1499 ₽; не вызывайте команды частей.
     - id: all-inclusive
       name: "<gradient:#ffd700:#b388ff>Всё включено</gradient>"
-      price: 899
+      price: 1499
       days: 30
       rank: 5
       includes-days: 30
@@ -908,6 +908,23 @@ shop:
         - look-pack
         - join-effect
         - battlepass-premium
+
+    # --- Вход без привязки к ВК/MAX -------------------------------------
+    # Отдельный товар для игроков без мессенджеров: плагин CHRDK_VK читает
+    # срок через hasEntitlement('social-access'). Не ранг, не группа, не права:
+    # покупка только снимает заморозку лобби. Повторная покупка продлевает
+    # срок с общим потолком 365 дней. В исторический комплект TradeMC из 26
+    # карточек не входит: для этого товара своя карточка и своя картинка.
+    - id: social-access
+      name: "<aqua>Вход без ВК и MAX</aqua>"
+      price: 150
+      days: 30
+      group: ""
+      description: "Играть без обязательной привязки к ВКонтакте или MAX — 30 дней. Не выдаёт ранг, привилегии и игровые бонусы"
+      tag: ""
+      permissions: []
+      commands: []
+      trademc-export: false
 
 
 # =====================================================================
@@ -1435,6 +1452,12 @@ tablist:
   #   %pass_status% — активен/истёк/нет ранга, %pass_left% — «12 дн. 3 ч.»,
   #   %pass_days% — осталось целых дней ранга,
   #   %tab_warns% — активные варны и порог автобана игрока («3/5»), видны всем.
+  #   %chrdksocial_status% — ЯВНЫЙ выбор игрока: «✅ привязан (ВК)»,
+  #   «✅ проход: 27 дн.» или «⚠ БЕЗ ПРИВЯЗКИ: осталось 14 дн.» / «⛔ ВХОД ЗАКРЫТ».
+  #   %chrdksocial_access% — остаток товара «Вход без ВК и MAX» («27 дн.», «нет»),
+  #   %chrdksocial_link% — статус привязки («ВК», «MAX», «осталось 12 дн.»).
+  #   Все три приходят из CHRDK_VK через PlaceholderAPI; без CHRDK_VK/PlaceholderAPI
+  #   в TAB будет пустая строка, а в логе CHRDK_VK — громкое предупреждение.
   #   %pass_type% — приветственный/обычный/нет, %auth_status% — состояние входа,
   #   %auth_hint% — следующий шаг, %security% — состояние 2FA,
   #   %navigation% — доступные ссылки после входа (до входа: пустая строка).
@@ -1460,6 +1483,8 @@ tablist:
     - "<gray>Банк <aqua>%tab_balance% 💠</aqua> <dark_gray>│</dark_gray> XP-буст <green>%tab_boost%</green>"
     - "<gray>%auth_status%</gray> <dark_gray>│</dark_gray> <gray>2FA: %security%</gray>"
     - "<gray>Варны <yellow>%tab_warns%</yellow> <dark_gray>│</dark_gray> <gray>порог — автобан</gray>"
+    - "<gold>%chrdksocial_status%</gold>"
+    - "<gray>Привязка <green>%chrdksocial_link%</green> <dark_gray>│</dark_gray> Проход <aqua>%chrdksocial_access%</aqua></gray>"
     - "<gray>%auth_hint%</gray>"
     - "<yellow>✦</yellow> <gray>%tab_tip%</gray>"
     - "%tab_separator%"

@@ -20,7 +20,7 @@ class AllInclusiveTest {
     @Test void fullPackIsOneSaleWithRootRankAndThirteenDistinctExtras() throws Exception {
         var catalog = defaults();
         var full = catalog.find("all-inclusive").orElseThrow();
-        assertEquals(899, full.priceRubles());
+        assertEquals(1499, full.priceRubles());
         assertEquals(30, full.days());
         assertEquals(5, full.rank());
         assertTrue(full.isBundle());

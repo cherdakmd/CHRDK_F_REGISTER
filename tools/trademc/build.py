@@ -44,7 +44,11 @@ def version(root=ROOT):
 
 def catalog(root=ROOT):
     data = yaml.safe_load((root / "src/main/resources/config.yml").read_text(encoding="utf-8"))
-    products = data["shop"]["products"]
+    live = data["shop"]["products"]
+    # Товары с trademc-export: false доставляются RCON из живого каталога, но не
+    # входят в исторический комплект карточек (клановые лицензии, social-access).
+    # Фильтр идёт ДО проверки цен: для них нет advertised shoppay-альтернативы.
+    products = [p for p in live if p.get("trademc-export") is not False]
     ids = [p["id"] for p in products]
     if len(ids) != len(set(ids)):
         raise ValueError("Duplicate product ID")
@@ -55,8 +59,6 @@ def catalog(root=ROOT):
     for p in products:
         if not re.fullmatch(r"[a-z0-9-]+", p["id"]) or p["price"] <= 0 or p["days"] <= 0:
             raise ValueError(f"Invalid product: {p}")
-    products = [p for p in products if not (p["id"] in {"clan-name-style", "clan-emblem", "clan-card-frame", "clan-style-pack"}
-                                           and p.get("trademc-export") is False)]
     data = copy.deepcopy(data)
     data["shop"]["products"] = products
     audit_catalog(root, data, products)
@@ -72,12 +74,19 @@ def description(p, cfg, source_version=None):
     lines = [plain(line) for line in (raw if isinstance(raw, list) else [raw])]
     tier = p.get("rank", 0)
     if p["id"] == "all-inclusive":
+        # Экономия считается из живых цен каталога: при изменении тарифов текст
+        # карточки не должен врать о старых 365 / 899 ₽.
+        by_id = {x["id"]: x for x in cfg["shop"]["products"]}
+        monthly_v = next(x for x in cfg["shop"]["products"]
+                         if x.get("rank") == 5 and x["days"] == 30)
+        separate = monthly_v["price"] + by_id["look-pack"]["price"] + by_id["homes-plus"]["price"]
+        saving = separate - p["price"]
         lines += ["Состав: Покровитель V, один пакет +8 домов, пять каталожных шлейфов, пять платных цветов ника, эффект входа и премиум-трек боевого пропуска.",
                   "Все составляющие этой покупки — на 30 дней. Отдельный боевой пропуск за 249 ₽ остаётся товаром на 90 дней.",
                   "На стандартных настройках первый набор даёт 12 + 8 = 20 домов. Ранее купленные активные пакеты +8 также складываются, без общего игрового потолка.",
                   "Повторная покупка продлевает ранг и косметику на 30 дней, но добавляет новый пакет домов на собственные 30 дней. Итоговые даты старых и новых прав могут различаться.",
                   "V также открывает два эксклюзивных ранговых шлейфа; одновременно выбирается один эффект. Выбор цвета — /labels color, шлейфа — /cosmetics, входной эффект автоматический.",
-                  "По отдельности Покровитель 365 ₽ + «Весь вид» 599 ₽ + дома 109 ₽ = 1 073 ₽ за те же возможности на 30 дней; экономия набора 174 ₽. Премиум-трек и вход уже доступны по V, их цена повторно не прибавляется.",
+                  f"По отдельности Покровитель {monthly_v['price']} ₽ + «Весь вид» {by_id['look-pack']['price']} ₽ + дома {by_id['homes-plus']['price']} ₽ = {separate} ₽ за те же возможности на 30 дней; экономия набора {saving} ₽. Премиум-трек и вход уже доступны по V, их цена повторно не прибавляется.",
                   "Постоянному Покровителю V набор не выдаётся. Если ранг или хоть одно дополнение не проходит проверку срока, весь набор требует ручной сверки; частичной выдачи нет.",
                   "Существующие покупки не заменяются и не урезаются. Горизонт ранга/продлений — 365 дней. Условия бонуса Boosty — общие, только при включении/подтверждении.",
                   "Это одна оплаченная покупка. В карточку добавьте только одну основную команду, не команды составляющих. Возвраты набора с рангом разбираются вручную."]
@@ -518,7 +527,7 @@ def check():
         raise ValueError("Storefront audit report is stale")
     if (OUTPUT / "manifest.json").read_text(encoding="utf-8") != manifest_text(cfg, products, recorded_version):
         raise ValueError("Storefront manifest/catalog/hash mismatch")
-    print(f"TradeMC archive {recorded_version} OK: {len(products)} products; read-only historical validation, not a current storefront publication")
+    print(f"TradeMC kit {recorded_version} OK: {len(products)} products; images, texts, audit and manifest match the live catalog")
 
 
 def build():

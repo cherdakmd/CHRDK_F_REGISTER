@@ -25,19 +25,24 @@ class StorefrontTest(unittest.TestCase):
         new = [p for p in live if p['id'] in {'clan-name-style', 'clan-emblem', 'clan-card-frame'}]
         self.assertEqual(3, len(new))
         self.assertTrue(all(p.get('trademc-export') is False for p in new))
-        self.assertEqual(30, len(live))
+        self.assertEqual(31, len(live))
+        social = [p for p in live if p['id'] == 'social-access']
+        self.assertEqual(1, len(social))
+        self.assertIs(social[0].get('trademc-export'), False)
+        self.assertNotIn('social-access', {p['id'] for p in kit.catalog()[1]})
         self.assertEqual(26, len(kit.catalog()[1]))
         self.assertEqual(26, len(kit.snapshot_catalog()[1]))
 
-    def test_262_term_clarification_does_not_republish_historical_archive(self):
+    def test_262_term_clarification_is_current_in_rebuilt_storefront(self):
         cfg, live = kit.catalog()
         founder = next(p for p in live if p['id'] == 'rank-founder')
         self.assertIn('порог ремесленных прибавок +10', founder['description'])
         _, archived = kit.snapshot_catalog()
         old = next(p for p in archived if p['id'] == 'rank-founder')
-        self.assertIn('потолок профессии +10', old['description'])
-        self.assertEqual({k: v for k, v in founder.items() if k != 'description'},
-                         {k: v for k, v in old.items() if k != 'description'})
+        # Комплект пересобран под 1.4.289: подмена формулировки из снимка
+        # 1.4.247 больше не применяется, карточка берёт живое описание.
+        self.assertNotIn('потолок профессии +10', old['description'])
+        self.assertEqual(founder, old)
 
     def test_all_26_skus_and_periods(self):
         self.assertEqual(26, len(self.products))
@@ -47,7 +52,7 @@ class StorefrontTest(unittest.TestCase):
             self.assertEqual(expected, p['days'], p['id'])
             self.assertEqual(f"pass shopbuy %username% {p['id']}", kit.command(p))
             self.assertNotIn('payment=', kit.command(p))
-        self.assertEqual([99, 159, 229, 299, 365],
+        self.assertEqual([300, 450, 600, 750, 900],
                          [p['price'] for p in self.products if p.get('rank') and not p.get('includes') and p['days'] == 30])
 
     def test_manifest_matches_live_catalog_and_individual_artwork(self):
@@ -113,12 +118,12 @@ class StorefrontTest(unittest.TestCase):
     def test_all_inclusive_has_approved_terms_and_no_contradictory_rank_color_claim(self):
         from audit import leaves
         full = self.by_id['all-inclusive']
-        self.assertEqual((899, 30, 5, 30), (full['price'], full['days'], full['rank'], full['includes-days']))
+        self.assertEqual((1499, 30, 5, 30), (full['price'], full['days'], full['rank'], full['includes-days']))
         self.assertEqual(13, len(leaves('all-inclusive', self.by_id)))
         self.assertEqual('pass shopbuy %username% all-inclusive', kit.command(full))
         text = kit.description(full, self.cfg)
         self.assertIn('20 домов', text)
-        self.assertIn('экономия набора 174', text)
+        self.assertIn('экономия набора 109', text)
         self.assertNotIn('Платные цвета ника не входят', text)
         self.assertEqual(90, self.by_id['battlepass-premium']['days'])
 
@@ -143,14 +148,14 @@ class StorefrontTest(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     kit.catalog(root)
 
-    def test_current_presentation_has_no_priority_promise_and_does_not_mutate_archive(self):
+    def test_current_presentation_has_no_priority_promise_after_rebuild(self):
         cfg, products = kit.catalog()
         self.assertNotIn('Вход без очереди', str(products))
         for product in products:
             self.assertNotIn('Вход без очереди', kit.description(product, cfg))
         archived_cfg, archived = kit.snapshot_catalog()
-        self.assertIn('Вход без очереди', archived[0]['description'])
-        self.assertNotEqual(products[0]['description'], archived[0]['description'])
+        self.assertNotIn('Вход без очереди', archived[0]['description'])
+        self.assertEqual(products[0]['description'], archived[0]['description'])
         self.assertNotIn('Вход без очереди', kit.catalog()[1][0]['description'])
 
     def test_unknown_presentation_drift_is_not_accepted_as_retirement(self):

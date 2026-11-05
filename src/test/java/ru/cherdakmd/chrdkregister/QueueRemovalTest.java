@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -88,18 +89,26 @@ class QueueRemovalTest {
         // Снята очередь и уточнён порог прибавок262: только тексты, не условия SKU.
         var oldProducts = legacy.getMapList("shop.products");
         var newProducts = live.getMapList("shop.products");
-        assertEquals(oldProducts.size() + 4, newProducts.size(), "278–279 добавляют четыре SKU, не меняя условия старых");
-        newProducts = newProducts.stream().filter(product -> !PremiumPresentationMigration.PRODUCTS.contains(product.get("id"))).toList();
+        assertEquals(oldProducts.size() + 5, newProducts.size(),
+                "278–279 добавляют четыре SKU и social-access, не меняя условия старых");
+        newProducts = newProducts.stream()
+                .filter(product -> !PremiumPresentationMigration.PRODUCTS.contains(product.get("id")))
+                .filter(product -> !PresentationMigration.LATE_STOCK_PRODUCTS.contains(String.valueOf(product.get("id"))))
+                .toList();
         assertEquals(oldProducts.size(), newProducts.size());
-        int changed = 0;
+        int pricesChanged = 0;
+        int descriptionsChanged = 0;
         for (int i = 0; i < oldProducts.size(); i++) {
             var old = new HashMap<Object, Object>(oldProducts.get(i));
             var current = new HashMap<Object, Object>(newProducts.get(i));
-            if (!old.equals(current)) changed++;
+            if (!Objects.equals(old.get("description"), current.get("description"))) descriptionsChanged++;
+            if (!Objects.equals(old.get("price"), current.get("price"))) pricesChanged++;
             old.remove("description"); current.remove("description");
-            assertEquals(old, current);
+            old.remove("price"); current.remove("price");
+            assertEquals(old, current, "сроки, состав, права и команды прежних SKU неизменны");
         }
-        assertEquals(2, changed);
+        assertEquals(2, descriptionsChanged, "262 уточняет только два описания");
+        assertEquals(11, pricesChanged, "смена тарифов поставкой обновляет 11 цен");
         assertTrue(newProducts.stream().filter(p->"rank-founder".equals(p.get("id"))).allMatch(p->p.get("description").toString().contains("порог ремесленных прибавок +10")));
     }
 

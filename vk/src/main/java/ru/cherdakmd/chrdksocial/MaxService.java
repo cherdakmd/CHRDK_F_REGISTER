@@ -53,7 +53,9 @@ public final class MaxService implements MaxBotRouter.Backend {
         this.client = new MaxApiClient(next.maxApiBaseUrl(), next.maxAccessToken(),
                 new MaxApiClient.HttpTransport());
         boolean webhookStarted = false;
-        if (next.webhookEnabled() && next.webhookConfigured()) {
+        // transport=polling явно отключает приёмник даже при готовом HTTPS;
+        // transport=webhook при неудаче всё ещё уходит в polling как fallback.
+        if ("webhook".equals(next.maxTransport()) && next.webhookEnabled() && next.webhookConfigured()) {
             webhook = new MaxWebhookServer(next.webhookBind(), next.webhookPort(),
                     next.webhookPath(), next.webhookSecret(),
                     plugin.getDataFolder().toPath().resolve(next.keystoreFile()),

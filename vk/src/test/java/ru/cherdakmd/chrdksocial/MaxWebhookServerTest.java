@@ -20,13 +20,17 @@ class MaxWebhookServerTest {
     private final Logger logger = Logger.getLogger("max-webhook-test");
 
     private static int post(int port, String path, String secret, String body) throws Exception {
+        return post(port, path, "X-Max-Bot-Api-Secret", secret, body);
+    }
+
+    private static int post(int port, String path, String header, String secret, String body) throws Exception {
         HttpURLConnection connection = (HttpURLConnection)
                 new URL("http://127.0.0.1:" + port + path).openConnection();
         connection.setRequestMethod("POST");
         connection.setDoOutput(true);
         connection.setConnectTimeout(5_000);
         connection.setReadTimeout(5_000);
-        if (secret != null) connection.setRequestProperty("X-Max-Bot-Api-Secret-Token", secret);
+        if (secret != null) connection.setRequestProperty(header, secret);
         connection.setRequestProperty("Content-Type", "application/json");
         try (OutputStream out = connection.getOutputStream()) {
             out.write(body.getBytes(StandardCharsets.UTF_8));
@@ -54,6 +58,27 @@ class MaxWebhookServerTest {
             assertEquals(200, status);
             assertTrue(latch.await(5, TimeUnit.SECONDS));
             assertEquals(72000001L, MaxBotRouter.chatId(received.get()));
+        } finally {
+            server.stop();
+        }
+    }
+
+    @Test
+    void officialAndLegacySecretHeadersAreAccepted() throws Exception {
+        AtomicReference<JsonObject> received = new AtomicReference<>();
+        MaxWebhookServer server = new MaxWebhookServer("127.0.0.1", 0, "/max/webhook",
+                "s3cret", null, "", false, received::set, logger);
+        try {
+            assertTrue(server.start());
+            String body = "{\"update_type\":\"bot_added\",\"chat_id\":72000001}";
+            assertEquals(200, post(server.port(), "/max/webhook",
+                    "X-Max-Bot-Api-Secret", "s3cret", body),
+                    "MAX шлёт секрет в X-Max-Bot-Api-Secret");
+            assertEquals(200, post(server.port(), "/max/webhook",
+                    "X-Max-Bot-Api-Secret-Token", "s3cret", body),
+                    "старый заголовок тоже не должен ломать уже работающие подписки");
+            assertEquals(401, post(server.port(), "/max/webhook",
+                    "X-Max-Bot-Api-Secret", "wrong", body));
         } finally {
             server.stop();
         }

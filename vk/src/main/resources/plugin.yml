@@ -4,6 +4,11 @@ main: ru.cherdakmd.chrdkvk.VkPlugin
 api-version: '26.3'
 depend:
   - CHRDK_Core
+# Счётчики TAB (%chrdksocial_*) регистрируются как PlaceholderExpansion: PAPI
+# должен включиться ДО CHRDK_VK, иначе expansion не зарегистрируется и в TAB
+# останется сырой текст плейсхолдеров.
+softdepend:
+  - PlaceholderAPI
 description: "Единый социальный плагин: обязательная привязка через ВКонтакте или MAX, защита сессий, мосты чата и новости релизов"
 commands:
   vk:
@@ -21,8 +26,8 @@ commands:
     permission: chrdksocial.use
   social:
     aliases: [socialadmin]
-    description: "Управление обязательной привязкой и чатами MAX"
-    usage: "/<command> [status [ник]|unlink <ник>|emergency <минуты|off>|setchat <bot|news|bridge> <id>|chats|testnews|reload]"
+    description: "Управление обязательной привязкой, чатами MAX и доступом по донату"
+    usage: "/<command> [status [ник]|unlink <ник>|emergency <минуты|off>|setchat <bot|news|bridge> <id>|chats|donor|testnews|reload]"
     permission: chrdksocial.use
   max:
     description: "MAX: статус привязки, код входа и известные чаты"
@@ -33,7 +38,7 @@ permissions:
     description: "Просмотр своего кода входа и статуса привязки"
     default: true
   chrdksocial.admin:
-    description: "Отвязка игроков, аварийный режим, настройка чатов MAX и перезагрузка"
+    description: "Отвязка игроков, аварийный режим, донат-доступ, настройка чатов MAX и перезагрузка"
     default: op
   chrdksocial.bypass:
     description: "Вход без обязательной привязки к мессенджеру"

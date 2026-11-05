@@ -11,6 +11,7 @@ import ru.cherdakmd.chrdkregister.configuration.ConfigSnapshot;
 import ru.cherdakmd.chrdkregister.storage.SafeJsonWriter;
 import ru.cherdakmd.chrdksocial.MaxService;
 import ru.cherdakmd.chrdksocial.SocialConfig;
+import ru.cherdakmd.chrdksocial.SocialPlaceholders;
 import ru.cherdakmd.chrdksocial.SocialService;
 
 import java.io.BufferedReader;
@@ -44,6 +45,8 @@ public final class VkPlugin extends JavaPlugin {
     private VkService service;
     private SocialService socialService;
     private MaxService maxService;
+    private SocialPlaceholders socialPlaceholders;
+    private boolean placeholdersRetryScheduled;
     private BukkitTask saveTask;
 
     @Override
@@ -93,6 +96,7 @@ public final class VkPlugin extends JavaPlugin {
         socialService.attachMax(maxService);
         socialService.start();
         maxService.start();
+        registerPlaceholders();
 
         // Периодическая запись грязного состояния раз в 30 секунд.
         this.saveTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
@@ -106,8 +110,39 @@ public final class VkPlugin extends JavaPlugin {
                 + ", социальные привязки: " + socialService.store().linkCount() + ").");
     }
 
+    /**
+     * Счётчики TAB регистрируются только при наличии PlaceholderAPI: без PAPI
+     * плагин продолжает работать, а в TAB останутся пустые значения.
+     */
+    private void registerPlaceholders() {
+        if (socialPlaceholders != null) return;
+        if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+            getLogger().severe("[CHRDK_SOCIAL] PlaceholderAPI не найден: счётчики привязки и прохода "
+                    + "(%chrdksocial_status%, %chrdksocial_link%, %chrdksocial_access%) в TAB НЕ работают. "
+                    + "Установите PlaceholderAPI и перезапустите сервер.");
+            // На случай нестандартного порядка загрузки — одна повторная попытка.
+            if (!placeholdersRetryScheduled) {
+                placeholdersRetryScheduled = true;
+                Bukkit.getScheduler().runTaskLater(this, this::registerPlaceholders, 20L * 5);
+            }
+            return;
+        }
+        try {
+            SocialPlaceholders expansion = new SocialPlaceholders(this, socialService);
+            if (expansion.register()) {
+                this.socialPlaceholders = expansion;
+                getLogger().info("[CHRDK_SOCIAL] Счётчики TAB зарегистрированы (chrdksocial).");
+            } else {
+                getLogger().warning("[CHRDK_SOCIAL] Идентификатор chrdksocial уже занят — счётчики TAB не зарегистрированы.");
+            }
+        } catch (Throwable failure) {
+            getLogger().log(Level.WARNING, "[CHRDK_SOCIAL] Не удалось зарегистрировать счётчики TAB", failure);
+        }
+    }
+
     @Override
     public void onDisable() {
+        this.socialPlaceholders = null;
         if (saveTask != null) {
             saveTask.cancel();
             saveTask = null;

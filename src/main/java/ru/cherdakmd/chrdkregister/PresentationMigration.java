@@ -26,6 +26,12 @@ final class PresentationMigration {
             "auto-messages.messages", "auto-messages.prefix", "tablist.header", "tablist.footer",
             "tablist.player-name-format", "shop.products");
 
+    /**
+     * Новые стоковые SKU после четырёх клановых лицензий. Миграция может
+     * добавить их к прежнему каталогу, но неизвестный товар владельца — нет.
+     */
+    static final Set<String> LATE_STOCK_PRODUCTS = Set.of("social-access");
+
     /** Настройки меню, которые должны обновиться вместе с его пунктами. */
     static final List<String> MENU_COMPANIONS = List.of("server-menu.title",
             "server-menu.category-title", "server-menu.back-slot", "server-menu.back-icon",
@@ -69,7 +75,11 @@ final class PresentationMigration {
             if ((key.equals("tablist.header") || key.equals("tablist.footer")) && value instanceof List<?> lines
                     && lines.stream().allMatch(line -> line == null || line instanceof String text && text.isBlank())) continue;
             // Снятие старой рекламы не должно обновлять цены/сроки из более ранних снимков.
-            if (key.equals("shop.products") && !sameCatalogTerms(value, fresh.get(key))) continue;
+            // Исключение: если в каталоге сервера стоят ровно тарифы предыдущей
+            // поставки, владелец цены не правил — отличие от fresh объясняется
+            // сменой тарифов в новом config.yml, и каталог можно обновить.
+            if (key.equals("shop.products") && !sameCatalogTerms(value, fresh.get(key))
+                    && !isPreviousStockCatalog(value)) continue;
             boolean stock = false;
             for (YamlConfiguration legacy : legacies) {
                 if (legacy != null && legacy.contains(key, true) && Objects.equals(value, legacy.get(key))) {
@@ -95,22 +105,60 @@ final class PresentationMigration {
     /** Для каталога допустимы только отличия описаний при неизменных условиях каждого SKU. */
     private static boolean sameCatalogTerms(Object before, Object after) {
         if (!(before instanceof List<?> previous) || !(after instanceof List<?> current)) return false;
-        // 278 добавляет ровно три косметических SKU. Условия всех прежних товаров
-        // должны совпасть; это не разрешение заменять владельческие цены или наборы.
-        if (current.size() == previous.size() + PremiumPresentationMigration.PRODUCTS.size()
-                && previous.stream().noneMatch(value -> value instanceof Map<?, ?> item
-                    && PremiumPresentationMigration.PRODUCTS.contains(item.get("id")))) {
-            current = current.stream().filter(value -> !(value instanceof Map<?, ?> item)
-                    || !PremiumPresentationMigration.PRODUCTS.contains(item.get("id"))).toList();
+        // Допустимы только известные стоковые добавления (четыре клановые лицензии
+        // и товар social-access). Если владелец завёл свой SKU или правил цены,
+        // каталог целиком остаётся его редакцией и миграция его не трогает.
+        Set<Object> previousIds = new HashSet<>();
+        for (Object value : previous) {
+            if (!(value instanceof Map<?, ?> item)) return false;
+            previousIds.add(item.get("id"));
         }
-        if (previous.size() != current.size()) return false;
+        List<Object> retained = new ArrayList<>();
+        for (Object value : current) {
+            if (!(value instanceof Map<?, ?> item)) return false;
+            Object id = item.get("id");
+            if (previousIds.contains(id)) {
+                retained.add(value);
+            } else if (!PremiumPresentationMigration.PRODUCTS.contains(String.valueOf(id))
+                    && !LATE_STOCK_PRODUCTS.contains(String.valueOf(id))) {
+                return false;
+            }
+        }
+        if (previous.size() != retained.size()) return false;
         for (int i = 0; i < previous.size(); i++) {
-            if (!(previous.get(i) instanceof Map<?, ?> old) || !(current.get(i) instanceof Map<?, ?> fresh))
+            if (!(previous.get(i) instanceof Map<?, ?> old) || !(retained.get(i) instanceof Map<?, ?> fresh))
                 return false;
             var left = new HashMap<Object, Object>(old);
             var right = new HashMap<Object, Object>(fresh);
             left.remove("description"); right.remove("description");
             if (!left.equals(right)) return false;
+        }
+        return true;
+    }
+
+    /**
+     * Тарифы предыдущей поставки. Служат только для отличия «владелец правил
+     * цены» от «поставка сменила тарифы»: любое другое значение цены считается
+     * владельческой правкой и каталог миграция не трогает.
+     */
+    private static final Map<String, Integer> PREVIOUS_STOCK_PRICES = Map.ofEntries(
+            Map.entry("rank-wanderer", 99), Map.entry("rank-wanderer-year", 990),
+            Map.entry("rank-pathfinder", 159), Map.entry("rank-pathfinder-year", 1590),
+            Map.entry("rank-keeper", 229), Map.entry("rank-keeper-year", 2290),
+            Map.entry("rank-patron", 299), Map.entry("rank-patron-year", 2990),
+            Map.entry("rank-founder", 365), Map.entry("rank-founder-year", 3650),
+            Map.entry("all-inclusive", 899));
+
+    private static boolean isPreviousStockCatalog(Object value) {
+        if (!(value instanceof List<?> catalog)) return false;
+        Map<Object, Object> prices = new HashMap<>();
+        for (Object entry : catalog) {
+            if (!(entry instanceof Map<?, ?> product)) return false;
+            prices.put(product.get("id"), product.get("price"));
+        }
+        for (var expected : PREVIOUS_STOCK_PRICES.entrySet()) {
+            if (!(prices.get(expected.getKey()) instanceof Number actual)
+                    || actual.intValue() != expected.getValue()) return false;
         }
         return true;
     }

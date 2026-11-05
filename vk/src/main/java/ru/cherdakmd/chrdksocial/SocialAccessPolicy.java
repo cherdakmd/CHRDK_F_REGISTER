@@ -65,4 +65,59 @@ public final class SocialAccessPolicy {
     public static boolean modeActive(String mode) {
         return !MODE_OFF.equals(mode);
     }
+
+    /* ------------------------- счётчики для TAB (plain text) ------------------------- */
+
+    /** Остаток срока товара: «27 дн.», «нет» или «∞» для бессрочного доступа. */
+    public static String accessCounter(long untilMillis, long now, boolean permanent) {
+        if (permanent) return "∞";
+        if (untilMillis <= now) return "нет";
+        return remainingDays(untilMillis, now) + " дн.";
+    }
+
+    /**
+     * Персональный статус привязки: «ВК» / «MAX», либо сколько дней осталось
+     * до обязательной привязки. Возвращает обычный текст — PAPI не понимает MiniMessage.
+     */
+    public static String providerLabel(String provider) {
+        if (provider == null || provider.isBlank()) return "привязан";
+        return switch (provider.trim().toLowerCase(Locale.ROOT)) {
+            case "vk" -> "ВК";
+            case "max" -> "MAX";
+            default -> "привязан";
+        };
+    }
+
+    public static String linkCounter(String provider, long graceDeadline, long now,
+                                     boolean required, boolean emergency) {
+        if (provider != null && !provider.isBlank()) return providerLabel(provider);
+        if (!required) return "не требуется";
+        if (emergency) return "аварийный вход";
+        if (graceDeadline <= now) return "обязательна";
+        return "осталось " + remainingDays(graceDeadline, now) + " дн.";
+    }
+
+    /**
+     * Готовая строка для TAB: игрок должен увидеть не безликое «14 дн.», а явный
+     * выбор — привязан, купил проход, либо «БЕЗ ПРИВЯЗКИ» со сроком до закрытия.
+     */
+    public static String tabStatus(boolean linked, String provider, long accessUntil,
+                                   long graceDeadline, long now, boolean required,
+                                   boolean emergency, boolean permanent) {
+        if (linked) return "✅ привязан (" + providerLabel(provider) + ")";
+        if (permanent || accessUntil > now) {
+            return "✅ проход: " + accessCounter(accessUntil, now, permanent);
+        }
+        if (!required) return "✅ привязка не требуется";
+        if (emergency) return "⚠ аварийный вход";
+        if (graceDeadline <= now) return "⛔ ВХОД ЗАКРЫТ";
+        return "⚠ БЕЗ ПРИВЯЗКИ: осталось " + remainingDays(graceDeadline, now) + " дн.";
+    }
+
+    /** Остаток дней с округлением вверх: 1 час — это ещё «1 дн.». */
+    public static int remainingDays(long untilMillis, long now) {
+        long left = untilMillis - now;
+        if (left <= 0L) return 0;
+        return (int) Math.max(1, (left + DAY_MILLIS - 1) / DAY_MILLIS);
+    }
 }

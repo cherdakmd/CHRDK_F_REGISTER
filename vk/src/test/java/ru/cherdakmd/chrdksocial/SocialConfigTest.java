@@ -35,11 +35,18 @@ class SocialConfigTest {
         assertFalse(cfg.webhookConfigured(), "нет публичного URL и секрета");
         assertEquals(14, cfg.newcomerGraceDays());
         assertTrue(cfg.donateEnabled());
-        assertEquals(SocialAccessPolicy.MODE_ANY_RANK, cfg.donateMode());
-        assertTrue(cfg.donateProductIds().isEmpty());
+        assertEquals(SocialAccessPolicy.MODE_EITHER, cfg.donateMode(),
+                "любой донатный ранг ИЛИ карточка проходки снимают ограничение");
+        assertEquals(java.util.List.of("social-access"), cfg.donateProductIds());
         assertFalse(cfg.donatePermanent(), "по умолчанию доступ привязан к активной покупке");
         assertEquals("https://chrdk.trademc.org/", cfg.donateUrl());
         assertTrue(cfg.donateActive());
+        assertEquals(30, cfg.reminderSeconds(), "напоминание в чате каждые 30 с, включая grace");
+        assertTrue(cfg.reminderNagging());
+        assertEquals(5, cfg.reminderActionBarSeconds());
+        assertEquals(20, cfg.reminderActionNagSeconds());
+        assertTrue(cfg.reminderTitleOnJoin());
+        assertTrue(cfg.reminderSound());
     }
 
     @Test
@@ -95,6 +102,12 @@ class SocialConfigTest {
         assertTrue(SocialConfig.parse(yaml).webhookConfigured());
         yaml.set("max.webhook.public-url", "http://plain.example.ru/hook");
         assertFalse(SocialConfig.parse(yaml).webhookConfigured(), "HTTP-webhook MAX не принимает");
+        yaml.set("max.webhook.public-url", "https://bot.example.ru/max/webhook");
+        yaml.set("max.webhook.secret", "short with spaces!");
+        assertFalse(SocialConfig.parse(yaml).webhookConfigured(),
+                "MAX принимает secret только из A-Z a-z 0-9 _ - длиной 5..256");
+        yaml.set("max.webhook.secret", "Chrdk-2026_webhook_secret");
+        assertTrue(SocialConfig.parse(yaml).webhookConfigured());
     }
 
     @Test

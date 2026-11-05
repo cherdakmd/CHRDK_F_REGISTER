@@ -1,6 +1,52 @@
 CHRDK — обновление плагинов
 ===========================
 
+Комплект 1.4.289 — СТАБИЛЬНЫЙ выпуск
+-------------------------------------
+22 JAR одной версии + памятка; chrdk-vk-1.4.289.jar отдельно.
+Latest становится v1.4.289; v1.4.288 и все прежние теги не переписываются.
+Core API42. Патч к 1.4.288: вся социальная часть сохранена без изменений.
+
+Явный выбор с первого входа: привязать ВК/MAX ИЛИ купить проходку на сайте
+донатов. Заголовок со звуком, action bar каждые 5 с, чат каждые 30 с, пинг
+при действиях с кулдауном 20 с; staff и bypass больше не молчат.
+Новые ключи plugins/CHRDK_VK/config.yml: social.reminder.nagging,
+social.reminder.action-bar-seconds, action-nag-seconds, title-on-join,
+sound, reminder-seconds: 30. plugin.yml получил softdepend: PlaceholderAPI;
+без PAPI пишется SEVERE и регистрация повторяется через 5 с.
+Footer plugins/CHRDK_Core/config.yml — ДВЕ строки в tablist.footer:
+<gold>%chrdksocial_status%</gold> и строка с %chrdksocial_link% /
+%chrdksocial_access%. Статус «БЕЗ ПРИВЯЗКИ: осталось N дн.» виден в TAB.
+
+Проходка social-access: 150 RUB / 30 дней, без ранга/прав/команд, НЕ входит
+в витрину из 26 карточек (trademc-export: false). Выдача ТОЛЬКО командой
+pass shopbuy %username% social-access; pass shoppay %username% 150 не пишет
+entitlement и обхода не даёт. permanent: false — доступ истекает с покупкой.
+
+social.donate-access.mode: either — ограничение снимает любой активный
+донатный ранг/проходка (hasActivePass) ИЛИ social-access (hasEntitlement).
+Косметика, шлейфы, цвета и дома обхода НЕ дают. Fail-closed сохранён.
+Гибридный grace 14 + 14 дней и отсутствие Immediate freeze не менялись.
+
+НОВЫЕ ЦЕНЫ (plugins/CHRDK_Core/config.yml, shop.products), правка вручную:
+  30 дней: 300 / 450 / 600 / 750 / 900 RUB; «Всё включено» 1499 RUB.
+  365 дней: 3000 / 4500 / 6000 / 7500 / 9000 RUB (месячная x10).
+  Проходка social-access остаётся 150 RUB / 30 дней, дешевле любого ранга.
+Все 11 цен уникальны. Миграция стокового каталога отличает смену тарифов
+поставкой от владельческой правки цен, но чужой config.yml не переписывает.
+Карточки и суммы в панели TradeMC выставляются администратором вручную;
+готовый архив PNG — chrdk-trademc-cards-733b4ce.zip в корне репозитория.
+
+Backup: data.json/SHA, bank.json, honors.json, moderation.json, vk-links.json,
+social-links.json, прочие хранилища, миры и playerdata. Все 22 JAR обновлять
+совместно; CHRDK_VK ставить отдельным JAR. Пароль/TOTP/ВК-2FA не отключать.
+CHRDK_Queue и снятые JAR убрать вручную из plugins/, plugins/update/, staging.
+Живой MAX-бот, сертификат, токен, платёж TradeMC, RCON, Minecraft-клиент,
+PAPI на сервере, установка и MSPT НЕ проверялись.
+Подробности и границы: docs/releases/1.4.289.md.
+
+Ниже — предыдущие изменения (история).
+
 Комплект 1.4.288 — СТАБИЛЬНЫЙ выпуск
 -------------------------------------
 22 JAR одной версии + памятка; chrdk-vk-1.4.288.jar отдельно.
@@ -29,9 +75,6 @@ CHRDK_Queue и снятые JAR убрать вручную из plugins/, plugi
 Пароль/TOTP/ВК-2FA не отключать. Живой MAX-бот, сертификат, токен, платёж
 TradeMC, RCON, Minecraft-клиент, установка и MSPT НЕ проверялись.
 Подробности и ограничения: docs/releases/1.4.288.md.
-
-Ниже — предыдущие изменения (история).
-
 Комплект 1.4.287 — СТАБИЛЬНЫЙ выпуск
 -------------------------------------
 22 JAR одной версии + памятка; optional chrdk-vk-1.4.287.jar отдельно.
