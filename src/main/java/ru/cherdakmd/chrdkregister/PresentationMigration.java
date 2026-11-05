@@ -75,7 +75,11 @@ final class PresentationMigration {
             if ((key.equals("tablist.header") || key.equals("tablist.footer")) && value instanceof List<?> lines
                     && lines.stream().allMatch(line -> line == null || line instanceof String text && text.isBlank())) continue;
             // Снятие старой рекламы не должно обновлять цены/сроки из более ранних снимков.
-            if (key.equals("shop.products") && !sameCatalogTerms(value, fresh.get(key))) continue;
+            // Исключение: если каталог сервера сам совпадает по условиям с одним из
+            // известных стоковых снимков, то отличие цен объясняется сменой тарифов
+            // в новой поставке, а не правкой владельца — такой каталог обновляем.
+            if (key.equals("shop.products") && !sameCatalogTerms(value, fresh.get(key))
+                    && !isHistoricalStockCatalog(value, legacies)) continue;
             boolean stock = false;
             for (YamlConfiguration legacy : legacies) {
                 if (legacy != null && legacy.contains(key, true) && Objects.equals(value, legacy.get(key))) {
@@ -130,6 +134,32 @@ final class PresentationMigration {
             if (!left.equals(right)) return false;
         }
         return true;
+    }
+
+    /**
+     * Условия каталога сервера совпадают с одним из historical stock-снимков.
+     * Тогда владелец цены не правил, и смена тарифов в новой поставке должна
+     * дойти до него вместе с остальными стоковыми изменениями.
+     */
+    private static boolean isHistoricalStockCatalog(Object value, List<YamlConfiguration> legacies) {
+        if (!(value instanceof List<?> current)) return false;
+        for (YamlConfiguration legacy : legacies) {
+            if (legacy == null || !(legacy.get("shop.products") instanceof List<?> stock)) continue;
+            if (stock.size() != current.size()) continue;
+            boolean equal = true;
+            for (int i = 0; i < current.size() && equal; i++) {
+                if (!(current.get(i) instanceof Map<?, ?> left) || !(stock.get(i) instanceof Map<?, ?> right)) {
+                    equal = false;
+                    break;
+                }
+                var a = new HashMap<Object, Object>(left);
+                var b = new HashMap<Object, Object>(right);
+                a.remove("description"); b.remove("description");
+                equal = a.equals(b);
+            }
+            if (equal) return true;
+        }
+        return false;
     }
 
     static void apply(JavaPlugin plugin) {

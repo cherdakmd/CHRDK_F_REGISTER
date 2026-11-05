@@ -90,7 +90,23 @@ class AddonRetirement271Test {
                 .map(product -> { var terms = new LinkedHashMap<>(product); terms.remove("description"); return terms; }).toList();
         var previous = old.getMapList("shop.products").stream()
                 .map(product -> { var terms = new LinkedHashMap<>(product); terms.remove("description"); return terms; }).toList();
-        assertEquals(previous, retained, "условия прежних товаров не меняются");
+        // Смена тарифов поставкой меняет ТОЛЬКО цену: сроки, состав, права и
+        // команды прежних товаров остаются прежними. Владельческая правка цен
+        // по-прежнему защищена guard'ом миграции.
+        assertEquals(previous.size(), retained.size(), "набор прежних товаров не меняется");
+        for (int i = 0; i < previous.size(); i++) {
+            var before = new LinkedHashMap<>(previous.get(i));
+            var after = new LinkedHashMap<>(retained.get(i));
+            Object oldPrice = before.remove("price");
+            Object newPrice = after.remove("price");
+            assertEquals(before, after, "условия товара " + before.get("id") + " не меняются");
+            if (!oldPrice.equals(newPrice)) {
+                assertTrue(((Number) newPrice).intValue() > ((Number) oldPrice).intValue(),
+                        "тариф меняется только в сторону новой, более высокой цены");
+            }
+        }
+        assertEquals(300, ((Number) fresh.getMapList("shop.products").stream()
+                .filter(p -> "rank-wanderer".equals(p.get("id"))).findFirst().orElseThrow().get("price")).intValue());
         assertEquals(48,fresh.getMapList("server-menu.items").size());
         assertEquals(42,fresh.getMapList("auto-messages.messages").size());
         for(String key:changes)old.set(key,fresh.get(key));
