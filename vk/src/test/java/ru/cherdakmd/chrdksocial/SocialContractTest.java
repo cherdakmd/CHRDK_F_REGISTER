@@ -47,9 +47,11 @@ class SocialContractTest {
         }
         assertTrue(config.contains("https://platform-api2.max.ru/"));
         String messages = read("src/main/resources/messages.yml");
-        for (String key : new String[]{"gate-header", "gate-code", "gate-howto", "linked",
-                "gate-donate", "donate-welcome", "gate-grace",
-                "reminder", "command-blocked", "unlinked", "reward", "code-cooldown", "disabled"}) {
+        for (String key : new String[]{"gate-choice", "gate-code", "gate-howto", "linked",
+                "gate-donate", "donate-welcome", "gate-grace", "gate-closed", "gate-staff",
+                "reminder-choice", "action-bar", "action-bar-closed", "action-nag",
+                "title", "subtitle", "command-blocked", "unlinked", "reward",
+                "code-cooldown", "disabled"}) {
             assertTrue(messages.contains(key), "нет сообщения social." + key);
         }
         String pluginYml = read("src/main/resources/plugin.yml");
