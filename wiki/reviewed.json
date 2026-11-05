@@ -36,8 +36,8 @@
       "text": "bf1b24b85ecdaee84580c0d5ea4b9c1120b8dd072e38aa68b52e49fc2a0c472c"
     },
     "classes": {
-      "reason": "Релиз 1.4.289: платный доступ social-access, назойливое информирование и счётчик TAB, режим donate-access either, новые тарифы 300/450/600/750/900 ₽ (год ×10) и 1499 ₽, пересобранный комплект TradeMC и bump версии.",
-      "sources": "88516a27044fe40b315f1ca0d1d4dec3a7a7ecb462c830cfc80399b9ceb64911",
+      "reason": "Добавлены чистые классы каркаса деревьев перков в модуль skills; игровое поведение, команды, GUI, конфиг и messages.yml не изменились, поэтому тексты страниц остаются актуальными. Дизайн и границы фаз описаны в docs/design/PERK-TREES.md.",
+      "sources": "33baf8a445959615e3ab7ce8da05b7e2db9f6fde892b69e7e68bfae83169bc7f",
       "text": "ee29d92bd4e9527924d14405057fd62402857c1a688439c7b9d86d4c9bf3b546"
     },
     "commands": {
@@ -86,8 +86,8 @@
       "text": "6bc29d5a2d7783845f8b3d9b085e85982faec5b3029d841092386f36b1d4c4b0"
     },
     "hunt": {
-      "reason": "Релиз 1.4.289: платный доступ social-access, назойливое информирование и счётчик TAB, режим donate-access either, новые тарифы 300/450/600/750/900 ₽ (год ×10) и 1499 ₽, пересобранный комплект TradeMC и bump версии.",
-      "sources": "27b5b20bf17dcd0e22aa6d30587b5be1c18a5adb5d6adee13fe99583860eca7e",
+      "reason": "Добавлены чистые классы каркаса деревьев перков в модуль skills; игровое поведение, команды, GUI, конфиг и messages.yml не изменились, поэтому тексты страниц остаются актуальными. Дизайн и границы фаз описаны в docs/design/PERK-TREES.md.",
+      "sources": "9f7ae35ac31243c7d554f0414cf57004545ef086d413a114a1f1a77a7ed32618",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
@@ -116,8 +116,8 @@
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "Релиз 1.4.289: платный доступ social-access, назойливое информирование и счётчик TAB, режим donate-access either, новые тарифы 300/450/600/750/900 ₽ (год ×10) и 1499 ₽, пересобранный комплект TradeMC и bump версии.",
-      "sources": "53df73c3676d2313de180e52b8d56d1dcda01bfcc411d760a0815b2417987117",
+      "reason": "Добавлены чистые классы каркаса деревьев перков в модуль skills; игровое поведение, команды, GUI, конфиг и messages.yml не изменились, поэтому тексты страниц остаются актуальными. Дизайн и границы фаз описаны в docs/design/PERK-TREES.md.",
+      "sources": "efd9dd3219a8999803a8ee254ef649c6bf3d4bda384a82e9584e81227ca35f6d",
       "text": "b66278597912053a64a4f192bf0cf63795a8720263d4283683b9458eec8f0bff"
     },
     "profile": {
@@ -141,8 +141,8 @@
       "text": "62ef5965cc091b6cbd7e6af58d21e58ba2e8dd65d9e704cec710768ff7a47099"
     },
     "skills": {
-      "reason": "Релиз 1.4.289: платный доступ social-access, назойливое информирование и счётчик TAB, режим donate-access either, новые тарифы 300/450/600/750/900 ₽ (год ×10) и 1499 ₽, пересобранный комплект TradeMC и bump версии.",
-      "sources": "d07fc070881c58f6e876caf1edd2851166a1dcd57ee715fe3a716506993a4635",
+      "reason": "Добавлены чистые классы каркаса деревьев перков в модуль skills; игровое поведение, команды, GUI, конфиг и messages.yml не изменились, поэтому тексты страниц остаются актуальными. Дизайн и границы фаз описаны в docs/design/PERK-TREES.md.",
+      "sources": "45f23c89df40dafa0288a0265b02b58850af7b73ac698e21e942a120f53b457d",
       "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
     },
     "social-link": {
