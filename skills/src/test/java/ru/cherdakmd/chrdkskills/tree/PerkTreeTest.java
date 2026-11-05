@@ -29,7 +29,8 @@ class PerkTreeTest {
     @Test
     void pilotIsValidAndStrictlyQol() {
         PerkTreeRegistry.validateAll();
-        assertEquals(Set.of(TreeDomain.MINING), PerkTreeRegistry.defined());
+        assertEquals(6, PerkTreeRegistry.defined().size());
+        assertTrue(PerkTreeRegistry.defined().contains(TreeDomain.MINING));
         PerkTreeDefinition definition = PerkTreeRegistry.pilot();
         assertEquals(TreeDomain.MINING, definition.domain());
         assertEquals(7, definition.tiers());
@@ -40,16 +41,49 @@ class PerkTreeTest {
     }
 
     @Test
+    void pveDomainsAreRegisteredAndStrictlyQol() {
+        List<TreeDomain> pve = PerkTreeRegistry.pveDomains();
+        assertEquals(5, pve.size());
+        for (TreeDomain domain : pve) {
+            PerkTreeDefinition definition = PerkTreeRegistry.of(domain).orElseThrow();
+            assertEquals(domain, definition.domain());
+            assertFalse(definition.coreNodes().isEmpty(), "ядро у " + domain.id());
+            assertFalse(definition.abilities().isEmpty(), "приём у " + domain.id());
+            assertTrue(definition.nodes().stream().noneMatch(n -> n.effect().balanceSensitive()),
+                    "PvE-дерево не должно давать урон, защиту, дроп или опыт: " + domain.id());
+        }
+        assertTrue(PerkTreeRegistry.defined().containsAll(pve));
+        assertEquals(TreeDomain.COMBAT, PerkTreeRegistry.of(TreeDomain.COMBAT).orElseThrow().domain());
+    }
+
+    @Test
+    void everyPveTreePassesTheSameUnlockAndResetContract() {
+        for (TreeDomain domain : PerkTreeRegistry.pveDomains()) {
+            PerkTreeDefinition definition = PerkTreeRegistry.of(domain).orElseThrow();
+            PerkNode first = definition.nodesAtTier(1).get(0);
+            PerkTreeState opened = funded(domain, 20, definition.powderCap())
+                    .unlock(definition, first.id());
+            assertTrue(opened.isUnlocked(first.id()), domain.id());
+            PerkTreeState reset = opened.reset();
+            assertEquals(20, reset.level(), domain.id());
+            assertEquals(0, reset.tokensSpent(), domain.id());
+            assertTrue(reset.levels().isEmpty(), domain.id());
+            assertEquals(definition.powderCap(), reset.powder(),
+                    domain.id() + ": пыль за обычный узел возвращена полностью");
+        }
+    }
+
+    @Test
     void reservedDomainsCoverOtherAspectsNotOnlyMining() {
         List<TreeDomain> reserved = PerkTreeRegistry.reserved();
-        assertEquals(TreeDomain.values().length - 1, reserved.size());
+        assertEquals(TreeDomain.values().length - PerkTreeRegistry.defined().size(), reserved.size());
         assertTrue(reserved.contains(TreeDomain.FISHING));
-        assertTrue(reserved.contains(TreeDomain.COMBAT));
+        assertTrue(reserved.contains(TreeDomain.FARMING));
         assertTrue(reserved.contains(TreeDomain.CRAFTING));
-        assertTrue(reserved.contains(TreeDomain.EXPLORATION));
         assertTrue(reserved.contains(TreeDomain.COMMERCE));
+        assertTrue(reserved.contains(TreeDomain.ALCHEMY));
         assertEquals(10, Arrays.stream(TreeDomain.values()).filter(TreeDomain::hasSkillSource).count());
-        assertEquals(3, Arrays.stream(TreeDomain.values()).filter(d -> !d.hasSkillSource()).count());
+        assertEquals(4, Arrays.stream(TreeDomain.values()).filter(d -> !d.hasSkillSource()).count());
         assertFalse(TreeDomain.FISHING.pilot());
         assertTrue(TreeDomain.MINING.pilot());
     }

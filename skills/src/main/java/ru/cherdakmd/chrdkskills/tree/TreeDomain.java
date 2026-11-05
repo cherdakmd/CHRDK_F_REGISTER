@@ -30,7 +30,9 @@ public enum TreeDomain {
     ENCHANTING("enchanting", SkillType.ENCHANTING, false),
     CRAFTING("crafting", null, false),
     EXPLORATION("exploration", null, false),
-    COMMERCE("commerce", null, false);
+    COMMERCE("commerce", null, false),
+    /** PvE без навыкового источника: прогресс модуля hunt (добыча, бестиарий, трофеи). */
+    HUNT("hunt", null, false);
 
     private final String id;
     private final SkillType source;

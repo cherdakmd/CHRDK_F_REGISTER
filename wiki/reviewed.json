@@ -36,8 +36,8 @@
       "text": "bf1b24b85ecdaee84580c0d5ea4b9c1120b8dd072e38aa68b52e49fc2a0c472c"
     },
     "classes": {
-      "reason": "Добавлены чистые классы каркаса деревьев перков в модуль skills; игровое поведение, команды, GUI, конфиг и messages.yml не изменились, поэтому тексты страниц остаются актуальными. Дизайн и границы фаз описаны в docs/design/PERK-TREES.md.",
-      "sources": "33baf8a445959615e3ab7ce8da05b7e2db9f6fde892b69e7e68bfae83169bc7f",
+      "reason": "Расширен каркас деревьев перков: добавлены PvE-домены и PvE-QoL эффекты в модуль skills. Игровое поведение, команды, GUI, конфиг и messages.yml не менялись, поэтому тексты существующих страниц остаются актуальными; PvE-стратегия и границы фаз описаны в docs/design/PVE-ROADMAP.md и PERK-TREES.md.",
+      "sources": "23ee9874ee758c61416cf6eb2f55ab8e2a8dd4e3602d2ed40e04016a6695bd1b",
       "text": "ee29d92bd4e9527924d14405057fd62402857c1a688439c7b9d86d4c9bf3b546"
     },
     "commands": {
@@ -86,8 +86,8 @@
       "text": "6bc29d5a2d7783845f8b3d9b085e85982faec5b3029d841092386f36b1d4c4b0"
     },
     "hunt": {
-      "reason": "Добавлены чистые классы каркаса деревьев перков в модуль skills; игровое поведение, команды, GUI, конфиг и messages.yml не изменились, поэтому тексты страниц остаются актуальными. Дизайн и границы фаз описаны в docs/design/PERK-TREES.md.",
-      "sources": "9f7ae35ac31243c7d554f0414cf57004545ef086d413a114a1f1a77a7ed32618",
+      "reason": "Расширен каркас деревьев перков: добавлены PvE-домены и PvE-QoL эффекты в модуль skills. Игровое поведение, команды, GUI, конфиг и messages.yml не менялись, поэтому тексты существующих страниц остаются актуальными; PvE-стратегия и границы фаз описаны в docs/design/PVE-ROADMAP.md и PERK-TREES.md.",
+      "sources": "84d1d02b5f5807923a95e0b223c066064af0317612fe820651fefd6b04ceb0c3",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
@@ -116,8 +116,8 @@
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "Добавлены чистые классы каркаса деревьев перков в модуль skills; игровое поведение, команды, GUI, конфиг и messages.yml не изменились, поэтому тексты страниц остаются актуальными. Дизайн и границы фаз описаны в docs/design/PERK-TREES.md.",
-      "sources": "efd9dd3219a8999803a8ee254ef649c6bf3d4bda384a82e9584e81227ca35f6d",
+      "reason": "Расширен каркас деревьев перков: добавлены PvE-домены и PvE-QoL эффекты в модуль skills. Игровое поведение, команды, GUI, конфиг и messages.yml не менялись, поэтому тексты существующих страниц остаются актуальными; PvE-стратегия и границы фаз описаны в docs/design/PVE-ROADMAP.md и PERK-TREES.md.",
+      "sources": "bfd436cdac8dde4a920d56bcc8fef88da6eaa1ed4d960e384e872c21b058ed53",
       "text": "b66278597912053a64a4f192bf0cf63795a8720263d4283683b9458eec8f0bff"
     },
     "profile": {
@@ -141,8 +141,8 @@
       "text": "62ef5965cc091b6cbd7e6af58d21e58ba2e8dd65d9e704cec710768ff7a47099"
     },
     "skills": {
-      "reason": "Добавлены чистые классы каркаса деревьев перков в модуль skills; игровое поведение, команды, GUI, конфиг и messages.yml не изменились, поэтому тексты страниц остаются актуальными. Дизайн и границы фаз описаны в docs/design/PERK-TREES.md.",
-      "sources": "45f23c89df40dafa0288a0265b02b58850af7b73ac698e21e942a120f53b457d",
+      "reason": "Расширен каркас деревьев перков: добавлены PvE-домены и PvE-QoL эффекты в модуль skills. Игровое поведение, команды, GUI, конфиг и messages.yml не менялись, поэтому тексты существующих страниц остаются актуальными; PvE-стратегия и границы фаз описаны в docs/design/PVE-ROADMAP.md и PERK-TREES.md.",
+      "sources": "9ded294de18c2956b7e91c583195fa59ad3dd1fc1ce2442765b2b7e275f2975a",
       "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
     },
     "social-link": {
