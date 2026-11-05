@@ -9,6 +9,9 @@ import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 import ru.cherdakmd.chrdkregister.configuration.ConfigSnapshot;
 import ru.cherdakmd.chrdkregister.storage.SafeJsonWriter;
+import ru.cherdakmd.chrdksocial.MaxService;
+import ru.cherdakmd.chrdksocial.SocialConfig;
+import ru.cherdakmd.chrdksocial.SocialService;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -39,6 +42,8 @@ public final class VkPlugin extends JavaPlugin {
     private volatile Messages messages;
     private VkStore store;
     private VkService service;
+    private SocialService socialService;
+    private MaxService maxService;
     private BukkitTask saveTask;
 
     @Override
@@ -80,12 +85,25 @@ public final class VkPlugin extends JavaPlugin {
             }
         }
 
+        // Единый социальный плагин: обязательная привязка к ВК/MAX, webhook MAX,
+        // мост чата, уведомления и автопостинг новостей живут в этом же JAR.
+        SocialConfig socialConfig = SocialConfig.parse(getConfig());
+        this.socialService = new SocialService(this, socialConfig);
+        this.maxService = new MaxService(this, socialService, socialConfig);
+        socialService.attachMax(maxService);
+        socialService.start();
+        maxService.start();
+
         // Периодическая запись грязного состояния раз в 30 секунд.
         this.saveTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
-                this, () -> store.saveIfDirty(), 20L * 30, 20L * 30);
+                this, () -> {
+                    store.saveIfDirty();
+                    if (socialService != null) socialService.store().saveIfDirty();
+                }, 20L * 30, 20L * 30);
 
         getLogger().info("[CHRDK_VK] Включён (привязок: " + store.linkCount()
-                + ", API настроен: " + config.apiConfigured() + ").");
+                + ", API настроен: " + config.apiConfigured()
+                + ", социальные привязки: " + socialService.store().linkCount() + ").");
     }
 
     @Override
@@ -93,6 +111,14 @@ public final class VkPlugin extends JavaPlugin {
         if (saveTask != null) {
             saveTask.cancel();
             saveTask = null;
+        }
+        if (maxService != null) {
+            maxService.shutdown();
+            maxService = null;
+        }
+        if (socialService != null) {
+            socialService.shutdown();
+            socialService = null;
         }
         if (service != null) {
             service.shutdown();
@@ -121,6 +147,14 @@ public final class VkPlugin extends JavaPlugin {
             if (this.service != null) {
                 this.service.applyRuntimeConfig();
             }
+            YamlConfiguration fresh = new YamlConfiguration();
+            try (BufferedReader configReader = Files.newBufferedReader(
+                    folder.resolve("config.yml"), StandardCharsets.UTF_8)) {
+                fresh.load(configReader);
+            }
+            SocialConfig socialConfig = SocialConfig.parse(fresh);
+            if (this.socialService != null) this.socialService.applyConfig(socialConfig);
+            if (this.maxService != null) this.maxService.applyConfig(socialConfig);
             return true;
         } catch (Exception exception) {
             getLogger().log(Level.WARNING, "[CHRDK_VK] Ошибка перезагрузки конфигурации", exception);
@@ -242,5 +276,29 @@ public final class VkPlugin extends JavaPlugin {
 
     public Messages messages() {
         return messages;
+    }
+
+    /** Регистрация команд социального блока из того же класса: getCommand() может быть protected. */
+    public void registerSocialCommands(org.bukkit.command.CommandExecutor executor,
+                                       org.bukkit.command.TabCompleter completer) {
+        for (String name : List.of("link", "social", "socialadmin", "max")) {
+            PluginCommand command = getCommand(name);
+            if (command != null) {
+                command.setExecutor(executor);
+                command.setTabCompleter(completer);
+            }
+        }
+    }
+
+    public VkService vkService() {
+        return service;
+    }
+
+    public SocialService socialService() {
+        return socialService;
+    }
+
+    public MaxService maxService() {
+        return maxService;
     }
 }

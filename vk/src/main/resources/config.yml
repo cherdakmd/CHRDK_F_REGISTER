@@ -137,3 +137,103 @@ onboarding:
   peer-id: 0
   # Настоящая HTTPS-ссылка приглашения в нужную беседу. Не публикуйте закрытую ссылку в Git.
   chat-invite-url: ""
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Единый социальный плагин: обязательная привязка Minecraft ↔ ВК / MAX.
+# Один JAR (chrdk-vk-*.jar), один реестр привязок, одно пространство кодов.
+# ═══════════════════════════════════════════════════════════════════════════
+
+social:
+  # Выключить всю социальную подсистему (ВК-интеграция при этом продолжает работать)
+  enabled: true
+  # Требовать привязку к ВК или MAX до начала игры
+  require-link: true
+  # Гибридный переходный период. Общий дедлайн отсчитывается от первого запуска
+  # плагина (для уже игравших аккаунтов), личный — от первого входа конкретного
+  # игрока (для новичков и вернувшихся). Действует БОЛЕЕ ПОЗДНЯЯ из двух дат,
+  # поэтому пришедший на 15-й день новичок не оказывается в лобби без срока.
+  # 0 = сразу всем обязательно.
+  grace-days: 14
+  newcomer-grace-days: 14
+  # Третий путь для игроков без ВК и MAX: доступ по УЖЕ ПОДТВЕРЖДЁННОЙ оплате
+  # на сайте донатов. Плагин сам ничего не принимает от игрока и не выдает покупки:
+  # он читает data.json ядра (TradeMC -> RCON `/pass shoppay` / `/pass shopbuy`).
+  donate-access:
+    enabled: true
+    # any-rank       — любой активный донатный ранг/проходка (по умолчанию)
+    # product-list   — только товары из product-ids (отдельная платная «проходка»)
+    # either         — ранг ИЛИ любой товар из списка
+    # off            — платного доступа нет
+    mode: any-rank
+    product-ids: []
+    # false — доступ действует, пока активна покупка; true — фиксируется навсегда
+    permanent: false
+    url: "https://chrdk.trademc.org/"
+  bypass-permission: "chrdksocial.bypass"
+  code-length: 6
+  code-ttl-seconds: 300
+  code-cooldown-seconds: 20
+  max-attempts: 5
+  max-accounts-per-profile: 1
+  reminder-seconds: 45
+  # Одноразовая награда за первую привязку (0 = выключено)
+  reward-xp-levels: 0
+  emergency-minutes: 30
+  # Повреждённый social-links.json: true — аварийный режим вместо тотального кика
+  fail-open-on-corruption: true
+  vk-community-url: "https://vk.ru/chrdk_reborn"
+  # Публичная ссылка на бота MAX (диплинк), показывается в игре
+  max-bot-url: ""
+
+max:
+  enabled: true
+  # Актуальный домен MAX Bot API с 19 июля 2026 года
+  api-base-url: "https://platform-api2.max.ru/"
+  # Токен бота: ТОЛЬКО заголовок Authorization, никогда не URL. Хранить в секрете.
+  access-token: ""
+  # webhook (production) | polling (разработка / fallback)
+  transport: webhook
+  update-types: [message_created, message_callback, bot_started, bot_added, bot_removed]
+  # chat_id канала/чата: GET /chats не поддерживается, id приходит из bot_added/bot_started
+  chat-id: 0
+
+  webhook:
+    enabled: true
+    # Отдельный порт хостинга. MAX принимает webhook только по HTTPS с доверенным сертификатом.
+    port: 8443
+    bind-address: "0.0.0.0"
+    path: "/max/webhook"
+    # Публичный HTTPS-адрес, который записан в POST /subscriptions (за reverse-proxy)
+    public-url: ""
+    # Секрет из POST /subscriptions; проверяется constant-time по заголовку запроса
+    secret: ""
+    # PKCS12-keystore с сертификатом и ключом в папке плагина. Без него HTTPS не поднимется.
+    keystore: "max-webhook.p12"
+    keystore-password: ""
+    require-tls: true
+
+  polling:
+    # Исходящий GET /updates без белого порта; официально — режим разработки.
+    enabled: true
+    wait-seconds: 25
+    reconnect-seconds: 5
+    limit: 100
+
+  group-chat:
+    enabled: true
+    minecraft-to-max: true
+    max-to-minecraft: true
+    require-linked: true
+    mc-badge: "<#00C3FF>[MAX]</#00C3FF>"
+    max-format: "[MC] {player}: {message}"
+    sender-cooldown-seconds: 3
+    max-message-length: 220
+
+news:
+  # Автопостинг релиза из плагина: GET GitHub Releases latest → MAX + ВК + чат игры.
+  # Дублирует, но не заменяет публикацию из GitHub Actions (tools/social).
+  enabled: true
+  poll-minutes: 30
+  announce-in-game: true
+  template: "🚀 CHERDAK — выпуск %tag%: %title%\nПодробности и скачивание: %url%"
+  release-api-url: "https://api.github.com/repos/cherdakmd/CHRDK_F_REGISTER/releases/latest"

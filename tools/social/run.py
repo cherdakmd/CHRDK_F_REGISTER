@@ -14,6 +14,7 @@ from urllib.parse import quote
 from content import ROOT, Post, SafetyError, catalog, due_slot, news, tip, validate, MOSCOW, TAG, RC_TAG
 from cards import render
 from publisher import GitHub, Ledger, VK, publish
+from max_publisher import MAX, MaxLedger, check_env, publish_max, release_url_for
 
 
 def tagged_news(gh, release):
@@ -111,7 +112,8 @@ def main(argv=None):
             for file in (ROOT / 'docs/social/releases').glob('*.json'):
                 post = preview_news(file.stem)
                 render(post, Path(folder) / (file.stem + '.png'))
-        print('Социальные публикации: источники, заметки и все карточки проверены.')
+        check_env(os.environ, ROOT)
+        print('Социальные публикации: источники, заметки, все карточки и настройки MAX проверены.')
         return 0
     if args.publish:
         if (os.environ.get('VK_AUTOPUBLISH_ENABLED') != 'true'
@@ -169,6 +171,15 @@ def main(argv=None):
     ledger = Ledger(gh, vk.group, vk.peer)
     message_id, created = publish(post, (args.out / 'card.png').read_bytes(), ledger, vk)
     print(('Отправлено в беседу: ' if created else 'Уже отправлено в беседу: ') + str(vk.peer))
+    max_settings = check_env(os.environ, ROOT)
+    if max_settings['enabled'] and args.publish:
+        max_client = MAX(os.environ['MAX_BOT_TOKEN'])
+        max_chat = int(os.environ['MAX_NEWS_CHAT_ID'])
+        max_ledger = MaxLedger(gh, max_chat)
+        mid, max_created = publish_max(post, max_ledger, max_client, max_chat, release_url_for(post))
+        print(('Отправлено в MAX: ' if max_created else 'Уже отправлено в MAX: ') + str(mid))
+    elif os.environ.get('GITHUB_ACTIONS') == 'true':
+        print('::notice title=MAX news::Публикация в MAX не включена (MAX_AUTOPUBLISH_ENABLED)')
     return 0
 
 
