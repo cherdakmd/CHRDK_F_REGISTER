@@ -35,6 +35,28 @@ class SocialLinkStoreTest {
     }
 
     @Test
+    void firstSeenIsRecordedOnceAndDonorAccessSurvivesReload(@TempDir Path dir) {
+        SocialLinkStore first = store(dir);
+        assertEquals(0L, first.firstSeenAt("StaveLime"));
+        first.recordFirstSeen("StaveLime", 1_000L);
+        first.recordFirstSeen("stavelime", 9_000L);
+        first.grantDonor("StaveLime", "manual:оплата на сайте", 2_000L);
+        assertTrue(first.donorGranted("STAVELIME"));
+        assertTrue(first.donorSource("StaveLime").contains("manual"));
+        assertEquals(1, first.donorCount());
+
+        SocialLinkStore second = store(dir);
+        assertFalse(second.loadFailed());
+        assertEquals(1_000L, second.firstSeenAt("StaveLime"),
+                "повторный вход не продлевает личный переходный срок");
+        assertTrue(second.donorGranted("StaveLime"));
+        assertEquals(java.util.List.of("stavelime"), second.donors());
+        assertTrue(second.revokeDonor("STAVELIME"));
+        assertFalse(second.revokeDonor("StaveLime"));
+        assertEquals(0, second.donorCount());
+    }
+
+    @Test
     void survivesReloadWithChecksum(@TempDir Path dir) {
         SocialLinkStore first = store(dir);
         first.link("Player", "vk", 123L, "id123", 1, 100L);

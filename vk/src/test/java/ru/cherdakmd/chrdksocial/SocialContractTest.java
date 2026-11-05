@@ -41,12 +41,14 @@ class SocialContractTest {
     void configMessagesAndCommandsCoverSocialFlow() throws Exception {
         String config = read("src/main/resources/config.yml");
         for (String key : new String[]{"social:", "require-link:", "grace-days:",
+                "newcomer-grace-days:", "donate-access:", "product-ids:", "permanent:",
                 "max:", "api-base-url:", "public-url:", "keystore:", "polling:", "news:"}) {
             assertTrue(config.contains(key), "нет ключа " + key);
         }
         assertTrue(config.contains("https://platform-api2.max.ru/"));
         String messages = read("src/main/resources/messages.yml");
         for (String key : new String[]{"gate-header", "gate-code", "gate-howto", "linked",
+                "gate-donate", "donate-welcome", "gate-grace",
                 "reminder", "command-blocked", "unlinked", "reward", "code-cooldown", "disabled"}) {
             assertTrue(messages.contains(key), "нет сообщения social." + key);
         }
@@ -81,6 +83,28 @@ class SocialContractTest {
         assertTrue(service.contains("graceActive(now)"));
         assertTrue(service.contains("staffBypass(player)"));
         assertTrue(service.contains("notifyLinked(playerName"), "снятие заморозки без релога");
+    }
+
+    @Test
+    void playersWithoutSocialNetworksHaveAThirdPath() throws Exception {
+        String service = read("src/main/java/ru/cherdakmd/chrdksocial/SocialService.java");
+        assertTrue(service.contains("recordFirstSeen(player.getName(), now)"),
+                "первый вход фиксируется для личного срока");
+        assertTrue(service.contains("graceActive(player, now)"));
+        assertTrue(service.contains("api.hasActivePass(playerName)"),
+                "доступ читает подтверждённую оплату из ядра");
+        assertTrue(service.contains("api.hasEntitlement(playerName, id)"));
+        assertTrue(service.contains("social.donate-welcome"));
+        assertTrue(service.contains("social.gate-donate"));
+        assertFalse(service.contains("sender.sendMessage(\"оплатил\")"),
+                "слова игрока не принимаются как подтверждение оплаты");
+        String handler = read("src/main/java/ru/cherdakmd/chrdksocial/SocialCommandHandler.java");
+        assertTrue(handler.contains("case \"donor\""));
+        assertTrue(handler.contains("service.donorGrant("));
+        assertTrue(handler.contains("service.donorRevoke("));
+        String messages = read("src/main/resources/messages.yml");
+        assertTrue(messages.contains("%url%"), "ссылка на сайт донатов видна в лобби");
+        assertTrue(messages.contains("%date%"));
     }
 
     @Test

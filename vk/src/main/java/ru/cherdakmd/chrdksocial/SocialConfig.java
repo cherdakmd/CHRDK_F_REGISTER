@@ -60,7 +60,13 @@ public record SocialConfig(
         int newsPollMinutes,
         boolean newsInGame,
         String newsTemplate,
-        String releaseApiUrl
+        String releaseApiUrl,
+        int newcomerGraceDays,
+        boolean donateEnabled,
+        String donateMode,
+        List<String> donateProductIds,
+        boolean donatePermanent,
+        String donateUrl
 ) {
 
     public static final String DEFAULT_MAX_API = "https://platform-api2.max.ru/";
@@ -69,6 +75,7 @@ public record SocialConfig(
             "🚀 CHERDAK — выпуск %tag%: %title%\nПодробности и скачивание: %url%";
     public static final String DEFAULT_RELEASE_API =
             "https://api.github.com/repos/cherdakmd/CHRDK_F_REGISTER/releases/latest";
+    public static final String DEFAULT_DONATE_URL = "https://chrdk.trademc.org/";
     public static final List<String> DEFAULT_UPDATE_TYPES = List.of(
             "message_created", "message_callback", "bot_started", "bot_added", "bot_removed");
 
@@ -132,13 +139,23 @@ public record SocialConfig(
         String template = trimOrDefault(cfg.getString("news.template", DEFAULT_NEWS_TEMPLATE), DEFAULT_NEWS_TEMPLATE);
         String releaseApi = sanitizeHttps(cfg.getString("news.release-api-url", DEFAULT_RELEASE_API), DEFAULT_RELEASE_API);
 
+        int newcomerGraceDays = Math.clamp(cfg.getInt("social.newcomer-grace-days", 14), 0, 90);
+        boolean donateEnabled = cfg.getBoolean("social.donate-access.enabled", true);
+        String donateMode = SocialAccessPolicy.normalizeMode(
+                cfg.getString("social.donate-access.mode", SocialAccessPolicy.MODE_ANY_RANK));
+        List<String> productIds = parseProductIds(cfg.getStringList("social.donate-access.product-ids"));
+        boolean donatePermanent = cfg.getBoolean("social.donate-access.permanent", false);
+        String donateUrl = sanitizeHttps(
+                cfg.getString("social.donate-access.url", DEFAULT_DONATE_URL), DEFAULT_DONATE_URL);
+
         return new SocialConfig(enabled, requireLink, graceDays, bypass, codeLength, ttl, cooldown,
                 attempts, maxAccounts, reminder, reward, emergency, failOpen, vkUrl, maxUrl,
                 maxEnabled, apiBase, token, transport, webhookEnabled, port, bind, path, secret,
                 publicUrl, keystore, keystorePassword == null ? "" : keystorePassword, requireTls,
                 pollingEnabled, waitSeconds, reconnect, limit, updateTypes, maxChatId,
                 bridgeEnabled, mcToMax, maxToMc, requireLinked, badge, format,
-                bridgeCooldown, bridgeMaxLength, newsEnabled, newsPoll, inGame, template, releaseApi);
+                bridgeCooldown, bridgeMaxLength, newsEnabled, newsPoll, inGame, template, releaseApi,
+                newcomerGraceDays, donateEnabled, donateMode, productIds, donatePermanent, donateUrl);
     }
 
     /** Достаточно ли данных для сетевых запросов MAX Bot API. */
@@ -157,7 +174,29 @@ public record SocialConfig(
     }
 
     public long graceMillis() {
-        return graceDays * 86_400_000L;
+        return graceDays * SocialAccessPolicy.DAY_MILLIS;
+    }
+
+    public long newcomerGraceMillis() {
+        return newcomerGraceDays * SocialAccessPolicy.DAY_MILLIS;
+    }
+
+    /** Платный доступ активен только при явном режиме и включённом флаге. */
+    public boolean donateActive() {
+        return donateEnabled && SocialAccessPolicy.modeActive(donateMode);
+    }
+
+    private static List<String> parseProductIds(List<String> raw) {
+        List<String> out = new ArrayList<>();
+        if (raw != null) {
+            for (String value : raw) {
+                String id = trim(value);
+                if (id.length() > 64 || id.isEmpty() || out.contains(id)) continue;
+                if (!id.matches("[A-Za-z0-9._-]+")) continue;
+                out.add(id);
+            }
+        }
+        return List.copyOf(out);
     }
 
     private static List<String> parseUpdateTypes(List<String> raw) {

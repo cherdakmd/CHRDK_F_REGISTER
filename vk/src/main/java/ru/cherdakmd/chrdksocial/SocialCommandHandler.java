@@ -52,6 +52,9 @@ public final class SocialCommandHandler implements CommandExecutor, TabCompleter
                 "code", code, "minutes", Math.max(1, service.config().codeTtlSeconds() / 60),
                 "vk", service.config().vkCommunityUrl(), "max", service.config().maxBotUrl());
         plugin.messages().send(player, "social.gate-howto");
+        if (service.config().donateActive()) {
+            plugin.messages().send(player, "social.gate-donate", "url", service.config().donateUrl());
+        }
         return true;
     }
 
@@ -141,6 +144,9 @@ public final class SocialCommandHandler implements CommandExecutor, TabCompleter
                 sender.sendMessage("§b[CHRDK] §fПроверка новости релиза запущена в фоне.");
                 return true;
             }
+            case "donor" -> {
+                return donorCommand(sender, args);
+            }
             case "reload" -> {
                 if (!admin(sender)) return true;
                 boolean ok = plugin.reloadBundle();
@@ -148,10 +154,42 @@ public final class SocialCommandHandler implements CommandExecutor, TabCompleter
                 return true;
             }
             default -> {
-                sender.sendMessage("§e/social [status [ник]|unlink <ник>|emergency <минуты|off>|setchat <вид> <id>|chats|testnews|reload]");
+                sender.sendMessage("§e/social [status [ник]|unlink <ник>|emergency <минуты|off>|setchat <вид> <id>|chats|donor|testnews|reload]");
                 return true;
             }
         }
+    }
+
+    private boolean donorCommand(CommandSender sender, String[] args) {
+        if (!admin(sender)) return true;
+        String action = args.length > 1 ? args[1].toLowerCase(Locale.ROOT) : "list";
+        switch (action) {
+            case "check" -> {
+                if (args.length < 3) {
+                    sender.sendMessage("§e/social donor check <ник>");
+                    return true;
+                }
+                sender.sendMessage("§b[CHRDK] §f" + service.donorStatus(args[2]));
+            }
+            case "grant" -> {
+                if (args.length < 4) {
+                    sender.sendMessage("§e/social donor grant <ник> <причина>");
+                    return true;
+                }
+                String reason = String.join(" ", java.util.Arrays.copyOfRange(args, 3, args.length));
+                sender.sendMessage("§b[CHRDK] §f" + service.donorGrant(args[2], reason, sender.getName()));
+            }
+            case "revoke" -> {
+                if (args.length < 3) {
+                    sender.sendMessage("§e/social donor revoke <ник>");
+                    return true;
+                }
+                sender.sendMessage("§b[CHRDK] §f" + service.donorRevoke(args[2], sender.getName()));
+            }
+            case "list" -> sender.sendMessage("§b[CHRDK] Донат-доступы: §f" + service.donors());
+            default -> sender.sendMessage("§e/social donor [check <ник>|grant <ник> <причина>|revoke <ник>|list]");
+        }
+        return true;
     }
 
     private boolean admin(CommandSender sender) {
@@ -170,13 +208,18 @@ public final class SocialCommandHandler implements CommandExecutor, TabCompleter
             return out;
         }
         if (args.length <= 1) {
-            return List.of("status", "unlink", "emergency", "setchat", "chats", "testnews", "reload");
+            return List.of("status", "unlink", "emergency", "setchat", "chats", "donor", "testnews", "reload");
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("setchat")) {
             return List.of("bot", "news", "bridge");
         }
-        if (args.length == 2 && (args[0].equalsIgnoreCase("status")
-                || args[0].equalsIgnoreCase("unlink"))) {
+        if (args.length == 2 && args[0].equalsIgnoreCase("donor")) {
+            return List.of("check", "grant", "revoke", "list");
+        }
+        if ((args.length == 2 && (args[0].equalsIgnoreCase("status")
+                || args[0].equalsIgnoreCase("unlink")))
+                || (args.length == 3 && args[0].equalsIgnoreCase("donor")
+                        && !args[1].equalsIgnoreCase("list"))) {
             for (Player player : org.bukkit.Bukkit.getOnlinePlayers()) out.add(player.getName());
         }
         return out;

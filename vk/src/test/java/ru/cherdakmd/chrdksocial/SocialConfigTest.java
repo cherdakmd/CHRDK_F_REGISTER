@@ -33,6 +33,34 @@ class SocialConfigTest {
         assertTrue(cfg.newsEnabled());
         assertFalse(cfg.maxApiConfigured(), "токен бота не задан в репозитории");
         assertFalse(cfg.webhookConfigured(), "нет публичного URL и секрета");
+        assertEquals(14, cfg.newcomerGraceDays());
+        assertTrue(cfg.donateEnabled());
+        assertEquals(SocialAccessPolicy.MODE_ANY_RANK, cfg.donateMode());
+        assertTrue(cfg.donateProductIds().isEmpty());
+        assertFalse(cfg.donatePermanent(), "по умолчанию доступ привязан к активной покупке");
+        assertEquals("https://chrdk.trademc.org/", cfg.donateUrl());
+        assertTrue(cfg.donateActive());
+    }
+
+    @Test
+    void donateModeIsFailClosedAndProductIdsAreSanitized() {
+        YamlConfiguration yaml = new YamlConfiguration();
+        yaml.set("social.newcomer-grace-days", 999);
+        yaml.set("social.donate-access.mode", "unknown");
+        yaml.set("social.donate-access.product-ids",
+                java.util.List.of("social-pass", "social-pass", "bad id with spaces", "rank-keeper"));
+        yaml.set("social.donate-access.url", "http://plain.example.ru/donate");
+        SocialConfig cfg = SocialConfig.parse(yaml);
+        assertEquals(90, cfg.newcomerGraceDays());
+        assertEquals(SocialAccessPolicy.MODE_OFF, cfg.donateMode());
+        assertFalse(cfg.donateActive());
+        assertEquals(java.util.List.of("social-pass", "rank-keeper"), cfg.donateProductIds());
+        assertEquals("https://chrdk.trademc.org/", cfg.donateUrl(),
+                "только HTTPS-адрес попадает в кликабельное сообщение");
+        yaml.set("social.donate-access.mode", "product-list");
+        assertTrue(SocialConfig.parse(yaml).donateActive());
+        yaml.set("social.donate-access.enabled", false);
+        assertFalse(SocialConfig.parse(yaml).donateActive());
     }
 
     @Test

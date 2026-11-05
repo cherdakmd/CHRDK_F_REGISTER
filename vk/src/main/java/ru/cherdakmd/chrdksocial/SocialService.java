@@ -16,6 +16,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -39,6 +42,12 @@ public final class SocialService {
 
     public static final String PROVIDER_VK = "vk";
     public static final String PROVIDER_MAX = "max";
+    private static final long DONOR_CACHE_MILLIS = 60_000L;
+    private static final DateTimeFormatter DEADLINE_FORMAT =
+            DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+    private static final ZoneId MOSCOW = ZoneId.of("Europe/Moscow");
+
+    private record DonorCheck(boolean allowed, long checkedAt) { }
 
     private final VkPlugin plugin;
     private volatile SocialConfig config;
@@ -46,6 +55,8 @@ public final class SocialService {
     private final SocialLinkCodeManager codes = new SocialLinkCodeManager();
     private final SocialAudit audit;
     private final Set<String> pending = ConcurrentHashMap.newKeySet();
+    /** Проверка покупки дёргает ядро; isFrozen вызывается на каждый PlayerMoveEvent. */
+    private final ConcurrentHashMap<String, DonorCheck> donorCache = new ConcurrentHashMap<>();
     private final ExecutorService newsExecutor;
     private final HttpClient newsClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
@@ -94,7 +105,8 @@ public final class SocialService {
 
     public void sendFrozenNotice(Player player, String code) {
         if (player == null || !player.isOnline()) return;
-        plugin.messages().send(player, "social.command-blocked", "code", code);
+        plugin.messages().send(player, "social.command-blocked",
+                "code", code, "url", config.donateUrl());
     }
 
     public SocialLinkStore store() {
@@ -126,11 +138,14 @@ public final class SocialService {
         plugin.getLogger().info("[CHRDK_SOCIAL] Обязательная привязка "
                 + (config.mandatoryActive() ? "включена" : "выключена")
                 + "; привязок: " + store.linkCount()
-                + "; grace: " + config.graceDays() + " дн.");
+                + "; grace: " + config.graceDays() + " дн. общий + "
+                + config.newcomerGraceDays() + " дн. личный"
+                + "; доступ по донату: " + (config.donateActive() ? config.donateMode() : "выключен"));
     }
 
     public void applyConfig(SocialConfig next) {
         this.config = next;
+        donorCache.clear();
     }
 
     public void shutdown() {
@@ -153,43 +168,170 @@ public final class SocialService {
         return now < store.emergencyUntil();
     }
 
-    public boolean graceActive(long now) {
-        long deadline = store.rolloutStartedAt() + config.graceMillis();
-        return now < deadline;
+    /** Общий дедлайн и личный срок от первого входа; действует более поздняя дата. */
+    public long graceDeadline(String playerName, long now) {
+        return SocialAccessPolicy.graceDeadline(store.rolloutStartedAt(),
+                store.firstSeenAt(playerName), config.graceDays(), config.newcomerGraceDays(), now);
     }
 
-    /** Заморозка действует только после grace и только для не-привязанных не-staff игроков. */
+    /** Глобальная часть переходного периода (для отчётов и обратной совместимости). */
+    public boolean graceActive(long now) {
+        return SocialAccessPolicy.graceActive(
+                store.rolloutStartedAt() + config.graceMillis(), now);
+    }
+
+    public boolean graceActive(Player player, long now) {
+        if (player == null) return graceActive(now);
+        return SocialAccessPolicy.graceActive(graceDeadline(player.getName(), now), now);
+    }
+
+    /**
+     * Заморозка действует только после grace и только для не-привязанных не-staff
+     * игроков без подтверждённой оплаты на сайте.
+     */
     public boolean isFrozen(Player player) {
         if (player == null || !config.mandatoryActive()) return false;
         if (staffBypass(player)) return false;
         if (store.loadFailed()) return !config.failOpenOnCorruption();
         long now = System.currentTimeMillis();
-        if (emergencyActive(now) || graceActive(now)) return false;
-        return !store.isLinked(player.getName());
+        if (emergencyActive(now)) return false;
+        if (store.isLinked(player.getName())) return false;
+        if (graceActive(player, now)) return false;
+        return !donateAccess(player.getName());
     }
 
     public boolean needsInvitation(Player player) {
         if (player == null || !config.enabled() || store.isLinked(player.getName())) return false;
-        return staffBypass(player) || graceActive(System.currentTimeMillis())
-                || emergencyActive(System.currentTimeMillis()) || isFrozen(player);
+        long now = System.currentTimeMillis();
+        return staffBypass(player) || graceActive(player, now) || emergencyActive(now)
+                || isFrozen(player);
+    }
+
+    /* ------------------- доступ через подтверждённый донат на сайте ------------------- */
+
+    /**
+     * Платный доступ читает <em>уже подтверждённую</em> покупку из ядра
+     * ({@code data.json}): {@code hasActivePass} или {@code hasEntitlement}.
+     * Слова игрока в чате и «ручной ввод суммы» нигде не принимаются, а при
+     * отсутствии Core API результат — отказ, а не обход обязательной привязки.
+     */
+    public boolean donateAccess(String playerName) {
+        if (playerName == null || playerName.isBlank()) return false;
+        if (store.donorGranted(playerName)) return true;
+        SocialConfig cfg = config;
+        if (!cfg.donateActive()) return false;
+        String key = SocialLinkCodeManager.canonical(playerName);
+        long now = System.currentTimeMillis();
+        DonorCheck cached = donorCache.get(key);
+        if (cached != null && now - cached.checkedAt() < DONOR_CACHE_MILLIS) return cached.allowed();
+        boolean allowed = checkDonate(playerName, cfg);
+        donorCache.put(key, new DonorCheck(allowed, now));
+        return allowed;
+    }
+
+    private boolean checkDonate(String playerName, SocialConfig cfg) {
+        ChrdkRegisterApi api = plugin.coreApi();
+        if (api == null) {
+            plugin.getLogger().fine("[CHRDK_SOCIAL] Core API недоступен — платный доступ не подтверждён.");
+            return false;
+        }
+        try {
+            boolean rank = SocialAccessPolicy.rankAllowed(cfg.donateMode())
+                    && api.hasActivePass(playerName);
+            boolean product = false;
+            if (!rank && SocialAccessPolicy.productsAllowed(cfg.donateMode())) {
+                for (String id : cfg.donateProductIds()) {
+                    if (api.hasEntitlement(playerName, id)) {
+                        product = true;
+                        break;
+                    }
+                }
+            }
+            boolean allowed = rank || product;
+            if (allowed && cfg.donatePermanent() && !store.donorGranted(playerName)) {
+                String source = rank ? "rank" : "product";
+                store.grantDonor(playerName, source, System.currentTimeMillis());
+                audit.write("social.donate-access", playerName, "shop",
+                        "source=" + source + ", permanent=true");
+            }
+            return allowed;
+        } catch (RuntimeException failure) {
+            plugin.getLogger().log(Level.FINE,
+                    "[CHRDK_SOCIAL] Не удалось проверить покупку для " + playerName, failure);
+            return false;
+        }
+    }
+
+    /** Ручная выдача доступа администратором: только с причиной и записью в аудит. */
+    public String donorGrant(String playerName, String reason, String actor) {
+        if (playerName == null || playerName.isBlank() || reason == null || reason.isBlank()) {
+            return "Нужны ник и причина.";
+        }
+        store.grantDonor(playerName, "manual:" + reason.trim(), System.currentTimeMillis());
+        donorCache.remove(SocialLinkCodeManager.canonical(playerName));
+        audit.write("social.donate-grant", playerName, "shop", "actor=" + actor + ", reason=" + reason.trim());
+        return "Доступ без привязки выдан " + playerName + ".";
+    }
+
+    public String donorRevoke(String playerName, String actor) {
+        if (!store.revokeDonor(playerName)) return "У " + playerName + " нет доната-доступа.";
+        donorCache.put(SocialLinkCodeManager.canonical(playerName),
+                new DonorCheck(false, System.currentTimeMillis()));
+        audit.write("social.donate-revoke", playerName, "shop", "actor=" + actor);
+        return "Доступ по донату снят у " + playerName + ".";
+    }
+
+    public String donorStatus(String playerName) {
+        long now = System.currentTimeMillis();
+        return playerName + ": донат-доступ=" + (donateAccess(playerName) ? "да" : "нет")
+                + ", запись=" + (store.donorGranted(playerName)
+                        ? store.donorSource(playerName) : "нет")
+                + ", режим=" + config.donateMode()
+                + ", grace до " + formatDeadline(graceDeadline(playerName, now));
+    }
+
+    public List<String> donors() {
+        return store.donors();
+    }
+
+    private static String formatDeadline(long millis) {
+        if (millis <= 0L) return "—";
+        return Instant.ofEpochMilli(millis).atZone(MOSCOW).format(DEADLINE_FORMAT);
     }
 
     public void onJoin(Player player) {
         if (!config.enabled()) return;
         String key = SocialLinkCodeManager.canonical(player.getName());
-        if (!store.isLinked(player.getName()) && !staffBypass(player)) {
-            pending.add(key);
-            String code = issueCode(player);
-            plugin.messages().send(player, "social.gate-header");
-            plugin.messages().send(player, "social.gate-code",
-                    "code", code, "minutes", Math.max(1, config.codeTtlSeconds() / 60),
-                    "vk", config.vkCommunityUrl(), "max", config.maxBotUrl());
-            plugin.messages().send(player, "social.gate-howto");
-            if (!isFrozen(player)) plugin.messages().send(player, "social.gate-grace");
-            audit.write("social.join-pending", player.getName(), "", "выдан код входа");
-        } else {
+        long now = System.currentTimeMillis();
+        // Один раз фиксируем первый вход: от него считается личный переходный срок.
+        store.recordFirstSeen(player.getName(), now);
+        if (store.isLinked(player.getName()) || staffBypass(player)) {
             pending.remove(key);
+            return;
         }
+        if (donateAccess(player.getName())) {
+            pending.remove(key);
+            plugin.messages().send(player, "social.donate-welcome",
+                    "url", config.donateUrl());
+            audit.write("social.join-donor", player.getName(), "shop",
+                    "доступ по подтверждённой оплате, привязка добровольна");
+            return;
+        }
+        pending.add(key);
+        String code = issueCode(player);
+        plugin.messages().send(player, "social.gate-header");
+        plugin.messages().send(player, "social.gate-code",
+                "code", code, "minutes", Math.max(1, config.codeTtlSeconds() / 60),
+                "vk", config.vkCommunityUrl(), "max", config.maxBotUrl());
+        plugin.messages().send(player, "social.gate-howto");
+        if (config.donateActive()) {
+            plugin.messages().send(player, "social.gate-donate", "url", config.donateUrl());
+        }
+        if (!isFrozen(player)) {
+            plugin.messages().send(player, "social.gate-grace",
+                    "date", formatDeadline(graceDeadline(player.getName(), now)));
+        }
+        audit.write("social.join-pending", player.getName(), "", "выдан код входа");
     }
 
     public void onQuit(Player player) {
@@ -317,9 +459,12 @@ public final class SocialService {
         long now = System.currentTimeMillis();
         return "Привязка: " + state
                 + " | заморозка: " + (isFrozen(Bukkit.getPlayerExact(playerName)) ? "да" : "нет")
-                + " | grace: " + (graceActive(now) ? "активен" : "истёк")
-                + " | аварийный режим до: " + store.emergencyUntil()
-                + " | всего привязок: " + store.linkCount();
+                + " | донат-доступ: " + (donateAccess(playerName) ? "да" : "нет")
+                + " | grace до: " + formatDeadline(graceDeadline(playerName, now))
+                + " | аварийный режим: " + (emergencyActive(now)
+                        ? "до " + formatDeadline(store.emergencyUntil()) : "выключен")
+                + " | всего привязок: " + store.linkCount()
+                + " | донатных доступов: " + store.donorCount();
     }
 
     public String unlink(String playerName, String actor) {

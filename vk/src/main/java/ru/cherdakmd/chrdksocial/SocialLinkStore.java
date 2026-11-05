@@ -27,7 +27,7 @@ import java.util.logging.Logger;
  */
 public final class SocialLinkStore {
 
-    public static final int SCHEMA = 1;
+    public static final int SCHEMA = 2;
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private static final Gson CANONICAL = new GsonBuilder().disableHtmlEscaping().create();
 
@@ -51,6 +51,10 @@ public final class SocialLinkStore {
         Map<String, String> owners = new LinkedHashMap<>();
         Map<String, String> rewarded = new LinkedHashMap<>();
         Map<String, Long> discoveredChats = new LinkedHashMap<>();
+        /** Первый вход после установки плагина: нужен для личного переходного срока. */
+        Map<String, Long> firstSeen = new LinkedHashMap<>();
+        /** Подтверждённый донат с бессрочным доступом: ник → «момент|источник». */
+        Map<String, String> donors = new LinkedHashMap<>();
         String maxChatId = "0";
         String maxNewsChatId = "0";
         String maxBridgeChatId = "0";
@@ -106,6 +110,8 @@ public final class SocialLinkStore {
             if (loaded.owners == null) loaded.owners = new LinkedHashMap<>();
             if (loaded.rewarded == null) loaded.rewarded = new LinkedHashMap<>();
             if (loaded.discoveredChats == null) loaded.discoveredChats = new LinkedHashMap<>();
+            if (loaded.firstSeen == null) loaded.firstSeen = new LinkedHashMap<>();
+            if (loaded.donors == null) loaded.donors = new LinkedHashMap<>();
             if (loaded.rolloutStartedAt <= 0L) loaded.rolloutStartedAt = System.currentTimeMillis();
             if (loaded.lastNewsTag == null) loaded.lastNewsTag = "";
             loaded.schema = SCHEMA;
@@ -284,6 +290,55 @@ public final class SocialLinkStore {
         recordChat(value, System.currentTimeMillis());
         dirty = true;
         saveNow();
+    }
+
+    /* --------------- гибридный grace и доступ через подтверждённый донат --------------- */
+
+    /** Момент первого входа после установки; {@code 0} — игрок ещё не заходил. */
+    public synchronized long firstSeenAt(String playerName) {
+        Long value = doc.firstSeen.get(canonical(playerName));
+        return value == null ? 0L : value;
+    }
+
+    /** Фиксируется один раз и не переписывается при следующих входах. */
+    public synchronized void recordFirstSeen(String playerName, long now) {
+        String key = canonical(playerName);
+        if (key.isEmpty()) return;
+        if (doc.firstSeen.putIfAbsent(key, Math.max(1L, now)) == null) {
+            dirty = true;
+            saveNow();
+        }
+    }
+
+    public synchronized boolean donorGranted(String playerName) {
+        return doc.donors.containsKey(canonical(playerName));
+    }
+
+    public synchronized String donorSource(String playerName) {
+        return doc.donors.getOrDefault(canonical(playerName), "");
+    }
+
+    public synchronized void grantDonor(String playerName, String source, long now) {
+        String key = canonical(playerName);
+        if (key.isEmpty()) return;
+        doc.donors.put(key, Math.max(1L, now) + "|" + (source == null ? "" : source.trim()));
+        dirty = true;
+        saveNow();
+    }
+
+    public synchronized boolean revokeDonor(String playerName) {
+        if (doc.donors.remove(canonical(playerName)) == null) return false;
+        dirty = true;
+        saveNow();
+        return true;
+    }
+
+    public synchronized List<String> donors() {
+        return List.copyOf(doc.donors.keySet());
+    }
+
+    public synchronized int donorCount() {
+        return doc.donors.size();
     }
 
     public synchronized int linkCount() {
