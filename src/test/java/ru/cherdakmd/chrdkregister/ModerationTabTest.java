@@ -46,6 +46,10 @@ class ModerationTabTest {
         var disabled = new ModerationService(null, ledger, null, off);
         var service = new ModerationService(null, ledger, null, on);
         assertEquals("", disabled.warnsPublicText(), "флаг выключен — кадра нет");
+        var globallyOff = new ModerationConfig(false, 5, "", true, true, 3, 500,
+                java.util.List.of());
+        assertEquals("", new ModerationService(null, ledger, null, globallyOff)
+                        .warnsPublicText(), "moderation.enabled=false глушит и публичный кадр");
         String frame = service.warnsPublicText();
         assertEquals("⚠ Ivan 3/5, Petr 2/5", frame);
         assertFalse(frame.contains("секретная"), "причины не уходят в TAB");

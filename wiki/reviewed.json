@@ -101,9 +101,9 @@
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "moderation": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
+      "reason": "Уточнено: при moderation.enabled=false публичный кадр варнов в TAB тоже пуст; добавлен JVM-тест на этот случай",
       "sources": "0cd10f4e15455379df0feedeee068be96c630e9deb070f82c8641677a5d040c9",
-      "text": "f86e923c754c8d75a3ce14fae09a027534776b7979ed28a23d23f109388a28d9"
+      "text": "255b8cacb80c9ea7b1236f73feaa226a121bb9b58cff81fef2d46b65abae4073"
     },
     "orders": {
       "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
