@@ -35,8 +35,8 @@ class SocialConfigTest {
         assertFalse(cfg.webhookConfigured(), "нет публичного URL и секрета");
         assertEquals(14, cfg.newcomerGraceDays());
         assertTrue(cfg.donateEnabled());
-        assertEquals(SocialAccessPolicy.MODE_ANY_RANK, cfg.donateMode());
-        assertTrue(cfg.donateProductIds().isEmpty());
+        assertEquals(SocialAccessPolicy.MODE_PRODUCT_LIST, cfg.donateMode());
+        assertEquals(java.util.List.of("social-access"), cfg.donateProductIds());
         assertFalse(cfg.donatePermanent(), "по умолчанию доступ привязан к активной покупке");
         assertEquals("https://chrdk.trademc.org/", cfg.donateUrl());
         assertTrue(cfg.donateActive());

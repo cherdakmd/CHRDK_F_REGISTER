@@ -86,6 +86,7 @@ class AddonRetirement271Test {
         assertTrue(changes.contains("shop.products"), "278 добавляет три косметических SKU");
         var retained = fresh.getMapList("shop.products").stream()
                 .filter(product -> !PremiumPresentationMigration.PRODUCTS.contains(product.get("id")))
+                .filter(product -> !PresentationMigration.LATE_STOCK_PRODUCTS.contains(String.valueOf(product.get("id"))))
                 .map(product -> { var terms = new LinkedHashMap<>(product); terms.remove("description"); return terms; }).toList();
         var previous = old.getMapList("shop.products").stream()
                 .map(product -> { var terms = new LinkedHashMap<>(product); terms.remove("description"); return terms; }).toList();

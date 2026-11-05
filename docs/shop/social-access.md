@@ -53,6 +53,10 @@ pass shopbuy %username% social-access
       trademc-export: false
 ```
 
+Если `shop.products` на сервере правился вручную, миграция презентационного
+конфига намеренно не перезаписывает чужие цены — в этом случае добавьте блок
+товара в `plugins/CHRDK_Core/config.yml` вручную.
+
 `trademc-export: false` означает, что товар **не попадает в исторический комплект
 из 26 карточек** `docs/trademc/`: у него своя карточка здесь. Тот же флаг уже
 используют клановые лицензии. Экспорт TradeMC (`tools/trademc/build.py`)

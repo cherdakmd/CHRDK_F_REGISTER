@@ -26,6 +26,12 @@ final class PresentationMigration {
             "auto-messages.messages", "auto-messages.prefix", "tablist.header", "tablist.footer",
             "tablist.player-name-format", "shop.products");
 
+    /**
+     * Новые стоковые SKU после четырёх клановых лицензий. Миграция может
+     * добавить их к прежнему каталогу, но неизвестный товар владельца — нет.
+     */
+    static final Set<String> LATE_STOCK_PRODUCTS = Set.of("social-access");
+
     /** Настройки меню, которые должны обновиться вместе с его пунктами. */
     static final List<String> MENU_COMPANIONS = List.of("server-menu.title",
             "server-menu.category-title", "server-menu.back-slot", "server-menu.back-icon",
@@ -95,17 +101,28 @@ final class PresentationMigration {
     /** Для каталога допустимы только отличия описаний при неизменных условиях каждого SKU. */
     private static boolean sameCatalogTerms(Object before, Object after) {
         if (!(before instanceof List<?> previous) || !(after instanceof List<?> current)) return false;
-        // 278 добавляет ровно три косметических SKU. Условия всех прежних товаров
-        // должны совпасть; это не разрешение заменять владельческие цены или наборы.
-        if (current.size() == previous.size() + PremiumPresentationMigration.PRODUCTS.size()
-                && previous.stream().noneMatch(value -> value instanceof Map<?, ?> item
-                    && PremiumPresentationMigration.PRODUCTS.contains(item.get("id")))) {
-            current = current.stream().filter(value -> !(value instanceof Map<?, ?> item)
-                    || !PremiumPresentationMigration.PRODUCTS.contains(item.get("id"))).toList();
+        // Допустимы только известные стоковые добавления (четыре клановые лицензии
+        // и товар social-access). Если владелец завёл свой SKU или правил цены,
+        // каталог целиком остаётся его редакцией и миграция его не трогает.
+        Set<Object> previousIds = new HashSet<>();
+        for (Object value : previous) {
+            if (!(value instanceof Map<?, ?> item)) return false;
+            previousIds.add(item.get("id"));
         }
-        if (previous.size() != current.size()) return false;
+        List<Object> retained = new ArrayList<>();
+        for (Object value : current) {
+            if (!(value instanceof Map<?, ?> item)) return false;
+            Object id = item.get("id");
+            if (previousIds.contains(id)) {
+                retained.add(value);
+            } else if (!PremiumPresentationMigration.PRODUCTS.contains(String.valueOf(id))
+                    && !LATE_STOCK_PRODUCTS.contains(String.valueOf(id))) {
+                return false;
+            }
+        }
+        if (previous.size() != retained.size()) return false;
         for (int i = 0; i < previous.size(); i++) {
-            if (!(previous.get(i) instanceof Map<?, ?> old) || !(current.get(i) instanceof Map<?, ?> fresh))
+            if (!(previous.get(i) instanceof Map<?, ?> old) || !(retained.get(i) instanceof Map<?, ?> fresh))
                 return false;
             var left = new HashMap<Object, Object>(old);
             var right = new HashMap<Object, Object>(fresh);
