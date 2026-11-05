@@ -39,7 +39,7 @@ class StorefrontTest(unittest.TestCase):
         self.assertIn('порог ремесленных прибавок +10', founder['description'])
         _, archived = kit.snapshot_catalog()
         old = next(p for p in archived if p['id'] == 'rank-founder')
-        # Комплект пересобран под 1.4.288: подмена формулировки из снимка
+        # Комплект пересобран под 1.4.289: подмена формулировки из снимка
         # 1.4.247 больше не применяется, карточка берёт живое описание.
         self.assertNotIn('потолок профессии +10', old['description'])
         self.assertEqual(founder, old)
