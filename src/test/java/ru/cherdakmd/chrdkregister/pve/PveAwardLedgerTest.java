@@ -90,6 +90,28 @@ class PveAwardLedgerTest {
     }
 
     @Test
+    void trimEvictsLeastRecentlyUsedInsteadOfAnArbitraryKey() {
+        PveAwardLedger ledger = new PveAwardLedger();
+        UUID keep = UUID.randomUUID();
+        // Заполняем реестр ровно до потолка; keep попадает первым.
+        for (int i = 0; i < 8_192; i++) {
+            UUID who = i == 0 ? keep : UUID.randomUUID();
+            assertTrue(ledger.register(who,
+                    receipt(UUID.randomUUID(), PveRecipient.CLASS_XP, DAY)));
+        }
+        assertEquals(8_192, ledger.players());
+        // Освежаем keep: теперь он самый недавно использованный.
+        assertTrue(ledger.register(keep,
+                receipt(UUID.randomUUID(), PveRecipient.HUNT_COINS, DAY)));
+        // 8193-й игрок вытесняет давно не активного, а не случайный ключ HashMap.
+        assertTrue(ledger.register(UUID.randomUUID(),
+                receipt(UUID.randomUUID(), PveRecipient.CLASS_XP, DAY)));
+        assertEquals(8_192, ledger.players());
+        assertEquals(2, ledger.receipts(keep),
+                "недавно активный игрок не должен терять квитанции при вытеснении");
+    }
+
+    @Test
     void nullArgumentsAndClearAreSafe() {
         PveAwardLedger ledger = new PveAwardLedger();
         assertFalse(ledger.register(null, receipt(UUID.randomUUID(), PveRecipient.CLASS_XP, DAY)));

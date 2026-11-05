@@ -82,6 +82,7 @@ final class PerkTreeGui implements Listener {
         Holder holder = new Holder(player.getUniqueId());
         Inventory inventory = Bukkit.createInventory(holder, 54,
                 plugin.messages().get("perktree-title", "domain", domain.id()));
+        holder.inventory = inventory;
         Map<Integer, String> slots = new HashMap<>();
         int index = 0;
         for (PerkNode node : definition.nodes()) {
@@ -196,9 +197,11 @@ final class PerkTreeGui implements Listener {
         }
     }
 
-    /** Открытые меню не держим после выхода игрока. */
+    /** Открытые меню и неподтверждённый сброс не держим после выхода игрока. */
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        views.remove(event.getPlayer().getUniqueId());
+        UUID player = event.getPlayer().getUniqueId();
+        views.remove(player);
+        trees.forget(player);
     }
 }

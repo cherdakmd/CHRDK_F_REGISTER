@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.UUID;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 /**
  * Журнал операций с деревьями перков: {@code unlock}, {@code select},
@@ -15,9 +16,12 @@ import java.util.logging.Logger;
  *
  * <p>Формат — JSONL в {@code audit/perk-trees.jsonl}, одна строка на действие.
  * Запись через {@code APPEND}, без переписывания истории. Ошибка ввода-вывода
- * не роняет игровой поток: она логируется, а операция деревьев продолжается.
- * Размер журнала ограничен числом строк, после чего новые записи не пишутся
- * до ротации администратором — бесконечного файла нет.</p>
+ * не роняет игровой поток: она логируется, а операция деревьев продолжается.</p>
+ *
+ * <p>Потолок строк считается от <b>уже существующего</b> файла, иначе каждый
+ * рестарт начинался бы с нуля и журнал рос бы бесконечно. Если прочитать файл
+ * не удалось, запись закрывается (fail-closed) до вмешательства
+ * администратора.</p>
  */
 final class PerkTreeAudit {
 
@@ -31,6 +35,22 @@ final class PerkTreeAudit {
     PerkTreeAudit(Path folder, Logger logger) {
         this.file = folder.resolve("audit").resolve(FILE);
         this.logger = logger;
+        this.lines = countLines();
+    }
+
+    private int countLines() {
+        if (!Files.isRegularFile(file)) {
+            return 0;
+        }
+        try (Stream<String> stream = Files.lines(file, StandardCharsets.UTF_8)) {
+            return (int) Math.min(MAX_LINES, stream.count());
+        } catch (IOException | RuntimeException error) {
+            if (logger != null) {
+                logger.warning("Аудит деревьев перков не прочитан, запись закрыта: "
+                        + error.getMessage());
+            }
+            return MAX_LINES;
+        }
     }
 
     synchronized void record(String action, UUID player, String domainId,
@@ -65,6 +85,7 @@ final class PerkTreeAudit {
         return raw.replace("\\", "\\\\")
                 .replace("\"", "\\\"")
                 .replace("\n", "\\n")
-                .replace("\r", "\\r");
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
     }
 }

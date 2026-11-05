@@ -144,9 +144,6 @@ final class PveProgressListener implements Listener {
         // без отдельного листенера на каждый удар. Проверки происхождения выше
         // не повторяются, а фиксируются в снимке для единого валидатора.
         String day=dayKey();
-        // Классовый XP теперь тоже проходит через общий реестр квитанций.
-        PveAwardLedger.shared().register(hit.player(),
-                PveAwardContract.receipt(mob.getUniqueId(),PveRecipient.CLASS_XP,day));
         PveDeathEvidence evidence=new PveDeathEvidence(
                 hit.player(),mob.getUniqueId(),System.currentTimeMillis(),day,
                 plugin.coreApi()!=null && plugin.coreApi().isAuthenticated(p),
@@ -155,6 +152,11 @@ final class PveProgressListener implements Listener {
                 MobRewardPolicy.temporary(mob),false,inPvp(hit.player()),
                 plugin.ready(p) && plugin.config().enabled(),hit.damage(),max);
         PveVerdict verdict=PveAwardContract.verify(evidence);
+        // Реестр пополняется только по подтверждённому вердикту. Раньше
+        // CLASS_XP регистрировался до verify и расходовал общий дневной бюджет
+        // даже при отказе (например, игрок не авторизован в Core).
+        if(verdict.allowed()) PveAwardLedger.shared().register(hit.player(),
+                PveAwardContract.receipt(mob.getUniqueId(),PveRecipient.CLASS_XP,day));
         // SKILL_XP получает квитанцию из того же подтверждённого контекста:
         // отдельного валидатора, death-листенера и второго XP-начисления нет.
         // Численный опыт по-прежнему начисляется в skills на событиях урона.

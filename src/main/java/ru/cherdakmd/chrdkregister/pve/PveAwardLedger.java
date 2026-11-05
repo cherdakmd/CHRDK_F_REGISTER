@@ -2,6 +2,7 @@ package ru.cherdakmd.chrdkregister.pve;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -32,7 +33,8 @@ public final class PveAwardLedger {
         return SHARED;
     }
 
-    private final Map<UUID, Set<String>> keys = new HashMap<>();
+    /** access-order: при переполнении вытесняется давно не активный игрок, а не случайный ключ. */
+    private final Map<UUID, Set<String>> keys = new LinkedHashMap<>(16, 0.75f, true);
     private final Map<UUID, Integer> spent = new HashMap<>();
     private String currentDay;
 
@@ -71,6 +73,7 @@ public final class PveAwardLedger {
         spent.clear();
     }
 
+    /** LRU: iterator access-order карты начинается с наименее недавно использованного. */
     private void trim() {
         while (keys.size() > MAX_PLAYERS) {
             UUID oldest = keys.keySet().iterator().next();
@@ -86,6 +89,11 @@ public final class PveAwardLedger {
     public synchronized int receipts(UUID playerId) {
         Set<String> mine = keys.get(playerId);
         return mine == null ? 0 : mine.size();
+    }
+
+    /** Для тестов и диагностики: сколько игроков сейчас в реестре. */
+    public synchronized int players() {
+        return keys.size();
     }
 
     public synchronized String currentDay() {

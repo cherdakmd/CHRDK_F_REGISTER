@@ -25,7 +25,7 @@ final class PerkTreeService {
     record Result(boolean ok, String reason, PerkTreeState state) {
     }
 
-    private record Pending(TreeDomain domain, String token, long expiresAt) {
+    private record Pending(TreeDomain domain, int classLevel, String token, long expiresAt) {
     }
 
     private final PerkTreeStore store;
@@ -88,21 +88,25 @@ final class PerkTreeService {
 
     /** Возвращает токен в {@code reason}; состояние при этом не меняется. */
     Result requestReset(UUID player, TreeDomain domain, int classLevel, long now) {
+        purgeExpired(now);
         if (state(player, domain, classLevel) == null) {
             return fail(null, "дерево недоступно");
         }
         String token = UUID.randomUUID().toString().substring(0, 8);
-        pending.put(player, new Pending(domain, token, now + RESET_TTL_MILLIS));
+        pending.put(player, new Pending(domain, classLevel, token, now + RESET_TTL_MILLIS));
         return new Result(true, token, state(player, domain, classLevel));
     }
 
     Result confirmReset(UUID player, String token, long now) {
+        purgeExpired(now);
         Pending request = pending.remove(player);
         if (request == null || token == null || !token.equals(request.token())
                 || now > request.expiresAt()) {
             return fail(null, "подтверждение недействительно");
         }
-        PerkTreeState before = store.state(player, request.domain());
+        // state(), а не store.state(): у нового игрока состояние ещё не записано
+        // на диск, и сброс такого дерева должен проходить, а не падать.
+        PerkTreeState before = state(player, request.domain(), request.classLevel());
         if (before == null) {
             return fail(null, "дерево недоступно");
         }
@@ -113,6 +117,21 @@ final class PerkTreeService {
         audit.record("reset", player, request.domain().id(),
                 refundPowder, refundTokens, token);
         return new Result(true, "ok", after);
+    }
+
+    /** Одноразовые токены не должны копиться в памяти до следующего запроса. */
+    private void purgeExpired(long now) {
+        pending.entrySet().removeIf(entry -> entry.getValue().expiresAt() < now);
+    }
+
+    /** Выход игрока закрывает его неподтверждённый запрос на сброс. */
+    void forget(UUID player) {
+        pending.remove(player);
+    }
+
+    /** Для тестов: сколько неподтверждённых запросов сейчас в памяти. */
+    int pendingCount() {
+        return pending.size();
     }
 
     private static Result fail(PerkTreeState state, String reason) {

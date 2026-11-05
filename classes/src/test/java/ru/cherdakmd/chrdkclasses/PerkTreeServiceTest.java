@@ -121,6 +121,39 @@ class PerkTreeServiceTest {
     }
 
     @Test
+    void resetOfAFreshTreeSucceedsWithoutSavedState() {
+        // Раньше confirmReset читал store.state() и падал: requestReset состояние
+        // не сохранял, поэтому сброс нетронутого дерева был невозможен.
+        PerkTreeService.Result request = service.requestReset(PLAYER, TreeDomain.COMBAT,
+                CLASS_LEVEL, 1_000L);
+        assertTrue(request.ok());
+        PerkTreeService.Result done = service.confirmReset(PLAYER, request.reason(), 1_100L);
+        assertTrue(done.ok(), done.reason());
+        assertEquals(50, done.state().level());
+        assertEquals(1, audit.lines(), "сброс без возврата тоже пишется в аудит");
+    }
+
+    @Test
+    void forgetClosesPendingReset() {
+        PerkTreeService.Result request = service.requestReset(PLAYER, TreeDomain.COMBAT,
+                CLASS_LEVEL, 1_000L);
+        assertEquals(1, service.pendingCount());
+        service.forget(PLAYER);
+        assertEquals(0, service.pendingCount());
+        assertFalse(service.confirmReset(PLAYER, request.reason(), 1_100L).ok());
+    }
+
+    @Test
+    void expiredRequestsDoNotAccumulate() {
+        String oldToken = service.requestReset(PLAYER, TreeDomain.COMBAT,
+                CLASS_LEVEL, 0L).reason();
+        long later = PerkTreeService.RESET_TTL_MILLIS + 1L;
+        service.requestReset(PLAYER, TreeDomain.COMBAT, CLASS_LEVEL, later);
+        assertEquals(1, service.pendingCount(), "просроченный запрос вычищен");
+        assertFalse(service.confirmReset(PLAYER, oldToken, later).ok());
+    }
+
+    @Test
     void externalDomainWithoutSavedStateIsUnavailable() {
         assertNull(service.state(PLAYER, TreeDomain.MINING, CLASS_LEVEL),
                 "MINING не получает уровень домена из класса");

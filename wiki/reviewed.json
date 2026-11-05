@@ -1,183 +1,183 @@
 {
   "pages": {
     "about": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "d4f1e2f8fbba6cb490b49c6cd8e076f208d841534762f4b1db0e18e49ba8cf27",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "de5ec690b0016d36d92268c8e2b474ab0c4623c183ba3f8f1ed9156ebe40e5de",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "9bccf106ddbb5db09ff4635595caeea5f547c6611f35b004d9fb94138a062efd",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "f25062fc0f0c7b9dc5d96b9aa6b5fe92bec08bc484c920d652841b2bc8bfe9b7",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "f7723254a2d0e095e4db9d2cd1d43976be8f0ce24ea47d7657484c98a1869686",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "28d86f165575a8aa6d73fe36c0821018c278791cdffdcfa81a13d33945648595",
       "text": "fcdffb1098428fac2bd42d1c4acb73bb9a024d1823d5398b8845bb2f415a506f"
     },
     "auction": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "9868dc3cd8522652b6fd100d4336eae22a633f87c64227fb14b15ce1d1841342",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "078c69ad7d917f47922510fe238621c790d61c0647daac508977a70bd3a80a76",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "001521b6ab5741b606570864e660358799164fdf94ddf3d0a63a806129f43e97",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "63a04bfb200d1aeedfbd7099cb04c30c7ca0388047f9ac4fb3b30a5fd8e5c3ab",
       "text": "f368077b5f1961a1982957afe3b8523b60c8330f3dfd1891003d01ea1c4fd6db"
     },
     "chat": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "d4f1e2f8fbba6cb490b49c6cd8e076f208d841534762f4b1db0e18e49ba8cf27",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "de5ec690b0016d36d92268c8e2b474ab0c4623c183ba3f8f1ed9156ebe40e5de",
       "text": "ca6c93fc33fca52eecc7d38744bc86f619ea0b6a7bcc2314b84ca6c5399d8a1c"
     },
     "claims": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "88f6c68de13210cbb4c7ee198213ce7bfe3d6bc7c41bfb2af780212e6e79a045",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "54804ef6bbb1b5959934b010b9dcf6ce2aa830c024c30d08de2b9692c3387ad4",
       "text": "bf1b24b85ecdaee84580c0d5ea4b9c1120b8dd072e38aa68b52e49fc2a0c472c"
     },
     "classes": {
-      "reason": "Защита внешних доменов деревьев: PerkTreeService.state возвращает null для MINING/EXPLORATION/HUNT без сохранённого состояния, добавлен 7-й JVM-тест. Логика наград, квитанции SKILL_XP, потолки, цены, тарифы и тексты действующих страниц не менялись.",
-      "sources": "1364e0fcc20bcc6e63c276d5e10a1e78cc5d08709d66920750c70109dd9ef808",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "4c89d0607c577290ff7157a3af91015e69f5842341cd768b141ca3af1dcae2b4",
       "text": "6f01ab8fae80096e18683538820f62e093784cdb5b79533f6a35e29ee3999d81"
     },
     "commands": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "5219c338bc2f5cebd8b95ddc63ea4358f0f9bde35e131979bf8ff0f5f99a55d7",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "cf5bcfe85d605bb7eaaa87ce243681c9459d9739ac3674630e60e97e87b1cf80",
       "text": "20dfb8a4a0c1cc8c4acb62a1d327fba6bb3f9a36925e2760a98e79d3c2938580"
     },
     "cosmetics": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "f75ab21968157c497e1bf1c61b45e6e65cef293aec43933f63c7b365ec5d6fbf",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "9dc4c0045a5a2caffbf7c3d4e632fd9a27847a11983e87475fdcc6e3edd46422",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "7977606442e2e5ad528e300d8d5b3989cf60c9a0c664d6352988112f80e63251",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "b9095ab6a133b43bf513f8e1959b2b531b0c4fc0b4cd8442c7db948badd2e393",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "economy": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "07f169b76544e871ce3f589080a74c4e4c6823876cdeec155f5b81df5b9a82ef",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "fa10924f11af9b48d84b8d688a10eee469ac7788b1e671844a79c861308613b7",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "42d37b176a3949911cf6c6f0733ea1cad3feb925833cf7b0afee6de755211968",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "9d9cc82acda31e10f2632a4306e4146aa98bfa27e9ed00e186df4e1e0af4f311",
       "text": "daba8068188cc03ac1ee0f787eb1322c4d33b14da0bdffe35c17b473843dc5aa"
     },
     "faq": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "f3ea5fda90a26c6c771a13ba19017e4abf0d64095432ba353b09598565bd8477",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "3f5bb150cdd56758bdf0ec8b942c2a0f14a04215488b29af0bece39625c79047",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "43495fc7607258004ea21cc66b59d383cb3176c3c03fb4d21a066778fea0806f",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "d2a3842416829e91abf5976488419ccea69069103431811a371cfde6349b82e4",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "88f6c68de13210cbb4c7ee198213ce7bfe3d6bc7c41bfb2af780212e6e79a045",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "54804ef6bbb1b5959934b010b9dcf6ce2aa830c024c30d08de2b9692c3387ad4",
       "text": "e166f2671aabcdf55ecf59d1465ddb19a36343f6d07983eb8b8821b3a63cce34"
     },
     "honors": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "d4f1e2f8fbba6cb490b49c6cd8e076f208d841534762f4b1db0e18e49ba8cf27",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "de5ec690b0016d36d92268c8e2b474ab0c4623c183ba3f8f1ed9156ebe40e5de",
       "text": "6bc29d5a2d7783845f8b3d9b085e85982faec5b3029d841092386f36b1d4c4b0"
     },
     "hunt": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "329a2625260cd076cf62152bb475256a527c54f5ea5b179b55fbeb63b0f18e08",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "a87704f118700b9906dcb4bc3f7ec1cda676281faafb31fcfab9c73ebd2aa6dc",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "6564ee2b1fcd926fdc2d95a184ea9ebfeb150235f07a72190741c0a7d0055dc7",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "d136d902d61942cbc960db0bf930ced4cb35f70bfa6b077c30de814fede09348",
       "text": "1417660c5793d86ddfab16c8b2203cbd2dd6b47a245ffa219c71898485b9c39f"
     },
     "menu": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "5811d95f3663d4196dba8e0cfa9ec51d0f7fc92736a2bf3de21f12a5cee037bf",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "61dbcb3a7fbac0cf5fa53a29c459cdf01799b8f476651f51e0bf8c72a84670ea",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "moderation": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "d4f1e2f8fbba6cb490b49c6cd8e076f208d841534762f4b1db0e18e49ba8cf27",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "de5ec690b0016d36d92268c8e2b474ab0c4623c183ba3f8f1ed9156ebe40e5de",
       "text": "1bc92e4c97e80aa6e773940d0b09a1682de13c5118c99da2fd77759b24213b54"
     },
     "orders": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "79656ef360251a5aa5a75b357004869c436234c6ebda3d460ebb44fa91d71222",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "7eab539034d9563e9dabf7f0b3bffe003f6bd3a3221bbe36135086c3a240c647",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "pets": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "1e8e4c444b7b93392aee958ab8eca22d13a9ab58d9df1bdd9c58d8958168cb45",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "bf0a0b3cb9e168afe6c691583e3c7e5fcf070156169afea8f7fb9ade6cdef264",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "95edffefff6b35c10866185e2fd7023ccadfa41c1db88ea1613a1d6b1215f98d",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "c338ce1e44e65e97d96bee20e1003d092b9725f4be253156ffa2af80c9c3b8dc",
       "text": "b66278597912053a64a4f192bf0cf63795a8720263d4283683b9458eec8f0bff"
     },
     "profile": {
-      "reason": "Защита внешних доменов деревьев: PerkTreeService.state возвращает null для MINING/EXPLORATION/HUNT без сохранённого состояния, добавлен 7-й JVM-тест. Логика наград, квитанции SKILL_XP, потолки, цены, тарифы и тексты действующих страниц не менялись.",
-      "sources": "d369c6b3afdb3e4178203d10963a17c853525980fa2ddf53912e0f26b6764901",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "bdf4b1afd1701e256bac0823399199b6ea12b885e4d47587fca88789e91a4e31",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "d33b725191fcc43e5f586eb98bbba47d612e73e6e299b70931ea747ac617de2a",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "04ee48d2240cb6f50ce15bff7203b3abde90dfe7aa780f4d2d6959400620f651",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "Защита внешних доменов деревьев: PerkTreeService.state возвращает null для MINING/EXPLORATION/HUNT без сохранённого состояния, добавлен 7-й JVM-тест. Логика наград, квитанции SKILL_XP, потолки, цены, тарифы и тексты действующих страниц не менялись.",
-      "sources": "e9512e3537669d0da9c70af3e4398e6d6a0b25992266097fd1e4cf1cbf044328",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "71e0b7639b94795dacead7aa5e81d0e1b64e19ed7902ce0ccca7ff4579c8a325",
       "text": "83fdfb3ddc5551875ec1f031676a80e3adb73e448dffae614c489441ea6f2c33"
     },
     "shop": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "6564ee2b1fcd926fdc2d95a184ea9ebfeb150235f07a72190741c0a7d0055dc7",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "d136d902d61942cbc960db0bf930ced4cb35f70bfa6b077c30de814fede09348",
       "text": "62ef5965cc091b6cbd7e6af58d21e58ba2e8dd65d9e704cec710768ff7a47099"
     },
     "skills": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "73e5ef0f8d39f6c61a071a9da68511f8e907013c5a914c7f1c914680919461ab",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "621422d44cb060510b7798dd5a87f888570442029b14eca64762826caca762eb",
       "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
     },
     "social-link": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "b449b8b71a1042cd933a46423c2500705d91df7d7eeedfbcda08f21e99bc309f",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "d38daef4f0eb23d6fd56b6057a4468d52bf2eeff48e7855dbbce597f9980bfc8",
       "text": "bf7a5ea20ec023b6530e20a3b8b2468ef892481b2fc9bc88d8cc27522db673da"
     },
     "start": {
-      "reason": "Защита внешних доменов деревьев: PerkTreeService.state возвращает null для MINING/EXPLORATION/HUNT без сохранённого состояния, добавлен 7-й JVM-тест. Логика наград, квитанции SKILL_XP, потолки, цены, тарифы и тексты действующих страниц не менялись.",
-      "sources": "7b8b391984606568d176a2c89d6f09b43dd5742b2c7d32bff25c4dab993921b1",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "b48725d08ee5cb5e8470e6d4aed42e225bc13d0abb1b29f1a4019f468d76174a",
       "text": "c2835fdf2d1945079115e6a252d472ce72ad9ad79f4ed47ad58e269b467d595f"
     },
     "teleports": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "15d592e93bbd056b58e459cd76d3b5412d677ef7c95c3531c4386f1a36592df9",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "0930494ad90c2f57cec1b3ce13dcf2d962aa5d2ea4cbb6bdb2503ad3be0b62ca",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "42d37b176a3949911cf6c6f0733ea1cad3feb925833cf7b0afee6de755211968",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "9d9cc82acda31e10f2632a4306e4146aa98bfa27e9ed00e186df4e1e0af4f311",
       "text": "a4d12cf48881e623761e39d44e627b95975f839a8737cfd76b9ee138317a4c07"
     },
     "titles": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "b94aa324efdaa332afb7c311fc81205b479426697eb303760a5b603eefc4e45c",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "52555272e3aa8874b0ec9be33ca03dc4639a53486d080b0f042a2ee169790933",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "6564ee2b1fcd926fdc2d95a184ea9ebfeb150235f07a72190741c0a7d0055dc7",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "d136d902d61942cbc960db0bf930ced4cb35f70bfa6b077c30de814fede09348",
       "text": "7e6c6c55f1b349c2b6b543ec19d1fe383bb1f72561e0fd3d32fb9e3811a5ac7a"
     },
     "vk": {
-      "reason": "Фаза 3: SKILL_XP через PveContributionContract поверх единого PveAwardContract без нового валидатора и листенера; PerkTreeService/GUI/perktree/аудит сброса в classes над тем же PerkTreeStore. Добавлены wiki/commands.md и wiki/classes.md, ключи messages.yml и команда plugin.yml. Численные XP, пыль, тарифы, донат, дроп, защита, урон, исторические блоки и действующие цены не менялись.",
-      "sources": "b449b8b71a1042cd933a46423c2500705d91df7d7eeedfbcda08f21e99bc309f",
+      "reason": "Фаза 3.1 аудит после зелёного CI: квитанции CLASS_XP/SKILL_XP только по положительному вердикту, сброс дерева без сохранённого состояния, очистка токенов сброса, счётчик аудита между рестартами, LRU-вытеснение в PveAwardLedger. Численные XP, пыль, цены, тарифы, донат и тексты действующих страниц не менялись.",
+      "sources": "d38daef4f0eb23d6fd56b6057a4468d52bf2eeff48e7855dbbce597f9980bfc8",
       "text": "837f09be941b49d216ee03340a1fb905538d70a9c0a4553dcebf6159c6e5cadf"
     }
   },

@@ -213,6 +213,12 @@ XP добавлен один вызов общего контракта `ru.cher
 пилотом `MINING` и пятью PvE-дефинициями, 11 PvE-QoL эффектов, мост к
 классам, общий контракт PvE-наград и начисление пыли из подтверждённой смерти
 моба, тесты, этот документ, `PVE-ROADMAP.md` и `PVE-AWARD-CONTRACT.md`.
+**Фаза 3.1 (аудит после зелёного CI):** `CLASS_XP`/`SKILL_XP` регистрируются
+только после `verify`; `confirmReset` работает и для дерева без сохранённого
+состояния; токены сброса вычищаются по сроку и при выходе игрока;
+`PerkTreeAudit` продолжает счётчик строк после рестарта; `PveAwardLedger`
+вытесняет LRU. Численные XP и пыль не менялись.
+
 **Дополнительно реализовано:** `SKILL_XP` в общем реестре через
 `PveContributionContract`, `PerkTreeService`, `PerkTreeGui`, `/perktree`,
 `PerkTreeAudit`, ключи `classes/messages.yml` и команда в `classes/plugin.yml`,
