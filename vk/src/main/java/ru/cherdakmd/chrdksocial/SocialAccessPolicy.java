@@ -65,4 +65,39 @@ public final class SocialAccessPolicy {
     public static boolean modeActive(String mode) {
         return !MODE_OFF.equals(mode);
     }
+
+    /* ------------------------- счётчики для TAB (plain text) ------------------------- */
+
+    /** Остаток срока товара: «27 дн.», «нет» или «∞» для бессрочного доступа. */
+    public static String accessCounter(long untilMillis, long now, boolean permanent) {
+        if (permanent) return "∞";
+        if (untilMillis <= now) return "нет";
+        return remainingDays(untilMillis, now) + " дн.";
+    }
+
+    /**
+     * Персональный статус привязки: «ВК» / «MAX», либо сколько дней осталось
+     * до обязательной привязки. Возвращает обычный текст — PAPI не понимает MiniMessage.
+     */
+    public static String linkCounter(String provider, long graceDeadline, long now,
+                                     boolean required, boolean emergency) {
+        if (provider != null && !provider.isBlank()) {
+            return switch (provider.trim().toLowerCase(Locale.ROOT)) {
+                case "vk" -> "ВК";
+                case "max" -> "MAX";
+                default -> "привязан";
+            };
+        }
+        if (!required) return "не требуется";
+        if (emergency) return "аварийный вход";
+        if (graceDeadline <= now) return "обязательна";
+        return "ещё " + remainingDays(graceDeadline, now) + " дн.";
+    }
+
+    /** Остаток дней с округлением вверх: 1 час — это ещё «1 дн.». */
+    public static int remainingDays(long untilMillis, long now) {
+        long left = untilMillis - now;
+        if (left <= 0L) return 0;
+        return (int) Math.max(1, (left + DAY_MILLIS - 1) / DAY_MILLIS);
+    }
 }

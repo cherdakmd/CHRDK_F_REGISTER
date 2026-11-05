@@ -336,3 +336,35 @@ GitHub Release, пропускает черновики и пререлизы, �
   живой платёж TradeMC, установка на игровой сервер и production MSPT не
   проверялись.
 - Исторические теги и заметки прошлых релизов не переписываются.
+
+---
+
+## 11. Товар «Вход без ВК и MAX» и счётчики TAB
+
+Игрок без мессенджеров покупает доступ на сайте: **150 ₽ / 30 дней**,
+`id: social-access`, команда выдачи для TradeMC
+`pass shopbuy %username% social-access` (без `/`, `%username%` подставляет
+панель). Карточка и картинка 1200×1200 —
+[docs/shop/social-access.md](../shop/social-access.md).
+
+Товар лежит в `plugins/CHRDK_Core/config.yml` → `shop.products` с
+`trademc-export: false`: он **не** переиздаёт исторический комплект из 26
+карточек `docs/trademc/`. В `plugins/CHRDK_VK/config.yml` включён
+`social.donate-access.mode: product-list` и
+`product-ids: [social-access]`, поэтому другие ранги и товары обхода не дают.
+
+В `tablist.footer` ядра добавлены два плейсхолдера, которые регистрирует этот
+же JAR через PlaceholderAPI:
+
+```yaml
+    - "<gray>Вход <aqua>%chrdksocial_access%</aqua> <dark_gray>│</dark_gray> Привязка <green>%chrdksocial_link%</green></gray>"
+```
+
+- `%chrdksocial_access%` — `27 дн.` / `1 дн.` / `нет` / `∞`, читается из
+  `ChrdkRegisterApi.entitlementUntil(ник, "social-access")`.
+- `%chrdksocial_link%` — `ВК`, `MAX`, `ещё 12 дн.`, `обязательна`,
+  `не требуется` или `аварийный вход`, от личного дедлайна grace.
+
+Без PlaceholderAPI `VkPlugin` просто пишет в лог, что счётчики недоступны, и
+работает дальше; `/social reload` не требует рестарта из-за этих строк. Живая
+покупка, выдача панелью TradeMC и истечение срока на сервере не проверялись.

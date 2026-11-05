@@ -11,6 +11,7 @@ import ru.cherdakmd.chrdkregister.configuration.ConfigSnapshot;
 import ru.cherdakmd.chrdkregister.storage.SafeJsonWriter;
 import ru.cherdakmd.chrdksocial.MaxService;
 import ru.cherdakmd.chrdksocial.SocialConfig;
+import ru.cherdakmd.chrdksocial.SocialPlaceholders;
 import ru.cherdakmd.chrdksocial.SocialService;
 
 import java.io.BufferedReader;
@@ -44,6 +45,7 @@ public final class VkPlugin extends JavaPlugin {
     private VkService service;
     private SocialService socialService;
     private MaxService maxService;
+    private SocialPlaceholders socialPlaceholders;
     private BukkitTask saveTask;
 
     @Override
@@ -93,6 +95,7 @@ public final class VkPlugin extends JavaPlugin {
         socialService.attachMax(maxService);
         socialService.start();
         maxService.start();
+        registerPlaceholders();
 
         // Периодическая запись грязного состояния раз в 30 секунд.
         this.saveTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
@@ -106,8 +109,30 @@ public final class VkPlugin extends JavaPlugin {
                 + ", социальные привязки: " + socialService.store().linkCount() + ").");
     }
 
+    /**
+     * Счётчики TAB регистрируются только при наличии PlaceholderAPI: без PAPI
+     * плагин продолжает работать, а в TAB останутся пустые значения.
+     */
+    private void registerPlaceholders() {
+        if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+            getLogger().info("[CHRDK_SOCIAL] PlaceholderAPI не найден — счётчики TAB недоступны.");
+            return;
+        }
+        try {
+            SocialPlaceholders expansion = new SocialPlaceholders(this, socialService);
+            if (expansion.register()) {
+                this.socialPlaceholders = expansion;
+            } else {
+                getLogger().warning("[CHRDK_SOCIAL] Идентификатор chrdksocial уже занят — счётчики TAB не зарегистрированы.");
+            }
+        } catch (Throwable failure) {
+            getLogger().log(Level.WARNING, "[CHRDK_SOCIAL] Не удалось зарегистрировать счётчики TAB", failure);
+        }
+    }
+
     @Override
     public void onDisable() {
+        this.socialPlaceholders = null;
         if (saveTask != null) {
             saveTask.cancel();
             saveTask = null;

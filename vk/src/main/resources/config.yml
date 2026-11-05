@@ -160,12 +160,12 @@ social:
   # он читает data.json ядра (TradeMC -> RCON `/pass shoppay` / `/pass shopbuy`).
   donate-access:
     enabled: true
-    # any-rank       — любой активный донатный ранг/проходка (по умолчанию)
+    # any-rank       — любой активный донатный ранг/проходка
     # product-list   — только товары из product-ids (отдельная платная «проходка»)
     # either         — ранг ИЛИ любой товар из списка
     # off            — платного доступа нет
-    mode: any-rank
-    product-ids: []
+    mode: product-list
+    product-ids: [social-access]
     # false — доступ действует, пока активна покупка; true — фиксируется навсегда
     permanent: false
     url: "https://chrdk.trademc.org/"

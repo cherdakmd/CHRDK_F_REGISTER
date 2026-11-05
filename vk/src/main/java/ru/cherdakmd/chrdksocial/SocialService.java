@@ -294,6 +294,34 @@ public final class SocialService {
         return store.donors();
     }
 
+    /**
+     * Максимальный срок активного товара из {@code donate-access.product-ids}.
+     * Read-only запрос к {@code data.json} ядра; 0 — покупки нет или ядро недоступно.
+     */
+    public long donateUntil(String playerName) {
+        ChrdkRegisterApi api = plugin.coreApi();
+        if (api == null || playerName == null || playerName.isBlank()) return 0L;
+        long best = 0L;
+        try {
+            for (String id : config.donateProductIds()) {
+                long until = api.entitlementUntil(playerName, id);
+                if (until > best) best = until;
+            }
+        } catch (RuntimeException failure) {
+            plugin.getLogger().fine("[CHRDK_SOCIAL] Не удалось прочитать срок товара для TAB");
+            return 0L;
+        }
+        return best;
+    }
+
+    public String linkProvider(String playerName) {
+        return store.binding(playerName).map(SocialLinkStore.Binding::provider).orElse("");
+    }
+
+    public boolean permanentDonorAccess(String playerName) {
+        return config.donatePermanent() && store.donorGranted(playerName);
+    }
+
     private static String formatDeadline(long millis) {
         if (millis <= 0L) return "—";
         return Instant.ofEpochMilli(millis).atZone(MOSCOW).format(DEADLINE_FORMAT);

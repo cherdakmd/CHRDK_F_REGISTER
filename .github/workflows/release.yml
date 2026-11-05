@@ -59,6 +59,7 @@ jobs:
           python3 -m pip install -r tools/trademc/requirements.txt
           python3 tools/trademc/build.py --check
           python3 -m unittest discover -s tools/trademc -p 'test_*.py' -v
+          python3 tools/shop/build_social_access_card.py --check
           python3 -m pip install -r tools/wiki/requirements.txt
           python3 tools/wiki/build.py --check
           python3 -m unittest discover -s tools/wiki -p 'test_*.py' -v

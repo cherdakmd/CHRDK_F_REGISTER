@@ -909,6 +909,23 @@ shop:
         - join-effect
         - battlepass-premium
 
+    # --- Вход без привязки к ВК/MAX -------------------------------------
+    # Отдельный товар для игроков без мессенджеров: плагин CHRDK_VK читает
+    # срок через hasEntitlement('social-access'). Не ранг, не группа, не права:
+    # покупка только снимает заморозку лобби. Повторная покупка продлевает
+    # срок с общим потолком 365 дней. В исторический комплект TradeMC из 26
+    # карточек не входит: для этого товара своя карточка и своя картинка.
+    - id: social-access
+      name: "<aqua>Вход без ВК и MAX</aqua>"
+      price: 150
+      days: 30
+      group: ""
+      description: "Играть без обязательной привязки к ВКонтакте или MAX — 30 дней. Не выдаёт ранг, привилегии и игровые бонусы"
+      tag: ""
+      permissions: []
+      commands: []
+      trademc-export: false
+
 
 # =====================================================================
 #  ВИКИ ИГРОКА (1.4.171): сайт с командами, ценами и лимитами
@@ -1435,6 +1452,10 @@ tablist:
   #   %pass_status% — активен/истёк/нет ранга, %pass_left% — «12 дн. 3 ч.»,
   #   %pass_days% — осталось целых дней ранга,
   #   %tab_warns% — активные варны и порог автобана игрока («3/5»), видны всем.
+  #   %chrdksocial_access% — остаток товара «Вход без ВК и MAX» («27 дн.», «нет»),
+  #   %chrdksocial_link% — персональный статус привязки ВК/MAX («ВК», «MAX»,
+  #   «ещё 12 дн.», «обязательна»). Оба приходят из CHRDK_VK через PlaceholderAPI;
+  #   без CHRDK_VK/PlaceholderAPI в TAB будет пустая строка.
   #   %pass_type% — приветственный/обычный/нет, %auth_status% — состояние входа,
   #   %auth_hint% — следующий шаг, %security% — состояние 2FA,
   #   %navigation% — доступные ссылки после входа (до входа: пустая строка).
@@ -1460,6 +1481,7 @@ tablist:
     - "<gray>Банк <aqua>%tab_balance% 💠</aqua> <dark_gray>│</dark_gray> XP-буст <green>%tab_boost%</green>"
     - "<gray>%auth_status%</gray> <dark_gray>│</dark_gray> <gray>2FA: %security%</gray>"
     - "<gray>Варны <yellow>%tab_warns%</yellow> <dark_gray>│</dark_gray> <gray>порог — автобан</gray>"
+    - "<gray>Вход <aqua>%chrdksocial_access%</aqua> <dark_gray>│</dark_gray> Привязка <green>%chrdksocial_link%</green></gray>"
     - "<gray>%auth_hint%</gray>"
     - "<yellow>✦</yellow> <gray>%tab_tip%</gray>"
     - "%tab_separator%"

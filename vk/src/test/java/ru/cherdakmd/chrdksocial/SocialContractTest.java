@@ -146,6 +146,68 @@ class SocialContractTest {
     }
 
     @Test
+    void socialAccessProductIsRealAndDeliveredByExactCommand() throws Exception {
+        String core = read("../src/main/resources/config.yml");
+        assertTrue(core.contains("- id: social-access"), "товар должен быть в shop.products ядра");
+        assertTrue(core.contains("name: \"<aqua>Вход без ВК и MAX</aqua>\""));
+        assertTrue(core.contains("price: 150"));
+        assertTrue(core.contains("days: 30"));
+        assertTrue(core.contains("trademc-export: false"),
+                "исторический комплект из 26 карточек не переиздаётся");
+        assertFalse(core.lines().anyMatch(line -> line.contains("id: social-access") && line.contains("rank:")),
+                "товар не должен выдавать ранг");
+
+        String vkConfig = read("src/main/resources/config.yml");
+        assertTrue(vkConfig.contains("mode: product-list"));
+        assertTrue(vkConfig.contains("product-ids: [social-access]"));
+
+        String card = read("../docs/shop/social-access.md");
+        assertTrue(card.contains("pass shopbuy %username% social-access"));
+        assertTrue(card.contains("150 ₽"));
+        assertTrue(card.contains("30 дней"));
+        assertTrue(card.contains("social-access.png"));
+    }
+
+    @Test
+    void tabCountersAreWiredEndToEnd() throws Exception {
+        String core = read("../src/main/resources/config.yml");
+        assertTrue(core.contains("%chrdksocial_access%"));
+        assertTrue(core.contains("%chrdksocial_link%"));
+        assertTrue(core.contains("%tab_warns%"), "существующие счётчики не потеряны");
+
+        String expansion = read("src/main/java/ru/cherdakmd/chrdksocial/SocialPlaceholders.java");
+        assertTrue(expansion.contains("return \"chrdksocial\""));
+        assertTrue(expansion.contains("case \"access\""));
+        assertTrue(expansion.contains("case \"link\""));
+        assertTrue(expansion.contains("SocialAccessPolicy.accessCounter("));
+        assertTrue(expansion.contains("SocialAccessPolicy.linkCounter("));
+
+        String main = read("src/main/java/ru/cherdakmd/chrdkvk/VkPlugin.java");
+        assertTrue(main.contains("new SocialPlaceholders(this, socialService)"));
+        assertTrue(main.contains("registerPlaceholders()"));
+        assertTrue(main.contains("isPluginEnabled(\"PlaceholderAPI\")"),
+                "без PAPI плагин должен включаться без ошибок");
+
+        String gradle = read("build.gradle");
+        assertTrue(gradle.contains("placeholderapi:2.12.3"), "PAPI нужен в compileOnly модуля vk");
+        assertTrue(gradle.contains("chrdk.papiJar"), "CI использует тот же pinned jar, что и ядро");
+
+        String service = read("src/main/java/ru/cherdakmd/chrdksocial/SocialService.java");
+        assertTrue(service.contains("entitlementUntil(playerName, id)"));
+        assertTrue(service.contains("linkProvider(String playerName)"));
+    }
+
+    @Test
+    void newProductDoesNotRepublishHistoricalTrademcKit() throws Exception {
+        String kit = read("../tools/trademc/build.py");
+        assertTrue(kit.contains("p.get(\"trademc-export\") is not False"));
+        String regression = read("../tools/trademc/test_build.py");
+        assertTrue(regression.contains("'social-access'"));
+        assertTrue(regression.contains("self.assertEqual(26, len(kit.catalog()[1]))"));
+        assertTrue(regression.contains("self.assertEqual(31, len(live))"));
+    }
+
+    @Test
     void ciPublisherIsWiredIntoRunAndWorkflow() throws Exception {
         String runner = read("../tools/social/run.py");
         assertTrue(runner.contains("from max_publisher import"));
