@@ -34,6 +34,10 @@ public final class ClassesPlugin extends JavaPlugin {
     private ClassesGui gui;
     private DevelopmentGui developmentGui;
     private PveProgressListener gameplay;
+    private PerkTreeAudit perkTreeAudit;
+    private PerkTreeService perkTrees;
+    private PerkTreeGui perkTreeGui;
+    PerkTreeService perkTrees() { return perkTrees; }
     ChrdkRegisterApi coreApi() { return coreApi; }
     DevelopmentGui developmentGui() { return developmentGui; }
     PveProgressListener gameplay() { return gameplay; }
@@ -68,6 +72,10 @@ public final class ClassesPlugin extends JavaPlugin {
             service.enableDevelopment(LegacyRulesFile.loadOrCreate(getDataFolder().toPath(),config,getLogger()));
             this.developmentGui = new DevelopmentGui(this);
             this.gameplay = new PveProgressListener(this);
+            this.perkTreeAudit = new PerkTreeAudit(getDataFolder().toPath(), getLogger());
+            this.perkTrees = new PerkTreeService(gameplay.perkTrees(), perkTreeAudit);
+            this.perkTreeGui = new PerkTreeGui(this, perkTrees);
+            getServer().getPluginManager().registerEvents(perkTreeGui, this);
             this.effects = new ClassEffects(this);
             this.abilities = new AbilityService(this);
             this.tag = new ClassTag(this);
@@ -254,6 +262,12 @@ public final class ClassesPlugin extends JavaPlugin {
             }
             command.setExecutor(handler);
             command.setTabCompleter(handler);
+        }
+        PluginCommand perktree = getCommand("perktree");
+        if (perktree != null) {
+            perktree.setExecutor(new PerkTreeCommandHandler(this, perkTrees, perkTreeGui));
+        } else {
+            getLogger().warning("Команда perktree не объявлена в plugin.yml — GUI дерева недоступно.");
         }
     }
 

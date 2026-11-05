@@ -10,6 +10,7 @@ import java.util.*;
 import ru.cherdakmd.chrdkregister.api.MobRewardPolicy;
 import ru.cherdakmd.chrdkregister.pve.PveAwardContract;
 import ru.cherdakmd.chrdkregister.pve.PveAwardLedger;
+import ru.cherdakmd.chrdkregister.pve.PveContributionContract;
 import ru.cherdakmd.chrdkregister.pve.PveDeathEvidence;
 import ru.cherdakmd.chrdkregister.pve.PveRecipient;
 import ru.cherdakmd.chrdkregister.pve.PveVerdict;
@@ -24,7 +25,9 @@ final class PveProgressListener implements Listener {
     private record Shield(double amount, long until) { }
     private final Map<UUID,Hit> hits = new LinkedHashMap<>();
     private final PveContributionLedger ledger = new PveContributionLedger();
-    /** Получатель общего PvE-контракта: пыль деревьев перков, состояние на диске. */
+    /** Состояния деревьев перков на диске: ими же пользуются GUI и команды. */
+    private final PerkTreeStore trees;
+    /** Получатель общего PvE-контракта: пыль деревьев перков. */
     private final PveAwardPowderRouter powder;
     private final Map<UUID,Shield> shields = new HashMap<>();
     private final Map<UUID,Long> pvp = new LinkedHashMap<>();
@@ -32,10 +35,11 @@ final class PveProgressListener implements Listener {
         this.plugin=plugin;
         natural=new NamespacedKey(plugin,"natural-v1"); rewarded=new NamespacedKey(plugin,"rewarded-v1");
         projectile=new NamespacedKey(plugin,"ability-projectile");
-        PerkTreeStore trees=new PerkTreeStore(plugin.getDataFolder().toPath(),plugin.getLogger());
+        this.trees=new PerkTreeStore(plugin.getDataFolder().toPath(),plugin.getLogger());
         trees.load();
         this.powder=new PveAwardPowderRouter(trees);
     }
+    PerkTreeStore perkTrees() { return trees; }
     /** Снимок деревьев пишется общим асинхронным сохранением плагина. */
     void flushPowder() { powder.flush(); }
     boolean honest(Player p) {
@@ -151,6 +155,10 @@ final class PveProgressListener implements Listener {
                 MobRewardPolicy.temporary(mob),false,inPvp(hit.player()),
                 plugin.ready(p) && plugin.config().enabled(),hit.damage(),max);
         PveVerdict verdict=PveAwardContract.verify(evidence);
+        // SKILL_XP получает квитанцию из того же подтверждённого контекста:
+        // отдельного валидатора, death-листенера и второго XP-начисления нет.
+        // Численный опыт по-прежнему начисляется в skills на событиях урона.
+        PveContributionContract.register(evidence,verdict);
         TreeDomain domain=ClassPerkTreeBridge.primaryDomain(role);
         if(domain!=null) powder.accept(evidence,verdict,domain,plugin.service().level(hit.player()));
     }
