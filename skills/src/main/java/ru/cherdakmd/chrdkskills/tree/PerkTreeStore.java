@@ -240,12 +240,13 @@ public final class PerkTreeStore {
         }
         String ability = null;
         if (row.has("selectedAbility") && !row.get("selectedAbility").isJsonNull()) {
-            ability = row.get("selectedAbility").getAsString();
-            PerkNode node = definition.node(ability)
-                    .orElseThrow(() -> new IllegalArgumentException("unknown ability " + ability));
-            if (!node.ability() || !levels.containsKey(ability)) {
-                throw new IllegalArgumentException("ability not unlocked " + ability);
+            final String abilityId = row.get("selectedAbility").getAsString();
+            PerkNode node = definition.node(abilityId)
+                    .orElseThrow(() -> new IllegalArgumentException("unknown ability " + abilityId));
+            if (!node.ability() || !levels.containsKey(abilityId)) {
+                throw new IllegalArgumentException("ability not unlocked " + abilityId);
             }
+            ability = abilityId;
         }
         return new PerkTreeState(domain, level, coreLevel, powder, powderSpent,
                 corePowderSpent, tokensSpent, levels, ability);
