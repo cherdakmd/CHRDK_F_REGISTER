@@ -1406,8 +1406,14 @@ moderation:
   warn-limit: 5
   # Причина бана: %player%, %count%, %limit% подставляются ядром.
   ban-reason: "%player%: %count%/%limit% активных варнов — бан по правилам сервера"
-  # Показывать %tab_warns% в таб-листе всем игрокам.
+  # Показывать %tab_warns% в таб-листе каждому игроку (ЕГО собственный счётчик).
   warns-in-tab: true
+  # Публичный список нарушителей в подвале TAB: видят ВСЕ игроки, а не только
+  # владелец варнов. По умолчанию ВЫКЛЮЧЕНО: «доска позора» — решение владельца.
+  # В кадр уходят только ник и «активные/порог»; причины, даты и авторы — нет.
+  warns-public-in-tab: false
+  # Сколько ников показывать (1..10); остаток сворачивается в «+N ещё».
+  warns-public-limit: 3
   # Сколько последних действий держим в moderation.json (полная история — в audit/*.jsonl).
   journal-limit: 500
   # Кнопки срока мута в GUI (минуты): 10, 60, 1440, 10080 = 10 мин, 1 ч, 1 д, 7 д.
@@ -1451,7 +1457,9 @@ tablist:
   #   %player_tagged% — общая строка ника и меток с учётом /labels и лимита,
   #   %pass_status% — активен/истёк/нет ранга, %pass_left% — «12 дн. 3 ч.»,
   #   %pass_days% — осталось целых дней ранга,
-  #   %tab_warns% — активные варны и порог автобана игрока («3/5»), видны всем.
+  #   %tab_warns% — СВОИ активные варны и порог автобана игрока («3/5»).
+  #   %tab_warns_public% — общий список нарушителей (ник + счётчик), одинаковый
+  #   для всех; включается moderation.warns-public-in-tab, по умолчанию пусто.
   #   %chrdksocial_status% — ЯВНЫЙ выбор игрока: «✅ привязан (ВК)»,
   #   «✅ проход: 27 дн.» или «⚠ БЕЗ ПРИВЯЗКИ: осталось 14 дн.» / «⛔ ВХОД ЗАКРЫТ».
   #   %chrdksocial_access% — остаток товара «Вход без ВК и MAX» («27 дн.», «нет»),
@@ -1483,6 +1491,7 @@ tablist:
     - "<gray>Банк <aqua>%tab_balance% 💠</aqua> <dark_gray>│</dark_gray> XP-буст <green>%tab_boost%</green>"
     - "<gray>%auth_status%</gray> <dark_gray>│</dark_gray> <gray>2FA: %security%</gray>"
     - "<gray>Варны <yellow>%tab_warns%</yellow> <dark_gray>│</dark_gray> <gray>порог — автобан</gray>"
+    - "<gray>%tab_warns_public%</gray>"
     - "<gold>%chrdksocial_status%</gold>"
     - "<gray>Привязка <green>%chrdksocial_link%</green> <dark_gray>│</dark_gray> Проход <aqua>%chrdksocial_access%</aqua></gray>"
     - "<gray>%auth_hint%</gray>"

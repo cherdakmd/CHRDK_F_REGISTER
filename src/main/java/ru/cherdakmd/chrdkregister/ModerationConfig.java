@@ -11,6 +11,8 @@ public record ModerationConfig(
         int warnLimit,
         String banReason,
         boolean warnsInTab,
+        boolean warnsPublicInTab,
+        int warnsPublicLimit,
         int journalLimit,
         List<Long> mutePresets
 ) {
@@ -21,8 +23,8 @@ public record ModerationConfig(
     public static final List<Long> DEFAULT_MUTE_PRESETS = List.of(10L, 60L, 1_440L, 10_080L);
 
     public static final ModerationConfig DEFAULT = new ModerationConfig(
-            true, ModerationLedger.DEFAULT_WARN_LIMIT, DEFAULT_BAN_REASON, true, 500,
-            DEFAULT_MUTE_PRESETS);
+            true, ModerationLedger.DEFAULT_WARN_LIMIT, DEFAULT_BAN_REASON, true,
+            false, 3, 500, DEFAULT_MUTE_PRESETS);
 
     public static ModerationConfig fromConfig(FileConfiguration config) {
         if (config == null) return DEFAULT;
@@ -31,8 +33,12 @@ public record ModerationConfig(
         String reason = config.getString("moderation.ban-reason", DEFAULT.banReason());
         if (reason == null || reason.isBlank()) reason = DEFAULT.banReason();
         boolean tab = config.getBoolean("moderation.warns-in-tab", true);
+        // Публичный список нарушителей — осознанный выбор владельца: по умолчанию выключен.
+        boolean publicTab = config.getBoolean("moderation.warns-public-in-tab", false);
+        int publicLimit = clamp(config.getInt("moderation.warns-public-limit", 3), 1, 10);
         int journal = clamp(config.getInt("moderation.journal-limit", DEFAULT.journalLimit()), 10, 5000);
-        return new ModerationConfig(enabled, limit, reason, tab, journal, mutePresets(config));
+        return new ModerationConfig(enabled, limit, reason, tab, publicTab, publicLimit,
+                journal, mutePresets(config));
     }
 
     /** Пустой/мусорный список в конфиге не оставляет панель без кнопок мута. */

@@ -218,6 +218,24 @@ public final class ModerationLedger {
         return warns.size();
     }
 
+    /**
+     * Снимок «ник → число активных варнов» для публичного кадра TAB. Снятые
+     * варны не учитываются; причины, даты и авторы выдачи не покидают журнал.
+     */
+    public synchronized List<PublicWarnSummary.Row> activeWarnSummary() {
+        Map<String, Integer> counts = new LinkedHashMap<>();
+        for (Warn warn : warns) {
+            if (warn.removedAt <= 0 && warn.target != null && !warn.target.isBlank()) {
+                counts.merge(warn.target, 1, Integer::sum);
+            }
+        }
+        List<PublicWarnSummary.Row> out = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : counts.entrySet()) {
+            out.add(new PublicWarnSummary.Row(display(entry.getKey()), entry.getValue()));
+        }
+        return List.copyOf(out);
+    }
+
     /* ---------------------------- модераторы ------------------------------ */
 
     public synchronized boolean addModerator(String name, String actor, long now) {

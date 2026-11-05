@@ -42,6 +42,21 @@ class ModerationLedgerTest {
     }
 
     @Test
+    void publicSummaryCountsOnlyActiveWarnsAndKeepsStoredKeys() {
+        ModerationLedger ledger = new ModerationLedger();
+        ledger.issueWarn("Ivan", "Mod", "причина", 1L);
+        ledger.issueWarn("IVAN", "Mod", "причина", 2L);
+        ledger.issueWarn("Petr", "Mod", "причина", 3L);
+        assertTrue(ledger.removeWarn(ledger.activeWarns("Petr").get(0).id, "Senior", 4L));
+        List<PublicWarnSummary.Row> rows = ledger.activeWarnSummary();
+        assertEquals(1, rows.size(), "снятый варн и повтор ника в другом регистре не дублируются");
+        assertEquals(new PublicWarnSummary.Row("ivan", 2), rows.get(0),
+                "журнал хранит ключ в нижнем регистре");
+        assertEquals("⚠ Ivan 2/5", PublicWarnSummary.format(rows, 3, 5),
+                "в TAB ник показывается с заглавной буквы");
+    }
+
+    @Test
     void journalRecordsWhoWhomWhenWhyAndIsFilterable() {
         ModerationLedger ledger = new ModerationLedger();
         ledger.issueWarn("Steve", "Mod", "грифинг", 1000L);

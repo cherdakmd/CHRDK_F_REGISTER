@@ -124,6 +124,8 @@ public final class TabPlaceholderIntegration extends PlaceholderExpansion {
                         ? "0/" + ModerationLedger.DEFAULT_WARN_LIMIT
                         : moderation.warnText(player);
             }
+            // Публичный список не зависит от того, кто запросил плейсхолдер.
+            case "warns_public" -> moderation == null ? "" : moderation.warnsPublicText();
             default -> null;
         };
     }
@@ -132,7 +134,7 @@ public final class TabPlaceholderIntegration extends PlaceholderExpansion {
     static boolean isTabKey(String key) {
         return switch (key) {
             case "brand", "separator", "tip", "clock", "balance", "boost",
-                 "health", "ping", "world", "mspt", "warns" -> true;
+                 "health", "ping", "world", "mspt", "warns", "warns_public" -> true;
             default -> false;
         };
     }
