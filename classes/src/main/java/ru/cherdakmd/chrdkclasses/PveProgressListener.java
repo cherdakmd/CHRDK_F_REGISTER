@@ -7,6 +7,11 @@ import org.bukkit.event.entity.*;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.persistence.PersistentDataType;
 import java.util.*;
+import ru.cherdakmd.chrdkregister.api.MobRewardPolicy;
+import ru.cherdakmd.chrdkregister.pve.PveAwardContract;
+import ru.cherdakmd.chrdkregister.pve.PveDeathEvidence;
+import ru.cherdakmd.chrdkregister.pve.PveVerdict;
+import ru.cherdakmd.chrdkskills.tree.TreeDomain;
 
 /** Только подтверждённые естественные враги и реальный вклад. Никакого XP за AFK-пульс. */
 final class PveProgressListener implements Listener {
@@ -16,6 +21,8 @@ final class PveProgressListener implements Listener {
     private record Shield(double amount, long until) { }
     private final Map<UUID,Hit> hits = new LinkedHashMap<>();
     private final PveContributionLedger ledger = new PveContributionLedger();
+    /** Первый получатель общего PvE-контракта: пыль деревьев перков. */
+    private final PveAwardPowderRouter powder = new PveAwardPowderRouter();
     private final Map<UUID,Shield> shields = new HashMap<>();
     private final Map<UUID,Long> pvp = new LinkedHashMap<>();
     PveProgressListener(ClassesPlugin plugin) {
@@ -121,6 +128,23 @@ final class PveProgressListener implements Listener {
         if(role==null || (role==PlayerClass.ARCHER && !hit.ranged()) || (role==PlayerClass.WARRIOR && hit.ranged())) return;
         mob.getPersistentDataContainer().set(rewarded,PersistentDataType.BYTE,(byte)1);
         award(p,ClassDevelopment.Source.COMBAT,25,1);
+        // Общий контракт PvE: пыль деревьев из уже подтверждённой смерти,
+        // без отдельного листенера на каждый удар. Проверки происхождения выше
+        // не повторяются, а фиксируются в снимке для единого валидатора.
+        PveDeathEvidence evidence=new PveDeathEvidence(
+                hit.player(),mob.getUniqueId(),System.currentTimeMillis(),dayKey(),
+                plugin.coreApi()!=null && plugin.coreApi().isAuthenticated(p),
+                p.getGameMode()==GameMode.SURVIVAL || p.getGameMode()==GameMode.ADVENTURE,
+                mob.getPersistentDataContainer().has(natural,PersistentDataType.BYTE),
+                MobRewardPolicy.temporary(mob),false,inPvp(hit.player()),
+                plugin.ready(p) && plugin.config().enabled(),hit.damage(),max);
+        PveVerdict verdict=PveAwardContract.verify(evidence);
+        TreeDomain domain=ClassPerkTreeBridge.primaryDomain(role);
+        if(domain!=null) powder.accept(evidence,verdict,domain,plugin.service().level(hit.player()));
+    }
+    /** Календарный день UTC — ключ общего дневного бюджета наград. */
+    private String dayKey() {
+        return java.time.LocalDate.now(java.time.ZoneOffset.UTC).toString();
     }
     private double debt(Player p) {
         return ledger.debt(p.getUniqueId(),System.currentTimeMillis());
@@ -156,6 +180,7 @@ final class PveProgressListener implements Listener {
     }
     @EventHandler public void quit(PlayerQuitEvent e) {
         ledger.forgetWound(e.getPlayer().getUniqueId()); shields.remove(e.getPlayer().getUniqueId());
+        powder.forget(e.getPlayer().getUniqueId());
         // Недавний PvP не очищается релогом; таблица ограничена по размеру.
     }
 }
