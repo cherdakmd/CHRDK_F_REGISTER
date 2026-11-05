@@ -5,7 +5,6 @@ import ru.cherdakmd.chrdkregister.pve.PveDeathEvidence;
 import ru.cherdakmd.chrdkregister.pve.PveReceipt;
 import ru.cherdakmd.chrdkregister.pve.PveRecipient;
 import ru.cherdakmd.chrdkregister.pve.PveVerdict;
-import ru.cherdakmd.chrdkskills.tree.ClassPerkTreeBridge;
 import ru.cherdakmd.chrdkskills.tree.PerkTreePowderSource;
 import ru.cherdakmd.chrdkskills.tree.PerkTreeState;
 import ru.cherdakmd.chrdkskills.tree.TreeDomain;

@@ -36,8 +36,8 @@
       "text": "bf1b24b85ecdaee84580c0d5ea4b9c1120b8dd072e38aa68b52e49fc2a0c472c"
     },
     "classes": {
-      "reason": "Добавлен служебный общий контракт PvE-наград в ядре и первый подключённый получатель — пыль деревьев перков. Игровые команды, GUI, конфиги, messages.yml, тарифы, баланс и тексты действующих страниц не изменились, поэтому страницы остаются актуальными; схема, бюджет и границы Фазы 1 описаны в docs/design/PVE-AWARD-CONTRACT.md.",
-      "sources": "eac1617f0be3e880c637091a9d413d9a84cf4859cd21da41a0effc8f01bc0cae",
+      "reason": "Исправлен ошибочный импорт ClassPerkTreeBridge в PveAwardPowderRouter: класс находится в том же пакете chrdkclasses, импорт из skills.tree удалён. Логика, команды, GUI, конфиги и тексты страниц не менялись.",
+      "sources": "a4fba74d6234b592626f860d95c8ef27cddfa31e03e32a4b50bc375a18c79b98",
       "text": "ee29d92bd4e9527924d14405057fd62402857c1a688439c7b9d86d4c9bf3b546"
     },
     "commands": {
@@ -121,8 +121,8 @@
       "text": "b66278597912053a64a4f192bf0cf63795a8720263d4283683b9458eec8f0bff"
     },
     "profile": {
-      "reason": "Добавлен служебный общий контракт PvE-наград в ядре и первый подключённый получатель — пыль деревьев перков. Игровые команды, GUI, конфиги, messages.yml, тарифы, баланс и тексты действующих страниц не изменились, поэтому страницы остаются актуальными; схема, бюджет и границы Фазы 1 описаны в docs/design/PVE-AWARD-CONTRACT.md.",
-      "sources": "f359fa14f82fe9e22540c1d860416659cc42455fe29e3b6c842d04cd1c3c9c99",
+      "reason": "Исправлен ошибочный импорт ClassPerkTreeBridge в PveAwardPowderRouter: класс находится в том же пакете chrdkclasses, импорт из skills.tree удалён. Логика, команды, GUI, конфиги и тексты страниц не менялись.",
+      "sources": "044d159cade4edac88fd83b42a91a8137229ce2dd8d37f0047b5f97aca9a736b",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
@@ -131,8 +131,8 @@
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "Добавлен служебный общий контракт PvE-наград в ядре и первый подключённый получатель — пыль деревьев перков. Игровые команды, GUI, конфиги, messages.yml, тарифы, баланс и тексты действующих страниц не изменились, поэтому страницы остаются актуальными; схема, бюджет и границы Фазы 1 описаны в docs/design/PVE-AWARD-CONTRACT.md.",
-      "sources": "1e90c2cd687fa87ab72126bfab8124f70403c6b12d69c7445b457f307e20fa3b",
+      "reason": "Исправлен ошибочный импорт ClassPerkTreeBridge в PveAwardPowderRouter: класс находится в том же пакете chrdkclasses, импорт из skills.tree удалён. Логика, команды, GUI, конфиги и тексты страниц не менялись.",
+      "sources": "e716d94969857bb8c7f694ab9386006b005c260f8d96df61824972a15c7c37ba",
       "text": "83fdfb3ddc5551875ec1f031676a80e3adb73e448dffae614c489441ea6f2c33"
     },
     "shop": {
@@ -151,8 +151,8 @@
       "text": "bf7a5ea20ec023b6530e20a3b8b2468ef892481b2fc9bc88d8cc27522db673da"
     },
     "start": {
-      "reason": "Добавлен служебный общий контракт PvE-наград в ядре и первый подключённый получатель — пыль деревьев перков. Игровые команды, GUI, конфиги, messages.yml, тарифы, баланс и тексты действующих страниц не изменились, поэтому страницы остаются актуальными; схема, бюджет и границы Фазы 1 описаны в docs/design/PVE-AWARD-CONTRACT.md.",
-      "sources": "eac75a1fcaf52b859b5054ef7f04c190d553946af85e5e9939a8a86ddb24f8d5",
+      "reason": "Исправлен ошибочный импорт ClassPerkTreeBridge в PveAwardPowderRouter: класс находится в том же пакете chrdkclasses, импорт из skills.tree удалён. Логика, команды, GUI, конфиги и тексты страниц не менялись.",
+      "sources": "ae5837e5400ae5e79eef8ba35bdf86fd4ad7938d3c625393818c5595f68e0880",
       "text": "c2835fdf2d1945079115e6a252d472ce72ad9ad79f4ed47ad58e269b467d595f"
     },
     "teleports": {
