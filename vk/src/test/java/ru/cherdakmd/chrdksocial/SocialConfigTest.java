@@ -95,6 +95,12 @@ class SocialConfigTest {
         assertTrue(SocialConfig.parse(yaml).webhookConfigured());
         yaml.set("max.webhook.public-url", "http://plain.example.ru/hook");
         assertFalse(SocialConfig.parse(yaml).webhookConfigured(), "HTTP-webhook MAX не принимает");
+        yaml.set("max.webhook.public-url", "https://bot.example.ru/max/webhook");
+        yaml.set("max.webhook.secret", "short with spaces!");
+        assertFalse(SocialConfig.parse(yaml).webhookConfigured(),
+                "MAX принимает secret только из A-Z a-z 0-9 _ - длиной 5..256");
+        yaml.set("max.webhook.secret", "Chrdk-2026_webhook_secret");
+        assertTrue(SocialConfig.parse(yaml).webhookConfigured());
     }
 
     @Test

@@ -199,13 +199,17 @@ max:
 
   webhook:
     enabled: true
-    # Отдельный порт хостинга. MAX принимает webhook только по HTTPS с доверенным сертификатом.
+    # Внутренний порт плагина на хостинге. Публичный URL для MAX должен быть HTTPS
+    # с доверенным сертификатом; для production используйте 443 (или reverse-proxy
+    # на 443 -> этот порт). MAX с 25 мая не принимает HTTP и самоподписные сертификаты.
     port: 8443
     bind-address: "0.0.0.0"
     path: "/max/webhook"
-    # Публичный HTTPS-адрес, который записан в POST /subscriptions (за reverse-proxy)
+    # Публичный HTTPS-адрес, который записывается в POST /subscriptions.
+    # Домен должен совпадать с CN/SAN сертификата и отдавать полную цепочку.
     public-url: ""
-    # Секрет из POST /subscriptions; проверяется constant-time по заголовку запроса
+    # Секрет из POST /subscriptions: ТОЛЬКО A-Z a-z 0-9 _ и дефис, 5..256 символов.
+    # MAX присылает его в заголовке X-Max-Bot-Api-Secret, плагин сверяет constant-time.
     secret: ""
     # PKCS12-keystore с сертификатом и ключом в папке плагина. Без него HTTPS не поднимется.
     keystore: "max-webhook.p12"

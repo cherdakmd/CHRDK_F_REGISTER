@@ -164,9 +164,14 @@ public record SocialConfig(
     }
 
     /** Можно ли поднять защищённый webhook: есть порт, путь, секрет и публичный HTTPS-адрес. */
+    /** MAX принимает secret только из A-Z a-z 0-9 _ и дефиса, длиной 5..256 символов. */
+    public boolean webhookSecretValid() {
+        return webhookSecret.matches("[A-Za-z0-9_-]{5,256}");
+    }
+
     public boolean webhookConfigured() {
         return maxEnabled && webhookEnabled && webhookPort > 0 && !webhookPath.isBlank()
-                && !webhookSecret.isBlank() && !webhookPublicUrl.isBlank();
+                && webhookSecretValid() && !webhookPublicUrl.isBlank();
     }
 
     public boolean mandatoryActive() {

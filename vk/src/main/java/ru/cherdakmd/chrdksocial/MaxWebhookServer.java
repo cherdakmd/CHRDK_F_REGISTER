@@ -41,8 +41,10 @@ public final class MaxWebhookServer {
 
     private static final int MAX_HEADERS = 16 * 1024;
     private static final int MAX_BODY = 64 * 1024;
+    /** Официальный заголовок MAX — X-Max-Bot-Api-Secret; остальные оставлены для совместимости. */
     private static final String[] SECRET_HEADERS = {
-            "x-max-bot-api-secret-token", "x-max-secret", "x-webhook-secret"
+            "x-max-bot-api-secret", "x-max-bot-api-secret-token",
+            "x-max-secret", "x-webhook-secret"
     };
 
     private final String bindAddress;

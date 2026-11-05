@@ -112,6 +112,18 @@ class SocialContractTest {
     }
 
     @Test
+    void webhookUsesOfficialSecretHeaderAndTransportSwitch() throws Exception {
+        String server = read("src/main/java/ru/cherdakmd/chrdksocial/MaxWebhookServer.java");
+        assertTrue(server.contains("x-max-bot-api-secret"),
+                "MAX шлёт секрет в X-Max-Bot-Api-Secret");
+        String service = read("src/main/java/ru/cherdakmd/chrdksocial/MaxService.java");
+        assertTrue(service.contains("next.maxTransport()"),
+                "max.transport должен реально переключать транспорт, а не только парситься");
+        String config = read("src/main/resources/config.yml");
+        assertTrue(config.contains("X-Max-Bot-Api-Secret"));
+    }
+
+    @Test
     void playersWithoutSocialNetworksHaveAThirdPath() throws Exception {
         String service = read("src/main/java/ru/cherdakmd/chrdksocial/SocialService.java");
         assertTrue(service.contains("recordFirstSeen(player.getName(), now)"),

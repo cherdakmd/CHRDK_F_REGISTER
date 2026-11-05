@@ -117,16 +117,27 @@ MAX Bot API живёт на `https://platform-api2.max.ru`, токен пере�
   сертификатом**. Положите PKCS12-keystore `max-webhook.p12` в папку плагина,
   задайте `max.webhook.keystore-password`, а снаружи направьте домен на этот порт.
 - `max.webhook.public-url` — тот же публичный HTTPS-адрес, который плагин
-  регистрирует через `POST /subscriptions`; `max.webhook.secret` проверяется
-  constant-time по заголовку каждого запроса. Ответ 200 уходит до обработки,
-  чтобы уложиться в 30-секундный таймаут доставки MAX.
+  регистрирует через `POST /subscriptions`. Для production это порт **443**;
+  `max.webhook.port` (8443) — внутренний порт плагина за reverse-proxy.
+  Домен должен совпадать с CN/SAN сертификата и отдавать полную цепочку.
+- `max.webhook.secret` — только `A-Z a-z 0-9 _ -` длиной 5..256. MAX присылает
+  его в заголовке **`X-Max-Bot-Api-Secret`**, плагин сверяет constant-time.
+  Ответ 200 уходит до обработки, чтобы уложиться в 30-секундный таймаут.
 - **Без keystore HTTPS не поднимается**: плагин честно отказывает и падает на
   `GET /updates` long polling (`max.polling.enabled`), который документация MAX
   допускает только для разработки. Это не «тихий» продакшен-режим — в логе
-  будет предупреждение.
+  будет предупреждение. `max.transport: polling` включает этот режим явно.
+- Боту нужны права `read_all_messages` и `write` и статус администратора в
+  чате/канале, а в настройках приватности надо разрешить добавление в групповые
+  чаты. Без `read_all_messages` webhook не получает обновления. Код входа
+  принимается только из **личного диалога** с ботом; ссылка на него задаётся
+  `social.max-bot-url` (диплинк `https://max.ru/<botName>?start=...`).
 - `GET /chats` с 2026 года не поддерживается. `chat_id` канала или беседы ловится
   из событий `bot_added` / `bot_started`, попадает в `/max chats` и затем
   фиксируется командой `/social setchat`.
+
+Пошаговая настройка бота, сертификата, keystore, подписки и диагностика —
+[docs/automation/max-publications.md](https://github.com/cherdakmd/CHRDK_F_REGISTER/blob/main/docs/automation/max-publications.md).
 
 Лимиты MAX (30 RPS overall, 2 сообщения в секунду в один чат) соблюдаются
 минимальным интервалом между отправками; уведомления в личные диалоги идут без
