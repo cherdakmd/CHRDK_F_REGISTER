@@ -160,7 +160,10 @@ jobs:
 
   wiki:
     name: Build wiki
-    runs-on: ubuntu-latest
+    # ubuntu-latest мигрировал на 26.04, а Playwright 1.58.2 не умеет ставить
+    # chromium на ubuntu26.04-x64. Фиксируем образ, на котором browser-тесты
+    # вики запускаются; остальные job'ы остаются на ubuntu-latest.
+    runs-on: ubuntu-24.04
     steps:
       - name: Check out source
         uses: actions/checkout@v5
