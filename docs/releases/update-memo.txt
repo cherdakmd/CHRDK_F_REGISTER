@@ -1,6 +1,44 @@
 CHRDK — обновление плагинов
 ===========================
 
+Комплект 1.5.1 — СТАБИЛЬНЫЙ патч
+---------------------------------
+22 JAR одной версии + памятка; chrdk-vk-1.5.1.jar отдельно.
+Latest становится v1.5.1; v1.5.0, v1.4.289 и все прежние теги не
+переписываются. Core API42. Патч к 1.5.0: VK-модуль, LuckPerms и
+переработанные напоминания об обязательной привязке.
+
+Напоминания в чате и пинги при игровых действиях делят один общий кулдаун:
+не чаще раза в 3 минуты вместо 30 и 20 с. Action bar обновляется раз в 15 с;
+nagging: true сохранён, nagging: false оставляет только блок при входе.
+Инструкция — только ВКонтакте: /link -> код -> сообщество ВК -> одним
+сообщением боту -> ограничения снимаются без релога. MAX игрокам не
+предлагается (модуль в разработке), техническая привязка сохранена.
+Оба тарифа прохода в подсказках: social-access-day 15 ₽ / 1 день и
+social-access 150 ₽ / 30 дней. Цены рангов, 26 карточек TradeMC, either,
+fail-closed, 27-го SKU нет.
+
+Товар social-access-day: pass shopbuy %username% social-access-day,
+entitlement из data.json + временная LP-группа social-day с правом
+chrdksocial.bypass. /pass luckperms setup создаёт chrdksocial.use в DEFAULT
+и chrdksocial.admin в ADMIN; integrations.lp-social-bypass-permission.
+Карточка docs/shop/social-access-day.md и PNG не входят в комплект 26
+карточек TradeMC (trademc-export: false).
+
+VK: события сервера (events.* по умолчанию false, кулдаун, аудит,
+без IP/UUID/координат/инвентаря) и интерактив сообщества (interactive.*
+по умолчанию false, меню/диалоги/опросы/тикеты/реакции). Внешний VK code
+38 и права группы ВК настраиваются вне репозитория; исключённая кнопка №4
+и сырые provider:userId в аудите вынесены в отдельную задачу после выпуска.
+TAB: %tab_warns_public% (по умолчанию выключен), личный %tab_warns% прежний.
+
+Backup: data.json/SHA, bank.json, honors.json, moderation.json, vk-links.json,
+social-links.json, perk-trees.json, прочие хранилища, миры и playerdata.
+Все 22 JAR обновлять совместно; CHRDK_VK ставить отдельным JAR.
+CHRDK_Queue и снятые JAR убрать вручную из plugins/, plugins/update/, staging.
+Живой сервер, RCON, установка и игровой smoke НЕ проверялись.
+Подробности и границы: docs/releases/1.5.1.md.
+
 Комплект 1.5.0 — СТАБИЛЬНЫЙ минорный выпуск
 --------------------------------------------
 22 JAR одной версии + памятка; chrdk-vk-1.5.0.jar отдельно.

@@ -94,7 +94,9 @@ public record SocialConfig(
         int cooldown = Math.clamp(cfg.getInt("social.code-cooldown-seconds", 20), 0, 300);
         int attempts = Math.clamp(cfg.getInt("social.max-attempts", 5), 1, 20);
         int maxAccounts = Math.clamp(cfg.getInt("social.max-accounts-per-profile", 1), 1, 8);
-        int reminder = Math.clamp(cfg.getInt("social.reminder-seconds", 45), 10, 600);
+        // Напоминания в чат не чаще раза в 3 минуты: периодический таймер и пинг
+        // при действиях делят один общий кулдаун (SocialService.allowChatReminder).
+        int reminder = Math.clamp(cfg.getInt("social.reminder-seconds", 180), 10, 600);
         int reward = Math.clamp(cfg.getInt("social.reward-xp-levels", 0), 0, 30);
         int emergency = Math.clamp(cfg.getInt("social.emergency-minutes", 30), 1, 720);
         boolean failOpen = cfg.getBoolean("social.fail-open-on-corruption", true);
@@ -155,8 +157,8 @@ public record SocialConfig(
 
         // Назойливое информирование: работает и В grace, а не только после заморозки.
         boolean nagging = cfg.getBoolean("social.reminder.nagging", true);
-        int actionBarSeconds = Math.clamp(cfg.getInt("social.reminder.action-bar-seconds", 5), 2, 60);
-        int actionNagSeconds = Math.clamp(cfg.getInt("social.reminder.action-nag-seconds", 20), 5, 300);
+        int actionBarSeconds = Math.clamp(cfg.getInt("social.reminder.action-bar-seconds", 15), 2, 60);
+        int actionNagSeconds = Math.clamp(cfg.getInt("social.reminder.action-nag-seconds", 120), 5, 300);
         boolean titleOnJoin = cfg.getBoolean("social.reminder.title-on-join", true);
         boolean reminderSound = cfg.getBoolean("social.reminder.sound", true);
 

@@ -49,9 +49,10 @@ public final class SocialCommandHandler implements CommandExecutor, TabCompleter
         }
         String code = service.issueCode(player);
         plugin.messages().send(player, "social.gate-code",
-                "code", code, "minutes", Math.max(1, service.config().codeTtlSeconds() / 60),
-                "vk", service.config().vkCommunityUrl(), "max", service.config().maxBotUrl());
-        plugin.messages().send(player, "social.gate-howto");
+                "code", code, "minutes", Math.max(1, service.config().codeTtlSeconds() / 60));
+        // Инструкция по ВК с живым кодом и ссылкой на сообщество (MAX в разработке).
+        plugin.messages().send(player, "social.gate-howto",
+                "code", code, "vk", service.config().vkCommunityUrl());
         if (service.config().donateActive()) {
             plugin.messages().send(player, "social.gate-donate", "url", service.config().donateUrl());
         }

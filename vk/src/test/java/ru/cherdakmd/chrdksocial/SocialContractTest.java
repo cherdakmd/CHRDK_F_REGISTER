@@ -162,13 +162,37 @@ class SocialContractTest {
         String vkConfig = read("src/main/resources/config.yml");
         assertTrue(vkConfig.contains("mode: either"),
                 "ранг ИЛИ проходка: ранги дороже карточки и должны снимать ограничение");
-        assertTrue(vkConfig.contains("product-ids: [social-access]"));
+        assertTrue(vkConfig.contains("product-ids: [social-access, social-access-day]"));
 
         String card = read("../docs/shop/social-access.md");
         assertTrue(card.contains("pass shopbuy %username% social-access"));
         assertTrue(card.contains("150 ₽"));
         assertTrue(card.contains("30 дней"));
         assertTrue(card.contains("social-access.png"));
+    }
+
+    @Test
+    void socialAccessDayIsOneDayForFifteenRublesAndUsesBothMechanisms() throws Exception {
+        String core = read("../src/main/resources/config.yml");
+        assertTrue(core.contains("- id: social-access-day"), "дневной тариф есть в shop.products");
+        assertTrue(core.contains("price: 15"));
+        assertTrue(core.contains("days: 1"));
+        assertTrue(core.contains("group: \"social-day\""));
+        assertTrue(core.contains("permissions: [\"chrdksocial.bypass\"]"));
+        assertTrue(core.contains("trademc-export: false"),
+                "дневной тариф не добавляет 27-ю карточку TradeMC");
+        assertTrue(core.contains("lp-social-bypass-permission"),
+                "узел обхода настраивается в integrations ядра");
+
+        String vkConfig = read("src/main/resources/config.yml");
+        assertTrue(vkConfig.contains("product-ids: [social-access, social-access-day]"),
+                "оба тарифа снимают ограничение через entitlement");
+
+        String card = read("../docs/shop/social-access-day.md");
+        assertTrue(card.contains("pass shopbuy %username% social-access-day"));
+        assertTrue(card.contains("15 ₽"));
+        assertTrue(card.contains("1 день"));
+        assertTrue(card.contains("chrdksocial.bypass"));
     }
 
     @Test
@@ -206,8 +230,10 @@ class SocialContractTest {
         assertTrue(kit.contains("p.get(\"trademc-export\") is not False"));
         String regression = read("../tools/trademc/test_build.py");
         assertTrue(regression.contains("'social-access'"));
+        assertTrue(regression.contains("'social-access-day'"));
         assertTrue(regression.contains("self.assertEqual(26, len(kit.catalog()[1]))"));
-        assertTrue(regression.contains("self.assertEqual(31, len(live))"));
+        assertTrue(regression.contains("self.assertEqual(32, len(live))"),
+                "в живом каталоге два тарифа проходки, но комплект TradeMC прежний");
     }
 
     @Test
@@ -237,11 +263,37 @@ class SocialContractTest {
             assertTrue(messages.contains("\"" + key + "\""), "нет сообщения social." + key);
         }
         assertTrue(messages.contains("150 ₽ / 30 дней"), "оба варианта должны называть цену и срок");
+        assertTrue(messages.contains("15 ₽ / 1 день"),
+                "дневной тариф за 15 ₽ упоминается в подсказках");
+        assertTrue(messages.contains("%vk%"), "инструкция содержит кликабельную ссылку на ВК");
+        assertTrue(messages.contains("/link"), "инструкция называет команду получения кода");
+        assertFalse(messages.contains("ВК/MAX"),
+                "MAX в разработке: игрокам предлагается только ВКонтакте");
+        assertTrue(messages.contains("1)"), "инструкция пошаговая");
 
         String config = read("src/main/resources/config.yml");
-        assertTrue(config.contains("reminder-seconds: 30"));
+        assertTrue(config.contains("reminder-seconds: 180"));
         assertTrue(config.contains("nagging: true"));
-        assertTrue(config.contains("action-bar-seconds: 5"));
+        assertTrue(config.contains("action-bar-seconds: 15"));
+        assertTrue(config.contains("action-nag-seconds: 120"));
+    }
+
+    @Test
+    void chatRemindersShareOneCooldownAndVkLinkIsPassedToTemplates() throws Exception {
+        String service = read("src/main/java/ru/cherdakmd/chrdksocial/SocialService.java");
+        assertTrue(service.contains("lastChatReminder"),
+                "периодическое напоминание и пинг при действиях делят один кулдаун");
+        assertTrue(service.contains("allowChatReminder"));
+        assertTrue(service.contains("if (!allowChatReminder(key, now)) return;"));
+        assertTrue(service.contains("if (!allowChatReminder(key, now)) continue;"));
+        assertFalse(service.contains("lastActionNag"), "старый раздельный кулдаун удалён");
+        assertTrue(service.contains("\"vk\", config.vkCommunityUrl()"),
+                "ссылка на сообщество ВК подставляется во все шаблоны");
+        assertTrue(service.contains("\"social.gate-howto\""));
+        String handler = read("src/main/java/ru/cherdakmd/chrdksocial/SocialCommandHandler.java");
+        assertFalse(handler.contains("\"social.gate-howto\");"),
+                "/link не должен отправлять инструкцию с сырыми %code% и %vk%");
+        assertTrue(handler.contains("\"vk\", service.config().vkCommunityUrl()"));
     }
 
     @Test

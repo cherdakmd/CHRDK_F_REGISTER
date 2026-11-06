@@ -2,6 +2,7 @@ package ru.cherdakmd.chrdkvk;
 
 import com.google.gson.JsonParser;
 import org.junit.jupiter.api.Test;
+import ru.cherdakmd.chrdksocial.SocialCallback;
 
 import java.io.IOException;
 import java.net.URI;
@@ -75,6 +76,42 @@ class VkApiClientTest {
                     "токен сообщества никогда не передаётся в URI");
         }
         assertTrue(formBodies.stream().allMatch(b -> b.contains("access_token=SECRET_VK_TOKEN")));
+    }
+
+    @Test
+    void callbackAnswerAndEditUsePostBodyWithoutTokenInUri() throws Exception {
+        List<URI> uris = new ArrayList<>();
+        List<String> bodies = new ArrayList<>();
+        VkApiClient.Transport transport = new VkApiClient.Transport() {
+            @Override
+            public String postForm(URI uri, String formBody, Duration timeout) {
+                uris.add(uri);
+                bodies.add(formBody);
+                return "{\"response\":1}";
+            }
+
+            @Override
+            public String get(URI uri, Duration timeout) {
+                return "{\"ts\":\"1\",\"updates\":[]}";
+            }
+        };
+        VkApiClient client = new VkApiClient("https://api.vk.com/method/", "TOK", "5.199", transport);
+        assertTrue(client.sendMessageEventAnswer("evt-1", 101L, 2000000001L,
+                VkKeyboards.snackbar("Готово")));
+        assertTrue(client.editMessage(2000000001L, 42L, "🗳 Опрос",
+                VkKeyboards.callbackKeyboard(java.util.List.of(
+                        new SocialCallback.Button("✅", "poll", "1:yes", "positive")))));
+        assertFalse(client.sendMessageEventAnswer("", 101L, 1L, "{}"));
+        assertFalse(client.editMessage(1L, 0L, "", null));
+
+        assertEquals(2, uris.size());
+        assertTrue(uris.get(0).getPath().endsWith("/messages.sendMessageEventAnswer"));
+        assertTrue(uris.get(1).getPath().endsWith("/messages.edit"));
+        assertTrue(bodies.get(0).contains("event_id=evt-1"));
+        assertTrue(bodies.get(0).contains("user_id=101"));
+        assertTrue(bodies.get(1).contains("conversation_message_id=42"));
+        assertTrue(bodies.stream().allMatch(b -> b.contains("access_token=TOK")));
+        assertTrue(uris.stream().noneMatch(u -> u.toString().contains("TOK")));
     }
 
     @Test

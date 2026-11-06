@@ -37,14 +37,15 @@ class SocialConfigTest {
         assertTrue(cfg.donateEnabled());
         assertEquals(SocialAccessPolicy.MODE_EITHER, cfg.donateMode(),
                 "любой донатный ранг ИЛИ карточка проходки снимают ограничение");
-        assertEquals(java.util.List.of("social-access"), cfg.donateProductIds());
+        assertEquals(java.util.List.of("social-access", "social-access-day"),
+                cfg.donateProductIds(), "платный доступ дают оба тарифа проходки");
         assertFalse(cfg.donatePermanent(), "по умолчанию доступ привязан к активной покупке");
         assertEquals("https://chrdk.trademc.org/", cfg.donateUrl());
         assertTrue(cfg.donateActive());
-        assertEquals(30, cfg.reminderSeconds(), "напоминание в чате каждые 30 с, включая grace");
+        assertEquals(180, cfg.reminderSeconds(), "напоминание в чате не чаще раза в 3 минуты");
         assertTrue(cfg.reminderNagging());
-        assertEquals(5, cfg.reminderActionBarSeconds());
-        assertEquals(20, cfg.reminderActionNagSeconds());
+        assertEquals(15, cfg.reminderActionBarSeconds());
+        assertEquals(120, cfg.reminderActionNagSeconds());
         assertTrue(cfg.reminderTitleOnJoin());
         assertTrue(cfg.reminderSound());
     }

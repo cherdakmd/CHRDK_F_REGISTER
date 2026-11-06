@@ -92,6 +92,75 @@ class LuckPermsBootstrapTest {
     }
 
     @Test
+    void socialPermissionsArePresentButBypassNeverLeaksIntoDefaultOrAdmin() throws Exception {
+        List<LuckPermsBootstrap.GroupSpec> scheme = bootstrap("").scheme();
+        assertTrue(scheme.get(0).permissions().contains("chrdksocial.use"),
+                "базовые права социального плагина есть даже без загруженного CHRDK_VK");
+        assertTrue(scheme.get(2).permissions().contains("chrdksocial.admin"));
+        assertFalse(scheme.get(0).permissions().contains("chrdksocial.bypass"));
+        assertFalse(scheme.get(2).permissions().contains("chrdksocial.bypass"));
+
+        assertEquals(List.of("chrdkregister.menu", "chrdksocial.admin"),
+                LuckPermsBootstrap.withoutBypass(
+                        List.of("chrdkregister.menu", "ChrdkSocial.Bypass", "chrdksocial.admin"),
+                        "chrdksocial.bypass"),
+                "узел обхода вырезается регистронезависимо");
+        assertEquals(List.of("chrdkregister.menu"),
+                LuckPermsBootstrap.withoutBypass(List.of("chrdkregister.menu"), ""),
+                "пустой узел ничего не ломает");
+    }
+
+    @Test
+    void bypassNodeIsConfigurableAndDefaultsToSocialBypass() throws Exception {
+        YamlConfiguration plain = new YamlConfiguration();
+        plain.loadFromString("");
+        assertEquals("chrdksocial.bypass",
+                PluginConfig.fromBukkitConfig(plain).lpSocialBypassPermission());
+
+        YamlConfiguration custom = new YamlConfiguration();
+        custom.loadFromString("integrations:\n  lp-social-bypass-permission: \"Custom.Bypass\"\n");
+        assertEquals("custom.bypass",
+                PluginConfig.fromBukkitConfig(custom).lpSocialBypassPermission());
+    }
+
+    @Test
+    void passGroupNeverInheritsBypassEvenIfAddedManually() throws Exception {
+        var scheme = bootstrap("integrations:\n  pass-group: donator\n"
+                + "  pass-group-permissions: [\"chrdksocial.bypass\", \"chrdkregister.menu\"]\n").scheme();
+        var pass = scheme.stream().filter(spec -> spec.name().equals("donator")).findFirst();
+        assertTrue(pass.isPresent());
+        assertEquals(List.of("chrdkregister.menu"), pass.get().permissions(),
+                "узел обхода вырезается и из группы проходки");
+    }
+
+    @Test
+    void dayPassCreatesTemporaryLuckPermsGroupWithBypassOnly() throws Exception {
+        String yaml = """
+                shop:
+                  enabled: true
+                  max-total-days: 365
+                  products:
+                    - id: social-access-day
+                      name: "Вход без ВК и MAX — 1 день"
+                      price: 15
+                      days: 1
+                      group: "social-day"
+                      description: "Пробный доступ на сутки"
+                      tag: ""
+                      permissions: ["chrdksocial.bypass"]
+                      commands: []
+                """;
+        List<LuckPermsBootstrap.GroupSpec> scheme = bootstrap(yaml).scheme();
+        var group = scheme.stream().filter(spec -> spec.name().equals("social-day")).findFirst();
+        assertTrue(group.isPresent(), "временная группа товара создаётся /pass luckperms setup");
+        assertEquals(20, group.get().weight());
+        assertEquals("default", group.get().parent());
+        assertEquals(List.of("chrdksocial.bypass"), group.get().permissions());
+        assertFalse(scheme.get(0).permissions().contains("chrdksocial.bypass"),
+                "default не наследует обход привязки");
+    }
+
+    @Test
     void splitDiscoveredFiltersBySuffix() {
         java.util.LinkedHashSet<String> keys = new java.util.LinkedHashSet<>();
         keys.add("chrdkartifacts.use");

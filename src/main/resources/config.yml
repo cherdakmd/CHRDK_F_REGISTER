@@ -926,6 +926,25 @@ shop:
       commands: []
       trademc-export: false
 
+    # --- Вход без привязки на 1 день (пробный тариф) ---------------------
+    # Тот же доступ, что у social-access, но на 24 часа и за 15 ₽. Работает
+    # ДВУМЯ независимыми путями: entitlement в data.json ядра (в списке
+    # social.donate-access.product-ids плагина CHRDK_VK) и временная группа
+    # LuckPerms social-day с правом chrdksocial.bypass. Fail-closed: при
+    # недоступном API ядра право не выдаётся «на всякий случай».
+    # Группу social-day создаёт /pass luckperms setup; НЕ добавляйте
+    # chrdksocial.bypass в default или admin — это обход обязательной привязки.
+    - id: social-access-day
+      name: "<aqua>Вход без ВК и MAX — 1 день</aqua>"
+      price: 15
+      days: 1
+      group: "social-day"
+      description: "Играть без обязательной привязки к ВКонтакте или MAX — 1 день (24 часа). Не выдаёт ранг, привилегии и игровые бонусы"
+      tag: ""
+      permissions: ["chrdksocial.bypass"]
+      commands: []
+      trademc-export: false
+
 
 # =====================================================================
 #  ВИКИ ИГРОКА (1.4.171): сайт с командами, ценами и лимитами
@@ -1089,6 +1108,11 @@ integrations:
   lp-command-protect: true
   # Дополнительные узлы, запрещаемые обычным игрокам (добавляются к встроенному списку):
   lp-deny-extra: []
+  # Узел обхода обязательной привязки ВК/MAX. Выдаётся ТОЛЬКО временной
+  # группой товара social-day (1 день) и НИКОГДА не попадает в default/admin
+  # при /pass luckperms setup — даже если право зарегистрировано плагином.
+  # Смените здесь и в vk/config.yml (social.bypass-permission), если переименовали узел.
+  lp-social-bypass-permission: "chrdksocial.bypass"
 
 auth:
   # Время жизни сессии по IP в минутах (0 = отключить сессию, спрашивать пароль при каждом входе)
@@ -1406,8 +1430,14 @@ moderation:
   warn-limit: 5
   # Причина бана: %player%, %count%, %limit% подставляются ядром.
   ban-reason: "%player%: %count%/%limit% активных варнов — бан по правилам сервера"
-  # Показывать %tab_warns% в таб-листе всем игрокам.
+  # Показывать %tab_warns% в таб-листе каждому игроку (ЕГО собственный счётчик).
   warns-in-tab: true
+  # Публичный список нарушителей в подвале TAB: видят ВСЕ игроки, а не только
+  # владелец варнов. По умолчанию ВЫКЛЮЧЕНО: «доска позора» — решение владельца.
+  # В кадр уходят только ник и «активные/порог»; причины, даты и авторы — нет.
+  warns-public-in-tab: false
+  # Сколько ников показывать (1..10); остаток сворачивается в «+N ещё».
+  warns-public-limit: 3
   # Сколько последних действий держим в moderation.json (полная история — в audit/*.jsonl).
   journal-limit: 500
   # Кнопки срока мута в GUI (минуты): 10, 60, 1440, 10080 = 10 мин, 1 ч, 1 д, 7 д.
@@ -1451,7 +1481,9 @@ tablist:
   #   %player_tagged% — общая строка ника и меток с учётом /labels и лимита,
   #   %pass_status% — активен/истёк/нет ранга, %pass_left% — «12 дн. 3 ч.»,
   #   %pass_days% — осталось целых дней ранга,
-  #   %tab_warns% — активные варны и порог автобана игрока («3/5»), видны всем.
+  #   %tab_warns% — СВОИ активные варны и порог автобана игрока («3/5»).
+  #   %tab_warns_public% — общий список нарушителей (ник + счётчик), одинаковый
+  #   для всех; включается moderation.warns-public-in-tab, по умолчанию пусто.
   #   %chrdksocial_status% — ЯВНЫЙ выбор игрока: «✅ привязан (ВК)»,
   #   «✅ проход: 27 дн.» или «⚠ БЕЗ ПРИВЯЗКИ: осталось 14 дн.» / «⛔ ВХОД ЗАКРЫТ».
   #   %chrdksocial_access% — остаток товара «Вход без ВК и MAX» («27 дн.», «нет»),
@@ -1483,6 +1515,7 @@ tablist:
     - "<gray>Банк <aqua>%tab_balance% 💠</aqua> <dark_gray>│</dark_gray> XP-буст <green>%tab_boost%</green>"
     - "<gray>%auth_status%</gray> <dark_gray>│</dark_gray> <gray>2FA: %security%</gray>"
     - "<gray>Варны <yellow>%tab_warns%</yellow> <dark_gray>│</dark_gray> <gray>порог — автобан</gray>"
+    - "<gray>%tab_warns_public%</gray>"
     - "<gold>%chrdksocial_status%</gold>"
     - "<gray>Привязка <green>%chrdksocial_link%</green> <dark_gray>│</dark_gray> Проход <aqua>%chrdksocial_access%</aqua></gray>"
     - "<gray>%auth_hint%</gray>"

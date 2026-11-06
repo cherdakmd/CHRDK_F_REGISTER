@@ -69,8 +69,13 @@ public final class SocialService {
     private BukkitTask reminderTask;
     private BukkitTask actionBarTask;
     private BukkitTask newsTask;
-    /** Кулдаун пинга при игровых действиях: название не должно превращаться в спам каждого тика. */
-    private final ConcurrentHashMap<String, Long> lastActionNag = new ConcurrentHashMap<>();
+    /**
+     * Общий кулдаун ЛЮБОГО напоминания в чат. Раньше периодическое сообщение и
+     * пинг при действиях жили каждый со своим таймером и приходили друг за другом
+     * («НАПОМИНАНИЕ» + «Не забудь выбрать» подряд). Теперь оба источника делят
+     * одну паузу, поэтому игрок видит не чаще одного напоминания за интервал.
+     */
+    private final ConcurrentHashMap<String, Long> lastChatReminder = new ConcurrentHashMap<>();
 
     public SocialService(VkPlugin plugin, SocialConfig config) {
         this.plugin = plugin;
@@ -111,7 +116,7 @@ public final class SocialService {
     public void sendFrozenNotice(Player player, String code) {
         if (player == null || !player.isOnline()) return;
         plugin.messages().send(player, "social.command-blocked",
-                "code", code, "url", config.donateUrl());
+                "code", code, "url", config.donateUrl(), "vk", config.vkCommunityUrl());
     }
 
     public SocialLinkStore store() {
@@ -381,9 +386,10 @@ public final class SocialService {
 
         plugin.messages().send(player, "social.gate-choice");
         plugin.messages().send(player, "social.gate-code",
-                "code", code, "minutes", Math.max(1, config.codeTtlSeconds() / 60),
-                "vk", config.vkCommunityUrl(), "max", config.maxBotUrl());
-        plugin.messages().send(player, "social.gate-howto");
+                "code", code, "minutes", Math.max(1, config.codeTtlSeconds() / 60));
+        // Подробная инструкция именно по ВК: MAX в разработке и игрокам не предлагается.
+        plugin.messages().send(player, "social.gate-howto",
+                "code", code, "vk", config.vkCommunityUrl());
         if (config.donateActive()) {
             plugin.messages().send(player, "social.gate-donate", "url", url);
         }
@@ -400,7 +406,7 @@ public final class SocialService {
     public void onQuit(Player player) {
         String key = SocialLinkCodeManager.canonical(player.getName());
         pending.remove(key);
-        lastActionNag.remove(key);
+        lastChatReminder.remove(key);
     }
 
     /* ------------------------- назойливое информирование ------------------------- */
@@ -408,7 +414,7 @@ public final class SocialService {
     /** Снимает все напоминания, как только игрок привязался или купил проход. */
     private void settle(Player player, String key) {
         pending.remove(key);
-        lastActionNag.remove(key);
+        lastChatReminder.remove(key);
         clearActionBar(player);
     }
 
@@ -459,14 +465,24 @@ public final class SocialService {
         String key = SocialLinkCodeManager.canonical(player.getName());
         if (!pending.contains(key)) return;
         long now = System.currentTimeMillis();
-        Long last = lastActionNag.get(key);
-        if (last != null && now - last < config.reminderActionNagSeconds() * 1000L) return;
         if (settled(player, key)) return;
-        lastActionNag.put(key, now);
+        if (!allowChatReminder(key, now)) return;
         long deadline = graceDeadline(player.getName(), now);
         int days = SocialAccessPolicy.remainingDays(deadline, now);
         plugin.messages().send(player, "social.action-nag",
-                "url", config.donateUrl(), "days", days);
+                "url", config.donateUrl(), "vk", config.vkCommunityUrl(), "days", days);
+    }
+
+    /** Один общий кулдаун для remindPending и nagOnAction (чатовый спам исключён). */
+    private boolean allowChatReminder(String key, long now) {
+        long pause = Math.max(config.reminderSeconds(), config.reminderActionNagSeconds()) * 1000L;
+        Long last = lastChatReminder.get(key);
+        if (last != null && now - last < pause) return false;
+        lastChatReminder.put(key, now);
+        if (lastChatReminder.size() > 4096) {
+            lastChatReminder.entrySet().removeIf(entry -> now - entry.getValue() > pause * 4L);
+        }
+        return true;
     }
 
     /** Возвращает живой код игрока, перевыпуская только по истечении паузы. */
@@ -490,11 +506,13 @@ public final class SocialService {
             Player player = Bukkit.getPlayerExact(key);
             if (player == null || !player.isOnline()) continue;
             if (settled(player, key)) continue;
+            if (!allowChatReminder(key, now)) continue;
             Optional<String> code = codes.peek(player.getName(), now);
             if (code.isEmpty()) code = Optional.of(issueCode(player));
             int days = SocialAccessPolicy.remainingDays(graceDeadline(player.getName(), now), now);
             plugin.messages().send(player, "social.reminder-choice",
-                    "code", code.get(), "url", config.donateUrl(), "days", days);
+                    "code", code.get(), "url", config.donateUrl(),
+                    "vk", config.vkCommunityUrl(), "days", days);
             if (config.reminderSound()) playNagSound(player);
         }
     }

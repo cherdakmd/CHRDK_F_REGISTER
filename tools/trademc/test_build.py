@@ -25,11 +25,19 @@ class StorefrontTest(unittest.TestCase):
         new = [p for p in live if p['id'] in {'clan-name-style', 'clan-emblem', 'clan-card-frame'}]
         self.assertEqual(3, len(new))
         self.assertTrue(all(p.get('trademc-export') is False for p in new))
-        self.assertEqual(31, len(live))
+        self.assertEqual(32, len(live))
         social = [p for p in live if p['id'] == 'social-access']
         self.assertEqual(1, len(social))
         self.assertIs(social[0].get('trademc-export'), False)
         self.assertNotIn('social-access', {p['id'] for p in kit.catalog()[1]})
+        day = [p for p in live if p['id'] == 'social-access-day']
+        self.assertEqual(1, len(day))
+        self.assertEqual(15, day[0]['price'])
+        self.assertEqual(1, day[0]['days'])
+        self.assertIs(day[0].get('trademc-export'), False)
+        self.assertEqual(['chrdksocial.bypass'], day[0]['permissions'])
+        self.assertNotIn('social-access-day', {p['id'] for p in kit.catalog()[1]},
+                         'дневной тариф не добавляет 27-ю карточку TradeMC')
         self.assertEqual(26, len(kit.catalog()[1]))
         self.assertEqual(26, len(kit.snapshot_catalog()[1]))
 

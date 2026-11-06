@@ -15,6 +15,8 @@ class ModerationConfigTest {
         assertEquals(5, config.warnLimit());
         assertEquals(ModerationLedger.DEFAULT_WARN_LIMIT, config.warnLimit());
         assertTrue(config.warnsInTab());
+        assertFalse(config.warnsPublicInTab(), "публичная доска позора не включается молча");
+        assertEquals(3, config.warnsPublicLimit());
         assertEquals(500, config.journalLimit());
         assertTrue(config.banReason().contains("%count%"));
         assertSame(ModerationConfig.DEFAULT, ModerationConfig.fromConfig(null));
@@ -43,17 +45,23 @@ class ModerationConfigTest {
         yaml.set("moderation.warn-limit", 999);
         yaml.set("moderation.ban-reason", "   ");
         yaml.set("moderation.warns-in-tab", false);
+        yaml.set("moderation.warns-public-in-tab", true);
+        yaml.set("moderation.warns-public-limit", 999);
         yaml.set("moderation.journal-limit", 1);
         ModerationConfig config = ModerationConfig.fromConfig(yaml);
         assertFalse(config.enabled());
         assertEquals(50, config.warnLimit());
         assertEquals(ModerationConfig.DEFAULT_BAN_REASON, config.banReason());
         assertFalse(config.warnsInTab());
+        assertTrue(config.warnsPublicInTab());
+        assertEquals(10, config.warnsPublicLimit(), "топ-N не выходит за 10 ников");
         assertEquals(10, config.journalLimit());
 
         yaml.set("moderation.warn-limit", -4);
+        yaml.set("moderation.warns-public-limit", -4);
         yaml.set("moderation.journal-limit", 99999);
         assertEquals(1, ModerationConfig.fromConfig(yaml).warnLimit());
+        assertEquals(1, ModerationConfig.fromConfig(yaml).warnsPublicLimit());
         assertEquals(5000, ModerationConfig.fromConfig(yaml).journalLimit());
     }
 }

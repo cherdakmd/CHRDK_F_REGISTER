@@ -56,6 +56,23 @@ class VkBotRouterTest {
             }
 
             @Override
+            public void onVkCallback(String eventId, long userId, long peerId, String payload,
+                                     long conversationMessageId, long nowMillis) {
+                actions.add("callback:" + eventId + ":" + userId + ":" + payload + ":"
+                        + conversationMessageId);
+            }
+
+            @Override
+            public void onWallReaction(String kind, long fromUserId, long postId, long nowMillis) {
+                actions.add("reaction:" + kind + ":" + postId);
+            }
+
+            @Override
+            public void onPollRequested(long peerId, long nowMillis) {
+                actions.add("poll:" + peerId);
+            }
+
+            @Override
             public void sendDirectReply(long peerId, String text) {
                 replies.add(peerId + "->" + text);
             }
@@ -198,10 +215,29 @@ class VkBotRouterTest {
         router.handleUpdate(JsonParser.parseString(
                 "{\"type\":\"message_new\",\"object\":{\"message\":{\"peer_id\":77,\"from_id\":77,\"text\":\"Начать\",\"payload\":{\"command\":\"start\"}}}}").getAsJsonObject(), 1000L);
 
+        router.handleUpdate(JsonParser.parseString(
+                "{\"type\":\"message_event\",\"object\":{\"event_id\":\"evt-1\",\"user_id\":77,\"peer_id\":77,\"conversation_message_id\":42,\"payload\":\"{\\\"act\\\":\\\"help\\\"}\"}}").getAsJsonObject(), 1000L);
+        router.handleUpdate(JsonParser.parseString(
+                "{\"type\":\"wall_reply_new\",\"object\":{\"from_id\":88,\"post_id\":99}}").getAsJsonObject(), 1000L);
+        router.handleUpdate(JsonParser.parseString(
+                "{\"type\":\"like_add\",\"object\":{\"liker_id\":88,\"object_id\":99}}").getAsJsonObject(), 1000L);
+        router.handleUpdate(JsonParser.parseString(
+                "{\"type\":\"message_event\",\"object\":{\"user_id\":77,\"peer_id\":77}}").getAsJsonObject(), 1000L);
+        router.handleUpdate(JsonParser.parseString(
+                "{\"type\":\"like_add\",\"object\":{\"liker_id\":88,\"object_id\":99,\"object_type\":\"photo\"}}").getAsJsonObject(), 1000L);
+        router.handleUpdate(JsonParser.parseString(
+                "{\"type\":\"message_new\",\"object\":{\"message\":{\"peer_id\":2000000001,\"from_id\":77,\"text\":\"/опрос\"}}}").getAsJsonObject(), 1000L);
+
         assertTrue(actions.containsAll(List.of(
                 "link:77:AB34CD",
                 "chat:2000000001:77:Всем привет из беседы!",
-                "logout:77", "freeze:77", "unfreeze:77", "donut_on:77", "wall:99")));
+                "logout:77", "freeze:77", "unfreeze:77", "donut_on:77", "wall:99",
+                "callback:evt-1:77:{\"act\":\"help\"}:42",
+                "reaction:reply:99", "reaction:like:99", "poll:2000000001")));
+        assertEquals(1, actions.stream().filter(a -> a.startsWith("callback:")).count(),
+                "событие без event_id не должно попадать в роутер");
+        assertEquals(2, actions.stream().filter(a -> a.startsWith("reaction:")).count(),
+                "лайки фотографий не попадают в дайджест стены");
         assertFalse(actions.stream().anyMatch(a -> a.contains("Чужая беседа") || a.contains("эхо")));
     }
 }

@@ -38,6 +38,12 @@ public final class PluginConfig {
     private boolean lpCommandProtect = true;
     /** Доп. узлы для запрета обычным игрокам (integrations.lp-deny-extra). */
     private List<String> lpDenyExtra = List.of();
+    /**
+     * Узел обхода обязательной привязки ВК/MAX (integrations.lp-social-bypass-permission).
+     * При /pass luckperms setup этот узел никогда не попадает в default/admin:
+     * его выдаёт только временная группа товара social-day.
+     */
+    private String lpSocialBypassPermission = "chrdksocial.bypass";
     /** Проверять обновления ядра на GitHub (updates.enabled). */
     private boolean updatesEnabled = true;
     /** Репозиторий релизов для проверки обновлений (updates.repo). */
@@ -439,6 +445,9 @@ public final class PluginConfig {
         parsed.passGroupPermissions = List.copyOf(config.getStringList("integrations.pass-group-permissions"));
         parsed.lpCommandProtect = config.getBoolean("integrations.lp-command-protect", true);
         parsed.lpDenyExtra = List.copyOf(config.getStringList("integrations.lp-deny-extra"));
+        String bypass = config.getString("integrations.lp-social-bypass-permission", "chrdksocial.bypass");
+        parsed.lpSocialBypassPermission = bypass == null || bypass.isBlank()
+                ? "chrdksocial.bypass" : bypass.trim().toLowerCase(java.util.Locale.ROOT);
         parsed.trialEnabled = config.getBoolean("pass.trial.enabled", true);
         parsed.trialDays = Math.max(1, Math.min(365, config.getInt("pass.trial.days", 14)));
         parsed.updatesEnabled = config.getBoolean("updates.enabled", true);
@@ -569,6 +578,11 @@ public final class PluginConfig {
     /** Доп. узлы запрета обычным игрокам (extra — поверх встроенного deny-листа). */
     public List<String> lpDenyExtra() {
         return lpDenyExtra;
+    }
+
+    /** Узел, который запрещено выдавать группам default/admin при авто-настройке LuckPerms. */
+    public String lpSocialBypassPermission() {
+        return lpSocialBypassPermission;
     }
 
     /** Включена ли фоновая проверка обновлений ядра на GitHub. */

@@ -84,6 +84,19 @@ public final class ModerationService {
         return config.warnsInTab() ? warnCount(name) + "/" + config.warnLimit() : "";
     }
 
+    /**
+     * Публичный кадр подвала TAB: одинаковый для всех, без причин и дат.
+     * Выключенный флаг даёт пустую строку, чтобы stock-строка подвала не
+     * показывала «доску позора» без решения владельца.
+     */
+    public String warnsPublicText() {
+        if (!enabled() || !config.warnsPublicInTab()) {
+            return "";
+        }
+        return PublicWarnSummary.format(ledger.activeWarnSummary(),
+                config.warnsPublicLimit(), config.warnLimit());
+    }
+
     public boolean isBanned(String name) {
         if (ledger.isBanned(name)) return true;
         try {

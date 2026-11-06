@@ -40,7 +40,8 @@ public final class LuckPermsBootstrap {
             "chrdkranks.use",
             "chrdktele.use",
             "chrdktierforge.use",
-            "chrdkvk.use"
+            "chrdkvk.use",
+            "chrdksocial.use"
     );
 
     /** Админские права семейства + модераторские права чата. */
@@ -64,7 +65,8 @@ public final class LuckPermsBootstrap {
             "chrdkranks.admin",
             "chrdktele.admin",
             "chrdktierforge.admin",
-            "chrdkvk.admin"
+            "chrdkvk.admin",
+            "chrdksocial.admin"
     );
 
     /** Описание одной группы схемы: имя, вес, родитель, список нод-прав. */
@@ -129,10 +131,14 @@ public final class LuckPermsBootstrap {
         List<GroupSpec> specs = new ArrayList<>();
         specs.add(new GroupSpec("default", 0, null, DEFAULT_PERMS));
         specs.add(new GroupSpec(passGroupName(), 10, "default",
-                List.copyOf(config.get().passGroupPermissions())));
+                withoutBypass(List.copyOf(config.get().passGroupPermissions()),
+                        config.get().lpSocialBypassPermission())));
         specs.add(new GroupSpec("admin", 100, "default", ADMIN_PERMS));
         // Группы товаров каталога: вес выше проходки, но ниже админа. Права товара
         // («+8 домов» и подобные) выдаются вместе с группой на срок покупки.
+        // Временные группы товаров каталога: social-day (social-access-day,
+        // 15 ₽ / 1 день) несёт chrdksocial.bypass и НИКОГДА не наследуется
+        // default/admin — иначе обязательная привязка обходится у всех игроков.
         for (ShopProduct product : config.get().shop().products()) {
             if (!product.hasGroup()) {
                 continue;
@@ -159,8 +165,11 @@ public final class LuckPermsBootstrap {
         // Правила самих плагинов берём у установленных плагинов (без хардкода):
         // для default — все chrdk*.use, для admin — все chrdk*.admin
         java.util.Set<String> discovered = discoverChrdkPerms();
-        java.util.List<String> usePerms = mergeUnique(DEFAULT_PERMS, splitDiscovered(discovered, ".use"));
-        java.util.List<String> adminPerms = mergeUnique(ADMIN_PERMS, splitDiscovered(discovered, ".admin"));
+        String bypassNode = config.get().lpSocialBypassPermission();
+        java.util.List<String> usePerms = withoutBypass(
+                mergeUnique(DEFAULT_PERMS, splitDiscovered(discovered, ".use")), bypassNode);
+        java.util.List<String> adminPerms = withoutBypass(
+                mergeUnique(ADMIN_PERMS, splitDiscovered(discovered, ".admin")), bypassNode);
         CompletableFuture<Void> chain = CompletableFuture.completedFuture(null);
         for (GroupSpec spec : scheme()) {
             java.util.List<String> resolved = switch (spec.name()) {
@@ -201,6 +210,20 @@ public final class LuckPermsBootstrap {
             }
         }
         return result;
+    }
+
+    /**
+     * Страховка от случайной выдачи обхода обязательной привязки: узел
+     * {@code integrations.lp-social-bypass-permission} убирается из default/admin,
+     * даже если плагин зарегистрировал его как {@code chrdk*.use/admin} или
+     * владелец добавил его в pass-group-permissions вручную. Применяется к
+     * default/admin/pass, но НЕ к группам товаров: social-day обязана нести узел.
+     * Выдавать узел имеет право только временная группа товара.
+     */
+    static java.util.List<String> withoutBypass(java.util.List<String> keys, String bypassNode) {
+        String node = bypassNode == null ? "" : bypassNode.trim().toLowerCase(Locale.ROOT);
+        if (node.isEmpty()) return keys;
+        return keys.stream().filter(key -> !node.equalsIgnoreCase(key.trim())).toList();
     }
 
     /** Объединение базового списка с обнаруженным (без дублей, регистронезависимо). */

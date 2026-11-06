@@ -13,6 +13,10 @@ import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 import ru.cherdakmd.chrdkregister.api.events.PlayerAuthCompletedEvent;
+import ru.cherdakmd.chrdksocial.SocialCallback;
+import ru.cherdakmd.chrdksocial.SocialEventText;
+import ru.cherdakmd.chrdksocial.SocialEventThrottle;
+import ru.cherdakmd.chrdksocial.SocialInteractionHub;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -77,6 +81,8 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
     private volatile VkLongPollWorker longPollWorker;
     private volatile VkChatBatcher chatBatcher;
     private volatile ServerPulse serverPulse = new ServerPulse(0, 0, 20.0, List.of());
+    private volatile SocialInteractionHub interactionHub;
+    private final SocialEventThrottle wallThrottle = new SocialEventThrottle(System::currentTimeMillis);
     private BukkitTask onboardingTask;
     private final Map<UUID, Long> onboardingDue = new ConcurrentHashMap<>();
     private final Set<UUID> onboardingCompleted = ConcurrentHashMap.newKeySet();
@@ -103,6 +109,11 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
 
     public VkStore store() {
         return store;
+    }
+
+    /** Общий хаб интерактива создаётся плагином после SocialService (нужен аудит). */
+    public void attachInteraction(SocialInteractionHub hub) {
+        this.interactionHub = hub;
     }
 
     public VkLinkCodeManager codeManager() {
@@ -238,6 +249,35 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
             return false;
         }
         sendAsync(effectiveGroupChatPeerId(), text);
+        return true;
+    }
+
+    /** Тикет «Позвать администратора»: admin-peer-id или беседа сообщества. */
+    public boolean sendAdminAlert(String text, long adminPeerId) {
+        if (text == null || text.isBlank()) return false;
+        long peer = adminPeerId > 0L ? adminPeerId : effectiveGroupChatPeerId();
+        if (peer <= 0L) return false;
+        sendAsync(peer, text);
+        return true;
+    }
+
+    /**
+     * Событие сервера в беседу ВК: идёт через общий {@link VkChatBatcher},
+     * чтобы всплеск смертей/входов не упёрся в VK flood control. В отличие от
+     * {@link #onPlayerAuthCompleted} не зависит от {@code relay-join-quit} —
+     * у событий свой набор флагов.
+     */
+    public boolean sendEventToGroupChat(String text) {
+        if (!groupChatBridgeReady() || text == null || text.isBlank()) {
+            return false;
+        }
+        long peerId = effectiveGroupChatPeerId();
+        VkChatBatcher batcher = this.chatBatcher;
+        if (batcher != null) {
+            batcher.enqueue(peerId, text);
+        } else {
+            sendAsync(peerId, text);
+        }
         return true;
     }
 
@@ -588,6 +628,93 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
         }
     }
 
+    @Override
+    public void onVkCallback(String eventId, long userId, long peerId, String payload,
+                             long conversationMessageId, long nowMillis) {
+        VkApiClient client = this.apiClient;
+        SocialInteractionHub hub = this.interactionHub;
+        if (client == null) return;
+        if (hub == null) {
+            answerEvent(client, eventId, userId, peerId, "Интерактив выключен");
+            return;
+        }
+        SocialInteractionHub.Reply reply = hub.handle("vk", userId, payload, nowMillis);
+        String keyboard = reply.buttons().isEmpty()
+                ? null : VkKeyboards.callbackKeyboard(reply.buttons());
+        if (reply.edit() && conversationMessageId > 0L && !reply.text().isBlank()) {
+            outboundExecutor.execute(() -> {
+                try {
+                    client.editMessage(peerId, conversationMessageId, reply.text(), keyboard);
+                } catch (InterruptedException interrupted) {
+                    Thread.currentThread().interrupt();
+                } catch (Exception failure) {
+                    plugin.getLogger().fine("[CHRDK_VK] messages.edit: " + failure.getClass().getSimpleName());
+                }
+            });
+        } else if (!reply.text().isBlank()) {
+            sendAsync(peerId, reply.text(), keyboard);
+        }
+        answerEvent(client, eventId, userId, peerId,
+                reply.snackbar().isBlank() ? "Готово" : reply.snackbar());
+    }
+
+    /** VK требует ответ на message_event даже при пустом результате. */
+    private void answerEvent(VkApiClient client, String eventId, long userId, long peerId,
+                             String text) {
+        outboundExecutor.execute(() -> {
+            try {
+                client.sendMessageEventAnswer(eventId, userId, peerId, VkKeyboards.snackbar(text));
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+            } catch (Exception failure) {
+                plugin.getLogger().fine("[CHRDK_VK] sendMessageEventAnswer: "
+                        + failure.getClass().getSimpleName());
+            }
+        });
+    }
+
+    @Override
+    public void onPollRequested(long peerId, long nowMillis) {
+        SocialInteractionHub hub = this.interactionHub;
+        if (hub == null || !hub.config().enabled() || !hub.config().callbacks()
+                || !hub.config().polls()) return;
+        String id = hub.polls().open(hub.config().pollQuestion(),
+                hub.config().pollDurationSeconds(), nowMillis);
+        if (id.isEmpty()) return;
+        String text = "🗳 " + hub.config().pollQuestion() + "\n✅ 0 · ❌ 0";
+        List<SocialCallback.Button> buttons = List.of(
+                new SocialCallback.Button("✅ За", "poll", id + ":yes", "positive"),
+                new SocialCallback.Button("❌ Против", "poll", id + ":no", "negative"));
+        sendAsync(peerId, text, VkKeyboards.callbackKeyboard(buttons));
+        if (plugin.socialService() != null) {
+            plugin.socialService().audit().write("social.poll.open", "", "vk", "id=" + id);
+        }
+    }
+
+    @Override
+    public void onWallReaction(String kind, long fromUserId, long postId, long nowMillis) {
+        SocialInteractionHub hub = this.interactionHub;
+        if (hub == null || postId <= 0L) return;
+        var cfg = hub.config();
+        if (!cfg.enabled() || !cfg.wallReactions()) return;
+        if (!wallThrottle.allow(kind, Long.toString(postId), cfg.cooldownMillis())) return;
+        String label = switch (kind) {
+            case "reply" -> "💬 Новый комментарий";
+            case "like" -> "❤️ Новая реакция";
+            default -> "↩️ Реакция снята";
+        };
+        String text = SocialEventText.limit(label + " под записью стены #" + postId,
+                cfg.maxLength());
+        sendEventToGroupChat(text);
+        if (cfg.inGameDigest()) {
+            Bukkit.broadcastMessage("§b[CHERDAK] §f" + text);
+        }
+        if (plugin.socialService() != null) {
+            plugin.socialService().audit().write("social.wall.reaction", "", "vk",
+                    kind + ":post=" + postId);
+        }
+    }
+
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerAuthCompleted(PlayerAuthCompletedEvent event) {
         Player player = event.getPlayer();
@@ -761,8 +888,18 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
 
     @Override
     public void sendDirectReplyWithMenu(long peerId, String text) {
-        String kb = plugin.config().keyboardsEnabled() && peerId < VkConfig.MIN_CONVERSATION_PEER_ID
-                ? VkKeyboards.directMenuKeyboard() : null;
+        boolean keyboards = plugin.config().keyboardsEnabled()
+                && peerId < VkConfig.MIN_CONVERSATION_PEER_ID;
+        if (!keyboards) {
+            sendAsync(peerId, text, null);
+            return;
+        }
+        // Точка входа в интерактив: /меню и /помощь в ЛС приходят уже с
+        // callback-кнопками, если владелец включил interactive.callbacks.
+        SocialInteractionHub hub = this.interactionHub;
+        String kb = (hub != null && hub.config().enabled() && hub.config().callbacks())
+                ? VkKeyboards.callbackKeyboard(SocialInteractionHub.menuButtons(hub.config()))
+                : VkKeyboards.directMenuKeyboard();
         sendAsync(peerId, text, kb);
     }
 
