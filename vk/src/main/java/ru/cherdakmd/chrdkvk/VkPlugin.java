@@ -13,6 +13,8 @@ import ru.cherdakmd.chrdksocial.MaxService;
 import ru.cherdakmd.chrdksocial.SocialConfig;
 import ru.cherdakmd.chrdksocial.SocialEventAnnouncer;
 import ru.cherdakmd.chrdksocial.SocialEventConfig;
+import ru.cherdakmd.chrdksocial.SocialInteractionConfig;
+import ru.cherdakmd.chrdksocial.SocialInteractionHub;
 import ru.cherdakmd.chrdksocial.SocialPlaceholders;
 import ru.cherdakmd.chrdksocial.SocialService;
 
@@ -49,6 +51,7 @@ public final class VkPlugin extends JavaPlugin {
     private MaxService maxService;
     private SocialPlaceholders socialPlaceholders;
     private SocialEventAnnouncer eventAnnouncer;
+    private SocialInteractionHub interactionHub;
     private boolean placeholdersRetryScheduled;
     private BukkitTask saveTask;
 
@@ -100,6 +103,20 @@ public final class VkPlugin extends JavaPlugin {
         socialService.start();
         maxService.start();
         registerPlaceholders();
+
+        // Единый хаб интерактива: callback-кнопки, диалоги, опросы и тикеты
+        // для VK и MAX по одной схеме. Все флаги interactive.* выключены по умолчанию.
+        this.interactionHub = new SocialInteractionHub(
+                SocialInteractionConfig.parse(getConfig()),
+                interactionExecutor(),
+                row -> {
+                    SocialService social = socialService;
+                    if (social != null) {
+                        social.audit().write(row.event(), row.player(), row.provider(), row.detail());
+                    }
+                });
+        service.attachInteraction(interactionHub);
+        maxService.attachInteractionHub(interactionHub);
 
         // Смерть, старт/стоп сервера и приветствие новичков — один слушатель,
         // все флаги выключены по умолчанию. Старт анонсируем с задержкой: к
@@ -212,6 +229,9 @@ public final class VkPlugin extends JavaPlugin {
             if (this.eventAnnouncer != null) {
                 this.eventAnnouncer.applyConfig(SocialEventConfig.parse(fresh));
             }
+            if (this.interactionHub != null) {
+                this.interactionHub.applyConfig(SocialInteractionConfig.parse(fresh));
+            }
             return true;
         } catch (Exception exception) {
             getLogger().log(Level.WARNING, "[CHRDK_VK] Ошибка перезагрузки конфигурации", exception);
@@ -321,6 +341,46 @@ public final class VkPlugin extends JavaPlugin {
             }
         }
         return keys;
+    }
+
+    /**
+     * Опасные действия выполняет сервис ВК; MAX получает только тикеты и
+     * подсказки — у него нет сессий входа, которые можно сбросить.
+     */
+    private SocialInteractionHub.ActionExecutor interactionExecutor() {
+        return new SocialInteractionHub.ActionExecutor() {
+            @Override
+            public String run(String provider, String kind, String arg, long userId, long now) {
+                if ("ticket".equals(kind)) return submitTicket(provider, arg, userId, now);
+                if (!"vk".equals(provider) || service == null) {
+                    return "⚠ Это действие доступно только в ВКонтакте.";
+                }
+                return switch (kind) {
+                    case "logout" -> service.handleRemoteLogout(userId);
+                    case "freeze" -> service.handleRemoteFreeze(userId, true);
+                    case "unfreeze" -> service.handleRemoteFreeze(userId, false);
+                    case "unlink" -> service.handleUnlinkFromVk(userId);
+                    case "link_wizard" -> "Отправьте одноразовый код из игрового чата.";
+                    default -> "⚠ Неизвестное действие.";
+                };
+            }
+        };
+    }
+
+    private String submitTicket(String provider, String ticketId, long userId, long now) {
+        SocialInteractionConfig cfg = interactionHub == null
+                ? SocialInteractionConfig.DEFAULT : interactionHub.config();
+        // В заявку уходят только служебный ID и номер тикета: без IP, UUID и координат.
+        String text = "🆘 Запрос " + ticketId + " из " + provider + " · обращение #" + userId;
+        boolean sent = service != null && service.sendAdminAlert(text, cfg.adminPeerId());
+        SocialService social = socialService;
+        if (social != null) {
+            social.audit().write("social.ticket", "", provider, ticketId + ", sent=" + sent);
+        }
+        if (cfg.inGameDigest()) {
+            Bukkit.broadcastMessage("§b[CHERDAK] §f" + text);
+        }
+        return sent ? "✅ Заявка отправлена администрации." : "⚠ Канал администрации не настроен.";
     }
 
     public ChrdkRegisterApi coreApi() {

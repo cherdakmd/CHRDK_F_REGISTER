@@ -194,6 +194,38 @@ public final class VkApiClient {
         return true;
     }
 
+    /**
+     * Обязательный ответ на {@code message_event}: без него callback-кнопка
+     * «залипает». Показывает всплывающую плашку, не создавая сообщение в чате.
+     */
+    public boolean sendMessageEventAnswer(String eventId, long userId, long peerId, String eventData)
+            throws IOException, InterruptedException {
+        if (eventId == null || eventId.isBlank() || userId <= 0L || peerId <= 0L) return false;
+        Map<String, String> params = new LinkedHashMap<>();
+        params.put("event_id", eventId);
+        params.put("user_id", Long.toString(userId));
+        params.put("peer_id", Long.toString(peerId));
+        params.put("event_data", eventData == null || eventData.isBlank()
+                ? "{\"type\":\"show_snackbar\"}" : eventData);
+        callMethod("messages.sendMessageEventAnswer", params);
+        return true;
+    }
+
+    /** Редактирует карточку опроса/меню на месте вместо потока новых сообщений. */
+    public boolean editMessage(long peerId, long conversationMessageId, String text,
+                               String keyboardJson) throws IOException, InterruptedException {
+        if (peerId <= 0L || conversationMessageId <= 0L || text == null || text.isBlank()) return false;
+        String cropped = text.length() > 3_800 ? text.substring(0, 3_800) + "…" : text;
+        Map<String, String> params = new LinkedHashMap<>();
+        params.put("peer_id", Long.toString(peerId));
+        params.put("conversation_message_id", Long.toString(conversationMessageId));
+        params.put("message", cropped);
+        params.put("dont_parse_links", "1");
+        if (keyboardJson != null && !keyboardJson.isBlank()) params.put("keyboard", keyboardJson);
+        callMethod("messages.edit", params);
+        return true;
+    }
+
     /** Полная ограниченная сверка участников. Ошибка/обрезанный ответ — не отсутствие участника. */
     public Set<Long> fetchConversationMemberIds(long groupId, long peerId) throws IOException, InterruptedException {
         if (peerId < VkConfig.MIN_CONVERSATION_PEER_ID) throw new IOException("VK conversation is not configured");

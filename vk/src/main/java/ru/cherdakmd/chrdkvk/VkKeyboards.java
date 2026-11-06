@@ -59,6 +59,52 @@ public final class VkKeyboards {
     }
 
     /**
+     * Inline-клавиатура из настоящих {@code callback}-кнопок: нажатие приходит
+     * событием {@code message_event} и не засорняет чат текстом команды.
+     * Схема кнопок общая с MAX — см. {@code SocialCallback.Button}.
+     */
+    public static String callbackKeyboard(java.util.List<ru.cherdakmd.chrdksocial.SocialCallback.Button> buttons) {
+        JsonObject root = new JsonObject();
+        root.addProperty("inline", true);
+        root.addProperty("one_time", false);
+        JsonArray rows = new JsonArray();
+        if (buttons != null) {
+            JsonArray current = null;
+            for (var button : buttons) {
+                if (button == null) continue;
+                if (current == null || current.size() >= 2) {
+                    current = new JsonArray();
+                    rows.add(current);
+                }
+                current.add(callbackButton(button));
+            }
+        }
+        root.add("buttons", rows);
+        return root.toString();
+    }
+
+    /** Ответ на {@code message_event}: всплывающая плашка вместо нового сообщения. */
+    public static String snackbar(String text) {
+        JsonObject data = new JsonObject();
+        data.addProperty("type", "show_snackbar");
+        JsonObject payload = new JsonObject();
+        payload.addProperty("text", text == null || text.isBlank() ? "Готово" : text);
+        data.add("show_snackbar", payload);
+        return data.toString();
+    }
+
+    private static JsonObject callbackButton(ru.cherdakmd.chrdksocial.SocialCallback.Button button) {
+        JsonObject action = new JsonObject();
+        action.addProperty("type", "callback");
+        action.addProperty("label", button.label());
+        action.addProperty("payload", button.payload());
+        JsonObject result = new JsonObject();
+        result.add("action", action);
+        result.addProperty("color", button.color());
+        return result;
+    }
+
+    /**
      * Извлекает каноническую команду бота из JSON-поля {@code message.payload} кнопки ВК.
      * Возвращает пустую строку, если payload отсутствует или не распознан.
      */

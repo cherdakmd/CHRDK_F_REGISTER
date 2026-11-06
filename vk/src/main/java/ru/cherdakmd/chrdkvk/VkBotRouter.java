@@ -70,6 +70,19 @@ public final class VkBotRouter {
         /** Принято обычное сообщение из привязанной беседы сообщества ВК для моста в игру. */
         default void onGroupChatMessage(long peerId, long fromUserId, JsonObject message, long nowMillis) {
         }
+
+        /** Нажатие callback-кнопки ({@code message_event}). Ответ обязателен. */
+        default void onVkCallback(String eventId, long userId, long peerId, String payload,
+                                  long conversationMessageId, long nowMillis) {
+        }
+
+        /** Реакция стены: комментарий или лайк. */
+        default void onWallReaction(String kind, long fromUserId, long postId, long nowMillis) {
+        }
+
+        /** Команда /опрос в подключённой беседе. */
+        default void onPollRequested(long peerId, long nowMillis) {
+        }
     }
 
     private final Backend backend;
@@ -112,10 +125,35 @@ public final class VkBotRouter {
                     backend.onWallPost(post);
                 }
             }
+            case "message_event" -> handleMessageEvent(object, nowMillis);
+            case "wall_reply_new" -> backend.onWallReaction("reply",
+                    longField(object, "from_id"), longField(object, "post_id"), nowMillis);
+            case "like_add", "like_remove" -> {
+                // Лайки фотографий и комментариев в дайджест стены не попадают.
+                String objectType = stringField(object, "object_type");
+                if (objectType.isEmpty() || objectType.equals("post")) {
+                    backend.onWallReaction(type.equals("like_add") ? "like" : "unlike",
+                            longField(object, "liker_id"), longField(object, "object_id"), nowMillis);
+                }
+            }
             default -> {
                 // Прочие уведомления сообщества игнорируем безопасно.
             }
         }
+    }
+
+    private void handleMessageEvent(JsonObject object, long nowMillis) {
+        String eventId = stringField(object, "event_id");
+        long userId = longField(object, "user_id");
+        long peerId = longField(object, "peer_id");
+        long cmid = longField(object, "conversation_message_id");
+        if (eventId.isEmpty() || userId <= 0L || peerId <= 0L) return;
+        String payload = "";
+        if (object.has("payload") && !object.get("payload").isJsonNull()) {
+            var element = object.get("payload");
+            payload = element.isJsonPrimitive() ? element.getAsString() : element.toString();
+        }
+        backend.onVkCallback(eventId, userId, peerId, payload, cmid, nowMillis);
     }
 
     private void handleMessageNew(JsonObject object, long nowMillis) {
@@ -181,6 +219,10 @@ public final class VkBotRouter {
                         if (online != null && !online.isBlank()) {
                             backend.sendDirectReply(peerId, online);
                         }
+                        return;
+                    }
+                    if (cmd.equals("опрос") || cmd.equals("poll")) {
+                        backend.onPollRequested(peerId, nowMillis);
                         return;
                     }
                     if (cmd.equals("новости") || cmd.equals("news")) {
@@ -279,6 +321,15 @@ public final class VkBotRouter {
             return word.substring(1);
         }
         return word;
+    }
+
+    private static String stringField(JsonObject obj, String key) {
+        if (obj == null || !obj.has(key) || obj.get(key).isJsonNull()) return "";
+        try {
+            return obj.get(key).getAsString().trim();
+        } catch (RuntimeException bad) {
+            return "";
+        }
     }
 
     private static long longField(JsonObject obj, String key) {

@@ -25,6 +25,7 @@ public final class MaxService implements MaxBotRouter.Backend {
     private final Map<Long, Long> lastOutbound = new ConcurrentHashMap<>();
     private final Map<Long, Long> bridgeCooldown = new ConcurrentHashMap<>();
 
+    private volatile SocialInteractionHub interactionHub;
     private volatile MaxApiClient client;
     private volatile MaxBotRouter router;
     private volatile MaxWebhookServer webhook;
@@ -39,6 +40,11 @@ public final class MaxService implements MaxBotRouter.Backend {
 
     public void start() {
         applyConfig(config);
+    }
+
+    /** Тот же хаб, что и у VK: общая схема callback-действий для обоих мессенджеров. */
+    public void attachInteractionHub(SocialInteractionHub hub) {
+        this.interactionHub = hub;
     }
 
     /** Пересобирает транспорт после /social reload без раскачивания состояния привязок. */
@@ -210,6 +216,14 @@ public final class MaxService implements MaxBotRouter.Backend {
 
     @Override
     public String onCallback(String senderKey, long userId, String payload, long nowMillis) {
+        SocialInteractionHub hub = this.interactionHub;
+        if (hub != null) {
+            SocialInteractionHub.Reply reply = hub.handle("max", userId, payload, nowMillis);
+            if (reply.hasContent()) {
+                return reply.text().isBlank() ? reply.snackbar() : reply.text();
+            }
+            if (SocialCallback.parse(payload).known()) return "";
+        }
         String command = payload == null ? "" : payload.trim().toLowerCase(java.util.Locale.ROOT);
         if (command.equals("start") || command.equals("/start")) {
             return """
