@@ -13,8 +13,10 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkskills.tree.PerkNode;
 import ru.cherdakmd.chrdkskills.tree.PerkTreeDefinition;
+import ru.cherdakmd.chrdkskills.tree.PerkTreeMath;
 import ru.cherdakmd.chrdkskills.tree.PerkTreeRegistry;
 import ru.cherdakmd.chrdkskills.tree.PerkTreeState;
 import ru.cherdakmd.chrdkskills.tree.TreeDomain;
@@ -81,7 +83,8 @@ final class PerkTreeGui implements Listener {
         }
         Holder holder = new Holder(player.getUniqueId());
         Inventory inventory = Bukkit.createInventory(holder, 54,
-                plugin.messages().get("perktree-title", "domain", domain.id()));
+                plugin.messages().get("perktree-title", "domain",
+                        PerkTreeText.domain(plugin.messages(), domain)));
         holder.inventory = inventory;
         Map<Integer, String> slots = new HashMap<>();
         int index = 0;
@@ -90,7 +93,7 @@ final class PerkTreeGui implements Listener {
                 break;
             }
             int slot = NODE_SLOTS[index++];
-            inventory.setItem(slot, icon(node, state));
+            inventory.setItem(slot, icon(node, state, definition));
             slots.put(slot, node.id());
         }
         inventory.setItem(SLOT_RESET, named(Material.BARRIER,
@@ -101,28 +104,43 @@ final class PerkTreeGui implements Listener {
         player.openInventory(inventory);
     }
 
-    private static ItemStack icon(PerkNode node, PerkTreeState state) {
+    private ItemStack icon(PerkNode node, PerkTreeState state, PerkTreeDefinition definition) {
+        Messages messages = plugin.messages();
         int level = state.levelOf(node.id());
         ItemStack item = named(level > 0 ? Material.EMERALD_BLOCK : Material.PAPER,
-                Component.text(node.id()));
+                PerkTreeText.nodeName(messages, node.id()));
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            List<Component> lore = new ArrayList<>();
-            lore.add(Component.text("тир " + node.tier() + " · ранг " + level
-                    + "/" + node.maxLevel()));
-            lore.add(Component.text("цена: " + node.tokenCost() + " токен. / "
-                    + node.powderCost() + " пыли"));
-            lore.add(Component.text(level > 0 ? "открыто" : "доступно: "
-                    + (state.level() / 10 + 1) + "-й тир"));
+            List<Component> lore = new ArrayList<>(PerkTreeText.description(messages, node.id()));
+            lore.add(messages.get("perktree-node-tier",
+                    "tier", node.tier(), "level", level, "max", node.maxLevel()));
+            lore.add(messages.get("perktree-node-cost",
+                    "tokens", node.tokenCost(), "powder", node.powderCost()));
+            if (level > 0) {
+                lore.add(messages.get("perktree-node-open", "level", level, "max", node.maxLevel()));
+            }
+            int available = PerkTreeMath.availableTier(state.level(), definition.tiers());
+            if (node.tier() > available) {
+                lore.add(messages.get("perktree-node-locked-tier",
+                        "tier", node.tier(), "available", available));
+            } else {
+                lore.add(messages.get("perktree-node-available", "tier", available));
+            }
             if (!node.requires().isEmpty()) {
-                lore.add(Component.text("требует: " + String.join(", ", node.requires())));
+                List<String> names = node.requires().stream()
+                        .map(required -> PerkTreeText.nodeNamePlain(messages, required))
+                        .sorted()
+                        .toList();
+                lore.add(messages.get("perktree-node-requires", "nodes", String.join(", ", names)));
             }
             if (node.core()) {
-                lore.add(Component.text("ядро — не сбрасывается"));
+                lore.add(messages.get("perktree-node-core"));
             }
             if (node.ability()) {
-                lore.add(Component.text("активный приём — клик выберет его"));
+                lore.add(messages.get("perktree-node-ability"));
             }
+            lore.add(messages.get(node.ability()
+                    ? "perktree-node-hint-select" : "perktree-node-hint-unlock"));
             meta.lore(lore);
             item.setItemMeta(meta);
         }
@@ -183,7 +201,7 @@ final class PerkTreeGui implements Listener {
         if (result.ok()) {
             plugin.messages().send(player,
                     node.ability() ? "perktree-selected" : "perktree-unlocked",
-                    "node", nodeId);
+                    "node", PerkTreeText.nodeNamePlain(plugin.messages(), nodeId));
         } else {
             plugin.messages().send(player, "perktree-locked", "reason", result.reason());
         }

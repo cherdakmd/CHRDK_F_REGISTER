@@ -14,6 +14,7 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
+import ru.cherdakmd.chrdkregister.Messages;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,9 +70,14 @@ final class ForgeShopGui implements Listener {
         ItemStack icon = offer.prototype().clone();
         ItemMeta meta = icon.getItemMeta();
         if (meta != null) {
-            List<Component> lore = new ArrayList<>(plugin.messages().getList("forge.shop.item-lore",
-                    "sku", offer.sku(), "price", offer.price()));
-            if (offer.seed()) lore.add(plugin.messages().get("forge.shop.max-one"));
+            Messages messages = plugin.messages();
+            // Сначала — ЧТО делает предмет и КАК его применить, затем цена и клики.
+            List<Component> lore = new ArrayList<>(ForgeShopText.purpose(messages, offer.sku()));
+            lore.add(messages.get("forge.shop.details-hint"));
+            lore.addAll(messages.getList("forge.shop.item-lore",
+                    "sku", offer.sku(), "name", ForgeShopText.name(messages, offer.sku()),
+                    "price", offer.price()));
+            if (offer.seed()) lore.add(messages.get("forge.shop.max-one"));
             meta.lore(lore);
             icon.setItemMeta(meta);
         }

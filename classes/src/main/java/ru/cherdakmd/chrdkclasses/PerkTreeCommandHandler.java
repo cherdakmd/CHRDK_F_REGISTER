@@ -64,11 +64,14 @@ final class PerkTreeCommandHandler implements CommandExecutor {
                     plugin.messages().send(player, "perktree-no-tree");
                     return true;
                 }
+                String ability = state.selectedAbility() == null ? "—"
+                        : PerkTreeText.nodeNamePlain(plugin.messages(), state.selectedAbility());
                 plugin.messages().send(player, "perktree-info",
-                        "domain", domain.id(), "level", String.valueOf(state.level()),
+                        "domain", PerkTreeText.domain(plugin.messages(), domain),
+                        "level", String.valueOf(state.level()),
                         "powder", String.valueOf(state.powder()),
                         "tokens", String.valueOf(state.tokensAvailable()),
-                        "ability", state.selectedAbility() == null ? "—" : state.selectedAbility());
+                        "ability", ability);
             }
             case "unlock", "select" -> {
                 if (args.length < 3) {
@@ -87,7 +90,7 @@ final class PerkTreeCommandHandler implements CommandExecutor {
                 if (result.ok()) {
                     plugin.messages().send(player,
                             sub.equals("select") ? "perktree-selected" : "perktree-unlocked",
-                            "node", args[2]);
+                            "node", PerkTreeText.nodeNamePlain(plugin.messages(), args[2]));
                 } else {
                     plugin.messages().send(player, "perktree-locked", "reason", result.reason());
                 }

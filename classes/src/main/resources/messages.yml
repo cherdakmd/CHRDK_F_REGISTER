@@ -766,3 +766,206 @@ classes:
   perktree-reset-pending: "<yellow>Подтвердите сброс: <white>/perktree confirm %token%</white> (30 сек)</yellow>"
   perktree-reset-done: "<green>Дерево сброшено, пыль и токены возвращены.</green>"
   perktree-reset-failed: "<red>Сброс не выполнен: подтверждение недействительно.</red>"
+
+  # --------------- русские названия и описания узлов /perktree ---------------
+  # Домены — БЕЗ разметки: имя подставляется как %domain% внутрь <white>.
+  perktree.domain.mining: "Добыча"
+  perktree.domain.woodcutting: "Лесозаготовка"
+  perktree.domain.digging: "Земляные работы"
+  perktree.domain.farming: "Фермерство"
+  perktree.domain.fishing: "Рыбалка"
+  perktree.domain.combat: "Ближний бой"
+  perktree.domain.archery: "Стрельба"
+  perktree.domain.defense: "Защита"
+  perktree.domain.alchemy: "Алхимия"
+  perktree.domain.enchanting: "Зачарование"
+  perktree.domain.crafting: "Ремесло"
+  perktree.domain.exploration: "Исследование"
+  perktree.domain.commerce: "Торговля"
+  perktree.domain.hunt: "Охота"
+  # Названия и описания узлов. desc — список строк: сначала «что даёт»,
+  # затем ограничение QoL-only. Все эффекты запрещают урон, защиту, дроп и опыт.
+  perktree.node.mining-vein-preview.name: "<aqua>Превью жилы</aqua>"
+  perktree.node.mining-vein-preview.desc:
+    - '<gray>Показывает соседние рудные блоки до того, как вы начнёте добычу.</gray>'
+    - '<gray>Только подсказка: скорость ломания и дроп не меняются.</gray>'
+  perktree.node.mining-tool-care.name: "<aqua>Уход за инструментом</aqua>"
+  perktree.node.mining-tool-care.desc:
+    - '<gray>Уменьшает износ инструмента при добыче; до 3 рангов.</gray>'
+    - '<gray>Не добавляет прочности сверх обычного ремонта.</gray>'
+  perktree.node.mining-burst.name: "<aqua>Рывок добычи</aqua>"
+  perktree.node.mining-burst.desc:
+    - '<gray>Активный приём добычи: временная подсветка жилы на 10 секунд.</gray>'
+    - '<gray>Можно выбрать только одним активным приёмом дерева.</gray>'
+  perktree.node.mining-pickobulus.name: "<aqua>Широкая жила</aqua>"
+  perktree.node.mining-pickobulus.desc:
+    - '<gray>Активный приём: увеличивает радиус подсветки жилы до 2 блоков.</gray>'
+    - '<gray>Это область подсказки, а не радиус разрушения блоков.</gray>'
+  perktree.node.mining-hud.name: "<aqua>HUD добычи</aqua>"
+  perktree.node.mining-hud.desc:
+    - '<gray>В интерфейсе видно, какие подсказки активны и сколько осталось.</gray>'
+    - '<gray>Не меняет классовый XP, навыки и пыль.</gray>'
+  perktree.node.mining-cooldown.name: "<aqua>Короткая пауза</aqua>"
+  perktree.node.mining-cooldown.desc:
+    - '<gray>Сокращает паузу активного приёма добычи; до 3 рангов.</gray>'
+    - '<gray>Влияет только на QoL-приём, не на умения класса.</gray>'
+  perktree.node.mining-core.name: "<aqua>Ядро добычи</aqua>"
+  perktree.node.mining-core.desc:
+    - '<gray>Ядро дерева: сохраняется при сбросе и отменяет плату за него.</gray>'
+    - '<gray>Пыль за ядро при сбросе не возвращается.</gray>'
+  perktree.node.mining-reach.name: "<aqua>Длинная рука</aqua>"
+  perktree.node.mining-reach.desc:
+    - '<gray>Чуть дальше подсвечивает блоки взаимодействия; до 2 рангов.</gray>'
+    - '<gray>Не увеличивает реальную дальность ломания блоков.</gray>'
+  perktree.node.mining-vein-map.name: "<aqua>Карта жилы</aqua>"
+  perktree.node.mining-vein-map.desc:
+    - '<gray>Превью жилы второго ранга: показывает больше соседних блоков.</gray>'
+    - '<gray>Дроп и скорость добычи остаются прежними.</gray>'
+  perktree.node.mining-second-wind.name: "<aqua>Второе дыхание</aqua>"
+  perktree.node.mining-second-wind.desc:
+    - '<gray>Активный приём добычи с увеличенной длительностью — 15 секунд.</gray>'
+    - '<gray>Выбор приёма не тратит пыль повторно.</gray>'
+  perktree.node.combat-threat-hint.name: "<aqua>Подсказка угрозы</aqua>"
+  perktree.node.combat-threat-hint.desc:
+    - '<gray>Показывает агрессию и уровень угрозы моба в бою.</gray>'
+    - '<gray>Не меняет урон, защиту и агро мобов.</gray>'
+  perktree.node.combat-durability-alert.name: "<aqua>Сигнал износа</aqua>"
+  perktree.node.combat-durability-alert.desc:
+    - '<gray>Заранее предупреждает, когда прочность снаряжения близка к нулю.</gray>'
+    - '<gray>До 3 рангов; само снаряжение не чинится.</gray>'
+  perktree.node.combat-focus.name: "<aqua>Фокус цели</aqua>"
+  perktree.node.combat-focus.desc:
+    - '<gray>Активный приём: быстрое переключение и фиксация цели.</gray>'
+    - '<gray>Одновременно активен только один приём дерева.</gray>'
+  perktree.node.combat-hud.name: "<aqua>Боевой HUD</aqua>"
+  perktree.node.combat-hud.desc:
+    - '<gray>В HUD видны текущая цель, таймеры и источники урона.</gray>'
+    - '<gray>Чисто интерфейсная подсказка без прибавок к урону.</gray>'
+  perktree.node.combat-dodge-hint.name: "<aqua>Тайминг уклонения</aqua>"
+  perktree.node.combat-dodge-hint.desc:
+    - '<gray>Визуально подсказывает момент уклонения; до 3 рангов.</gray>'
+    - '<gray>Механика боя и кулдауны не меняются.</gray>'
+  perktree.node.combat-core.name: "<aqua>Ядро боя</aqua>"
+  perktree.node.combat-core.desc:
+    - '<gray>Ядро дерева: сохраняется при сбросе и отменяет плату за него.</gray>'
+    - '<gray>Пыль за ядро при сбросе не возвращается.</gray>'
+  perktree.node.combat-loot-preview.name: "<aqua>Превью добычи</aqua>"
+  perktree.node.combat-loot-preview.desc:
+    - '<gray>Показывает дроп моба до подбора; до 2 рангов.</gray>'
+    - '<gray>Сам дроп, шансы и количество не меняются.</gray>'
+  perktree.node.combat-elite-telegraph.name: "<aqua>Телеграф элиты</aqua>"
+  perktree.node.combat-elite-telegraph.desc:
+    - '<gray>Визуально предупреждает об опасной атаке элитного моба.</gray>'
+    - '<gray>До 2 рангов; урон и защита не меняются.</gray>'
+  perktree.node.combat-second-wind.name: "<aqua>Второй темп</aqua>"
+  perktree.node.combat-second-wind.desc:
+    - '<gray>Активный приём боя с длительностью 12 секунд.</gray>'
+    - '<gray>Выбор приёма не тратит пыль повторно.</gray>'
+  perktree.node.archery-trajectory.name: "<aqua>Траектория</aqua>"
+  perktree.node.archery-trajectory.desc:
+    - '<gray>Подсказывает траекторию полёта стрелы или снаряда.</gray>'
+    - '<gray>Не меняет урон и скорость полёта.</gray>'
+  perktree.node.archery-quiver-hud.name: "<aqua>HUD колчана</aqua>"
+  perktree.node.archery-quiver-hud.desc:
+    - '<gray>Показывает цель и таймеры стрельбы в интерфейсе; до 2 рангов.</gray>'
+    - '<gray>Не добавляет стрелы и не ускоряет выстрел.</gray>'
+  perktree.node.archery-focus.name: "<aqua>Метка стрелка</aqua>"
+  perktree.node.archery-focus.desc:
+    - '<gray>Активный приём: быстрое переключение и фиксация цели.</gray>'
+    - '<gray>Одновременно активен только один приём дерева.</gray>'
+  perktree.node.archery-range-marker.name: "<aqua>Дальняя метка</aqua>"
+  perktree.node.archery-range-marker.desc:
+    - '<gray>Увеличивает дальность подсветки цели; до 2 рангов.</gray>'
+    - '<gray>Не увеличивает реальную дальность выстрела.</gray>'
+  perktree.node.archery-core.name: "<aqua>Ядро стрельбы</aqua>"
+  perktree.node.archery-core.desc:
+    - '<gray>Ядро дерева: сохраняется при сбросе и отменяет плату за него.</gray>'
+    - '<gray>Пыль за ядро при сбросе не возвращается.</gray>'
+  perktree.node.archery-loot-preview.name: "<aqua>Превью трофеев</aqua>"
+  perktree.node.archery-loot-preview.desc:
+    - '<gray>Показывает дроп до подбора.</gray>'
+    - '<gray>Сам дроп и шансы не меняются.</gray>'
+  perktree.node.defense-damage-log.name: "<aqua>Журнал урона</aqua>"
+  perktree.node.defense-damage-log.desc:
+    - '<gray>В HUD видны источники входящего урона и таймеры.</gray>'
+    - '<gray>Не снижает урон и не добавляет броню.</gray>'
+  perktree.node.defense-shield-alert.name: "<aqua>Сигнал щита</aqua>"
+  perktree.node.defense-shield-alert.desc:
+    - '<gray>Заранее предупреждает о низкой прочности щита и брони.</gray>'
+    - '<gray>До 3 рангов; предметы не ремонтируются.</gray>'
+  perktree.node.defense-telegraph.name: "<aqua>Предвестник удара</aqua>"
+  perktree.node.defense-telegraph.desc:
+    - '<gray>Активный приём: подсвечивает опасную атаку элитного моба.</gray>'
+    - '<gray>Это предупреждение, а не блок или неуязвимость.</gray>'
+  perktree.node.defense-dodge-hint.name: "<aqua>Окно уклонения</aqua>"
+  perktree.node.defense-dodge-hint.desc:
+    - '<gray>Подсказывает момент уклонения; до 3 рангов.</gray>'
+    - '<gray>Механика боя и кулдауны не меняются.</gray>'
+  perktree.node.defense-core.name: "<aqua>Ядро защиты</aqua>"
+  perktree.node.defense-core.desc:
+    - '<gray>Ядро дерева: сохраняется при сбросе и отменяет плату за него.</gray>'
+    - '<gray>Пыль за ядро при сбросе не возвращается.</gray>'
+  perktree.node.defense-respawn-hint.name: "<aqua>Путь к возрождению</aqua>"
+  perktree.node.defense-respawn-hint.desc:
+    - '<gray>Показывает точку возрождения и направление к ней.</gray>'
+    - '<gray>Не телепортирует и не меняет правила смерти.</gray>'
+  perktree.node.explore-biome-hud.name: "<aqua>HUD биома</aqua>"
+  perktree.node.explore-biome-hud.desc:
+    - '<gray>Показывает тип биома и активные подсказки в интерфейсе.</gray>'
+    - '<gray>Не влияет на генерацию мира и находки.</gray>'
+  perktree.node.explore-waypoint.name: "<aqua>Путевая точка</aqua>"
+  perktree.node.explore-waypoint.desc:
+    - '<gray>Ставит метку путевой точки на локальной карте; до 3 рангов.</gray>'
+    - '<gray>Не телепортирует и не открывает карту за вас.</gray>'
+  perktree.node.explore-scout-ping.name: "<aqua>Сигнал разведчика</aqua>"
+  perktree.node.explore-scout-ping.desc:
+    - '<gray>Активный приём: отмечает точку союзникам в радиусе.</gray>'
+    - '<gray>Одновременно активен только один приём дерева.</gray>'
+  perktree.node.explore-threat-hint.name: "<aqua>Чужие следы</aqua>"
+  perktree.node.explore-threat-hint.desc:
+    - '<gray>Показывает агрессию и уровень угрозы ближайших мобов.</gray>'
+    - '<gray>Не меняет урон, защиту и агро мобов.</gray>'
+  perktree.node.explore-core.name: "<aqua>Ядро исследования</aqua>"
+  perktree.node.explore-core.desc:
+    - '<gray>Ядро дерева: сохраняется при сбросе и отменяет плату за него.</gray>'
+    - '<gray>Пыль за ядро при сбросе не возвращается.</gray>'
+  perktree.node.explore-loot-preview.name: "<aqua>Превью находки</aqua>"
+  perktree.node.explore-loot-preview.desc:
+    - '<gray>Показывает дроп до подбора.</gray>'
+    - '<gray>Сам дроп и шансы не меняются.</gray>'
+  perktree.node.hunt-track-hint.name: "<aqua>След зверя</aqua>"
+  perktree.node.hunt-track-hint.desc:
+    - '<gray>Подсвечивает агрессию и уровень угрозы моба.</gray>'
+    - '<gray>Не меняет урон, защиту и шансы дропа.</gray>'
+  perktree.node.hunt-trophy-hud.name: "<aqua>HUD трофеев</aqua>"
+  perktree.node.hunt-trophy-hud.desc:
+    - '<gray>Показывает цель охоты и таймеры в интерфейсе.</gray>'
+    - '<gray>Не добавляет трофеи и не ускоряет охоту.</gray>'
+  perktree.node.hunt-mark.name: "<aqua>Метка охотника</aqua>"
+  perktree.node.hunt-mark.desc:
+    - '<gray>Активный приём: быстрая фиксация цели охоты.</gray>'
+    - '<gray>Одновременно активен только один приём дерева.</gray>'
+  perktree.node.hunt-loot-preview.name: "<aqua>Превью трофея</aqua>"
+  perktree.node.hunt-loot-preview.desc:
+    - '<gray>Показывает дроп до подбора.</gray>'
+    - '<gray>Сам дроп и шансы не меняются.</gray>'
+  perktree.node.hunt-core.name: "<aqua>Ядро охоты</aqua>"
+  perktree.node.hunt-core.desc:
+    - '<gray>Ядро дерева: сохраняется при сбросе и отменяет плату за него.</gray>'
+    - '<gray>Пыль за ядро при сбросе не возвращается.</gray>'
+  perktree.node.hunt-ally-ping.name: "<aqua>Сигнал напарнику</aqua>"
+  perktree.node.hunt-ally-ping.desc:
+    - '<gray>Отмечает цель союзникам в радиусе.</gray>'
+    - '<gray>Не передаёт координаты в общий чат.</gray>'
+  # Служебные строки подсказки иконки узла.
+  perktree-node-tier: "<gray>Тир <white>%tier%</white> · ранг <white>%level%</white>/%max%</gray>"
+  perktree-node-cost: "<gold>Цена ранга: <white>%tokens%</white> токен. · <white>%powder%</white> пыли</gold>"
+  perktree-node-open: "<green>✓ Открыто · ранг %level%/%max%</green>"
+  perktree-node-available: "<gray>Сейчас открыт до <white>%tier%-го</white> тира</gray>"
+  perktree-node-locked-tier: "<red>Нужен <white>%tier%-й</white> тир дерева · сейчас %available%-й</red>"
+  perktree-node-requires: "<gray>Требует: <white>%nodes%</white></gray>"
+  perktree-node-core: "<light_purple>Ядро — сохраняется при сбросе</light_purple>"
+  perktree-node-ability: "<aqua>Активный приём — одновременно только один</aqua>"
+  perktree-node-hint-unlock: "<yellow>ЛКМ — купить ранг узла</yellow>"
+  perktree-node-hint-select: "<yellow>ЛКМ — выбрать активным приёмом</yellow>"
+  perktree-node-no-desc: "<dark_gray>Описание появится после обновления messages.yml.</dark_gray>"

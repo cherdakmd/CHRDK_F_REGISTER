@@ -95,7 +95,12 @@ public final class ShopQuantityGui implements Listener {
         if(meta!=null){
             var lines=h.forge==null
                 ?plugin.messages().getList(h.buy?"quantity.buy-details":"quantity.details","batch",h.batch,"price",h.price,"minimum",minimum,"have",have(player,h,material),"balance",h.service.balance(player),"physical",h.service.physical(player))
-                :plugin.messages().getList("forge.shop.quantity-details","sku",h.forge.sku(),"price",h.price,"units",h.units,"maximum",cap(h),"balance",h.service.balance(player),"physical",h.service.physical(player));
+                :plugin.messages().getList("forge.shop.quantity-details","sku",h.forge.sku(),"name",ForgeShopText.name(plugin.messages(),h.forge.sku()),"price",h.price,"units",h.units,"maximum",cap(h),"balance",h.service.balance(player),"physical",h.service.physical(player));
+            if(h.forge!=null){
+                var withPurpose=new ArrayList<>(ForgeShopText.purpose(plugin.messages(),h.forge.sku()));
+                withPurpose.addAll(lines);
+                lines=withPurpose;
+            }
             meta.lore(lines);quote.setItemMeta(meta);
         }inv.setItem(22,quote);
         inv.setItem(40,named(money>0?Material.LIME_DYE:Material.BARRIER,money>0?"quantity.confirm":"quantity.unavailable"));
@@ -129,7 +134,7 @@ public final class ShopQuantityGui implements Listener {
                 var result=plugin.forgeShop().purchase(player,h.forge,units);
                 if(result.success()){
                     plugin.messages().send(player,"trading.payment-detail","account",result.bankPaid(),"physical",result.physicalPaid(),"change",result.change());
-                    plugin.messages().send(player,"forge.shop.done","sku",h.forge.sku(),"units",result.units(),"cost",result.money(),"balance",h.service.balance(player),"physical",h.service.physical(player));
+                    plugin.messages().send(player,"forge.shop.done","sku",h.forge.sku(),"name",ForgeShopText.name(plugin.messages(),h.forge.sku()),"units",result.units(),"cost",result.money(),"balance",h.service.balance(player),"physical",h.service.physical(player));
                 }else plugin.messages().send(player,result.errorKey(),"sku",h.forge.sku(),"cost",result.money(),"value",units,"units",units,"balance",h.service.balance(player),"limit",h.service.config().dailyTurnoverLimit());
                 if(active(player,h))plugin.forgeShopGui().open(player);
                 return;
