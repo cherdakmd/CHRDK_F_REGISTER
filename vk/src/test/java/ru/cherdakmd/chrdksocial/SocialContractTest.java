@@ -162,13 +162,37 @@ class SocialContractTest {
         String vkConfig = read("src/main/resources/config.yml");
         assertTrue(vkConfig.contains("mode: either"),
                 "ранг ИЛИ проходка: ранги дороже карточки и должны снимать ограничение");
-        assertTrue(vkConfig.contains("product-ids: [social-access]"));
+        assertTrue(vkConfig.contains("product-ids: [social-access, social-access-day]"));
 
         String card = read("../docs/shop/social-access.md");
         assertTrue(card.contains("pass shopbuy %username% social-access"));
         assertTrue(card.contains("150 ₽"));
         assertTrue(card.contains("30 дней"));
         assertTrue(card.contains("social-access.png"));
+    }
+
+    @Test
+    void socialAccessDayIsOneDayForFifteenRublesAndUsesBothMechanisms() throws Exception {
+        String core = read("../src/main/resources/config.yml");
+        assertTrue(core.contains("- id: social-access-day"), "дневной тариф есть в shop.products");
+        assertTrue(core.contains("price: 15"));
+        assertTrue(core.contains("days: 1"));
+        assertTrue(core.contains("group: \"social-day\""));
+        assertTrue(core.contains("permissions: [\"chrdksocial.bypass\"]"));
+        assertTrue(core.contains("trademc-export: false"),
+                "дневной тариф не добавляет 27-ю карточку TradeMC");
+        assertTrue(core.contains("lp-social-bypass-permission"),
+                "узел обхода настраивается в integrations ядра");
+
+        String vkConfig = read("src/main/resources/config.yml");
+        assertTrue(vkConfig.contains("product-ids: [social-access, social-access-day]"),
+                "оба тарифа снимают ограничение через entitlement");
+
+        String card = read("../docs/shop/social-access-day.md");
+        assertTrue(card.contains("pass shopbuy %username% social-access-day"));
+        assertTrue(card.contains("15 ₽"));
+        assertTrue(card.contains("1 день"));
+        assertTrue(card.contains("chrdksocial.bypass"));
     }
 
     @Test

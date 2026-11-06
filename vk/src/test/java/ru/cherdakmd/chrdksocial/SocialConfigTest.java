@@ -37,7 +37,8 @@ class SocialConfigTest {
         assertTrue(cfg.donateEnabled());
         assertEquals(SocialAccessPolicy.MODE_EITHER, cfg.donateMode(),
                 "любой донатный ранг ИЛИ карточка проходки снимают ограничение");
-        assertEquals(java.util.List.of("social-access"), cfg.donateProductIds());
+        assertEquals(java.util.List.of("social-access", "social-access-day"),
+                cfg.donateProductIds(), "платный доступ дают оба тарифа проходки");
         assertFalse(cfg.donatePermanent(), "по умолчанию доступ привязан к активной покупке");
         assertEquals("https://chrdk.trademc.org/", cfg.donateUrl());
         assertTrue(cfg.donateActive());

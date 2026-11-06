@@ -346,12 +346,18 @@ GitHub Release, пропускает черновики и пререлизы, �
 `pass shopbuy %username% social-access` (без `/`, `%username%` подставляет
 панель). Карточка и картинка 1200×1200 —
 [docs/shop/social-access.md](../shop/social-access.md).
+Дневной пробный тариф **15 ₽ / 1 день** — `id: social-access-day`,
+`pass shopbuy %username% social-access-day`,
+[docs/shop/social-access-day.md](../shop/social-access-day.md). Он дополнительно
+выдаёт временную группу LuckPerms `social-day` с правом `chrdksocial.bypass`.
 
 Товар лежит в `plugins/CHRDK_Core/config.yml` → `shop.products` с
 `trademc-export: false`: он **не** переиздаёт исторический комплект из 26
 карточек `docs/trademc/`. В `plugins/CHRDK_VK/config.yml` включён
 `social.donate-access.mode: either` и
-`product-ids: [social-access]`, поэтому любой донатный ранг (от 300 ₽) тоже снимает ограничение, а карточка за 150 ₽ остаётся для игроков без ВК/MAX.
+`product-ids: [social-access, social-access-day]`, поэтому любой донатный ранг
+(от 300 ₽) тоже снимает ограничение, а карточки за 150 ₽ и 15 ₽ остаются для
+игроков без ВК/MAX.
 
 В `tablist.footer` ядра добавлены два плейсхолдера, которые регистрирует этот
 же JAR через PlaceholderAPI:
@@ -365,7 +371,8 @@ GitHub Release, пропускает черновики и пререлизы, �
   `⚠ БЕЗ ПРИВЯЗКИ: осталось 14 дн.`, `✅ привязан (ВК)`,
   `✅ проход: 27 дн.` или `⛔ ВХОД ЗАКРЫТ`.
 - `%chrdksocial_access%` — `27 дн.` / `1 дн.` / `нет` / `∞`, читается из
-  `ChrdkRegisterApi.entitlementUntil(ник, "social-access")`.
+  `ChrdkRegisterApi.entitlementUntil(ник, <id>)` по всем товарам из
+  `product-ids` — в том числе по дневному тарифу.
 - `%chrdksocial_link%` — `ВК`, `MAX`, `осталось 12 дн.`, `обязательна`,
   `не требуется` или `аварийный вход`, от личного дедлайна grace.
 

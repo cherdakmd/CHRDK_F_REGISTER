@@ -112,3 +112,26 @@ review: [core, claims, teleports, diamond-shop, tier-forge]
 выдаёт одноразовый токен на 30 секунд, `/perktree confirm <токен>` применяет
 его и возвращает пыль и токены. Уровень домена и ядро дерева при сбросе
 сохраняются. Все операции записываются в журнал аудита плагина.
+
+## LuckPerms: права и группы
+
+`/pass luckperms setup` (право `chrdkregister.admin`) один раз создаёт схему
+групп: `default` (вес 0), группа проходки `pass` (10), `admin` (100) и
+временные группы товаров каталога — в том числе `social-day` (20) для
+[дневного прохода без ВК](social-link.html). `/pass luckperms status`
+показывает вес и число узлов каждой группы; повторный `setup` безопасен.
+
+Права социального плагина: `chrdksocial.use` — всем, `chrdksocial.admin` —
+администрации, `chrdksocial.bypass` — **только** временной группе `social-day`
+на 1 день. `setup` явно вырезает узел обхода из `default`/`admin`, даже если
+он зарегистрирован плагином или добавлен в `pass-group-permissions` вручную:
+иначе обязательная привязка к ВК/MAX обходится у всех игроков. Имя узла
+задаётся `integrations.lp-social-bypass-permission` ядра и должно совпадать с
+`social.bypass-permission` в конфиге `CHRDK_VK`.
+
+Ручная правка прав делается в редакторе [luckperms.net/editor](https://luckperms.net/editor/)
+(одноразовую ссылку выдаёт `/lp editor`): выставьте `social-day` вес 20,
+родителя `default` и ровно один узел `chrdksocial.bypass`, затем `/lp sync`.
+Служебные команды (`/plugins`, `/op`, `/ban`, `/whitelist`) остаются явно
+запрещёнными в `default` — за это отвечает `integrations.lp-command-protect`.
+Полная инструкция — `docs/luckperms-setup.md` репозитория.

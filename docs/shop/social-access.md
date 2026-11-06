@@ -72,7 +72,7 @@ social:
   donate-access:
     enabled: true
     mode: either
-    product-ids: [social-access]
+    product-ids: [social-access, social-access-day]
     permanent: false
     url: "https://chrdk.trademc.org/"
 ```
@@ -98,6 +98,11 @@ social:
 | IV Меценат | 750 ₽ | 7 500 ₽ |
 | V Покровитель | 900 ₽ | 9 000 ₽ |
 | Всё включено | 1 499 ₽ | — |
+
+Короткий пробный тариф — **[«Вход без ВК и MAX — 1 день»](social-access-day.md)**,
+15 ₽ за 24 часа. Он дешевле любого ранга и этой карточки, но действует только
+сутки и дополнительно выдаёт временную группу LuckPerms `social-day`.
+Настройка прав описана в [docs/luckperms-setup.md](../luckperms-setup.md).
 
 Минимальный ранг — 300 ₽, годовой тариф равен десяти месячным, все 11 цен
 уникальны (это проверяет `tools/trademc/audit.py`). Косметика за 39–69 ₽,

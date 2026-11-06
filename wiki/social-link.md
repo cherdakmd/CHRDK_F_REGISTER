@@ -67,13 +67,23 @@ review: [vk, core]
 **150 ₽ на 30 дней**, команда выдачи для сайта
 `pass shopbuy %username% social-access`, карточка и картинка лежат в
 `docs/shop/social-access.md` и `docs/shop/social-access.png` репозитория. Режим
-`mode: either`, `product-ids: [social-access]` — доступ даёт любой
-активный донатный ранг/проходка **или** карточка проходки. Повторная покупка продлевает срок с общим
-потолком 365 дней. `pass shoppay %username% 150` для этого товара **не**
-используется: он выдаёт ранг по сумме, а не entitlement.
+`mode: either`, `product-ids: [social-access, social-access-day]` — доступ
+даёт любой активный донатный ранг/проходка **или** любой товар из списка.
+Повторная покупка продлевает срок с общим потолком 365 дней.
+`pass shoppay %username% 150` для этого товара **не** используется: он выдаёт
+ранг по сумме, а не entitlement.
 
-Товар помечен `trademc-export: false` и не входит в исторический комплект из
-26 карточек `docs/trademc/` — у него собственная картинка 1200×1200.
+Есть и короткий пробный тариф **«Вход без ВК и MAX — 1 день»**
+(`social-access-day`): **15 ₽ за 24 часа**,
+`pass shopbuy %username% social-access-day`. Помимо entitlement он выдаёт
+временную группу LuckPerms `social-day` с правом `chrdksocial.bypass` на тот же
+срок. Группу создаёт `/pass luckperms setup`; право **нельзя** выдавать в
+`default` или `admin`, иначе привязка обходится у всех игроков. Подробности —
+в [настройке LuckPerms](commands.html#luckperms-prava-i-gruppy) и карточке
+товара `docs/shop/social-access-day.md`.
+
+Оба товара помечены `trademc-export: false` и не входят в исторический комплект
+из 26 карточек `docs/trademc/` — у каждого своя картинка 1200×1200.
 
 | `social.donate-access.mode` | Что открывает доступ |
 | --- | --- |
@@ -99,7 +109,7 @@ review: [vk, core]
   или его нет.
 
 Чтобы продавать ещё одну «проходку», добавьте её id в `product-ids` или
-переключите режим на `either`. Для ручных исключений остаётся
+переключите режим на `either` (сейчас в списке уже два тарифа). Для ручных исключений остаётся
 `/social donor grant <ник> <причина>`; запись в `audit/*.jsonl` обязательна.
 
 ## Два счётчика в TAB

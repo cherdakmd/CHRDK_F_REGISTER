@@ -29,8 +29,9 @@ final class PresentationMigration {
     /**
      * Новые стоковые SKU после четырёх клановых лицензий. Миграция может
      * добавить их к прежнему каталогу, но неизвестный товар владельца — нет.
+     * social-access-day — дневной тариф 15 ₽ / 24 часа (1.5.x).
      */
-    static final Set<String> LATE_STOCK_PRODUCTS = Set.of("social-access");
+    static final Set<String> LATE_STOCK_PRODUCTS = Set.of("social-access", "social-access-day");
 
     /** Настройки меню, которые должны обновиться вместе с его пунктами. */
     static final List<String> MENU_COMPANIONS = List.of("server-menu.title",

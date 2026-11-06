@@ -1,188 +1,188 @@
 {
   "pages": {
     "about": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "0cd10f4e15455379df0feedeee068be96c630e9deb070f82c8641677a5d040c9",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "0cd84c1e5a3ef0c117e47bf26959dcfca317223419d60e8ab094cdaa258b51fd",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "9f7764171fe7684052d548d1ab2a14d04c1232c1ad4f046d65c9c60b774f6361",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "17cba3d4f3f6b473cb85947b01b867b77f167615af5cdef0eba0be1272029413",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "537fed8cc5b0d2ce515ea469778190ce5ce59c6f5d2ce93b8c857ba9e0ee7583",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "79270ce52b2de3795784e78763ccade33ce7f8f09d1d00f8104e47c0b3898e6f",
       "text": "fcdffb1098428fac2bd42d1c4acb73bb9a024d1823d5398b8845bb2f415a506f"
     },
     "auction": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "b69773fc664858fef01abbf1835e8307c6c8cf841b889da93a5ce00b26a4abf3",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "57065fa0843d7877265956f332f8458e035b347ec21f7fd438238f968cfecbd5",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "d63331edc4a9cc5ddc5db283bd2e3bdbf1c351aa2d916dd29b78fa478b662b0f",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "90cf5264dab98817e968f980c1dfcf8c41129c38f2fa65d00ef9cc900fd289c5",
       "text": "f368077b5f1961a1982957afe3b8523b60c8330f3dfd1891003d01ea1c4fd6db"
     },
     "chat": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "0cd10f4e15455379df0feedeee068be96c630e9deb070f82c8641677a5d040c9",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "0cd84c1e5a3ef0c117e47bf26959dcfca317223419d60e8ab094cdaa258b51fd",
       "text": "ca6c93fc33fca52eecc7d38744bc86f619ea0b6a7bcc2314b84ca6c5399d8a1c"
     },
     "claims": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "4a7adc2ba1ee61a7d2ccbdb87b44b9cdb9425853059abda42d7d2d89d021db5b",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "77c5812c24cd3a4dff51ade8795ff7252c13859157105ad380aadc8c860330b0",
       "text": "bf1b24b85ecdaee84580c0d5ea4b9c1120b8dd072e38aa68b52e49fc2a0c472c"
     },
     "classes": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "3ef9608f1e7e0f868607bbb8f16cf66930b63ea9d30dee12787b26e2a7b32e8f",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "ab2bc58573e41b6d5617e9c128afc71d0db3381b6d51c3fbbaea745b67f07492",
       "text": "fdebe780b6e7964249b5c4bc4752908cbdd67722e4d4bb0a4b1f64d94cd15ea1"
     },
     "commands": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "9bbc213be4f91a08b4c612b4259cb321db1b0a89140395554d617d645cbffc48",
-      "text": "ef36a988d1fa6dcb998e21d4ad030d04fc297965dd3d2f706cd2ecd6cf919116"
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "f142e0bcff06229a71f598b2af7b490933057c7b53824e724862a442b0e9bc79",
+      "text": "deb43c99022eb3fe2ccf7355ab726dd06531737319b93f376265cfe1479186fb"
     },
     "cosmetics": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "9d60adc2c05866aba38dd8ed419dba2494500860ebaa56ece9036eddaebb7bab",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "957cc0d4d14e9a62051c1ac59299d5cdba4b442f8c5781e100a2297109cd5c1c",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "681af840abd487d313c9ba39770cdb4c70833a624420c3b154bd97db93915899",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "79d7d95d51d83eef2606465365db60df69e1c9e559a93d4048eff101c9de598d",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "economy": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "a63d3f1f6b44b651058c79dee81bb11145718f541250f23b4aa146271da0a10f",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "e60786f36f92d0a6ad1345654f4c17ea698161f5331146855ff4c6694c07a1ea",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "c4e35a9911b75d6515cd4367f53589dcd2e0bc13a7d4af5af32fc4ebb90aa037",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "369a28bb84aaac742db9cf08389aba93b87a6133a0dd8985940d946592808470",
       "text": "daba8068188cc03ac1ee0f787eb1322c4d33b14da0bdffe35c17b473843dc5aa"
     },
     "faq": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "59fea15b9f1b6cf0b3efbe33d6c7025eabf327cbea6e280b8649f4c48b2a690b",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "425959169a3da3b4cdd5bce8ad3c7718e8ced90960766333c797e5a4823a8d88",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "a632586d5b33c8c3b10608dc1d7a37d9f976743922fb4a9a1e2b1270e157389f",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "c1713cdda5a47efb4f51907d2ac5c838f21c8a30e9d2c692ebd5b3841566b388",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "4a7adc2ba1ee61a7d2ccbdb87b44b9cdb9425853059abda42d7d2d89d021db5b",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "77c5812c24cd3a4dff51ade8795ff7252c13859157105ad380aadc8c860330b0",
       "text": "e166f2671aabcdf55ecf59d1465ddb19a36343f6d07983eb8b8821b3a63cce34"
     },
     "honors": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "0cd10f4e15455379df0feedeee068be96c630e9deb070f82c8641677a5d040c9",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "0cd84c1e5a3ef0c117e47bf26959dcfca317223419d60e8ab094cdaa258b51fd",
       "text": "6bc29d5a2d7783845f8b3d9b085e85982faec5b3029d841092386f36b1d4c4b0"
     },
     "hunt": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "992d61a4004de72295b17ed58efc7c0bb593db84bd826faa300084ec1f57bf30",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "e592dcca02a6fd329fb314a94b05f42c16c71f67f3341b6e5316314a7802dad7",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "a79d24106d4e4ee4b2573691430b71ca80f7995254178d0ab8ef2b7316ccfa48",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "4343c0895dd8a428f7661f092e0c8612a5b2ebd21843ce210e77d69b3940d54b",
       "text": "6a3b9fedc0d15e6ef23ae50e7bf41cdf79f9efcc79299101944c041b5c2d9222"
     },
     "menu": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "a14067b5bb63a3af2936925b6edec2034303f9fde89686ed0ffc2296784ce82a",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "e0e22b600483f7ee75ed9a108384943aa611e4600707d6d25789cef37c92035b",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "moderation": {
-      "reason": "Уточнено: при moderation.enabled=false публичный кадр варнов в TAB тоже пуст; добавлен JVM-тест на этот случай",
-      "sources": "0cd10f4e15455379df0feedeee068be96c630e9deb070f82c8641677a5d040c9",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "0cd84c1e5a3ef0c117e47bf26959dcfca317223419d60e8ab094cdaa258b51fd",
       "text": "255b8cacb80c9ea7b1236f73feaa226a121bb9b58cff81fef2d46b65abae4073"
     },
     "orders": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "8608778de1889f47e396c5ef7b1c71fd9e998197bc1b226144493da8e887c5b0",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "400992a957ebe8360b0508251ec7121e42b3b04569a7c8dcc985587e0de165c6",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "perktree": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "3ef9608f1e7e0f868607bbb8f16cf66930b63ea9d30dee12787b26e2a7b32e8f",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "ab2bc58573e41b6d5617e9c128afc71d0db3381b6d51c3fbbaea745b67f07492",
       "text": "e3e52c8c8644c30b0b8a870406bc7e45def6fe49313ca2f5d89c833f69250504"
     },
     "pets": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "04d0e3598679e76e3c58cda47f77eb23fbe4fdd2b822d9b155f9fb9185ee9e72",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "6cdd9a89df81bce5f6922aba0cb90f3cbd8207096afe9d8f9dfb0e8212c15f4a",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "38556c36550a873115de5811e75ba625687ccda9b1c5532786e805bdf39f1598",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "d6cc09f1de08b9f7ed625e1d2fa6e19bf9895ca27696a4c6b808201b100924ae",
       "text": "b66278597912053a64a4f192bf0cf63795a8720263d4283683b9458eec8f0bff"
     },
     "profile": {
-      "reason": "Интерактив VK/MAX: callback-кнопки и точка входа /меню, /опрос в беседе, диалоги с TTL, тикеты, реакции стены, единый SocialInteractionHub; флаги interactive.* по умолчанию выключены, привязка/доступ/профиль/тарифы не меняются",
-      "sources": "8f86ce6685617694259ac1ff0d1659484319799df209953cf37be1a76e2667ef",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "9a54620e880fa4c538dbb8be43d192115468af06d9b4267523ba8afc1124c889",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "706f3fdb3d981d10be82d6c573576dfe292655dd7788fb647d0e9575adf42854",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "d5f00eed58a040514cc8111870bb3d398629a69a6c55a3a2c296ee39e7c57c3b",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "f56ec66cfde95e883a44213d408115d5a73f15c421a451db4b78c2b0282a4945",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "bd7d8e77a3b22f088ba27d6b8649ac29a329af704fa54853d1ea5477984f9729",
       "text": "83fdfb3ddc5551875ec1f031676a80e3adb73e448dffae614c489441ea6f2c33"
     },
     "shop": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "a79d24106d4e4ee4b2573691430b71ca80f7995254178d0ab8ef2b7316ccfa48",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "4343c0895dd8a428f7661f092e0c8612a5b2ebd21843ce210e77d69b3940d54b",
       "text": "62ef5965cc091b6cbd7e6af58d21e58ba2e8dd65d9e704cec710768ff7a47099"
     },
     "skills": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "ff6ce1dc52c4d4b88d85f2a1ed15b7aae461c00ccb56b1f44ca052bd1cf58f3d",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "632affd6f2ff9e3db1f75b2391a2db68ce26f7c08cfc472234e44d6a57d0e410",
       "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
     },
     "social-link": {
-      "reason": "Интерактив VK/MAX: callback-кнопки и точка входа /меню, /опрос в беседе, диалоги с TTL, тикеты, реакции стены, единый SocialInteractionHub; флаги interactive.* по умолчанию выключены, привязка/доступ/профиль/тарифы не меняются",
-      "sources": "30beb015ce5079b4d00ee7465908799c9d55a1deefdc875da47a060b624d5bbc",
-      "text": "bf7a5ea20ec023b6530e20a3b8b2468ef892481b2fc9bc88d8cc27522db673da"
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "84980110d87a40ac42a169dc06fd86ee6d976cf6efa89e45c94c5198482ac12e",
+      "text": "6884ca3f303906b657f71dfc784d925e3a402ce52de592264ca90294703027d7"
     },
     "start": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "805e9730da3fe8e48baabc56bd393de6069fc7e588f8e0a642d1f7876c9b3a96",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "75105de2a85ddfd52415291cf056ef94ba1c99aa638133d0e549d880713e4b54",
       "text": "c2835fdf2d1945079115e6a252d472ce72ad9ad79f4ed47ad58e269b467d595f"
     },
     "teleports": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "d35fdd304780550a9d7bc94b270772753bbd50796ee46316e7909a61ef399d72",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "0005449aff554825d5565c86276f5b6cfb0dcdbe994e8032d4b9c6b95a6cf4f9",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "c4e35a9911b75d6515cd4367f53589dcd2e0bc13a7d4af5af32fc4ebb90aa037",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "369a28bb84aaac742db9cf08389aba93b87a6133a0dd8985940d946592808470",
       "text": "a4d12cf48881e623761e39d44e627b95975f839a8737cfd76b9ee138317a4c07"
     },
     "titles": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "c32b2560167481694f3b14a69aa91e340809d6c4600ff305a6ddcbf745ea5134",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "c91fc94b06a85106ff313d8b23f4db5628f4f18c696b92c4c35160c460cf5aba",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Сверены все страницы после добавления публичного кадра варнов в TAB: новые moderation.warns-public-* и %tab_warns_public% меняют только подвал TAB, игровая логика, баланс, тарифы и разделы аддонов не затронуты",
-      "sources": "a79d24106d4e4ee4b2573691430b71ca80f7995254178d0ab8ef2b7316ccfa48",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "4343c0895dd8a428f7661f092e0c8612a5b2ebd21843ce210e77d69b3940d54b",
       "text": "61ff7d56a1a997622addd95e0b98076bb1090d7058b94321e6586cb04d31b29c"
     },
     "vk": {
-      "reason": "Интерактив VK/MAX: callback-кнопки и точка входа /меню, /опрос в беседе, диалоги с TTL, тикеты, реакции стены, единый SocialInteractionHub; флаги interactive.* по умолчанию выключены, привязка/доступ/профиль/тарифы не меняются",
-      "sources": "30beb015ce5079b4d00ee7465908799c9d55a1deefdc875da47a060b624d5bbc",
+      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
+      "sources": "84980110d87a40ac42a169dc06fd86ee6d976cf6efa89e45c94c5198482ac12e",
       "text": "a12d86feae628e2da230860e796dc05dfcf9c39e50080432c4beb4145395a303"
     }
   },
