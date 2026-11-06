@@ -42,12 +42,30 @@ class SocialConfigTest {
         assertFalse(cfg.donatePermanent(), "по умолчанию доступ привязан к активной покупке");
         assertEquals("https://chrdk.trademc.org/", cfg.donateUrl());
         assertTrue(cfg.donateActive());
-        assertEquals(180, cfg.reminderSeconds(), "напоминание в чате не чаще раза в 3 минуты");
+        assertEquals(3600, cfg.reminderSeconds(), "все напоминания не чаще раза в час");
         assertTrue(cfg.reminderNagging());
-        assertEquals(15, cfg.reminderActionBarSeconds());
-        assertEquals(120, cfg.reminderActionNagSeconds());
+        assertEquals(3600, cfg.reminderActionBarSeconds());
+        assertEquals(3600, cfg.reminderActionNagSeconds());
         assertTrue(cfg.reminderTitleOnJoin());
         assertTrue(cfg.reminderSound());
+    }
+
+    @Test
+    void hourlyReminderIntervalsAreConfigurableUpToADay() {
+        YamlConfiguration yaml = new YamlConfiguration();
+        yaml.set("social.reminder-seconds", 7200);
+        yaml.set("social.reminder.action-bar-seconds", 1800);
+        yaml.set("social.reminder.action-nag-seconds", 999999);
+        SocialConfig cfg = SocialConfig.parse(yaml);
+        assertEquals(7200, cfg.reminderSeconds(), "владелец может сделать интервал реже часа");
+        assertEquals(1800, cfg.reminderActionBarSeconds());
+        assertEquals(SocialConfig.MAX_REMINDER_SECONDS, cfg.reminderActionNagSeconds(),
+                "потолок в сутки не даёт увести таймер в бесконечность");
+
+        yaml.set("social.reminder-seconds", 1);
+        yaml.set("social.reminder.action-bar-seconds", 0);
+        assertEquals(10, SocialConfig.parse(yaml).reminderSeconds());
+        assertEquals(10, SocialConfig.parse(yaml).reminderActionBarSeconds());
     }
 
     @Test

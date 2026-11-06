@@ -272,10 +272,10 @@ class SocialContractTest {
         assertTrue(messages.contains("1)"), "инструкция пошаговая");
 
         String config = read("src/main/resources/config.yml");
-        assertTrue(config.contains("reminder-seconds: 180"));
+        assertTrue(config.contains("reminder-seconds: 3600"));
         assertTrue(config.contains("nagging: true"));
-        assertTrue(config.contains("action-bar-seconds: 15"));
-        assertTrue(config.contains("action-nag-seconds: 120"));
+        assertTrue(config.contains("action-bar-seconds: 3600"));
+        assertTrue(config.contains("action-nag-seconds: 3600"));
     }
 
     @Test
@@ -287,6 +287,12 @@ class SocialContractTest {
         assertTrue(service.contains("if (!allowChatReminder(key, now)) return;"));
         assertTrue(service.contains("if (!allowChatReminder(key, now)) continue;"));
         assertFalse(service.contains("lastActionNag"), "старый раздельный кулдаун удалён");
+        assertTrue(service.contains("boolean showGate = !config.reminderNagging() || allowChatReminder(key, now);"),
+                "блок при входе тоже делит общий часовой кулдаун");
+        assertTrue(service.contains("lastFrozenNotice"),
+                "короткое «действие доступно после привязки» не спамит при каждом движении");
+        assertTrue(service.contains("restartReminderTimers()"),
+                "/social reload перезапускает таймеры с новыми интервалами");
         assertTrue(service.contains("\"vk\", config.vkCommunityUrl()"),
                 "ссылка на сообщество ВК подставляется во все шаблоны");
         assertTrue(service.contains("\"social.gate-howto\""));

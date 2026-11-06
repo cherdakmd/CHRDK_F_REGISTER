@@ -69,13 +69,21 @@ public final class SocialService {
     private BukkitTask reminderTask;
     private BukkitTask actionBarTask;
     private BukkitTask newsTask;
+    private volatile boolean running;
     /**
      * Общий кулдаун ЛЮБОГО напоминания в чат. Раньше периодическое сообщение и
      * пинг при действиях жили каждый со своим таймером и приходили друг за другом
      * («НАПОМИНАНИЕ» + «Не забудь выбрать» подряд). Теперь оба источника делят
      * одну паузу, поэтому игрок видит не чаще одного напоминания за интервал.
+     * Запись НЕ удаляется при выходе: перезаход в течение часа не обнуляет паузу.
      */
     private final ConcurrentHashMap<String, Long> lastChatReminder = new ConcurrentHashMap<>();
+    /**
+     * Отдельная пауза для короткого «действие доступно после привязки»: оно
+     * отвечает на отменённый клик/команду замороженного игрока, поэтому не должно
+     * приходить на каждое движение, но и не обязано съедать общий кулдаун чата.
+     */
+    private final ConcurrentHashMap<String, Long> lastFrozenNotice = new ConcurrentHashMap<>();
 
     public SocialService(VkPlugin plugin, SocialConfig config) {
         this.plugin = plugin;
@@ -115,6 +123,15 @@ public final class SocialService {
 
     public void sendFrozenNotice(Player player, String code) {
         if (player == null || !player.isOnline()) return;
+        String key = SocialLinkCodeManager.canonical(player.getName());
+        long now = System.currentTimeMillis();
+        long pause = config.reminderSeconds() * 1000L;
+        Long last = lastFrozenNotice.get(key);
+        if (last != null && now - last < pause) return;
+        lastFrozenNotice.put(key, now);
+        if (lastFrozenNotice.size() > 4096) {
+            lastFrozenNotice.entrySet().removeIf(entry -> now - entry.getValue() > pause * 4L);
+        }
         plugin.messages().send(player, "social.command-blocked",
                 "code", code, "url", config.donateUrl(), "vk", config.vkCommunityUrl());
     }
@@ -140,11 +157,8 @@ public final class SocialService {
         SocialCommandHandler commands = new SocialCommandHandler(this, plugin);
         plugin.registerSocialCommands(commands, commands);
         registerCoreBridges();
-        long period = 20L * Math.max(10, config.reminderSeconds());
-        reminderTask = Bukkit.getScheduler().runTaskTimer(plugin, this::remindPending, period, period);
-        // Постоянная строка над хотбаром у всех, кто ещё не выбрал способ входа.
-        actionBarTask = Bukkit.getScheduler().runTaskTimer(plugin, this::updateActionBars,
-                20L, 20L * config.reminderActionBarSeconds());
+        running = true;
+        restartReminderTimers();
         long newsPeriod = 20L * 60L * Math.max(5, config.newsPollMinutes());
         newsTask = Bukkit.getScheduler().runTaskTimer(plugin, this::scheduleNewsCheck,
                 20L * 30L, newsPeriod);
@@ -159,9 +173,25 @@ public final class SocialService {
     public void applyConfig(SocialConfig next) {
         this.config = next;
         donorCache.clear();
+        // /social reload меняет интервалы: таймеры надо перезапустить, иначе до
+        // рестарта сервера продолжат работать старые периоды.
+        if (running) restartReminderTimers();
+    }
+
+    /** Периоды берутся из свежего конфига; вызывается при старте и reload. */
+    private void restartReminderTimers() {
+        if (reminderTask != null) reminderTask.cancel();
+        if (actionBarTask != null) actionBarTask.cancel();
+        long period = 20L * Math.max(10, config.reminderSeconds());
+        reminderTask = Bukkit.getScheduler().runTaskTimer(plugin, this::remindPending, period, period);
+        // Строка над хотбаром обновляется с тем же часовым интервалом: она
+        // появляется при входе и больше не висит перед глазами постоянно.
+        actionBarTask = Bukkit.getScheduler().runTaskTimer(plugin, this::updateActionBars,
+                20L, 20L * Math.max(10, config.reminderActionBarSeconds()));
     }
 
     public void shutdown() {
+        running = false;
         if (reminderTask != null) reminderTask.cancel();
         if (actionBarTask != null) actionBarTask.cancel();
         if (newsTask != null) newsTask.cancel();
@@ -380,33 +410,42 @@ public final class SocialService {
         int days = SocialAccessPolicy.remainingDays(deadline, now);
         String url = config.donateUrl();
 
-        // Крупный заголовок и звук: блок в чате легко потерять среди системных сообщений.
-        if (config.reminderTitleOnJoin()) showEntryTitle(player);
-        if (config.reminderSound()) playNagSound(player);
+        // Один общий кулдаун на ВСЕ показы: полный блок при входе, периодическое
+        // напоминание и пинг при действиях. Запись переживает выход, поэтому
+        // перезаход в течение часа не обнуляет паузу и не повторяет пять строк
+        // инструкции. При nagging: false сохраняется прежнее поведение — только
+        // блок при входе, и он показывается при каждом входе.
+        boolean showGate = !config.reminderNagging() || allowChatReminder(key, now);
+        if (showGate) {
+            // Крупный заголовок и звук: блок в чате легко потерять среди системных сообщений.
+            if (config.reminderTitleOnJoin()) showEntryTitle(player);
+            if (config.reminderSound()) playNagSound(player);
 
-        plugin.messages().send(player, "social.gate-choice");
-        plugin.messages().send(player, "social.gate-code",
-                "code", code, "minutes", Math.max(1, config.codeTtlSeconds() / 60));
-        // Подробная инструкция именно по ВК: MAX в разработке и игрокам не предлагается.
-        plugin.messages().send(player, "social.gate-howto",
-                "code", code, "vk", config.vkCommunityUrl());
-        if (config.donateActive()) {
-            plugin.messages().send(player, "social.gate-donate", "url", url);
+            plugin.messages().send(player, "social.gate-choice");
+            plugin.messages().send(player, "social.gate-code",
+                    "code", code, "minutes", Math.max(1, config.codeTtlSeconds() / 60));
+            // Подробная инструкция именно по ВК: MAX в разработке и игрокам не предлагается.
+            plugin.messages().send(player, "social.gate-howto",
+                    "code", code, "vk", config.vkCommunityUrl());
+            if (config.donateActive()) {
+                plugin.messages().send(player, "social.gate-donate", "url", url);
+            }
+            if (isFrozen(player)) {
+                plugin.messages().send(player, "social.gate-closed", "url", url);
+            } else {
+                plugin.messages().send(player, "social.gate-grace",
+                        "days", days, "date", formatDeadline(deadline));
+            }
+            player.sendActionBar(actionBarComponent(player, code, days));
         }
-        if (isFrozen(player)) {
-            plugin.messages().send(player, "social.gate-closed", "url", url);
-        } else {
-            plugin.messages().send(player, "social.gate-grace",
-                    "days", days, "date", formatDeadline(deadline));
-        }
-        player.sendActionBar(actionBarComponent(player, code, days));
         audit.write("social.join-pending", player.getName(), "", "выдан код входа, требуется выбор способа входа");
     }
 
     public void onQuit(Player player) {
         String key = SocialLinkCodeManager.canonical(player.getName());
         pending.remove(key);
-        lastChatReminder.remove(key);
+        // lastChatReminder НЕ удаляем: общий часовой кулдаун должен пережить
+        // перезаход, иначе релог снова включит назойливые напоминания.
     }
 
     /* ------------------------- назойливое информирование ------------------------- */
@@ -415,6 +454,7 @@ public final class SocialService {
     private void settle(Player player, String key) {
         pending.remove(key);
         lastChatReminder.remove(key);
+        lastFrozenNotice.remove(key);
         clearActionBar(player);
     }
 
