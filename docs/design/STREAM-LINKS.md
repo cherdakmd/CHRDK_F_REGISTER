@@ -4,9 +4,11 @@
 **Решение владельца:** новый модуль `CHRDK_Live`, уведомления идут в общий чат
 (повтор ~раз в 20 минут) и в беседу ВК; старт эфира хочется определять
 автоматически; на этом шаге — только документ.
-**Площадки этапа 1 (решение владельца):** **Twitch** и **VK Play Live**.
-Автоматика у них разная: у Twitch есть официальный EventSub, у VK Play Live
-публичного вебхука старта эфира нет — нужен внешний адаптер (см. § 3).
+**Фокус этапа 1 (решение владельца):** **Twitch**. Привязка канала,
+автоматика EventSub, анонсы и плашка делаются сначала и только для него.
+**VK Play Live** сохранена в проекте как отложенный адаптер этапа 2 (§ 3.2),
+в первый релиз не входит. Автоматика у площадок разная: у Twitch есть
+официальный EventSub, у VK Play Live публичного вебхука старта эфира нет.
 **Связанные документы:** `docs/releases/1.4.241.md` (снятие старой программы),
 `docs/design/PVE-ROADMAP.md` (граница снятых аддонов),
 `docs/releases/1.4.186.md` / `1.4.190.md` (`/labels` и лимит меток),
@@ -67,19 +69,21 @@ Referrals». Возврат старой программы — отдельно
 
 | Термин | Значение |
 | --- | --- |
-| **Площадка** | внешний сервис, где идёт эфир. На этапе 1 ровно два: `twitch` и `vkplay`. Имена в коде нейтральные; в **текстах автосообщений** названия и домены не встречаются (см. § 5.1). Другие площадки добавляются адаптерами, не правкой ядра. |
+| **Площадка** | внешний сервис, где идёт эфир. На этапе 1 ровно одна: **`twitch`**. `vkplay` запроектирован и описан, но отложен до этапа 2; в конфиге он есть с `enabled: false`. Имена в коде нейтральные; в **текстах автосообщений** названия и домены не встречаются (см. § 5.1). Другие площадки добавляются адаптерами, не правкой ядра. |
 | **Канал** | `(platformId, channelId, channelHandle)` — один эфирный канал. `channelId` — стабильный идентификатор площадки, не ник (ник меняется): у Twitch это `broadcaster_user_id`, у VK Play Live — числовой/строковый id канала. |
 
-**Две площадки этапа 1:**
+**Площадки и их статус:**
 
-| `platformId` | Что храним | Ссылка в анонсе | Источник события |
-| --- | --- | --- | --- |
-| `twitch` | `broadcaster_user_id`, `broadcaster_login` | `https://www.twitch.tv/<login>` | EventSub `stream.online` / `stream.offline` ([1](https://hookdeck.com/webhooks/platforms/guide-to-twitch-webhooks-features-and-best-practices), [2](https://hookdeck.com/webhooks/skills/twitch-webhooks)) |
-| `vkplay` | id канала, `channelHandle` (слаг в `live.vkvideo.ru`) | `https://live.vkvideo.ru/<handle>` | внешний адаптер: событие `stream_start` / `stream_end` чат-клиента ([1](https://github.com/thearturca/vkplay-live-message-client)) |
+| `platformId` | Статус | Что храним | Ссылка в анонсе | Источник события |
+| --- | --- | --- | --- | --- |
+| `twitch` | **этап 1, реализуем** | `broadcaster_user_id`, `broadcaster_login` | `https://www.twitch.tv/<login>` | EventSub `stream.online` / `stream.offline` ([1](https://hookdeck.com/webhooks/platforms/guide-to-twitch-webhooks-features-and-best-practices), [2](https://hookdeck.com/webhooks/skills/twitch-webhooks)) |
+| `vkplay` | отложен, этап 2 | id канала, `channelHandle` (слаг в `live.vkvideo.ru`) | `https://live.vkvideo.ru/<handle>` | внешний адаптер: событие `stream_start` / `stream_end` чат-клиента ([1](https://github.com/thearturca/vkplay-live-message-client)) |
 
 `vkplay` выбран как id **намеренно**: `RetiredAddons.REMOVED_PROGRAM` ищет
 `vk\s*play\s*live`, а `vkplay` под этот шаблон не подпадает. Названия площадок
 допустимы в конфиге, GUI, вики и ссылках, но не в строках ротации чата.
+Отложенный статус означает: контракт `LiveSignal` и таблица выше сохраняются,
+но ни адаптер, ни heartbeat/TTL для `vkplay`, ни его тесты в этап 1 не входят.
 | **Привязка** | подтверждённая пара `UUID игрока → канал`. Один игрок ≤ `max-channels-per-player` (по умолчанию 2), один канал → ровно один игрок. |
 | **Эфир** | состояние `LiveSession(streamerUuid, channel, startedAt, eventId, state)`. Живёт **в памяти**, не в durable-файле. |
 | **Событие** | `LiveStartedEvent` / `LiveEndedEvent` / `LiveHeartbeatEvent` — Bukkit-события, единственный вход в машину состояний. |
@@ -90,17 +94,20 @@ Referrals». Возврат старой программы — отдельно
 
 ## 3. Ответ на вопрос «можно ли автоматически?»
 
-**Коротко: да для обеих площадок, но по-разному.** Площадка не знает о
-существовании Minecraft-сервера, поэтому нужен внешний источник. У **Twitch**
-есть официальный EventSub с событиями `stream.online` / `stream.offline`; у
-**VK Play Live** публичного вебхука старта эфира нет, но статус можно получить
-из чата канала внешним ботом. Оба источника сводятся в один `LiveSignal`.
+**Коротко: да, и на этапе 1 это Twitch.** Площадка не знает о существовании
+Minecraft-сервера, поэтому нужен внешний источник. У **Twitch** есть
+официальный EventSub с событиями `stream.online` / `stream.offline` — это
+единственный автоматический источник первого релиза. У **VK Play Live**
+публичного вебхука старта эфира нет, статус можно получить из чата канала
+внешним ботом; этот путь запроектирован в § 3.2, но **отложен до этапа 2**.
+Оба источника сводятся в один `LiveSignal`, так что добавление второй площадки
+не переписывает анонсы, привязки и TAB.
 
 | Вариант | Twitch | VK Play Live | Оценка |
 | --- | --- | --- | --- |
-| **A. Официальный webhook** | EventSub: `stream.online`/`stream.offline` на HTTPS-колбэк, подписка через Helix с app access token ([1](https://hookdeck.com/webhooks/platforms/guide-to-twitch-webhooks-features-and-best-practices), [2](https://hookdeck.com/webhooks/skills/twitch-webhooks), [4](https://github.com/katogaming88/WGA-Raid-Hub/issues/1262)) | публичного вебхука разработчика нет; в интерфейсе ВК есть только «Оповестить о начале трансляции» для подписчиков ВК, раз в час, и оно не приходит на сервер ([4](https://vk.ru/@authors-create-stream), [5](https://vk.company/ru/press/releases/9937/)) | **основной путь для Twitch** |
-| **C. Внешний адаптер-бот** | не нужен | сообщественный чат-клиент отдаёт `stream-status` с `stream_start` / `stream_end`; работает даже вне эфира ([1](https://github.com/thearturca/vkplay-live-message-client)). Embed `postMessage` из iframe — браузерный путь, на сервере недоступен ([3](https://qna.habr.com/q/1405876)) | **основной путь для VK Play Live** |
-| **B. Опрос статуса** | `GET /helix/streams?user_id=…` как медленная страховка раз в 30 мин, если webhook потерян ([4](https://github.com/katogaming88/WGA-Raid-Hub/issues/1262)) | неофициальный опрос страницы канала — хрупкий, не рекомендуется | только safety net, не основной источник |
+| **A. Официальный webhook** | EventSub: `stream.online`/`stream.offline` на HTTPS-колбэк, подписка через Helix с app access token ([1](https://hookdeck.com/webhooks/platforms/guide-to-twitch-webhooks-features-and-best-practices), [2](https://hookdeck.com/webhooks/skills/twitch-webhooks), [4](https://github.com/katogaming88/WGA-Raid-Hub/issues/1262)) | публичного вебхука разработчика нет; в интерфейсе ВК есть только «Оповестить о начале трансляции» для подписчиков ВК, раз в час, и оно не приходит на сервер ([4](https://vk.ru/@authors-create-stream), [5](https://vk.company/ru/press/releases/9937/)) | **этап 1, единственный автоматический путь** |
+| **C. Внешний адаптер-бот** | не нужен | сообщественный чат-клиент отдаёт `stream-status` с `stream_start` / `stream_end`; работает даже вне эфира ([1](https://github.com/thearturca/vkplay-live-message-client)). Embed `postMessage` из iframe — браузерный путь, на сервере недоступен ([3](https://qna.habr.com/q/1405876)) | **отложено, этап 2** |
+| **B. Опрос статуса** | `GET /helix/streams?user_id=…` как медленная страховка раз в 30 мин, если webhook потерян ([4](https://github.com/katogaming88/WGA-Raid-Hub/issues/1262)) | неофициальный опрос страницы канала — хрупкий, не рекомендуется | safety net в этапе 1 |
 
 ### 3.1 Twitch EventSub: что именно приходит
 
@@ -133,7 +140,14 @@ Referrals». Возврат старой программы — отдельно
   «15 минут без heartbeat → OFFLINE» к Twitch **не применяется**; там OFFLINE
   приходит явным событием, а страховкой служит опрос статуса (см. § 3.3).
 
-### 3.2 VK Play Live: почему без внешнего адаптера никак
+### 3.2 VK Play Live: почему без внешнего адаптера никак — ОТЛОЖЕНО до этапа 2
+
+> **Статус: отложено.** Решение владельца — «пока что сделаем акцент на Twitch».
+> Ниже сохранён готовый контракт, чтобы вернуться к площадке без
+> перепроектирования. В этапе 1 не реализуется: адаптера нет, heartbeat/TTL
+> для `vkplay` выключены, `vkplay.enabled: false` в конфиге, тесты помечены
+> как этап 2. Единственный источник эфира в первом релизе — Twitch EventSub
+> плюс ручной `/live start|stop`.
 
 Открытый API для трансляций анонсировался ещё в 2017 году
 ([5](https://vk.company/ru/press/releases/9937/)), но общедоступного
@@ -164,18 +178,25 @@ Referrals». Возврат старой программы — отдельно
 ```
 Twitch EventSub ──HTTPS 443──> [внешний приёмник: HMAC + challenge]
                                      │  LiveSignal (внутренний HMAC)
-VK Play адаптер ────────────────────┤
-ВК-бот /live start (fallback) ──────┤
-Helix safety-net (30 мин) ──────────┘──> CHRDK_Live : 8765 ──> LiveSession
+Helix safety-net (30 мин) ──────────┤
+/live start|stop (fallback) ────────┤
+VK Play адаптер (ЭТАП 2) ┄┄┄┄┄┄┄┄┄┄┄┤
+                                     └──> CHRDK_Live : 8765 ──> LiveSession
 ```
 
+На этапе 1 в схеме работают три верхних источника; пунктир — отложенный
+адаптер. Приёмник и `LiveSignal` уже рассчитаны на него, но код адаптера,
+его секрет и heartbeat появляются только на этапе 2.
+
 `LiveSignal`: `platformId, channelId, kind(ONLINE|OFFLINE|HEARTBEAT|STATUS),
-startedAt, eventId, signature`. Источник значения не имеет — дальше одна
-машина состояний; площадки добавляются адаптерами без правки анонсов и TAB.
+startedAt, eventId, signature`. На этапе 1 используются `ONLINE`, `OFFLINE` и
+`STATUS`; `HEARTBEAT` зарезервирован за отложенным этапом 2. Источник значения
+не имеет — дальше одна машина состояний; площадки добавляются адаптерами без
+правки анонсов и TAB.
 
 **Защита:** HMAC-SHA256 по сырому телу, constant-time; окно метки времени
 ±5 минут (для Twitch — 10 минут по его правилам); `eventId` в LRU (message id
-Twitch / id события адаптера / `status:<время>`); whitelist
+Twitch / `status:<время>` / id события адаптера на этапе 2); whitelist
 `(platformId, channelId)` по `live-links.json`; лимит тела 64 КБ, максимум 16
 заголовков; ответ 200 до обработки; обработка в отдельном пуле, в игровой
 поток — только `Bukkit.getScheduler().runTask(...)`. Секреты и `client-id` —
@@ -187,8 +208,8 @@ Twitch / id события адаптера / `status:<время>`); whitelist
 OFFLINE ──ONLINE──> STARTING ──(анонс отправлен)──> ONLINE
    ^                                                  │
    │                    Twitch: stream.offline / Helix STATUS (30 мин)
-   │                    VK Play: stream_end / HEARTBEAT (5 мин)
    │                    Ручной: /live stop
+   │                    [этап 2] VK Play: stream_end / HEARTBEAT (5 мин)
    └──────────────────────────────────────────────────┘
 ```
 
@@ -196,16 +217,20 @@ OFFLINE ──ONLINE──> STARTING ──(анонс отправлен)──
   эфир и **не** шлёт новый анонс.
 - `OFFLINE` принимается не раньше `min-session-seconds` (60 с) после старта —
   защита от дребезга переподключения.
-- Twitch: OFFLINE от EventSub; если пропал — safety-net `STATUS` из Helix
-  раз в 30 минут. VK Play: 15 минут без heartbeat → гасим молча.
+- **Этап 1:** OFFLINE от EventSub; если пропал — safety-net `STATUS` из Helix
+  раз в 30 минут. Heartbeat-TTL не используется: EventSub не шлёт heartbeat.
+- **Этап 2 (отложено):** для `vkplay` 15 минут без heartbeat → гасим молча.
 - После рестарта сервера память пуста: **никаких фантомных эфиров и анонсов**;
-  восстановление — только новым `ONLINE`/`HEARTBEAT`/`STATUS`.
+  восстановление — только новым `ONLINE`/`STATUS` (и `HEARTBEAT` на этапе 2).
 - Ручной источник требует `chrdklive.manual`, помечается `source=manual` в
   аудите и не раскрывается в тексте анонса.
 
-**Этап 1:** ручной `/live start|stop` + приёмник `LiveSignal` + адаптер VK Play
-+ подписки Twitch (выключены до появления client-id, секрета и HTTPS-домена).
-**Этап 2:** включаем EventSub, reconcile и safety-net; прямой опрос страницы
+**Этап 1 (реализуем):** `twitch` как единственная площадка — привязка с
+подтверждением владения, подписки EventSub, внешний HTTPS-приёмник на :443,
+внутренний `LiveSignal` с HMAC, reconcile и Helix safety-net, ручной
+`/live start|stop`, анонсы и плашка. Подписки включаются после появления
+`client-id`, секрета и HTTPS-домена; до этого работает ручной путь.
+**Этап 2 (отложен):** адаптер VK Play Live по § 3.2. Прямой опрос страницы
 VK Play не реализуем — он хрупок и не проверяем в песочнице.
 
 ---
@@ -229,16 +254,16 @@ VK Play не реализуем — он хрупок и не проверяем
      Проверка — `GET /helix/channels?broadcaster_id=…` с тем же app access
      token: поле `title` должно содержать код. Авторизация стримера не нужна,
      но нужен исходящий HTTPS к Helix; в песочнице это не проверяем.
-   - `vkplay`: игрок пишет код в чат канала; внешний адаптер (§ 3.2) видит
-     сообщение и присылает `link.confirm` с тем же кодом.
+   - `vkplay` **(этап 2, отложено)**: игрок пишет код в чат канала; внешний
+     адаптер (§ 3.2) видит сообщение и присылает `link.confirm` с тем же кодом.
    - **Общий fallback:** `/live confirm <код>` **плюс** ручная проверка
      администратором (`/liveadmin verify <игрок>`, право `chrdklive.admin`).
      «Сам подтвердил» без внешней проверки даёт только `PENDING`, не
      `CONFIRMED`: иначе любой игрок может привязать чужой канал и получить
      плашку СТРИМ.
    - При `CONFIRMED` для `twitch` сразу создаём подписки EventSub; при
-     `unlink` — удаляем (§ 3.1). Для `vkplay` адаптер добавляет канал в список
-     прослушивания.
+     `unlink` — удаляем (§ 3.1). На этапе 1 это единственная ветка.
+     Для `vkplay` адаптер добавит канал в список прослушивания на этапе 2.
 4. `EconomyConfirmations.consume(...)` — строго одноразово; смена сессии,
    канала или истечение TTL отклоняет. Статус `CONFIRMED`, пишем аудит.
 5. `/live unlink <канал>` — мгновенно снимает привязку, гасит активный эфир
@@ -289,7 +314,8 @@ VK Play не реализуем — он хрупок и не проверяем
   (`PlayerStage`): гостю в лобби анонс не нужен.
 - Текст — **нейтральный**, без названий площадок: «🔴 <ник> в эфире:
   <название>». Ссылка — кликабельный `Component` с URL из привязки:
-  `https://www.twitch.tv/<login>` или `https://live.vkvideo.ru/<handle>`.
+  `https://www.twitch.tv/<login>` (этап 1); отложенная ветка этапа 2 —
+  `https://live.vkvideo.ru/<handle>`.
   **Важно:** анонс **не регистрируется как `AutoMessage`** —
   `AutoMessage.eligible()` вызывает `RetiredAddons.announcement(text)`, который
   ищет `(?iu)twitch|vk\s*play\s*live|стримерская программа`. Ссылка на
@@ -299,9 +325,9 @@ VK Play не реализуем — он хрупок и не проверяем
   (`Component` + `player.sendMessage`) или через
   `ChatService.broadcastAnnouncement`, минуя ротацию автосообщений. В ротации
   чата место не занимается, чужие списки и интервалы не перезаписываются.
-  Это прямо отвечает на пожелание «Нам надо Twitch и VK Play Live»: обе
-  площадки поддерживаются, но их названия не попадают в строки, которые ядро
-  фильтрует как рекламу снятой программы.
+  На этапе 1 в анонсе фигурирует только ссылка Twitch; механизм компонента
+  одинаков и для отложенного `vkplay`. Названия площадок не попадают в строки,
+  которые ядро фильтрует как рекламу снятой программы.
 - Анти-спам: `SocialEventThrottle`-подобный `LiveAnnounceThrottle` с часами
   `LongSupplier` (проверяемо офлайн), ключ `chat:<eventId>`; отдельный
   `chat:global` кулдаун (по умолчанию 60 с), чтобы несколько стримеров не
@@ -408,7 +434,7 @@ live:
   enabled: true
   max-channels-per-player: 2
   link-code-seconds: 600
-  # Ровно две площадки этапа 1; остальные добавляются адаптерами.
+  # Фокус этапа 1 — twitch; vkplay запроектирован, но отложен до этапа 2.
   platforms:
     twitch:
       enabled: true
@@ -423,7 +449,7 @@ live:
         reconcile-hours: 24
         safety-net-minutes: 30        # GET /helix/streams?user_id=
     vkplay:
-      enabled: true
+      enabled: false            # ОТЛОЖЕНО до этапа 2, код адаптера не пишем
       link-url: "https://live.vkvideo.ru/{handle}"
       # Официального серверного webhook нет: внешний адаптер чата шлёт
       # stream_start / stream_end подписанным LiveSignal (§ 3.2).
@@ -487,7 +513,7 @@ live:
 | `NotificationService` | опционально `live.started` как `NotificationListener` | Discord при желании, по флагу |
 | `RetiredAddons` | **не меняем** | политика снятых аддонов остаётся |
 | Внешний HTTPS-приёмник `:443` | проверяет подпись EventSub, отвечает на `webhook_callback_verification`, нормализует в `LiveSignal` | Twitch не умеет в произвольный порт; плагин слушает только `127.0.0.1:8765` |
-| Адаптер `vkplay` (внешний процесс) | `stream_start`/`stream_end` чата → подписанный `LiveSignal` | у VK Play Live нет серверного webhook'а |
+| Адаптер `vkplay` (внешний процесс) | **этап 2, отложен**: `stream_start`/`stream_end` чата → подписанный `LiveSignal` | у VK Play Live нет серверного webhook'а |
 | Helix (только вне игрового потока) | `POST /helix/eventsub/subscriptions`, `DELETE` при unlink, `GET /helix/channels` для кода, `GET /helix/streams` как safety-net | app access token из `secrets.yml`, ни одного токена в git |
 
 Bukkit-события модуля (в `ru.cherdakmd.chrdklive.api`, не в Core API):
@@ -501,12 +527,12 @@ Bukkit-события модуля (в `ru.cherdakmd.chrdklive.api`, не в Cor
 ## 9. Безопасность, приватность, отказоустойчивость
 
 - **Два разных секрета** (подписки EventSub и внутреннего `LiveSignal`) плюс
-  `client-id` / `client-secret` Twitch-app и access token адаптера VK Play —
-  только в `secrets.yml` вне репозитория; в логах и аудите не появляются.
+  `client-id` / `client-secret` Twitch-app (этап 1) и access token адаптера
+  VK Play (только этап 2) — в `secrets.yml` вне репозитория; в логах и аудите не появляются.
   HMAC constant-time по **сырому** телу, окно метки времени (Twitch — 10 мин),
   replay-cache по message id, whitelist каналов, лимит тела и заголовков.
   App access token Twitch обновляется по client credentials и не требует
-  авторизации стримера; токен адаптера VK Play ротируется владельцем вручную.
+  авторизации стримера; токен адаптера VK Play (этап 2) ротируется вручную.
 - Один канал → один игрок; лимит каналов на игрока; кулдаун и блокировка кодов;
   любая попытка подтверждения одноразова (`EconomyConfirmations.consume`).
 - Fail-closed на повреждённом `live-links.json`: плашка не загорается, анонсы
@@ -534,15 +560,16 @@ Bukkit-события модуля (в `ru.cherdakmd.chrdklive.api`, не в Cor
    constant-time, окно 10 минут, повтор message id, `Retry > 0`,
    `webhook_callback_verification` → возврат `challenge`, `revocation` →
    пометка подписки, whitelist `broadcaster_user_id`.
-2. `VkPlayAdapterContractTest` — `stream_start` / `stream_end` / heartbeat
-   → `LiveSignal(kind=…)`, подпись, TTL 15 минут, потеря адаптера не шлёт
-   ложный «эфир завершён»; `twitch` и `vkplay` дают одинаковый `LiveSession`.
+2. `TwitchSubscriptionManagerTest` — создание подписки при `CONFIRMED`,
+   удаление при `unlink`, ежедневный reconcile пересоздаёт отозванные,
+   safety-net `GET /helix/streams` гасит эфир при пустом ответе, app access
+   token обновляется по client credentials, ошибки Helix не роняют планировщик.
 3. `LiveSignalVerifierTest` — внутренний HMAC, окно ±5 минут, replay,
    whitelist, битое тело, лимит размера.
 4. `LiveSessionMachineTest` — переходы состояний, повтор `ONLINE` с тем же
-   `eventId`, дребезг `OFFLINE` до `min-session-seconds`, для Twitch —
-   `STATUS` из Helix вместо heartbeat-TTL, для VK Play — TTL heartbeat,
-   рестарт = пустая память, ручной источник помечен в аудите.
+   `eventId`, дребезг `OFFLINE` до `min-session-seconds`, `STATUS` из Helix
+   вместо heartbeat-TTL, рестарт = пустая память, ручной источник помечен в
+   аудите; `vkplay` в этапе 1 не участвует.
 5. `LiveAnnounceThrottleTest` — первый анонс, ровно через 20 минут повтор,
    `max-repeats`, `max-lifetime`, тихие часы, `min-online`, `mute`,
    глобальный кулдаун, отсутствие ВК не блокирует чат.
@@ -557,10 +584,15 @@ Bukkit-события модуля (в `ru.cherdakmd.chrdklive.api`, не в Cor
 9. `check_retired_addons.py`, `check_messages.py`, все YAML, tree-sitter,
    `git diff --check`, freshness 37 страниц и `wiki/live.md` (на этапе
    реализации), `tools/social/run.py --check`, TradeMC/clan_shop — в CI.
+10. **Этап 2, отложен:** `VkPlayAdapterContractTest` — `stream_start` /
+    `stream_end` / heartbeat → `LiveSignal`, TTL 15 минут, потеря адаптера не
+    шлёт ложный «эфир завершён»; `vkplay` даёт тот же `LiveSession`, что и
+    `twitch`.
 
-**Не проверяем и не обещаем:** живые вызовы Helix/EventSub и чата VK Play,
-настоящий HTTPS-колбэк на 443 с доверенным сертификатом, получение app access
-token, работу внешнего адаптера на неофициальном протоколе, LongPoll ВК-бота,
+**Не проверяем и не обещаем:** живые вызовы Helix/EventSub (и чата VK Play
+на этапе 2), настоящий HTTPS-колбэк на 443 с доверенным сертификатом,
+получение app access token, работу отложенного адаптера на неофициальном
+протоколе, LongPoll ВК-бота,
 кликабельные ссылки в реальном клиенте, `CraftItemStack`, playerdata, MSPT,
 RCON, установку на production. В песочнице исходящий интернет ограничен `github.com`, `pypi.org`
 и npm — поэтому автоматика определяется контрактом и офлайн-тестами, а живой
@@ -572,8 +604,8 @@ smoke выносится в отдельную задачу на staging.
 
 | Этап | Состав | Риск |
 | --- | --- | --- |
-| **1. Каркас** | модуль `live`, `platforms: twitch + vkplay`, хранилище привязок, ручной `/live start|stop`, внутренний приёмник `LiveSignal` с HMAC, плашка `LIVE`, чат-анонсы с 20-минутным повтором, адаптер ВК через событие, офлайн-тесты обоих адаптеров, `wiki/live.md`, freshness | низкий: всё проверяемо без сети |
-| **2. Автоматика** | Twitch EventSub (client credentials, HTTPS :443, challenge, reconcile, Helix safety-net) + внешний адаптер чата VK Play (`stream_start`/`stream_end`, heartbeat), гистерезис, `LiveBroadcastEvent` для сторонних | средний: нужен публичный HTTPS, сертификат и живой smoke; адаптер VK Play опирается на неофициальный протокол |
+| **1. Twitch (делаем сейчас)** | модуль `live`, только `platforms.twitch`, хранилище привязок с кодом в заголовке трансляции, подписки EventSub + внешний HTTPS-приёмник :443, внутренний `LiveSignal` с HMAC, reconcile и Helix safety-net, ручной `/live start|stop`, плашка `LIVE`, чат-анонсы с 20-минутным повтором, один анонс в беседу ВК, офлайн-тесты 1–9, `wiki/live.md`, freshness | средний: нужен Twitch app и HTTPS-домен; всё остальное проверяемо без сети |
+| **2. VK Play Live (отложен)** | адаптер чата `stream_start`/`stream_end` по § 3.2, heartbeat и TTL 15 минут, `vkplay.enabled: true`, тест 10, `LiveBroadcastEvent` для сторонних | средний: неофициальный протокол площадки, живой smoke |
 | **3. Опционально** | PAPI `%chrdklive_*%`, подписки зрителей на конкретных стримеров, «эфир завершён» в ВК, дополнительные площадки адаптерами | высокий: приватность подписок, новые секреты |
 
 Каждый этап — отдельная задача с версией и заметками; пререлиз
@@ -583,30 +615,27 @@ smoke выносится в отдельную задачу на staging.
 
 ## 12. Что принято и что осталось уточнить
 
-**Принято владельцем («звучит хорошо») как дефолты:** плашка `LIVE` рядом с
- ником через `/labels` (статичная, не `pulse`); повтор в общем чате раз в
- **20 минут** с `max-repeats: 6` и тихими часами `02:00–09:00` МСК; один анонс
- при старте в общую беседу ВК без повторов; `/live mute` как opt-out; код
- подтверждения владения; площадки этапа 1 — **Twitch и VK Play Live**.
+**Принято владельцем как дефолты:** плашка `LIVE` рядом с ником через
+`/labels` (статичная, не `pulse`); повтор в общем чате раз в **20 минут** с
+`max-repeats: 6` и тихими часами `02:00–09:00` МСК; один анонс при старте в
+общую беседу ВК без повторов; `/live mute` как opt-out; код подтверждения
+владения; **фокус этапа 1 — Twitch**, VK Play Live отложена до этапа 2.
 
-**Осталось три инфраструктурных вопроса** (без них этап 2 не включается, но
-этап 1 реализуем уже сейчас):
+**Осталось два вопроса по этапу 1** (каркас и офлайн-тесты от них не зависят,
+но без них не включается живая автоматика EventSub):
 
 1. **Twitch-приложение и домен.** Есть ли зарегистрированное Twitch
    application (`client id` + `client secret`) для app access token и
    публичный HTTPS-адрес **на порту 443** с доверенным сертификатом для
    колбэка EventSub? Если нет — кто его поднимает: reverse proxy на
    существующем домене или отдельный внешний приёмник?
-2. **Адаптер VK Play Live.** Где будет жить внешний процесс с чат-клиентом
-   (`stream_start`/`stream_end`) и кто его обслуживает? Альтернатива —
-   слать события через уже работающего ВК-бота `CHRDK_VK`; тогда нужен
-   служебный формат команды и право на неё.
-3. **Подтверждение владения.** Автоматическая проверка кода (заголовок
-   трансляции Twitch через Helix / сообщение в чате VK Play) или на этапе 1
-   оставить только `/liveadmin verify` администратором?
+2. **Подтверждение владения.** Автоматическая проверка кода в заголовке
+   трансляции через `GET /helix/channels` или на этапе 1 оставить только
+   `/liveadmin verify` администратором?
 
-Ответы не блокируют документ и каркас: они нужны лишь для включения живой
-автоматики и честного smoke-отчёта на staging.
+**Не блокирует, просто зафиксировано:** когда вернуться к VK Play Live и где
+будет жить её внешний адаптер (чат-клиент или мост через CHRDK_VK) — решается
+при запуске этапа 2. Прямой опрос страницы VK Play не планируется.
 
 ---
 
@@ -614,8 +643,8 @@ smoke выносится в отдельную задачу на staging.
 
 - Twitch EventSub, подпись, подписки, challenge, replay: [1](https://hookdeck.com/webhooks/platforms/guide-to-twitch-webhooks-features-and-best-practices), [2](https://hookdeck.com/webhooks/skills/twitch-webhooks), [3](https://github.com/hookdeck/webhook-skills/blob/main/skills/twitch-webhooks/SKILL.md).
 - Практика `stream.online`/`stream.offline`, reconcile и safety-net опрос: [4](https://github.com/katogaming88/WGA-Raid-Hub/issues/1262).
-- VK Play Live: события `stream_start`/`stream_end` в сообщественном чат-клиенте: [1](https://github.com/thearturca/vkplay-live-message-client).
-- VK Play Live: embed-события плеера (браузерный путь, не серверный): [3](https://qna.habr.com/q/1405876); оповещение подписчиков ВК «раз в час»: [4](https://vk.ru/@authors-create-stream); анонс открытого API 2017 года: [5](https://vk.company/ru/press/releases/9937/).
+- VK Play Live **(для отложенного этапа 2)**: события `stream_start`/`stream_end` в сообщественном чат-клиенте: [1](https://github.com/thearturca/vkplay-live-message-client).
+- VK Play Live **(для отложенного этапа 2)**: embed-события плеера (браузерный путь, не серверный): [3](https://qna.habr.com/q/1405876); оповещение подписчиков ВК «раз в час»: [4](https://vk.ru/@authors-create-stream); анонс открытого API 2017 года: [5](https://vk.company/ru/press/releases/9937/).
 
 Источники использованы только для проектирования контрактов; ни один внешний
 API в песочнице не вызывался и в коде не реализован.
