@@ -42,6 +42,13 @@ class SkillPrestigeTest {
         assertTrue(store.addPrestige(PLAYER, SkillType.FARMING));
         assertEquals(3, store.totalPrestige(PLAYER));
         assertFalse(store.addPrestige(null, SkillType.MINING));
+        for (int step = 3; step < PrestigeMath.MAX_PER_SKILL; step++) {
+            assertTrue(store.addPrestige(PLAYER, SkillType.MINING));
+        }
+        assertEquals(PrestigeMath.MAX_PER_SKILL,
+                store.prestige(PLAYER, SkillType.MINING));
+        assertFalse(store.addPrestige(PLAYER, SkillType.MINING),
+                "потолок ступеней на навык");
     }
 
     @Test
@@ -65,11 +72,15 @@ class SkillPrestigeTest {
         store.markMilestone(PLAYER, 100);
         store.addPrestige(PLAYER, SkillType.MINING);
         store.noteDiamondDrops(PLAYER, "2026-11-06", 9);
+        assertTrue(store.markTier(PLAYER, 5));
+        assertFalse(store.markTier(PLAYER, 5), "награда за звание одноразова");
+        assertTrue(store.claimedTiers(PLAYER).contains(5));
         store.flush();
 
         String json = Files.readString(store.file(), StandardCharsets.UTF_8);
         assertTrue(json.contains("\"version\": 1"), "версию поднимать нельзя");
         assertTrue(json.contains("\"prestige\""));
+        assertTrue(json.contains("\"claimedTiers\""));
         assertTrue(json.contains("\"diamondDay\""));
         assertTrue(json.contains("\"diamondToday\""));
 
@@ -85,7 +96,24 @@ class SkillPrestigeTest {
         assertTrue(reloaded.milestones(PLAYER).contains(100));
         assertEquals(1, reloaded.prestige(PLAYER, SkillType.MINING));
         assertEquals(9, reloaded.diamondDropsToday(PLAYER, "2026-11-06"));
+        assertTrue(reloaded.claimedTiers(PLAYER).contains(5));
         assertEquals("Steve", reloaded.name(PLAYER));
+    }
+
+    @Test
+    void prestigeTopIsSortedAndSkipsEmptyPlayers() {
+        SkillStore store = new SkillStore(folder, LOGGER);
+        String other = "22222222-3333-4444-5555-666666666666";
+        store.addPrestige(PLAYER, SkillType.MINING);
+        for (int step = 0; step < 4; step++) {
+            store.addPrestige(other, SkillType.COMBAT);
+        }
+        store.setName(PLAYER, "Steve");
+        store.setName(other, "Alex");
+        assertEquals(2, store.prestigeTop(10).size());
+        assertEquals(other, store.prestigeTop(10).get(0).getKey());
+        assertEquals(4, store.prestigeTop(10).get(0).getValue());
+        assertEquals(1, store.prestigeTop(1).size());
     }
 
     @Test

@@ -1,6 +1,9 @@
 package ru.cherdakmd.chrdkskills;
 
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.EconomyConfirmations;
 
@@ -40,7 +43,11 @@ public final class SkillService {
     private final EconomyConfirmations confirmations = new EconomyConfirmations();
 
     /** Результат обращения к {@link #requestPrestige}. */
-    public enum PrestigeResult { DISABLED, NOT_MAX, PENDING, DONE }
+    public enum PrestigeResult { DISABLED, NOT_MAX, AT_CAP, PENDING, DONE }
+
+    /** Строка топа престижа. */
+    public record PrestigeEntry(String name, int total) {
+    }
 
     public SkillService(SkillsPlugin plugin, SkillStore store) {
         this.plugin = plugin;
@@ -98,7 +105,10 @@ public final class SkillService {
         if (player == null || skill == null) {
             return new SkillPerks.Active(Map.of(), List.of());
         }
-        return SkillPerks.active(Map.of(skill, level(player, skill)));
+        return SkillPerks.active(
+                Map.of(skill, level(player, skill)),
+                Map.of(skill, prestigeLevel(player, skill)),
+                plugin.config().prestigePerkPerStep());
     }
 
     /* -------------------------------- престиж -------------------------------- */
@@ -113,32 +123,135 @@ public final class SkillService {
         return player == null ? 0 : store.totalPrestige(key(player));
     }
 
+    /** Текущее звание серверного уровня престижа. */
+    public PrestigeMath.Tier prestigeTier(Player player) {
+        return PrestigeMath.tierFor(totalPrestige(player));
+    }
+
+    /** Следующее звание или {@code null} на потолке. */
+    public PrestigeMath.Tier nextPrestigeTier(Player player) {
+        return PrestigeMath.nextTier(totalPrestige(player));
+    }
+
+    /** Топ игроков по общему уровню престижа. */
+    public List<PrestigeEntry> prestigeTop() {
+        List<PrestigeEntry> out = new ArrayList<>();
+        for (Map.Entry<String, Integer> row
+                : store.prestigeTop(plugin.config().leaderboardSize())) {
+            String name = store.name(row.getKey());
+            out.add(new PrestigeEntry(name.isBlank() ? shortKey(row.getKey()) : name,
+                    row.getValue()));
+        }
+        return List.copyOf(out);
+    }
+
     /**
-     * Добровольный сброс навыка с потолка. Первый вызов выдаёт подтверждение,
-     * повторный в течение TTL реально сбрасывает опыт и добавляет ступень.
-     * Разовые вехи в {@code /bal} не перевыдаются: новый цикл наград идёт
-     * физическими алмазами из {@link DiamondDrops}.
+     * Добровольный сброс одного навыка с потолка. Первый вызов выдаёт
+     * подтверждение, повторный в течение TTL реально сбрасывает опыт.
      */
     public PrestigeResult requestPrestige(Player player, SkillType skill) {
-        if (player == null || skill == null || !plugin.config().enabled()
-                || !plugin.config().prestigeEnabled()) {
+        if (!prestigeReady(player) || skill == null) {
             return PrestigeResult.DISABLED;
+        }
+        if (store.prestige(key(player), skill) >= PrestigeMath.MAX_PER_SKILL) {
+            return PrestigeResult.AT_CAP;
         }
         if (level(player, skill) < curve().maxLevel()) {
             return PrestigeResult.NOT_MAX;
         }
-        String quote = skill.id();
+        return applyPrestige(player, skill.id(), List.of(skill));
+    }
+
+    /** Сброс всех навыков, достигших потолка, одним подтверждением. */
+    public PrestigeResult requestPrestigeAll(Player player) {
+        if (!prestigeReady(player)) {
+            return PrestigeResult.DISABLED;
+        }
+        List<SkillType> ready = new ArrayList<>();
+        boolean anyMaxed = false;
+        for (SkillType skill : SkillRegistry.all()) {
+            boolean maxed = level(player, skill) >= curve().maxLevel();
+            anyMaxed |= maxed;
+            if (maxed && store.prestige(key(player), skill) < PrestigeMath.MAX_PER_SKILL) {
+                ready.add(skill);
+            }
+        }
+        if (ready.isEmpty()) {
+            return anyMaxed ? PrestigeResult.AT_CAP : PrestigeResult.NOT_MAX;
+        }
+        return applyPrestige(player, "all", ready);
+    }
+
+    private boolean prestigeReady(Player player) {
+        return player != null && plugin.config().enabled()
+                && plugin.config().prestigeEnabled();
+    }
+
+    /**
+     * Общий исполнитель: двухшаговое подтверждение, сброс, физические алмазы
+     * за ступени и за новые звания. Разовые вехи в {@code /bal} не
+     * перевыдаются — у нового цикла свой предметный источник наград.
+     */
+    private PrestigeResult applyPrestige(Player player, String quote,
+                                         List<SkillType> targets) {
         long now = System.nanoTime();
         if (!confirmations.consume(player.getUniqueId(), "prestige", quote, now)) {
             confirmations.offer(player.getUniqueId(), "prestige", quote, now);
             return PrestigeResult.PENDING;
         }
-        // Сначала фиксируем ступень: если потолок достигнут, опыт не трогаем.
-        if (!store.addPrestige(key(player), skill)) {
-            return PrestigeResult.DISABLED;
+        int steps = 0;
+        for (SkillType skill : targets) {
+            // Сначала фиксируем ступень: если потолок достигнут, опыт не трогаем.
+            if (!store.addPrestige(key(player), skill)) {
+                continue;
+            }
+            store.setXp(key(player), skill, 0L);
+            steps++;
         }
-        store.setXp(key(player), skill, 0L);
+        if (steps == 0) {
+            return PrestigeResult.AT_CAP;
+        }
+        giveDiamonds(player, PrestigeMath.stepDiamonds(
+                plugin.config().prestigeDiamondsPerStep()) * steps);
+        grantTierRewards(player);
         return PrestigeResult.DONE;
+    }
+
+    /** Разовые алмазы за каждое новое звание, один раз на порог. */
+    private void grantTierRewards(Player player) {
+        int total = totalPrestige(player);
+        for (int threshold : PrestigeMath.rewardThresholds()) {
+            if (total < threshold || !store.markTier(key(player), threshold)) {
+                continue;
+            }
+            PrestigeMath.Tier tier = PrestigeMath.tierAt(threshold);
+            int diamonds = PrestigeMath.tierDiamonds(tier);
+            giveDiamonds(player, diamonds);
+            if (tier != null && plugin.config().prestigeAnnounceTiers()) {
+                Bukkit.broadcast(plugin.messages().get("prestige-tier-announce",
+                        "player", player.getName(),
+                        "title", Messages.trusted(tier.title()),
+                        "count", String.valueOf(threshold),
+                        "diamonds", String.valueOf(diamonds)));
+            }
+            plugin.getLogger().info("[CHRDK_Skills] " + player.getName()
+                    + " достиг звания «" + (tier == null ? threshold : tier.title())
+                    + "» (престиж " + total + ")");
+        }
+    }
+
+    /** Алмазы предметом: в инвентарь, остаток — под ноги. */
+    private void giveDiamonds(Player player, int amount) {
+        if (player == null || !player.isOnline() || amount <= 0) {
+            return;
+        }
+        ItemStack stack = new ItemStack(Material.DIAMOND, Math.min(64 * 36, amount));
+        try {
+            player.getInventory().addItem(stack).values().forEach(rest ->
+                    player.getWorld().dropItemNaturally(player.getLocation(), rest));
+        } catch (RuntimeException error) {
+            player.getWorld().dropItemNaturally(player.getLocation(), stack);
+        }
     }
 
     /** Сколько физических алмазов уже выпало игроку сегодня (МСК). */
@@ -176,6 +289,11 @@ public final class SkillService {
         long safeUnits = Math.min(1000L, units);
         long gained = perUnit * safeUnits;
         if (plugin.coreApi() != null) gained = plugin.coreApi().boostExperience(player.getName(), "skills", gained, gained);
+        // Престиж ускоряет повторную прокачку, но не пробивает потолок одного
+        // действия: иначе ветеран получал бы экспоненциальный опыт.
+        gained = Math.round(gained * PrestigeMath.xpFactor(
+                prestigeLevel(player, skill), plugin.config().prestigeXpPerStep()));
+        gained = Math.max(0L, Math.min(plugin.config().maxXpPerAction(), gained));
         int oldLevel = level(player, skill);
         if (store.xp(key(player), skill) > Long.MAX_VALUE - gained) return Award.none(skill);
         long next = store.xp(key(player), skill) + gained;

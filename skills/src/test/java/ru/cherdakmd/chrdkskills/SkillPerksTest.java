@@ -54,6 +54,28 @@ class SkillPerksTest {
     }
 
     @Test
+    void prestigeAddsVirtualBonusWithoutNewCatalogEntries() {
+        Map<SkillType, Integer> levels = Map.of(SkillType.MINING, 100);
+        SkillPerks.Active base = SkillPerks.active(levels);
+        SkillPerks.Active boosted = SkillPerks.active(levels,
+                Map.of(SkillType.MINING, 5), 0.01);
+        assertEquals(0.05,
+                boosted.value(SkillPerk.Kind.BREAK_SPEED)
+                        - base.value(SkillPerk.Kind.BREAK_SPEED), 1e-9,
+                "пять ступеней по 0.01 дают +5 % к скорости копания");
+        assertEquals(12, boosted.perks().size(),
+                "виртуальные бонусы не создают записей в каталоге перков");
+        assertTrue(boosted.value(SkillPerk.Kind.BREAK_SPEED) <= 1.0,
+                "доли по-прежнему клампятся");
+
+        SkillPerks.Active armor = SkillPerks.active(
+                Map.of(SkillType.DEFENSE, 100),
+                Map.of(SkillType.DEFENSE, 10), 0.01);
+        assertEquals(8.0, armor.value(SkillPerk.Kind.ARMOR), 1e-9,
+                "броня — абсолютная величина, престиж добавляет 2.0");
+    }
+
+    @Test
     void flagsWorkAsBooleans() {
         assertFalse(SkillPerks.active(Map.of(SkillType.FARMING, 24))
                 .flag(SkillPerk.Kind.AUTO_REPLANT));

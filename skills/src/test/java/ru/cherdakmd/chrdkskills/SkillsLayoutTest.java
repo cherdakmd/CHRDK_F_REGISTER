@@ -65,6 +65,18 @@ class SkillsLayoutTest {
     }
 
     @Test
+    void prestigeTabIsWiredIntoTheSameInventory() throws IOException {
+        String source = source();
+        assertTrue(source.contains("TAB_PRESTIGE = 5"));
+        assertTrue(source.contains("case PRESTIGE -> renderPrestige"));
+        assertTrue(source.contains("Tab.PRESTIGE"));
+        String api = Files.readString(
+                Path.of("src/main/java/ru/cherdakmd/chrdkskills/SkillsMenuApi.java"),
+                StandardCharsets.UTF_8);
+        assertTrue(api.contains("PRESTIGE"), "вкладка должна быть в публичном контракте");
+    }
+
+    @Test
     void emptySlotsAreFilledAndDetailButtonsAreCentred() throws IOException {
         String source = source();
         assertTrue(source.contains("fillEmpty(inventory);"),

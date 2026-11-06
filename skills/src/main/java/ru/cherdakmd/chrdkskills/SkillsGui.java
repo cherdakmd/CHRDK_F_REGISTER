@@ -47,6 +47,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
     private static final int TAB_TREE = 1;
     private static final int TAB_TOP = 2;
     private static final int SLOT_GUIDE = 3;
+    private static final int TAB_PRESTIGE = 5;
     private static final int SLOT_CONTEXT = 4;
     private static final int SLOT_CLOSE = 8;
 
@@ -172,6 +173,8 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
                 "menu-tab-tree"));
         inventory.setItem(TAB_TOP, tabItem(holder, Tab.TOP, Material.GOLD_INGOT,
                 "menu-top"));
+        inventory.setItem(TAB_PRESTIGE, tabItem(holder, Tab.PRESTIGE,
+                Material.NETHERITE_INGOT, "menu-tab-prestige"));
         inventory.setItem(SLOT_GUIDE, button(Material.BOOK, "menu-guide-button",
                 guideLore(player)));
         inventory.setItem(SLOT_CLOSE, button(Material.BARRIER, "menu-close"));
@@ -179,6 +182,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
             case SKILLS -> renderSkills(player, holder);
             case TREE -> renderTree(player, holder);
             case TOP -> renderTop(player, holder);
+            case PRESTIGE -> renderPrestige(player, holder);
         }
         fillEmpty(inventory);
     }
@@ -278,6 +282,116 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
                         api.title(player, holder.domain, holder.page)),
                 "domain", api.domainName(holder.domain),
                 "page", holder.page + 1, "pages", pages));
+    }
+
+    /* ------------------------------- престиж -------------------------------- */
+
+    private static final int PRESTIGE_TIER_SLOT = 31;
+    private static final int PRESTIGE_TOP_SLOT = 46;
+
+    private void renderPrestige(Player player, Holder holder) {
+        Inventory inventory = holder.inventory;
+        List<SkillType> skills = SkillRegistry.all();
+        for (int index = 0; index < Math.min(SKILL_SLOTS.length, skills.size()); index++) {
+            inventory.setItem(SKILL_SLOTS[index], prestigeIcon(player, skills.get(index)));
+        }
+        int total = service.totalPrestige(player);
+        PrestigeMath.Tier tier = service.prestigeTier(player);
+        PrestigeMath.Tier next = service.nextPrestigeTier(player);
+        int percent = PrestigeMath.progressPercent(total);
+        List<Component> lore = new ArrayList<>();
+        lore.add(plugin.messages().get("menu-prestige-total",
+                "total", String.valueOf(total),
+                "max", String.valueOf(PrestigeMath.MAX_TOTAL)));
+        lore.add(plugin.messages().get("menu-prestige-progress",
+                "bar", SkillCurve.bar(percent, 10),
+                "percent", String.valueOf(percent)));
+        if (next != null) {
+            lore.add(plugin.messages().get("menu-prestige-next",
+                    "title", Messages.trusted(next.title()),
+                    "need", String.valueOf(next.threshold() - total)));
+        } else {
+            lore.add(plugin.messages().get("menu-prestige-cap"));
+        }
+        lore.add(plugin.messages().get("menu-prestige-bonus-xp",
+                "percent", String.valueOf((int) Math.round(
+                        (PrestigeMath.xpFactor(PrestigeMath.MAX_PER_SKILL,
+                                plugin.config().prestigeXpPerStep()) - 1.0) * 100))));
+        inventory.setItem(PRESTIGE_TIER_SLOT,
+                button(Material.NETHERITE_INGOT, "menu-prestige-tier-name",
+                        lore, "title", Messages.trusted(tier.title()),
+                        "total", String.valueOf(total)));
+        inventory.setItem(PRESTIGE_TOP_SLOT,
+                button(Material.PAPER, "menu-prestige-top-button", prestigeTopLore(player)));
+        inventory.setItem(DETAIL_BACK, button(Material.ARROW, "menu-prestige-back"));
+        inventory.setItem(SLOT_SUMMARY, summary(player));
+    }
+
+    private ItemStack prestigeIcon(Player player, SkillType skill) {
+        int steps = service.prestigeLevel(player, skill);
+        int level = service.level(player, skill);
+        ItemStack item = new ItemStack(materialOf(skill));
+        ItemMeta meta = item.getItemMeta();
+        meta.displayName(plugin.messages().get("menu-prestige-skill-name",
+                "name", Messages.trusted(plugin.messages().raw("skill." + skill.id() + ".name")),
+                "roman", PrestigeMath.roman(steps)));
+        List<Component> lore = new ArrayList<>();
+        lore.add(plugin.messages().get("menu-prestige-skill-level",
+                "level", String.valueOf(level),
+                "max", String.valueOf(plugin.config().curve().maxLevel()),
+                "steps", String.valueOf(steps),
+                "cap", String.valueOf(PrestigeMath.MAX_PER_SKILL)));
+        SkillPerk.Kind kind = PrestigeMath.perkKind(skill);
+        lore.add(plugin.messages().get("menu-prestige-skill-bonus",
+                "kind", Messages.trusted(kind.name().toLowerCase(java.util.Locale.ROOT)),
+                "value", String.valueOf(Math.round(PrestigeMath.perkValue(skill, steps,
+                        plugin.config().prestigePerkPerStep()) * 100.0))));
+        lore.add(plugin.messages().get(steps >= PrestigeMath.MAX_PER_SKILL
+                ? "menu-prestige-skill-cap"
+                : level >= plugin.config().curve().maxLevel()
+                        ? "menu-prestige-skill-ready" : "menu-prestige-skill-hint"));
+        meta.lore(lore);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private List<Component> prestigeTopLore(Player player) {
+        List<Component> out = new ArrayList<>();
+        int place = 1;
+        for (SkillService.PrestigeEntry entry : service.prestigeTop()) {
+            if (place > 5) {
+                break;
+            }
+            out.add(plugin.messages().get("menu-prestige-top-line",
+                    "place", String.valueOf(place++),
+                    "name", entry.name(),
+                    "total", String.valueOf(entry.total())));
+        }
+        if (out.isEmpty()) {
+            out.add(plugin.messages().get("menu-prestige-top-empty"));
+        }
+        return out;
+    }
+
+    private void onPrestigeClick(Player player, Holder holder, int slot) {
+        if (slot == DETAIL_BACK) {
+            switchTab(player, holder, Tab.SKILLS);
+            return;
+        }
+        if (slot == PRESTIGE_TOP_SLOT) {
+            player.closeInventory();
+            plugin.messages().send(player, "prestige-top-header");
+            int place = 1;
+            for (SkillService.PrestigeEntry entry : service.prestigeTop()) {
+                plugin.messages().send(player, "prestige-top-line",
+                        "place", String.valueOf(place++),
+                        "name", entry.name(),
+                        "total", String.valueOf(entry.total()));
+            }
+            if (place == 1) {
+                plugin.messages().send(player, "prestige-top-empty");
+            }
+        }
     }
 
     private void renderTop(Player player, Holder holder) {
@@ -514,6 +628,10 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
             switchTab(player, holder, Tab.TOP);
             return;
         }
+        if (slot == TAB_PRESTIGE) {
+            switchTab(player, holder, Tab.PRESTIGE);
+            return;
+        }
         if (slot == SLOT_GUIDE) {
             sendGuide(player);
             return;
@@ -521,6 +639,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         switch (holder.tab) {
             case TREE -> onTreeClick(player, holder, slot);
             case SKILLS -> onSkillsClick(player, holder, slot);
+            case PRESTIGE -> onPrestigeClick(player, holder, slot);
             case TOP -> { /* рейтинг только для чтения */ }
         }
     }

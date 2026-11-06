@@ -15,7 +15,9 @@ public interface SkillsMenuApi {
     enum Tab {
         SKILLS,
         TREE,
-        TOP
+        TOP,
+        /** Серверный уровень престижа: звания, ступени по всем навыкам, бонусы. */
+        PRESTIGE
     }
 
     /**

@@ -46,6 +46,10 @@ public final class SkillsConfig {
     private final int placedBlockMaxEntries;
     private final int leaderboardSize;
     private final boolean prestigeEnabled;
+    private final double prestigeXpPerStep;
+    private final double prestigePerkPerStep;
+    private final int prestigeDiamondsPerStep;
+    private final boolean prestigeAnnounceTiers;
     private final DiamondDrops.Settings diamonds;
     private final Set<String> excludedDropMaterials;
 
@@ -56,6 +60,8 @@ public final class SkillsConfig {
                          Map<Integer, Milestone> milestones, long placedBlockTtlSeconds,
                          int placedBlockMaxEntries, int leaderboardSize, boolean abilitiesEnabled,
                          boolean abilitiesHud, boolean prestigeEnabled,
+                         double prestigeXpPerStep, double prestigePerkPerStep,
+                         int prestigeDiamondsPerStep, boolean prestigeAnnounceTiers,
                          DiamondDrops.Settings diamonds, Set<String> excludedDropMaterials) {
         this.abilitiesEnabled = abilitiesEnabled;
         this.abilitiesHud = abilitiesHud;
@@ -74,6 +80,10 @@ public final class SkillsConfig {
         this.placedBlockMaxEntries = placedBlockMaxEntries;
         this.leaderboardSize = leaderboardSize;
         this.prestigeEnabled = prestigeEnabled;
+        this.prestigeXpPerStep = prestigeXpPerStep;
+        this.prestigePerkPerStep = prestigePerkPerStep;
+        this.prestigeDiamondsPerStep = prestigeDiamondsPerStep;
+        this.prestigeAnnounceTiers = prestigeAnnounceTiers;
         this.diamonds = diamonds;
         this.excludedDropMaterials = excludedDropMaterials;
     }
@@ -170,7 +180,11 @@ public final class SkillsConfig {
                 refreshTicks, curve, xpRate, maxXp,
                 skills, Collections.unmodifiableMap(milestones), ttl, maxEntries, leaderboard,
                 cfg.getBoolean("abilities.enabled", true), cfg.getBoolean("abilities.hud", true),
-                cfg.getBoolean("prestige.enabled", true), diamonds,
+                cfg.getBoolean("prestige.enabled", true),
+                clamp(cfg.getDouble("prestige.xp-per-step", 0.03), 0.0, 0.10),
+                clamp(cfg.getDouble("prestige.perk-per-step", 0.01), 0.0, 0.05),
+                (int) clamp(cfg.getLong("prestige.diamonds-per-step", 4L), 0L, 32L),
+                cfg.getBoolean("prestige.announce-tiers", true), diamonds,
                 Collections.unmodifiableSet(excluded));
     }
 
@@ -276,6 +290,26 @@ public final class SkillsConfig {
     /** Добровольный сброс навыка после 100-го уровня. */
     public boolean prestigeEnabled() {
         return prestigeEnabled;
+    }
+
+    /** Прибавка к множителю опыта за каждую ступень престижа навыка. */
+    public double prestigeXpPerStep() {
+        return prestigeXpPerStep;
+    }
+
+    /** Прибавка к профильному перку за каждую ступень. */
+    public double prestigePerkPerStep() {
+        return prestigePerkPerStep;
+    }
+
+    /** Физические алмазы за каждую новую ступень. */
+    public int prestigeDiamondsPerStep() {
+        return prestigeDiamondsPerStep;
+    }
+
+    /** Объявлять ли новое звание в общий чат. */
+    public boolean prestigeAnnounceTiers() {
+        return prestigeAnnounceTiers;
     }
 
     /** Формула физического дропа алмазов (потолки уже закламплены). */

@@ -41,6 +41,8 @@ public final class SkillStore {
         public final Set<Integer> milestones = new TreeSet<>();
         /** Ступени престижа по каждому навыку; сброс добровольный, опыт не теряется молча. */
         public final Map<SkillType, Integer> prestige = new EnumMap<>(SkillType.class);
+        /** Пороги званий, за которые уже выдали разовые алмазы. */
+        public final Set<Integer> claimedTiers = new TreeSet<>();
         /** Дневной бюджет физических алмазов: ключ дня и выпавшее сегодня. */
         public String diamondDay = "";
         public int diamondToday = 0;
@@ -129,7 +131,15 @@ public final class SkillStore {
                         SkillType skill = SkillType.byId(String.valueOf(prestige.getKey()));
                         if (skill != null && prestige.getValue() instanceof Number number
                                 && number.intValue() > 0) {
-                            player.prestige.put(skill, Math.min(100, number.intValue()));
+                            player.prestige.put(skill,
+                                    Math.min(PrestigeMath.MAX_PER_SKILL, number.intValue()));
+                        }
+                    }
+                }
+                if (row.get("claimedTiers") instanceof List<?> tiers) {
+                    for (Object element : tiers) {
+                        if (element instanceof Number number && number.intValue() > 0) {
+                            player.claimedTiers.add(number.intValue());
                         }
                     }
                 }
@@ -243,19 +253,61 @@ public final class SkillStore {
         return data == null ? 0 : data.totalPrestige();
     }
 
-    /** Добавляет ступень престижа; {@code false}, если потолок достигнут. */
+    /** Все ступени престижа игрока (копия, для чистого расчёта бонусов). */
+    public synchronized Map<SkillType, Integer> allPrestige(String playerKey) {
+        PlayerData data = players.get(playerKey);
+        Map<SkillType, Integer> out = new EnumMap<>(SkillType.class);
+        if (data != null) {
+            out.putAll(data.prestige);
+        }
+        return out;
+    }
+
+    /** Добавляет ступень престижа; {@code false}, если потолок навыка достигнут. */
     public synchronized boolean addPrestige(String playerKey, SkillType skill) {
         if (playerKey == null || skill == null) {
             return false;
         }
         PlayerData data = players.computeIfAbsent(playerKey, key -> new PlayerData());
         int current = data.prestige(skill);
-        if (current >= 100) {
+        if (current >= PrestigeMath.MAX_PER_SKILL) {
             return false;
         }
         data.prestige.put(skill, current + 1);
         dirty = true;
         return true;
+    }
+
+    /** Пороги званий, за которые награда уже выдана. */
+    public synchronized Set<Integer> claimedTiers(String playerKey) {
+        PlayerData data = players.get(playerKey);
+        return data == null ? Set.of() : Set.copyOf(data.claimedTiers);
+    }
+
+    /** Отмечает звание выданным; {@code true} — порог новый. */
+    public synchronized boolean markTier(String playerKey, int threshold) {
+        if (playerKey == null || threshold <= 0) {
+            return false;
+        }
+        PlayerData data = players.computeIfAbsent(playerKey, key -> new PlayerData());
+        if (!data.claimedTiers.add(threshold)) {
+            return false;
+        }
+        dirty = true;
+        return true;
+    }
+
+    /** Топ по общему уровню престижа (только игроки с хотя бы одной ступенью). */
+    public synchronized List<Map.Entry<String, Integer>> prestigeTop(int limit) {
+        List<Map.Entry<String, Integer>> ranked = new ArrayList<>();
+        for (Map.Entry<String, PlayerData> entry : players.entrySet()) {
+            int total = entry.getValue().totalPrestige();
+            if (total > 0) {
+                ranked.add(Map.entry(entry.getKey(), total));
+            }
+        }
+        ranked.sort((left, right) -> Integer.compare(right.getValue(), left.getValue()));
+        return List.copyOf(ranked.subList(0, Math.min(Math.max(0, limit), ranked.size())));
     }
 
     /** Сколько физических алмазов выпало игроку в указанный день. */
@@ -310,6 +362,7 @@ public final class SkillStore {
             // version остаётся 1: MilestoneMigration читает этот файл и требует
             // ровно эту версию. Новые поля совместимы со старым загрузчиком.
             fields.put("prestige", prestigeRows);
+            fields.put("claimedTiers", new ArrayList<>(player.claimedTiers));
             fields.put("diamondDay", player.diamondDay);
             fields.put("diamondToday", player.diamondToday);
             rows.put(key, fields);

@@ -66,6 +66,15 @@ final class SkillsProfile implements ChrdkRegisterApi.ProfileProvider {
         lines.add(messages.get("profile-best",
                 "skill", Messages.trusted(messages.raw("skill." + best.id() + ".name")),
                 "level", String.valueOf(bestLevel)));
+        // Престиж читаем из хранилища по UUID: раздел работает и для оффлайн-игрока.
+        Map<SkillType, Integer> steps = plugin.store().allPrestige(context.playerId().toString());
+        int total = PrestigeMath.total(steps);
+        if (total > 0) {
+            lines.add(messages.get("profile-prestige",
+                    "total", String.valueOf(total),
+                    "max", String.valueOf(PrestigeMath.MAX_TOTAL),
+                    "title", Messages.trusted(PrestigeMath.tierFor(total).title())));
+        }
         lines.add(messages.get("ability-energy", "energy", plugin.abilities().energy(context.playerId()), "max", SkillAbility.MAX_ENERGY));
         return new ChrdkRegisterApi.ProfileSection(messages.raw("profile-title"),
                 Material.EXPERIENCE_BOTTLE, lines);

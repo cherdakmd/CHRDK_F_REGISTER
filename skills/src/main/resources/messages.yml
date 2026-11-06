@@ -13,11 +13,16 @@ messages:
   milestone: "<green>Награда за уровень <white>%level%</white>: <aqua>%diamonds% алмазов в /bal</aqua>. При полном/недоступном банке выплата сохранена.</green>"
 
   # ---------------------- престиж и физический дроп ----------------------
-  prestige-usage: "<yellow>Использование: /skills prestige <навык></yellow>"
+  prestige-usage: "<yellow>Использование: /skills prestige [<навык>|all] · без аргумента — меню престижа.</yellow>"
   prestige-disabled: "<red>Престиж выключен в config.yml.</red>"
-  prestige-not-max: "<red>%skill%: престиж доступен только на %level% уровне.</red>"
-  prestige-confirm: "<gold>Внимание: %skill% будет сброшен до 1 уровня, ступень престижа сохранится. Повторите команду в течение 30 секунд, чтобы подтвердить.</gold>"
-  prestige-done: "<green>✦ Престиж %skill% · ступень %count%: новый цикл, значок и усиленный дроп алмазов.</green>"
+  prestige-not-max: "<red>Для престижа нужен %level% уровень выбранных навыков.</red>"
+  prestige-at-cap: "<red>Потолок престижа достигнут: не более %cap% ступеней на навык.</red>"
+  prestige-confirm: "<gold>Внимание: выбранные навыки будут сброшены до 1 уровня, ступени престижа сохранятся. Повторите команду в течение 30 секунд, чтобы подтвердить.</gold>"
+  prestige-done: "<green>✦ Новый цикл! Серверный престиж %total% · звание %title%. Алмазы выданы предметом.</green>"
+  prestige-tier-announce: "<gold>✦ %player% достиг звания %title% (престиж %count%) и получил %diamonds% алмазов!</gold>"
+  prestige-top-header: "<gold>✦ Топ престижа сервера</gold>"
+  prestige-top-line: "<gray>%place%. <white>%name%</white> — %total%</gray>"
+  prestige-top-empty: "<gray>Пока никто не брал престиж.</gray>"
   extra-catch: "<aqua>Рыбалка: лишний улов!</aqua>"
   arrow-kept: "<gray>Стрельба: стрела сохранена.</gray>"
   extra-potion: "<light_purple>Алхимия: вторая порция ингредиента.</light_purple>"
@@ -48,7 +53,7 @@ messages:
     - '<gray>4. Вкладка «Дерево перков» ведёт к отдельному дереву за токены и пыль: уровень домена = уровень класса × 2.</gray>'
     - '<gray>5. Пыль даётся только за подтверждённую смерть естественного моба: +5 за моба, дневной потолок 2000.</gray>'
     - '<gray>6. /perktree открывает это же окно сразу на вкладке дерева; /perktree info [домен] — сводка.</gray>'
-    - '<gray>7. На 100 уровне доступен /skills prestige <навык>: добровольный сброс с сохранением значка и нового цикла.</gray>'
+    - '<gray>7. На 100 уровне доступен престиж: /skills prestige [<навык>|all], вкладка «Престиж» показывает звания и бонусы.</gray>'
     - '<gray>8. Алмазы падают предметом из блоков и мобов: шанс и количество зависят от уровня, престижа и ранга, но ограничены дневным лимитом.</gray>'
     - '<dark_gray>Все вкладки — одно меню: клик по верхнему ряду только перерисовывает слоты.</dark_gray>'
   menu-top-hint: "<gray>Суммарный опыт всех навыков</gray>"
@@ -70,6 +75,26 @@ messages:
   menu-summary-perks: "<gray>Ступеней открыто: <white>%unlocked%/%all%</white></gray>"
   menu-summary-xp: "<gray>Опыта накоплено: <white>%xp%</white></gray>"
   menu-summary-prestige: "<gray>Престиж: </gray><white>%count%</white>"
+  profile-prestige: "<gray>Престиж: </gray><white>%total%/%max%</white> <dark_gray>·</dark_gray> <light_purple>%title%</light_purple>"
+
+  # ---------------------------- вкладка «Престиж» ----------------------------
+  menu-tab-prestige: "<light_purple>Престиж</light_purple>"
+  menu-prestige-tier-name: "<light_purple>%title%</light_purple> <dark_gray>·</dark_gray> <white>%total%</white>"
+  menu-prestige-total: "<gray>Серверный уровень: <white>%total%/%max%</white></gray>"
+  menu-prestige-progress: "<gray>%bar%</gray> <white>%percent%%</white>"
+  menu-prestige-next: "<gray>До звания %title%: <white>%need%</white> ступеней</gray>"
+  menu-prestige-cap: "<green>Достигнут потолок престижа сервера.</green>"
+  menu-prestige-bonus-xp: "<gray>Максимальный буст опыта: <white>+%percent%%</white></gray>"
+  menu-prestige-skill-name: "<gold>%name%</gold> <dark_gray>·</dark_gray> <light_purple>%roman%</light_purple>"
+  menu-prestige-skill-level: "<gray>Уровень <white>%level%/%max%</white> · ступеней <white>%steps%/%cap%</white></gray>"
+  menu-prestige-skill-bonus: "<gray>Бонус престижа: <white>%kind%</white> +%value%</gray>"
+  menu-prestige-skill-ready: "<green>Готов к престижу: /skills prestige <навык></green>"
+  menu-prestige-skill-hint: "<gray>Докачайте навык до потолка, чтобы сбросить.</gray>"
+  menu-prestige-skill-cap: "<dark_gray>Потолок ступеней достигнут.</dark_gray>"
+  menu-prestige-top-button: "<gold>Топ престижа сервера</gold>"
+  menu-prestige-top-line: "<gray>%place%. <white>%name%</white> — %total%</gray>"
+  menu-prestige-top-empty: "<gray>Пока никто не брал престиж.</gray>"
+  menu-prestige-back: "<yellow>Назад к навыкам</yellow>"
   menu-prestige-line: "<light_purple>✦ Престиж %count%</light_purple>"
   detail-title: "<gold>%name%</gold>"
   detail-progress: "<gray>%bar%</gray> <dark_gray>(%percent%%)</dark_gray>"
