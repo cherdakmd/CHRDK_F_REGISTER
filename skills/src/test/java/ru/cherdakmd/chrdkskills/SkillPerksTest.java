@@ -32,7 +32,7 @@ class SkillPerksTest {
     @Test
     void firstPerkAtTen() {
         SkillPerks.Active active = SkillPerks.active(Map.of(SkillType.MINING, 10));
-        assertEquals(0.06, active.value(SkillPerk.Kind.BREAK_SPEED), 1e-9);
+        assertEquals(0.03, active.value(SkillPerk.Kind.BREAK_SPEED), 1e-9);
         assertEquals(1, active.perks().size());
         assertEquals("mining-strong-hand", active.perks().get(0).id());
     }
@@ -42,7 +42,7 @@ class SkillPerksTest {
         SkillPerks.Active active = SkillPerks.active(Map.of(SkillType.MINING, 100));
         assertEquals(0.20, active.value(SkillPerk.Kind.BREAK_SPEED), 1e-9);
         assertEquals(0.30, active.value(SkillPerk.Kind.DOUBLE_DROP), 1e-9);
-        assertEquals(6, active.perks().size(), "на 100-м работают все шесть перков");
+        assertEquals(12, active.perks().size(), "на 100-м работают все 12 ступеней");
 
         SkillPerks.Active combat = SkillPerks.active(Map.of(SkillType.COMBAT, 100));
         assertEquals(0.15, combat.value(SkillPerk.Kind.MELEE_DAMAGE), 1e-9);
@@ -67,7 +67,7 @@ class SkillPerksTest {
         levels.put(SkillType.MINING, 10);
         levels.put(SkillType.FISHING, 100);
         SkillPerks.Active active = SkillPerks.active(levels);
-        assertEquals(0.06, active.value(SkillPerk.Kind.BREAK_SPEED), 1e-9,
+        assertEquals(0.03, active.value(SkillPerk.Kind.BREAK_SPEED), 1e-9,
                 "рыбалка не должна давать скорость копания");
         assertTrue(active.value(SkillPerk.Kind.EXTRA_CATCH) > 0.0);
     }
@@ -82,15 +82,15 @@ class SkillPerksTest {
     void perksAtListsOpenedPerks() {
         assertEquals(0, SkillPerks.perksAt(SkillType.MINING, 9).size());
         assertEquals(1, SkillPerks.perksAt(SkillType.MINING, 10).size());
-        assertEquals(2, SkillPerks.perksAt(SkillType.MINING, 25).size());
-        assertEquals(6, SkillPerks.perksAt(SkillType.MINING, 100).size());
+        assertEquals(3, SkillPerks.perksAt(SkillType.MINING, 25).size());
+        assertEquals(12, SkillPerks.perksAt(SkillType.MINING, 100).size());
     }
 
     @Test
     void nextPerkSkipsOpenedAndEndsAtNull() {
         SkillPerk next = SkillPerks.nextPerk(SkillType.MINING, 10);
         assertNotNull(next);
-        assertEquals(25, next.level());
+        assertEquals(15, next.level());
         assertNull(SkillPerks.nextPerk(SkillType.MINING, 100), "после 100-го открывать нечего");
         assertNull(SkillPerks.nextPerk(null, 1));
     }
@@ -98,7 +98,7 @@ class SkillPerksTest {
     @Test
     void thresholdsAreSortedWithoutDuplicates() {
         List<Integer> thresholds = SkillPerks.thresholds(SkillType.ENCHANTING);
-        assertEquals(List.of(10, 25, 50, 75, 100), thresholds);
+        assertEquals(SkillRegistry.THRESHOLDS, thresholds);
     }
 
     @Test

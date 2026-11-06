@@ -3,8 +3,10 @@ package ru.cherdakmd.chrdkskills;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -15,14 +17,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Каталог навыков и перков: количество, иды, пороги и допустимые величины.
  *
- * <p>Тест держит инварианты, на которых стоит баланс: десять навыков, по шесть
- * перков, ровно пять порогов на навык, суммарные эффекты не выходят за
- * заявленные потолки.</p>
+ * <p>Тест держит инварианты, на которых стоит баланс: десять навыков, по 12
+ * ступеней, 11 порогов на навык, суммарные эффекты на 100-м уровне не выходят
+ * за прежние потолки — дерево стало вдвое длиннее, но не сильнее.</p>
  */
 class SkillRegistryTest {
 
     @Test
-    void tenSkillsWithSixPerksEach() {
+    void tenSkillsWithTwelveStepsEach() {
         assertEquals(10, SkillRegistry.size());
         assertEquals(SkillRegistry.EXPECTED_SKILLS, SkillRegistry.size());
         int perks = 0;
@@ -31,7 +33,8 @@ class SkillRegistryTest {
             assertEquals(SkillRegistry.PERKS_PER_SKILL, list.size(), "перков у " + skill.id());
             perks += list.size();
         }
-        assertEquals(60, perks);
+        assertEquals(120, perks);
+        assertEquals(SkillRegistry.EXPECTED_SKILLS * SkillRegistry.PERKS_PER_SKILL, perks);
     }
 
     @Test
@@ -47,12 +50,12 @@ class SkillRegistryTest {
                 previous = perk.level();
             }
         }
-        assertEquals(60, ids.size());
+        assertEquals(120, ids.size());
     }
 
     @Test
-    void thresholdsAreTenTwentyFiveFiftySeventyFiveHundred() {
-        List<Integer> expected = List.of(10, 25, 50, 75, 100);
+    void thresholdsAreElevenEvenStepsUpToHundred() {
+        List<Integer> expected = SkillRegistry.THRESHOLDS;
         for (SkillType skill : SkillRegistry.all()) {
             assertEquals(expected, SkillPerks.thresholds(skill), "пороги " + skill.id());
         }
@@ -98,6 +101,28 @@ class SkillRegistryTest {
                 if (kind.percent()) {
                     assertTrue(active.value(kind) <= 1.0, "доля выше 1.0: " + kind);
                 }
+            }
+        }
+    }
+
+    @Test
+    void everyOriginalPerkIsSplitIntoTwoHalves() {
+        for (SkillType skill : SkillRegistry.all()) {
+            List<SkillPerk> list = SkillRegistry.perksOf(skill);
+            Map<String, SkillPerk> byId = new HashMap<>();
+            for (SkillPerk perk : list) {
+                byId.put(perk.id(), perk);
+            }
+            for (SkillPerk perk : list) {
+                if (!perk.id().endsWith("-2")) {
+                    continue;
+                }
+                SkillPerk first = byId.get(perk.id().substring(0, perk.id().length() - 2));
+                assertNotNull(first, "нет первой половинки у " + perk.id());
+                assertEquals(first.kind(), perk.kind(), "пара одного эффекта " + perk.id());
+                assertEquals(first.value(), perk.value(), 1e-9,
+                        "равные половинки " + perk.id());
+                assertTrue(perk.level() > first.level(), "вторая ступень позже первой");
             }
         }
     }

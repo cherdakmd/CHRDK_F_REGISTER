@@ -77,6 +77,11 @@ public final class SkillCurve {
     }
 
     public record LevelProgress(int level, long into, long need, int percent) {
+
+        /** {@code true} на последнем уровне: {@code need == 0} и делить не на что. */
+        public boolean maxed() {
+            return need <= 0L;
+        }
     }
 
     /** Опыт, которого не хватает до указанного уровня (0, если уже есть). */

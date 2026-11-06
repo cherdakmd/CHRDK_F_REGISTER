@@ -59,6 +59,15 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
             plugin.messages().send(sender, "player-only");
             return true;
         }
+        if (args[0].equalsIgnoreCase("tree") || args[0].equalsIgnoreCase("perktree")
+                || args[0].equalsIgnoreCase("perks")) {
+            gui.open(player, SkillsMenuApi.Tab.TREE, args.length > 1 ? args[1] : null, 0);
+            return true;
+        }
+        if (args[0].equalsIgnoreCase("rating")) {
+            gui.open(player, SkillsMenuApi.Tab.TOP, null, 0);
+            return true;
+        }
         if (args[0].equalsIgnoreCase("energy")) {
             plugin.abilities().status(player); return true;
         }
@@ -90,12 +99,20 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
         for (SkillType skill : SkillRegistry.all()) {
             int level = service.level(player, skill);
             SkillCurve.LevelProgress progress = service.progress(player, skill);
-            plugin.messages().send(player, "list-line",
-                    "name", Messages.trusted(plugin.messages().raw("skill." + skill.id() + ".name")),
-                    "level", String.valueOf(level),
-                    "bar", SkillCurve.bar(progress.percent(), 10),
-                    "current", String.valueOf(progress.into()),
-                    "need", String.valueOf(progress.need()));
+            if (progress.maxed()) {
+                plugin.messages().send(player, "list-line-max",
+                        "name", Messages.trusted(plugin.messages().raw("skill." + skill.id() + ".name")),
+                        "level", String.valueOf(level),
+                        "bar", SkillCurve.bar(progress.percent(), 10),
+                        "xp", String.valueOf(service.xp(player, skill)));
+            } else {
+                plugin.messages().send(player, "list-line",
+                        "name", Messages.trusted(plugin.messages().raw("skill." + skill.id() + ".name")),
+                        "level", String.valueOf(level),
+                        "bar", SkillCurve.bar(progress.percent(), 10),
+                        "current", String.valueOf(progress.into()),
+                        "need", String.valueOf(progress.need()));
+            }
         }
         plugin.messages().send(player, "list-footer");
         return true;
@@ -127,11 +144,18 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
                 "level", String.valueOf(level));
         plugin.messages().send(player, "card-desc",
                 "text", Messages.trusted(plugin.messages().raw("skill." + skill.id() + ".desc")));
-        plugin.messages().send(player, "card-progress",
-                "bar", SkillCurve.bar(progress.percent(), 10),
-                "current", String.valueOf(progress.into()),
-                "need", String.valueOf(progress.need()),
-                "percent", String.valueOf(progress.percent()));
+        if (progress.maxed()) {
+            plugin.messages().send(player, "card-progress-max",
+                    "bar", SkillCurve.bar(progress.percent(), 10),
+                    "xp", String.valueOf(service.xp(player, skill)));
+        } else {
+            plugin.messages().send(player, "card-progress",
+                    "bar", SkillCurve.bar(progress.percent(), 10),
+                    "current", String.valueOf(progress.into()),
+                    "need", String.valueOf(progress.need()),
+                    "percent", String.valueOf(progress.percent()));
+        }
+        plugin.messages().send(player, "card-steps", "steps", SkillRegistry.thresholdLine());
         for (SkillPerk perk : SkillRegistry.perksOf(skill)) {
             boolean active = level >= perk.level();
             plugin.messages().send(player, active ? "card-perk-active" : "card-perk-locked",
@@ -226,7 +250,8 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (command.getName().equalsIgnoreCase("skills")) {
             if (args.length == 1) {
-                List<String> options = new ArrayList<>(List.of("list", "top", "menu", "use", "energy"));
+                List<String> options = new ArrayList<>(List.of(
+                        "list", "top", "rating", "menu", "tree", "perks", "perktree", "use", "energy"));
                 for (SkillType skill : SkillRegistry.all()) {
                     options.add(skill.id());
                 }

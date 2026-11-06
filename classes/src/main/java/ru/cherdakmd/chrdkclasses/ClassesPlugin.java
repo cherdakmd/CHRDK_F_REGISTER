@@ -4,10 +4,12 @@ import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
+import ru.cherdakmd.chrdkskills.tree.PerkTreeMenuApi;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -76,6 +78,10 @@ public final class ClassesPlugin extends JavaPlugin {
             this.perkTrees = new PerkTreeService(gameplay.perkTrees(), perkTreeAudit);
             this.perkTreeGui = new PerkTreeGui(this, perkTrees);
             getServer().getPluginManager().registerEvents(perkTreeGui, this);
+            // Единое меню /skills: CHRDK_Skills спрашивает иконки и клики
+            // дерева через ServicesManager, не зная про этот JAR.
+            getServer().getServicesManager().register(PerkTreeMenuApi.class,
+                    perkTreeGui, this, ServicePriority.Normal);
             this.effects = new ClassEffects(this);
             this.abilities = new AbilityService(this);
             this.tag = new ClassTag(this);
@@ -113,6 +119,9 @@ public final class ClassesPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (perkTreeGui != null) {
+            getServer().getServicesManager().unregister(PerkTreeMenuApi.class, perkTreeGui);
+        }
         if (coreApi != null) {
             try {
                 coreApi.unregisterNameTag(ClassTag.ID);

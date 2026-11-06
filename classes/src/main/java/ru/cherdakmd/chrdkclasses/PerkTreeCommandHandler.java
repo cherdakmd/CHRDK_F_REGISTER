@@ -1,9 +1,11 @@
 package ru.cherdakmd.chrdkclasses;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import ru.cherdakmd.chrdkskills.SkillsMenuApi;
 import ru.cherdakmd.chrdkskills.tree.PerkTreeDefinition;
 import ru.cherdakmd.chrdkskills.tree.PerkTreeMath;
 import ru.cherdakmd.chrdkskills.tree.PerkTreePowderSource;
@@ -47,14 +49,23 @@ final class PerkTreeCommandHandler implements CommandExecutor {
         }
         String sub = args.length == 0 ? "open" : args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
-            case "help" -> plugin.messages().sendList(player, "perktree-guide");
+            case "help" -> {
+                plugin.messages().sendList(player, "perktree-guide");
+                plugin.messages().send(player, "perktree-unified-hint");
+            }
             case "open" -> {
                 TreeDomain domain = args.length > 1 ? domain(args[1]) : primary(player);
                 if (domain == null || PerkTreeRegistry.of(domain).isEmpty()) {
                     plugin.messages().send(player, "perktree-unknown-domain");
                     return true;
                 }
-                gui.open(player, domain, page(args.length > 2 ? args[2] : null));
+                int page = page(args.length > 2 ? args[2] : null);
+                SkillsMenuApi menu = unifiedMenu();
+                if (menu != null) {
+                    menu.open(player, SkillsMenuApi.Tab.TREE, domain.id(), page);
+                } else {
+                    gui.open(player, domain, page);
+                }
             }
             case "info" -> {
                 TreeDomain domain = args.length > 1 ? domain(args[1]) : primary(player);
@@ -137,6 +148,15 @@ final class PerkTreeCommandHandler implements CommandExecutor {
             default -> plugin.messages().send(player, "perktree-usage");
         }
         return true;
+    }
+
+    /** Мягкая связь: сервиса может не быть, если аддон навыков выключен. */
+    private static SkillsMenuApi unifiedMenu() {
+        try {
+            return Bukkit.getServicesManager().load(SkillsMenuApi.class);
+        } catch (LinkageError | RuntimeException error) {
+            return null;
+        }
     }
 
     private static int page(String raw) {

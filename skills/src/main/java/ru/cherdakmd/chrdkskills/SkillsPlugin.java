@@ -12,7 +12,8 @@ import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 import java.util.Locale;
 
 /**
- * CHRDK_Skills — десять навыков с уровнями 1..100 и 60 перками.
+ * CHRDK_Skills — десять навыков с уровнями 1..100 и 12 ступенями перков
+ * на каждом (всего 120).
  *
  * <p>Опыт идёт из честных событий: разрушение блоков, бой, рыбалка, варка и
  * зачарование. Прогресс живёт в {@code skills.json} по UUID, уровень всегда
@@ -110,6 +111,9 @@ public final class SkillsPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (gui != null) {
+            Bukkit.getServicesManager().unregister(SkillsMenuApi.class, gui);
+        }
         if (awards != null) awards.close();
         ru.cherdakmd.chrdkregister.api.CropReplanting.cancel(this);
         if (abilityTask != null) abilityTask.cancel();
@@ -190,6 +194,9 @@ public final class SkillsPlugin extends JavaPlugin {
     public void registerApi() {
         Bukkit.getServicesManager().register(ChrdkSkillsApi.class,
                 new SkillsApiImpl(service), this, ServicePriority.Normal);
+        // Единое меню: /perktree из CHRDK_Classes открывает тот же инвентарь.
+        Bukkit.getServicesManager().register(SkillsMenuApi.class, gui,
+                this, ServicePriority.Normal);
     }
 
     public Messages messages() {

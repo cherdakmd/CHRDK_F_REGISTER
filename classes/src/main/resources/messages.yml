@@ -755,6 +755,7 @@ classes:
   # --------------------------- деревья перков -------------------------------
   perktree-title: "<gold>Дерево перков: <white>%domain%</white></gold>"
   perktree-usage: "<gray>/perktree help — как качать и где брать пыль; open|info|unlock|select|reset|confirm</gray>"
+  perktree-unified-hint: "<gray>/perktree open открывает вкладку «Дерево перков» в общем меню /skills; вкладки переключаются кликом по верхнему ряду.</gray>"
   perktree-unknown-domain: "<red>Неизвестный домен дерева.</red>"
   perktree-no-tree: "<red>Дерево недоступно. Проверьте perk-trees.json.</red>"
   perktree-info: "<gold>%domain%</gold> <gray>· ур. <white>%level%</white> · пыль <white>%powder%</white> · токены <white>%tokens%</white> · приём <white>%ability%</white></gray>"
