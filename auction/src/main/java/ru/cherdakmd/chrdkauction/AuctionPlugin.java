@@ -2,6 +2,7 @@ package ru.cherdakmd.chrdkauction;
 
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
+import ru.cherdakmd.chrdkregister.ConfigUpgrader;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
@@ -16,7 +17,7 @@ public final class AuctionPlugin extends JavaPlugin {
     private BukkitTask expiry;
     public void onEnable() {
         try {
-            saveDefaultConfig(); reloadAuction();
+            saveDefaultConfig(); ConfigUpgrader.apply(this); reloadAuction();
             api=Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
             if (api==null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<22) throw new IllegalStateException("Нужен CHRDK_Core API 22+; финансовый fallback запрещён");
             ChrdkRegisterApi.class.getMethod("auctionBankAvailable");

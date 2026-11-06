@@ -3,6 +3,7 @@ package ru.cherdakmd.chrdkhunt;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
+import ru.cherdakmd.chrdkregister.ConfigUpgrader;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.configuration.ConfigSnapshot;
@@ -59,6 +60,7 @@ public final class HuntPlugin extends JavaPlugin {
     public void onEnable() {
         try {
             saveDefaultConfig();
+            ConfigUpgrader.apply(this);
             if (!tryReloadHunt()) {
                 getServer().getPluginManager().disablePlugin(this);
                 return;

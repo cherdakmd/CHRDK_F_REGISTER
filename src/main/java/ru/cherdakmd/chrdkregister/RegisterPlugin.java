@@ -84,6 +84,7 @@ public final class RegisterPlugin extends JavaPlugin {
         OptionalTotpMigration.apply(this);
         PresentationMigration.apply(this);
         PremiumPresentationMigration.apply(this);
+        ConfigUpgrader.apply(this);
         PluginConfig config = PluginConfig.fromBukkitConfig(getConfig());
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
 

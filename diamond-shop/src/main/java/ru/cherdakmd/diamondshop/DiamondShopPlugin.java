@@ -3,6 +3,7 @@ package ru.cherdakmd.diamondshop;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
+import ru.cherdakmd.chrdkregister.ConfigUpgrader;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
@@ -41,6 +42,7 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
         try { if(ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<29) throw new IllegalStateException("Нужен Core API 29+"); }
         catch(Exception e) { getLogger().severe("Магазин выключен: нужен актуальный CHRDK_Core API 29+"); Bukkit.getPluginManager().disablePlugin(this); return; }
         saveDefaultConfig();
+        ConfigUpgrader.apply(this);
         ShopCatalogMigration.apply(this);
         reloadShopConfig(); // stores первичную инициализацию всех сервисов
 
