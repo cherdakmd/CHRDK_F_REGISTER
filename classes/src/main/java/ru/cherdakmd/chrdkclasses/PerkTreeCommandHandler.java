@@ -20,6 +20,12 @@ import java.util.Locale;
  * принимает {@link PerkTreeService}, тот же, что и у кликов в
  * {@link PerkTreeGui}. Сброс двухшаговый — {@code reset} выдаёт токен,
  * {@code confirm <токен>} применяет его.
+ *
+ * <p>Дерево больше не живёт в отдельном окне: {@code open} передаёт домен и
+ * страницу в {@link SkillsMenuApi}, который показывает вкладку «Дерево перков»
+ * общего меню {@code /skills}. Лишь когда {@code CHRDK_Skills} не предоставил
+ * сервис, команда открывает резервный инвентарь {@link PerkTreeGui} напрямую;
+ * повторные страницы перерисовываются в нём же, без второго окна.</p>
  */
 final class PerkTreeCommandHandler implements CommandExecutor {
 
