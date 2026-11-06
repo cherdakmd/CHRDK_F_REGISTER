@@ -650,6 +650,11 @@ public final class RegisterPlugin extends JavaPlugin {
         return bankService;
     }
 
+    /** Текущая (в т.ч. после /pass reload) конфигурация плагина. */
+    public PluginConfig config() {
+        return accessManager != null ? accessManager.config() : null;
+    }
+
     /** Разделы аддонов для {@code /profile} (API v8). */
     public ProfileRegistry profileRegistry() {
         return profileRegistry;

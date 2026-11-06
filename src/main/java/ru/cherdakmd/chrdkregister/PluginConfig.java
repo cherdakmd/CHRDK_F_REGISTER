@@ -77,6 +77,9 @@ public final class PluginConfig {
     /** server-menu.* (не часть ctor): конфиг-driven серверное меню /menu. */
     private ServerMenuSettings serverMenu = ServerMenuSettings.DISABLED;
 
+    /** anvil.* (не часть ctor): потолок полной цены и оплата алмазами. */
+    private AnvilSettings anvil = AnvilSettings.DEFAULTS;
+
     /** wiki.* (не часть ctor): ссылка на сайт игрока для /wiki и кнопки меню. */
     private WikiSettings wiki = WikiSettings.DISABLED;
     /** economy.* (не часть ctor): банк алмазов /bal /pay /baltop. */
@@ -464,6 +467,11 @@ public final class PluginConfig {
         parsed.serverMenu = ServerMenuSettings.from(config);
         parsed.wiki = WikiSettings.from(config);
         parsed.economy = EconomySettings.from(config);
+        parsed.anvil = new AnvilSettings(
+                config.getInt("anvil.max-level-price", 150),
+                config.getInt("anvil.levels-per-diamond", 10),
+                config.getInt("anvil.max-diamond-price", 64),
+                config.getBoolean("anvil.currency-payment", true));
         return parsed;
     }
 
@@ -628,6 +636,11 @@ public final class PluginConfig {
     /** Динамический MOTD. НИКОГДА не null. */
     public MotdSettings motd() {
         return motd;
+    }
+
+    /** Наковальня: потолок полной цены и альтернативная оплата алмазами. НИКОГДА не null. */
+    public AnvilSettings anvil() {
+        return anvil;
     }
 
     /**
