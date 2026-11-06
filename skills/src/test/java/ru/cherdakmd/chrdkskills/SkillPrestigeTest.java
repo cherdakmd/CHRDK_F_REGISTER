@@ -118,6 +118,23 @@ class SkillPrestigeTest {
     }
 
     @Test
+    void legacyPrestigeBackfillsClaimedTiersWithoutPaying() throws IOException {
+        Path file = folder.resolve("skills.json");
+        Files.writeString(file, """
+                {"version":1,"players":{"%s":{"name":"Alex","xp":{"mining":131175},"prestige":{"mining":10,"combat":10},"milestones":[]}}}
+                """.formatted(PLAYER), StandardCharsets.UTF_8);
+        SkillStore store = new SkillStore(folder, LOGGER);
+        store.load();
+        assertEquals(20, store.totalPrestige(PLAYER));
+        // Уже достигнутые звания помечаем выданными молча: первый сброс после
+        // обновления не должен разом выплеснуть ветерану накопленные алмазы.
+        assertTrue(store.claimedTiers(PLAYER).contains(5));
+        assertTrue(store.claimedTiers(PLAYER).contains(15));
+        assertFalse(store.claimedTiers(PLAYER).contains(30));
+        assertFalse(store.markTier(PLAYER, 5), "награда за звание уже учтена");
+    }
+
+    @Test
     void legacyFileWithoutNewFieldsStillLoads() throws IOException {
         Path file = folder.resolve("skills.json");
         Files.writeString(file, """

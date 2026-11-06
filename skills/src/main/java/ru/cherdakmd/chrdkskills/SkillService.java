@@ -217,26 +217,38 @@ public final class SkillService {
         return PrestigeResult.DONE;
     }
 
-    /** Разовые алмазы за каждое новое звание, один раз на порог. */
+    /**
+     * Разовые алмазы за каждое новое звание, один раз на порог. При сбросе
+     * всех навыков игрок может пересечь несколько порогов сразу: в чат уходит
+     * один анонс старшего звания с суммарной наградой, а не пачка сообщений.
+     */
     private void grantTierRewards(Player player) {
         int total = totalPrestige(player);
+        int diamonds = 0;
+        int crossed = 0;
+        PrestigeMath.Tier highest = null;
         for (int threshold : PrestigeMath.rewardThresholds()) {
             if (total < threshold || !store.markTier(key(player), threshold)) {
                 continue;
             }
             PrestigeMath.Tier tier = PrestigeMath.tierAt(threshold);
-            int diamonds = PrestigeMath.tierDiamonds(tier);
-            giveDiamonds(player, diamonds);
-            if (tier != null && plugin.config().prestigeAnnounceTiers()) {
-                Bukkit.broadcast(plugin.messages().get("prestige-tier-announce",
-                        "player", player.getName(),
-                        "title", Messages.trusted(tier.title()),
-                        "count", String.valueOf(threshold),
-                        "diamonds", String.valueOf(diamonds)));
-            }
+            diamonds += PrestigeMath.tierDiamonds(tier);
+            crossed++;
+            highest = tier == null ? highest : tier;
             plugin.getLogger().info("[CHRDK_Skills] " + player.getName()
                     + " достиг звания «" + (tier == null ? threshold : tier.title())
                     + "» (престиж " + total + ")");
+        }
+        if (crossed == 0) {
+            return;
+        }
+        giveDiamonds(player, diamonds);
+        if (highest != null && plugin.config().prestigeAnnounceTiers()) {
+            Bukkit.broadcast(plugin.messages().get("prestige-tier-announce",
+                    "player", player.getName(),
+                    "title", Messages.trusted(highest.title()),
+                    "count", String.valueOf(total),
+                    "diamonds", String.valueOf(diamonds)));
         }
     }
 

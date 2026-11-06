@@ -136,12 +136,25 @@ public final class SkillStore {
                         }
                     }
                 }
-                if (row.get("claimedTiers") instanceof List<?> tiers) {
+                boolean legacyTiers = !(row.get("claimedTiers") instanceof List<?>);
+                if (!legacyTiers && row.get("claimedTiers") instanceof List<?> tiers) {
                     for (Object element : tiers) {
                         if (element instanceof Number number && number.intValue() > 0) {
                             player.claimedTiers.add(number.intValue());
                         }
                     }
+                }
+                // Миграция 6 ноября 2026: у старых профилей поля claimedTiers
+                // ещё не было. Уже достигнутые звания помечаем выданными без
+                // выплаты — иначе первый сброс после обновления разом выплеснул
+                // бы ветерану все накопленные разовые награды.
+                if (legacyTiers && player.totalPrestige() > 0) {
+                    for (int threshold : PrestigeMath.rewardThresholds()) {
+                        if (player.totalPrestige() >= threshold) {
+                            player.claimedTiers.add(threshold);
+                        }
+                    }
+                    dirty = true;
                 }
                 if (row.get("diamondDay") != null) {
                     player.diamondDay = String.valueOf(row.get("diamondDay")).trim();
