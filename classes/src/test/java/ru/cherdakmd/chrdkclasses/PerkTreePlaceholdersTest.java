@@ -56,6 +56,12 @@ class PerkTreePlaceholdersTest {
                 PerkTreePlaceholders.resolve(STATE, TreeDomain.COMBAT, "ability"));
         assertEquals("true",
                 PerkTreePlaceholders.resolve(STATE, TreeDomain.COMBAT, "available"));
+        assertEquals("6", PerkTreePlaceholders.resolve(STATE, TreeDomain.COMBAT, "tier"));
+        assertEquals("10", PerkTreePlaceholders.resolve(STATE, TreeDomain.COMBAT, "tiers"));
+        assertEquals("10", PerkTreePlaceholders.resolve(STATE, TreeDomain.COMBAT, "next_tier"));
+        PerkTreeState maxed = PerkTreeState.empty(TreeDomain.COMBAT).withLevel(100);
+        assertEquals("10", PerkTreePlaceholders.resolve(maxed, TreeDomain.COMBAT, "tier"));
+        assertEquals("0", PerkTreePlaceholders.resolve(maxed, TreeDomain.COMBAT, "next_tier"));
     }
 
     @Test

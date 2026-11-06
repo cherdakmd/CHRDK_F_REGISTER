@@ -754,7 +754,7 @@ classes:
 
   # --------------------------- деревья перков -------------------------------
   perktree-title: "<gold>Дерево перков: <white>%domain%</white></gold>"
-  perktree-usage: "<gray>/perktree open|info|unlock|select|reset|confirm</gray>"
+  perktree-usage: "<gray>/perktree help — как качать и где брать пыль; open|info|unlock|select|reset|confirm</gray>"
   perktree-unknown-domain: "<red>Неизвестный домен дерева.</red>"
   perktree-no-tree: "<red>Дерево недоступно. Проверьте perk-trees.json.</red>"
   perktree-info: "<gold>%domain%</gold> <gray>· ур. <white>%level%</white> · пыль <white>%powder%</white> · токены <white>%tokens%</white> · приём <white>%ability%</white></gray>"
@@ -969,3 +969,345 @@ classes:
   perktree-node-hint-unlock: "<yellow>ЛКМ — купить ранг узла</yellow>"
   perktree-node-hint-select: "<yellow>ЛКМ — выбрать активным приёмом</yellow>"
   perktree-node-no-desc: "<dark_gray>Описание появится после обновления messages.yml.</dark_gray>"
+
+  # --------------- углубление дерева: 10 тиров, 120 узлов ---------------
+  perktree.node.mining-ore-ledger.name: "<aqua>Учёт руды</aqua>"
+  perktree.node.mining-ore-ledger.desc:
+    - '<gray>Помечает в подсказке, какие блоки и предметы из жилы стоит подобрать.</gray>'
+    - '<gray>Дроп, количество руды и шансы не меняются.</gray>'
+  perktree.node.mining-vein-echo.name: "<aqua>Схема жилы</aqua>"
+  perktree.node.mining-vein-echo.desc:
+    - '<gray>Рисует контур жилы и расстояние до неё на карте подсказок.</gray>'
+    - '<gray>Не меняет генерацию руды и не телепортирует.</gray>'
+  perktree.node.mining-depth-hint.name: "<aqua>Глубинный ориентир</aqua>"
+  perktree.node.mining-depth-hint.desc:
+    - '<gray>Показывает слой, высоту и направление к ближайшей жиле в HUD.</gray>'
+    - '<gray>Не меняет генерацию мира и скорость добычи.</gray>'
+  perktree.node.mining-salvage-eye.name: "<aqua>Проба породы</aqua>"
+  perktree.node.mining-salvage-eye.desc:
+    - '<gray>Превью свойств находки до того, как вы её поднимете.</gray>'
+    - '<gray>Характеристики и тир предмета не меняются.</gray>'
+  perktree.node.mining-deep-pulse.name: "<aqua>Глубинный импульс</aqua>"
+  perktree.node.mining-deep-pulse.desc:
+    - '<gray>Активный приём: самая долгая подсветка жилы — 20 секунд.</gray>'
+    - '<gray>Не ускоряет ломание и не добавляет дроп.</gray>'
+  perktree.node.mining-tool-diary.name: "<aqua>Дневник инструмента</aqua>"
+  perktree.node.mining-tool-diary.desc:
+    - '<gray>Таймеры эффектов и состояние инструмента в HUD.</gray>'
+    - '<gray>Длительности и износ не меняются.</gray>'
+  perktree.node.mining-ore-price.name: "<aqua>Оценка жилы</aqua>"
+  perktree.node.mining-ore-price.desc:
+    - '<gray>Показывает примерную ценность добытого в подсказке.</gray>'
+    - '<gray>Цены магазина и донат не меняются.</gray>'
+  perktree.node.mining-grand-vein.name: "<aqua>Главная жила</aqua>"
+  perktree.node.mining-grand-vein.desc:
+    - '<gray>Расширяет радиус подсветки жилы до 3 блоков.</gray>'
+    - '<gray>Это область подсказки, а не радиус разрушения.</gray>'
+  perktree.node.mining-master-hud.name: "<aqua>Мастер-карта рудокопа</aqua>"
+  perktree.node.mining-master-hud.desc:
+    - '<gray>Сводный HUD: жила, пыль, токены, тир и активный приём.</gray>'
+    - '<gray>Не выдаёт пыль, токены и уровни.</gray>'
+  perktree.node.mining-last-seam.name: "<aqua>Последний пласт</aqua>"
+  perktree.node.mining-last-seam.desc:
+    - '<gray>Запоминает точку последней жилы и показывает направление к ней.</gray>'
+    - '<gray>Не телепортирует и не показывает координаты игроков.</gray>'
+  perktree.node.combat-riposte-cue.name: "<aqua>Контрудар</aqua>"
+  perktree.node.combat-riposte-cue.desc:
+    - '<gray>Активный приём: подсвечивает окно контратаки после блока.</gray>'
+    - '<gray>Урон и кулдауны не меняются.</gray>'
+  perktree.node.combat-death-recap.name: "<aqua>Разбор боя</aqua>"
+  perktree.node.combat-death-recap.desc:
+    - '<gray>Сводка последнего боя: источники урона и порядок событий.</gray>'
+    - '<gray>Не возвращает вещи и не меняет правила смерти.</gray>'
+  perktree.node.combat-timer-hud.name: "<aqua>Таймеры боя</aqua>"
+  perktree.node.combat-timer-hud.desc:
+    - '<gray>Таймеры эффектов, зелий и кулдаунов в HUD.</gray>'
+    - '<gray>Длительности и кулдауны не меняются.</gray>'
+  perktree.node.combat-spawn-cue.name: "<aqua>Происхождение моба</aqua>"
+  perktree.node.combat-spawn-cue.desc:
+    - '<gray>Показывает, откуда появился моб и каков его уровень угрозы.</gray>'
+    - '<gray>Не меняет сложность и дроп.</gray>'
+  perktree.node.combat-ally-hud.name: "<aqua>Командный HUD</aqua>"
+  perktree.node.combat-ally-hud.desc:
+    - '<gray>Метки союзников и их текущих целей в интерфейсе.</gray>'
+    - '<gray>Не передаёт инвентарь и здоровье чужих игроков.</gray>'
+  perktree.node.combat-war-cry.name: "<aqua>Боевой клич</aqua>"
+  perktree.node.combat-war-cry.desc:
+    - '<gray>Активный приём: групповая подсветка цели на 18 секунд.</gray>'
+    - '<gray>Не усиливает союзников и не меняет урон.</gray>'
+  perktree.node.combat-loot-filter.name: "<aqua>Фильтр трофеев</aqua>"
+  perktree.node.combat-loot-filter.desc:
+    - '<gray>Помечает в подсказке ценный дроп и мусор до подбора.</gray>'
+    - '<gray>Сам дроп и шансы не меняются.</gray>'
+  perktree.node.combat-weather-eye.name: "<aqua>Ориентир по времени</aqua>"
+  perktree.node.combat-weather-eye.desc:
+    - '<gray>Показывает время суток, погоду и фазу луны в HUD.</gray>'
+    - '<gray>Не меняет погоду и спавн мобов.</gray>'
+  perktree.node.combat-master-recap.name: "<aqua>Хроника сражений</aqua>"
+  perktree.node.combat-master-recap.desc:
+    - '<gray>Расширенная сводка боя с порядком целей и таймерами.</gray>'
+    - '<gray>Не влияет на урон, защиту и дроп.</gray>'
+  perktree.node.combat-arena-mind.name: "<aqua>Аренный разум</aqua>"
+  perktree.node.combat-arena-mind.desc:
+    - '<gray>Сводный боевой HUD: цель, таймеры, угрозы, пыль и тир.</gray>'
+    - '<gray>Не выдаёт пыль, токены и уровни.</gray>'
+  perktree.node.combat-final-stance.name: "<aqua>Последняя стойка</aqua>"
+  perktree.node.combat-final-stance.desc:
+    - '<gray>Подсветка нескольких окон уклонения подряд.</gray>'
+    - '<gray>Механика боя и кулдауны не меняются.</gray>'
+  perktree.node.archery-wind-cue.name: "<aqua>Поправка на ветер</aqua>"
+  perktree.node.archery-wind-cue.desc:
+    - '<gray>Активный приём: подсказка сноса и дистанции до цели.</gray>'
+    - '<gray>Траектория и урон стрелы не меняются.</gray>'
+  perktree.node.archery-effect-timer.name: "<aqua>Таймеры стрелка</aqua>"
+  perktree.node.archery-effect-timer.desc:
+    - '<gray>Таймеры эффектов и перезарядки приёма в HUD.</gray>'
+    - '<gray>Длительности и кулдауны не меняются.</gray>'
+  perktree.node.archery-craft-preview.name: "<aqua>Пристрелка снаряжения</aqua>"
+  perktree.node.archery-craft-preview.desc:
+    - '<gray>Превью результата переделки лука и стрел до подтверждения.</gray>'
+    - '<gray>Рецепты, шансы и характеристики не меняются.</gray>'
+  perktree.node.archery-spawn-cue.name: "<aqua>Метка дичи</aqua>"
+  perktree.node.archery-spawn-cue.desc:
+    - '<gray>Подсказка происхождения и уровня цели перед выстрелом.</gray>'
+    - '<gray>Не меняет сложность и дроп.</gray>'
+  perktree.node.archery-volley.name: "<aqua>Залп</aqua>"
+  perktree.node.archery-volley.desc:
+    - '<gray>Активный приём: подсветка группы целей на 14 секунд.</gray>'
+    - '<gray>Не добавляет стрелы и не меняет урон.</gray>'
+  perktree.node.archery-map-detail.name: "<aqua>Карта огня</aqua>"
+  perktree.node.archery-map-detail.desc:
+    - '<gray>Детализация карты: дальность, метки и расстояния до целей.</gray>'
+    - '<gray>Не открывает карту мира и не телепортирует.</gray>'
+  perktree.node.archery-price-cue.name: "<aqua>Оценка трофея</aqua>"
+  perktree.node.archery-price-cue.desc:
+    - '<gray>Показывает ценность добычи и сдачу сделки в подсказке.</gray>'
+    - '<gray>Цены магазина и курс не меняются.</gray>'
+  perktree.node.archery-ally-hud.name: "<aqua>Наводка напарника</aqua>"
+  perktree.node.archery-ally-hud.desc:
+    - '<gray>Командный HUD: метки союзников и их цели.</gray>'
+    - '<gray>Не передаёт инвентарь и здоровье чужих игроков.</gray>'
+  perktree.node.archery-eagle-eye.name: "<aqua>Орлиный глаз</aqua>"
+  perktree.node.archery-eagle-eye.desc:
+    - '<gray>Увеличивает дальность подсветки цели ещё на 2 блока.</gray>'
+    - '<gray>Реальная дальность выстрела не меняется.</gray>'
+  perktree.node.archery-loot-filter.name: "<aqua>Сортировка трофеев</aqua>"
+  perktree.node.archery-loot-filter.desc:
+    - '<gray>Помечает ценный дроп и мусор до подбора.</gray>'
+    - '<gray>Сам дроп и количество не меняются.</gray>'
+  perktree.node.archery-reset-preview.name: "<aqua>Прикидка сброса</aqua>"
+  perktree.node.archery-reset-preview.desc:
+    - '<gray>Показывает, что вернётся при сбросе дерева, до подтверждения.</gray>'
+    - '<gray>Сам сброс остаётся двухшаговым.</gray>'
+  perktree.node.archery-tree-guide.name: "<aqua>Подсказка лучника</aqua>"
+  perktree.node.archery-tree-guide.desc:
+    - '<gray>В HUD видны уровень домена, пыль, токены и следующий тир.</gray>'
+    - '<gray>Не выдаёт пыль, токены и уровни.</gray>'
+  perktree.node.archery-master-shot.name: "<aqua>Мастерский выстрел</aqua>"
+  perktree.node.archery-master-shot.desc:
+    - '<gray>Полная подсказка траектории с точкой попадания и сносом.</gray>'
+    - '<gray>Урон, скорость полёта и дроп не меняются.</gray>'
+  perktree.node.archery-last-mark.name: "<aqua>Последняя метка</aqua>"
+  perktree.node.archery-last-mark.desc:
+    - '<gray>Запоминает последнюю цель и показывает направление к ней.</gray>'
+    - '<gray>Не телепортирует и не выдаёт координаты игроков.</gray>'
+  perktree.node.defense-guard-cue.name: "<aqua>Стойка стража</aqua>"
+  perktree.node.defense-guard-cue.desc:
+    - '<gray>Активный приём: подсветка окна безопасного блока.</gray>'
+    - '<gray>Урон и кулдауны не меняются.</gray>'
+  perktree.node.defense-death-recap.name: "<aqua>Разбор урона</aqua>"
+  perktree.node.defense-death-recap.desc:
+    - '<gray>Сводка входящего урона и порядка событий перед смертью.</gray>'
+    - '<gray>Не возвращает вещи и не меняет правила смерти.</gray>'
+  perktree.node.defense-effect-timer.name: "<aqua>Таймеры защиты</aqua>"
+  perktree.node.defense-effect-timer.desc:
+    - '<gray>Таймеры эффектов, зелий и кулдаунов в HUD.</gray>'
+    - '<gray>Длительности и кулдауны не меняются.</gray>'
+  perktree.node.defense-spawn-cue.name: "<aqua>Происхождение угрозы</aqua>"
+  perktree.node.defense-spawn-cue.desc:
+    - '<gray>Подсказка источника и уровня атакующего моба.</gray>'
+    - '<gray>Не меняет сложность и дроп.</gray>'
+  perktree.node.defense-bulwark.name: "<aqua>Бастион</aqua>"
+  perktree.node.defense-bulwark.desc:
+    - '<gray>Активный приём: подсветка опасных зон на 16 секунд.</gray>'
+    - '<gray>Не добавляет броню и не снижает урон.</gray>'
+  perktree.node.defense-map-detail.name: "<aqua>Карта убежищ</aqua>"
+  perktree.node.defense-map-detail.desc:
+    - '<gray>Детализация карты: метки точек возрождения и расстояния.</gray>'
+    - '<gray>Не открывает карту мира и не телепортирует.</gray>'
+  perktree.node.defense-ally-hud.name: "<aqua>Круг союзников</aqua>"
+  perktree.node.defense-ally-hud.desc:
+    - '<gray>Командный HUD: метки союзников и их цели.</gray>'
+    - '<gray>Не передаёт инвентарь и здоровье чужих игроков.</gray>'
+  perktree.node.defense-loot-filter.name: "<aqua>Фильтр оброненного</aqua>"
+  perktree.node.defense-loot-filter.desc:
+    - '<gray>Помечает ценные предметы и мусор после боя.</gray>'
+    - '<gray>Сам дроп и количество не меняются.</gray>'
+  perktree.node.defense-weather-eye.name: "<aqua>Ночной дозор</aqua>"
+  perktree.node.defense-weather-eye.desc:
+    - '<gray>Показывает время суток, погоду и фазу луны.</gray>'
+    - '<gray>Не меняет погоду и спавн мобов.</gray>'
+  perktree.node.defense-price-cue.name: "<aqua>Оценка ремонта</aqua>"
+  perktree.node.defense-price-cue.desc:
+    - '<gray>Подсказка стоимости ремонта и сдачи до покупки.</gray>'
+    - '<gray>Цены и курс не меняются.</gray>'
+  perktree.node.defense-reset-preview.name: "<aqua>Прикидка сброса</aqua>"
+  perktree.node.defense-reset-preview.desc:
+    - '<gray>Показывает возврат пыли и токенов до подтверждения сброса.</gray>'
+    - '<gray>Сам сброс остаётся двухшаговым.</gray>'
+  perktree.node.defense-craft-preview.name: "<aqua>Пробная починка</aqua>"
+  perktree.node.defense-craft-preview.desc:
+    - '<gray>Превью результата починки снаряжения до подтверждения.</gray>'
+    - '<gray>Прочность и характеристики не меняются.</gray>'
+  perktree.node.defense-master-ward.name: "<aqua>Высший оберег</aqua>"
+  perktree.node.defense-master-ward.desc:
+    - '<gray>Сводный HUD защиты: угрозы, таймеры, пыль и тир.</gray>'
+    - '<gray>Не выдаёт пыль, токены и уровни.</gray>'
+  perktree.node.defense-last-stand.name: "<aqua>Последний рубеж</aqua>"
+  perktree.node.defense-last-stand.desc:
+    - '<gray>Показывает ближайшую точку возрождения и путь к ней.</gray>'
+    - '<gray>Не телепортирует и не меняет правила смерти.</gray>'
+  perktree.node.explore-map-cue.name: "<aqua>Картограф</aqua>"
+  perktree.node.explore-map-cue.desc:
+    - '<gray>Активный приём: временная детализация карты вокруг.</gray>'
+    - '<gray>Не открывает карту мира и не телепортирует.</gray>'
+  perktree.node.explore-weather-eye.name: "<aqua>Приметы погоды</aqua>"
+  perktree.node.explore-weather-eye.desc:
+    - '<gray>Показывает погоду, время суток и фазу луны.</gray>'
+    - '<gray>Не меняет погоду и спавн мобов.</gray>'
+  perktree.node.explore-effect-timer.name: "<aqua>Таймеры пути</aqua>"
+  perktree.node.explore-effect-timer.desc:
+    - '<gray>Таймеры эффектов и кулдаунов приёма в HUD.</gray>'
+    - '<gray>Длительности и кулдауны не меняются.</gray>'
+  perktree.node.explore-recipe-hint.name: "<aqua>Записи путешественника</aqua>"
+  perktree.node.explore-recipe-hint.desc:
+    - '<gray>Подсказка рецепта и недостающих ингредиентов в пути.</gray>'
+    - '<gray>Не выдаёт предметы и не ускоряет крафт.</gray>'
+  perktree.node.explore-spawn-cue.name: "<aqua>След спавна</aqua>"
+  perktree.node.explore-spawn-cue.desc:
+    - '<gray>Активный приём: подсказка происхождения мобов вокруг.</gray>'
+    - '<gray>Не меняет сложность и дроп.</gray>'
+  perktree.node.explore-track-hint.name: "<aqua>Тропа</aqua>"
+  perktree.node.explore-track-hint.desc:
+    - '<gray>Показывает направление к последней путевой точке.</gray>'
+    - '<gray>Не телепортирует и не выдаёт координаты игроков.</gray>'
+  perktree.node.explore-price-cue.name: "<aqua>Оценка находки</aqua>"
+  perktree.node.explore-price-cue.desc:
+    - '<gray>Показывает ценность находки и сдачу сделки.</gray>'
+    - '<gray>Цены магазина и курс не меняются.</gray>'
+  perktree.node.explore-ally-hud.name: "<aqua>Командная карта</aqua>"
+  perktree.node.explore-ally-hud.desc:
+    - '<gray>Метки союзников и их цели на карте подсказок.</gray>'
+    - '<gray>Не передаёт инвентарь и здоровье чужих игроков.</gray>'
+  perktree.node.explore-craft-preview.name: "<aqua>Пробный сбор</aqua>"
+  perktree.node.explore-craft-preview.desc:
+    - '<gray>Превью результата крафта до подтверждения.</gray>'
+    - '<gray>Рецепты, шансы и количество не меняются.</gray>'
+  perktree.node.explore-loot-filter.name: "<aqua>Сортировка находок</aqua>"
+  perktree.node.explore-loot-filter.desc:
+    - '<gray>Помечает ценное и мусор до подбора.</gray>'
+    - '<gray>Сам дроп и шансы не меняются.</gray>'
+  perktree.node.explore-enchant-preview.name: "<aqua>Проба находки</aqua>"
+  perktree.node.explore-enchant-preview.desc:
+    - '<gray>Превью свойств и зачарования предмета до применения.</gray>'
+    - '<gray>Шансы и уровни зачарования не меняются.</gray>'
+  perktree.node.explore-reset-preview.name: "<aqua>Прикидка сброса</aqua>"
+  perktree.node.explore-reset-preview.desc:
+    - '<gray>Показывает возврат пыли и токенов до подтверждения.</gray>'
+    - '<gray>Сам сброс остаётся двухшаговым.</gray>'
+  perktree.node.explore-master-map.name: "<aqua>Полная карта</aqua>"
+  perktree.node.explore-master-map.desc:
+    - '<gray>Сводная карта: биомы, метки, расстояния, пыль и тир.</gray>'
+    - '<gray>Не выдаёт пыль, токены и уровни.</gray>'
+  perktree.node.explore-last-camp.name: "<aqua>Последний лагерь</aqua>"
+  perktree.node.explore-last-camp.desc:
+    - '<gray>В HUD видны уровень домена, пыль, токены и следующий тир.</gray>'
+    - '<gray>Не выдаёт пыль, токены и уровни.</gray>'
+  perktree.node.hunt-pack-cue.name: "<aqua>Свора</aqua>"
+  perktree.node.hunt-pack-cue.desc:
+    - '<gray>Активный приём: метка цели для союзников в радиусе.</gray>'
+    - '<gray>Не усиливает союзников и не меняет дроп.</gray>'
+  perktree.node.hunt-spawn-cue.name: "<aqua>Происхождение зверя</aqua>"
+  perktree.node.hunt-spawn-cue.desc:
+    - '<gray>Подсказка источника и уровня моба перед охотой.</gray>'
+    - '<gray>Не меняет сложность и дроп.</gray>'
+  perktree.node.hunt-effect-timer.name: "<aqua>Таймеры охоты</aqua>"
+  perktree.node.hunt-effect-timer.desc:
+    - '<gray>Таймеры эффектов и кулдаунов приёма в HUD.</gray>'
+    - '<gray>Длительности и кулдауны не меняются.</gray>'
+  perktree.node.hunt-weather-eye.name: "<aqua>Охотничьи приметы</aqua>"
+  perktree.node.hunt-weather-eye.desc:
+    - '<gray>Показывает погоду, время суток и фазу луны.</gray>'
+    - '<gray>Не меняет погоду и спавн мобов.</gray>'
+  perktree.node.hunt-blood-trail.name: "<aqua>Кровавый след</aqua>"
+  perktree.node.hunt-blood-trail.desc:
+    - '<gray>Активный приём: подсветка направления к раненой цели.</gray>'
+    - '<gray>Не телепортирует и не меняет урон.</gray>'
+  perktree.node.hunt-craft-preview.name: "<aqua>Пробная разделка</aqua>"
+  perktree.node.hunt-craft-preview.desc:
+    - '<gray>Превью результата разделки трофея до подтверждения.</gray>'
+    - '<gray>Количество и качество трофеев не меняются.</gray>'
+  perktree.node.hunt-price-cue.name: "<aqua>Оценка трофея</aqua>"
+  perktree.node.hunt-price-cue.desc:
+    - '<gray>Показывает ценность трофея и сдачу сделки.</gray>'
+    - '<gray>Цены магазина и курс не меняются.</gray>'
+  perktree.node.hunt-ally-hud.name: "<aqua>Командная охота</aqua>"
+  perktree.node.hunt-ally-hud.desc:
+    - '<gray>Метки союзников и их целей в HUD.</gray>'
+    - '<gray>Не передаёт инвентарь и здоровье чужих игроков.</gray>'
+  perktree.node.hunt-loot-filter.name: "<aqua>Сортировка трофеев</aqua>"
+  perktree.node.hunt-loot-filter.desc:
+    - '<gray>Помечает ценный дроп и мусор до подбора.</gray>'
+    - '<gray>Сам дроп и шансы не меняются.</gray>'
+  perktree.node.hunt-death-recap.name: "<aqua>Разбор охоты</aqua>"
+  perktree.node.hunt-death-recap.desc:
+    - '<gray>Сводка последнего боя: источники урона и порядок событий.</gray>'
+    - '<gray>Не возвращает вещи и не меняет правила смерти.</gray>'
+  perktree.node.hunt-map-detail.name: "<aqua>Карта угодий</aqua>"
+  perktree.node.hunt-map-detail.desc:
+    - '<gray>Детализация карты: метки, биомы и расстояния до цели.</gray>'
+    - '<gray>Не открывает карту мира и не телепортирует.</gray>'
+  perktree.node.hunt-reset-preview.name: "<aqua>Прикидка сброса</aqua>"
+  perktree.node.hunt-reset-preview.desc:
+    - '<gray>Показывает возврат пыли и токенов до подтверждения.</gray>'
+    - '<gray>Сам сброс остаётся двухшаговым.</gray>'
+  perktree.node.hunt-master-tracker.name: "<aqua>Мастер-следопыт</aqua>"
+  perktree.node.hunt-master-tracker.desc:
+    - '<gray>Сводный HUD охоты: цель, пыль, токены, тир и приём.</gray>'
+    - '<gray>Не выдаёт пыль, токены и уровни.</gray>'
+  perktree.node.hunt-last-trophy.name: "<aqua>Последний трофей</aqua>"
+  perktree.node.hunt-last-trophy.desc:
+    - '<gray>Превью дропа и редкости трофея до подбора.</gray>'
+    - '<gray>Сам дроп и шансы не меняются.</gray>'
+
+  # --------------- как качать дерево и где брать пыль ---------------
+  perktree-title-page: "<gold>Дерево перков: <white>%domain%</white> <dark_gray>· стр. %page%/%pages%</dark_gray></gold>"
+  perktree-page-prev: "<yellow>← Предыдущая страница</yellow>"
+  perktree-page-next: "<yellow>Следующая страница →</yellow>"
+  perktree-guide-button: "<aqua>Как качать дерево и где брать пыль</aqua>"
+  perktree-status-button: "<gold>Прогресс дерева</gold>"
+  perktree-node-dust-only: "<aqua>Без токенов · оплачивается только пылью</aqua>"
+  perktree-guide:
+    - '<gold>Как прокачивать дерево перков</gold>'
+    - '<gray>1. Уровень домена = уровень класса × 2 (максимум 100). Качайте класс — дерево растёт само.</gray>'
+    - '<gray>2. Каждые 10 уровней домена: +1 токен и новый тир. Всего 10 тиров, по 2 узла на тир.</gray>'
+    - '<gray>3. Пыль даётся только за подтверждённую смерть естественного моба: +5 за моба.</gray>'
+    - '<gray>   Общий дневной потолок 2000 пыли на игрока; запас одного дерева — 1500 или 2000.</gray>'
+    - '<gray>4. Узел стоит токены и пыль; каждый следующий ранг дороже: база × квадрат ранга.</gray>'
+    - '<gray>5. ЛКМ по узлу покупает ранг. Закрытый узел ждёт нужный тир или предыдущие узлы.</gray>'
+    - '<gray>6. Активный приём — один на дерево; ядро не сбрасывается и даёт +1 токен за ранг.</gray>'
+    - '<gray>7. Сброс: /perktree reset, затем /perktree confirm ТОКЕН в течение 30 секунд.</gray>'
+    - '<gray>8. /perktree info [домен] — уровень, пыль, токены, тир и приём. Страницы листают стрелки внизу.</gray>'
+    - '<yellow>Уровень из класса получают combat / archery / defense; остальные деревья зарегистрированы, но ждут источника прогресса.</yellow>'
+    - '<dark_gray>Пыль нельзя купить, выдать командой или получить из опыта, алмазов и дропа.</dark_gray>'
+  perktree-info-hint:
+    - '<gray>Пыль: +%base% за подтверждённого моба; дневной потолок %daily%, запас дерева %cap%.</gray>'
+    - '<gray>Доступен тир <white>%tier%</white> из %tiers%; до следующего — <white>%next%</white> ур. домена.</gray>'
+    - '<yellow>Полная инструкция: /perktree help или книга в меню.</yellow>'
+  perktree-status:
+    - '<gray>Уровень домена: <white>%level%</white> из 100</gray>'
+    - '<gray>Пыль: <white>%powder%</white> из %cap%</gray>'
+    - '<gray>Свободно токенов: <white>%tokens%</white></gray>'
+    - '<gray>Открыт тир <white>%tier%</white> из %tiers%; до следующего — <white>%next%</white> ур.</gray>'
+    - '<gray>Открыто узлов: <white>%nodes%</white> из %total%</gray>'
+    - '<yellow>Книга слева объясняет, как качать и где брать пыль.</yellow>'

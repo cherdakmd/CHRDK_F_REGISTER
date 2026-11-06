@@ -32,11 +32,20 @@ import java.util.UUID;
  * клики и команды проходят одинаковую проверку тира, зависимостей, токенов и
  * пыли. Иконки узлов не являются предметами игрока: все клики по меню
  * отменяются, драг запрещён.
+ *
+ * <p>Дерево на 10 тиров по 20 узлов не помещается в 15 слотов, поэтому меню
+ * постраничное: стрелки в нижнем ряду листают узлы, а покупка остаётся на той
+ * же странице. Книга «Как качать» и панель прогресса отвечают на два главных
+ * вопроса игрока: как растёт дерево и где брать пыль.</p>
  */
 final class PerkTreeGui implements Listener {
 
+    private static final int SLOT_PREV = 45;
+    private static final int SLOT_GUIDE = 46;
     private static final int SLOT_RESET = 49;
     private static final int SLOT_CLOSE = 50;
+    private static final int SLOT_STATUS = 52;
+    private static final int SLOT_NEXT = 53;
     private static final int[] NODE_SLOTS =
             {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 28, 29, 30};
 
@@ -54,7 +63,7 @@ final class PerkTreeGui implements Listener {
         }
     }
 
-    private record View(TreeDomain domain, Map<Integer, String> slots) {
+    private record View(TreeDomain domain, int page, Map<Integer, String> slots) {
     }
 
     private final ClassesPlugin plugin;
@@ -67,6 +76,11 @@ final class PerkTreeGui implements Listener {
     }
 
     void open(Player player, TreeDomain domain) {
+        open(player, domain, 0);
+    }
+
+    /** Страница с запасом: несуществующий номер прижимается к границам. */
+    void open(Player player, TreeDomain domain, int page) {
         if (player == null || domain == null) {
             return;
         }
@@ -81,27 +95,72 @@ final class PerkTreeGui implements Listener {
             plugin.messages().send(player, "perktree-no-tree");
             return;
         }
+        int pages = pageCount(definition.size(), NODE_SLOTS.length);
+        int current = clampPage(page, pages);
+        Messages messages = plugin.messages();
+        String domainName = PerkTreeText.domain(messages, domain);
+        Component title = pages > 1
+                ? messages.get("perktree-title-page", "domain", domainName,
+                        "page", current + 1, "pages", pages)
+                : messages.get("perktree-title", "domain", domainName);
+
         Holder holder = new Holder(player.getUniqueId());
-        Inventory inventory = Bukkit.createInventory(holder, 54,
-                plugin.messages().get("perktree-title", "domain",
-                        PerkTreeText.domain(plugin.messages(), domain)));
+        Inventory inventory = Bukkit.createInventory(holder, 54, title);
         holder.inventory = inventory;
         Map<Integer, String> slots = new HashMap<>();
-        int index = 0;
-        for (PerkNode node : definition.nodes()) {
-            if (index >= NODE_SLOTS.length) {
-                break;
+        int from = current * NODE_SLOTS.length;
+        for (int index = 0; index < NODE_SLOTS.length && from + index < definition.size(); index++) {
+            PerkNode node = definition.nodes().get(from + index);
+            inventory.setItem(NODE_SLOTS[index], icon(node, state, definition));
+            slots.put(NODE_SLOTS[index], node.id());
+        }
+        inventory.setItem(SLOT_GUIDE, button(Material.BOOK,
+                messages.get("perktree-guide-button"),
+                messages.getList("perktree-guide")));
+        inventory.setItem(SLOT_STATUS, button(Material.CLOCK,
+                messages.get("perktree-status-button"),
+                statusLore(state, definition)));
+        if (pages > 1) {
+            if (current > 0) {
+                inventory.setItem(SLOT_PREV, named(Material.ARROW,
+                        messages.get("perktree-page-prev")));
             }
-            int slot = NODE_SLOTS[index++];
-            inventory.setItem(slot, icon(node, state, definition));
-            slots.put(slot, node.id());
+            if (current + 1 < pages) {
+                inventory.setItem(SLOT_NEXT, named(Material.ARROW,
+                        messages.get("perktree-page-next")));
+            }
         }
         inventory.setItem(SLOT_RESET, named(Material.BARRIER,
-                plugin.messages().get("perktree-reset-button")));
+                messages.get("perktree-reset-button")));
         inventory.setItem(SLOT_CLOSE, named(Material.OAK_DOOR,
-                plugin.messages().get("perktree-close-button")));
-        views.put(player.getUniqueId(), new View(domain, slots));
+                messages.get("perktree-close-button")));
+        views.put(player.getUniqueId(), new View(domain, current, slots));
         player.openInventory(inventory);
+    }
+
+    /** Чистая арифметика страниц: проверяется JVM-тестом без Bukkit. */
+    static int pageCount(int nodes, int slots) {
+        if (slots <= 0) {
+            return 1;
+        }
+        return Math.max(1, (Math.max(0, nodes) + slots - 1) / slots);
+    }
+
+    static int clampPage(int page, int pages) {
+        return Math.max(0, Math.min(page, Math.max(1, pages) - 1));
+    }
+
+    private List<Component> statusLore(PerkTreeState state, PerkTreeDefinition definition) {
+        int tier = PerkTreeMath.availableTier(state.level(), definition.tiers());
+        int next = tier >= definition.tiers() ? 0
+                : PerkTreeMath.LEVELS_PER_TOKEN
+                        - (state.level() % PerkTreeMath.LEVELS_PER_TOKEN);
+        return plugin.messages().getList("perktree-status",
+                "level", state.level(), "powder", state.powder(),
+                "tokens", state.tokensAvailable(), "tier", tier,
+                "tiers", definition.tiers(), "next", next,
+                "nodes", state.levels().size(), "total", definition.size(),
+                "cap", definition.powderCap());
     }
 
     private ItemStack icon(PerkNode node, PerkTreeState state, PerkTreeDefinition definition) {
@@ -116,6 +175,9 @@ final class PerkTreeGui implements Listener {
                     "tier", node.tier(), "level", level, "max", node.maxLevel()));
             lore.add(messages.get("perktree-node-cost",
                     "tokens", node.tokenCost(), "powder", node.powderCost()));
+            if (node.tokenCost() == 0) {
+                lore.add(messages.get("perktree-node-dust-only"));
+            }
             if (level > 0) {
                 lore.add(messages.get("perktree-node-open", "level", level, "max", node.maxLevel()));
             }
@@ -148,10 +210,17 @@ final class PerkTreeGui implements Listener {
     }
 
     private static ItemStack named(Material material, Component name) {
+        return button(material, name, List.of());
+    }
+
+    private static ItemStack button(Material material, Component name, List<Component> lore) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             meta.displayName(name);
+            if (!lore.isEmpty()) {
+                meta.lore(lore);
+            }
             item.setItemMeta(meta);
         }
         return item;
@@ -175,6 +244,21 @@ final class PerkTreeGui implements Listener {
         if (slot == SLOT_CLOSE) {
             views.remove(player.getUniqueId());
             player.closeInventory();
+            return;
+        }
+        if (slot == SLOT_PREV) {
+            open(player, view.domain(), view.page() - 1);
+            return;
+        }
+        if (slot == SLOT_NEXT) {
+            open(player, view.domain(), view.page() + 1);
+            return;
+        }
+        if (slot == SLOT_GUIDE) {
+            plugin.messages().sendList(player, "perktree-guide");
+            return;
+        }
+        if (slot == SLOT_STATUS) {
             return;
         }
         if (slot == SLOT_RESET) {
@@ -205,7 +289,7 @@ final class PerkTreeGui implements Listener {
         } else {
             plugin.messages().send(player, "perktree-locked", "reason", result.reason());
         }
-        open(player, view.domain());
+        open(player, view.domain(), view.page());
     }
 
     @EventHandler

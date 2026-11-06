@@ -77,7 +77,7 @@ class PerkTreeTextTest {
                         "у узла " + node.id() + " описание должно объяснять действие и границу QoL-only");
             }
         }
-        assertTrue(seen.size() >= 40, "реестр деревьев должен оставаться полным");
+        assertTrue(seen.size() >= 100, "дерево должно оставаться длинным: 10 тиров по 2 узла");
         assertTrue(seen.contains("defense-telegraph"),
                 "узел со скриншота обязан быть переведён");
     }

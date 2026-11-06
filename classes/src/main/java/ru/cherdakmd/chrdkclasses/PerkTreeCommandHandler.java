@@ -4,6 +4,9 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import ru.cherdakmd.chrdkskills.tree.PerkTreeDefinition;
+import ru.cherdakmd.chrdkskills.tree.PerkTreeMath;
+import ru.cherdakmd.chrdkskills.tree.PerkTreePowderSource;
 import ru.cherdakmd.chrdkskills.tree.PerkTreeRegistry;
 import ru.cherdakmd.chrdkskills.tree.PerkTreeState;
 import ru.cherdakmd.chrdkskills.tree.TreeDomain;
@@ -44,13 +47,14 @@ final class PerkTreeCommandHandler implements CommandExecutor {
         }
         String sub = args.length == 0 ? "open" : args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
+            case "help" -> plugin.messages().sendList(player, "perktree-guide");
             case "open" -> {
                 TreeDomain domain = args.length > 1 ? domain(args[1]) : primary(player);
                 if (domain == null || PerkTreeRegistry.of(domain).isEmpty()) {
                     plugin.messages().send(player, "perktree-unknown-domain");
                     return true;
                 }
-                gui.open(player, domain);
+                gui.open(player, domain, page(args.length > 2 ? args[2] : null));
             }
             case "info" -> {
                 TreeDomain domain = args.length > 1 ? domain(args[1]) : primary(player);
@@ -72,6 +76,16 @@ final class PerkTreeCommandHandler implements CommandExecutor {
                         "powder", String.valueOf(state.powder()),
                         "tokens", String.valueOf(state.tokensAvailable()),
                         "ability", ability);
+                PerkTreeDefinition definition = PerkTreeRegistry.of(domain).orElseThrow();
+                int tier = PerkTreeMath.availableTier(state.level(), definition.tiers());
+                int next = tier >= definition.tiers() ? 0
+                        : PerkTreeMath.LEVELS_PER_TOKEN
+                                - (state.level() % PerkTreeMath.LEVELS_PER_TOKEN);
+                plugin.messages().sendList(player, "perktree-info-hint",
+                        "tier", tier, "tiers", definition.tiers(), "next", next,
+                        "cap", definition.powderCap(),
+                        "base", PerkTreePowderSource.BASE_POWDER,
+                        "daily", PveAwardPowderRouter.DAILY_POWDER_CAP);
             }
             case "unlock", "select" -> {
                 if (args.length < 3) {
@@ -123,6 +137,17 @@ final class PerkTreeCommandHandler implements CommandExecutor {
             default -> plugin.messages().send(player, "perktree-usage");
         }
         return true;
+    }
+
+    private static int page(String raw) {
+        if (raw == null) {
+            return 0;
+        }
+        try {
+            return Math.max(0, Integer.parseInt(raw) - 1);
+        } catch (NumberFormatException ignored) {
+            return 0;
+        }
     }
 
     private TreeDomain primary(Player player) {

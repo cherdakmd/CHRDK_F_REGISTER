@@ -33,11 +33,53 @@ class PerkTreeTest {
         assertTrue(PerkTreeRegistry.defined().contains(TreeDomain.MINING));
         PerkTreeDefinition definition = PerkTreeRegistry.pilot();
         assertEquals(TreeDomain.MINING, definition.domain());
-        assertEquals(7, definition.tiers());
-        assertEquals(10, definition.size());
-        assertEquals(3, definition.abilities().size());
+        assertEquals(10, definition.tiers());
+        assertEquals(20, definition.size());
+        assertEquals(4, definition.abilities().size());
         assertEquals(1, definition.coreNodes().size());
         assertTrue(definition.nodes().stream().noneMatch(node -> node.effect().balanceSensitive()));
+    }
+
+    @Test
+    void everyTreeIsTenTiersDeepWithTwoChoicesPerTier() {
+        PerkTreeRegistry.validateAll();
+        assertEquals(6, PerkTreeRegistry.defined().size());
+        for (TreeDomain domain : PerkTreeRegistry.defined()) {
+            PerkTreeDefinition definition = PerkTreeRegistry.of(domain).orElseThrow();
+            assertEquals(10, definition.tiers(), domain.id());
+            assertEquals(20, definition.size(), domain.id());
+            assertEquals(4, definition.abilities().size(), domain.id());
+            assertEquals(1, definition.coreNodes().size(), domain.id());
+            for (int tier = 1; tier <= 10; tier++) {
+                assertEquals(2, definition.nodesAtTier(tier).size(),
+                        domain.id() + ": тир " + tier + " должен давать выбор");
+            }
+            assertTrue(definition.nodes().stream()
+                    .noneMatch(node -> node.effect().balanceSensitive()));
+            assertTrue(definition.nodes().stream().anyMatch(node -> node.tokenCost() == 0),
+                    domain.id() + ": нужен путь вложений только за пыль");
+            assertTrue(definition.nodes().stream()
+                    .anyMatch(node -> node.requires().size() >= 2),
+                    domain.id() + ": ветви должны сходиться");
+        }
+    }
+
+    @Test
+    void newQolEffectsStayNonBalanceSensitive() {
+        for (PerkEffect effect : List.of(
+                PerkEffect.CRAFT_PREVIEW, PerkEffect.RECIPE_HINT,
+                PerkEffect.ENCHANT_PREVIEW, PerkEffect.PRICE_HINT,
+                PerkEffect.DEATH_RECAP, PerkEffect.EFFECT_TIMER,
+                PerkEffect.WEATHER_HINT, PerkEffect.SPAWN_HINT,
+                PerkEffect.LOOT_FILTER_HINT, PerkEffect.MAP_DETAIL,
+                PerkEffect.TRACK_HINT, PerkEffect.ALLY_HUD,
+                PerkEffect.TREE_GUIDE, PerkEffect.RESET_PREVIEW)) {
+            assertFalse(effect.balanceSensitive(), effect + " должен оставаться QoL");
+        }
+        for (PerkEffect effect : List.of(PerkEffect.DROP_MULTIPLIER,
+                PerkEffect.XP_MULTIPLIER, PerkEffect.BREAK_SPEED_MULTIPLIER)) {
+            assertTrue(effect.balanceSensitive(), effect + " должен оставаться запрещённым");
+        }
     }
 
     @Test
