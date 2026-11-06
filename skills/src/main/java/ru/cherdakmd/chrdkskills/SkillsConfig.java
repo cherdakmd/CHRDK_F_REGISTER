@@ -6,7 +6,9 @@ import org.bukkit.configuration.file.FileConfiguration;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Logger;
 
@@ -43,13 +45,18 @@ public final class SkillsConfig {
     private final long placedBlockTtlSeconds;
     private final int placedBlockMaxEntries;
     private final int leaderboardSize;
+    private final boolean prestigeEnabled;
+    private final DiamondDrops.Settings diamonds;
+    private final Set<String> excludedDropMaterials;
 
     private SkillsConfig(boolean enabled, boolean announce, boolean actionbar, boolean sounds,
                          boolean countCreative, int refreshTicks, SkillCurve.Params curve,
                          double xpRate, long maxXpPerAction,
                          Map<SkillType, SkillSettings> skills,
                          Map<Integer, Milestone> milestones, long placedBlockTtlSeconds,
-                         int placedBlockMaxEntries, int leaderboardSize, boolean abilitiesEnabled, boolean abilitiesHud) {
+                         int placedBlockMaxEntries, int leaderboardSize, boolean abilitiesEnabled,
+                         boolean abilitiesHud, boolean prestigeEnabled,
+                         DiamondDrops.Settings diamonds, Set<String> excludedDropMaterials) {
         this.abilitiesEnabled = abilitiesEnabled;
         this.abilitiesHud = abilitiesHud;
         this.enabled = enabled;
@@ -66,6 +73,9 @@ public final class SkillsConfig {
         this.placedBlockTtlSeconds = placedBlockTtlSeconds;
         this.placedBlockMaxEntries = placedBlockMaxEntries;
         this.leaderboardSize = leaderboardSize;
+        this.prestigeEnabled = prestigeEnabled;
+        this.diamonds = diamonds;
+        this.excludedDropMaterials = excludedDropMaterials;
     }
 
     public static SkillsConfig parse(FileConfiguration cfg, Logger logger) {
@@ -129,10 +139,39 @@ public final class SkillsConfig {
         int maxEntries = (int) clamp(cfg.getLong("limits.placed-block-max", 20_000L), 64L, 1_000_000L);
         int leaderboard = (int) clamp(cfg.getLong("limits.leaderboard-size", 10L), 3L, 50L);
 
+        DiamondDrops.Settings defaults = DiamondDrops.Settings.DEFAULT;
+        DiamondDrops.Settings diamonds = new DiamondDrops.Settings(
+                cfg.getBoolean("diamonds.enabled", defaults.enabled()),
+                cfg.getDouble("diamonds.base-chance", defaults.baseChance()),
+                cfg.getDouble("diamonds.level-chance-bonus", defaults.levelChanceBonus()),
+                cfg.getDouble("diamonds.rank-chance-per-level", defaults.rankChancePerLevel()),
+                cfg.getDouble("diamonds.rank-xp-chance-bonus", defaults.rankXpChanceBonus()),
+                cfg.getDouble("diamonds.prestige-chance", defaults.prestigeChance()),
+                cfg.getDouble("diamonds.max-chance", defaults.maxChance()),
+                cfg.getInt("diamonds.base-amount", defaults.baseAmount()),
+                cfg.getInt("diamonds.level-amount-bonus", defaults.levelAmountBonus()),
+                cfg.getInt("diamonds.prestige-amount-bonus", defaults.prestigeAmountBonus()),
+                cfg.getInt("diamonds.max-amount", defaults.maxAmount()),
+                cfg.getInt("diamonds.daily-cap", defaults.dailyCap()),
+                cfg.getDouble("diamonds.mob-chance-factor", defaults.mobChanceFactor()),
+                cfg.getInt("diamonds.mob-amount-bonus", defaults.mobAmountBonus()));
+        Set<String> excluded = new java.util.LinkedHashSet<>();
+        for (String raw : cfg.getStringList("diamonds.excluded-materials")) {
+            if (raw != null && !raw.isBlank()) {
+                excluded.add(raw.trim().toUpperCase(Locale.ROOT));
+            }
+        }
+        if (excluded.isEmpty()) {
+            excluded.add("DIAMOND_ORE");
+            excluded.add("DEEPSLATE_DIAMOND_ORE");
+        }
+
         return new SkillsConfig(enabled, announce, actionbar, sounds, countCreative,
                 refreshTicks, curve, xpRate, maxXp,
                 skills, Collections.unmodifiableMap(milestones), ttl, maxEntries, leaderboard,
-                cfg.getBoolean("abilities.enabled", true), cfg.getBoolean("abilities.hud", true));
+                cfg.getBoolean("abilities.enabled", true), cfg.getBoolean("abilities.hud", true),
+                cfg.getBoolean("prestige.enabled", true), diamonds,
+                Collections.unmodifiableSet(excluded));
     }
 
     /** Значения опыта по умолчанию — те же, что в config.yml. */
@@ -232,6 +271,21 @@ public final class SkillsConfig {
 
     public int leaderboardSize() {
         return leaderboardSize;
+    }
+
+    /** Добровольный сброс навыка после 100-го уровня. */
+    public boolean prestigeEnabled() {
+        return prestigeEnabled;
+    }
+
+    /** Формула физического дропа алмазов (потолки уже закламплены). */
+    public DiamondDrops.Settings diamonds() {
+        return diamonds;
+    }
+
+    /** Материалы блоков, с которых бонусный алмаз не падает. */
+    public Set<String> excludedDropMaterials() {
+        return excludedDropMaterials;
     }
 
     private static Integer parseInt(String value) {

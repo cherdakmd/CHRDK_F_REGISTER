@@ -2,6 +2,7 @@ package ru.cherdakmd.chrdkskills;
 
 import org.bukkit.entity.Player;
 import ru.cherdakmd.chrdkregister.Messages;
+import ru.cherdakmd.chrdkregister.api.EconomyConfirmations;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -35,6 +36,11 @@ public final class SkillService {
 
     private final SkillsPlugin plugin;
     private final SkillStore store;
+    /** Двухшаговое подтверждение сброса навыка: TTL и одноразовость из ядра. */
+    private final EconomyConfirmations confirmations = new EconomyConfirmations();
+
+    /** Результат обращения к {@link #requestPrestige}. */
+    public enum PrestigeResult { DISABLED, NOT_MAX, PENDING, DONE }
 
     public SkillService(SkillsPlugin plugin, SkillStore store) {
         this.plugin = plugin;
@@ -93,6 +99,58 @@ public final class SkillService {
             return new SkillPerks.Active(Map.of(), List.of());
         }
         return SkillPerks.active(Map.of(skill, level(player, skill)));
+    }
+
+    /* -------------------------------- престиж -------------------------------- */
+
+    /** Ступени престижа одного навыка (0 — ещё не сбрасывали). */
+    public int prestigeLevel(Player player, SkillType skill) {
+        return player == null || skill == null ? 0 : store.prestige(key(player), skill);
+    }
+
+    /** Сумма ступеней по всем навыкам — значок «✦ Престиж N». */
+    public int totalPrestige(Player player) {
+        return player == null ? 0 : store.totalPrestige(key(player));
+    }
+
+    /**
+     * Добровольный сброс навыка с потолка. Первый вызов выдаёт подтверждение,
+     * повторный в течение TTL реально сбрасывает опыт и добавляет ступень.
+     * Разовые вехи в {@code /bal} не перевыдаются: новый цикл наград идёт
+     * физическими алмазами из {@link DiamondDrops}.
+     */
+    public PrestigeResult requestPrestige(Player player, SkillType skill) {
+        if (player == null || skill == null || !plugin.config().enabled()
+                || !plugin.config().prestigeEnabled()) {
+            return PrestigeResult.DISABLED;
+        }
+        if (level(player, skill) < curve().maxLevel()) {
+            return PrestigeResult.NOT_MAX;
+        }
+        String quote = skill.id();
+        long now = System.nanoTime();
+        if (!confirmations.consume(player.getUniqueId(), "prestige", quote, now)) {
+            confirmations.offer(player.getUniqueId(), "prestige", quote, now);
+            return PrestigeResult.PENDING;
+        }
+        // Сначала фиксируем ступень: если потолок достигнут, опыт не трогаем.
+        if (!store.addPrestige(key(player), skill)) {
+            return PrestigeResult.DISABLED;
+        }
+        store.setXp(key(player), skill, 0L);
+        return PrestigeResult.DONE;
+    }
+
+    /** Сколько физических алмазов уже выпало игроку сегодня (МСК). */
+    public int diamondDropsToday(Player player) {
+        return player == null ? 0 : store.diamondDropsToday(key(player), DiamondDrops.today());
+    }
+
+    /** Учесть выпавшие алмазы в дневном бюджете. */
+    public void noteDiamondDrops(Player player, int amount) {
+        if (player != null && amount > 0) {
+            store.noteDiamondDrops(key(player), DiamondDrops.today(), amount);
+        }
     }
 
     /* -------------------------------- начисление ------------------------------- */

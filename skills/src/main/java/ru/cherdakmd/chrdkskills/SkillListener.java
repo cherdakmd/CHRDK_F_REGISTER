@@ -26,6 +26,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.enchantment.EnchantItemEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityPotionEffectEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.inventory.BrewEvent;
@@ -36,6 +37,8 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
+import ru.cherdakmd.chrdkregister.api.RankBonus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -111,9 +114,72 @@ public final class SkillListener implements Listener {
         plugin.abilities().noteBreak(event, skill);
         service.award(player, skill, 1L);
         doubleDrop(player, block, skill);
+        diamondDrop(player, skill, block.getLocation().add(0.5, 0.5, 0.5), type, false);
         if (skill == SkillType.FARMING) {
             replayCrop(player, event);
         }
+    }
+
+    /**
+     * Физический алмаз за честное действие. Уровень навыка, ступень престижа и
+     * платный ранг влияют и на шанс, и на количество; дневной потолок режет
+     * фермы, а поставленные блоки отсекаются {@link PlacedBlocks} выше.
+     */
+    private void diamondDrop(Player player, SkillType skill, Location at,
+                             Material blockType, boolean mob) {
+        if (player == null || skill == null || at == null || at.getWorld() == null) {
+            return;
+        }
+        DiamondDrops.Settings settings = plugin.config().diamonds();
+        if (!settings.enabled() || player.hasMetadata("NPC")) {
+            return;
+        }
+        if (!mob && blockType != null
+                && plugin.config().excludedDropMaterials().contains(blockType.name())) {
+            return;
+        }
+        ChrdkRegisterApi api = plugin.coreApi();
+        RankBonus bonus;
+        try {
+            bonus = api == null ? RankBonus.NONE : api.rankBonus(player.getName());
+        } catch (RuntimeException | LinkageError error) {
+            bonus = RankBonus.NONE;
+        }
+        if (bonus == null) {
+            bonus = RankBonus.NONE;
+        }
+        DiamondDrops.Result result = DiamondDrops.roll(
+                service.level(player, skill),
+                plugin.config().curve().maxLevel(),
+                service.prestigeLevel(player, skill),
+                bonus.level(), bonus.xpPercent(), bonus.dropPercent(),
+                service.diamondDropsToday(player), mob,
+                random.nextDouble(), settings);
+        if (!result.dropped()) {
+            return;
+        }
+        at.getWorld().dropItemNaturally(at, new ItemStack(Material.DIAMOND, result.amount()));
+        service.noteDiamondDrops(player, result.amount());
+    }
+
+    /** Мобы: только враждебные, только убитые живым игроком, тот же дневной лимит. */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onEntityDeath(EntityDeathEvent event) {
+        LivingEntity entity = event.getEntity();
+        if (entity instanceof Player) {
+            return;
+        }
+        boolean hostile = entity instanceof Monster || entity instanceof Boss
+                || entity instanceof Slime || entity instanceof Phantom
+                || entity instanceof Ghast;
+        if (!hostile) {
+            return;
+        }
+        Player killer = entity.getKiller();
+        if (killer == null || !honest(killer)) {
+            return;
+        }
+        diamondDrop(killer, SkillType.COMBAT, entity.getLocation(), null, true);
     }
 
     /** Шанс второй порции добычи из того же блока. */

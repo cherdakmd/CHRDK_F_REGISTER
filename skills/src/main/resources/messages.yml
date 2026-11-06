@@ -11,6 +11,13 @@ messages:
   level-up: "<gold>✦ <white>%skill%</white> — уровень <yellow>%level%</yellow>!</gold>"
   actionbar-level: "<gold>%skill% → %level%</gold>"
   milestone: "<green>Награда за уровень <white>%level%</white>: <aqua>%diamonds% алмазов в /bal</aqua>. При полном/недоступном банке выплата сохранена.</green>"
+
+  # ---------------------- престиж и физический дроп ----------------------
+  prestige-usage: "<yellow>Использование: /skills prestige <навык></yellow>"
+  prestige-disabled: "<red>Престиж выключен в config.yml.</red>"
+  prestige-not-max: "<red>%skill%: престиж доступен только на %level% уровне.</red>"
+  prestige-confirm: "<gold>Внимание: %skill% будет сброшен до 1 уровня, ступень престижа сохранится. Повторите команду в течение 30 секунд, чтобы подтвердить.</gold>"
+  prestige-done: "<green>✦ Престиж %skill% · ступень %count%: новый цикл, значок и усиленный дроп алмазов.</green>"
   extra-catch: "<aqua>Рыбалка: лишний улов!</aqua>"
   arrow-kept: "<gray>Стрельба: стрела сохранена.</gray>"
   extra-potion: "<light_purple>Алхимия: вторая порция ингредиента.</light_purple>"
@@ -41,6 +48,8 @@ messages:
     - '<gray>4. Вкладка «Дерево перков» ведёт к отдельному дереву за токены и пыль: уровень домена = уровень класса × 2.</gray>'
     - '<gray>5. Пыль даётся только за подтверждённую смерть естественного моба: +5 за моба, дневной потолок 2000.</gray>'
     - '<gray>6. /perktree открывает это же окно сразу на вкладке дерева; /perktree info [домен] — сводка.</gray>'
+    - '<gray>7. На 100 уровне доступен /skills prestige <навык>: добровольный сброс с сохранением значка и нового цикла.</gray>'
+    - '<gray>8. Алмазы падают предметом из блоков и мобов: шанс и количество зависят от уровня, престижа и ранга, но ограничены дневным лимитом.</gray>'
     - '<dark_gray>Все вкладки — одно меню: клик по верхнему ряду только перерисовывает слоты.</dark_gray>'
   menu-top-hint: "<gray>Суммарный опыт всех навыков</gray>"
   menu-tree-unavailable: "<red>Дерево перков недоступно: установите CHRDK_Classes.</red>"
@@ -60,6 +69,8 @@ messages:
   menu-summary-name: "<gold>Всего уровней: %total%</gold>"
   menu-summary-perks: "<gray>Ступеней открыто: <white>%unlocked%/%all%</white></gray>"
   menu-summary-xp: "<gray>Опыта накоплено: <white>%xp%</white></gray>"
+  menu-summary-prestige: "<gray>Престиж: </gray><white>%count%</white>"
+  menu-prestige-line: "<light_purple>✦ Престиж %count%</light_purple>"
   detail-title: "<gold>%name%</gold>"
   detail-progress: "<gray>%bar%</gray> <dark_gray>(%percent%%)</dark_gray>"
   detail-xp: "<gray>Опыт: <white>%into%/%need%</white></gray>"

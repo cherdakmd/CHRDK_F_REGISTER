@@ -50,17 +50,22 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
     private static final int SLOT_CONTEXT = 4;
     private static final int SLOT_CLOSE = 8;
 
-    /** Содержимое вкладки «Навыки». */
-    private static final int[] SKILL_SLOTS = {10, 11, 12, 13, 14, 19, 20, 21, 28, 29};
+    /**
+     * Симметричная раскладка: 10 навыков — два ряда по 5 (слоты 11–15 и
+     * 20–24), 12 ступеней — два ряда по 6 (10–15 и 19–24). Раньше ряды были
+     * 5/3/2 и 7/5: на скриншоте это выглядело «лесенкой» и половина окна
+     * пустовала. Все свободные слоты теперь закрываются рамкой.
+     */
+    private static final int[] SKILL_SLOTS = {11, 12, 13, 14, 15, 20, 21, 22, 23, 24};
     /** 12 ступеней перков вместо прежних шести. */
-    private static final int[] PERK_SLOTS = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23};
+    private static final int[] PERK_SLOTS = {10, 11, 12, 13, 14, 15, 19, 20, 21, 22, 23, 24};
     private static final int DETAIL_HEAD = SLOT_CONTEXT;
-    private static final int DETAIL_ABILITY = 28;
+    private static final int DETAIL_ABILITY = 31;
     private static final int DETAIL_BACK = 45;
     private static final int SLOT_SUMMARY = 49;
 
-    /** Содержимое вкладки «Топ». */
-    private static final int[] TOP_SLOTS = {10, 11, 12, 13, 14, 19, 20, 21, 28, 29};
+    /** Содержимое вкладки «Топ»: та же сетка 5/5, что и у навыков. */
+    private static final int[] TOP_SLOTS = {11, 12, 13, 14, 15, 20, 21, 22, 23, 24};
 
     private final SkillsPlugin plugin;
     private final SkillService service;
@@ -175,6 +180,20 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
             case TREE -> renderTree(player, holder);
             case TOP -> renderTop(player, holder);
         }
+        fillEmpty(inventory);
+    }
+
+    /** Рамка из стекла: пустые слоты больше не выглядят сломанной вёрсткой. */
+    private void fillEmpty(Inventory inventory) {
+        ItemStack pane = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
+        ItemMeta meta = pane.getItemMeta();
+        meta.displayName(Component.empty());
+        pane.setItemMeta(meta);
+        for (int slot = 9; slot < inventory.getSize(); slot++) {
+            if (inventory.getItem(slot) == null) {
+                inventory.setItem(slot, pane);
+            }
+        }
     }
 
     private void renderSkills(Player player, Holder holder) {
@@ -206,6 +225,11 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         }
         lore.add(plugin.messages().get("menu-skill-steps",
                 "steps", SkillRegistry.thresholdLine()));
+        int prestige = service.prestigeLevel(player, holder.skill);
+        if (prestige > 0) {
+            lore.add(plugin.messages().get("menu-prestige-line",
+                    "count", String.valueOf(prestige)));
+        }
         headMeta.lore(lore);
         head.setItemMeta(headMeta);
         inventory.setItem(DETAIL_HEAD, head);
@@ -327,6 +351,11 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
             lore.add(plugin.messages().get("menu-skill-max"));
         }
         lore.add(plugin.messages().get("menu-skill-click"));
+        int prestige = service.prestigeLevel(player, skill);
+        if (prestige > 0) {
+            lore.add(plugin.messages().get("menu-prestige-line",
+                    "count", String.valueOf(prestige)));
+        }
         meta.lore(lore);
         item.setItemMeta(meta);
         return item;
@@ -355,6 +384,8 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
                         "all", String.valueOf(all)),
                 plugin.messages().get("menu-summary-xp",
                         "xp", String.valueOf(service.totalXp(player))),
+                plugin.messages().get("menu-summary-prestige",
+                        "count", String.valueOf(service.totalPrestige(player))),
                 plugin.messages().get("ability-energy", "energy", plugin.abilities().energy(player.getUniqueId()), "max", SkillAbility.MAX_ENERGY)));
         item.setItemMeta(meta);
         return item;
