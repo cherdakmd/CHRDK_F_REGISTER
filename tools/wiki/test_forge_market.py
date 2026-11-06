@@ -51,15 +51,15 @@ class ForgeMarketContractTest(unittest.TestCase):
         end = self.items.index("public void bumpUpgrade(", start)
         return self.items[start:end]
 
-    def test_version_and_core_api_are_current(self):
+    def test_version_and_core_api_are_current_rc(self):
         props = read(ROOT / "gradle.properties")
         version = re.search(r"^plugin_version=(.+)$", props, re.M)
         self.assertIsNotNone(version, "plugin_version обязателен")
         current = version.group(1).strip()
-        self.assertEqual("1.5.1", current)
-        self.assertRegex(current, r"^1\.\d+\.\d+$", "выпуск стабильный, не пререлиз")
+        self.assertEqual("1.5.2-rc.1", current)
+        self.assertRegex(current, r"^1\.5\.\d+-rc\.[1-9]\d*$", "выпуск остаётся пререлизом")
         self.assertTrue((ROOT / "docs/releases" / (current + ".md")).is_file(),
-                        "для текущего стабильного выпуска нужны полные заметки в архиве")
+                        "для текущего пререлиза нужны полные заметки в архиве")
         self.assertIn("int API_VERSION = 42;", self.api)
         self.assertIn("ForgeMaterialSource forgeMaterialSource()", self.api)
         self.assertIn("ForgeMarketCatalog", self.exchange)
