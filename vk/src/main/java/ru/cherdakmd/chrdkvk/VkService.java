@@ -241,6 +241,26 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
         return true;
     }
 
+    /**
+     * Событие сервера в беседу ВК: идёт через общий {@link VkChatBatcher},
+     * чтобы всплеск смертей/входов не упёрся в VK flood control. В отличие от
+     * {@link #onPlayerAuthCompleted} не зависит от {@code relay-join-quit} —
+     * у событий свой набор флагов.
+     */
+    public boolean sendEventToGroupChat(String text) {
+        if (!groupChatBridgeReady() || text == null || text.isBlank()) {
+            return false;
+        }
+        long peerId = effectiveGroupChatPeerId();
+        VkChatBatcher batcher = this.chatBatcher;
+        if (batcher != null) {
+            batcher.enqueue(peerId, text);
+        } else {
+            sendAsync(peerId, text);
+        }
+        return true;
+    }
+
     /* ---------------- мосты ChrdkRegisterApi ---------------- */
 
     private void registerCoreBridges() {

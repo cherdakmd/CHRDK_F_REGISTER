@@ -11,6 +11,8 @@ import ru.cherdakmd.chrdkregister.configuration.ConfigSnapshot;
 import ru.cherdakmd.chrdkregister.storage.SafeJsonWriter;
 import ru.cherdakmd.chrdksocial.MaxService;
 import ru.cherdakmd.chrdksocial.SocialConfig;
+import ru.cherdakmd.chrdksocial.SocialEventAnnouncer;
+import ru.cherdakmd.chrdksocial.SocialEventConfig;
 import ru.cherdakmd.chrdksocial.SocialPlaceholders;
 import ru.cherdakmd.chrdksocial.SocialService;
 
@@ -46,6 +48,7 @@ public final class VkPlugin extends JavaPlugin {
     private SocialService socialService;
     private MaxService maxService;
     private SocialPlaceholders socialPlaceholders;
+    private SocialEventAnnouncer eventAnnouncer;
     private boolean placeholdersRetryScheduled;
     private BukkitTask saveTask;
 
@@ -98,6 +101,16 @@ public final class VkPlugin extends JavaPlugin {
         maxService.start();
         registerPlaceholders();
 
+        // Смерть, старт/стоп сервера и приветствие новичков — один слушатель,
+        // все флаги выключены по умолчанию. Старт анонсируем с задержкой: к
+        // этому моменту клиенты VK/MAX уже созданы и беседа доступна.
+        this.eventAnnouncer = new SocialEventAnnouncer(this, SocialEventConfig.parse(getConfig()));
+        getServer().getPluginManager().registerEvents(eventAnnouncer, this);
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+            SocialEventAnnouncer announcer = eventAnnouncer;
+            if (announcer != null) announcer.onServerStarted();
+        }, 20L * 5);
+
         // Периодическая запись грязного состояния раз в 30 секунд.
         this.saveTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
                 this, () -> {
@@ -147,6 +160,12 @@ public final class VkPlugin extends JavaPlugin {
             saveTask.cancel();
             saveTask = null;
         }
+        // Анонс остановки — ДО shutdown(): иначе исходящие executors уже закрыты.
+        if (eventAnnouncer != null) {
+            eventAnnouncer.onServerStopping();
+            eventAnnouncer.shutdown();
+            eventAnnouncer = null;
+        }
         if (maxService != null) {
             maxService.shutdown();
             maxService = null;
@@ -190,6 +209,9 @@ public final class VkPlugin extends JavaPlugin {
             SocialConfig socialConfig = SocialConfig.parse(fresh);
             if (this.socialService != null) this.socialService.applyConfig(socialConfig);
             if (this.maxService != null) this.maxService.applyConfig(socialConfig);
+            if (this.eventAnnouncer != null) {
+                this.eventAnnouncer.applyConfig(SocialEventConfig.parse(fresh));
+            }
             return true;
         } catch (Exception exception) {
             getLogger().log(Level.WARNING, "[CHRDK_VK] Ошибка перезагрузки конфигурации", exception);

@@ -43,6 +43,13 @@ class VkMessagesTest {
             assertTrue(text.contains("Steve") && text.contains("/заморозить"));
             assertTrue(text.contains("\n") && !text.contains("%"));
             assertTrue(messages.plain("bot.news-links", "url", "https://vk.ru/chrdk_reborn").contains("не означает"));
+            // События сервера: шаблоны есть в стоке, приватные поля не подставляются.
+            assertEquals("💀 Steve погиб на сервере CHERDAK.",
+                    messages.plain("bot.event-death", "player", "Steve"));
+            assertTrue(messages.plain("bot.event-server-start",
+                    "online", 3, "max", 20).contains("3/20"));
+            assertTrue(messages.plain("bot.event-server-stop").contains("останавливается"));
+            assertTrue(messages.plain("bot.event-welcome", "player", "Alex").contains("Alex"));
         }
     }
 
