@@ -28,10 +28,14 @@ class PerkTreeMenuContractTest {
 
     @Test
     void skillsDeclaresItsOwnMenuContract() {
-        assertEquals(3, SkillsMenuApi.Tab.values().length);
+        // Четвёртая вкладка — серверный престиж (6 ноября 2026). Контракт
+        // намеренно проверяет точное число: новая вкладка не должна появиться
+        // молча, чтобы /perktree не открыл чужое окно.
+        assertEquals(4, SkillsMenuApi.Tab.values().length);
         assertSame(SkillsMenuApi.Tab.SKILLS, SkillsMenuApi.Tab.valueOf("SKILLS"));
         assertSame(SkillsMenuApi.Tab.TREE, SkillsMenuApi.Tab.valueOf("TREE"));
         assertSame(SkillsMenuApi.Tab.TOP, SkillsMenuApi.Tab.valueOf("TOP"));
+        assertSame(SkillsMenuApi.Tab.PRESTIGE, SkillsMenuApi.Tab.valueOf("PRESTIGE"));
     }
 
     @Test

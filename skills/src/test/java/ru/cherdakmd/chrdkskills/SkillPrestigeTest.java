@@ -42,7 +42,8 @@ class SkillPrestigeTest {
         assertTrue(store.addPrestige(PLAYER, SkillType.FARMING));
         assertEquals(3, store.totalPrestige(PLAYER));
         assertFalse(store.addPrestige(null, SkillType.MINING));
-        for (int step = 3; step < PrestigeMath.MAX_PER_SKILL; step++) {
+        for (int step = store.prestige(PLAYER, SkillType.MINING);
+             step < PrestigeMath.MAX_PER_SKILL; step++) {
             assertTrue(store.addPrestige(PLAYER, SkillType.MINING));
         }
         assertEquals(PrestigeMath.MAX_PER_SKILL,
