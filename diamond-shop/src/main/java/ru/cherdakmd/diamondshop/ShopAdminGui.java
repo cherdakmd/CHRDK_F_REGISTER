@@ -165,7 +165,7 @@ public final class ShopAdminGui implements Listener {
 
     private List<ShopConfig.ShopItem> catalog(ShopOverrides draft) {
         var config = plugin.shopService().config();
-        return draft.apply(config.items(), config.retiredMaterials());
+        return draft.apply(config.items(), new java.util.HashSet<>(config.retiredMaterials()));
     }
 
     /** Эталонный товар из уже загруженного каталога (с сохранёнными правками). */

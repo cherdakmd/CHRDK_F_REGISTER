@@ -154,6 +154,11 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
         return coreApi;
     }
 
+    /** Мягкий API CHRDK_Skills; {@code null}, если аддон не установлен. */
+    public ru.cherdakmd.chrdkskills.ChrdkSkillsApi skillsApi() {
+        return skillsApi;
+    }
+
     public ShopService shopService() {
         return shopService;
     }
