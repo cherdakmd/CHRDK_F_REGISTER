@@ -14,7 +14,11 @@ import java.util.Set;
  * Неизменяемый снимок настроек CHRDK_Disasters. Все числа зажаты в безопасных
  * границах: случайная опечатка в YAML не должна превратить катастрофу в очистку
  * мира. Главный принцип — <b>по умолчанию всё выключено</b>: владелец явно
- * включает модуль, миры и каждую катастрофу.
+ * включает модуль, миры и каждую разрушительную катастрофу.
+ *
+ * <p>Вторая итерация добавляет план фаз, звуки и мягкие эффекты состояния.
+ * Они тоже выключаются одним ключом и не меняют лимиты блоков: активная фаза
+ * лишь распределяет прежний {@code max-blocks} по нескольким тикам.</p>
  */
 public record DisastersConfig(
         boolean enabled,
@@ -30,7 +34,13 @@ public record DisastersConfig(
         int spawnProtectionRadius,
         boolean respectClaims,
         Set<String> worlds,
-        Map<DisasterKind, Boolean> kinds) {
+        Map<DisasterKind, Boolean> kinds,
+        DisasterPhasePlan phases,
+        boolean soundsEnabled,
+        boolean playerEffectsEnabled,
+        float soundVolume,
+        float soundPitch,
+        Map<DisasterKind, String> sounds) {
 
     public static DisastersConfig parse(FileConfiguration cfg) {
         boolean enabled = cfg.getBoolean("disasters.enabled", false);
@@ -50,6 +60,17 @@ public record DisastersConfig(
         int spawnRadius = clamp(cfg.getInt("disasters.spawn-protection-radius", 64), 0, 512);
         boolean claims = cfg.getBoolean("disasters.respect-claims", true);
 
+        DisasterPhasePlan phases = DisasterPhasePlan.from(
+                clamp(cfg.getInt("disasters.phases.warn-seconds", 5), 0, 60),
+                clamp(cfg.getInt("disasters.phases.active-seconds", 20), 2, 300),
+                clamp(cfg.getInt("disasters.phases.fade-seconds", 5), 0, 60),
+                clamp(cfg.getInt("disasters.phases.tick-seconds", 2), 1, 10));
+
+        boolean soundsEnabled = cfg.getBoolean("disasters.sounds.enabled", true);
+        boolean effectsEnabled = cfg.getBoolean("disasters.player-effects.enabled", true);
+        float volume = (float) cfg.getDouble("disasters.sounds.volume", 0.7);
+        float pitch = (float) cfg.getDouble("disasters.sounds.pitch", 1.0);
+
         Set<String> worlds = new LinkedHashSet<>();
         for (String world : cfg.getStringList("disasters.worlds")) {
             if (world != null && !world.isBlank()) {
@@ -57,16 +78,17 @@ public record DisastersConfig(
             }
         }
         Map<DisasterKind, Boolean> kinds = new EnumMap<>(DisasterKind.class);
-        // Разрушительная площадная катастрофа по умолчанию всё равно выключена,
-        // даже если владелец включил сам модуль.
+        Map<DisasterKind, String> soundNames = new EnumMap<>(DisasterKind.class);
         for (DisasterKind kind : DisasterKind.values()) {
-            boolean stock = kind != DisasterKind.EARTHQUAKE;
-            kinds.put(kind, cfg.getBoolean("disasters.kinds." + kind.id(), stock));
+            kinds.put(kind, cfg.getBoolean("disasters.kinds." + kind.id(), kind.stockEnabled()));
+            String sound = trimUpper(cfg.getString("disasters.sounds." + kind.id(), kind.sound()));
+            soundNames.put(kind, sound.isEmpty() ? "NONE" : sound);
         }
 
         return new DisastersConfig(enabled, locale.isEmpty() ? "ru" : locale,
                 tick, min, max, announce, restore, maxLevel, radius, maxBlocks,
-                spawnRadius, claims, Set.copyOf(worlds), Map.copyOf(kinds));
+                spawnRadius, claims, Set.copyOf(worlds), Map.copyOf(kinds), phases,
+                soundsEnabled, effectsEnabled, volume, pitch, Map.copyOf(soundNames));
     }
 
     /** Пустой список worlds означает все миры; пустое enabled-множество — тишина. */
@@ -84,6 +106,11 @@ public record DisastersConfig(
         return List.copyOf(out);
     }
 
+    /** Звук катастрофы с учётом настройки владельца. */
+    public String soundFor(DisasterKind kind) {
+        return soundsEnabled ? sounds.getOrDefault(kind, kind.sound()) : "NONE";
+    }
+
     public long minMillis() {
         return minSeconds * 1000L;
     }
@@ -98,5 +125,9 @@ public record DisastersConfig(
 
     private static String trim(String raw) {
         return raw == null ? "" : raw.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private static String trimUpper(String raw) {
+        return raw == null ? "" : raw.trim().toUpperCase(Locale.ROOT);
     }
 }

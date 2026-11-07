@@ -9,7 +9,9 @@ import java.util.Map;
 /**
  * Один общий кулдаун на игрока для всех оповещений о катастрофах — та же
  * политика, что у напоминаний CHRDK_VK: игрок не должен получать подряд
- * сообщения от разных катастроф и разных таймеров.
+ * сообщения от разных катастроф и разных таймеров. Названия всех шести видов
+ * берутся из messages.yml по ключу {@code kind-<id>}, поэтому добавление
+ * катастрофы не требует правки этого класса.
  */
 public final class DisasterBroadcaster {
 
@@ -48,11 +50,7 @@ public final class DisasterBroadcaster {
 
     /** Название катастрофы лежит в messages.yml, а не в коде. */
     private String title(DisasterKind kind) {
-        return switch (kind) {
-            case DUST_STORM -> plugin.messages().raw("kind-dust-storm");
-            case METEOR_SHOWER -> plugin.messages().raw("kind-meteor-shower");
-            case EARTHQUAKE -> plugin.messages().raw("kind-earthquake");
-        };
+        return plugin.messages().raw(kind.titleKey());
     }
 
     public void forget(String player) {

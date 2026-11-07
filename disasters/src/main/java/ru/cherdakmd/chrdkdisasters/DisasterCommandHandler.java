@@ -7,9 +7,10 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Locale;
 
-/** /disasters — статус игрока; /disastersadmin — управление. */
+/** /disasters — статус игрока; /disastersadmin — управление фазами и реестром. */
 public final class DisasterCommandHandler implements CommandExecutor {
 
     private final DisastersPlugin plugin;
@@ -36,12 +37,8 @@ public final class DisasterCommandHandler implements CommandExecutor {
         }
         switch (args[0].toLowerCase(Locale.ROOT)) {
             case "start" -> start(sender, args);
-            case "stop" -> {
-                plugin.engine().stop();
-                plugin.restore().restoreAll();
-                plugin.engine().start();
-                plugin.messages().send(sender, "admin-stopped");
-            }
+            case "list" -> list(sender);
+            case "stop" -> stop(sender, args);
             case "restore" -> plugin.messages().send(sender, "admin-restored",
                     "count", plugin.restore().restoreAll());
             case "reload" -> {
@@ -102,8 +99,47 @@ public final class DisasterCommandHandler implements CommandExecutor {
             plugin.messages().send(sender, "admin-not-found");
             return;
         }
-        boolean ok = plugin.engine().runNow(kind.get(), level, target.getLocation(), target);
-        plugin.messages().send(sender, ok ? "admin-started" : "admin-blocked",
-                "kind", kind.get().id(), "level", level, "player", target.getName());
+        int id = plugin.engine().runNow(kind.get(), level, target.getLocation(), target);
+        if (id == 0) {
+            plugin.messages().send(sender, "admin-blocked");
+            return;
+        }
+        plugin.messages().send(sender, "admin-started",
+                "id", id, "kind", kind.get().id(), "level", level, "player", target.getName());
+    }
+
+    /** Реестр активных катастроф: id нужен для точечной остановки. */
+    private void list(CommandSender sender) {
+        List<DisasterRun> runs = plugin.engine().active();
+        if (runs.isEmpty()) {
+            plugin.messages().send(sender, "admin-list-empty");
+            return;
+        }
+        plugin.messages().send(sender, "admin-list", "count", runs.size());
+        for (DisasterRun run : runs) {
+            plugin.messages().send(sender, "admin-list-line",
+                    "id", run.id(), "kind", run.kind().id(), "level", run.level(),
+                    "phase", run.phase().name().toLowerCase(Locale.ROOT),
+                    "seconds", run.secondsLeft());
+        }
+    }
+
+    private void stop(CommandSender sender, String[] args) {
+        if (args.length >= 2) {
+            int id;
+            try {
+                id = Integer.parseInt(args[1]);
+            } catch (NumberFormatException ignored) {
+                plugin.messages().send(sender, "admin-usage");
+                return;
+            }
+            boolean ok = plugin.engine().stopOne(id);
+            plugin.messages().send(sender, ok ? "admin-stopped-one" : "admin-no-run", "id", id);
+            return;
+        }
+        plugin.engine().stop();
+        plugin.restore().restoreAll();
+        plugin.engine().start();
+        plugin.messages().send(sender, "admin-stopped");
     }
 }

@@ -3,8 +3,12 @@
 # Оригинальная реализация под MIT: сторонний GPL-плагин не копируется.
 #
 # ГЛАВНОЕ: по умолчанию ВСЁ ВЫКЛЮЧЕНО. Включите disasters.enabled,
-# перечислите миры и разрешите нужные катастрофы. Разрушительное
-# землетрясение (earthquake) выключено отдельно даже при enabled: true.
+# перечислите миры и разрешите нужные катастрофы. Разрушительные площадные
+# виды (earthquake, tornado, flood) выключены отдельно даже при enabled: true.
+#
+# Вторая итерация: шесть катастроф и три фазы у каждого запуска —
+# предупреждение, активные тики, затухание. Активная фаза меняет блоки
+# порциями; предупреждение и затухание меняют только частицы и эффекты.
 # =====================================================================
 
 disasters:
@@ -23,7 +27,7 @@ disasters:
   announce-cooldown-seconds: 600
   # Через сколько секунд вернуть изменённые блоки. 0 = не возвращать.
   restore-after-seconds: 600
-  # Уровень катастрофы 1..5 влияет на число метеоров/блоков и силу эффектов.
+  # Уровень катастрофы 1..5 влияет на число блоков и плотность эффектов.
   max-level: 5
   # Радиус площади в блоках. Проверка приватов идёт по ВСЕМ чанкам радиуса.
   radius: 12
@@ -35,8 +39,38 @@ disasters:
   respect-claims: true
   # Белый список миров. Пустой список = все миры (если enabled: true).
   worlds: []
-  # Разрешённые катастрофы. dust-storm не меняет блоки вообще.
+
+  # Фазы одного запуска. tick-seconds — период шага активной фазы.
+  phases:
+    warn-seconds: 5
+    active-seconds: 20
+    fade-seconds: 5
+    tick-seconds: 2
+
+  # Звуки: допустимы только имена из DisasterFx.SOUND_NAMES, NONE = тишина.
+  # Неизвестное имя просто выключает звук, плагин не падает.
+  sounds:
+    enabled: true
+    volume: 0.7
+    pitch: 1.0
+    dust-storm: BLOCK_NOTE_BLOCK_BASS
+    meteor-shower: ENTITY_LIGHTNING_BOLT_IMPACT
+    earthquake: ENTITY_LIGHTNING_BOLT_THUNDER
+    tornado: ITEM_TRIDENT_RIPTIDE_1
+    flood: BLOCK_BEACON_ACTIVATE
+    blizzard: BLOCK_SNOW_BREAK
+
+  # Мягкие эффекты состояния без урона: снимаются на затухании/остановке.
+  # Игроки с chrdkdisasters.bypass их не получают.
+  player-effects:
+    enabled: true
+
+  # Разрешённые катастрофы. dust-storm и blizzard не меняют блоки вообще;
+  # meteor-shower, earthquake, tornado и flood требуют снимка для отката.
   kinds:
     dust-storm: true
     meteor-shower: true
     earthquake: false
+    tornado: false
+    flood: false
+    blizzard: true

@@ -2,7 +2,7 @@ name: CHRDK_Disasters
 version: ${version}
 main: ru.cherdakmd.chrdkdisasters.DisastersPlugin
 api-version: '26.3'
-description: "Собственные катастрофы CHRDK: пыльная буря, метеоритный дождь и землетрясение с защитой приватов и откатом блоков"
+description: "Шесть катастроф CHRDK: пыльная буря, метеоритный дождь, землетрясение, смерч, наводнение и метель с фазами, защитой приватов и откатом блоков"
 author: cherdakmd
 depend: [CHRDK_Core]
 softdepend: [CHRDK_Claims, CHRDK_Skills, PlaceholderAPI]
@@ -13,7 +13,7 @@ commands:
     permission: chrdkdisasters.use
   disastersadmin:
     description: "Управление катастрофами"
-    usage: "/disastersadmin <start <kind> [level] [player]|stop|restore|reload|on|off>"
+    usage: "/disastersadmin <start <kind> [level] [player]|list|stop [id]|restore|reload|on|off>"
     permission: chrdkdisasters.admin
 permissions:
   chrdkdisasters.use:
