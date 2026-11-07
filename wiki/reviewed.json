@@ -1,193 +1,198 @@
 {
   "pages": {
     "about": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "f4b3335e258e5b6708222a4cc176835f3102ee97dac855db41689e86a7c906c0",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "813c509c8d8fa55bd6c32c4c109ed7b4f70044009227a2c1ed95907efd94a55f",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "cfafe2e1cc1bb8f974a0f530e24bd6f4a251f7582aa3e4d51748a168a2f4133b",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "584b5249362f8fd59146f56f436c1e42d17ae88d28f90745dd6374be1e42063d",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "2e270161574f3ada854b4bd6ab3dc74f8a243fa3eb43aa2247e0f399ec68c3f0",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "9938fc42e28d9ff3a5575c199b7b94652a3937e6c48c1ee42a45468d66da5d72",
       "text": "fcdffb1098428fac2bd42d1c4acb73bb9a024d1823d5398b8845bb2f415a506f"
     },
     "auction": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "d05233ea3c37715c2e0c85d1cefb092031f33ee2cb66b90eaf850a5e41f4f379",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "ae1dffc90cce09cf7762ba9c5db41c532811c1ccbdfa347bf2671c9425bd7ec4",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "9398037022f4c45742a076caef2a1fda95b645ee8270d8ef67420f4dd9df80a3",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "31f4a751678053d6b96c834194d0c63491997a9cd8fe08903b8b9b9dec475cba",
       "text": "f368077b5f1961a1982957afe3b8523b60c8330f3dfd1891003d01ea1c4fd6db"
     },
     "chat": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "f4b3335e258e5b6708222a4cc176835f3102ee97dac855db41689e86a7c906c0",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "813c509c8d8fa55bd6c32c4c109ed7b4f70044009227a2c1ed95907efd94a55f",
       "text": "ca6c93fc33fca52eecc7d38744bc86f619ea0b6a7bcc2314b84ca6c5399d8a1c"
     },
     "claims": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "02de82d34bb4d5b12257d2873b22c2b7be79a36c0e5144acbbaf421c31a892a1",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "72464706c2222cbe71cae90d208b3cadc1437c00ddb2c718b9be0fb7298ae1a3",
       "text": "bf1b24b85ecdaee84580c0d5ea4b9c1120b8dd072e38aa68b52e49fc2a0c472c"
     },
     "classes": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "42923975675e331361e75c4f96b3436ed10fd11de7b2f505bc1c1e7a10156f47",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "32ef4b87eefd7e2a189b56d5223fa6c1e40ac01830ac128564d69f082dbf4466",
       "text": "fdebe780b6e7964249b5c4bc4752908cbdd67722e4d4bb0a4b1f64d94cd15ea1"
     },
     "commands": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "bbc2ff23a77a8327af68ac3eb2ecfce44e7a2069a65fafa9eef2f7a6f9914711",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "50b622a3cdf9fd60f76253e58ccab93b199e81f1a7d1ca7a82c6402b6d321462",
       "text": "deb43c99022eb3fe2ccf7355ab726dd06531737319b93f376265cfe1479186fb"
     },
     "cosmetics": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "8cf3ad79710fd90ea852fcc62485ef63a27805e6d0e154ec07e7681673de8890",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "e5ce24431b65cb4f1c00ba9ca9ccec91b9d5b1bce4232945b7f3f6b49a1a89aa",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "d482f4bbbda28ca148ce496883e972aa2742d9ffd571f032986dfbb7858dac51",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "af2df501705babdb8c1d22fcf5a899e6b2959704c1877c1360da38e829cc1c96",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "disasters": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "91b1cc8b4d24e70c3f7128e2c10643d24c073ad0ade5a2c70355d10dd2a12ce1",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "51addebc5dcf3dbbcec5fc9342470cc7967e65afcc54876cc6f22fb7968880c4",
       "text": "98bf8335363c58e70a911141856fff3175d82b4e794accee8efc8613b38b8325"
     },
     "economy": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "b0c5065328644c5a52cfd8e4eafa02dc07da77115d92214f42ee59dcd19aeea0",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "65bb9a0354a323a76d0cc23fdfda45088ca8cb785acc3416e9b16c62d37d7dcb",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "65b835002a6f2bc1e88e6032046ffbda3bc90b37072de8bc08f691aa969ea06d",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "2ea1ae9aac8b0e3d4635e2f465eb7660c8d0de71cb22f76524bd53c5a8827329",
       "text": "eb4d46a57319a2c56aed075ca386f6db0271d2df40e428db86c176cfc0e6c807"
     },
     "faq": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "6d7d0d39b72004ec8cf21be7e83b5ddb76622cc205344bac00976cf7a199edda",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "2f468236b3fbdb990a1c73913d220e7107e962de23610fd29590a206bd6f95b4",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "283fb5a517ef30da9d6193657fead20fd1dd23573afa609accb59546d3a37a68",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "1bb5e266f9ca1e428c648cab7c1524d0a964d577ce6b97d8d270d486e4941557",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "02de82d34bb4d5b12257d2873b22c2b7be79a36c0e5144acbbaf421c31a892a1",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "72464706c2222cbe71cae90d208b3cadc1437c00ddb2c718b9be0fb7298ae1a3",
       "text": "e166f2671aabcdf55ecf59d1465ddb19a36343f6d07983eb8b8821b3a63cce34"
     },
     "honors": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "f4b3335e258e5b6708222a4cc176835f3102ee97dac855db41689e86a7c906c0",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "813c509c8d8fa55bd6c32c4c109ed7b4f70044009227a2c1ed95907efd94a55f",
       "text": "6bc29d5a2d7783845f8b3d9b085e85982faec5b3029d841092386f36b1d4c4b0"
     },
     "hunt": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "7aa33709fb992552cb039e92ee3359a18ebaf6a4381165df1ddc197dd1b2cb7f",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "2317be20d15fcca4090d56ca24916dc61e814f7819e2420efa8bfde7d417a4cf",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "36a9aa5993c05412aad9371347d4c870e22dcb720bdb8f9005b398f761190cb6",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "65748030085b7b7a6567ac387c9c8577ba505e2611ac332eeda7081154e86c66",
       "text": "6a3b9fedc0d15e6ef23ae50e7bf41cdf79f9efcc79299101944c041b5c2d9222"
     },
     "menu": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "ef154e2a66b6f905e4388bf609397c28bdcdb0e9dfcb14c4dc08f1eaf5ac5141",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "c40e4d07f3a6f121da92f4ab319ce9ec5e322dbe26de18d2f73cecc8fd2bd5ea",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "moderation": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "f4b3335e258e5b6708222a4cc176835f3102ee97dac855db41689e86a7c906c0",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "813c509c8d8fa55bd6c32c4c109ed7b4f70044009227a2c1ed95907efd94a55f",
       "text": "255b8cacb80c9ea7b1236f73feaa226a121bb9b58cff81fef2d46b65abae4073"
     },
     "orders": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "a8b89c604ae1ea387c69e0847005bd643f59632c65cc96fa17cad2bddf27b38d",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "db1700a9bad576baa54f17554eac8349d9de97dd1e7d35880abaca92242bbb08",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "perktree": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "42923975675e331361e75c4f96b3436ed10fd11de7b2f505bc1c1e7a10156f47",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "32ef4b87eefd7e2a189b56d5223fa6c1e40ac01830ac128564d69f082dbf4466",
       "text": "148006c785c6f0e5adf6725d87605f5e508b957636fdac87ea64939e7bd63b79"
     },
     "pets": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "5857879ba47a453ef320b0639cbd8dfdc20f0198e5ee736cf4cace0789e402f8",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "49c297443cae579a8a8d79d30b8f55d933ef65ddfabe1a53ce74a0da2a4bde5e",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "4581ce6697d7ee2bed14fdbc96b62fb495c36d8baed82d7064c723e9359c7fc6",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "c32d4ea1c03937f1b351f148fd71bed18ef5058a854baf78a30360201f52e9a2",
       "text": "13e6d38670572890ab2567279a5ca76f8e353eab6ade09a877eee2e884c6e272"
     },
     "profile": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "6793a307d066a7090c95a92c6e0495f3c731c309c144389229b1065d4f6a963f",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "e5622e7d8b381e5688d493dbf61a40f94c84c6649fd48a0864a510368b08980f",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "1ffd4323e34099348bf1da1e33660bf5d05dd1ed01bf99ff2e67d4e839639a9c",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "35cb2c7c7fbf5c16af02f92a0c3249b51ed684cb069b2deb0ea0ad7645397361",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "ffd170ae4ecd0035f1b58a766d4c78b31b740ed0aed694dbc4fbbd7ad605306b",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "bdafb0b775560d91da86ff2205e702556391ea91f53a792aec8a89010788ce97",
       "text": "ab539f2c7c0119321d83bb9e12e09ba23d402df986d6639dbb1c11e2e47ea06d"
     },
     "shop": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "36a9aa5993c05412aad9371347d4c870e22dcb720bdb8f9005b398f761190cb6",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "65748030085b7b7a6567ac387c9c8577ba505e2611ac332eeda7081154e86c66",
       "text": "974065393ff473ac12b0957c9b605b853df30b343c64029aa2fee650b198b861"
     },
     "skills": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "2edfdd448e97be2505edfdc2fade37e83001bd0b0a88b0cc1b540fa536561cf9",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "af1b28c19e967a83f8af4493321e4b19e647f3cd49a848476cf70f46187c56af",
       "text": "7659c1d40dea79612d72ba929cbc47ce2fafc224c04a6a002cf8e0b27fa2a286"
     },
     "social-link": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "23b6bfee40071ea13a81b753b02295780cbc00ff10726722293b4716595a9d35",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "d0513868b86f091e7fc412e92b19a64230e85eee59842dd4636f64c775997e14",
       "text": "4c8cab4b751d6f98f2dfca7e7cd7e2770ee7f7000984ccc7c7b57ec8949a3ae4"
     },
     "start": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "3938f7298740d6cfff01cb7bae139dbbae514ba78528086b364b8272d4f849fb",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "d91a4b51a14b8034630160e1b55cde0b9c95285c53da6641d5da35be1593ef55",
       "text": "c2835fdf2d1945079115e6a252d472ce72ad9ad79f4ed47ad58e269b467d595f"
     },
+    "starter-kit": {
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "9938fc42e28d9ff3a5575c199b7b94652a3937e6c48c1ee42a45468d66da5d72",
+      "text": "65c09c42fa8c7768259deeb47dae55dd63a590c1a1748beadb596a3ac37b73b8"
+    },
     "teleports": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "b5f94ed77eaee5086890070777a78dcb7171f8022aeac7936aa0d8d3de99daba",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "2e41ade5831966080eb71ecf4f98d88f41d3ccf103b190013bd4664c881390ac",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "65b835002a6f2bc1e88e6032046ffbda3bc90b37072de8bc08f691aa969ea06d",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "2ea1ae9aac8b0e3d4635e2f465eb7660c8d0de71cb22f76524bd53c5a8827329",
       "text": "0bc7c3b4ed2ad0db4e441ebe12d0a0aef810740f727cda6b272d49f59f28b08c"
     },
     "titles": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "5c721dfd4ce8dd9f8970d6836aa15f17349f7d44bc96d362d0683e7e51efc0b2",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "559df2e885c19f45692af8356d68324a34ab87fe9fb3405395df14f70b5e1e15",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "36a9aa5993c05412aad9371347d4c870e22dcb720bdb8f9005b398f761190cb6",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "65748030085b7b7a6567ac387c9c8577ba505e2611ac332eeda7081154e86c66",
       "text": "eb314f009d0ec644bb7c5dabd99f1a8a860c14715813ddbcc41786e4c229c573"
     },
     "vk": {
-      "reason": "CHRDK_Disasters: константы legacy-миграций меню и авторассылки сверены с 23-м модулем",
-      "sources": "23b6bfee40071ea13a81b753b02295780cbc00ff10726722293b4716595a9d35",
+      "reason": "Стартовый комплект новичка: код ядра, config/messages, вики и контракты сверены",
+      "sources": "d0513868b86f091e7fc412e92b19a64230e85eee59842dd4636f64c775997e14",
       "text": "94f2d5f3cf83ae414f1a577156884ae1329734bf55951e2707569c3ce923c199"
     }
   },

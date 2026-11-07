@@ -55,6 +55,7 @@ public final class RegisterPlugin extends JavaPlugin {
     private UpdateChecker updateChecker;
     private SpawnService spawnService;
     private GuideBookService guideBookService;
+    private StarterKitService starterKitService;
     private RegistrationStore store;
     private ShopService shopService;
     private ExecutionService executor;
@@ -241,6 +242,12 @@ public final class RegisterPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(guideBookService, this);
         guideBookService.start();
 
+        this.starterKitService = new StarterKitService(this,
+                new StarterKitStore(getDataFolder().toPath(), getLogger()),
+                StarterKitSettings.parse(getConfig()));
+        getServer().getPluginManager().registerEvents(starterKitService, this);
+        starterKitService.start();
+
         Path pluginsFolder = getDataFolder().getParentFile() != null
                 ? getDataFolder().getParentFile().toPath() : getDataFolder().toPath();
         DuplicatePluginJarDetector.warnIfDuplicates(pluginsFolder, getLogger());
@@ -411,6 +418,10 @@ public final class RegisterPlugin extends JavaPlugin {
             guideBookService.shutdown();
             guideBookService = null;
         }
+        if (starterKitService != null) {
+            starterKitService.shutdown();
+            starterKitService = null;
+        }
         if (spawnService != null) {
             spawnService.shutdown();
             spawnService = null;
@@ -472,6 +483,9 @@ public final class RegisterPlugin extends JavaPlugin {
         }
         if (guideBookService != null) {
             guideBookService.reload(GuideBookSettings.parse(getConfig()));
+        }
+        if (starterKitService != null) {
+            starterKitService.reload(StarterKitSettings.parse(getConfig()));
         }
         if (shopService != null) {
             shopService.logProblems();
@@ -626,6 +640,11 @@ public final class RegisterPlugin extends JavaPlugin {
     /** Книга-путеводитель для новичков ({@code guide.*}, команда {@code /guide}). */
     public GuideBookService guide() {
         return guideBookService;
+    }
+
+    /** Случайный стартовый комплект новичка (секция {@code starter-kit}). */
+    public StarterKitService starterKit() {
+        return starterKitService;
     }
 
     /** Инвентарное меню {@code /pass menu} (иконки вместо текстовых справок). */
