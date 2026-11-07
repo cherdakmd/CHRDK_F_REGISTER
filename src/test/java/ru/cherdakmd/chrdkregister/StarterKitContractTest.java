@@ -16,6 +16,13 @@ final class StarterKitContractTest {
         return Files.readString(Path.of(path));
     }
 
+    /** Только исполняемый код: в Javadoc эти названия встречаются как пояснение. */
+    private static String code(String path) throws IOException {
+        return read(path)
+                .replaceAll("(?s)/\\*.*?\\*/", "")
+                .replaceAll("(?m)^\\s*//.*$", "");
+    }
+
     @Test
     void configAndMessageAreShippedWithTheCore() throws IOException {
         String config = read("src/main/resources/config.yml");
@@ -43,10 +50,10 @@ final class StarterKitContractTest {
 
     @Test
     void grantNeverTouchesDropsDailyCapsOrNms() throws IOException {
-        String sources = read("src/main/java/ru/cherdakmd/chrdkregister/StarterKitService.java")
-                + read("src/main/java/ru/cherdakmd/chrdkregister/StarterKitPlan.java")
-                + read("src/main/java/ru/cherdakmd/chrdkregister/StarterKitStore.java")
-                + read("src/main/java/ru/cherdakmd/chrdkregister/StarterKitSettings.java");
+        String sources = code("src/main/java/ru/cherdakmd/chrdkregister/StarterKitService.java")
+                + code("src/main/java/ru/cherdakmd/chrdkregister/StarterKitPlan.java")
+                + code("src/main/java/ru/cherdakmd/chrdkregister/StarterKitStore.java")
+                + code("src/main/java/ru/cherdakmd/chrdkregister/StarterKitSettings.java");
         assertFalse(sources.contains("DiamondDrops"), "стартовый подарок — не добыча");
         assertFalse(sources.contains("MoneyLoot"), "стартовый подарок — не MoneyLoot");
         assertFalse(sources.contains("dailyCap"), "дневной лимит Skills не тратится");
