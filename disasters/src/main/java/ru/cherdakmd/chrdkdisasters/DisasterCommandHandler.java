@@ -28,7 +28,7 @@ public final class DisasterCommandHandler implements CommandExecutor {
             return true;
         }
         if (!admin) {
-            playerStatus(sender);
+            playerCommand(sender, args);
             return true;
         }
         if (args.length == 0) {
@@ -58,6 +58,29 @@ public final class DisasterCommandHandler implements CommandExecutor {
         return true;
     }
 
+    private void playerCommand(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            plugin.messages().send(sender, "player-only");
+            return;
+        }
+        if (args.length == 0) {
+            playerStatus(player);
+            return;
+        }
+        switch (args[0].toLowerCase(Locale.ROOT)) {
+            case "shop" -> plugin.shop().open(player);
+            case "buy" -> {
+                if (args.length < 2) {
+                    plugin.messages().send(player, "shop-usage");
+                    return;
+                }
+                plugin.shop().buy(player, args[1]);
+            }
+            case "status" -> playerStatus(player);
+            default -> plugin.messages().send(player, "player-usage");
+        }
+    }
+
     private void playerStatus(CommandSender sender) {
         if (!(sender instanceof Player player)) {
             plugin.messages().send(sender, "player-only");
@@ -67,10 +90,19 @@ public final class DisasterCommandHandler implements CommandExecutor {
             plugin.messages().send(sender, "status-disabled");
             return;
         }
-        long left = Math.max(0L,
+        DisasterProfile profile = plugin.progress().profile(player.getUniqueId());
+        DisasterSettings.Progression progression = plugin.settings().progression();
+        int level = DisasterProgressMath.levelForXp(profile.xp(),
+                progression.baseXp(), progression.maxLevel());
+        long xpLeft = DisasterProgressMath.xpToNext(profile.xp(), level,
+                progression.baseXp(), progression.maxLevel());
+        long seconds = Math.max(0L,
                 plugin.scheduler().nextFor(player.getName(), System.currentTimeMillis())
-                        - System.currentTimeMillis());
-        plugin.messages().send(sender, "status-enabled", "seconds", left / 1000L);
+                        - System.currentTimeMillis()) / 1000L;
+        plugin.messages().send(sender, "status-enabled",
+                "seconds", seconds, "level", level, "shards", profile.shards(),
+                "xp", xpLeft, "kinds", profile.kindCount());
+        plugin.messages().send(sender, "status-shop");
     }
 
     private void start(CommandSender sender, String[] args) {

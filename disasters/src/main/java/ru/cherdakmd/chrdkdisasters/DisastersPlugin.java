@@ -1,5 +1,6 @@
 package ru.cherdakmd.chrdkdisasters;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -39,11 +40,19 @@ public final class DisastersPlugin extends JavaPlugin {
     private DisasterEffects effects;
     private DisasterBroadcaster broadcaster;
     private DisasterEngine engine;
+    private DisasterProgressStore progress;
+    private DisasterRewards rewards;
+    private DisasterShop shop;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
         ConfigUpgrader.apply(this);
+        this.progress = new DisasterProgressStore(getDataFolder().toPath(), getLogger());
+        this.progress.load();
+        this.rewards = new DisasterRewards(this);
+        this.shop = new DisasterShop(this);
+        Bukkit.getPluginManager().registerEvents(shop, this);
         reloadAll();
         DisasterCommandHandler handler = new DisasterCommandHandler(this);
         PluginCommand player = getCommand("disasters");
@@ -92,6 +101,9 @@ public final class DisastersPlugin extends JavaPlugin {
         if (restore != null) {
             restore.restoreAll();
         }
+        if (progress != null) {
+            progress.saveNow();
+        }
     }
 
     public DisastersConfig settings() {
@@ -124,6 +136,18 @@ public final class DisastersPlugin extends JavaPlugin {
 
     public DisasterEngine engine() {
         return engine;
+    }
+
+    public DisasterProgressStore progress() {
+        return progress;
+    }
+
+    public DisasterRewards rewards() {
+        return rewards;
+    }
+
+    public DisasterShop shop() {
+        return shop;
     }
 
     /** Runtime-переключатель /disastersadmin on|off: в YAML ничего не пишется. */

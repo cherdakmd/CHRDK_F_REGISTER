@@ -17,13 +17,20 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class AchievementRegistryTest {
 
     @Test
-    void catalogueHasSeventyTwoEighteenPerCategory() {
+    void catalogueHasSeventyEightAndKeepsHistoricalCategories() {
         assertEquals(AchievementRegistry.EXPECTED_SIZE, AchievementRegistry.size());
-        assertEquals(72, AchievementRegistry.size());
+        assertEquals(78, AchievementRegistry.size());
         for (AchievementDef.Category category : AchievementDef.Category.values()) {
-            assertEquals(AchievementRegistry.PER_CATEGORY,
-                    AchievementRegistry.byCategory(category).size(),
-                    "в разделе " + category.id() + " должно быть ровно 18 достижений");
+            if (category == AchievementDef.Category.PATH) {
+                // Шесть новых записей катастроф добавились только в «Путь».
+                assertEquals(AchievementRegistry.PER_CATEGORY + 6,
+                        AchievementRegistry.byCategory(category).size(),
+                        "в «Пути» 18 исторических + 6 за катастрофы");
+            } else {
+                assertEquals(AchievementRegistry.PER_CATEGORY,
+                        AchievementRegistry.byCategory(category).size(),
+                        "в разделе " + category.id() + " должно быть ровно 18 достижений");
+            }
         }
     }
 
@@ -54,8 +61,9 @@ class AchievementRegistryTest {
         AchievementDef master = AchievementRegistry.byId("legenda-legend");
         assertNotNull(master);
         assertEquals(AchievementMetric.ACHIEVEMENTS, master.metric());
-        assertEquals(AchievementRegistry.EXPECTED_SIZE - 1, master.goal());
-        assertEquals(71, master.goal(), "«Легенда легенд» требует все остальные достижения");
+        assertEquals(AchievementRegistry.MASTER_GOAL, master.goal());
+        assertEquals(71, master.goal(),
+                "рубеж «Легенды легенд» зафиксирован и не растёт с каталогом");
     }
 
     @Test

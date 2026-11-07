@@ -79,9 +79,14 @@ public final class DisasterEffects {
             case BLIZZARD -> blizzard(run, center, config);
         };
         if (config.playerEffectsEnabled()) {
+            // Перк стойкости: чем выше уровень игрока, тем слабее эффект.
+            int steadiness = plugin.rewards().levelOf(run.player());
+            double scale = DisasterProgressMath.effectScale(steadiness);
+            int amplifier = steadiness >= 4 ? 0 : run.kind().amplifier();
+            int ticks = (int) Math.max(20L,
+                    Math.round((config.phases().tickSeconds() * 20L + 20L) * scale));
             DisasterFx.apply(center.getWorld(), center, config.radius(),
-                    run.kind().effect(), run.kind().amplifier(),
-                    config.phases().tickSeconds() * 20 + 20);
+                    run.kind().effect(), amplifier, ticks);
         }
         if (run.activeStep() % 3 == 0) {
             sound(run, center, config.soundVolume());

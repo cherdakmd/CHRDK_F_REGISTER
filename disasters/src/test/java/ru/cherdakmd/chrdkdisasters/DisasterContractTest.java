@@ -33,14 +33,16 @@ final class DisasterContractTest {
         assertTrue(plugin.contains("name: CHRDK_Disasters"));
         assertTrue(plugin.contains("api-version: '26.3'"));
         assertTrue(plugin.contains("depend: [CHRDK_Core]"));
-        assertTrue(plugin.contains("softdepend: [CHRDK_Claims, CHRDK_Skills, PlaceholderAPI]"));
+        assertTrue(plugin.contains("softdepend: [CHRDK_Claims, CHRDK_Achievements, "
+                + "CHRDK_Skills, PlaceholderAPI]"));
         assertTrue(plugin.contains("chrdkdisasters.bypass"));
         assertTrue(plugin.contains("list|stop [id]"));
+        assertTrue(plugin.contains("/disasters [status|shop|buy"));
         assertTrue(read("../settings.gradle").contains("include 'disasters'"));
         assertTrue(read("../wiki/config.yml").contains("- disasters"));
         String schema = read("src/main/resources/config-schema.yml");
-        assertTrue(schema.contains("config-version: 2"));
-        assertTrue(schema.contains("messages-version: 2"));
+        assertTrue(schema.contains("config-version: 3"));
+        assertTrue(schema.contains("messages-version: 3"));
     }
 
     @Test
@@ -57,9 +59,14 @@ final class DisasterContractTest {
         assertTrue(config.contains("active-seconds: 20"));
         assertTrue(config.contains("sounds:"));
         assertTrue(config.contains("player-effects:"));
+        assertTrue(config.contains("rewards:"));
+        assertTrue(config.contains("progression:"));
+        assertTrue(config.contains("integrations:"));
+        assertTrue(config.contains("shop:"));
         String messages = read("src/main/resources/messages.yml");
         for (String key : new String[]{"start", "warn", "end", "status-enabled",
-                "status-disabled", "admin-usage", "admin-started", "admin-blocked",
+                "status-disabled", "status-shop", "player-usage", "admin-usage",
+                "admin-started", "admin-blocked",
                 "admin-stopped", "admin-stopped-one", "admin-no-run", "admin-list",
                 "admin-list-empty", "admin-list-line", "admin-restored",
                 "admin-not-found", "admin-on", "admin-off", "reloaded", "unknown-kind",
@@ -67,7 +74,13 @@ final class DisasterContractTest {
                 "hint-dust-storm", "hint-meteor-shower", "hint-earthquake",
                 "hint-tornado", "hint-flood", "hint-blizzard",
                 "kind-dust-storm", "kind-meteor-shower", "kind-earthquake",
-                "kind-tornado", "kind-flood", "kind-blizzard"}) {
+                "kind-tornado", "kind-flood", "kind-blizzard",
+                "reward", "shop-title", "shop-close", "shop-balance-title",
+                "shop-balance-line", "shop-level-line", "shop-kinds-line",
+                "shop-price", "shop-can-buy", "shop-cannot-buy",
+                "shop-item-diamonds", "shop-item-supplies", "shop-item-ward",
+                "shop-usage", "shop-unknown", "shop-no-funds", "shop-failed",
+                "shop-bought"}) {
             assertTrue(messages.contains("\"" + key + "\""), "нет сообщения " + key);
         }
     }
@@ -126,5 +139,55 @@ final class DisasterContractTest {
         assertTrue(sources.contains("ClaimStore") || sources.contains("claimAt("));
         assertTrue(sources.contains("Europe/Moscow"));
         assertTrue(sources.contains("announceCooldownSeconds()"));
+    }
+
+    @Test
+    void rewardsShopAndProgressUseSoftIntegrations() throws IOException {
+        String sources = sources();
+        assertTrue(sources.contains("disasters-progress.json"), "прогресс хранится по UUID");
+        assertTrue(sources.contains("DisasterProgressStore"), "атомарный JSON-стор");
+        assertTrue(sources.contains("DisasterProgressMath"), "чистая арифметика прокачки");
+        assertTrue(sources.contains("DisasterShop"), "магазин осколков");
+        assertTrue(sources.contains("/disasters shop") || sources.contains("shop()"));
+        assertTrue(sources.contains("bankStore().deposit"),
+                "алмазы идут на счёт ядра, а не физическим дропом");
+        assertTrue(sources.contains("isWardActive"), "пропуск катастрофы из магазина");
+        assertTrue(sources.contains("dailyLeft"), "дневной лимит осколков");
+        assertTrue(sources.contains("LinkageError"), "софт-зависимости fail-closed");
+
+        String rewards = read("src/main/java/ru/cherdakmd/chrdkdisasters/DisasterRewards.java");
+        assertFalse(rewards.contains("ChrdkAchievementsApi"),
+                "бинарный API ачивок резолвится только внутри хука");
+        assertFalse(rewards.contains("ChrdkSkillsApi"),
+                "бинарный API Skills резолвится только внутри хука");
+        String achievements = read("src/main/java/ru/cherdakmd/chrdkdisasters/AchievementsHook.java");
+        assertTrue(achievements.contains("isPluginEnabled(PLUGIN)"));
+        assertTrue(rewards.contains("disasters-survived"));
+        assertTrue(rewards.contains("disaster-shards"));
+        String skills = read("src/main/java/ru/cherdakmd/chrdkdisasters/SkillsHook.java");
+        assertTrue(skills.contains("isPluginEnabled(PLUGIN)"));
+        assertTrue(skills.contains("getRegistration(ChrdkSkillsApi.class)"));
+
+        String build = read("build.gradle");
+        assertTrue(build.contains("compileOnly project(':achievements')"));
+        assertTrue(build.contains("compileOnly project(':skills')"));
+    }
+
+    @Test
+    void achievementsCatalogueGainsSixDisasterGoals() throws IOException {
+        String registry = read("../achievements/src/main/java/ru/cherdakmd/chrdkachievements/AchievementRegistry.java");
+        assertTrue(registry.contains("EXPECTED_SIZE = 78"));
+        assertTrue(registry.contains("MASTER_GOAL = 71"));
+        assertTrue(registry.contains("pervaya-katastrofa"));
+        assertTrue(registry.contains("vse-shest-bedstvij"));
+        assertTrue(registry.contains("stojkost-pyat"));
+        String metric = read("../achievements/src/main/java/ru/cherdakmd/chrdkachievements/AchievementMetric.java");
+        assertTrue(metric.contains("disasters-survived"));
+        assertTrue(metric.contains("disaster-kinds"));
+        assertTrue(metric.contains("disaster-shards"));
+        assertTrue(metric.contains("disaster-level"));
+        String messages = read("../achievements/src/main/resources/messages.yml");
+        assertTrue(messages.contains("ach.pervaya-katastrofa.name"));
+        assertTrue(messages.contains("ach.stojkost-pyat.desc"));
     }
 }

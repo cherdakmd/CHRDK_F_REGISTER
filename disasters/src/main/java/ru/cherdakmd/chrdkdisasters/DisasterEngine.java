@@ -2,6 +2,7 @@ package ru.cherdakmd.chrdkdisasters;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -12,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -31,6 +33,7 @@ public final class DisasterEngine {
     private final DisastersPlugin plugin;
     private final Map<Integer, DisasterRun> active = new LinkedHashMap<>();
     private final AtomicInteger nextId = new AtomicInteger(1);
+    private final Random random = new Random();
     private BukkitTask scheduleTask;
     private BukkitTask phaseTask;
     private boolean restoreScheduled;
@@ -82,8 +85,21 @@ public final class DisasterEngine {
             if (!config.worldAllowed(player.getWorld().getName())) {
                 continue;
             }
+            DisasterProfile profile = plugin.progress().profile(player.getUniqueId());
+            if (profile.isWardActive(now)) {
+                // Купленный в магазине пропуск: пауза обновляется, события нет.
+                plugin.scheduler().reset(player.getName(), now);
+                continue;
+            }
             Optional<DisasterScheduler.Scheduled> due = plugin.scheduler().poll(player.getName(), now);
             if (due.isEmpty()) {
+                continue;
+            }
+            int steadiness = DisasterProgressMath.levelForXp(profile.xp(),
+                    config.progression().baseXp(), config.progression().maxLevel());
+            if (random.nextDouble() < DisasterProgressMath.avoidChance(steadiness)) {
+                // Перк стойкости: опытный игрок иногда отделается предупреждением.
+                plugin.scheduler().reset(player.getName(), now);
                 continue;
             }
             DisasterScheduler.Scheduled event = due.get();
@@ -154,12 +170,20 @@ public final class DisasterEngine {
     private void finish(DisasterRun run, DisastersConfig config) {
         active.remove(run.id());
         plugin.effects().clearEffects(run);
+        // Награды начисляются и при досрочной остановке: игрок всё равно
+        // пережил предупреждение и часть активной фазы.
+        plugin.rewards().grant(run, center(run));
         if (run.changed() > 0) {
             scheduleRestore(config);
         }
         plugin.getLogger().info("[CHRDK_Disasters] #" + run.id() + " " + run.kind().id()
                 + " завершена · блоков изменено: " + run.changed()
                 + (run.stopped() ? " · остановлена вручную" : ""));
+    }
+
+    private Location center(DisasterRun run) {
+        World world = Bukkit.getWorld(run.world());
+        return world == null ? null : new Location(world, run.x(), run.y(), run.z());
     }
 
     /** @return id запуска или 0, если старт отменён приватом/спавном. */

@@ -27,10 +27,16 @@ dependencies {
     compileOnly project(':')
     // Приваты — обязательная защита катастроф; плагин может быть отключён.
     compileOnly project(':claims')
+    // Мягкие интеграции: ачивки и опыт Skills. Обе софт-зависимости
+    // опрашиваются через ServicesManager и не нужны disasters в одиночку.
+    compileOnly project(':achievements')
+    compileOnly project(':skills')
 
     testImplementation "org.purpurmc.purpur:purpur-api:${project.purpur_api_version}"
     testImplementation project(':')
     testImplementation project(':claims')
+    testImplementation project(':achievements')
+    testImplementation project(':skills')
     testImplementation "org.junit.jupiter:junit-jupiter:5.11.3"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }

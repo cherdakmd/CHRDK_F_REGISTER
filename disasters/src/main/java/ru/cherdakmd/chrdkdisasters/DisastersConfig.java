@@ -13,12 +13,12 @@ import java.util.Set;
 /**
  * Неизменяемый снимок настроек CHRDK_Disasters. Все числа зажаты в безопасных
  * границах: случайная опечатка в YAML не должна превратить катастрофу в очистку
- * мира. Главный принцип — <b>по умолчанию всё выключено</b>: владелец явно
- * включает модуль, миры и каждую разрушительную катастрофу.
+ * мира или бесконечный поток алмазов. Главный принцип — <b>по умолчанию всё
+ * выключено</b>: владелец явно включает модуль, миры и каждую разрушительную
+ * катастрофу.
  *
- * <p>Вторая итерация добавляет план фаз, звуки и мягкие эффекты состояния.
- * Они тоже выключаются одним ключом и не меняют лимиты блоков: активная фаза
- * лишь распределяет прежний {@code max-blocks} по нескольким тикам.</p>
+ * <p>Третья итерация добавляет осколки, магазин, прокачку стойкости и мягкие
+ * интеграции. Они не меняют лимиты блоков и не начисляют физический дроп.</p>
  */
 public record DisastersConfig(
         boolean enabled,
@@ -40,7 +40,11 @@ public record DisastersConfig(
         boolean playerEffectsEnabled,
         float soundVolume,
         float soundPitch,
-        Map<DisasterKind, String> sounds) {
+        Map<DisasterKind, String> sounds,
+        DisasterSettings.Rewards rewards,
+        DisasterSettings.Progression progression,
+        DisasterSettings.Integrations integrations,
+        DisasterSettings.Shop shop) {
 
     public static DisastersConfig parse(FileConfiguration cfg) {
         boolean enabled = cfg.getBoolean("disasters.enabled", false);
@@ -71,6 +75,31 @@ public record DisastersConfig(
         float volume = (float) cfg.getDouble("disasters.sounds.volume", 0.7);
         float pitch = (float) cfg.getDouble("disasters.sounds.pitch", 1.0);
 
+        DisasterSettings.Rewards rewards = new DisasterSettings.Rewards(
+                cfg.getBoolean("disasters.rewards.enabled", true),
+                clamp(cfg.getInt("disasters.rewards.base-shards", 5), 0, 1000),
+                clamp(cfg.getInt("disasters.rewards.per-level-shards", 2), 0, 100),
+                clamp(cfg.getInt("disasters.rewards.daily-cap", 120), 0, 10_000),
+                clampDouble(cfg.getDouble("disasters.rewards.bonus-cap", 1.5), 1.0, 3.0));
+        DisasterSettings.Progression progression = new DisasterSettings.Progression(
+                clamp(cfg.getInt("disasters.progression.base-xp", 100), 10, 10_000),
+                clamp(cfg.getInt("disasters.progression.xp-per-survive", 30), 0, 1000),
+                clamp(cfg.getInt("disasters.progression.xp-per-level", 8), 0, 200),
+                clamp(cfg.getInt("disasters.progression.max-level", 10), 1, 50));
+        String skillId = trim(cfg.getString("disasters.integrations.skill-id", "defense"));
+        DisasterSettings.Integrations integrations = new DisasterSettings.Integrations(
+                cfg.getBoolean("disasters.integrations.achievements", true),
+                cfg.getBoolean("disasters.integrations.skills", true),
+                skillId.isEmpty() ? "defense" : skillId,
+                clamp(cfg.getInt("disasters.integrations.skills-units", 2), 1, 100));
+        DisasterSettings.Shop shop = new DisasterSettings.Shop(
+                clamp(cfg.getInt("disasters.shop.diamonds.price", 20), 1, 10_000),
+                clamp(cfg.getInt("disasters.shop.diamonds.amount", 16), 1, 576),
+                clamp(cfg.getInt("disasters.shop.supplies.price", 12), 1, 10_000),
+                clamp(cfg.getInt("disasters.shop.supplies.diamonds", 4), 1, 64),
+                clamp(cfg.getInt("disasters.shop.ward.price", 30), 1, 10_000),
+                clamp(cfg.getInt("disasters.shop.ward.minutes", 30), 1, 1440));
+
         Set<String> worlds = new LinkedHashSet<>();
         for (String world : cfg.getStringList("disasters.worlds")) {
             if (world != null && !world.isBlank()) {
@@ -88,7 +117,8 @@ public record DisastersConfig(
         return new DisastersConfig(enabled, locale.isEmpty() ? "ru" : locale,
                 tick, min, max, announce, restore, maxLevel, radius, maxBlocks,
                 spawnRadius, claims, Set.copyOf(worlds), Map.copyOf(kinds), phases,
-                soundsEnabled, effectsEnabled, volume, pitch, Map.copyOf(soundNames));
+                soundsEnabled, effectsEnabled, volume, pitch, Map.copyOf(soundNames),
+                rewards, progression, integrations, shop);
     }
 
     /** Пустой список worlds означает все миры; пустое enabled-множество — тишина. */
@@ -120,6 +150,10 @@ public record DisastersConfig(
     }
 
     private static int clamp(int value, int low, int high) {
+        return Math.max(low, Math.min(high, value));
+    }
+
+    private static double clampDouble(double value, double low, double high) {
         return Math.max(low, Math.min(high, value));
     }
 

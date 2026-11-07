@@ -1,7 +1,9 @@
 # CHRDK_Disasters — версии схемы эталонных YAML.
 # v2: три новые катастрофы, фазы phases.*, sounds.*, player-effects.* и
 #     обновлённые тексты messages.yml (warn/end/hint-*/list/stop <id>).
+# v3: осколки rewards.*, прокачка progression.*, мягкие integrations.*,
+#     магазин shop.* и новые тексты /disasters shop|buy.
 # Переименований и удалений нет: миграция чисто аддитивная, владельческие
 # значения и комментарии сохраняются, перед записью создаётся backup.
-config-version: 2
-messages-version: 2
+config-version: 3
+messages-version: 3

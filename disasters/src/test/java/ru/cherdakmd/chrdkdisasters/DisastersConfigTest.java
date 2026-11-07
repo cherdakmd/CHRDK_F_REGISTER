@@ -41,6 +41,24 @@ final class DisastersConfigTest {
         assertTrue(config.playerEffectsEnabled());
         assertEquals("BLOCK_NOTE_BLOCK_BASS", config.soundFor(DisasterKind.DUST_STORM));
         assertEquals("BLOCK_SNOW_BREAK", config.soundFor(DisasterKind.BLIZZARD));
+
+        assertTrue(config.rewards().enabled());
+        assertEquals(5, config.rewards().base());
+        assertEquals(2, config.rewards().perLevel());
+        assertEquals(120, config.rewards().dailyCap());
+        assertEquals(1.5, config.rewards().bonusCap());
+        assertEquals(100, config.progression().baseXp());
+        assertEquals(30, config.progression().xpPerSurvive());
+        assertEquals(10, config.progression().maxLevel());
+        assertTrue(config.integrations().achievements());
+        assertTrue(config.integrations().skills());
+        assertEquals("defense", config.integrations().skillId());
+        assertEquals(2, config.integrations().units());
+        assertEquals(20, config.shop().diamondsPrice());
+        assertEquals(16, config.shop().diamondsAmount());
+        assertEquals(12, config.shop().suppliesPrice());
+        assertEquals(30, config.shop().wardPrice());
+        assertEquals(30, config.shop().wardMinutes());
     }
 
     @Test
@@ -59,6 +77,11 @@ final class DisastersConfigTest {
         yaml.set("disasters.phases.tick-seconds", -5);
         yaml.set("disasters.sounds.enabled", false);
         yaml.set("disasters.player-effects.enabled", false);
+        yaml.set("disasters.rewards.daily-cap", -5);
+        yaml.set("disasters.rewards.bonus-cap", 99.0);
+        yaml.set("disasters.progression.max-level", 999);
+        yaml.set("disasters.shop.diamonds.price", 999_999);
+        yaml.set("disasters.integrations.skill-id", "");
         DisastersConfig config = DisastersConfig.parse(yaml);
         assertEquals(5, config.maxLevel());
         assertEquals(48, config.radius());
@@ -74,6 +97,11 @@ final class DisastersConfigTest {
         assertFalse(config.soundsEnabled());
         assertFalse(config.playerEffectsEnabled());
         assertEquals("NONE", config.soundFor(DisasterKind.TORNADO));
+        assertEquals(0, config.rewards().dailyCap());
+        assertEquals(3.0, config.rewards().bonusCap());
+        assertEquals(50, config.progression().maxLevel());
+        assertEquals(10_000, config.shop().diamondsPrice());
+        assertEquals("defense", config.integrations().skillId());
     }
 
     @Test

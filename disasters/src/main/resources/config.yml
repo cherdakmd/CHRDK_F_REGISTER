@@ -61,9 +61,51 @@ disasters:
     blizzard: BLOCK_SNOW_BREAK
 
   # Мягкие эффекты состояния без урона: снимаются на затухании/остановке.
-  # Игроки с chrdkdisasters.bypass их не получают.
+  # Игроки с chrdkdisasters.bypass их не получают. Уровень стойкости
+  # ослабляет amplifier и длительность эффекта.
   player-effects:
     enabled: true
+
+  # Третья итерация: осколки катастроф за участие.
+  # base-shards + per-level-shards * (уровень катастрофы - 1), затем бонус
+  # стойкости до bonus-cap. daily-cap считается по МСК и защищает от фермы.
+  rewards:
+    enabled: true
+    base-shards: 5
+    per-level-shards: 2
+    daily-cap: 120
+    bonus-cap: 1.5
+
+  # Свой уровень стойкости: треугольная шкала опыта base-xp * (L-1)*L/2.
+  # Даёт бонус осколков, ослабляет эффекты и добавляет шанс пропуска события.
+  progression:
+    base-xp: 100
+    xp-per-survive: 30
+    xp-per-level: 8
+    max-level: 10
+
+  # Обе интеграции мягкие: без CHRDK_Achievements и CHRDK_Skills disasters
+  # продолжает работать, просто не шлёт прогресс в чужие каталоги.
+  integrations:
+    achievements: true
+    skills: true
+    # Навык из CHRDK_Skills (SkillType): defense, mining, combat и т.д.
+    skill-id: "defense"
+    skills-units: 2
+
+  # /disasters shop: цены в осколках. diamonds кладёт алмазы на /bal через
+  # BankStore ядра (не физдроп, не добыча Skills), supplies выдаёт ванильные
+  # припасы, ward включает временный пропуск расписания у игрока.
+  shop:
+    diamonds:
+      price: 20
+      amount: 16
+    supplies:
+      price: 12
+      diamonds: 4
+    ward:
+      price: 30
+      minutes: 30
 
   # Разрешённые катастрофы. dust-storm и blizzard не меняют блоки вообще;
   # meteor-shower, earthquake, tornado и flood требуют снимка для отката.
