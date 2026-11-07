@@ -1,193 +1,193 @@
 {
   "pages": {
     "about": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "b70e9f021c84c0bc812f001bbd0f0a81ceba8472001b065865ba4155a0f62526",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "f4b3335e258e5b6708222a4cc176835f3102ee97dac855db41689e86a7c906c0",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "10e0d5d87c0fcf9412cfe86df56810b51d27d981da41f3df013b2828074dc794",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "cfafe2e1cc1bb8f974a0f530e24bd6f4a251f7582aa3e4d51748a168a2f4133b",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "080623d536b96ddaf9a49894c0b931f3bde1a991b025b8094972f739bfc0f908",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "2e270161574f3ada854b4bd6ab3dc74f8a243fa3eb43aa2247e0f399ec68c3f0",
       "text": "fcdffb1098428fac2bd42d1c4acb73bb9a024d1823d5398b8845bb2f415a506f"
     },
     "auction": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "fd54e1cca1c73fcfad10d5c267fd5097f51de3ed544100835b37509125e97826",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "d05233ea3c37715c2e0c85d1cefb092031f33ee2cb66b90eaf850a5e41f4f379",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "38a75846766bbc75a007cd43905041cbba178179c12c400373017787b4c4b12e",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "9398037022f4c45742a076caef2a1fda95b645ee8270d8ef67420f4dd9df80a3",
       "text": "f368077b5f1961a1982957afe3b8523b60c8330f3dfd1891003d01ea1c4fd6db"
     },
     "chat": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "b70e9f021c84c0bc812f001bbd0f0a81ceba8472001b065865ba4155a0f62526",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "f4b3335e258e5b6708222a4cc176835f3102ee97dac855db41689e86a7c906c0",
       "text": "ca6c93fc33fca52eecc7d38744bc86f619ea0b6a7bcc2314b84ca6c5399d8a1c"
     },
     "claims": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "3f84966346557b06af19b3c5a427b2a1cc7f2e9153692f42915bc653ad474146",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "02de82d34bb4d5b12257d2873b22c2b7be79a36c0e5144acbbaf421c31a892a1",
       "text": "bf1b24b85ecdaee84580c0d5ea4b9c1120b8dd072e38aa68b52e49fc2a0c472c"
     },
     "classes": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "fb220c44c405ce57f01ac99a53aa21a19581fb46b42b1d31be6a805b5e6a51cd",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "42923975675e331361e75c4f96b3436ed10fd11de7b2f505bc1c1e7a10156f47",
       "text": "fdebe780b6e7964249b5c4bc4752908cbdd67722e4d4bb0a4b1f64d94cd15ea1"
     },
     "commands": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "f064ef5ca782bc626ec77b6ab59ca9c2d634a7534acb34a669c970f8dfb4b3c0",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "bbc2ff23a77a8327af68ac3eb2ecfce44e7a2069a65fafa9eef2f7a6f9914711",
       "text": "deb43c99022eb3fe2ccf7355ab726dd06531737319b93f376265cfe1479186fb"
     },
     "cosmetics": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "a9b894e8a6bacc3ec37bbcd4deff8e7ec4c95bf57e641eeb0cf69ea8d957a6bb",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "8cf3ad79710fd90ea852fcc62485ef63a27805e6d0e154ec07e7681673de8890",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "157c3f4cad5ec11a676d0245817101753f388b0de4f72cc597a7c37705349711",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "d482f4bbbda28ca148ce496883e972aa2742d9ffd571f032986dfbb7858dac51",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "disasters": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "598a3432eba86ff469d5c3441a59800aa79a1212d23f4ee1b4f302911456dcf7",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "91b1cc8b4d24e70c3f7128e2c10643d24c073ad0ade5a2c70355d10dd2a12ce1",
       "text": "98bf8335363c58e70a911141856fff3175d82b4e794accee8efc8613b38b8325"
     },
     "economy": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "177265f960c7369da994885b06ec49b10d0076e84694fa58aab666f008508a46",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "b0c5065328644c5a52cfd8e4eafa02dc07da77115d92214f42ee59dcd19aeea0",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "dc93244fdc3f2a193745f3cdf29a89bfffaa2d624cde1130e2c1c58546bc2945",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "65b835002a6f2bc1e88e6032046ffbda3bc90b37072de8bc08f691aa969ea06d",
       "text": "eb4d46a57319a2c56aed075ca386f6db0271d2df40e428db86c176cfc0e6c807"
     },
     "faq": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "255a70d53c345890b2ce00f55ca57c18309ce273ca3bcde8a2f7d18dea31982e",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "6d7d0d39b72004ec8cf21be7e83b5ddb76622cc205344bac00976cf7a199edda",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "295fba06114d5951269c56dc143db4d27819663c3958e4afc543d1e71942534d",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "283fb5a517ef30da9d6193657fead20fd1dd23573afa609accb59546d3a37a68",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "3f84966346557b06af19b3c5a427b2a1cc7f2e9153692f42915bc653ad474146",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "02de82d34bb4d5b12257d2873b22c2b7be79a36c0e5144acbbaf421c31a892a1",
       "text": "e166f2671aabcdf55ecf59d1465ddb19a36343f6d07983eb8b8821b3a63cce34"
     },
     "honors": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "b70e9f021c84c0bc812f001bbd0f0a81ceba8472001b065865ba4155a0f62526",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "f4b3335e258e5b6708222a4cc176835f3102ee97dac855db41689e86a7c906c0",
       "text": "6bc29d5a2d7783845f8b3d9b085e85982faec5b3029d841092386f36b1d4c4b0"
     },
     "hunt": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "10c9428b72e94297b25407d48883514f0c611ff5e06063c1b0fa85b70567aacf",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "7aa33709fb992552cb039e92ee3359a18ebaf6a4381165df1ddc197dd1b2cb7f",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "3496b83594dfbe531a5a6c9d6c8cc74722deb4aae5d5d3ba7e13eeadca3fd65c",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "36a9aa5993c05412aad9371347d4c870e22dcb720bdb8f9005b398f761190cb6",
       "text": "6a3b9fedc0d15e6ef23ae50e7bf41cdf79f9efcc79299101944c041b5c2d9222"
     },
     "menu": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "6695e5483d75203df5daba2bb3645b54fafda5275e7e3286387fda582e7d9de1",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "ef154e2a66b6f905e4388bf609397c28bdcdb0e9dfcb14c4dc08f1eaf5ac5141",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "moderation": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "b70e9f021c84c0bc812f001bbd0f0a81ceba8472001b065865ba4155a0f62526",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "f4b3335e258e5b6708222a4cc176835f3102ee97dac855db41689e86a7c906c0",
       "text": "255b8cacb80c9ea7b1236f73feaa226a121bb9b58cff81fef2d46b65abae4073"
     },
     "orders": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "ae1bf321b9ab09292765b320ed096a64e9b9cdef7f038aae0ef4830c956d70df",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "a8b89c604ae1ea387c69e0847005bd643f59632c65cc96fa17cad2bddf27b38d",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "perktree": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "fb220c44c405ce57f01ac99a53aa21a19581fb46b42b1d31be6a805b5e6a51cd",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "42923975675e331361e75c4f96b3436ed10fd11de7b2f505bc1c1e7a10156f47",
       "text": "148006c785c6f0e5adf6725d87605f5e508b957636fdac87ea64939e7bd63b79"
     },
     "pets": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "2358011166027a07ebe7a01486014c0568915c10ade94612d9a443f23fdf57a0",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "5857879ba47a453ef320b0639cbd8dfdc20f0198e5ee736cf4cace0789e402f8",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "7a8fd365bcedf7543747b44fdf3ee7da6c0441e20fa94bffd8bc62e9d9df7c9d",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "4581ce6697d7ee2bed14fdbc96b62fb495c36d8baed82d7064c723e9359c7fc6",
       "text": "13e6d38670572890ab2567279a5ca76f8e353eab6ade09a877eee2e884c6e272"
     },
     "profile": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "02d83d69a9b04fffab92fa020a3e8ef94099d20510838846571fd8d3c5685e71",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "6793a307d066a7090c95a92c6e0495f3c731c309c144389229b1065d4f6a963f",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "c66191947ca1adfdb91f1a11aaa6cc410da5bb80a2d3a011d550843a702111c3",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "1ffd4323e34099348bf1da1e33660bf5d05dd1ed01bf99ff2e67d4e839639a9c",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "67928dc388619388f1d9ee4270b8f75eda6c77202b7c48597e7858cbca5feaad",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "ffd170ae4ecd0035f1b58a766d4c78b31b740ed0aed694dbc4fbbd7ad605306b",
       "text": "ab539f2c7c0119321d83bb9e12e09ba23d402df986d6639dbb1c11e2e47ea06d"
     },
     "shop": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "3496b83594dfbe531a5a6c9d6c8cc74722deb4aae5d5d3ba7e13eeadca3fd65c",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "36a9aa5993c05412aad9371347d4c870e22dcb720bdb8f9005b398f761190cb6",
       "text": "974065393ff473ac12b0957c9b605b853df30b343c64029aa2fee650b198b861"
     },
     "skills": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "4554afccdcc95a0b68d28cad15f591b5cef2d861f39d7c970cafc5e9d284d563",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "2edfdd448e97be2505edfdc2fade37e83001bd0b0a88b0cc1b540fa536561cf9",
       "text": "7659c1d40dea79612d72ba929cbc47ce2fafc224c04a6a002cf8e0b27fa2a286"
     },
     "social-link": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "612a21b2ec6de9309f36109b429a00486e5ea0297e9f03f82ac96cdab8a7fd52",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "23b6bfee40071ea13a81b753b02295780cbc00ff10726722293b4716595a9d35",
       "text": "4c8cab4b751d6f98f2dfca7e7cd7e2770ee7f7000984ccc7c7b57ec8949a3ae4"
     },
     "start": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "14b42b321354a21585f53935db2293db145965c1bd3a6fc528b096096789da58",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "3938f7298740d6cfff01cb7bae139dbbae514ba78528086b364b8272d4f849fb",
       "text": "c2835fdf2d1945079115e6a252d472ce72ad9ad79f4ed47ad58e269b467d595f"
     },
     "teleports": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "16ef5b8d269a72f78c07bc90fab1bdaaa8115c867c3ef7612cf3bc78510167a3",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "b5f94ed77eaee5086890070777a78dcb7171f8022aeac7936aa0d8d3de99daba",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "dc93244fdc3f2a193745f3cdf29a89bfffaa2d624cde1130e2c1c58546bc2945",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "65b835002a6f2bc1e88e6032046ffbda3bc90b37072de8bc08f691aa969ea06d",
       "text": "0bc7c3b4ed2ad0db4e441ebe12d0a0aef810740f727cda6b272d49f59f28b08c"
     },
     "titles": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "f69ec418afc0e90a4b496b17a034da416be892c11eb1982a092e30b2e9d58ab9",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "5c721dfd4ce8dd9f8970d6836aa15f17349f7d44bc96d362d0683e7e51efc0b2",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "3496b83594dfbe531a5a6c9d6c8cc74722deb4aae5d5d3ba7e13eeadca3fd65c",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "36a9aa5993c05412aad9371347d4c870e22dcb720bdb8f9005b398f761190cb6",
       "text": "eb314f009d0ec644bb7c5dabd99f1a8a860c14715813ddbcc41786e4c229c573"
     },
     "vk": {
-      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
-      "sources": "612a21b2ec6de9309f36109b429a00486e5ea0297e9f03f82ac96cdab8a7fd52",
+      "reason": "CHRDK_Disasters: финальная сверка реестров ядра, меню, авторассылки и тестов",
+      "sources": "23b6bfee40071ea13a81b753b02295780cbc00ff10726722293b4716595a9d35",
       "text": "94f2d5f3cf83ae414f1a577156884ae1329734bf55951e2707569c3ce923c199"
     }
   },

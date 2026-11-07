@@ -1048,6 +1048,7 @@ server-menu:
     - {"category": "world", "icon": "RED_BED", "name": "<gold><bold>Поставить дом</bold></gold>", "lore": "<gray>Встаньте в нужной точке и введите</gray>\n<dark_gray>/sethome имя</dark_gray>\n<dark_gray>Лимит точек зависит от ранга</dark_gray>"}
     - {"category": "world", "icon": "ENDER_PEARL", "name": "<gold><bold>Случайный телепорт</bold></gold>", "lore": "<gray>RTP за алмазы</gray>\n<dark_gray>Цена — в настройках телепортов</dark_gray>", "command": "rtp", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
     - {"category": "world", "icon": "OAK_DOOR", "name": "<gold><bold>Телепорт к игроку</bold></gold>", "lore": "<gray>Запрос: /tpa ник</gray>\n<dark_gray>Принять: /tpaccept</dark_gray>", "command": "tpa", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
+    - {"category": "world", "icon": "SAND", "name": "<gold><bold>Катастрофы</bold></gold>", "lore": "<gray>Пыльная буря, метеориты и землетрясение</gray>\n<dark_gray>Клик: /disasters — когда ждать следующую</dark_gray>", "command": "disasters", "plugin": "CHRDK_Disasters", "permission": "chrdkdisasters.use"}
     # ------------------------------ снаряжение ------------------------------
     - {"category": "gear", "icon": "ENCHANTED_BOOK", "name": "<gold><bold>Кастомные чары</bold></gold>", "lore": "<gray>Каталог чар и описания</gray>\n<dark_gray>Получение — через игровую механику</dark_gray>", "command": "enchants", "plugin": "CHRDK_Enchants", "permission": "chrdkenchants.use"}
     - {"category": "gear", "icon": "SMITHING_TABLE", "name": "<gold><bold>Редкости снаряжения</bold></gold>", "lore": "<gray>Тиры крафта и характеристики</gray>", "command": "tiers", "plugin": "CHRDK_TierForge", "permission": "chrdktierforge.use"}
@@ -1433,6 +1434,7 @@ auto-messages:
     - {"text": "<gray>Хотите поддержать CHERDAK? <click:run_command:'/donate'><white>/donate</white></click> даст официальную ссылку. Не переводите деньги по реквизитам из чужих личных сообщений.</gray>", "permission": "chrdkregister.donate"}
     - {"text": "<gray>CHERDAK рядом и вне игры: <white>/vk link</white> выдаёт код для личных сообщений сообщества. Входы и самозащита — в ЛС; беседа — для общения и новостей. Пароли и коды 2FA боту не отправляйте.</gray>", "plugin": "CHRDK_VK", "permission": "chrdkvk.use"}
     - {"text": "<gray>На CHERDAK работает <white>Plasmo Voice</white>: голосовой чат с учётом расстояния между игроками. Нужен клиентский мод Plasmo Voice и настроенный микрофон; текстовые каналы и правила общения остаются прежними.</gray>"}
+    - {"text": "<gray>Катастрофы CHERDAK не задевают приваты и спавн: <white>/disasters</white> покажет, когда ждать следующую. Изменённые блоки возвращаются по таймеру, опыта и алмазов с них нет.</gray>", "plugin": "CHRDK_Disasters", "permission": "chrdkdisasters.use"}
 
 # ================================================================
 # Админ-панель аудита игроков (/adminpanel). Варны, роли и журнал лежат в

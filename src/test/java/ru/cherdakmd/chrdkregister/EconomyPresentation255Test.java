@@ -29,7 +29,7 @@ class EconomyPresentation255Test {
         var changes=PresentationMigration.replacements(live,List.of(old),fresh);
         assertTrue(changes.contains("auto-messages.messages"),changes.toString());assertEquals(before,live.saveToString());
         var previous=old.getMapList("auto-messages.messages").stream().filter(row->!RetiredAddons.plugin(String.valueOf(row.get("plugin")))).toList();var current=fresh.getMapList("auto-messages.messages");
-        assertEquals(42,current.size());assertEquals(previous.size()+2,current.size());
+        assertEquals(43,current.size());assertEquals(previous.size()+3,current.size());
         for(int i=0;i<previous.size();i++) {
             var a=new LinkedHashMap<>(previous.get(i));var b=new LinkedHashMap<>(current.get(i));a.remove("text");b.remove("text");
             assertEquals(a,b,"Аудитория сообщения №"+(i+1));
