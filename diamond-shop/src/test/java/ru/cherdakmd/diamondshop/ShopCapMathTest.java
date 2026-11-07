@@ -63,7 +63,9 @@ final class ShopCapMathTest {
         assertEquals(0, crazy.perRankLevel());
         assertEquals("shop-limit-boost", crazy.entitlementId());
         assertEquals(ShopCapMath.HARD_MAX, crazy.max());
-        assertEquals(1, ShopCapMath.compute(BASE, crazy, ShopCapMath.Context.NONE));
+        // base передаётся отдельно; с нулевой базой и обнулёнными коэффициентами
+        // лимит зажимается в 1, а не превращается в 0 или отрицательное число.
+        assertEquals(1, ShopCapMath.compute(0, crazy, ShopCapMath.Context.NONE));
     }
 
     @Test
