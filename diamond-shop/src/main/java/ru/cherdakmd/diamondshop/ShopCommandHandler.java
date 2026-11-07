@@ -165,7 +165,7 @@ public final class ShopCommandHandler implements TabExecutor {
                     "balance", plugin.shopService().balance(player), "physical", plugin.shopService().physical(player));
         } else {
             plugin.messages().send(player, result.errorKey(),
-                    "cost", result.money(), "limit", plugin.shopService().config().dailyTurnoverLimit(),
+                    "cost", result.money(), "limit", plugin.shopService().dailyLimit(player),
                     "balance", plugin.shopService().balance(player),
                     "material", item.material().toLowerCase(Locale.ROOT), "units", units, "value", args[2]);
         }
@@ -193,7 +193,7 @@ public final class ShopCommandHandler implements TabExecutor {
                     "balance", plugin.shopService().balance(player), "physical", plugin.shopService().physical(player));
         } else {
             plugin.messages().send(player, result.errorKey() == null ? "trading.invalid-number" : result.errorKey(),
-                    "cost", result.money(), "limit", plugin.shopService().config().dailyTurnoverLimit(),
+                    "cost", result.money(), "limit", plugin.shopService().dailyLimit(player),
                     "balance", plugin.shopService().balance(player),
                     "material", item.material().toLowerCase(Locale.ROOT), "units", units,
                     "value", args.length >= 3 ? args[2] : "1");
@@ -261,9 +261,96 @@ public final class ShopCommandHandler implements TabExecutor {
             }
             case "stock" -> handleAdminStock(sender, args);
             case "top" -> handleAdminTop(sender);
+            case "edit" -> handleAdminEdit(sender, args);
+            case "set" -> handleAdminSet(sender, args);
+            case "remove" -> handleAdminRemove(sender, args);
+            case "restore" -> handleAdminRestore(sender, args);
+            case "cap" -> handleAdminCap(sender, args);
             default -> plugin.messages().send(sender, "admin.usage");
         }
         return true;
+    }
+
+    /* ------------- редактор каталога вне config.yml (7 ноября 2026) ------------- */
+
+    private void handleAdminEdit(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            plugin.messages().send(sender, "admin.gui.player-only");
+            return;
+        }
+        int page = 0;
+        if (args.length >= 2) {
+            long parsed = parseLong(args[1], 0);
+            page = (int) Math.clamp(parsed - 1, 0L, 10_000L);
+        }
+        plugin.shopAdminGui().open(player, page);
+    }
+
+    private void handleAdminSet(CommandSender sender, String[] args) {
+        if (args.length < 4) {
+            plugin.messages().send(sender, "admin.usage");
+            return;
+        }
+        String material = args[1].toUpperCase(Locale.ROOT);
+        String field = args[2].toLowerCase(Locale.ROOT);
+        ShopOverrides overrides = plugin.overrides().copy();
+        if (plugin.shopService().config().item(material).isEmpty()) {
+            plugin.messages().send(sender, "trading.unknown-item", "material", args[1]);
+            return;
+        }
+        if (!overrides.set(material, field, args[3])) {
+            plugin.messages().send(sender, "admin.set-fail", "field", field, "value", args[3]);
+            return;
+        }
+        plugin.applyOverrides(overrides);
+        plugin.messages().send(sender, "admin.set-ok", "material", args[1].toLowerCase(Locale.ROOT),
+                "field", field, "value", args[3]);
+    }
+
+    private void handleAdminRemove(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            plugin.messages().send(sender, "admin.usage");
+            return;
+        }
+        ShopOverrides overrides = plugin.overrides().copy();
+        overrides.remove(args[1]);
+        plugin.applyOverrides(overrides);
+        plugin.messages().send(sender, "admin.remove-ok", "material", args[1].toLowerCase(Locale.ROOT));
+    }
+
+    private void handleAdminRestore(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            plugin.messages().send(sender, "admin.usage");
+            return;
+        }
+        ShopOverrides overrides = plugin.overrides().copy();
+        overrides.restore(args[1]);
+        plugin.applyOverrides(overrides);
+        plugin.messages().send(sender, "admin.restore-ok", "material", args[1].toLowerCase(Locale.ROOT));
+    }
+
+    private void handleAdminCap(CommandSender sender, String[] args) {
+        Player target;
+        if (args.length >= 2) {
+            target = org.bukkit.Bukkit.getPlayerExact(args[1]);
+            if (target == null) {
+                plugin.messages().send(sender, "admin.cap-offline", "player", args[1]);
+                return;
+            }
+        } else if (sender instanceof Player player) {
+            target = player;
+        } else {
+            plugin.messages().send(sender, "admin.usage");
+            return;
+        }
+        var parts = plugin.shopService().dailyLimitBreakdown(target);
+        plugin.messages().send(sender, "admin.cap-info",
+                "player", target.getName(),
+                "base", parts.base(), "rank", parts.rank(), "prestige", parts.prestige(),
+                "levels", parts.levels(), "pass", parts.pass(), "boost", parts.boost(),
+                "entitlement", parts.entitlement(), "total", parts.total(),
+                "used", PriceEngine.round(plugin.shopService().store().usedToday(
+                        target.getUniqueId(), System.currentTimeMillis())));
     }
 
     private void handleAdminStock(CommandSender sender, String[] args) {
@@ -350,9 +437,14 @@ public final class ShopCommandHandler implements TabExecutor {
         String prefix = args[args.length - 1].toLowerCase(Locale.ROOT);
         if ("shopadmin".equalsIgnoreCase(command.getName())) {
             if (args.length == 1) {
-                addMatches(matches, prefix, List.of("stock", "top", "reload", "recovery", "audit"));
-            } else if (args.length == 2 && "stock".equalsIgnoreCase(args[0])) {
+                addMatches(matches, prefix, List.of("stock", "top", "reload", "recovery", "audit",
+                        "edit", "set", "remove", "restore", "cap"));
+            } else if (args.length == 2 && (("stock".equalsIgnoreCase(args[0]))
+                    || "set".equalsIgnoreCase(args[0]) || "remove".equalsIgnoreCase(args[0])
+                    || "restore".equalsIgnoreCase(args[0]))) {
                 addItemMatches(matches, prefix);
+            } else if (args.length == 3 && "set".equalsIgnoreCase(args[0])) {
+                addMatches(matches, prefix, ShopOverrides.fields().stream().sorted().toList());
             }
             return matches;
         }

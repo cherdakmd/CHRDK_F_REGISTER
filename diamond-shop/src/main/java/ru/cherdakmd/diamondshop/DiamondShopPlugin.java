@@ -21,16 +21,27 @@ import java.util.List;
 public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.event.Listener {
 
     private volatile ChrdkRegisterApi coreApi;
+    private volatile ru.cherdakmd.chrdkskills.ChrdkSkillsApi skillsApi;
     private volatile ShopService shopService;
     private ShopStore store;
     private ShopGui gui;
     private ShopQuantityGui quantities;
+    private ShopAdminGui adminGui;
+    private ShopOverrides overrides;
     private ForgeShopPrices forgePrices;
     private ForgeShopService forgeShop;
     private ForgeShopGui forgeShopGui;
     public ShopQuantityGui quantities(){return quantities;}
+    public ShopAdminGui shopAdminGui(){return adminGui;}
+    public ShopOverrides overrides(){return overrides;}
     public ForgeShopService forgeShop(){return forgeShop;}
     public ForgeShopGui forgeShopGui(){return forgeShopGui;}
+    /** Принять черновик GUI: записать shop-overrides.json и перечитать каталог. */
+    public void applyOverrides(ShopOverrides draft) {
+        overrides.replaceWith(draft);
+        overrides.save();
+        reloadShopConfig();
+    }
     private volatile Messages messages;
     private BukkitTask saveTask;
     private BukkitTask historyTask;
@@ -49,9 +60,11 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
         Bukkit.getPluginManager().registerEvents(this,this);
         recoveryTask=Bukkit.getScheduler().runTaskTimer(this,()->shopService.recoverPending(),1L,20L);
         this.gui = new ShopGui(this);
+        this.adminGui = new ShopAdminGui(this);
         this.quantities=new ShopQuantityGui(this);
         getServer().getPluginManager().registerEvents(quantities,this);
         Bukkit.getPluginManager().registerEvents(gui, this);
+        Bukkit.getPluginManager().registerEvents(adminGui, this);
         Bukkit.getPluginManager().registerEvents(forgeShopGui, this);
 
         ShopCommandHandler commands = new ShopCommandHandler(this);
@@ -97,6 +110,7 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
     @Override
     public void onDisable() {
         if (gui != null) gui.closeAll();
+        if (adminGui != null) adminGui.closeAll();
         if(recoveryTask!=null) { recoveryTask.cancel(); recoveryTask=null; }
         if (migrationTask != null) { migrationTask.cancel(); migrationTask = null; }
         if (saveTask != null) {
@@ -116,15 +130,20 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
     /** Перечитывает config.yml/messages.yml и пересоздаёт сервис магазина. */
     public void reloadShopConfig() {
         if (gui != null) gui.closeAll();
+        if (adminGui != null) adminGui.closeAll();
         reloadConfig();
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
+        this.skillsApi = Bukkit.getServicesManager().load(
+                ru.cherdakmd.chrdkskills.ChrdkSkillsApi.class);
+        // Перечитываем файл при каждом reload: владелец мог поправить его вручную.
+        this.overrides = ShopOverrides.load(getDataFolder().toPath(), getLogger());
         if (this.store == null) {
             this.store = new ShopStore(getDataFolder().toPath(), getLogger());
             this.store.load();
         }
-        ShopConfig.ShopConfigData data = ShopConfig.parse(getConfig(), getLogger());
-        this.shopService = new ShopService(data, store, this::coreApi);
+        ShopConfig.ShopConfigData data = ShopConfig.parse(getConfig(), getLogger(), overrides);
+        this.shopService = new ShopService(data, store, this::coreApi, this::skillsApi);
         this.forgePrices = ForgeShopPrices.parse(getConfig(), getLogger());
         if (this.forgeShopGui == null) this.forgeShopGui = new ForgeShopGui(this);
         this.forgeShop = new ForgeShopService(this, forgePrices);

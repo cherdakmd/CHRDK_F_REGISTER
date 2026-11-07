@@ -86,6 +86,8 @@ public final class ShopConfig {
             List<ShopItem> items,
             double spreadPercent,
             double dailyTurnoverLimit,
+            ShopCapMath.Settings dailyCap,
+            List<String> retiredMaterials,
             int historyMaxPoints,
             long historyIntervalMillis
     ) {
@@ -94,6 +96,21 @@ public final class ShopConfig {
             String key = material.toUpperCase(java.util.Locale.ROOT);
             return items.stream().filter(item -> item.material.equals(key)).findFirst();
         }
+
+        /**
+         * Совместимость с прежним контрактом из 10 полей: юнит-тесты и старые
+         * вызовы получают дефолтный персональный лимит и пустой retired-список.
+         */
+        public ShopConfigData(Map<String, Integer> currencyRates, double stockRecoveryPerHour,
+                              int maxWithdraw, double defaultMinMultiplier,
+                              double defaultMaxMultiplier, List<ShopItem> items,
+                              double spreadPercent, double dailyTurnoverLimit,
+                              int historyMaxPoints, long historyIntervalMillis) {
+            this(currencyRates, stockRecoveryPerHour, maxWithdraw, defaultMinMultiplier,
+                    defaultMaxMultiplier, items, spreadPercent, dailyTurnoverLimit,
+                    ShopCapMath.Settings.DEFAULT, List.of(), historyMaxPoints,
+                    historyIntervalMillis);
+        }
     }
 
     private ShopConfig() {
@@ -101,6 +118,16 @@ public final class ShopConfig {
 
     /** Парсинг конфигурации баккита; материалы валюты валидируются ТОЛЬКО при вызове из плагина. */
     public static ShopConfigData parse(FileConfiguration config, Logger logger) {
+        return parse(config, logger, ShopOverrides.EMPTY);
+    }
+
+    /**
+     * Парсинг с правками администратора из {@code shop-overrides.json}.
+     * Эталонный {@code items:} сначала читается как обычно, затем {@link ShopOverrides#apply}
+     * убирает удалённые товары (включая {@code catalog.retired-materials}) и накладывает
+     * изменённые поля — config.yml при этом не перезаписывается.
+     */
+    public static ShopConfigData parse(FileConfiguration config, Logger logger, ShopOverrides overrides) {
         Map<String, Integer> rates = new LinkedHashMap<>();
         ConfigurationSection currency = config.getConfigurationSection("currency");
         if (currency != null) {
@@ -126,9 +153,30 @@ public final class ShopConfig {
         double minMult = Math.clamp(config.getDouble("defaults.min-multiplier", 0.25), 0.01, 1d);
         double maxMult = Math.clamp(config.getDouble("defaults.max-multiplier", 4.0), 1d, 100d);
         double spread = Math.clamp(config.getDouble("pricing.spread-percent", 10.0), 0d, 90d);
+        // 7 ноября 2026: 0 больше не «без лимита», а «не задан жёсткий ручной потолок».
+        // Работает персональный pricing.daily-cap.*; явное значение > 0 лишь зажимает его сверху.
         double dailyLimit = Math.max(0, config.getDouble("pricing.daily-turnover-limit", 0d));
+        ShopCapMath.Settings defaults = ShopCapMath.Settings.DEFAULT;
+        ShopCapMath.Settings dailyCap = new ShopCapMath.Settings(
+                config.getBoolean("pricing.daily-cap.enabled", defaults.enabled()),
+                config.getInt("pricing.daily-cap.base", defaults.base()),
+                config.getInt("pricing.daily-cap.per-rank-level", defaults.perRankLevel()),
+                config.getInt("pricing.daily-cap.per-rank-xp-percent", defaults.perRankXpPercent()),
+                config.getInt("pricing.daily-cap.per-rank-drop-percent", defaults.perRankDropPercent()),
+                config.getInt("pricing.daily-cap.per-rank-extra-skill", defaults.perRankExtraSkill()),
+                config.getInt("pricing.daily-cap.per-prestige", defaults.perPrestige()),
+                config.getInt("pricing.daily-cap.per-ten-levels", defaults.perTenLevels()),
+                config.getInt("pricing.daily-cap.pass-bonus", defaults.passBonus()),
+                config.getInt("pricing.daily-cap.reward-boost-bonus", defaults.boostBonus()),
+                config.getInt("pricing.daily-cap.entitlement-bonus", defaults.entitlementBonus()),
+                config.getString("pricing.daily-cap.entitlement-id", defaults.entitlementId()),
+                config.getInt("pricing.daily-cap.max", defaults.max()));
         int historyPoints = Math.clamp(config.getInt("pricing.history-points", 24), 4, 168);
         long historyInterval = Math.clamp(config.getLong("pricing.history-interval-minutes", 60), 5, 1440) * 60_000L;
+        Set<String> retired = new HashSet<>();
+        for (String raw : config.getStringList("catalog.retired-materials")) {
+            if (raw != null && !raw.isBlank()) retired.add(raw.trim().toUpperCase(java.util.Locale.ROOT));
+        }
 
         List<ShopItem> items = new ArrayList<>();
         Set<String> seen = new HashSet<>();
@@ -154,8 +202,10 @@ public final class ShopConfig {
             }
             items.add(book);
         }
-        return new ShopConfigData(rates, recovery, maxWithdraw, minMult, maxMult, List.copyOf(items),
-                spread, dailyLimit, historyPoints, historyInterval);
+        ShopOverrides effective = overrides == null ? ShopOverrides.EMPTY : overrides;
+        List<ShopItem> catalog = effective.apply(items, retired);
+        return new ShopConfigData(rates, recovery, maxWithdraw, minMult, maxMult, List.copyOf(catalog),
+                spread, dailyLimit, dailyCap, List.copyOf(retired), historyPoints, historyInterval);
     }
 
     /**

@@ -15,10 +15,16 @@ public final class ShopService {
     private final ShopConfig.ShopConfigData config;
     private final ShopStore store;
     private final Supplier<ChrdkRegisterApi> api;
+    private final Supplier<ru.cherdakmd.chrdkskills.ChrdkSkillsApi> skillsApi;
     private final Map<String,Integer> batches;
     private final Map<String,RecipeEconomy.Cost> recipeFloors;
     public ShopService(ShopConfig.ShopConfigData config, ShopStore store, Supplier<ChrdkRegisterApi> api) {
-        this.config = config; this.store = store; this.api = api;
+        this(config, store, api, () -> null);
+    }
+    /** Конструктор с мягким чтением престижа из CHRDK_Skills; без аддона — база лимита. */
+    public ShopService(ShopConfig.ShopConfigData config, ShopStore store, Supplier<ChrdkRegisterApi> api,
+                       Supplier<ru.cherdakmd.chrdkskills.ChrdkSkillsApi> skillsApi) {
+        this.config = config; this.store = store; this.api = api; this.skillsApi = skillsApi;
         var minimum = new HashMap<String,RecipeEconomy.Cost>();
         config.currencyRates().forEach((m,v)->minimum.put(m,RecipeEconomy.Cost.of(v)));
         for (var item : config.items()) minimum.put(item.material(), RecipeEconomy.Cost.of(
@@ -33,12 +39,74 @@ public final class ShopService {
             var bid = RecipeEconomy.Cost.of(PriceEngine.bid(PriceEngine.round(item.basePrice()*item.minMultiplier()),config.spreadPercent()));
             var cost = recipeFloors.get(item.material());
             if (cost != null) bid = bid.min(RecipeEconomy.withSpread(cost,config.spreadPercent()));
-            sizes.put(item.material(), RecipeEconomy.batch(bid));
+            int initial = RecipeEconomy.batch(bid);
+            // 7 ноября 2026: лот не должен стоить 1 алмаз. Если нижняя цена дала
+            // единицу, увеличиваем КОЛИЧЕСТВО товара в лоте, а не дробим алмаз.
+            double lowerBid = bid.numerator().doubleValue() / bid.denominator().doubleValue();
+            double lowerAsk = PriceEngine.ask(PriceEngine.round(item.basePrice()*item.minMultiplier()),config.spreadPercent());
+            int fitted = WholeLotMath.fit(initial, lowerBid, lowerAsk, item.sellEnabled());
+            sizes.put(item.material(), fitted);
         }
         batches = Map.copyOf(sizes);
     }
     public ShopConfig.ShopConfigData config() { return config; }
     public ShopStore store() { return store; }
+
+    /**
+     * Персональный дневной лимит оборота игрока в целых алмазах.
+     * {@code 0} — владелец выключил лимит ({@code daily-cap.enabled: false}).
+     * Явный {@code pricing.daily-turnover-limit > 0} зажимает лимит сверху.
+     */
+    public double dailyLimit(Player player) {
+        ShopCapMath.Settings settings = config.dailyCap();
+        if (settings == null || !settings.enabled()) {
+            return 0;
+        }
+        int personal = ShopCapMath.compute(settings.base(), settings, capContext(player));
+        double manual = config.dailyTurnoverLimit();
+        return manual > 0 ? Math.min(personal, manual) : personal;
+    }
+
+    /** Разбор лимита по источникам — для {@code /shopadmin cap} и диагностики. */
+    public ShopCapMath.Breakdown dailyLimitBreakdown(Player player) {
+        ShopCapMath.Settings settings = config.dailyCap();
+        if (settings == null || !settings.enabled()) {
+            return new ShopCapMath.Breakdown(0, 0, 0, 0, 0, 0, 0, 0);
+        }
+        ShopCapMath.Breakdown parts = ShopCapMath.breakdown(settings.base(), settings, capContext(player));
+        double manual = config.dailyTurnoverLimit();
+        return manual > 0 && parts.total() > manual
+                ? new ShopCapMath.Breakdown(parts.base(), parts.rank(), parts.prestige(), parts.levels(),
+                        parts.pass(), parts.boost(), parts.entitlement(), (long) manual)
+                : parts;
+    }
+
+    /** Сбор прокачки: недоступное ядро или отсутствующий CHRDK_Skills дают нули. */
+    private ShopCapMath.Context capContext(Player player) {
+        if (player == null) {
+            return ShopCapMath.Context.NONE;
+        }
+        String name = player.getName();
+        ChrdkRegisterApi core = api.get();
+        RankBonus bonus = core == null ? RankBonus.NONE : core.rankBonus(name);
+        if (bonus == null) {
+            bonus = RankBonus.NONE;
+        }
+        int prestige = 0, level = 0;
+        var skills = skillsApi.get();
+        if (skills != null) {
+            prestige = skills.totalPrestige(player);
+            level = skills.totalLevel(player);
+        }
+        ShopCapMath.Settings settings = config.dailyCap();
+        String entitlementId = settings == null ? "" : settings.entitlementId();
+        boolean pass = core != null && core.hasActivePass(name);
+        boolean boost = core != null && core.rewardBoostRemainingMillis(name) > 0;
+        boolean entitlement = core != null && entitlementId != null && !entitlementId.isEmpty()
+                && core.hasEntitlement(name, entitlementId);
+        return new ShopCapMath.Context(bonus.level(), bonus.xpPercent(), bonus.dropPercent(),
+                bonus.extraSkill(), prestige, level, pass, boost, entitlement);
+    }
     public double priceOf(ShopConfig.ShopItem item) {
         return PriceEngine.price(item.basePrice(), store.stockOf(item, System.currentTimeMillis(), config.stockRecoveryPerHour()),
                 item.refStock(), item.minMultiplier(), item.maxMultiplier());
@@ -188,7 +256,8 @@ public final class ShopService {
                 return fail("quantity.not-enough-items", money);
         }
         long now = System.currentTimeMillis();
-        if (money>0 && !store.canRecordTurnover(player.getUniqueId(), money, config.dailyTurnoverLimit(), now)) return fail(store.legacyAvailable() ? "trading.daily-limit" : "trading.unavailable", money);
+        double limit = dailyLimit(player); // один снимок прокачки на всю сделку
+        if (money>0 && !store.canRecordTurnover(player.getUniqueId(), money, limit, now)) return fail(store.legacyAvailable() ? "trading.daily-limit" : "trading.unavailable", money);
         var frozenRates=new LinkedHashMap<String,Integer>();
         config.currencyRates().forEach((key,value)->{ var m=Material.matchMaterial(key); if(m!=null&&m.isItem()&&m.name().equals(key)) frozenRates.put(key,value); });
         String beforeSnapshot=ChargeInventory.encode(before), afterSnapshot=ChargeInventory.encode(after);
@@ -200,7 +269,7 @@ public final class ShopService {
         long stock=store.stockOf(item,now,config.stockRecoveryPerHour());
         long afterStock; try { afterStock=Math.max(1,Math.addExact(stock,buy?-units:units)); } catch(ArithmeticException e) { return fail("trading.unavailable",money); }
         double afterPrice=PriceEngine.price(item.basePrice(),afterStock,item.refStock(),item.minMultiplier(),item.maxMultiplier());
-        if(!store.prepare(t,item,now,config.stockRecoveryPerHour(),config.dailyTurnoverLimit(),config.historyMaxPoints(),config.historyIntervalMillis(),afterPrice)) {
+        if(!store.prepare(t,item,now,config.stockRecoveryPerHour(),limit,config.historyMaxPoints(),config.historyIntervalMillis(),afterPrice)) {
             if(!store.legacyAvailable()) lock(player); return fail("trading.unavailable",money);
         }
         if(!recoverPending()) {
@@ -213,7 +282,8 @@ public final class ShopService {
     private TradeAmounts.Sale maximumSalePlan(Player player,ShopConfig.ShopItem item,int batch,long bid) {
         if (!item.sellEnabled() || config.item(item.material()).filter(item::equals).isEmpty()) return null;
         long budget=Math.max(0,WholeTrades.MAX-balance(player));
-        if(config.dailyTurnoverLimit()>0)budget=Math.min(budget,(long)Math.floor(Math.max(0,config.dailyTurnoverLimit()-store.usedToday(player.getUniqueId(),System.currentTimeMillis()))));
+        double limit=dailyLimit(player);
+        if(limit>0)budget=Math.min(budget,(long)Math.floor(Math.max(0,limit-store.usedToday(player.getUniqueId(),System.currentTimeMillis()))));
         return TradeAmounts.selectSale(batch,bid,countSellable(player.getInventory(),item),budget);
     }
     public int maximumSale(Player player,ShopConfig.ShopItem item,int batch,long bid) {
@@ -240,7 +310,8 @@ public final class ShopService {
         }
         int batch=batchSize(item); long price=bidPrice(item);
         long budget=Math.max(0,WholeTrades.MAX-balance(player));
-        if(config.dailyTurnoverLimit()>0) budget=Math.min(budget,(long)Math.floor(Math.max(0,config.dailyTurnoverLimit()-store.usedToday(player.getUniqueId(),System.currentTimeMillis()))));
+        double limit=dailyLimit(player);
+        if(limit>0) budget=Math.min(budget,(long)Math.floor(Math.max(0,limit-store.usedToday(player.getUniqueId(),System.currentTimeMillis()))));
         int units=CarrySale.maximum(saleRemainder(player),batch,price,countSellable(player.getInventory(),item),budget);
         return units==0 ? fail("quantity.sellall-none",0) : trade(player,item,units,false,batch,price,true);
     }

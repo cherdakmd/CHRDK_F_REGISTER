@@ -61,9 +61,9 @@ class ShopBooksCatalogTest {
     @Test
     void shippedCatalogKeepsLegacyItemsAndAddsTwoBookSections() throws Exception {
         var yaml = shipped();
-        assertEquals(249, yaml.getMapList("items").size(), "обычный каталог не изменился");
+        assertEquals(248, yaml.getMapList("items").size(), "обычный каталог не изменился");
         var config = data(yaml);
-        assertEquals(367, config.items().size());
+        assertEquals(366, config.items().size());
         var books = books(config);
         assertEquals(118, books.size());
         assertEquals(76, books.stream().filter(b -> b.category().equals("books-custom")).count());
@@ -113,6 +113,6 @@ class ShopBooksCatalogTest {
         var yaml = shipped();
         yaml.set("books.enabled", false);
         assertTrue(ShopConfig.parseBooks(yaml, Logger.getAnonymousLogger()).isEmpty());
-        assertEquals(249, data(yaml).items().size());
+        assertEquals(248, data(yaml).items().size());
     }
 }

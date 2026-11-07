@@ -135,7 +135,7 @@ public final class ShopQuantityGui implements Listener {
                 if(result.success()){
                     plugin.messages().send(player,"trading.payment-detail","account",result.bankPaid(),"physical",result.physicalPaid(),"change",result.change());
                     plugin.messages().send(player,"forge.shop.done","sku",h.forge.sku(),"name",ForgeShopText.name(plugin.messages(),h.forge.sku()),"units",result.units(),"cost",result.money(),"balance",h.service.balance(player),"physical",h.service.physical(player));
-                }else plugin.messages().send(player,result.errorKey(),"sku",h.forge.sku(),"cost",result.money(),"value",units,"units",units,"balance",h.service.balance(player),"limit",h.service.config().dailyTurnoverLimit());
+                }else plugin.messages().send(player,result.errorKey(),"sku",h.forge.sku(),"cost",result.money(),"value",units,"units",units,"balance",h.service.balance(player),"limit",h.service.dailyLimit(player));
                 if(active(player,h))plugin.forgeShopGui().open(player);
                 return;
             }
@@ -143,7 +143,7 @@ public final class ShopQuantityGui implements Listener {
             if(result.success()){
                 if(h.buy)plugin.messages().send(player,"trading.payment-detail","account",result.bankPaid(),"physical",result.physicalPaid(),"change",result.change());
                 plugin.messages().send(player,h.buy?"trading.buy-done":"trading.sell-done","material",h.item.material().toLowerCase(Locale.ROOT),"units",result.units(),"cost",result.money(),"income",result.money(),"balance",h.service.balance(player),"physical",h.service.physical(player));
-            }else plugin.messages().send(player,result.errorKey(),"material",h.item.material().toLowerCase(Locale.ROOT),"cost",result.money(),"value",units,"units",units,"balance",h.service.balance(player),"limit",h.service.config().dailyTurnoverLimit());
+            }else plugin.messages().send(player,result.errorKey(),"material",h.item.material().toLowerCase(Locale.ROOT),"cost",result.money(),"value",units,"units",units,"balance",h.service.balance(player),"limit",h.service.dailyLimit(player));
             if(active(player,h))plugin.gui().open(player,h.category,h.page);
         });
     }

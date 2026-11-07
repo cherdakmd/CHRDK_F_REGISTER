@@ -69,6 +69,11 @@ public final class ShopGui implements Listener {
         inventory.setItem(ShopLayout.SLOT_CLOSE, named(Material.BARRIER, "trading.gui.close-name"));
         // RC16: раздел «Кузня» доступен и кнопкой, и командой /shop forge.
         inventory.setItem(ShopLayout.SLOT_FORGE, named(Material.ANVIL, "forge.shop.tab"));
+        // 7 ноября 2026: администратор попадает в редактор каталога прямо из витрины.
+        if (player.hasPermission("chrdkshop.admin")) {
+            inventory.setItem(ShopAdminGui.SHOP_EDIT_SLOT,
+                    named(Material.COMMAND_BLOCK, "trading.gui.admin-edit"));
+        }
 
         int from = safePage * ShopLayout.ITEMS_PER_PAGE;
         for (int slot = 0; slot < ShopLayout.ITEMS_PER_PAGE && from + slot < view.size(); slot++) {
@@ -223,6 +228,12 @@ public final class ShopGui implements Listener {
             return;
         }
         if (slot == ShopLayout.SLOT_BALANCE) {
+            return;
+        }
+        if (slot == ShopAdminGui.SHOP_EDIT_SLOT) {
+            if (player.hasPermission("chrdkshop.admin") && plugin.shopAdminGui() != null) {
+                plugin.shopAdminGui().open(player, 0);
+            }
             return;
         }
         int index = ShopLayout.itemIndex(holder.page(), slot);
