@@ -113,9 +113,10 @@ class ReleaseValidationTest(unittest.TestCase):
         self.assertIn("CHRDK_Core", names)
         self.assertIn("CHRDK_BattlePass", names)
         self.assertIn("CHRDK_Professions", names)
-        self.assertEqual(23, len(names))
+        self.assertEqual(22, len(names))
         self.assertNotIn("CHRDK_VK", names, "CHRDK_VK публикуется отдельно, а не внутри общего ZIP")
-        self.assertEqual({"CHRDK_VK": "vk"}, standalone_plugins(root))
+        self.assertNotIn("CHRDK_Disasters", names, "CHRDK_Disasters публикуется отдельно, а не внутри общего ZIP")
+        self.assertEqual({"CHRDK_VK": "vk", "CHRDK_Disasters": "disasters"}, standalone_plugins(root))
         self.assertNotIn("CHRDK_Bosses", names)
         self.assertNotIn("CHRDK_Treasures", names)
         self.assertNotIn("CHRDK_Streams", names)
@@ -154,12 +155,14 @@ class ReleaseWorkflowContractTest(unittest.TestCase):
             self.assertIn('docs/releases/${version}.md', source,
                           "Заметки минорного выпуска должны входить в ZIP")
         self.assertIn("! -name 'chrdk-vk-*.jar'", source)
+        self.assertIn("! -name 'chrdk-disasters-*.jar'", source)
         self.assertIn('unzip -t "chrdk-plugins-${version}.zip"', source)
         self.assertIn('python3 .github/scripts/pack_release.py release "$version" "chrdk-plugins-${version}.zip"', source)
         self.assertIn('--standalone "chrdk-vk-${version}.jar" CHRDK_VK "$version"', source)
+        self.assertIn('--standalone "chrdk-disasters-${version}.jar" CHRDK_Disasters "$version"', source)
         self.assertNotIn("zip -j -9", source)
         self.assertNotIn("--zip", source)
-        self.assertIn('"${{ env.zip }}" "${{ env.vk_jar }}" --clobber', source)
+        self.assertIn('"${{ env.zip }}" "${{ env.vk_jar }}" "${{ env.disasters_jar }}" --clobber', source)
         # GitHub limits each run script to 21000 characters. Avoid parsing YAML/dependencies.
         for section in source.split("run: |\n")[1:]:
             script = section.split("\n      - name:", 1)[0]

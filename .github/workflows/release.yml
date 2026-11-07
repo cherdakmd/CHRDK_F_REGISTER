@@ -107,7 +107,7 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-      - name: Pack general plugin ZIP and prepare standalone CHRDK_VK JAR
+      - name: Pack general plugin ZIP and prepare standalone JARs
         shell: bash
         run: |
           set -euo pipefail
@@ -115,7 +115,7 @@ jobs:
           mkdir -p release
           find . -path '*/build/libs/*.jar' -type f \
             ! -name '*-sources.jar' ! -name '*-javadoc.jar' ! -name '*-dev.jar' \
-            ! -name 'chrdk-vk-*.jar' \
+            ! -name 'chrdk-vk-*.jar' ! -name 'chrdk-disasters-*.jar' \
             -exec cp '{}' release/ \;
           count="$(find release -maxdepth 1 -name '*.jar' | wc -l)"
           echo "Собрано JAR общего комплекта: $count"
@@ -141,10 +141,13 @@ jobs:
           unzip -l "chrdk-plugins-${version}.zip"
           cp "vk/build/libs/chrdk-vk-${version}.jar" "chrdk-vk-${version}.jar"
           python3 .github/scripts/verify_release.py --standalone "chrdk-vk-${version}.jar" CHRDK_VK "$version"
+          cp "disasters/build/libs/chrdk-disasters-${version}.jar" "chrdk-disasters-${version}.jar"
+          python3 .github/scripts/verify_release.py --standalone "chrdk-disasters-${version}.jar" CHRDK_Disasters "$version"
           echo "zip=chrdk-plugins-${version}.zip" >> "$GITHUB_ENV"
           echo "vk_jar=chrdk-vk-${version}.jar" >> "$GITHUB_ENV"
+          echo "disasters_jar=chrdk-disasters-${version}.jar" >> "$GITHUB_ENV"
 
-      - name: Attach general ZIP and standalone CHRDK_VK JAR
+      - name: Attach general ZIP and standalone JARs
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ env.zip }}" "${{ env.vk_jar }}" --clobber
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ env.zip }}" "${{ env.vk_jar }}" "${{ env.disasters_jar }}" --clobber

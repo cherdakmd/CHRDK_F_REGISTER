@@ -151,8 +151,8 @@ class PluginUpdateServiceTest {
         try (var updater = fixture.service()) {
             var result = updater.execute(true, "1.4.72");
             assertTrue(result.staged());
-            assertEquals(23, result.count());
-            try (var files = Files.list(result.updateDirectory())) { assertEquals(23, files.count()); }
+            assertEquals(22, result.count());
+            try (var files = Files.list(result.updateDirectory())) { assertEquals(22, files.count()); }
             for (var entry : originals.entrySet()) {
                 assertArrayEquals(entry.getValue(), Files.readAllBytes(entry.getKey()));
                 assertArrayEquals(entry.getValue(), Files.readAllBytes(result.backup().resolve(entry.getKey().getFileName())));
@@ -478,10 +478,12 @@ class PluginUpdateServiceTest {
         }
         CommandSender generic = (CommandSender) Proxy.newProxyInstance(CommandSender.class.getClassLoader(), new Class<?>[]{CommandSender.class}, (p, m, a) -> null);
         assertFalse(RegisterCommandHandler.canDownloadUpdates(generic));
-        assertEquals(23, PluginUpdateService.MODULES.size());
+        assertEquals(22, PluginUpdateService.MODULES.size());
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_VK"),
                 "CHRDK_VK публикуется отдельным JAR рядом с общим архивом, а не внутри ZIP");
-        Set<String> standalone = Set.of("CHRDK_VK");
+        assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_Disasters"),
+                "CHRDK_Disasters публикуется отдельным JAR рядом с общим архивом, а не внутри ZIP");
+        Set<String> standalone = Set.of("CHRDK_VK", "CHRDK_Disasters");
         Set<String> actual = new HashSet<>();
         List<Path> descriptors = new ArrayList<>();
         descriptors.add(Path.of("src/main/resources/plugin.yml"));

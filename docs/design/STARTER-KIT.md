@@ -67,5 +67,6 @@
 `/bal`, MSPT и RCON не проверялись: в песочнице нет JVM и Minecraft-сервера.
 Проверка — JUnit, контрактные тесты, валидаторы и CI.
 
-Тег, prerelease, `Latest`, `main`, TradeMC, соц. новости, production,
-`CHRDK_Live`, bump версии и `API_VERSION` не выполнялись.
+Функция вошла в пререлиз `v1.5.2-rc.3` с bump `plugin_version`. `Latest`
+остаётся `v1.5.1`, `main`, TradeMC, соц. новости, production,
+`CHRDK_Live` и bump `API_VERSION` не выполнялись.
