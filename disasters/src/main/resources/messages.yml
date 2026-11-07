@@ -1,0 +1,22 @@
+# CHRDK_Disasters — все игровые тексты модуля. Ключи, которых нет здесь,
+# берутся из этого же файла в JAR; Messages не перезаписывает правки владельца.
+disasters:
+  "start": "<gold>⚠ <bold>%kind%</bold></gold> <gray>рядом с вами · уровень %level%.</gray> <dark_gray>Изменения мира будут отменены по таймеру.</dark_gray>"
+  "storm-hint": "<yellow>Пыльная буря. Блоки не пострадают — переждите её.</yellow>"
+  "status-enabled": "<green>Катастрофы включены.</green> <gray>Следующая примерно через %seconds% с.</gray>"
+  "status-disabled": "<gray>Катастрофы сейчас выключены.</gray>"
+  "player-only": "<red>Команда доступна только игроку.</red>"
+  "no-permission": "<red>Недостаточно прав.</red>"
+  "unknown-kind": "<red>Неизвестная или отключённая катастрофа. Доступны: dust-storm, meteor-shower, earthquake.</red>"
+  "admin-usage": "<yellow>Использование: /disastersadmin <start <kind> [level] [player]|stop|restore|reload|on|off></yellow>"
+  "admin-started": "<green>Запущено: %kind% · уровень %level% · %player%.</green>"
+  "admin-blocked": "<red>Старт отменён: рядом приват CHRDK_Claims или спавн.</red>"
+  "admin-stopped": "<green>Активные катастрофы остановлены, блоки возвращены.</green>"
+  "admin-restored": "<green>Восстановлено блоков: %count%.</green>"
+  "admin-not-found": "<red>Игрок не найден или не в сети.</red>"
+  "admin-on": "<green>Катастрофы включены до рестарта.</green>"
+  "admin-off": "<yellow>Катастрофы выключены до рестарта (файл не менялся).</yellow>"
+  "reloaded": "<green>Конфигурация CHRDK_Disasters перечитана, блоки возвращены.</green>"
+  "kind-dust-storm": "Пыльная буря"
+  "kind-meteor-shower": "Метеоритный дождь"
+  "kind-earthquake": "Землетрясение"

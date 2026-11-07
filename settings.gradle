@@ -39,3 +39,5 @@ include 'guilds'
 include 'classes'
 include 'professions'
 include 'vk'
+
+include 'disasters'

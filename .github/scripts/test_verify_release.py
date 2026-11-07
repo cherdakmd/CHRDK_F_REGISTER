@@ -80,7 +80,14 @@ class ReleaseValidationTest(unittest.TestCase):
         memo = (root / "docs/releases/update-memo.txt").read_text(encoding="utf-8")
         current = memo.split("Ниже — предыдущие изменения", 1)[0]
         self.assertIn(f"Комплект {version}", current)
-        self.assertIn(f"{len(expected_plugins(root))} JAR одной версии", current)
+        # v1.5.2-rc.2 уже опубликован: его ZIP физически содержит 22 JAR.
+        # Модуль disasters добавлен в ветку после этого пререлиза и войдёт
+        # только в следующий комплект, поэтому историческую памятку не трогаем.
+        # После bump plugin_version эта оговорка перестаёт действовать и тест
+        # снова требует полный набор модулей из settings.gradle.
+        published_kits = {"1.5.2-rc.2": 22}
+        jars = published_kits.get(version, len(expected_plugins(root)))
+        self.assertIn(f"{jars} JAR одной версии", current)
         self.assertIn("CHRDK_Queue", current)
         self.assertIn("plugins/update/", current)
         self.assertIn("вручную", current)
@@ -106,7 +113,7 @@ class ReleaseValidationTest(unittest.TestCase):
         self.assertIn("CHRDK_Core", names)
         self.assertIn("CHRDK_BattlePass", names)
         self.assertIn("CHRDK_Professions", names)
-        self.assertEqual(22, len(names))
+        self.assertEqual(23, len(names))
         self.assertNotIn("CHRDK_VK", names, "CHRDK_VK публикуется отдельно, а не внутри общего ZIP")
         self.assertEqual({"CHRDK_VK": "vk"}, standalone_plugins(root))
         self.assertNotIn("CHRDK_Bosses", names)

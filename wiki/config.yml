@@ -24,6 +24,7 @@ groups:
   pages:
   - claims
   - teleports
+  - disasters
 - id: economy
   title: Алмазы и торговля
   description: Личные деньги, ресурсы и сделки между игроками.

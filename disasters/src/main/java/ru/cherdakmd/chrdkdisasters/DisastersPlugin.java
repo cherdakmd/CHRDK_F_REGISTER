@@ -1,0 +1,131 @@
+package ru.cherdakmd.chrdkdisasters;
+
+import org.bukkit.command.PluginCommand;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.plugin.java.JavaPlugin;
+import ru.cherdakmd.chrdkregister.ConfigUpgrader;
+import ru.cherdakmd.chrdkregister.Messages;
+
+/**
+ * CHRDK_Disasters — собственные катастрофы CHRDK, написанные с нуля под
+ * Purpur 26.3 и наш набор плагинов. Код, тексты и конфиги оригинальные (MIT),
+ * сторонний GPL-плагин DeadlyDisasters не копируется и не поставляется.
+ *
+ * <p>Принципы первой версии:</p>
+ * <ul>
+ *   <li>всё выключено по умолчанию: модуль, миры и площадная катастрофа
+ *       включаются владельцем явно;</li>
+ *   <li>приваты CHRDK_Claims, спавн и хранилища игроков проверяются ДО
+ *       изменения блока, а не через Bukkit-события;</li>
+ *   <li>изменённые блоки попадают в снимок и возвращаются по таймеру, при
+ *       reload и при выключении плагина;</li>
+ *   <li>оповещения делят один общий кулдаун на игрока, как в CHRDK_VK;</li>
+ *   <li>никаких NMS, взрывов и {@code BlockBreakEvent}: CHRDK_Skills не видит
+ *       катастрофу как добычу и не начисляет опыт/алмазы.</li>
+ * </ul>
+ */
+public final class DisastersPlugin extends JavaPlugin {
+
+    private volatile DisastersConfig settings;
+    private volatile Messages messages;
+    private volatile boolean runtimeEnabled = true;
+    private DisasterProtection protection;
+    private DisasterRestore restore;
+    private DisasterScheduler scheduler;
+    private DisasterEffects effects;
+    private DisasterBroadcaster broadcaster;
+    private DisasterEngine engine;
+
+    @Override
+    public void onEnable() {
+        saveDefaultConfig();
+        ConfigUpgrader.apply(this);
+        reloadAll();
+        DisasterCommandHandler handler = new DisasterCommandHandler(this);
+        PluginCommand player = getCommand("disasters");
+        PluginCommand admin = getCommand("disastersadmin");
+        if (player != null) {
+            player.setExecutor(handler);
+        }
+        if (admin != null) {
+            admin.setExecutor(handler);
+        }
+        getLogger().info("[CHRDK_Disasters] модуль загружен, активен: "
+                + (settings.enabled() ? "да" : "нет") + "; катастроф разрешено: "
+                + settings.enabledKinds().size() + "; приваты CHRDK_Claims: "
+                + (settings.respectClaims() ? "учитываются" : "игнорируются"));
+    }
+
+    /** Перечитывает YAML и тексты, не теряя снимок изменённых блоков. */
+    public void reloadAll() {
+        if (engine != null) {
+            engine.stop();
+        }
+        if (restore != null) {
+            restore.restoreAll();
+        }
+        reloadConfig();
+        FileConfiguration yaml = getConfig();
+        this.settings = DisastersConfig.parse(yaml);
+        this.messages = Messages.load(this, settings.locale(), getLogger());
+        this.protection = new DisasterProtection(this);
+        this.restore = new DisasterRestore(settings.maxBlocks(), getLogger());
+        this.scheduler = new DisasterScheduler(settings.minMillis(), settings.maxMillis(),
+                settings.maxLevel(), settings.enabledKinds(), System.currentTimeMillis());
+        this.effects = new DisasterEffects(this);
+        this.broadcaster = new DisasterBroadcaster(this);
+        this.engine = new DisasterEngine(this);
+        this.engine.start();
+    }
+
+    @Override
+    public void onDisable() {
+        if (engine != null) {
+            engine.stop();
+        }
+        if (restore != null) {
+            restore.restoreAll();
+        }
+    }
+
+    public DisastersConfig settings() {
+        return settings;
+    }
+
+    public Messages messages() {
+        return messages;
+    }
+
+    public DisasterProtection protection() {
+        return protection;
+    }
+
+    public DisasterRestore restore() {
+        return restore;
+    }
+
+    public DisasterScheduler scheduler() {
+        return scheduler;
+    }
+
+    public DisasterEffects effects() {
+        return effects;
+    }
+
+    public DisasterBroadcaster broadcaster() {
+        return broadcaster;
+    }
+
+    public DisasterEngine engine() {
+        return engine;
+    }
+
+    /** Runtime-переключатель /disastersadmin on|off: в YAML ничего не пишется. */
+    public boolean runtimeEnabled() {
+        return runtimeEnabled;
+    }
+
+    public void setRuntimeEnabled(boolean value) {
+        this.runtimeEnabled = value;
+    }
+}

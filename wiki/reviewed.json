@@ -1,187 +1,192 @@
 {
   "pages": {
     "about": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "b70e9f021c84c0bc812f001bbd0f0a81ceba8472001b065865ba4155a0f62526",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "10e0d5d87c0fcf9412cfe86df56810b51d27d981da41f3df013b2828074dc794",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "080623d536b96ddaf9a49894c0b931f3bde1a991b025b8094972f739bfc0f908",
       "text": "fcdffb1098428fac2bd42d1c4acb73bb9a024d1823d5398b8845bb2f415a506f"
     },
     "auction": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "fd54e1cca1c73fcfad10d5c267fd5097f51de3ed544100835b37509125e97826",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "38a75846766bbc75a007cd43905041cbba178179c12c400373017787b4c4b12e",
       "text": "f368077b5f1961a1982957afe3b8523b60c8330f3dfd1891003d01ea1c4fd6db"
     },
     "chat": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "b70e9f021c84c0bc812f001bbd0f0a81ceba8472001b065865ba4155a0f62526",
       "text": "ca6c93fc33fca52eecc7d38744bc86f619ea0b6a7bcc2314b84ca6c5399d8a1c"
     },
     "claims": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "3f84966346557b06af19b3c5a427b2a1cc7f2e9153692f42915bc653ad474146",
       "text": "bf1b24b85ecdaee84580c0d5ea4b9c1120b8dd072e38aa68b52e49fc2a0c472c"
     },
     "classes": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "fb220c44c405ce57f01ac99a53aa21a19581fb46b42b1d31be6a805b5e6a51cd",
       "text": "fdebe780b6e7964249b5c4bc4752908cbdd67722e4d4bb0a4b1f64d94cd15ea1"
     },
     "commands": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "f064ef5ca782bc626ec77b6ab59ca9c2d634a7534acb34a669c970f8dfb4b3c0",
       "text": "deb43c99022eb3fe2ccf7355ab726dd06531737319b93f376265cfe1479186fb"
     },
     "cosmetics": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "a9b894e8a6bacc3ec37bbcd4deff8e7ec4c95bf57e641eeb0cf69ea8d957a6bb",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "157c3f4cad5ec11a676d0245817101753f388b0de4f72cc597a7c37705349711",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
+    "disasters": {
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
+      "sources": "598a3432eba86ff469d5c3441a59800aa79a1212d23f4ee1b4f302911456dcf7",
+      "text": "98bf8335363c58e70a911141856fff3175d82b4e794accee8efc8613b38b8325"
+    },
     "economy": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "177265f960c7369da994885b06ec49b10d0076e84694fa58aab666f008508a46",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "dc93244fdc3f2a193745f3cdf29a89bfffaa2d624cde1130e2c1c58546bc2945",
       "text": "eb4d46a57319a2c56aed075ca386f6db0271d2df40e428db86c176cfc0e6c807"
     },
     "faq": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "255a70d53c345890b2ce00f55ca57c18309ce273ca3bcde8a2f7d18dea31982e",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "295fba06114d5951269c56dc143db4d27819663c3958e4afc543d1e71942534d",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "3f84966346557b06af19b3c5a427b2a1cc7f2e9153692f42915bc653ad474146",
       "text": "e166f2671aabcdf55ecf59d1465ddb19a36343f6d07983eb8b8821b3a63cce34"
     },
     "honors": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "b70e9f021c84c0bc812f001bbd0f0a81ceba8472001b065865ba4155a0f62526",
       "text": "6bc29d5a2d7783845f8b3d9b085e85982faec5b3029d841092386f36b1d4c4b0"
     },
     "hunt": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "10c9428b72e94297b25407d48883514f0c611ff5e06063c1b0fa85b70567aacf",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "3496b83594dfbe531a5a6c9d6c8cc74722deb4aae5d5d3ba7e13eeadca3fd65c",
       "text": "6a3b9fedc0d15e6ef23ae50e7bf41cdf79f9efcc79299101944c041b5c2d9222"
     },
     "menu": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "6695e5483d75203df5daba2bb3645b54fafda5275e7e3286387fda582e7d9de1",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "moderation": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "b70e9f021c84c0bc812f001bbd0f0a81ceba8472001b065865ba4155a0f62526",
       "text": "255b8cacb80c9ea7b1236f73feaa226a121bb9b58cff81fef2d46b65abae4073"
     },
     "orders": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "ae1bf321b9ab09292765b320ed096a64e9b9cdef7f038aae0ef4830c956d70df",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "perktree": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "fb220c44c405ce57f01ac99a53aa21a19581fb46b42b1d31be6a805b5e6a51cd",
       "text": "148006c785c6f0e5adf6725d87605f5e508b957636fdac87ea64939e7bd63b79"
     },
     "pets": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "2358011166027a07ebe7a01486014c0568915c10ade94612d9a443f23fdf57a0",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "7a8fd365bcedf7543747b44fdf3ee7da6c0441e20fa94bffd8bc62e9d9df7c9d",
       "text": "13e6d38670572890ab2567279a5ca76f8e353eab6ade09a877eee2e884c6e272"
     },
     "profile": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "02d83d69a9b04fffab92fa020a3e8ef94099d20510838846571fd8d3c5685e71",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "c66191947ca1adfdb91f1a11aaa6cc410da5bb80a2d3a011d550843a702111c3",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "67928dc388619388f1d9ee4270b8f75eda6c77202b7c48597e7858cbca5feaad",
       "text": "ab539f2c7c0119321d83bb9e12e09ba23d402df986d6639dbb1c11e2e47ea06d"
     },
     "shop": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "3496b83594dfbe531a5a6c9d6c8cc74722deb4aae5d5d3ba7e13eeadca3fd65c",
       "text": "974065393ff473ac12b0957c9b605b853df30b343c64029aa2fee650b198b861"
     },
     "skills": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "4554afccdcc95a0b68d28cad15f591b5cef2d861f39d7c970cafc5e9d284d563",
       "text": "7659c1d40dea79612d72ba929cbc47ce2fafc224c04a6a002cf8e0b27fa2a286"
     },
     "social-link": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "612a21b2ec6de9309f36109b429a00486e5ea0297e9f03f82ac96cdab8a7fd52",
       "text": "4c8cab4b751d6f98f2dfca7e7cd7e2770ee7f7000984ccc7c7b57ec8949a3ae4"
     },
     "start": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "14b42b321354a21585f53935db2293db145965c1bd3a6fc528b096096789da58",
       "text": "c2835fdf2d1945079115e6a252d472ce72ad9ad79f4ed47ad58e269b467d595f"
     },
     "teleports": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "16ef5b8d269a72f78c07bc90fab1bdaaa8115c867c3ef7612cf3bc78510167a3",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "dc93244fdc3f2a193745f3cdf29a89bfffaa2d624cde1130e2c1c58546bc2945",
       "text": "0bc7c3b4ed2ad0db4e441ebe12d0a0aef810740f727cda6b272d49f59f28b08c"
     },
     "titles": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "f69ec418afc0e90a4b496b17a034da416be892c11eb1982a092e30b2e9d58ab9",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "3496b83594dfbe531a5a6c9d6c8cc74722deb4aae5d5d3ba7e13eeadca3fd65c",
       "text": "eb314f009d0ec644bb7c5dabd99f1a8a860c14715813ddbcc41786e4c229c573"
     },
     "vk": {
-      "reason": "Неназойливые напоминания CHRDK_VK: общий часовой кулдаун, конфиг и вики social-link сверены",
+      "reason": "CHRDK_Disasters: софт-зависимость CHRDK_Claims изолирована в ClaimsHook, конфиг и тесты сверены",
       "sources": "612a21b2ec6de9309f36109b429a00486e5ea0297e9f03f82ac96cdab8a7fd52",
       "text": "94f2d5f3cf83ae414f1a577156884ae1329734bf55951e2707569c3ce923c199"
     }
