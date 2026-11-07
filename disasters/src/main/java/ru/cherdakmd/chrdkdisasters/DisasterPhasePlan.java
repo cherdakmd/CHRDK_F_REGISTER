@@ -39,7 +39,7 @@ public record DisasterPhasePlan(
 
     /** Равномерно раскладывает лимит блоков по активным тикам без хвостов. */
     public int budget(int total, int step) {
-        if (total <= 0 || activeTicks <= 0 || step < 0) {
+        if (total <= 0 || activeTicks <= 0 || step < 0 || step >= activeTicks) {
             return 0;
         }
         int base = total / activeTicks;
