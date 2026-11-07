@@ -9,6 +9,7 @@ import ru.cherdakmd.chrdkregister.ConfigUpgrader;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
+import ru.cherdakmd.chrdkregister.api.RankBonus;
 
 import java.util.Locale;
 
@@ -225,6 +226,61 @@ public final class SkillsPlugin extends JavaPlugin {
 
     public SkillEffects effects() {
         return effects;
+    }
+
+    /** Персональный дневной лимит дропа алмазов для онлайн-игрока. */
+    public int diamondDailyCap(Player player, RankBonus knownBonus) {
+        if (player == null) {
+            return config().diamonds().dailyCap();
+        }
+        return diamondDailyCap(player.getName(),
+                skills().totalLevel(player), skills().totalPrestige(player), knownBonus);
+    }
+
+    /**
+     * Тот же лимит для {@code /profile}: ранг, Pass, буст и entitlement читаются
+     * по имени, уровни и престиж — из {@code skills.json} по UUID, поэтому
+     * раздел работает и для оффлайн-игрока.
+     */
+    public int diamondDailyCap(String playerName, int totalLevel, int totalPrestige) {
+        return diamondDailyCap(playerName, totalLevel, totalPrestige, null);
+    }
+
+    private int diamondDailyCap(String playerName, int totalLevel, int totalPrestige,
+                                RankBonus knownBonus) {
+        DiamondCapMath.Settings settings = config().diamondCap();
+        return DiamondCapMath.compute(config().diamonds().dailyCap(), settings,
+                capContext(playerName, totalLevel, totalPrestige, settings, knownBonus));
+    }
+
+    private DiamondCapMath.Context capContext(String name, int totalLevel,
+                                             int totalPrestige,
+                                             DiamondCapMath.Settings settings,
+                                             RankBonus knownBonus) {
+        ChrdkRegisterApi api = coreApi();
+        RankBonus bonus = knownBonus == null ? RankBonus.NONE : knownBonus;
+        boolean pass = false;
+        boolean boost = false;
+        boolean entitlement = false;
+        if (api != null && name != null) {
+            try {
+                if (knownBonus == null) {
+                    bonus = api.rankBonus(name);
+                }
+                pass = api.hasActivePass(name);
+                boost = api.rewardBoostRemainingMillis(name) > 0L;
+                String productId = settings.entitlementId();
+                entitlement = !productId.isEmpty() && api.hasEntitlement(name, productId);
+            } catch (RuntimeException | LinkageError ignored) {
+                // Ядро недоступно или старше контракта: остаёмся на базовом лимите.
+            }
+        }
+        if (bonus == null) {
+            bonus = RankBonus.NONE;
+        }
+        return new DiamondCapMath.Context(
+                bonus.level(), bonus.xpPercent(), bonus.dropPercent(), bonus.extraSkill(),
+                totalPrestige, totalLevel, pass, boost, entitlement);
     }
 
     /** Тонкая обёртка: аддоны не видят внутренние классы и не могут сломать состояние. */

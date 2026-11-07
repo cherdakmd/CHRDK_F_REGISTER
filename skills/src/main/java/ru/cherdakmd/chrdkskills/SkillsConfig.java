@@ -51,6 +51,7 @@ public final class SkillsConfig {
     private final int prestigeDiamondsPerStep;
     private final boolean prestigeAnnounceTiers;
     private final DiamondDrops.Settings diamonds;
+    private final DiamondCapMath.Settings diamondCap;
     private final Set<String> excludedDropMaterials;
 
     private SkillsConfig(boolean enabled, boolean announce, boolean actionbar, boolean sounds,
@@ -62,7 +63,8 @@ public final class SkillsConfig {
                          boolean abilitiesHud, boolean prestigeEnabled,
                          double prestigeXpPerStep, double prestigePerkPerStep,
                          int prestigeDiamondsPerStep, boolean prestigeAnnounceTiers,
-                         DiamondDrops.Settings diamonds, Set<String> excludedDropMaterials) {
+                         DiamondDrops.Settings diamonds, DiamondCapMath.Settings diamondCap,
+                         Set<String> excludedDropMaterials) {
         this.abilitiesEnabled = abilitiesEnabled;
         this.abilitiesHud = abilitiesHud;
         this.enabled = enabled;
@@ -85,6 +87,7 @@ public final class SkillsConfig {
         this.prestigeDiamondsPerStep = prestigeDiamondsPerStep;
         this.prestigeAnnounceTiers = prestigeAnnounceTiers;
         this.diamonds = diamonds;
+        this.diamondCap = diamondCap;
         this.excludedDropMaterials = excludedDropMaterials;
     }
 
@@ -176,6 +179,20 @@ public final class SkillsConfig {
             excluded.add("DEEPSLATE_DIAMOND_ORE");
         }
 
+        DiamondCapMath.Settings capDefaults = DiamondCapMath.Settings.DEFAULT;
+        DiamondCapMath.Settings diamondCap = new DiamondCapMath.Settings(
+                cfg.getInt("diamonds.cap.per-rank-level", capDefaults.perRankLevel()),
+                cfg.getInt("diamonds.cap.per-rank-xp-percent", capDefaults.perRankXpPercent()),
+                cfg.getInt("diamonds.cap.per-rank-drop-percent", capDefaults.perRankDropPercent()),
+                cfg.getInt("diamonds.cap.per-rank-extra-skill", capDefaults.perRankExtraSkill()),
+                cfg.getInt("diamonds.cap.per-prestige", capDefaults.perPrestige()),
+                cfg.getInt("diamonds.cap.per-ten-levels", capDefaults.perTenLevels()),
+                cfg.getInt("diamonds.cap.pass-bonus", capDefaults.passBonus()),
+                cfg.getInt("diamonds.cap.reward-boost-bonus", capDefaults.boostBonus()),
+                cfg.getInt("diamonds.cap.entitlement-bonus", capDefaults.entitlementBonus()),
+                cfg.getString("diamonds.cap.entitlement-id", capDefaults.entitlementId()),
+                cfg.getInt("diamonds.cap.max", capDefaults.max()));
+
         return new SkillsConfig(enabled, announce, actionbar, sounds, countCreative,
                 refreshTicks, curve, xpRate, maxXp,
                 skills, Collections.unmodifiableMap(milestones), ttl, maxEntries, leaderboard,
@@ -184,7 +201,7 @@ public final class SkillsConfig {
                 clamp(cfg.getDouble("prestige.xp-per-step", 0.03), 0.0, 0.10),
                 clamp(cfg.getDouble("prestige.perk-per-step", 0.01), 0.0, 0.05),
                 (int) clamp(cfg.getLong("prestige.diamonds-per-step", 4L), 0L, 32L),
-                cfg.getBoolean("prestige.announce-tiers", true), diamonds,
+                cfg.getBoolean("prestige.announce-tiers", true), diamonds, diamondCap,
                 Collections.unmodifiableSet(excluded));
     }
 
@@ -315,6 +332,11 @@ public final class SkillsConfig {
     /** Формула физического дропа алмазов (потолки уже закламплены). */
     public DiamondDrops.Settings diamonds() {
         return diamonds;
+    }
+
+    /** Коэффициенты персонального дневного лимита (diamonds.cap.*). */
+    public DiamondCapMath.Settings diamondCap() {
+        return diamondCap;
     }
 
     /** Материалы блоков, с которых бонусный алмаз не падает. */

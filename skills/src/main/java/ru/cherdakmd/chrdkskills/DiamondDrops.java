@@ -18,7 +18,13 @@ public final class DiamondDrops {
     /** Потолки контракта: выше них конфиг поднять значения не может. */
     public static final double MAX_CHANCE_LIMIT = 0.50;
     public static final int MAX_AMOUNT_LIMIT = 16;
-    public static final int MAX_DAILY_CAP = 1024;
+    /**
+     * Жёсткий потолок персонального дневного лимита. С 7 ноября 2026 вырос
+     * с 1024 до 4096: лимит стал аддитивно зависеть от ранга, престижа и
+     * прочей прокачки (см. {@link DiamondCapMath}), и прежний потолок срезал бы
+     * верхние ступени. Конфиг всё равно не может пробить это значение.
+     */
+    public static final int MAX_DAILY_CAP = 4096;
     /** Сколько ступеней престижа вообще влияют на формулу. */
     public static final int MAX_PRESTIGE = 10;
 
@@ -58,9 +64,22 @@ public final class DiamondDrops {
             mobAmountBonus = (int) clamp(mobAmountBonus, 0, MAX_AMOUNT_LIMIT);
         }
 
+        /** База лимита 256 (было 64); сверху считается {@link DiamondCapMath}. */
         public static final Settings DEFAULT = new Settings(
                 true, 0.01, 0.04, 0.01, 0.03, 0.01, 0.20,
-                1, 2, 1, 4, 64, 1.5, 1);
+                1, 2, 1, 4, 256, 1.5, 1);
+
+        /**
+         * Персональный снимок настроек с подставленным дневным лимитом игрока.
+         * Шанс и количество не меняются — прокачка влияет только на дневной
+         * бюджет, а не на силу одного выпадения.
+         */
+        public Settings withDailyCap(int newCap) {
+            return new Settings(enabled, baseChance, levelChanceBonus,
+                    rankChancePerLevel, rankXpChanceBonus, prestigeChance, maxChance,
+                    baseAmount, levelAmountBonus, prestigeAmountBonus, maxAmount,
+                    newCap, mobChanceFactor, mobAmountBonus);
+        }
     }
 
     /** Результат одного броска. {@code amount == 0} — алмаз не выпал. */

@@ -148,13 +148,17 @@ public final class SkillListener implements Listener {
         if (bonus == null) {
             bonus = RankBonus.NONE;
         }
+        // Прокачка влияет только на дневной бюджет: шанс и количество за одно
+        // выпадение остаются прежними и по-прежнему зажаты потолками контракта.
+        DiamondDrops.Settings personal = settings.withDailyCap(
+                plugin.diamondDailyCap(player, bonus));
         DiamondDrops.Result result = DiamondDrops.roll(
                 service.level(player, skill),
                 plugin.config().curve().maxLevel(),
                 service.prestigeLevel(player, skill),
                 bonus.level(), bonus.xpPercent(), bonus.dropPercent(),
                 service.diamondDropsToday(player), mob,
-                random.nextDouble(), settings);
+                random.nextDouble(), personal);
         if (!result.dropped()) {
             return;
         }

@@ -75,6 +75,13 @@ final class SkillsProfile implements ChrdkRegisterApi.ProfileProvider {
                     "max", String.valueOf(PrestigeMath.MAX_TOTAL),
                     "title", Messages.trusted(PrestigeMath.tierFor(total).title())));
         }
+        // Персональный дневной лимит дропа: ранг, престиж, уровни и донатные
+        // бусты читаются по имени, поэтому строка работает и для оффлайн-игрока.
+        int personalCap = plugin.diamondDailyCap(context.playerName(), totalLevel, total);
+        int usedToday = plugin.store().diamondDropsToday(
+                context.playerId().toString(), DiamondDrops.today());
+        lines.add(messages.get("profile-diamond-cap",
+                "used", String.valueOf(usedToday), "cap", String.valueOf(personalCap)));
         lines.add(messages.get("ability-energy", "energy", plugin.abilities().energy(context.playerId()), "max", SkillAbility.MAX_ENERGY));
         return new ChrdkRegisterApi.ProfileSection(messages.raw("profile-title"),
                 Material.EXPERIENCE_BOTTLE, lines);
