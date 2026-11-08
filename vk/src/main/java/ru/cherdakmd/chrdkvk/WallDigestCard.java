@@ -113,12 +113,20 @@ public final class WallDigestCard {
             for (String line : body) {
                 rows.addAll(wrap(line, g.getFontMetrics(bodyFont), 730));
             }
+            if (rows.size() > 10) {
+                // Очень длинные имена лидеров: уменьшаем кегль, а не обрезаем отчёт.
+                bodyFont = font("/assets/DejaVuSans.ttf", Font.PLAIN, 22f);
+                rows = new ArrayList<>();
+                for (String line : body) {
+                    rows.addAll(wrap(line, g.getFontMetrics(bodyFont), 760));
+                }
+            }
             int step = rows.size() > 8 ? 28 : rows.size() > 6 ? 32 : 38;
             int start = rows.size() > 6 ? 326 : rows.size() >= 5 ? 350 : 380;
-            start = Math.max(start, y + 24);
+            start = Math.max(start, y + 16);
             if (start + rows.size() * step > 604) {
                 // Длинные имена лидеров не должны лишать сервер суточного поста.
-                step = Math.max(22, (604 - start) / Math.max(1, rows.size()));
+                step = Math.max(16, (604 - start) / Math.max(1, rows.size()));
             }
             if (start + rows.size() * step > 604) {
                 throw new IOException("Подпись дайджеста перекрывает подвал карточки");
