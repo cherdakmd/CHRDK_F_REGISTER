@@ -64,6 +64,7 @@ messages:
   # Новая схема финансов: старые пользовательские shop.* не подменяют цену за партию.
   "trading":
     "market-busy": "<yellow>Рынок зарезервирован незавершённой сделкой. Учёт запасов и лимитов восстановится по её сохранённой квитанции. Диагностика: /shopadmin recovery.</yellow>"
+    "promo-bonus-paid": "<gold>Акция дня: </gold><yellow>+%bonus% ⛁</yellow><gold> к выплате за эту сделку.</gold>"
     "recovery-status": "<gray>Магазин: исправен %healthy% · привязка Core %binding% · market %market% · sequence %sequence% · pending %pending% · владелец %owner% · Core %bank%. Команда ничего не выдаёт и не удаляет.</gray>"
     "pending": "<yellow>Сделка сохранена, но ещё не подтверждена целиком. Рынок временно зарезервирован до восстановления. Не выдавайте деньги или товары вручную и не удаляйте журнал.</yellow>"
     "storage-unavailable": "<red>Хранилище магазина остановлено после ошибки чтения или записи. Изменение запасов запрещено. Сохраните shop-data.json и согласованные резервные копии для сверки; reload не снимает блокировку.</red>"
@@ -129,6 +130,8 @@ messages:
         - "<yellow>ЛКМ — купить 1 партию | Shift+ЛКМ — 16 партий</yellow>"
         - "<yellow>ПКМ — продать 1 партию | Shift+ПКМ — 16 партий</yellow>"
       "admin-edit": "<light_purple>✎ Редактор каталога</light_purple> <dark_gray>(/shopadmin edit)</dark_gray>"
+      "promo-line": "<gold>Акция дня: %type%</gold> <gray>· товары: %items% · осталось бонуса: %left% ⛁</gray>"
+      "promo-tag": "<gold>★ Товар дня</gold>"
   "admin":
     "usage": "<gray>/shopadmin stock <товар> [значение] | top | reload | recovery | audit | edit [страница] | set <товар> <поле> <значение> | remove <товар> | restore <товар> | cap [игрок]</gray>"
     "stock-info": "<gray>%material%: запас %stock%</gray>"

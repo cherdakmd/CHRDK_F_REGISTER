@@ -191,6 +191,9 @@ public final class ShopCommandHandler implements TabExecutor {
                     "material", item.material().toLowerCase(Locale.ROOT), "units", result.units(),
                     "income", result.money(),
                     "balance", plugin.shopService().balance(player), "physical", plugin.shopService().physical(player));
+            if (result.bonus() > 0) {
+                plugin.messages().send(player, "trading.promo-bonus-paid", "bonus", result.bonus());
+            }
         } else {
             plugin.messages().send(player, result.errorKey() == null ? "trading.invalid-number" : result.errorKey(),
                     "cost", result.money(), "limit", plugin.shopService().dailyLimit(player),
@@ -210,6 +213,9 @@ public final class ShopCommandHandler implements TabExecutor {
                 "kinds", result.kinds(), "units", result.units(),
                 "income", result.income(), "remainder", plugin.shopService().saleRemainder(player),
                 "balance", plugin.shopService().balance(player), "physical", plugin.shopService().physical(player));
+        if (result.bonus() > 0) {
+            plugin.messages().send(player, "trading.promo-bonus-paid", "bonus", result.bonus());
+        }
     }
 
     private void handleStats(CommandSender sender) {

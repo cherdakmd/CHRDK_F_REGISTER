@@ -153,6 +153,11 @@ public final class ShopGui implements Listener {
                     "ref", item.refStock()));
             lore.add(plugin.messages().get("trading.gui.item-id",
                     "id", item.material().toLowerCase(Locale.ROOT)));
+            ShopPromoService promos = service.promos();
+            if (promos != null && promos.enabled()
+                    && promos.plan(now).featured().contains(item.material())) {
+                lore.add(plugin.messages().get("trading.gui.promo-tag"));
+            }
             meta.lore(lore);
             icon.setItemMeta(meta);
         }
@@ -166,8 +171,18 @@ public final class ShopGui implements Listener {
             ShopService service = plugin.shopService();
             meta.displayName(plugin.messages().get("trading.gui.balance-name",
                     "balance", service.balance(player)));
-            meta.lore(List.of(plugin.messages().get("trading.gui.balance-lore",
-                    "turnover", PriceEngine.round(service.store().turnover()), "physical", service.physical(player))));
+            List<Component> lore = new ArrayList<>();
+            lore.add(plugin.messages().get("trading.gui.balance-lore",
+                    "turnover", PriceEngine.round(service.store().turnover()), "physical", service.physical(player)));
+            ShopPromoService promos = service.promos();
+            if (promos != null && promos.enabled()) {
+                long now = System.currentTimeMillis();
+                lore.add(plugin.messages().get("trading.gui.promo-line",
+                        "type", promos.typeLabel(now),
+                        "items", promos.featuredLabel(now),
+                        "left", promos.remaining(player.getUniqueId(), now)));
+            }
+            meta.lore(lore);
             icon.setItemMeta(meta);
         }
         return icon;

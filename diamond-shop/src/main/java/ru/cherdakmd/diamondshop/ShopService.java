@@ -18,13 +18,22 @@ public final class ShopService {
     private final Supplier<ru.cherdakmd.chrdkskills.ChrdkSkillsApi> skillsApi;
     private final Map<String,Integer> batches;
     private final Map<String,RecipeEconomy.Cost> recipeFloors;
+    /** {@code null} в старых вызовах и юнит-тестах — акции честно выключены. */
+    private final ShopPromoService promos;
     public ShopService(ShopConfig.ShopConfigData config, ShopStore store, Supplier<ChrdkRegisterApi> api) {
-        this(config, store, api, () -> null);
+        this(config, store, api, () -> null, null);
     }
     /** Конструктор с мягким чтением престижа из CHRDK_Skills; без аддона — база лимита. */
     public ShopService(ShopConfig.ShopConfigData config, ShopStore store, Supplier<ChrdkRegisterApi> api,
                        Supplier<ru.cherdakmd.chrdkskills.ChrdkSkillsApi> skillsApi) {
+        this(config, store, api, skillsApi, null);
+    }
+    /** Полная сборка плагина: дневные акции вычисляются внутри обычной сделки. */
+    public ShopService(ShopConfig.ShopConfigData config, ShopStore store, Supplier<ChrdkRegisterApi> api,
+                       Supplier<ru.cherdakmd.chrdkskills.ChrdkSkillsApi> skillsApi,
+                       ShopPromoService promos) {
         this.config = config; this.store = store; this.api = api; this.skillsApi = skillsApi;
+        this.promos = promos;
         var minimum = new HashMap<String,RecipeEconomy.Cost>();
         config.currencyRates().forEach((m,v)->minimum.put(m,RecipeEconomy.Cost.of(v)));
         for (var item : config.items()) minimum.put(item.material(), RecipeEconomy.Cost.of(
@@ -51,6 +60,8 @@ public final class ShopService {
     }
     public ShopConfig.ShopConfigData config() { return config; }
     public ShopStore store() { return store; }
+    /** Дневные акции или {@code null}, если аддон собран без них (тесты/старые вызовы). */
+    public ShopPromoService promos() { return promos; }
 
     /**
      * Персональный дневной лимит оборота игрока в целых алмазах.
@@ -197,7 +208,14 @@ public final class ShopService {
     }
     private static boolean plain(ItemStack item) { return item != null && !item.getType().isAir() && !item.hasItemMeta() && item.getAmount() > 0 && item.getAmount() <= item.getMaxStackSize(); }
     private static ItemStack[] copy(ItemStack[] items) { return Arrays.stream(items).map(i -> i == null ? null : i.clone()).toArray(ItemStack[]::new); }
-    public record TradeResult(boolean success, long money, String errorKey, long units, long bankPaid, long physicalPaid, long change) { }
+    public record TradeResult(boolean success, long money, String errorKey, long units,
+                              long bankPaid, long physicalPaid, long change, long bonus) {
+        /** Прежний контракт без акций: бонус равен нулю. */
+        public TradeResult(boolean success, long money, String errorKey, long units,
+                           long bankPaid, long physicalPaid, long change) {
+            this(success, money, errorKey, units, bankPaid, physicalPaid, change, 0);
+        }
+    }
     private static TradeResult fail(String key, long money) { return new TradeResult(false, money, key, 0, 0, 0, 0); }
 
     /** Количество — штуки, не партии. Полная эталонная партия сохраняет прежнюю цену. */
@@ -225,6 +243,50 @@ public final class ShopService {
         long money=carry ? exact.money() : TradeAmounts.quote(batch,price,units,buy);
         if(money<0 || money>WholeTrades.MAX)return fail("trading.invalid-number",0);
         if(money==0 && !carry)return fail("quantity.too-small",0);
+        long now = System.currentTimeMillis();
+        double limit = dailyLimit(player); // один снимок прокачки на всю сделку
+        // Дневная акция добавляет алмазы ВНУТРЬ этой же сделки: WAL, журнал и
+        // дневной оборот видят одну выплату, отдельной эмиссии не существует.
+        ShopPromoService.Bonus promo = ShopPromoService.Bonus.none();
+        if (!buy && promos != null && money > 0) {
+            long askTotal = ShopPromoMath.askTotal(askPrice(item), batch, units);
+            double used = store.usedToday(player.getUniqueId(), now);
+            long headroom = limit > 0
+                    ? (long) Math.max(0, Math.floor(limit - used - money))
+                    : WholeTrades.MAX;
+            promo = promos.quote(player.getUniqueId(), item, money, askTotal, units, headroom, now);
+            long extra = promo.amount();
+            if (extra > 0) {
+                if (carry) {
+                    // validRemainder() пересчитывает выплату из salePrice, поэтому
+                    // в сделках с переносом остатка бонус входит в цену партии.
+                    long perLot = Math.min(extra / ShopPromoMath.lots(batch, units),
+                            Math.max(0, WholeTrades.MAX - price));
+                    if (perLot > 0) {
+                        long effectivePrice = price + perLot;
+                        try {
+                            exact = ShopSaleRemainder.quote(remainderBefore, batch, effectivePrice, units);
+                        } catch (RuntimeException error) {
+                            return fail("trading.unavailable", money);
+                        }
+                        long raised = exact.money();
+                        long actual = raised - money;
+                        if (actual > 0 && raised <= WholeTrades.MAX) {
+                            money = raised;
+                            price = effectivePrice;
+                            promo = promo.withAmount(Math.min(actual, extra));
+                        } else {
+                            promo = ShopPromoService.Bonus.none();
+                        }
+                    } else {
+                        promo = ShopPromoService.Bonus.none();
+                    }
+                } else {
+                    money += extra;
+                }
+                if (money > WholeTrades.MAX) return fail("trading.invalid-number", money);
+            }
+        }
         var spec = item.spec();
         Material material = spec == null ? Material.matchMaterial(item.material()) : null;
         if (spec == null && (material == null || !material.isItem())) return fail("trading.unknown-item", 0);
@@ -255,8 +317,6 @@ public final class ShopService {
             if (spec != null ? !removeBooks(after, spec, units) : !remove(after, material, units))
                 return fail("quantity.not-enough-items", money);
         }
-        long now = System.currentTimeMillis();
-        double limit = dailyLimit(player); // один снимок прокачки на всю сделку
         if (money>0 && !store.canRecordTurnover(player.getUniqueId(), money, limit, now)) return fail(store.legacyAvailable() ? "trading.daily-limit" : "trading.unavailable", money);
         var frozenRates=new LinkedHashMap<String,Integer>();
         config.currencyRates().forEach((key,value)->{ var m=Material.matchMaterial(key); if(m!=null&&m.isItem()&&m.name().equals(key)) frozenRates.put(key,value); });
@@ -276,9 +336,18 @@ public final class ShopService {
             if(store.pending()!=null||!store.legacyAvailable()) { lock(player); return fail("trading.pending",money); }
             return fail("trading.unavailable",money);
         }
-        return new TradeResult(true, money, null, units, debit, spent, change);
+        // Прогресс акций копится на каждой ПРОДАЖЕ, даже если бонус сегодня не
+        // выпал. Покупки в зачёт не идут: иначе заказ/серию можно было бы закрыть,
+        // просто купив товар в магазине.
+        if (!buy && promos != null) {
+            promos.record(player.getUniqueId(), item.material(), units, promo, now);
+        }
+        return new TradeResult(true, money, null, units, debit, spent, change, promo.amount());
     }
-    public record SellAllResult(long income, long units, int kinds) { }
+    public record SellAllResult(long income, long units, int kinds, long bonus) {
+        /** Прежний контракт без акций. */
+        public SellAllResult(long income, long units, int kinds) { this(income, units, kinds, 0); }
+    }
     private TradeAmounts.Sale maximumSalePlan(Player player,ShopConfig.ShopItem item,int batch,long bid) {
         if (!item.sellEnabled() || config.item(item.material()).filter(item::equals).isEmpty()) return null;
         long budget=Math.max(0,WholeTrades.MAX-balance(player));
@@ -316,15 +385,15 @@ public final class ShopService {
         return units==0 ? fail("quantity.sellall-none",0) : trade(player,item,units,false,batch,price,true);
     }
     public SellAllResult sellAll(Player player) {
-        long total=0,units=0;int kinds=0;
+        long total=0,units=0;int kinds=0;long bonus=0;
         for(var item:config.items()){
             if (!item.sellEnabled()) continue;
             if(!ready(player)||player.getGameMode()!=GameMode.SURVIVAL)break;
             var result=sellAllUnits(player,item);
-            if(result.success()){total+=result.money();units+=result.units();kinds++;}
+            if(result.success()){total+=result.money();units+=result.units();kinds++;bonus+=result.bonus();}
             else if(store.pending()!=null||!store.legacyAvailable())break;
         }
-        return new SellAllResult(total,units,kinds);
+        return new SellAllResult(total,units,kinds,bonus);
     }
     public static long countItems(PlayerInventory inventory, Material material) {
         long count = 0; for (var stack : inventory.getStorageContents()) if (plain(stack) && stack.getType() == material) count += stack.getAmount(); return count;
