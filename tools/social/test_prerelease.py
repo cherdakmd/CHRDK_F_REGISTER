@@ -93,6 +93,32 @@ class PrereleaseTest(unittest.TestCase):
             with self.assertRaises(SafetyError):
                 prerelease.configured()
 
+    def test_recording_transport_keeps_only_field_names(self):
+        transport = prerelease.RecordingTransport()
+        with patch.object(prerelease.Transport, 'request',
+                          return_value={'photo': 'secret', 'hash': 'secret', 'server': 1}):
+            result = transport.request('https://example.invalid/upload', 'POST', b'x',
+                                       {'Content-Type': 'multipart/form-data; boundary=x'})
+        self.assertEqual(sorted(result.keys()), transport.upload_keys)
+        self.assertNotIn('secret', str(transport.upload_keys))
+
+    def test_publish_retries_three_times_without_changing_the_post(self):
+        class VKWithTransport(FakeVK):
+            transport = type('T', (), {'upload_keys': ['error_code', 'error_msg']})()
+
+        failures = [SafetyError('загрузка не подтверждена')] * 2
+        with patch.object(prerelease, 'configured', return_value=(object(), VKWithTransport())), \
+             patch.object(prerelease, 'publish_announcement',
+                          side_effect=failures + [(777, True)]) as mocked, \
+             patch.object(prerelease.time, 'sleep') as sleeper:
+            rc = prerelease.main(['--publish', '--tag', TAG, '--version', VERSION])
+        self.assertEqual(rc, 0)
+        self.assertEqual(mocked.call_count, 3)
+        self.assertEqual(sleeper.call_count, 2)
+        first = mocked.call_args_list[0]
+        self.assertEqual(first.kwargs['gh'], mocked.call_args_list[2].kwargs['gh'])
+        self.assertIs(first.args[0], mocked.call_args_list[2].args[0])
+
 
 if __name__ == '__main__':
     unittest.main()

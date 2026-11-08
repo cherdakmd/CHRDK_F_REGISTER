@@ -23,16 +23,34 @@ import os
 import re
 import sys
 import tempfile
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
 from cards import render
 from content import MOSCOW, ROOT, Post, SafetyError
-from publisher import GitHub, Ledger, VK, publish
+from publisher import GitHub, Ledger, Transport, VK, publish
 
 TAG = re.compile(r'vk-v1\.\d+\.\d+-rc\.[1-9]\d*')
 VERSION = re.compile(r'1\.\d+\.\d+-rc\.[1-9]\d*')
 REPOSITORY = 'cherdakmd/CHRDK_F_REGISTER'
+MAX_ATTEMPTS = 3
+RETRY_SECONDS = 15
+
+
+class RecordingTransport(Transport):
+    """Запоминает только имена полей ответа загрузчика, никогда не значения."""
+
+    def __init__(self):
+        super().__init__()
+        self.upload_keys = None
+
+    def request(self, url, method='GET', data=None, headers=None):
+        result = super().request(url, method, data, headers)
+        if method == 'POST' and 'multipart/form-data' in (headers or {}).get('Content-Type', ''):
+            self.upload_keys = (sorted(result.keys()) if isinstance(result, dict)
+                               else [type(result).__name__])
+        return result
 
 
 def note_for(version, root=ROOT):
@@ -103,7 +121,8 @@ def configured():
         raise SafetyError('Нужен VK_NEWS_PEER_ID беседы для бота')
     if not gh_token or not repository:
         raise SafetyError('Нужны GH_TOKEN и GITHUB_REPOSITORY для журнала дедупликации')
-    return GitHub(repository, gh_token), VK(int(group), token, peer=int(peer))
+    return GitHub(repository, gh_token), VK(int(group), token, peer=int(peer),
+                                           transport=RecordingTransport())
 
 
 def publish_announcement(post, image, *, gh, vk, ledger=None):
@@ -128,7 +147,19 @@ def main(argv=None):
         print(post.text)
         return 0
     gh, vk = configured()
-    message_id, created = publish_announcement(post, image, gh=gh, vk=vk)
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        try:
+            message_id, created = publish_announcement(post, image, gh=gh, vk=vk)
+            break
+        except SafetyError as error:
+            keys = getattr(getattr(vk, 'transport', None), 'upload_keys', None)
+            if keys:
+                print('Ответ загрузчика (только имена полей): ' + ', '.join(keys), file=sys.stderr)
+            if attempt == MAX_ATTEMPTS:
+                raise
+            print(f'Попытка {attempt} из {MAX_ATTEMPTS} не удалась: {error}; '
+                  f'повтор через {RETRY_SECONDS} с.', file=sys.stderr)
+            time.sleep(RETRY_SECONDS)
     print(('Отправлено в беседу: ' if created else 'Уже отправлено в беседу: ') + str(vk.peer)
           + f' (id {message_id})')
     return 0

@@ -71,11 +71,20 @@ jobs:
             echo "Тег $tag не соответствует версии $version" >&2
             exit 1
           fi
+          mode='full'
           if gh release view "$tag" >/dev/null 2>&1; then
-            echo "Релиз $tag уже существует: перевыпуск запрещён" >&2
-            exit 1
+            # Повторный запуск того же тега: релиз и ассет не переписываем,
+            # досылаем только объявление (например после сбоя загрузчика ВК).
+            state="$(gh release view "$tag" --json isPrerelease,assets \
+                     --jq '[.isPrerelease, (.assets | length), .assets[0].name] | @tsv')"
+            read -r is_prerelease count asset <<< "$state"
+            if [[ "$is_prerelease" != "true" || "$count" != "1" || "$asset" != "chrdk-vk-$version.jar" ]]; then
+              echo "Релиз $tag уже есть, но это не наш пререлиз с одним ассетом: $state" >&2
+              exit 1
+            fi
+            mode='announce-only'
           fi
-          if [[ "$event" != "push" ]] && gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$tag" >/dev/null 2>&1; then
+          if [[ "$mode" == "full" && "$event" != "push" ]] && gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$tag" >/dev/null 2>&1; then
             echo "Тег $tag уже существует без релиза: проверьте вручную" >&2
             exit 1
           fi
@@ -86,13 +95,16 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "announce=$announce" >> "$GITHUB_OUTPUT"
-          echo "Собираем CHRDK_VK $version → $tag из $GITHUB_SHA (объявление: $announce)"
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+          echo "CHRDK_VK $version → $tag из $GITHUB_SHA: режим $mode (объявление: $announce)"
 
       - name: Build only :vk:jar
+        if: steps.meta.outputs.mode == 'full'
         shell: bash
         run: ./gradlew :vk:jar -Pplugin_version='${{ steps.meta.outputs.version }}' --no-daemon
 
       - name: Verify standalone JAR and bundled poster assets
+        if: steps.meta.outputs.mode == 'full'
         shell: bash
         run: |
           set -euo pipefail
@@ -122,6 +134,7 @@ jobs:
             --version '${{ steps.meta.outputs.version }}'
 
       - name: Create prerelease with exactly one asset
+        if: steps.meta.outputs.mode == 'full'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
