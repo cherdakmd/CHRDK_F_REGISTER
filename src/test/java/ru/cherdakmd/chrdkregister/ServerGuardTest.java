@@ -61,11 +61,15 @@ class ServerGuardTest {
         return new AsyncPlayerPreLoginEvent("Player",InetAddress.getByName(ip),id,false,profile);
     }
     @Test void authenticatedOpStillCannotUseAttackCommands() {
-        var guard=guard();var client=client("192.0.2.1");authenticated.add(client.player.getUniqueId());
+        var attempts=new ArrayList<BlockedCommandAttempt>();var guard=auditedGuard(attempts);
+        var client=client("192.0.2.1");authenticated.add(client.player.getUniqueId());
         for(String raw:List.of("/minecraft:fill 0 0 0 1 1 1 air","/execute run op Player","/gamerule random_tick_speed 2147483647","/title @a times 2s 9999d 9999d")) {
             var e=command(client,raw,false);guard.onCommand(e);assertTrue(e.isCancelled());
         }
-        assertEquals(0,client.kicks.get());assertEquals(4,client.messages.size());
+        assertEquals(0,client.kicks.get());
+        // Все четыре запрещены даже для OP; чат и аудит ограничены квотой burst=3.
+        assertEquals(3,client.messages.size());assertEquals(3,attempts.size());
+        assertEquals("fill",attempts.getFirst().root());assertEquals("execute",attempts.get(1).root());
     }
     @Test void cancelledPreAuthCommandsStillConsumeSpamQuota() {
         config.set("security.unauthenticated-command-burst",2);
