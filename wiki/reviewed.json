@@ -41,8 +41,8 @@
       "text": "fdebe780b6e7964249b5c4bc4752908cbdd67722e4d4bb0a4b1f64d94cd15ea1"
     },
     "commands": {
-      "reason": "Дневные акции /shop: три типа, UTC-ротация, бонус внутри сделки и потолки сверены",
-      "sources": "3cbcf926b5863d8b98fb6b3a87f505e36b447d24b945eb5b85702b0a76ec3a6a",
+      "reason": "Дневные акции /shop: три типа акций, UTC-ротация, бонус внутри сделки, потолки и GUI сверены с кодом и документацией",
+      "sources": "7a0b90a82bebf4e8f7c6cd24699474d17ad7560fd0a1a038ed4f4d60b9e19dc0",
       "text": "13b15e747e5e4aa93ff7ed9ce580f47e2c7952f5f319b46c6e854fc3eaec3252"
     },
     "cosmetics": {
@@ -61,8 +61,8 @@
       "text": "dd99cd1f21290668ef4d7c8ead28497aa0f50dc4ffd34ee6d8e9f02a0d013d9b"
     },
     "economy": {
-      "reason": "Дневные акции /shop: три типа, UTC-ротация, бонус внутри сделки и потолки сверены",
-      "sources": "a236f373989132719f05c03ae16ab82eb702cf661d29c96876644f78d3d087d9",
+      "reason": "Дневные акции /shop: три типа акций, UTC-ротация, бонус внутри сделки, потолки и GUI сверены с кодом и документацией",
+      "sources": "5a020b25af98af03d672aa39e8ba9bc95c666bdf990d71c373f1d656efa08dbf",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
@@ -71,8 +71,8 @@
       "text": "eb4d46a57319a2c56aed075ca386f6db0271d2df40e428db86c176cfc0e6c807"
     },
     "faq": {
-      "reason": "Дневные акции /shop: три типа, UTC-ротация, бонус внутри сделки и потолки сверены",
-      "sources": "10d6d0906147cd875c44a0ca56943fcdcb644c8e1633097036eb30d06a541ec0",
+      "reason": "Дневные акции /shop: три типа акций, UTC-ротация, бонус внутри сделки, потолки и GUI сверены с кодом и документацией",
+      "sources": "b2bb00dac8e38f5f22900f632dc1d047136ed4d145da7b2596a471b78866168c",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
@@ -96,13 +96,13 @@
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "Дневные акции /shop: три типа, UTC-ротация, бонус внутри сделки и потолки сверены",
-      "sources": "2811b3fc73d6a1c57a302cf3121be3cf85aaf3a193dc7b3c1db9cbddeb1ef4d9",
+      "reason": "Дневные акции /shop: три типа акций, UTC-ротация, бонус внутри сделки, потолки и GUI сверены с кодом и документацией",
+      "sources": "6ecdf18849b2074e082cae0c5199a71c5e50650e691f6cf9a0284a2b3bdd4b61",
       "text": "6a3b9fedc0d15e6ef23ae50e7bf41cdf79f9efcc79299101944c041b5c2d9222"
     },
     "menu": {
-      "reason": "Дневные акции /shop: три типа, UTC-ротация, бонус внутри сделки и потолки сверены",
-      "sources": "9087ac50fccedb26ee0a044c260d5ed3fd689ec145a7f6bf59c3f35e2d2e0bdf",
+      "reason": "Дневные акции /shop: три типа акций, UTC-ротация, бонус внутри сделки, потолки и GUI сверены с кодом и документацией",
+      "sources": "2ae6dd319051d1d6ca163213f5234c294d939c52dc369763bb793b3403cf60db",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "moderation": {
@@ -146,8 +146,8 @@
       "text": "b551d73e8dcc85c81ff7c908f7c89e1ebfb441b46d082a6a714124d77bfbb2c2"
     },
     "shop": {
-      "reason": "Дневные акции /shop: три типа, UTC-ротация, бонус внутри сделки и потолки сверены",
-      "sources": "2811b3fc73d6a1c57a302cf3121be3cf85aaf3a193dc7b3c1db9cbddeb1ef4d9",
+      "reason": "Дневные акции /shop: три типа акций, UTC-ротация, бонус внутри сделки, потолки и GUI сверены с кодом и документацией",
+      "sources": "6ecdf18849b2074e082cae0c5199a71c5e50650e691f6cf9a0284a2b3bdd4b61",
       "text": "4986d30ec383f17724d97e008bd348b364f9dceaa183eb1b4b6000114fd04408"
     },
     "skills": {
@@ -186,8 +186,8 @@
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Дневные акции /shop: три типа, UTC-ротация, бонус внутри сделки и потолки сверены",
-      "sources": "2811b3fc73d6a1c57a302cf3121be3cf85aaf3a193dc7b3c1db9cbddeb1ef4d9",
+      "reason": "Дневные акции /shop: три типа акций, UTC-ротация, бонус внутри сделки, потолки и GUI сверены с кодом и документацией",
+      "sources": "6ecdf18849b2074e082cae0c5199a71c5e50650e691f6cf9a0284a2b3bdd4b61",
       "text": "90f21fd47306990d69f9357b5a1a968a950c724efa66031eb71c2e9baef3d900"
     },
     "vk": {
