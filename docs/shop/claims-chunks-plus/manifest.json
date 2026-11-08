@@ -1,0 +1,42 @@
+{
+  "id": "claims-chunks-plus",
+  "name": "+8 чанков привата навсегда",
+  "name_minimessage": "<aqua>+8 чанков привата навсегда</aqua>",
+  "price_rub": 159,
+  "currency": "RUB",
+  "purchase_type": "one-time",
+  "bonus_chunks": 8,
+  "permanent": true,
+  "renewal_required": false,
+  "catalog_days": 30,
+  "catalog_days_note": "Обязательное техническое поле ShopCatalog, а не срок действия бонуса. Суммарный горизонт записей — 365 дней (до 12 покупок).",
+  "storage": "claims-data.json → bonus-chunks",
+  "grant_command": "pass shopbuy %username% claims-chunks-plus",
+  "internal_command": "claimadmin chunks %player% add 8",
+  "admin_commands": [
+    "claimadmin chunks <ник>",
+    "claimadmin chunks <ник> add <n>",
+    "claimadmin chunks <ник> set <n>",
+    "claimadmin chunks <ник> сброс"
+  ],
+  "player_commands": ["/claim buy [x z]", "/claim menu", "/claim balance"],
+  "trademc_export": false,
+  "trademc_cards_total": 26,
+  "image": "claims-chunks-plus.png",
+  "image_size": [1200, 1200],
+  "image_alt": "Изометрическая платформа чанков: восемь новых чанков светятся зелёным и золотым внутри изумрудной границы привата на фиолетовом космическом фоне",
+  "plugin_version": "1.5.2-rc.4",
+  "api_version": 42,
+  "branch": "arena/35241455-chrdk-f-register",
+  "distribution": "repository (commit), без нового тега, пререлиза и Release CI",
+  "files": [
+    "README.md",
+    "name.txt",
+    "command.txt",
+    "description.md",
+    "product.yml",
+    "manifest.json",
+    "claims-chunks-plus.png",
+    "SHA256SUMS.txt"
+  ]
+}

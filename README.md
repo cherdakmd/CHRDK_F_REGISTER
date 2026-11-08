@@ -33,6 +33,12 @@
 Админская сверка: `/claimadmin chunks <ник> [add <n>|set <n>|сброс]`.
 Команда `claimadmin` уже закрыта для игроков `console-only-commands`.
 
+**Материалы для витрины.** Готовый набор — картинка 1200×1200, название, команда
+выдачи и подробное описание — лежит в
+[`docs/shop/claims-chunks-plus-kit.zip`](docs/shop/claims-chunks-plus-kit.zip)
+(исходники: [`docs/shop/claims-chunks-plus/`](docs/shop/claims-chunks-plus/)).
+Скачивание с GitHub — по прямой ссылке на файл в ветке, без нового тега и релиза.
+
 **Без bump версии, тега и релиза:** `plugin_version=1.5.2-rc.4`, `API_VERSION=42`,
 `v1.5.2-rc.4` и ассеты не тронуты. Живой сервер, RCON и TradeMC не проверялись.
 [Аудит и границы](docs/CLAIMS_AUDIT.md).
