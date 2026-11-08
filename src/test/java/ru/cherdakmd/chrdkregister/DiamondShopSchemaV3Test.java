@@ -135,8 +135,10 @@ final class DiamondShopSchemaV3Test {
         assertEquals(16, live.getInt("promotions.series-reward"));
         assertEquals(32, live.getInt("promotions.max-bonus-per-trade"));
         assertEquals(128, live.getInt("promotions.max-bonus-per-player-per-day"));
-        assertEquals(248, live.getConfigurationSection("items").getKeys(false).size(),
-                "каталог владельца остался на месте");
+        // Каталог магазина — СПИСОК из 248 записей, а не секция YAML.
+        List<?> items = live.getList("items");
+        assertNotNull(items, "каталог владельца остался на месте");
+        assertEquals(248, items.size(), "каталог владельца остался на месте");
     }
 
     @Test
