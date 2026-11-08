@@ -5,7 +5,13 @@ name: VK plugin prerelease
 # (if: startsWith(tag_name, 'v1.')) его не собирает и не прикладывает
 # chrdk-plugins-*.zip + chrdk-disasters-*.jar. plugin_version в
 # gradle.properties не меняется: версию получает только этот JAR.
+#
+# Основной триггер — push тега vk-v*. Workflow берётся из самого тега,
+# поэтому не требует добавления файла в main. workflow_dispatch оставлен
+# для будущих запусков, когда workflow окажется в default branch.
 on:
+  push:
+    tags: ['vk-v*']
   workflow_dispatch:
     inputs:
       version:
@@ -40,21 +46,37 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Resolve version and check that the tag is free
+      - name: Resolve version and check release state
         id: meta
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          version='${{ inputs.version }}'
+          event='${{ github.event_name }}'
+          if [[ "$event" == "push" ]]; then
+            tag="$GITHUB_REF_NAME"
+            version="${tag#vk-v}"
+            announce='true'
+          else
+            version='${{ inputs.version }}'
+            tag="vk-v$version"
+            announce='${{ inputs.announce }}'
+          fi
           if [[ ! "$version" =~ ^1\.[0-9]+\.[0-9]+-rc\.[1-9][0-9]*$ ]]; then
             echo "Нужен RC-формат вида 1.5.2-rc.5, получено: $version" >&2
             exit 1
           fi
-          tag="vk-v$version"
-          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$tag" >/dev/null 2>&1; then
-            echo "Тег $tag уже существует: перевыпуск запрещён" >&2
+          if [[ "$tag" != "vk-v$version" ]]; then
+            echo "Тег $tag не соответствует версии $version" >&2
+            exit 1
+          fi
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Релиз $tag уже существует: перевыпуск запрещён" >&2
+            exit 1
+          fi
+          if [[ "$event" != "push" ]] && gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$tag" >/dev/null 2>&1; then
+            echo "Тег $tag уже существует без релиза: проверьте вручную" >&2
             exit 1
           fi
           if [[ ! -f "docs/releases/vk-$version.md" ]]; then
@@ -63,7 +85,8 @@ jobs:
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          echo "Собираем CHRDK_VK $version → $tag из $GITHUB_SHA"
+          echo "announce=$announce" >> "$GITHUB_OUTPUT"
+          echo "Собираем CHRDK_VK $version → $tag из $GITHUB_SHA (объявление: $announce)"
 
       - name: Build only :vk:jar
         shell: bash
@@ -107,11 +130,13 @@ jobs:
           version='${{ steps.meta.outputs.version }}'
           tag='${{ steps.meta.outputs.tag }}'
           jar="vk/build/libs/chrdk-vk-$version.jar"
-          gh release create "$tag" \
-            --target "$GITHUB_SHA" \
-            --title "CHRDK_VK $version — дайджест стены (пререлиз)" \
-            --notes-file "docs/releases/vk-$version.md" \
-            --prerelease "$jar"
+          args=(--title "CHRDK_VK $version — дайджест стены (пререлиз)"
+                --notes-file "docs/releases/vk-$version.md" --prerelease)
+          # При push тег уже существует; --target нужен только для dispatch.
+          if [[ '${{ github.event_name }}' != "push" ]]; then
+            args+=(--target "$GITHUB_SHA")
+          fi
+          gh release create "$tag" "${args[@]}" "$jar"
           count="$(gh release view "$tag" --json assets --jq '.assets | length')"
           if [[ "$count" != "1" ]]; then
             echo "Ожидался ровно один ассет, получено: $count" >&2
@@ -122,7 +147,7 @@ jobs:
       - name: Announce the prerelease in the VK chat
         # Отдельный явно включаемый контур: штатный vk-news по дизайну
         # готовит новости только по стабильному тегу с основным ZIP.
-        if: inputs.announce
+        if: steps.meta.outputs.announce == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           PRERELEASE_ANNOUNCE: 'true'
