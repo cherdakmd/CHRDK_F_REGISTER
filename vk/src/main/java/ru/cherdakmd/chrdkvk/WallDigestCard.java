@@ -31,6 +31,8 @@ public final class WallDigestCard {
     private static final Color ACCENT = new Color(0xff, 0xd6, 0x8a);
     private static final Color BADGE = new Color(0xf1, 0xcf, 0x8e);
     private static final Color SHADOW = new Color(0x20, 0x31, 0x2b);
+    /** Одна и та же запасная строка уходит и на постер, и в текст записи. */
+    static final String QUIET_DAY = "Тихий день на сервере — без громких событий.";
     private static final String[] MONTHS = {
             "января", "февраля", "марта", "апреля", "мая", "июня",
             "июля", "августа", "сентября", "октября", "ноября", "декабря"
@@ -44,8 +46,13 @@ public final class WallDigestCard {
         StringBuilder out = new StringBuilder();
         out.append("CHERDAK · ").append(config.title()).append(" · ")
                 .append(humanDate(digest.day())).append("\n\n");
-        for (String line : lines(digest, config)) {
-            out.append("— ").append(line).append('\n');
+        List<String> body = lines(digest, config);
+        if (body.isEmpty()) {
+            out.append(QUIET_DAY).append('\n');
+        } else {
+            for (String line : body) {
+                out.append("— ").append(line).append('\n');
+            }
         }
         out.append("\n").append(config.footer());
         if (marker != null && !marker.isBlank()) {
@@ -94,7 +101,7 @@ public final class WallDigestCard {
             y = Math.max(420, y + 24);
             List<String> body = lines(digest, config);
             if (body.isEmpty()) {
-                body = List.of("Тихий день на сервере — без громких событий.");
+                body = List.of(QUIET_DAY);
             }
             for (String line : body) {
                 List<String> wrapped = wrap(line, g.getFontMetrics(bodyFont), 730);
