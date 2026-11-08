@@ -17,36 +17,41 @@ import java.util.Set;
 /**
  * Несовместимость «Карьера» CHRDK_TierForge и режимов массовой добычи чар.
  *
- * <p>Легендарное свойство тира {@code quarry} («Карьер», эффект
- * {@code ZONE_BREAK}: колонна +1 блок сверху и +1 снизу) и кастомные чары
- * группы {@code megamine} ({@code veinminer} «Жилодробитель»,
- * {@code excavator} «Дробитель») дают два разных массовых разрушения за один
- * удар. Раньше {@link EnchantConflicts} разводил только чары между собой, а
- * тир-предмет мог получить и «Карьер», и «Дробитель» — как раз такой кадр и
- * стал причиной запрета. Теперь пара проверяется в обе стороны: аддон чар не
- * наложит {@code megamine} на предмет с {@code quarry}, а тир-аддон не выдаст
- * {@code quarry} предмету с уже стоявшей чарой {@code megamine}.</p>
+ * <p>Колонну {@code ZONE_BREAK} дают две вещи CHRDK_TierForge: легендарное
+ * свойство тира {@code quarry} («Карьер») и кузнечное улучшение {@code hewer}
+ * («Забойщик»). Кастомные чары группы {@code megamine} ({@code veinminer}
+ * «Жилодробитель», {@code excavator} «Дробитель») дают своё массовое
+ * разрушение за тот же удар. Раньше {@link EnchantConflicts} разводил только
+ * чары между собой, а тир-предмет мог получить и колонну, и «Дробитель» —
+ * как раз такой кадр и стал причиной запрета. Теперь пара проверяется в обе
+ * стороны: аддон чар не наложит {@code megamine} на предмет с колонной, а
+ * тир-аддон не выдаст ни «Карьер», ни «Забойщик» предмету с уже стоявшей
+ * чарой {@code megamine}.</p>
  *
  * <p>Правило мягкое: CHRDK_Enchants не зависит от CHRDK_TierForge. Чужой PDC
- * читается по <em>имени ключа</em> {@code tier_properties} среди
- * {@link PersistentDataContainer#getKeys()} — namespace аддона тиров не
- * хардкодится, а предмет без тира (или без этого ключа) просто считается
- * обычным. Формат значения — id свойств через запятую, как в
- * {@code TierProperties.serialize}. Неизвестный тип или отсутствие плагина не
- * ломают чтение: старые и чужие предметы остаются валидными.</p>
+ * читается по <em>именам ключей</em> {@code tier_properties} и
+ * {@code up_hewer} среди {@link PersistentDataContainer#getKeys()} — namespace
+ * аддона тиров не хардкодится, а предмет без тира просто считается обычным.
+ * Формат свойств — id через запятую ({@code TierProperties.serialize}),
+ * уровень улучшения — целое в {@code up_<id>}. Неизвестный тип или отсутствие
+ * плагина не ломают чтение: старые и чужие предметы остаются валидными.</p>
  *
  * <p>Уже выданный предмет с двумя режимами не переписывается молча: PDC игрока
- * не трогается, но при добыче приоритет остаётся у «Карьера», а ветки
+ * не трогается, но при добыче приоритет остаётся у колонны, а ветки
  * {@code veinminer}/{@code excavator} не запускаются.</p>
  */
 public final class ForgeMiningCompat {
 
     /** Id легендарного свойства тира «Карьер». */
     public static final String QUARRY = "quarry";
+    /** Id кузнечного улучшения «Забойщик» (тот же эффект колонны). */
+    public static final String HEWER = "hewer";
     /** Группа чар массовой добычи в {@link EnchantRegistry}. */
     public static final String MEGA_MINING_GROUP = "megamine";
     /** Имя PDC-ключа CHRDK_TierForge со списком свойств тира. */
     private static final String TIER_PROPERTIES_KEY = "tier_properties";
+    /** Имя PDC-ключа уровня улучшения: {@code up_} + id из {@code ForgeUpgrade}. */
+    private static final String UPGRADE_PREFIX = "up_";
 
     private ForgeMiningCompat() {
     }
@@ -84,54 +89,57 @@ public final class ForgeMiningCompat {
     }
 
     /**
-     * Свойства тира предмета без жёсткой зависимости от CHRDK_TierForge.
-     * Пустой список — предмета нет, тира нет или плагин тиров не установлен.
+     * Есть ли колонна {@code ZONE_BREAK}: «Карьер» ({@code tier_properties})
+     * или «Забойщик» ({@code up_hewer} уровня 1+). Один проход по чужим
+     * PDC-ключам, без привязки к namespace CHRDK_TierForge.
      */
-    public static List<String> tierProperties(ItemStack item) {
+    public static boolean hasColumnMining(ItemStack item) {
         if (item == null || !item.hasItemMeta()) {
-            return List.of();
+            return false;
         }
         ItemMeta meta = item.getItemMeta();
         if (meta == null) {
-            return List.of();
+            return false;
         }
         PersistentDataContainer data = meta.getPersistentDataContainer();
-        NamespacedKey found = null;
+        String hewerKey = UPGRADE_PREFIX + HEWER;
         for (NamespacedKey key : data.getKeys()) {
-            if (TIER_PROPERTIES_KEY.equals(key.getKey())) {
-                found = key;
-                break;
+            String name = key.getKey();
+            if (TIER_PROPERTIES_KEY.equals(name)) {
+                try {
+                    if (quarryPresent(parseProperties(data.get(key, PersistentDataType.STRING)))) {
+                        return true;
+                    }
+                } catch (IllegalArgumentException | ClassCastException malformed) {
+                    // Чужой ключ с другим типом: это не наши данные.
+                }
+            } else if (hewerKey.equals(name)) {
+                try {
+                    Integer level = data.get(key, PersistentDataType.INTEGER);
+                    if (level != null && level > 0) {
+                        return true;
+                    }
+                } catch (IllegalArgumentException | ClassCastException malformed) {
+                    // Уровень улучшения записан другим типом — колонны нет.
+                }
             }
         }
-        if (found == null) {
-            return List.of();
-        }
-        try {
-            return parseProperties(data.get(found, PersistentDataType.STRING));
-        } catch (IllegalArgumentException | ClassCastException malformed) {
-            // Чужой ключ с другим типом: это не наши данные, предмет не трогаем.
-            return List.of();
-        }
+        return false;
     }
 
-    /** На предмете стоит легендарное свойство «Карьер». */
-    public static boolean hasQuarry(ItemStack item) {
-        return quarryPresent(tierProperties(item));
-    }
-
-    /** Чистое правило: «Карьер» + конкретная чара {@code megamine}. */
-    public static boolean blocked(boolean quarry, String enchantId) {
-        return quarry && isMegaMining(enchantId);
+    /** Чистое правило: колонна + конкретная чара {@code megamine}. */
+    public static boolean blocked(boolean columnMining, String enchantId) {
+        return columnMining && isMegaMining(enchantId);
     }
 
     /** Нельзя ли добавить конкретную чару на такой предмет. */
     public static boolean blocked(ItemStack item, String enchantId) {
-        return blocked(hasQuarry(item), enchantId);
+        return blocked(hasColumnMining(item), enchantId);
     }
 
-    /** Чистое правило: «Карьер» + хотя бы одна чара {@code megamine} в наборе. */
-    public static boolean blocked(boolean quarry, Map<String, Integer> enchants) {
-        if (!quarry || enchants == null || enchants.isEmpty()) {
+    /** Чистое правило: колонна + хотя бы одна чара {@code megamine} в наборе. */
+    public static boolean blocked(boolean columnMining, Map<String, Integer> enchants) {
+        if (!columnMining || enchants == null || enchants.isEmpty()) {
             return false;
         }
         for (String id : enchants.keySet()) {
@@ -142,21 +150,21 @@ public final class ForgeMiningCompat {
         return false;
     }
 
-    /** Есть ли в наборе чара {@code megamine}, когда на предмете «Карьер». */
+    /** Есть ли в наборе чара {@code megamine}, когда на предмете колонна. */
     public static boolean blocked(ItemStack item, Map<String, Integer> enchants) {
-        return blocked(hasQuarry(item), enchants);
+        return blocked(hasColumnMining(item), enchants);
     }
 
     /**
-     * Убирает чары {@code megamine} из переносимого набора при «Карьере».
+     * Убирает чары {@code megamine} из переносимого набора при колонне.
      * Остальные чары и порядок обхода сохраняются. Чистая перегрузка нужна
      * юнит-тестам: чтение Bukkit-PDC вынесено в вариант с {@link ItemStack}.
      */
-    public static Map<String, Integer> stripMegaMining(Map<String, Integer> enchants, boolean quarry) {
+    public static Map<String, Integer> stripMegaMining(Map<String, Integer> enchants, boolean columnMining) {
         if (enchants == null) {
             return Map.of();
         }
-        if (!quarry || enchants.isEmpty()) {
+        if (!columnMining || enchants.isEmpty()) {
             return enchants;
         }
         Map<String, Integer> result = new LinkedHashMap<>();
@@ -174,6 +182,6 @@ public final class ForgeMiningCompat {
         if (enchants == null || enchants.isEmpty()) {
             return stripMegaMining(enchants, false);
         }
-        return stripMegaMining(enchants, hasQuarry(item));
+        return stripMegaMining(enchants, hasColumnMining(item));
     }
 }

@@ -36,6 +36,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.LongConsumer;
 import java.util.logging.Level;
 
 /**
@@ -250,6 +251,55 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
         }
         sendAsync(effectiveGroupChatPeerId(), text);
         return true;
+    }
+
+    /**
+     * Тестовая запись на стену для {@code /vkadmin testpost}: только
+     * {@code wall.post} без фото и без постера. Не трогает {@code wall-digest.json},
+     * {@code daily-cards.json} и {@code last_announced_post_id} — маркер
+     * {@link VkWallPublisher#TEST_POST_MARKER} отсекается в {@link #eligibleWallPost}.
+     * Сеть уходит в фоновый поток, ответы админу возвращаются в главный поток.
+     */
+    public void publishTestWallPost(String text, LongConsumer onSuccess, Consumer<String> onFailure) {
+        VkApiClient client = this.apiClient;
+        VkConfig cfg = plugin.config();
+        if (client == null || !cfg.apiConfigured() || cfg.groupId() <= 0L) {
+            onFailure.accept("VK API не настроен: general.enabled, community.group-id, access-token");
+            return;
+        }
+        if (text == null || text.isBlank()) {
+            onFailure.accept("Пустой текст тестовой записи");
+            return;
+        }
+        long groupId = cfg.groupId();
+        String guid = "chrdk-test-" + UUID.randomUUID();
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                long postId = new VkWallPublisher(client, groupId).publishText(text, guid);
+                onMainThread(() -> onSuccess.accept(postId));
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+                onMainThread(() -> onFailure.accept("Публикация прервана"));
+            } catch (Exception failure) {
+                String reason = failure.getMessage() == null
+                        ? failure.getClass().getSimpleName() : failure.getMessage();
+                String shortReason = reason.length() > 180 ? reason.substring(0, 180) : reason;
+                plugin.getLogger().log(Level.WARNING,
+                        "[vkadmin testpost] wall.post не удался: " + reason, failure);
+                onMainThread(() -> onFailure.accept(shortReason));
+            }
+        });
+    }
+
+    private void onMainThread(Runnable task) {
+        if (!plugin.isEnabled()) {
+            return;
+        }
+        if (Bukkit.isPrimaryThread()) {
+            task.run();
+        } else {
+            Bukkit.getScheduler().runTask(plugin, task);
+        }
     }
 
     /** Тикет «Позвать администратора»: admin-peer-id или беседа сообщества. */
@@ -965,6 +1015,11 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
 
     public static boolean eligibleWallPost(VkApiClient.WallPost post, VkConfig cfg) {
         if (post == null || post.id() <= 0L) {
+            return false;
+        }
+        // 1.5.2: тестовая запись /vkadmin testpost — не игровая новость. Не
+        // анонсируем её в игровом чате и не двигаем last_announced_post_id.
+        if (post.text() != null && post.text().contains(VkWallPublisher.TEST_POST_MARKER)) {
             return false;
         }
         if (cfg.wallIgnorePinned() && post.pinned()) {

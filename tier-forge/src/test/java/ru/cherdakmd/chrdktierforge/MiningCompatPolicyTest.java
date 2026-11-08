@@ -31,7 +31,30 @@ final class MiningCompatPolicyTest {
         assertTrue(MiningCompatPolicy.hasMegaMining(Map.of("excavator", 2, "autosmelt", 1)));
         assertFalse(MiningCompatPolicy.hasMegaMining(Map.of("autosmelt", 1)));
         assertFalse(MiningCompatPolicy.hasMegaMining(Map.of()));
-        assertFalse(MiningCompatPolicy.hasMegaMining(null));
+        assertFalse(MiningCompatPolicy.hasMegaMining((Map<String, Integer>) null));
+    }
+
+    @Test
+    void hewerIsTheColumnUpgradeAndQuarryIsTheProperty() {
+        assertTrue(MiningCompatPolicy.isColumnMiningUpgrade("hewer"));
+        assertTrue(MiningCompatPolicy.isColumnMiningUpgrade(" HEWER "));
+        assertFalse(MiningCompatPolicy.isColumnMiningUpgrade("quarry"));
+        assertFalse(MiningCompatPolicy.isColumnMiningUpgrade("jeweler"));
+        assertFalse(MiningCompatPolicy.isColumnMiningUpgrade(null));
+        assertEquals("hewer", MiningCompatPolicy.HEWER);
+        assertEquals("quarry", MiningCompatPolicy.QUARRY);
+    }
+
+    @Test
+    void rawCustomEnchantsPdcIsParsedWithoutTheEnchantsPlugin() {
+        assertTrue(MiningCompatPolicy.hasMegaMining("autosmelt:1;excavator:2"));
+        assertTrue(MiningCompatPolicy.hasMegaMining("veinminer:3"));
+        assertTrue(MiningCompatPolicy.hasMegaMining("  EXCAVATOR : 2 "));
+        assertFalse(MiningCompatPolicy.hasMegaMining("autosmelt:1;midas:1"));
+        assertFalse(MiningCompatPolicy.hasMegaMining("excavator_without_level"));
+        assertFalse(MiningCompatPolicy.hasMegaMining(""));
+        assertFalse(MiningCompatPolicy.hasMegaMining("  "));
+        assertFalse(MiningCompatPolicy.hasMegaMining((String) null));
     }
 
     @Test

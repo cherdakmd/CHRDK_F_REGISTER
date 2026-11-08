@@ -41,8 +41,8 @@
       "text": "fdebe780b6e7964249b5c4bc4752908cbdd67722e4d4bb0a4b1f64d94cd15ea1"
     },
     "commands": {
-      "reason": "Сверены: запрет «Карьера» (quarry) и чар megamine на всех путях выдачи, приоритет колонны у уже выданных предметов",
-      "sources": "a38e9462c6db9b15a95176fc6e17a8fcc0c216d89cd75d3540cec373d345b9f9",
+      "reason": "Сверены: запрет колонны (Карьер/Забойщик) с чарами megamine и админская команда /vkadmin testpost для чата и стены",
+      "sources": "2f5089695d3ebf2ff22bd6eda20b75e2941be8aa726040fddd8b7d98772b41a8",
       "text": "13b15e747e5e4aa93ff7ed9ce580f47e2c7952f5f319b46c6e854fc3eaec3252"
     },
     "cosmetics": {
@@ -66,9 +66,9 @@
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "Сверены: запрет «Карьера» (quarry) и чар megamine, фильтр пула ролла и приоритет колонны у уже выданных предметов",
-      "sources": "70130a76295cc8408251f39a0aef87daf573331e4cb3adcfeb7f7bd24a08e887",
-      "text": "2e9bf678cb246d007917e831522baf222e57b8d6c0aa428f5aecb527ff9b88cb"
+      "reason": "Сверены: колонна Карьер/Забойщик несовместима с чарами megamine на всех путях записи; тестовая команда стены не трогает ledger",
+      "sources": "ca872eff7bff7fd11a53cc2066a2976fc7e1c455eeb9831d146e13d443393114",
+      "text": "c9b27cd4a4970ad227e240e742adc52dca1533312ec7b590663add3b164ba1a2"
     },
     "faq": {
       "reason": "Сверены: пять постов стены в сутки, четыре карточки с никнеймами, per-игровые топы и daily-cards ledger; приватность дайджеста неизменна",
@@ -131,8 +131,8 @@
       "text": "13e6d38670572890ab2567279a5ca76f8e353eab6ade09a877eee2e884c6e272"
     },
     "profile": {
-      "reason": "Сверены: запрет «Карьера» (quarry) и чар megamine на всех путях выдачи, приоритет колонны у уже выданных предметов",
-      "sources": "f4aaa9e8c2dc3c5055f601898177be90b2698584e7d17a6364d7834ab4e8413a",
+      "reason": "Сверены: запрет колонны (Карьер/Забойщик) с чарами megamine и админская команда /vkadmin testpost для чата и стены",
+      "sources": "7c4546583bc3a1c3014c4994aa0ca30d9fa497d7d5160e741878b290662382bc",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
@@ -156,8 +156,8 @@
       "text": "4145bd09f8c7604a0b17976f7d5395a9fae287b1f76c38ac971429465b9cd85b"
     },
     "social-link": {
-      "reason": "Сверены: пять постов стены в сутки, четыре карточки с никнеймами, per-игровые топы и daily-cards ledger; приватность дайджеста неизменна",
-      "sources": "b1e1714c3202e2d969b72880eb0f01f3a16aa63ee3a14be98b156d7a75d862c7",
+      "reason": "Сверены: запрет колонны (Карьер/Забойщик) с чарами megamine и админская команда /vkadmin testpost для чата и стены",
+      "sources": "4e626b7f902424ae905a48364649068ec53a87234eb485edf500708ea82102d4",
       "text": "65f8ffa165ab0b2dfba6cebd5633dbe78011e5000e4ca5e731d11ec3e68167f7"
     },
     "start": {
@@ -176,9 +176,9 @@
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "Сверены: запрет «Карьера» (quarry) и чар megamine, фильтр пула ролла и приоритет колонны у уже выданных предметов",
-      "sources": "70130a76295cc8408251f39a0aef87daf573331e4cb3adcfeb7f7bd24a08e887",
-      "text": "ac0f5a78ebc73ba572251ac5589c5ac7bad348675a8d4210dea8be236650601e"
+      "reason": "Сверены: колонна Карьер/Забойщик несовместима с чарами megamine на всех путях записи; тестовая команда стены не трогает ledger",
+      "sources": "ca872eff7bff7fd11a53cc2066a2976fc7e1c455eeb9831d146e13d443393114",
+      "text": "8bfa7eee45f251d4f571e67782e4e245c8a0c9faf55062068f625f72771dc03c"
     },
     "titles": {
       "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
@@ -191,9 +191,9 @@
       "text": "238b43656d6df7186d842e6cfda78d158046d66c29320dedbb4bc7b4341b0856"
     },
     "vk": {
-      "reason": "Сверены: пять постов стены в сутки, четыре карточки с никнеймами, per-игровые топы и daily-cards ledger; приватность дайджеста неизменна",
-      "sources": "b1e1714c3202e2d969b72880eb0f01f3a16aa63ee3a14be98b156d7a75d862c7",
-      "text": "2f5de9df71202a845707c12afdd1c29a378a14100c4e98c55b7992e36465c37a"
+      "reason": "Сверены: запрет колонны (Карьер/Забойщик) с чарами megamine и админская команда /vkadmin testpost для чата и стены",
+      "sources": "4e626b7f902424ae905a48364649068ec53a87234eb485edf500708ea82102d4",
+      "text": "2288103e1234a0d2bbe060f0aaa25c941879f059d6e13acc49d5177267f75d76"
     }
   },
   "schema": 1

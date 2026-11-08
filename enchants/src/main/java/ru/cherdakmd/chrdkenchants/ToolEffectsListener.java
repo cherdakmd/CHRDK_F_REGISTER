@@ -54,10 +54,11 @@ public final class ToolEffectsListener implements Listener {
     public void onBlockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer(); ItemStack tool = player.getInventory().getItemInMainHand();
         if (!eligible(player) || tool.getAmount() != 1 || sources.size() >= 4096) return;
-        // 1.5.2: «Карьер» CHRDK_TierForge имеет приоритет. У уже выданного
-        // предмета PDC не переписываем, но ветки veinminer/excavator не пускаем —
-        // иначе колонна и площадь запускались бы за один удар.
-        boolean quarry = ForgeMiningCompat.hasQuarry(tool);
+        // 1.5.2: колонна CHRDK_TierForge («Карьер» или «Забойщик») имеет
+        // приоритет. У уже выданного предмета PDC не переписываем, но ветки
+        // veinminer/excavator не пускаем — иначе колонна и площадь/жила
+        // запускались бы за один удар.
+        boolean quarry = ForgeMiningCompat.hasColumnMining(tool);
         if (level(tool, "midas") + level(tool, "fortunate") + level(tool, "autosmelt")
                 + (quarry ? 0 : level(tool, "veinminer") + level(tool, "excavator")) == 0) return;
         Block block = event.getBlock(); Key key = key(block, player);

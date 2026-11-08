@@ -127,9 +127,9 @@ public final class EnchantGui implements Listener {
         List<String> names = new ArrayList<>(EnchantCatalog.conflicts(def).stream()
                 .map(id -> plugin.messages().raw("en." + id + ".name")).toList());
         // 1.5.2: у режимов массовой добычи есть ещё и внешний конфликт —
-        // легендарное свойство тира «Карьер». Показываем его в карточке.
+        // колонна тир-предмета: «Карьер» или «Забойщик». Показываем в карточке.
         if (ForgeMiningCompat.isMegaMining(def.id())) {
-            names.add("Карьер (тир-предмет)");
+            names.add("Карьер / Забойщик (тир)");
         }
         return String.join(", ", names);
     }

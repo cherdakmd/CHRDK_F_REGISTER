@@ -9,6 +9,9 @@ import org.jetbrains.annotations.NotNull;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -26,6 +29,10 @@ import java.util.stream.Collectors;
 public final class VkCommandHandler implements CommandExecutor, TabCompleter {
 
     private static final long UNLINK_CONFIRM_WINDOW_MILLIS = 30_000L;
+    /** Потолок произвольного текста тестового поста (VK wall.post сам держит 4096). */
+    private static final int MAX_TEST_POST_TEXT = 1000;
+    private static final DateTimeFormatter TEST_POST_TIME =
+            DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm").withZone(ZoneId.of("Europe/Moscow"));
 
     private final VkPlugin plugin;
     private final VkService service;
@@ -312,6 +319,7 @@ public final class VkCommandHandler implements CommandExecutor, TabCompleter {
                 messages.send(sender, "admin.testchat-queued",
                         "peer_id", Long.toString(service.effectiveGroupChatPeerId()));
             }
+            case "testpost" -> handleTestPost(sender, args, messages);
             case "lookup" -> handleLookup(sender, args, messages);
             case "chatban" -> handleChatBan(sender, args, messages);
             case "unlink" -> {
@@ -349,6 +357,64 @@ public final class VkCommandHandler implements CommandExecutor, TabCompleter {
             default -> messages.send(sender, "admin.usage");
         }
         return true;
+    }
+
+    /**
+     * {@code /vkadmin testpost [chat|wall|both] [текст]} — разовая проверка
+     * прав ключа и моста беседы. По умолчанию уходит и в беседу ВК, и на
+     * стену; тестовая запись помечается {@link VkWallPublisher#TEST_POST_MARKER},
+     * не анонсируется как новость и не пишется в суточные ledger'ы.
+     */
+    private void handleTestPost(CommandSender sender, String[] args, Messages messages) {
+        int textStart = 1;
+        String target = "both";
+        if (args.length >= 2) {
+            String first = args[1].toLowerCase(Locale.ROOT);
+            if (first.equals("chat") || first.equals("wall") || first.equals("both")) {
+                target = first;
+                textStart = 2;
+            }
+        }
+        String custom = args.length > textStart
+                ? String.join(" ", Arrays.copyOfRange(args, textStart, args.length)).trim() : "";
+        if (custom.length() > MAX_TEST_POST_TEXT) {
+            messages.send(sender, "admin.testpost-too-long",
+                    "max", Integer.toString(MAX_TEST_POST_TEXT));
+            return;
+        }
+        boolean chat = !target.equals("wall");
+        boolean wall = !target.equals("chat");
+        if (!plugin.config().apiConfigured()) {
+            messages.send(sender, "admin.testpost-not-ready");
+            return;
+        }
+        if (chat && !service.groupChatBridgeReady()) {
+            messages.send(sender, "admin.testpost-chat-not-ready");
+            return;
+        }
+
+        String marker = VkWallPublisher.TEST_POST_MARKER
+                + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+        String body = custom.isEmpty()
+                ? "🧪 Тест CHRDK_VK: проверка публикации от " + sender.getName()
+                        + " (" + TEST_POST_TIME.format(Instant.now()) + " МСК). "
+                        + "Техническая запись, не игровая новость."
+                : custom;
+        String text = body + "\n" + marker;
+
+        if (chat) {
+            service.sendToGroupChat(text);
+            messages.send(sender, "admin.testpost-chat-queued",
+                    "peer_id", Long.toString(service.effectiveGroupChatPeerId()));
+        }
+        if (wall) {
+            messages.send(sender, "admin.testpost-wall-queued");
+            service.publishTestWallPost(text,
+                    postId -> messages.send(sender, "admin.testpost-wall-ok",
+                            "post_id", Long.toString(postId),
+                            "url", plugin.config().wallPostUrl(postId)),
+                    error -> messages.send(sender, "admin.testpost-wall-failed", "error", error));
+        }
     }
 
     private void handleLookup(CommandSender sender, String[] args, Messages messages) {
@@ -448,10 +514,14 @@ public final class VkCommandHandler implements CommandExecutor, TabCompleter {
                 return List.of();
             }
             if (args.length == 1) {
-                return filterPrefix(List.of("status", "lookup", "chatban", "unlink", "setchat", "testchat", "sync", "reload"), args[0]);
+                return filterPrefix(List.of("status", "lookup", "chatban", "unlink", "setchat",
+                        "testchat", "testpost", "sync", "reload"), args[0]);
             }
             if (args.length == 2 && args[0].equalsIgnoreCase("setchat")) {
                 return filterPrefix(List.of("off", "2000000001"), args[1]);
+            }
+            if (args.length == 2 && args[0].equalsIgnoreCase("testpost")) {
+                return filterPrefix(List.of("chat", "wall", "both"), args[1]);
             }
             if (args.length == 2 && (args[0].equalsIgnoreCase("lookup")
                     || args[0].equalsIgnoreCase("unlink")

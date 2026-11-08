@@ -203,6 +203,10 @@ final class ForgeMaterials implements Listener {
         Consumer<ItemMeta> mutation = null;
         boolean rename = false;
         int units = 1, xp;
+        // 1.5.2: при чаре megamine не выдаём ни «Карьер», ни «Забойщик».
+        var enchantsApi = plugin.enchantsApi();
+        boolean megaMining = enchantsApi != null
+                && MiningCompatPolicy.hasMegaMining(enchantsApi.enchantsOf(main));
 
         if (kind == ForgeMaterial.ASCEND) {
             String nextTier = TierDef.next(tierId);
@@ -211,11 +215,13 @@ final class ForgeMaterials implements Listener {
             int index = TierDef.indexOf(nextTier);
             units = ForgeMaterial.ascendCost(index); xp = ForgeMaterial.ascendXp(index);
             if (!plugin.config().propertiesEnabled()) { fail("forge-unavailable"); return null; }
-            properties = new ArrayList<>(TierProperties.roll(nextTier, itemKind, plugin.config().propertiesPerItem(), choice));
+            properties = new ArrayList<>(TierProperties.roll(nextTier, itemKind,
+                    plugin.config().propertiesPerItem(), choice, MiningCompatPolicy.forbidden(megaMining)));
         } else if (kind == ForgeMaterial.TEMPER) {
             upgrade = ForgeUpgrade.byId(selectedId);
             int current = upgrade == null ? 0 : plugin.items().upgradeLevel(main, upgrade.id());
-            if (!plugin.config().improveEnabled() || upgrade == null || !upgrade.fits(itemKind) || current < 1 || current >= upgrade.maxLevel()) {
+            if (!plugin.config().improveEnabled() || upgrade == null || !upgrade.fits(itemKind) || current < 1 || current >= upgrade.maxLevel()
+                    || megaMining && MiningCompatPolicy.isColumnMiningUpgrade(upgrade.id())) {
                 fail("forge-upgrade-invalid"); return null;
             }
             xp = 8 + current * 2;
@@ -238,7 +244,10 @@ final class ForgeMaterials implements Listener {
         } else if (kind == ForgeMaterial.INSCRIBE) {
             upgrade = ForgeUpgrade.byId(selectedId);
             if (!plugin.config().improveEnabled() || upgrade == null || !upgrade.fits(itemKind)
-                    || plugin.items().upgradeLevel(main, upgrade.id()) != 0) { fail("forge-upgrade-invalid"); return null; }
+                    || plugin.items().upgradeLevel(main, upgrade.id()) != 0
+                    || megaMining && MiningCompatPolicy.isColumnMiningUpgrade(upgrade.id())) {
+                fail("forge-upgrade-invalid"); return null;
+            }
             String id = upgrade.id();
             mutation = meta -> plugin.items().setUpgradeLevel(meta, id, 1);
             xp = ForgeMaterial.INSCRIBE_XP;

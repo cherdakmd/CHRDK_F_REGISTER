@@ -1,6 +1,7 @@
 package ru.cherdakmd.chrdkvk;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -80,6 +81,34 @@ class VkWallPublisherTest {
         assertTrue(multipart.contains("name=\"photo\""));
         assertTrue(multipart.contains("filename=\"chrdk-digest.png\""));
         assertTrue(multipart.contains("Content-Type: image/png"));
+    }
+
+    @Test
+    void publishesTextTestPostWithoutPhotoAndWithOwnGuid() throws Exception {
+        FakeTransport fake = new FakeTransport();
+        long postId = new VkWallPublisher(api(fake), 123L)
+                .publishText("🧪 Тест CHRDK_VK\n" + VkWallPublisher.TEST_POST_MARKER + "abcd1234",
+                        "chrdk-test-42");
+
+        assertEquals(88L, postId);
+        assertEquals(1, fake.forms.size(), "Только wall.post, без photos.getWallUploadServer");
+        String form = fake.forms.get(0);
+        assertTrue(form.contains("owner_id=-123"));
+        assertTrue(form.contains("from_group=1"));
+        assertTrue(form.contains("guid=chrdk-test-42"));
+        assertTrue(form.contains("message="));
+        assertFalse(form.contains("attachments"), "У тестовой записи нет вложения-постера");
+        assertTrue(fake.uploadUris.isEmpty(), "Файл никуда не загружается");
+    }
+
+    @Test
+    void textTestPostRejectsBlankMessageAndMissingGroup() {
+        FakeTransport fake = new FakeTransport();
+        assertThrows(IOException.class, () -> new VkWallPublisher(api(fake), 123L)
+                .publishText("  ", "guid"));
+        assertThrows(IOException.class, () -> new VkWallPublisher(api(fake), 0L)
+                .publishText("🧪 Тест", "guid"));
+        assertTrue(fake.forms.isEmpty(), "До API запросов не дошло");
     }
 
     @Test

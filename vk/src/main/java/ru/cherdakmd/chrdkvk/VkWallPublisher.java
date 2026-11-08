@@ -26,6 +26,13 @@ import java.util.UUID;
  */
 public final class VkWallPublisher {
 
+    /**
+     * Маркер тестовой записи {@code /vkadmin testpost}. Такой пост не должен
+     * считаться игровой новостью: {@code wall_post_new} из Bots Long Poll
+     * пропускает его и не двигает {@code last_announced_post_id}.
+     */
+    public static final String TEST_POST_MARKER = "#chrdk_test_";
+
     private static final Duration UPLOAD_TIMEOUT = Duration.ofSeconds(30);
     private static final int MAX_PNG_BYTES = 5 * 1024 * 1024;
 
@@ -79,12 +86,37 @@ public final class VkWallPublisher {
             attachment += "_" + photo.get("access_key").getAsString();
         }
 
-        JsonObject posted = api.call("wall.post", Map.of(
-                "owner_id", "-" + groupId,
-                "from_group", "1",
-                "message", text,
-                "attachments", attachment,
-                "guid", safeGuid)).getAsJsonObject();
+        return post(text, safeGuid, attachment);
+    }
+
+    /**
+     * Тестовая запись стены: только {@code wall.post}, без фото, без постеров
+     * и без суточных ledger'ов. Нужна админской команде проверки прав ключа.
+     *
+     * @return {@code post_id} созданной записи
+     */
+    public long publishText(String text, String guid) throws IOException, InterruptedException {
+        if (groupId <= 0L) {
+            throw new IOException("Не задан community.group-id сообщества");
+        }
+        if (text == null || text.isBlank()) {
+            throw new IOException("Пустой текст записи на стене");
+        }
+        return post(text, guid == null || guid.isBlank() ? UUID.randomUUID().toString() : guid, null);
+    }
+
+    /** Общий финальный вызов: одно и то же для постера с фото и для текста. */
+    private long post(String text, String guid, String attachment)
+            throws IOException, InterruptedException {
+        Map<String, String> params = new java.util.LinkedHashMap<>();
+        params.put("owner_id", "-" + groupId);
+        params.put("from_group", "1");
+        params.put("message", text);
+        if (attachment != null && !attachment.isBlank()) {
+            params.put("attachments", attachment);
+        }
+        params.put("guid", guid == null || guid.isBlank() ? UUID.randomUUID().toString() : guid);
+        JsonObject posted = api.call("wall.post", params).getAsJsonObject();
         if (!posted.has("post_id") || posted.get("post_id").isJsonNull()) {
             throw new IOException("VK не подтвердил публикацию записи на стене");
         }

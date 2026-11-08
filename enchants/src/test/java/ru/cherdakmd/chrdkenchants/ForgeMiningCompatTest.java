@@ -32,6 +32,16 @@ final class ForgeMiningCompatTest {
     }
 
     @Test
+    void bothColumnSourcesAreDeclared() {
+        assertEquals("quarry", ForgeMiningCompat.QUARRY);
+        assertEquals("hewer", ForgeMiningCompat.HEWER);
+        assertEquals("megamine", ForgeMiningCompat.MEGA_MINING_GROUP);
+        // up_hewer лежит не в строке свойств тира, а в отдельном PDC-ключе.
+        assertFalse(ForgeMiningCompat.quarryPresent(
+                ForgeMiningCompat.parseProperties("up_hewer")));
+    }
+
+    @Test
     void quarryIsFoundInSerializedTierProperties() {
         assertTrue(ForgeMiningCompat.quarryPresent(
                 ForgeMiningCompat.parseProperties("world_breaker,quarry")));

@@ -9,24 +9,32 @@ import java.util.Set;
 /**
  * Чистое правило несовместимости «Карьера» и кастомных чар массовой добычи.
  *
- * <p>Легендарное свойство {@code quarry} («Карьер») даёт колонну
- * {@link ForgeUpgrade.Effect#ZONE_BREAK}. Чары {@code veinminer}
- * («Жилодробитель») и {@code excavator} («Дробитель») из CHRDK_Enchants дают
- * свой режим массовой добычи за тот же удар. Две ветки на одном инструменте
- * складывались, поэтому с 1.5.2 тир-аддон не выдаёт «Карьер» предмету, где
- * уже стоит такая чара, и не награждает такой чарой предмет с «Карьером».</p>
+ * <p>Колонну {@link ForgeUpgrade.Effect#ZONE_BREAK} дают и легендарное
+ * свойство {@code quarry} («Карьер»), и кузнечное улучшение {@code hewer}
+ * («Забойщик»). Чары {@code veinminer} («Жилодробитель») и {@code excavator}
+ * («Дробитель») из CHRDK_Enchants дают свой режим массовой добычи за тот же
+ * удар. Две ветки на одном инструменте складывались, поэтому с 1.5.2 тир-аддон
+ * не выдаёт ни «Карьер», ни «Забойщик» предмету, где уже стоит такая чара, и
+ * не награждает такой чарой предмет с колонной.</p>
  *
  * <p>Класс не знает ни Bukkit, ни аддона чар: он работает с id. Мост
  * {@code ChrdkEnchantsApi} опрашивается в {@link TierItems}, а обратную
  * границу (наковальня, книга, ролл, copy API) держит CHRDK_Enchants через
- * PDC {@code tier_properties}. Публичный Core API не меняется.</p>
+ * PDC {@code tier_properties} и {@code up_hewer}. Публичный Core API не
+ * меняется.</p>
  */
 final class MiningCompatPolicy {
 
-    /** Id легендарного свойства тира. */
+    /** Id легендарного свойства тира «Карьер». */
     static final String QUARRY = "quarry";
+    /** Id кузнечного улучшения «Забойщик» (тот же эффект колонны). */
+    static final String HEWER = "hewer";
     /** Чары группы {@code megamine} в CHRDK_Enchants. */
     static final Set<String> MEGA_MINING = Set.of("veinminer", "excavator");
+    /** Улучшения с эффектом колонны — их нельзя ставить при {@code megamine}. */
+    static final Set<String> COLUMN_UPGRADES = Set.of(HEWER);
+    /** Имя PDC-ключа CHRDK_Enchants со строкой {@code id:level;id:level}. */
+    static final String CUSTOM_ENCHANTS_KEY = "custom_enchants";
 
     private MiningCompatPolicy() {
     }
@@ -47,6 +55,32 @@ final class MiningCompatPolicy {
             }
         }
         return false;
+    }
+
+    /**
+     * То же по сырой PDC-строке {@code custom_enchants} («id:level;…»).
+     * Нужно в {@code setUpgradeLevel}, где доступен только {@code ItemMeta},
+     * а не готовый {@code ItemStack} для моста {@code ChrdkEnchantsApi}.
+     */
+    static boolean hasMegaMining(String customEnchantsPdc) {
+        if (customEnchantsPdc == null || customEnchantsPdc.isBlank()) {
+            return false;
+        }
+        for (String token : customEnchantsPdc.split(";")) {
+            int colon = token.indexOf(':');
+            if (colon <= 0) {
+                continue;
+            }
+            if (isMegaMining(token.substring(0, colon))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Улучшение с эффектом колонны («Забойщик»). */
+    static boolean isColumnMiningUpgrade(String id) {
+        return id != null && COLUMN_UPGRADES.contains(id.trim().toLowerCase(Locale.ROOT));
     }
 
     /** Какое свойство тира нельзя выдать при таком наборе чар. */

@@ -20,7 +20,8 @@ import java.util.Map;
  * с чужой PDC не превращались в пустышку.</p>
  *
  * <p>Это правило разводит только <em>чары</em> между собой. Отдельная пара
- * «чары {@code megamine} ↔ тир-свойство {@code quarry} («Карьер»)» живёт в
+ * «чары {@code megamine} ↔ колонна CHRDK_TierForge ({@code quarry}
+ * «Карьер» или {@code hewer} «Забойщик»)» живёт в
  * {@link ForgeMiningCompat}: она читает чужой PDC и потому не входит в этот
  * чистый класс.</p>
  */

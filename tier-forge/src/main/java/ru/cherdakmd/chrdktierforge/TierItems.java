@@ -619,10 +619,38 @@ public final class TierItems {
         return MiningCompatPolicy.forbidden(MiningCompatPolicy.hasMegaMining(api.enchantsOf(item)));
     }
 
-    /** На предмете уже стоит легендарное свойство «Карьер». */
-    private boolean hasQuarryProperty(ItemStack item) {
+    /**
+     * На предмете уже есть колонна: легендарное свойство «Карьер» или
+     * кузнечное улучшение «Забойщик». Оба дают {@code ZONE_BREAK}.
+     */
+    private boolean hasColumnMining(ItemStack item) {
         TierProperty quarry = TierProperties.byId(MiningCompatPolicy.QUARRY);
-        return quarry != null && propertiesOf(item).contains(quarry);
+        return quarry != null && propertiesOf(item).contains(quarry)
+                || upgradeLevel(item, MiningCompatPolicy.HEWER) > 0;
+    }
+
+    /**
+     * Сырая PDC-строка кастомных чар CHRDK_Enchants. Ключ ищем по имени,
+     * без зависимости от namespace аддона чар: в {@code setUpgradeLevel} есть
+     * только {@link ItemMeta}, а не готовый ItemStack для сервисного моста.
+     */
+    private String customEnchantsPdc(ItemMeta meta) {
+        if (meta == null) {
+            return "";
+        }
+        var data = meta.getPersistentDataContainer();
+        for (NamespacedKey key : data.getKeys()) {
+            if (!MiningCompatPolicy.CUSTOM_ENCHANTS_KEY.equals(key.getKey())) {
+                continue;
+            }
+            try {
+                String raw = data.get(key, PersistentDataType.STRING);
+                return raw == null ? "" : raw;
+            } catch (IllegalArgumentException | ClassCastException malformed) {
+                return "";
+            }
+        }
+        return "";
     }
 
     /** Сколько свойств положено предмету по конфигу (1..MAX_PER_ITEM). */
@@ -751,6 +779,11 @@ public final class TierItems {
     /** RC16: записать/снять уровень выбранной ковки изнутри assemble. */
     public void setUpgradeLevel(ItemMeta meta, String upgradeId, int level) {
         if (meta == null || upgradeId == null || upgradeId.isBlank()) return;
+        // 1.5.2: последняя граница записи up_hewer. «Забойщик» не встанет на
+        // предмет, где уже есть чара megamine; снять улучшение (level <= 0)
+        // можно всегда — это как раз лечение старого предмета.
+        if (level > 0 && MiningCompatPolicy.isColumnMiningUpgrade(upgradeId)
+                && MiningCompatPolicy.hasMegaMining(customEnchantsPdc(meta))) return;
         if (level <= 0) meta.getPersistentDataContainer().remove(upgradeKey(upgradeId));
         else meta.getPersistentDataContainer().set(upgradeKey(upgradeId), PersistentDataType.INTEGER, level);
     }
@@ -808,9 +841,14 @@ public final class TierItems {
     }
 
     public void bumpUpgrade(ItemStack item, ForgeUpgrade.Def def, int newLevel) {
+        if (def == null) return;
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
-        meta.getPersistentDataContainer().set(upgradeKey(def.id()), PersistentDataType.INTEGER, newLevel);
+        // 1.5.2: не даём «Забойщик» предмету с чарой megamine — ни с наковальни,
+        // ни из админской выдачи. Читаем чужие чары прямо из PDC меты.
+        if (newLevel > 0 && MiningCompatPolicy.isColumnMiningUpgrade(def.id())
+                && MiningCompatPolicy.hasMegaMining(customEnchantsPdc(meta))) return;
+        setUpgradeLevel(meta, def.id(), newLevel);
         item.setItemMeta(meta);
         String tierId = tierOf(item);
         TierDef.Snapshot snapshot = tierId == null ? null : plugin.config().find(tierId);
@@ -1029,11 +1067,12 @@ public final class TierItems {
         Random random = new Random(TierAffixes.seed(uid, tier.id(), kind, 0x43A5EEDL));
         List<TierCustomEnchants.Pick> picks = TierCustomEnchants.roll(tierIndex, random,
                 api.lightIds(), api.curseIds(), config, api::maxLevel);
-        boolean quarry = hasQuarryProperty(item);
+        boolean column = hasColumnMining(item);
         for (TierCustomEnchants.Pick pick : picks) {
-            // 1.5.2: на «Карьере» режимы массовой добычи не награждаем. Обратную
-            // границу (книга/наковальня/copy API) держит сам CHRDK_Enchants.
-            if (quarry && MiningCompatPolicy.isMegaMining(pick.id())) {
+            // 1.5.2: при колонне («Карьер» или «Забойщик») режимы массовой
+            // добычи не награждаем. Обратную границу (книга/наковальня/copy
+            // API) держит сам CHRDK_Enchants.
+            if (column && MiningCompatPolicy.isMegaMining(pick.id())) {
                 continue;
             }
             // отказ (вид предмета, лимит аддона, конфликт) — просто пропускаем кандидата
