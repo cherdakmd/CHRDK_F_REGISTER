@@ -53,6 +53,7 @@ public final class VkPlugin extends JavaPlugin {
     private SocialPlaceholders socialPlaceholders;
     private SocialEventAnnouncer eventAnnouncer;
     private SocialInteractionHub interactionHub;
+    private WallDigestService wallDigest;
     private boolean placeholdersRetryScheduled;
     private BukkitTask saveTask;
 
@@ -137,6 +138,12 @@ public final class VkPlugin extends JavaPlugin {
                     if (socialService != null) socialService.store().saveIfDirty();
                 }, 20L * 30, 20L * 30);
 
+        // Суточный дайджест на стену сообщества: сбор событий, постер,
+        // загрузка фото и wall.post выполняются этим же плагином на сервере.
+        this.wallDigest = new WallDigestService(this, WallDigestConfig.parse(getConfig()),
+                new WallDigestStore(getDataFolder().toPath(), getLogger()), store);
+        this.wallDigest.start();
+
         getLogger().info("[CHRDK_VK] Включён (привязок: " + store.linkCount()
                 + ", API настроен: " + config.apiConfigured()
                 + ", социальные привязки: " + socialService.store().linkCount() + ").");
@@ -178,6 +185,10 @@ public final class VkPlugin extends JavaPlugin {
         if (saveTask != null) {
             saveTask.cancel();
             saveTask = null;
+        }
+        if (wallDigest != null) {
+            wallDigest.shutdown();
+            wallDigest = null;
         }
         // Анонс остановки — ДО shutdown(): иначе исходящие executors уже закрыты.
         if (eventAnnouncer != null) {
@@ -233,6 +244,9 @@ public final class VkPlugin extends JavaPlugin {
             }
             if (this.interactionHub != null) {
                 this.interactionHub.applyConfig(SocialInteractionConfig.parse(fresh));
+            }
+            if (this.wallDigest != null) {
+                this.wallDigest.applyConfig(WallDigestConfig.parse(fresh));
             }
             return true;
         } catch (Exception exception) {

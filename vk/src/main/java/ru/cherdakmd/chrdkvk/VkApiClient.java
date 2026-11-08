@@ -48,6 +48,16 @@ public final class VkApiClient {
         String postForm(URI uri, String formBody, Duration timeout) throws IOException, InterruptedException;
 
         String get(URI uri, Duration timeout) throws IOException, InterruptedException;
+
+        /**
+         * Multipart-загрузка файла на адрес, выданный VK ({@code photos.getWallUploadServer}).
+         * Реализация по умолчанию нужна, чтобы существующие тестовые транспорты,
+         * работающие только с формой и Long Poll, не пришлось переписывать.
+         */
+        default String postMultipart(URI uri, byte[] body, String contentType, Duration timeout)
+                throws IOException, InterruptedException {
+            throw new IOException("Multipart-загрузка не поддерживается этим транспортом");
+        }
     }
 
     public static final class HttpTransport implements Transport {
@@ -87,6 +97,23 @@ public final class VkApiClient {
             }
             return response.body();
         }
+
+        @Override
+        public String postMultipart(URI uri, byte[] body, String contentType, Duration timeout)
+                throws IOException, InterruptedException {
+            HttpRequest request = HttpRequest.newBuilder(uri)
+                    .timeout(timeout)
+                    .header("Content-Type", contentType)
+                    .header("User-Agent", "CHRDK_VK/1.0")
+                    .POST(HttpRequest.BodyPublishers.ofByteArray(body))
+                    .build();
+            HttpResponse<String> response = client.send(request,
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                throw new IOException("VK upload HTTP " + response.statusCode());
+            }
+            return response.body();
+        }
     }
 
     public record LongPollEndpoint(String server, String key, String ts) {
@@ -119,6 +146,22 @@ public final class VkApiClient {
         this.accessToken = accessToken == null ? "" : accessToken.trim();
         this.apiVersion = apiVersion == null || apiVersion.isBlank() ? VkConfig.DEFAULT_API_VERSION : apiVersion.trim();
         this.transport = transport;
+    }
+
+    /**
+     * Вызов произвольного разрешённого метода VK API. Ключ по-прежнему уходит
+     * только в теле form-POST; тело ответа с ошибкой не попадает в исключение.
+     * Нужен публикатору стены ({@link VkWallPublisher}).
+     */
+    public JsonElement call(String method, Map<String, String> params)
+            throws IOException, InterruptedException {
+        return callMethod(method, params);
+    }
+
+    /** Загрузка PNG на выданный VK адрес; адрес проверяет вызывающая сторона. */
+    public String postMultipart(URI uri, byte[] body, String contentType, Duration timeout)
+            throws IOException, InterruptedException {
+        return transport.postMultipart(uri, body, contentType, timeout);
     }
 
     /** Получает сервер Bots Long Poll ({@code groups.getLongPollServer}). */

@@ -131,8 +131,8 @@
       "text": "13e6d38670572890ab2567279a5ca76f8e353eab6ade09a877eee2e884c6e272"
     },
     "profile": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "2f52f44bc926f886a105b293474c9754e73c64d65020b58910857f44eb595409",
+      "reason": "Суточный дайджест на стену сообщества ВК: plugin-owned сбор событий, Java2D-постер, photos/wall.post, локальный ledger. Сверены страницы ВК, привязки, обновлений и профиля; профиль содержит только ссылку на страницу ВК и правки не требует",
+      "sources": "42a61baa2de22c521cf94162850377b7d50e11df4be991179ac484472317e70f",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
@@ -156,9 +156,9 @@
       "text": "4145bd09f8c7604a0b17976f7d5395a9fae287b1f76c38ac971429465b9cd85b"
     },
     "social-link": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "ec65bc08d73d453a7f220833af85a86033179ffb7c98e6e82d3146baaee649e7",
-      "text": "4c8cab4b751d6f98f2dfca7e7cd7e2770ee7f7000984ccc7c7b57ec8949a3ae4"
+      "reason": "Суточный дайджест на стену сообщества ВК: plugin-owned сбор событий, Java2D-постер, photos/wall.post, локальный ledger. Сверены страницы ВК, привязки, обновлений и профиля; профиль содержит только ссылку на страницу ВК и правки не требует",
+      "sources": "8364736cde8cc64252654e3c78f1092f70e37662a1f16d2cb8f72221e5ffa260",
+      "text": "efb141806ac18fb7d89c9acd3a15298654ac64ff4a780d019f5543160cfe8a13"
     },
     "start": {
       "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
@@ -186,14 +186,14 @@
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Стабильный релиз 1.5.2 KARAS UPDATE: bump plugin_version, заметки, памятка, вики-страница обновлений и аудиты сверены с кодом",
+      "reason": "Суточный дайджест на стену сообщества ВК: plugin-owned сбор событий, Java2D-постер, photos/wall.post, локальный ledger. Сверены страницы ВК, привязки, обновлений и профиля; профиль содержит только ссылку на страницу ВК и правки не требует",
       "sources": "1a88b2229ad1af07b67e50872107ead626b06032ba167e6d4f586b559b2f4dd1",
-      "text": "771fbe7f62e3dcfd1c71dccad783fd732ac19d0e7253e156b27f9fffc879bd9d"
+      "text": "5c03b531f5f71868aeeae4f25548d5ede7f038a2194a22625a70571caea946f9"
     },
     "vk": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "ec65bc08d73d453a7f220833af85a86033179ffb7c98e6e82d3146baaee649e7",
-      "text": "94f2d5f3cf83ae414f1a577156884ae1329734bf55951e2707569c3ce923c199"
+      "reason": "Суточный дайджест на стену сообщества ВК: plugin-owned сбор событий, Java2D-постер, photos/wall.post, локальный ledger. Сверены страницы ВК, привязки, обновлений и профиля; профиль содержит только ссылку на страницу ВК и правки не требует",
+      "sources": "8364736cde8cc64252654e3c78f1092f70e37662a1f16d2cb8f72221e5ffa260",
+      "text": "3998864868d849ccee110a62cf8ffdb456f67836e9f90da1ac9da321c3fa7324"
     }
   },
   "schema": 1

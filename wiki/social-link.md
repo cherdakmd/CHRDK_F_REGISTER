@@ -245,6 +245,11 @@ MAX Bot API живёт на `https://platform-api2.max.ru`, токен пере�
   анонсирует новый стабильный тег в MAX-канал, беседу ВК и игровой чат,
   запоминая `lastNewsTag` в `social-links.json`.
 
+Отдельно от релизных новостей `CHRDK_VK` раз в сутки публикует на **стену
+сообщества** оформленный дайджест игровых событий. Этот контур целиком работает
+на сервере, не зависит от GitHub Actions и не дублирует посты в беседу; детали —
+на странице [«Сообщество ВК»](vk.md).
+
 Подробности настройки — [docs/automation/max-publications.md](https://github.com/cherdakmd/CHRDK_F_REGISTER/blob/main/docs/automation/max-publications.md).
 
 ## Прочие возможности
