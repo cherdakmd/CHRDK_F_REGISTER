@@ -84,8 +84,9 @@ class ShopConfigConsistencyTest {
         ShopCatalog catalog = catalog();
         assertTrue(catalog.usable(), "витрина должна быть включена");
         assertTrue(catalog.problems().isEmpty(), "каталог разбирается с ошибками: " + catalog.problems());
-        assertEquals(32, catalog.products().size(),
-                "три личные лицензии, клановый комплект с бонусом, social-access и social-access-day");
+        assertEquals(33, catalog.products().size(),
+                "три личные лицензии, клановый комплект с бонусом, social-access, "
+                        + "social-access-day и claims-chunks-plus");
     }
 
     @Test

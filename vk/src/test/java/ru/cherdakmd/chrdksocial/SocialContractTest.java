@@ -232,8 +232,8 @@ class SocialContractTest {
         assertTrue(regression.contains("'social-access'"));
         assertTrue(regression.contains("'social-access-day'"));
         assertTrue(regression.contains("self.assertEqual(26, len(kit.catalog()[1]))"));
-        assertTrue(regression.contains("self.assertEqual(32, len(live))"),
-                "в живом каталоге два тарифа проходки, но комплект TradeMC прежний");
+        assertTrue(regression.contains("self.assertEqual(33, len(live))"),
+                "в живом каталоге два тарифа проходки и claims-chunks-plus, но комплект TradeMC прежний");
     }
 
     @Test

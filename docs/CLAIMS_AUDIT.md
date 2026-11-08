@@ -700,4 +700,5 @@ TradeMC и цены рангов остаются снимком 1.5.1.
   `trademc-export: false`), разбор `ShopCatalog` без problems, аддитивность и
   идемпотентность миграции, сохранение владельческой цены.
 - Обновлены контракты размера каталога: `tools/trademc/test_build.py` (33 SKU
-  в живом каталоге, 26 в экспорте) и `QueueRemovalTest` (+7 стоковых SKU).
+  в живом каталоге, 26 в экспорте), `ShopConfigConsistencyTest` (33),
+  `SocialContractTest` (33) и `QueueRemovalTest` (+7 стоковых SKU).
