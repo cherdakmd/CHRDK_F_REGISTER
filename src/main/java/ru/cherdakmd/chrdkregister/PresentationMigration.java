@@ -31,7 +31,8 @@ final class PresentationMigration {
      * добавить их к прежнему каталогу, но неизвестный товар владельца — нет.
      * social-access-day — дневной тариф 15 ₽ / 24 часа (1.5.x).
      */
-    static final Set<String> LATE_STOCK_PRODUCTS = Set.of("social-access", "social-access-day");
+    static final Set<String> LATE_STOCK_PRODUCTS = Set.of(
+            "social-access", "social-access-day", "claims-chunks-plus");
 
     /** Настройки меню, которые должны обновиться вместе с его пунктами. */
     static final List<String> MENU_COMPANIONS = List.of("server-menu.title",

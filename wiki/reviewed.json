@@ -1,198 +1,198 @@
 {
   "pages": {
     "about": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "53ca68991b137c2456cefe3c65c1d9def8316e9f9b26c13fa8d15ecfe0af373a",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "66ac1f4448f09942ec428283e8631837b15d6ad1dacf908e4c6a9dd2deecfae7",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "f9883026b1c073d77fd137af57fd337d1c8453bbb962de7520058cf81893f750",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "35fc1aef311956539b9885932892700f69865c4a8b10d8ed80d896059bf3a5e5",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "2b885a083a76b30633947f3d35d31d1db7fddfbfd9495eddf3f2f68b2c55840d",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "b2975b408f253daed482b5f592cbc3fc6c0c4b6a7ec8f337cb50f075905015cf",
       "text": "fcdffb1098428fac2bd42d1c4acb73bb9a024d1823d5398b8845bb2f415a506f"
     },
     "auction": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "894bd3ff3e19f3058d0bb3b3ab2f7c02aee13c1af920656f820a513ddf0eaba0",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "eca7c923df70a7ab5105fd1dbfb2f2e8c16c19504388f46be70b6b2ff1d918ac",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "c20ea4ba1365b046bbebb13e36de1e0f0d088650902287c5c1a1178287445b53",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "8ac0b05d12222ce246f60da0209603cbf72547203914615cedbb9f5f818ea473",
       "text": "f368077b5f1961a1982957afe3b8523b60c8330f3dfd1891003d01ea1c4fd6db"
     },
     "chat": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "53ca68991b137c2456cefe3c65c1d9def8316e9f9b26c13fa8d15ecfe0af373a",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "66ac1f4448f09942ec428283e8631837b15d6ad1dacf908e4c6a9dd2deecfae7",
       "text": "ca6c93fc33fca52eecc7d38744bc86f619ea0b6a7bcc2314b84ca6c5399d8a1c"
     },
     "claims": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "50b40c8de756124817380c567eb4320440d4f001b73d42ffc1494647656b5c29",
-      "text": "bf1b24b85ecdaee84580c0d5ea4b9c1120b8dd072e38aa68b52e49fc2a0c472c"
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "129228c80c65a53b67fbfd047113307c88e8202ef85f87767d8da1e1ba17c78e",
+      "text": "3144ca61235b895be5cb61e6d120d5dc6d6d0d7c26f87819431b4756659e8e12"
     },
     "classes": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "afceb3caff1f6d9ae2c31309c43ce1afffa00f1494e39b65a0aa2522831c28d2",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "098d465a9460858a507cd708e97739ca90a5d598815e8a1fcc6d3918723cab92",
       "text": "fdebe780b6e7964249b5c4bc4752908cbdd67722e4d4bb0a4b1f64d94cd15ea1"
     },
     "commands": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "941b2347e59c86b2fc43ac73c9255f838cf55bc3959ceb4d4a50505e31fdeef5",
-      "text": "6ff56430a624ad33136de118509bf5b861e732c034df415c5e680a464c1f6039"
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "bd6c190b743bdd8defb369bfb46edcb5b1228acc9a5cdcd16f301759ec5f84e7",
+      "text": "13b15e747e5e4aa93ff7ed9ce580f47e2c7952f5f319b46c6e854fc3eaec3252"
     },
     "cosmetics": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "6e121fcc64b75067f27078611842e5aa50b18de756cfd29460f6aec4c51e448d",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "3b5843baac4159985d471043e72f0361fe4cdca1d62e4b28a491bce4bb2585e6",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "7de2e1bfe74daf1e517385b86d1c0bef235aa55a35ac8f158d46b505d694d2e7",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "815d931ee399bc5aa2c5453811e6dff46d323b8036898c7c1988707547c02f22",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "disasters": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "ac326a2455a50bbf30b51dd935b5e1a8b342579810f2f78b056c0562cc30343a",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "ae92de53cfe423676e16fe57678975a99210c3c8be80a4d5be4d09a615f6fbd2",
       "text": "dd99cd1f21290668ef4d7c8ead28497aa0f50dc4ffd34ee6d8e9f02a0d013d9b"
     },
     "economy": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "cf75e6bc273a0852bcf7e93828016bbe0e15e2a7958d8f7819e9a5a738c16783",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "3fd45c17777ada985e0923650ed778de82bc3fa9c6fa3018cd0bf1551b8fe998",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "e28c1046a79f05d67156476f0b98e1411d7586dc80c8851ded6358e3c72c307a",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "0acb35589d5fc2dcd9c8b1ae4f13c0448fe8c9c1c1df93490b4564b8f5084142",
       "text": "eb4d46a57319a2c56aed075ca386f6db0271d2df40e428db86c176cfc0e6c807"
     },
     "faq": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "f0a85fb409c26d1972573f4f5c794885ebcb61baa80f4d86fb00edf667b98132",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "79e7e10478a5bfdd15ac52e920acfb25fce0acacd216e1c128b3bf020e43f58c",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "4b1360478fe736e414ce9c0c097006b9cb09e8483c2aebc18eb437b16ef3255b",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "fa8272e083f54d8dd2ec04d1b40250f946092513f4a47d505c53bdc39ffa1aee",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "50b40c8de756124817380c567eb4320440d4f001b73d42ffc1494647656b5c29",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "129228c80c65a53b67fbfd047113307c88e8202ef85f87767d8da1e1ba17c78e",
       "text": "e166f2671aabcdf55ecf59d1465ddb19a36343f6d07983eb8b8821b3a63cce34"
     },
     "honors": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "53ca68991b137c2456cefe3c65c1d9def8316e9f9b26c13fa8d15ecfe0af373a",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "66ac1f4448f09942ec428283e8631837b15d6ad1dacf908e4c6a9dd2deecfae7",
       "text": "6bc29d5a2d7783845f8b3d9b085e85982faec5b3029d841092386f36b1d4c4b0"
     },
     "hunt": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "45916956364aede52bb9ad2d85f8ab22037c322d6d55b6f180ce59994580ff98",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "14c4fff262c029ff1a64df9133e157db88779a0d4bb86b631be2fc9a55536c0b",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "e52e2440992b9e3267dfceada0ab3b40e616405018a5d4df58ab6f7d9390829f",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "fc69c690392d34dbcaa6118b95212c9ade894c25fe13c3c242eafff3dbc14526",
       "text": "6a3b9fedc0d15e6ef23ae50e7bf41cdf79f9efcc79299101944c041b5c2d9222"
     },
     "menu": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "25b2d3bcf843e2f4e7346d7518f78fa6302b5fe7018c0ec20bc98d7e14118d57",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "f737e1eb018d176c81e3805d72f5e41b495ebbeded8573e14595169be469e11a",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "moderation": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "53ca68991b137c2456cefe3c65c1d9def8316e9f9b26c13fa8d15ecfe0af373a",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "66ac1f4448f09942ec428283e8631837b15d6ad1dacf908e4c6a9dd2deecfae7",
       "text": "255b8cacb80c9ea7b1236f73feaa226a121bb9b58cff81fef2d46b65abae4073"
     },
     "orders": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "ab4bff38310cac79abb95526a8b279ef07dea8701214af19e1739fe32a045bb2",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "cb8a91563e7d63ff5ae7ba34e620c20c176dc6a6d29dbf4b738ab023fd46de4f",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "perktree": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "afceb3caff1f6d9ae2c31309c43ce1afffa00f1494e39b65a0aa2522831c28d2",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "098d465a9460858a507cd708e97739ca90a5d598815e8a1fcc6d3918723cab92",
       "text": "148006c785c6f0e5adf6725d87605f5e508b957636fdac87ea64939e7bd63b79"
     },
     "pets": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "ed85b47edf01c30ce0c3f7240214446f43a837ab1999c880d2ceb50850009b2d",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "84318baecbc997ce0bedf081df3a313599332ddf7d301cbad1e5ec826c085850",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "f1fca3633abc395b3a948dab408798c5a6e1c5616b6afa4f0a3988bc3b789f09",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "9ad5bb91e15a668fdd82f555db3bc6aa2aba4c66f54a805a739fa96225e22e95",
       "text": "13e6d38670572890ab2567279a5ca76f8e353eab6ade09a877eee2e884c6e272"
     },
     "profile": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "2cc41fce4897d580d83196422efba72025807d05c75be6f5982e4a197a7dd966",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "c9f873e555ffdfeb5576d2aa27ccbfe13364c69666cad14d745b5e1130df67f2",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "1bff966592c2ab967ed0a009fcec502e5a6d6bd2bacccd995a849657cc91fd2f",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "45d823e3de41aeb4d9a996da44c8153b9bb402c6c3ea8d5439f9a74eab139d9d",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "95115d24b5261757b53cccd19e9c4b51fd897f0a817380fc29c52d6d662678f2",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "aa339690c6da4f4e7fab2db3c197eb028d382159ce2c605ddcdac0c706fcde1a",
       "text": "b551d73e8dcc85c81ff7c908f7c89e1ebfb441b46d082a6a714124d77bfbb2c2"
     },
     "shop": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "e52e2440992b9e3267dfceada0ab3b40e616405018a5d4df58ab6f7d9390829f",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "fc69c690392d34dbcaa6118b95212c9ade894c25fe13c3c242eafff3dbc14526",
       "text": "78c3e3e10e0a134e99df65d8037f7d77233f31e79f3982ee6b6d5d60b895928a"
     },
     "skills": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "c062b6a539808a58b848712855a0875a9878ccc71e53b68075d0edff00d202d8",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "732a13817cfa134e98bb644806f7648034084bc65d1e976ec4d3342398438e34",
       "text": "4145bd09f8c7604a0b17976f7d5395a9fae287b1f76c38ac971429465b9cd85b"
     },
     "social-link": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "efe47076db1726dcfec0d4917d1bee947c325b64db62cd71cb799b45a5c540b7",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "7f2767a7ff762e76e534b54d8e03621b44c1196675a6f16743913c4d89a4ed52",
       "text": "4c8cab4b751d6f98f2dfca7e7cd7e2770ee7f7000984ccc7c7b57ec8949a3ae4"
     },
     "start": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "e308768c2f345ffefb5a721919fee34ce2751f9ae241d977b02ec4d4e0eb32c6",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "c19adc6942042f49e4ca3f4126037ec1100892e8feec4a5897b75945d4c0124f",
       "text": "c2835fdf2d1945079115e6a252d472ce72ad9ad79f4ed47ad58e269b467d595f"
     },
     "starter-kit": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "2b885a083a76b30633947f3d35d31d1db7fddfbfd9495eddf3f2f68b2c55840d",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "b2975b408f253daed482b5f592cbc3fc6c0c4b6a7ec8f337cb50f075905015cf",
       "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
     },
     "teleports": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "5e970810e7e7a40bdba1f5d56d42c67a41e026626e0099a1a7e7c7f8acc06374",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "34ccf148bfaa60657db6d637cf8d208313b261570721f196e3cddaab8c4ca1a2",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "e28c1046a79f05d67156476f0b98e1411d7586dc80c8851ded6358e3c72c307a",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "0acb35589d5fc2dcd9c8b1ae4f13c0448fe8c9c1c1df93490b4564b8f5084142",
       "text": "6fecc5f6cbd3088f29bccb6fbb695467bfa0a24142db052c1a7d61be43037161"
     },
     "titles": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "45abe2a408a03d21283967fe57b65f24ca24df201d48491727dfbeb17de5d33b",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "fde04653fa94046fc1b29ee10601b883ce95484e8be7944588681e4f95144bb5",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "e52e2440992b9e3267dfceada0ab3b40e616405018a5d4df58ab6f7d9390829f",
-      "text": "8ef50f0a90781c9f5aa8277303e22484b52b4f5eee2d529fdd757d52aadc12dc"
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "fc69c690392d34dbcaa6118b95212c9ade894c25fe13c3c242eafff3dbc14526",
+      "text": "117d272f02e511a81249ce92e1660b74d264c0a151bcc4b03e2bf7ea56f77d9b"
     },
     "vk": {
-      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
-      "sources": "efe47076db1726dcfec0d4917d1bee947c325b64db62cd71cb799b45a5c540b7",
+      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
+      "sources": "7f2767a7ff762e76e534b54d8e03621b44c1196675a6f16743913c4d89a4ed52",
       "text": "94f2d5f3cf83ae414f1a577156884ae1329734bf55951e2707569c3ce923c199"
     }
   },

@@ -89,8 +89,9 @@ class QueueRemovalTest {
         // Снята очередь и уточнён порог прибавок262: только тексты, не условия SKU.
         var oldProducts = legacy.getMapList("shop.products");
         var newProducts = live.getMapList("shop.products");
-        assertEquals(oldProducts.size() + 6, newProducts.size(),
-                "278–279 добавляют четыре SKU, social-access и social-access-day, не меняя условия старых");
+        assertEquals(oldProducts.size() + 7, newProducts.size(),
+                "278–279 добавляют четыре SKU, social-access и social-access-day, "
+                        + "плюс claims-chunks-plus, не меняя условия старых");
         newProducts = newProducts.stream()
                 .filter(product -> !PremiumPresentationMigration.PRODUCTS.contains(product.get("id")))
                 .filter(product -> !PresentationMigration.LATE_STOCK_PRODUCTS.contains(String.valueOf(product.get("id"))))

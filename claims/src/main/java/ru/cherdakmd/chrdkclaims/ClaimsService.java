@@ -56,10 +56,18 @@ public final class ClaimsService {
                 plugin.config().passBonusChunks, level > 0);
     }
 
-    /** Фактический лимит: персональный лимит администратора главнее общего. */
+    /**
+     * Фактический лимит: персональный лимит администратора главнее общего расчёта,
+     * а вечный купленный бонус всегда добавляется сверху (и к расчёту, и к правке).
+     * Покупка не выдаёт чанки и не отменяет ренту: она расширяет потолок, внутри
+     * которого игрок сам приватит /claim за алмазы. При истечении других товаров
+     * бонус не сгорает, а существующие приваты при снижении лимита не удаляются.
+     */
     public int limitOf(String playerName) {
         Integer override = plugin.store().limitOverride(playerName);
-        return override != null ? override : baseLimitOf(playerName);
+        int base = override != null ? override : baseLimitOf(playerName);
+        return (int) Math.min(Integer.MAX_VALUE,
+                (long) base + Math.max(0, plugin.store().bonusChunks(playerName)));
     }
 
     /** Короткая запись в журнал операций (действие + подробности). */
