@@ -106,6 +106,41 @@ class WallDigestCollectorTest {
     }
 
     @Test
+    void activityCountersAreAggregatedAndResetOnNewDay() {
+        WallDigestCollector collector = fresh(WallDigestConfig.DEFAULT);
+        assertFalse(collector.shouldPost(DAY, 1), "Пустые сутки не публикуются");
+        collector.recordBlocksBroken(12);
+        collector.recordDiamonds(5);
+        collector.recordDiamonds(2);
+        collector.recordMobKills(3);
+
+        WallDigestCollector.Digest today = collector.snapshot(DAY);
+        assertEquals(12, today.blocksBroken());
+        assertEquals(7, today.diamondsGained());
+        assertEquals(3, today.mobKills());
+        assertEquals(22L, today.total());
+        assertTrue(collector.shouldPost(DAY, 1), "Игровая активность тоже будит пост");
+
+        WallDigestCollector.Digest tomorrow = collector.snapshot("2026-11-04");
+        assertEquals(0, tomorrow.blocksBroken());
+        assertEquals(0, tomorrow.diamondsGained());
+        assertEquals(0, tomorrow.mobKills());
+        assertEquals(0L, tomorrow.total());
+    }
+
+    @Test
+    void negativeOrZeroActivityIsIgnoredAndCountersNeverOverflow() {
+        WallDigestCollector collector = fresh(WallDigestConfig.DEFAULT);
+        collector.recordBlocksBroken(-1);
+        collector.recordDiamonds(0);
+        collector.recordMobKills(-5);
+        assertEquals(0L, collector.snapshot(DAY).total());
+        collector.recordBlocksBroken(Long.MAX_VALUE);
+        collector.recordBlocksBroken(10);
+        assertEquals(Long.MAX_VALUE, collector.snapshot(DAY).blocksBroken());
+    }
+
+    @Test
     void unresolvedPostingIsReportedOnce() {
         WallDigestCollector collector = fresh(WallDigestConfig.DEFAULT);
         collector.markPosting(DAY);

@@ -125,7 +125,9 @@ public final class ShopGui implements Listener {
         var spec = item.spec();
         ItemStack icon;
         if (spec != null) {
-            icon = ShopBooks.create(spec);
+            // Кастомные чары показываем русским именем и с коротким описанием:
+            // по техническому id игрок не поймёт, что именно покупает.
+            icon = ShopBooks.create(spec, ShopBookInfo.displayName(spec));
             if (icon == null) {
                 icon = new ItemStack(Material.BARRIER);
             }
@@ -153,6 +155,12 @@ public final class ShopGui implements Listener {
                     "ref", item.refStock()));
             lore.add(plugin.messages().get("trading.gui.item-id",
                     "id", item.material().toLowerCase(Locale.ROOT)));
+            // Описание чары — первой строкой под ценой, чтобы проклятие и эффект
+            // были видны до покупки, а не только в /enchants info.
+            Component description = ShopBookInfo.description(spec);
+            if (description != null) {
+                lore.add(0, description);
+            }
             ShopPromoService promos = service.promos();
             if (promos != null && promos.enabled()
                     && promos.plan(now).featured().contains(item.material())) {

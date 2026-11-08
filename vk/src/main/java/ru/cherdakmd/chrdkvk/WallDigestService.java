@@ -8,10 +8,15 @@ import java.util.HexFormat;
 import java.util.Locale;
 import java.util.logging.Level;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.api.events.PassGrantedEvent;
@@ -143,6 +148,52 @@ public final class WallDigestService implements Listener {
         if (!event.getPlayer().hasPlayedBefore()) {
             collector.recordNewPlayer();
         }
+    }
+
+    /**
+     * Добытые блоки. Только сам факт разрушения: тип блока, координаты и ник
+     * игрока на публичную стену не уходят.
+     */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBlockBreak(BlockBreakEvent event) {
+        if (stopped || !config.enabled() || !config.includeBlocks()) {
+            return;
+        }
+        collector.recordBlocksBroken(1);
+    }
+
+    /**
+     * Поднятые алмазы: считаем количество в выпавшем предмете. Алмазные блоки
+     * и руды здесь не учитываются — это отдельные товары, не «полученные алмазы».
+     */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onDiamondPickup(EntityPickupItemEvent event) {
+        if (stopped || !config.enabled() || !config.includeDiamonds()
+                || !(event.getEntity() instanceof Player)) {
+            return;
+        }
+        var stack = event.getItem().getItemStack();
+        if (stack.getType() == Material.DIAMOND) {
+            collector.recordDiamonds(stack.getAmount());
+        }
+    }
+
+    /**
+     * Победы над враждебными мобами. Игроки, питомцы, NPC и временные мобы
+     * событийных модулей в отчёт не попадают.
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onMobDeath(EntityDeathEvent event) {
+        if (stopped || !config.enabled() || !config.includeMobs()) {
+            return;
+        }
+        if (!(event.getEntity() instanceof Monster) || event.getEntity().getKiller() == null) {
+            return;
+        }
+        if (ru.cherdakmd.chrdkregister.api.MobRewardPolicy.temporary(event.getEntity())) {
+            return;
+        }
+        collector.recordMobKills(1);
     }
 
     /** Опрос престижа идёт на главном потоке: Bukkit API так безопаснее. */

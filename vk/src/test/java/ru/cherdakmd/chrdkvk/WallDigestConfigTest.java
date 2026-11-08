@@ -52,6 +52,25 @@ class WallDigestConfigTest {
     }
 
     @Test
+    void activityBlocksAreOnByDefaultAndCanBeDisabled() {
+        WallDigestConfig defaults = WallDigestConfig.parse(new YamlConfiguration());
+        assertTrue(defaults.includeBlocks());
+        assertTrue(defaults.includeDiamonds());
+        assertTrue(defaults.includeMobs());
+
+        YamlConfiguration yaml = new YamlConfiguration();
+        yaml.set("wall-digest.include-blocks", false);
+        yaml.set("wall-digest.include-diamonds", false);
+        yaml.set("wall-digest.include-mobs", false);
+        WallDigestConfig cfg = WallDigestConfig.parse(yaml);
+        assertFalse(cfg.includeBlocks());
+        assertFalse(cfg.includeDiamonds());
+        assertFalse(cfg.includeMobs());
+        assertTrue(cfg.includePrestige(), "Старые блоки не выключились вместе с новыми");
+        assertFalse(cfg.withPlayerNames(true).includeBlocks());
+    }
+
+    @Test
     void explicitOverrideKeepOwnerValues() {
         YamlConfiguration yaml = new YamlConfiguration();
         yaml.set("wall-digest.enabled", false);

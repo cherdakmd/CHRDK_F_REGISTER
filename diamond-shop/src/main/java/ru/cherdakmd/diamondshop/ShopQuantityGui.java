@@ -79,7 +79,7 @@ public final class ShopQuantityGui implements Listener {
         if(h.forge!=null){icon=h.forge.prototype().clone();}
         else{
             var spec=h.item.spec();
-            if(spec!=null){icon=ru.cherdakmd.chrdkregister.api.ShopBooks.create(spec);if(icon==null)icon=new ItemStack(Material.BARRIER);}
+            if(spec!=null){icon=ru.cherdakmd.chrdkregister.api.ShopBooks.create(spec,ShopBookInfo.displayName(spec));if(icon==null)icon=new ItemStack(Material.BARRIER);}
             else icon=new ItemStack(material==null?Material.BARRIER:material);
         }
         icon.setAmount(Math.min(h.units,Math.max(1,icon.getMaxStackSize())));inv.setItem(4,icon);

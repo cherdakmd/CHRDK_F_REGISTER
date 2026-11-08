@@ -16,8 +16,15 @@ class WallDigestCardTest {
 
     private static WallDigestCollector.Digest digest(int prestige, int donations, int peak,
                                                      int newcomers, List<String> leaders) {
+        return digest(prestige, donations, peak, newcomers, 0, 0, 0, leaders);
+    }
+
+    private static WallDigestCollector.Digest digest(int prestige, int donations, int peak,
+                                                     int newcomers, long blocks, long diamonds,
+                                                     long mobs, List<String> leaders) {
+        long total = (long) prestige + donations + newcomers + blocks + diamonds + mobs;
         return new WallDigestCollector.Digest("2026-11-03", prestige, donations,
-                peak, newcomers, leaders, prestige + donations + newcomers);
+                peak, newcomers, blocks, diamonds, mobs, leaders, total);
     }
 
     @Test
@@ -58,6 +65,47 @@ class WallDigestCardTest {
         assertFalse(text.contains("руб"), "Суммы не публикуются");
         assertFalse(text.contains("uuid"), "UUID не публикуются");
         assertTrue(text.contains("ТВОЙ МИР. ТВОЯ ИСТОРИЯ."));
+    }
+
+    @Test
+    void fullSixRowDigestRendersWithoutOverlappingFooter() throws Exception {
+        var data = digest(3, 2, 17, 1, 1842, 96, 37, List.of());
+        byte[] png = WallDigestCard.render(data, WallDigestConfig.DEFAULT);
+        assertNotNull(ImageIO.read(new ByteArrayInputStream(png)));
+        String text = WallDigestCard.message(data, WallDigestConfig.DEFAULT, "#chrdk_abc123");
+        assertTrue(text.contains("Добыто блоков: 1842"));
+        assertTrue(text.contains("Получено алмазов: 96"));
+        assertTrue(text.contains("Побед над монстрами: 37"));
+        // На публичной стене по-прежнему только агрегаты.
+        assertFalse(text.contains("Steve"));
+        assertFalse(text.contains("руб"));
+    }
+
+    @Test
+    void longLeaderNamesStillFitAboveFooter() throws Exception {
+        var leaders = List.of("ОченьДлинноеИмяПервогоИгрокаКотороеПереносится",
+                "ОченьДлинноеИмяВторогоИгрокаКотороеТожеПереносится",
+                "ОченьДлинноеИмяТретьегоИгрокаКотороеОпятьПереносится");
+        var cfg = WallDigestConfig.DEFAULT.withPlayerNames(true);
+        var data = digest(3, 2, 17, 1, 1842, 96, 37, leaders);
+        byte[] png = WallDigestCard.render(data, cfg);
+        var image = ImageIO.read(new ByteArrayInputStream(png));
+        assertNotNull(image);
+        assertEquals(1280, image.getWidth());
+        assertEquals(720, image.getHeight());
+    }
+
+    @Test
+    void activityBlocksCanBeDisabledIndependently() {
+        var data = digest(3, 2, 17, 1, 1842, 96, 37, List.of());
+        var cfg = new WallDigestConfig(true, 21, 0, java.time.ZoneId.of("Europe/Moscow"),
+                true, true, true, false, false, false, false, 3, 1, 5,
+                "Итоги дня", "ТВОЙ МИР. ТВОЯ ИСТОРИЯ.");
+        String text = WallDigestCard.message(data, cfg, "");
+        assertFalse(text.contains("Добыто блоков"));
+        assertFalse(text.contains("Получено алмазов"));
+        assertFalse(text.contains("Побед над монстрами"));
+        assertTrue(text.contains("Престиж"));
     }
 
     @Test

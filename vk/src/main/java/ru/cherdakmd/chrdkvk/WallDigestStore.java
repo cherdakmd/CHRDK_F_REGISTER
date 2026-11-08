@@ -35,6 +35,10 @@ public final class WallDigestStore {
         int donationEvents;
         int peakOnline;
         int newPlayers;
+        /** Агрегаты игровой активности за сутки: блоки, алмазы, победы над мобами. */
+        long blocksBroken;
+        long diamondsGained;
+        long mobKills;
         /** Прирост престижа за текущие сутки по игрокам (для топа). */
         Map<String, Integer> prestigeGains = new LinkedHashMap<>();
         /** Последние известные значения престижа (переживают рестарт). */

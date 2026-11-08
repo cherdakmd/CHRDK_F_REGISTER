@@ -435,7 +435,9 @@ public final class ShopService {
 
     /** {@code null} — успех, иначе ключ ошибки. Книги с NBT не стакаются: по слоту на книгу. */
     private static String insertBooks(ItemStack[] items, ShopBookKey.Spec spec, long units) {
-        ItemStack template = ShopBooks.create(spec);
+        // Выданная книга называется так же, как иконка в витрине: игрок получает
+        // «Громобой III», а не «Книга чар: thunderstrike III».
+        ItemStack template = ShopBooks.create(spec, ShopBookInfo.displayName(spec));
         if (template == null) return "trading.unknown-item";
         long left = units;
         for (int i = 0; i < items.length && left > 0; i++) {

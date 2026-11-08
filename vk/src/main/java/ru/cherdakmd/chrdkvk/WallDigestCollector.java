@@ -26,8 +26,11 @@ public final class WallDigestCollector {
             int donationEvents,
             int peakOnline,
             int newPlayers,
+            long blocksBroken,
+            long diamondsGained,
+            long mobKills,
             List<String> leaders,
-            int total) {
+            long total) {
     }
 
     private final WallDigestStore store;
@@ -59,6 +62,9 @@ public final class WallDigestCollector {
         state.donationEvents = 0;
         state.peakOnline = 0;
         state.newPlayers = 0;
+        state.blocksBroken = 0;
+        state.diamondsGained = 0;
+        state.mobKills = 0;
         state.prestigeGains.clear();
         state.postingDay = ""; // прошлая незавершённая попытка больше не актуальна
         // Снимок престижа и lastPostedDay намеренно сохраняются между сутками.
@@ -107,6 +113,32 @@ public final class WallDigestCollector {
         state.newPlayers++;
     }
 
+    /** Один сломанный игроком блок. Считается только факт, не тип и не координаты. */
+    public synchronized void recordBlocksBroken(long blocks) {
+        if (blocks > 0) {
+            state.blocksBroken = addCapped(state.blocksBroken, blocks);
+        }
+    }
+
+    /** Алмазы, реально подобранные игроком: сумма количеств выпавших предметов. */
+    public synchronized void recordDiamonds(long diamonds) {
+        if (diamonds > 0) {
+            state.diamondsGained = addCapped(state.diamondsGained, diamonds);
+        }
+    }
+
+    /** Победа над враждебным мобом; игроки и временные мобы событий не дают. */
+    public synchronized void recordMobKills(long kills) {
+        if (kills > 0) {
+            state.mobKills = addCapped(state.mobKills, kills);
+        }
+    }
+
+    /** Счётчик не должен уронить слушатель события даже за очень активные сутки. */
+    private static long addCapped(long current, long delta) {
+        return Long.MAX_VALUE - current < delta ? Long.MAX_VALUE : current + delta;
+    }
+
     public synchronized Digest snapshot(String day) {
         rollDay(day);
         List<String> leaders = new ArrayList<>();
@@ -122,9 +154,16 @@ public final class WallDigestCollector {
                 }
             }
         }
-        int total = state.prestigeEvents + state.donationEvents + state.newPlayers;
+        long total = activity();
         return new Digest(state.day, state.prestigeEvents, state.donationEvents,
-                state.peakOnline, state.newPlayers, List.copyOf(leaders), total);
+                state.peakOnline, state.newPlayers, state.blocksBroken,
+                state.diamondsGained, state.mobKills, List.copyOf(leaders), total);
+    }
+
+    /** Сумма всех суточных событий; новые счётчики тоже будят «пустой» день. */
+    private synchronized long activity() {
+        return (long) state.prestigeEvents + state.donationEvents + state.newPlayers
+                + state.blocksBroken + state.diamondsGained + state.mobKills;
     }
 
     public synchronized boolean shouldPost(String day, int minEvents) {
@@ -135,8 +174,7 @@ public final class WallDigestCollector {
         if (day.equals(state.attemptDay) && state.attempts >= MAX_ATTEMPTS) {
             return false;
         }
-        int total = state.prestigeEvents + state.donationEvents + state.newPlayers;
-        return total >= Math.max(0, minEvents);
+        return activity() >= Math.max(0, minEvents);
     }
 
     public synchronized void markAttempt(String day) {

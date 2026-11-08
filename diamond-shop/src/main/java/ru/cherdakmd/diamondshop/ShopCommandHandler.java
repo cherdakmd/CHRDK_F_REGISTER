@@ -136,11 +136,23 @@ public final class ShopCommandHandler implements TabExecutor {
         for (int index = 0; index < shown; index++) {
             ShopConfig.ShopItem item = matches.get(index);
             ShopCategory category = ShopCategory.byId(item.category()).orElse(ShopCategory.DEFAULT);
-            plugin.messages().send(player, item.sellEnabled()?"trading.find-line":"quantity.find-buy-only",
-                    "material", item.material().toLowerCase(Locale.ROOT),
-                    "ask", service.askPrice(item), "batch", service.batchSize(item),
-                    "bid", PriceEngine.round(service.bidPrice(item)),
-                    "category", plugin.messages().mini(category.messageKey()));
+            String name = ShopBookInfo.searchName(item.spec());
+            if (name != null) {
+                // Кастомная чара: русское имя в начале строки, ключ товара — для /shop buy.
+                plugin.messages().send(player, item.sellEnabled()
+                                ? "trading.find-line-book" : "quantity.find-buy-only-book",
+                        "name", name,
+                        "material", item.material().toLowerCase(Locale.ROOT),
+                        "ask", service.askPrice(item), "batch", service.batchSize(item),
+                        "bid", PriceEngine.round(service.bidPrice(item)),
+                        "category", plugin.messages().mini(category.messageKey()));
+            } else {
+                plugin.messages().send(player, item.sellEnabled()?"trading.find-line":"quantity.find-buy-only",
+                        "material", item.material().toLowerCase(Locale.ROOT),
+                        "ask", service.askPrice(item), "batch", service.batchSize(item),
+                        "bid", PriceEngine.round(service.bidPrice(item)),
+                        "category", plugin.messages().mini(category.messageKey()));
+            }
         }
         if (matches.size() > shown) {
             plugin.messages().send(player, "trading.find-more",

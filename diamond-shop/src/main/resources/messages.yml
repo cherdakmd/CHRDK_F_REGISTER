@@ -32,7 +32,7 @@ messages:
     "stats-empty": "<yellow>Сделок пока не было.</yellow>"
     "find-header": "<gold>=== Поиск: %query% ===</gold> <gray>найдено: %count%</gray>"
     "find-line": "<gray>%material% ×%batch% <dark_gray>(%category%)</dark_gray> — купить </gray><red>%ask% ⛁</red><gray>, продать </gray><green>%bid% ⛁</green>"
-    "find-empty": "<yellow>По запросу «%query%» ничего не найдено. Ищите часть английского названия: iron, log, apple.</yellow>"
+    "find-empty": "<yellow>По запросу «%query%» ничего не найдено. Ищите часть материала (iron, log) или русское название чары (громобой, жилодробитель).</yellow>"
     "find-more": "<gray>Показаны первые %shown% из %count% — уточните запрос или откройте /shop.</gray>"
     "gui":
       "title": "<gold>Алмазный магазин</gold>"
@@ -100,7 +100,8 @@ messages:
     "stats-empty": "<yellow>Сделок пока не было.</yellow>"
     "find-header": "<gold>=== Поиск: %query% ===</gold> <gray>найдено: %count%</gray>"
     "find-line": "<gray>%material% ×%batch% <dark_gray>(%category%)</dark_gray> — купить </gray><red>%ask% ⛁</red><gray>, продать </gray><green>%bid% ⛁</green>"
-    "find-empty": "<yellow>По запросу «%query%» ничего не найдено. Ищите часть английского названия: iron, log, apple.</yellow>"
+    "find-line-book": "<gray>%name% ×%batch% <dark_gray>(%category%)</dark_gray> — купить </gray><red>%ask% ⛁</red><gray>, продать </gray><green>%bid% ⛁</green> <dark_gray>%material%</dark_gray>"
+    "find-empty": "<yellow>По запросу «%query%» ничего не найдено. Ищите часть материала (iron, log) или русское название чары (громобой, жилодробитель).</yellow>"
     "find-more": "<gray>Показаны первые %shown% из %count% — уточните запрос или откройте /shop.</gray>"
     "gui":
       "title": "<gold>Алмазный магазин</gold>"
@@ -220,6 +221,7 @@ messages:
     no-bid: '<yellow>Скупка по этой котировке недоступна. Предметы не забраны; выберите другой товар или проверьте /shop price.</yellow>'
     price-buy-only: '<gray>%material%: купить %batch% шт. за </gray><red>%ask% алм.</red><gray>. Только покупка; запас %stock% / %ref%.</gray>'
     find-buy-only: '<gray>%material% ×%batch% <dark_gray>(%category%)</dark_gray> — купить </gray><red>%ask% алм.</red><gray> · без обратной скупки</gray>'
+    find-buy-only-book: '<gray>%name% ×%batch% <dark_gray>(%category%)</dark_gray> — купить </gray><red>%ask% алм.</red><gray> · без обратной скупки · %material%</gray>'
     buy-only-lore:
       - '<gray>Эталон: %batch% шт. · купить </gray><red>%ask% алм.</red>'
       - '<gold>Только покупка · обратной скупки нет</gold>'

@@ -31,6 +31,8 @@ public final class WallDigestCard {
     private static final Color ACCENT = new Color(0xff, 0xd6, 0x8a);
     private static final Color BADGE = new Color(0xf1, 0xcf, 0x8e);
     private static final Color SHADOW = new Color(0x20, 0x31, 0x2b);
+    /** Базовая линия даты: бейдж заканчивается на 155, ascent заголовка ~58. */
+    private static final int TITLE_BASELINE = 236;
     /** Одна и та же запасная строка уходит и на постер, и в текст записи. */
     static final String QUIET_DAY = "Тихий день на сервере — без громких событий.";
     private static final String[] MONTHS = {
@@ -87,7 +89,9 @@ public final class WallDigestCard {
             g.setColor(new Color(0x24, 0x35, 0x2d));
             g.drawString(badge, 78, 141);
 
-            int y = 194;
+            // Раньше дата рисовалась с базовой линией 194 и верхом букв заходила
+            // на бейдж (112..155). Теперь между бейджем и заголовком есть зазор.
+            int y = TITLE_BASELINE;
             List<String> title = wrap(humanDate(digest.day()), g.getFontMetrics(titleFont), 770);
             if (title.size() > 3) {
                 titleFont = font("/assets/DejaVuSans-Bold.ttf", Font.BOLD, 52f);
@@ -98,20 +102,29 @@ public final class WallDigestCard {
                 y += 83;
             }
 
-            y = Math.max(420, y + 24);
+            // Сначала собираем все строки отчёта, затем выбираем отступ и шаг:
+            // шесть блоков (престиж, поддержка, онлайн, блоки, алмазы, мобы)
+            // должны поместиться над подвалом даже с переносами длинных строк.
             List<String> body = lines(digest, config);
             if (body.isEmpty()) {
                 body = List.of(QUIET_DAY);
             }
+            List<String> rows = new ArrayList<>();
             for (String line : body) {
-                List<String> wrapped = wrap(line, g.getFontMetrics(bodyFont), 730);
-                for (String part : wrapped) {
-                    text(g, part, 64, y, bodyFont, CREAM);
-                    y += 39;
-                }
+                rows.addAll(wrap(line, g.getFontMetrics(bodyFont), 730));
             }
-            if (y > 604) {
+            int step = rows.size() > 8 ? 28 : rows.size() > 6 ? 32 : 38;
+            int start = rows.size() > 6 ? 326 : rows.size() >= 5 ? 350 : 380;
+            start = Math.max(start, y + 24);
+            if (start + rows.size() * step > 604) {
+                // Длинные имена лидеров не должны лишать сервер суточного поста.
+                step = Math.max(22, (604 - start) / Math.max(1, rows.size()));
+            }
+            if (start + rows.size() * step > 604) {
                 throw new IOException("Подпись дайджеста перекрывает подвал карточки");
+            }
+            for (int index = 0; index < rows.size(); index++) {
+                text(g, rows.get(index), 64, start + index * step, bodyFont, CREAM);
             }
 
             g.setColor(ACCENT);
@@ -145,6 +158,15 @@ public final class WallDigestCard {
         }
         if (config.includeOnline() && (digest.peakOnline() > 0 || digest.newPlayers() > 0)) {
             lines.add("Онлайн: пик " + digest.peakOnline() + " · новичков " + digest.newPlayers());
+        }
+        if (config.includeBlocks() && digest.blocksBroken() > 0) {
+            lines.add("Добыто блоков: " + digest.blocksBroken());
+        }
+        if (config.includeDiamonds() && digest.diamondsGained() > 0) {
+            lines.add("Получено алмазов: " + digest.diamondsGained());
+        }
+        if (config.includeMobs() && digest.mobKills() > 0) {
+            lines.add("Побед над монстрами: " + digest.mobKills());
         }
         return lines;
     }

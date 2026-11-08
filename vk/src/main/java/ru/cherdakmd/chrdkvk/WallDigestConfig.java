@@ -14,9 +14,10 @@ import org.bukkit.configuration.file.FileConfiguration;
  * {@code wall-digest.enabled: false}.</p>
  *
  * <p>На стену уходят только агрегаты: количество повышений престижа,
- * поддержек сервера, пик онлайна и число новичков. Суммы, названия товаров,
- * UUID, IP и время входа не публикуются никогда. Имена лидеров по умолчанию
- * выключены; при включении уважается существующий opt-out игрока из VkStore.</p>
+ * поддержек сервера, пик онлайна, число новичков, добытые блоки, поднятые
+ * алмазы и победы над монстрами. Суммы, названия товаров, UUID, IP и время
+ * входа не публикуются никогда. Имена лидеров по умолчанию выключены;
+ * при включении уважается существующий opt-out игрока из VkStore.</p>
  */
 public record WallDigestConfig(
         boolean enabled,
@@ -26,6 +27,9 @@ public record WallDigestConfig(
         boolean includePrestige,
         boolean includeDonations,
         boolean includeOnline,
+        boolean includeBlocks,
+        boolean includeDiamonds,
+        boolean includeMobs,
         boolean showPlayerNames,
         int maxNames,
         int minEvents,
@@ -37,7 +41,7 @@ public record WallDigestConfig(
 
     public static final WallDigestConfig DEFAULT = new WallDigestConfig(
             true, 21, 0, ZoneId.of("Europe/Moscow"),
-            true, true, true, false, 3, 1, 5,
+            true, true, true, true, true, true, false, 3, 1, 5,
             "Итоги дня", "ТВОЙ МИР. ТВОЯ ИСТОРИЯ.");
 
     public WallDigestConfig {
@@ -69,6 +73,9 @@ public record WallDigestConfig(
                 cfg.getBoolean(PREFIX + "include-prestige", DEFAULT.includePrestige()),
                 cfg.getBoolean(PREFIX + "include-donations", DEFAULT.includeDonations()),
                 cfg.getBoolean(PREFIX + "include-online", DEFAULT.includeOnline()),
+                cfg.getBoolean(PREFIX + "include-blocks", DEFAULT.includeBlocks()),
+                cfg.getBoolean(PREFIX + "include-diamonds", DEFAULT.includeDiamonds()),
+                cfg.getBoolean(PREFIX + "include-mobs", DEFAULT.includeMobs()),
                 cfg.getBoolean(PREFIX + "show-player-names", DEFAULT.showPlayerNames()),
                 cfg.getInt(PREFIX + "max-names", DEFAULT.maxNames()),
                 cfg.getInt(PREFIX + "min-events", DEFAULT.minEvents()),
@@ -109,8 +116,8 @@ public record WallDigestConfig(
     /** Удобная копия для админской настройки и тестов рендерера. */
     public WallDigestConfig withPlayerNames(boolean show) {
         return new WallDigestConfig(enabled, hour, minute, zone, includePrestige,
-                includeDonations, includeOnline, show, maxNames, minEvents,
-                pollMinutes, title, footer);
+                includeDonations, includeOnline, includeBlocks, includeDiamonds,
+                includeMobs, show, maxNames, minEvents, pollMinutes, title, footer);
     }
 
     private static boolean blank(String value) {
