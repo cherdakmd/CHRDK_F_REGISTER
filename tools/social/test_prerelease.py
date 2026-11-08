@@ -9,9 +9,11 @@ import unittest
 from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import patch
+from urllib.parse import parse_qs
 
 import prerelease
 from content import SafetyError
+from publisher import Ledger, VK
 
 TAG = 'vk-v1.5.2-rc.5'
 VERSION = '1.5.2-rc.5'
@@ -31,6 +33,38 @@ class FakeVK:
 class FakeLedger:
     group = 123456
     peer = 2000000001
+
+
+class FakeGH:
+    """Один месячный журнал Issues и пустая вторая страница."""
+
+    def __init__(self, records):
+        self.records, self.page = records, 0
+
+    def call(self, path, method='GET', data=None):
+        assert method == 'GET' and path.startswith('issues?'), (path, method)
+        self.page += 1
+        if self.page > 1:
+            return []
+        return [{'number': 1, 'title': '[CHRDK VK CHAT 123456 2000000001] 2026-11',
+                 'body': json.dumps({'schema': 2, 'group': 123456, 'peer': 2000000001,
+                                     'records': self.records}, ensure_ascii=False)}]
+
+
+class FailingCardVK:
+    group, peer = 123456, 2000000001
+
+    def upload(self, image):
+        raise SafetyError('VK не подтвердил загрузку карточки')
+
+
+class RecordingVKTransport:
+    def __init__(self):
+        self.calls = []
+
+    def request(self, url, method='GET', data=None, headers=None):
+        self.calls.append((url, method, data))
+        return {'response': 9}
 
 
 class PrereleaseTest(unittest.TestCase):
@@ -118,6 +152,44 @@ class PrereleaseTest(unittest.TestCase):
         first = mocked.call_args_list[0]
         self.assertEqual(first.kwargs['gh'], mocked.call_args_list[2].kwargs['gh'])
         self.assertIs(first.args[0], mocked.call_args_list[2].args[0])
+
+    def test_ledger_accepts_prerelease_key_but_rejects_foreign_key(self):
+        record = {'digest': 'a' * 64, 'status': 'prepared'}
+        ledger = Ledger(FakeGH({'prerelease:' + TAG: record}), 123456, 2000000001)
+        self.assertEqual(ledger.locate('prerelease:' + TAG)[1]['status'], 'prepared')
+        for key in ('prerelease:bogus', 'prerelease:v1.5.2', 'prerelease:vk-v1.5.2-rc.0',
+                    'release:vk-v1.5.2-rc.5', 'prerelease:' + TAG + '-extra'):
+            with self.subTest(key=key), self.assertRaises(SafetyError):
+                Ledger(FakeGH({key: record}), 123456, 2000000001)
+
+    def test_card_optional_adapter_falls_back_to_plain_text(self):
+        wrapper = prerelease.CardOptionalVK(FailingCardVK())
+        self.assertEqual(wrapper.group, 123456)
+        self.assertEqual(wrapper.upload(b'png'), '')
+        self.assertFalse(wrapper.card)
+
+    def test_empty_attachment_is_omitted_from_messages_send(self):
+        transport = RecordingVKTransport()
+        vk = VK(123456, 'TOKEN', transport, peer=2000000001)
+        self.assertEqual(9, vk.post(prerelease.build_post(TAG, VERSION), ''))
+        form = parse_qs(transport.calls[0][2].decode())
+        self.assertNotIn('attachment', form)
+        self.assertIn('message', form)
+
+    def test_text_fallback_only_after_real_upload_response(self):
+        class VKWithTransport(FakeVK):
+            transport = type('T', (), {'upload_keys': None})()
+
+            def check_connection(self):
+                return None
+
+        with patch.object(prerelease, 'configured', return_value=(object(), VKWithTransport())), \
+             patch.object(prerelease, 'publish_announcement',
+                          side_effect=SafetyError('журнал не прочитан')) as mocked, \
+             patch.object(prerelease.time, 'sleep'):
+            with self.assertRaises(SafetyError):
+                prerelease.main(['--publish', '--tag', TAG, '--version', VERSION])
+        self.assertEqual(mocked.call_count, prerelease.MAX_ATTEMPTS)
 
 
 if __name__ == '__main__':

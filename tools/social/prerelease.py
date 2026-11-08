@@ -53,6 +53,30 @@ class RecordingTransport(Transport):
         return result
 
 
+class CardOptionalVK:
+    """Если загрузчик ВК не подтвердил фото, новость уходит текстом.
+
+    Все проверки, маркер, журнал и messages.send остаются у обычного VK:
+    перехватывается только отказ upload(), поэтому дубль невозможен.
+    """
+
+    def __init__(self, vk):
+        self._vk = vk
+        self.card = True
+
+    def __getattr__(self, name):
+        return getattr(self._vk, name)
+
+    def upload(self, image):
+        try:
+            return self._vk.upload(image)
+        except SafetyError as error:
+            self.card = False
+            print('Карточка не загружена, отправляем новость текстом: ' + str(error),
+                  file=sys.stderr)
+            return ''
+
+
 def note_for(version, root=ROOT):
     """Читает заметку для игроков с теми же ограничениями объёма, что и news()."""
     if not VERSION.fullmatch(version or ''):
@@ -147,19 +171,31 @@ def main(argv=None):
         print(post.text)
         return 0
     gh, vk = configured()
+    sent, last_error = False, None
     for attempt in range(1, MAX_ATTEMPTS + 1):
         try:
             message_id, created = publish_announcement(post, image, gh=gh, vk=vk)
+            sent = True
             break
         except SafetyError as error:
+            last_error = error
             keys = getattr(getattr(vk, 'transport', None), 'upload_keys', None)
             if keys:
                 print('Ответ загрузчика (только имена полей): ' + ', '.join(keys), file=sys.stderr)
-            if attempt == MAX_ATTEMPTS:
-                raise
-            print(f'Попытка {attempt} из {MAX_ATTEMPTS} не удалась: {error}; '
-                  f'повтор через {RETRY_SECONDS} с.', file=sys.stderr)
-            time.sleep(RETRY_SECONDS)
+            print(f'Попытка {attempt} из {MAX_ATTEMPTS} с карточкой не удалась: {error}',
+                  file=sys.stderr)
+            if attempt < MAX_ATTEMPTS:
+                time.sleep(RETRY_SECONDS)
+    if not sent:
+        # Текстовый фолбэк только когда загрузчик реально ответил, но не дал
+        # photo/hash/server. Сетевые сбои и ошибки журнала так не маскируем.
+        if getattr(getattr(vk, 'transport', None), 'upload_keys', None) is None:
+            raise last_error
+        print(f'Отправляем новость текстом без постера: {last_error}', file=sys.stderr)
+        fallback = CardOptionalVK(vk)
+        message_id, created = publish_announcement(post, image, gh=gh, vk=fallback)
+        if not fallback.card:
+            print('Внимание: постер не прикреплён, ВК не подтвердил загрузку фото.')
     print(('Отправлено в беседу: ' if created else 'Уже отправлено в беседу: ') + str(vk.peer)
           + f' (id {message_id})')
     return 0

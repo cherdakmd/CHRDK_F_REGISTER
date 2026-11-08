@@ -18,7 +18,8 @@ from publisher import Transport
 
 BASE = 'https://platform-api2.max.ru'
 CHAT_KEY = re.compile(r'[1-9][0-9]*')
-RECORD_KEY = re.compile(r'(tip:\d{4}-\d{2}-\d{2}(?::12)?|release:v1\.\d+\.\d+|test:1\.\d+\.\d+)')
+RECORD_KEY = re.compile(r'(tip:\d{4}-\d{2}-\d{2}(?::12)?|release:v1\.\d+\.\d+|test:1\.\d+\.\d+'
+                        r'|prerelease:vk-v1\.\d+\.\d+-rc\.[1-9]\d*)')
 DIGEST = re.compile(r'[0-9a-f]{64}')
 
 
