@@ -41,8 +41,8 @@
       "text": "fdebe780b6e7964249b5c4bc4752908cbdd67722e4d4bb0a4b1f64d94cd15ea1"
     },
     "commands": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "5dd1a7f6064c4acba1d8642b323275eda95d9441666bbe0b85d3227928a4cfb4",
+      "reason": "Стабильный релиз 1.5.2 KARAS UPDATE: bump plugin_version, заметки, памятка, вики-страница обновлений и аудиты сверены с кодом",
+      "sources": "ef073007d8ea294395e29774f231d0b164dd05a147de44c7672775f4fe84a24f",
       "text": "13b15e747e5e4aa93ff7ed9ce580f47e2c7952f5f319b46c6e854fc3eaec3252"
     },
     "cosmetics": {
@@ -61,8 +61,8 @@
       "text": "dd99cd1f21290668ef4d7c8ead28497aa0f50dc4ffd34ee6d8e9f02a0d013d9b"
     },
     "economy": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "ea6d6acb8661207744e7d44fd99c35023c9c02f0df2e6229d638f4dac1eadca4",
+      "reason": "Стабильный релиз 1.5.2 KARAS UPDATE: bump plugin_version, заметки, памятка, вики-страница обновлений и аудиты сверены с кодом",
+      "sources": "47294db1021d1816e762bfeb0e9bcf50cfe0204f11251429baa1f94cf678ca88",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
@@ -71,8 +71,8 @@
       "text": "eb4d46a57319a2c56aed075ca386f6db0271d2df40e428db86c176cfc0e6c807"
     },
     "faq": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "4c036b35d3ae36c3d3cd3f59547fee7619bf0298e512d2c7bbeda50578bbfe06",
+      "reason": "Стабильный релиз 1.5.2 KARAS UPDATE: bump plugin_version, заметки, памятка, вики-страница обновлений и аудиты сверены с кодом",
+      "sources": "555788f3f8e5df6174cb2374701b8bab4abf4d28865f8fe93a64a15fcec703ba",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
@@ -96,13 +96,13 @@
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "e5e725d4b2dba7d596f89377b8a6d13dd57131b9a8f7e71791495489c90b98b6",
+      "reason": "Стабильный релиз 1.5.2 KARAS UPDATE: bump plugin_version, заметки, памятка, вики-страница обновлений и аудиты сверены с кодом",
+      "sources": "1a88b2229ad1af07b67e50872107ead626b06032ba167e6d4f586b559b2f4dd1",
       "text": "6a3b9fedc0d15e6ef23ae50e7bf41cdf79f9efcc79299101944c041b5c2d9222"
     },
     "menu": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "7e6853d78132e7bf20689091561cba4d08e3ec2f976d6c3a4d8fb020753d5a29",
+      "reason": "Стабильный релиз 1.5.2 KARAS UPDATE: bump plugin_version, заметки, памятка, вики-страница обновлений и аудиты сверены с кодом",
+      "sources": "2b328e4020ac44cdba37f737241c8b8430d6b67baa59cb08a6de865c2a69ce56",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "moderation": {
@@ -146,8 +146,8 @@
       "text": "b551d73e8dcc85c81ff7c908f7c89e1ebfb441b46d082a6a714124d77bfbb2c2"
     },
     "shop": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "e5e725d4b2dba7d596f89377b8a6d13dd57131b9a8f7e71791495489c90b98b6",
+      "reason": "Стабильный релиз 1.5.2 KARAS UPDATE: bump plugin_version, заметки, памятка, вики-страница обновлений и аудиты сверены с кодом",
+      "sources": "1a88b2229ad1af07b67e50872107ead626b06032ba167e6d4f586b559b2f4dd1",
       "text": "44b0b3c1a14fc26a26f166363e932f532bdfb98841c928614469144d55701928"
     },
     "skills": {
@@ -186,9 +186,9 @@
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "e5e725d4b2dba7d596f89377b8a6d13dd57131b9a8f7e71791495489c90b98b6",
-      "text": "04c4c8734b76fd8cbcc7f6e13c6407114f7f0379873e1aea3f5286a25d881ad1"
+      "reason": "Стабильный релиз 1.5.2 KARAS UPDATE: bump plugin_version, заметки, памятка, вики-страница обновлений и аудиты сверены с кодом",
+      "sources": "1a88b2229ad1af07b67e50872107ead626b06032ba167e6d4f586b559b2f4dd1",
+      "text": "771fbe7f62e3dcfd1c71dccad783fd732ac19d0e7253e156b27f9fffc879bd9d"
     },
     "vk": {
       "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
