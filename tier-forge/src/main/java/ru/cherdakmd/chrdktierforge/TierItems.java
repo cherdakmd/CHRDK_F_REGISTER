@@ -593,10 +593,36 @@ public final class TierItems {
      * предмета не подошёл. Используется превью крафта/наковальни/кузнечного стола.
      */
     public List<TierProperty> rollFor(TierDef.Snapshot tier, ItemKind kind) {
+        return rollFor(tier, kind, null);
+    }
+
+    /**
+     * То же, но с учётом уже стоящих на предмете кастомных чар: 1.5.2 «Карьер»
+     * не выпадает в превью, если на вещи есть чара группы {@code megamine}.
+     * Иначе превью наковальни/крафта показывало бы свойство, которое
+     * {@link #syncProperties} затем отбросил бы при реальной выдаче.
+     */
+    public List<TierProperty> rollFor(TierDef.Snapshot tier, ItemKind kind, ItemStack item) {
         if (tier == null || kind == null || !plugin.config().propertiesEnabled()) {
             return List.of();
         }
-        return TierProperties.roll(tier.id(), kind, desiredProperties(), random);
+        return TierProperties.roll(tier.id(), kind, desiredProperties(), random,
+                forbiddenProperties(item));
+    }
+
+    /** Какие свойства тира запрещены уже стоящими на предмете чарами. */
+    private List<TierProperty> forbiddenProperties(ItemStack item) {
+        ChrdkEnchantsApi api = plugin.enchantsApi();
+        if (api == null || item == null) {
+            return List.of();
+        }
+        return MiningCompatPolicy.forbidden(MiningCompatPolicy.hasMegaMining(api.enchantsOf(item)));
+    }
+
+    /** На предмете уже стоит легендарное свойство «Карьер». */
+    private boolean hasQuarryProperty(ItemStack item) {
+        TierProperty quarry = TierProperties.byId(MiningCompatPolicy.QUARRY);
+        return quarry != null && propertiesOf(item).contains(quarry);
     }
 
     /** Сколько свойств положено предмету по конфигу (1..MAX_PER_ITEM). */
@@ -623,8 +649,13 @@ public final class TierItems {
             }
             return;
         }
+        // 1.5.2: «Карьер» несовместим с чарами массовой добычи. Фильтруем и
+        // сохранённый набор PDC, и превью, чтобы запрет не обходился перекатом
+        // тира или заранее отложенным роллом свойств.
+        List<TierProperty> forbidden = forbiddenProperties(item);
         List<TierProperty> current = preset != null && !preset.isEmpty()
                 ? preset : rawPropertiesFromMeta(meta);
+        current = MiningCompatPolicy.without(current, forbidden);
         int wanted = desiredProperties();
         // Сырой набор сверяем и с тиром, и с видом: свойство «меча» на лопате
         // (или наоборот) — повод перероллить, а не тащить его в лор.
@@ -639,11 +670,13 @@ public final class TierItems {
         if (sameTier) {
             result = new ArrayList<>(current.subList(0, Math.min(current.size(), wanted)));
             if (result.size() < wanted) {
+                List<TierProperty> exclude = new ArrayList<>(result);
+                exclude.addAll(forbidden);
                 result.addAll(TierProperties.roll(tier.id(), kind, wanted - result.size(),
-                        random, result));
+                        random, exclude));
             }
         } else {
-            result = TierProperties.roll(tier.id(), kind, wanted, random);
+            result = TierProperties.roll(tier.id(), kind, wanted, random, forbidden);
         }
         if (result.isEmpty()) {
             meta.getPersistentDataContainer().remove(propertiesKey);
@@ -996,7 +1029,13 @@ public final class TierItems {
         Random random = new Random(TierAffixes.seed(uid, tier.id(), kind, 0x43A5EEDL));
         List<TierCustomEnchants.Pick> picks = TierCustomEnchants.roll(tierIndex, random,
                 api.lightIds(), api.curseIds(), config, api::maxLevel);
+        boolean quarry = hasQuarryProperty(item);
         for (TierCustomEnchants.Pick pick : picks) {
+            // 1.5.2: на «Карьере» режимы массовой добычи не награждаем. Обратную
+            // границу (книга/наковальня/copy API) держит сам CHRDK_Enchants.
+            if (quarry && MiningCompatPolicy.isMegaMining(pick.id())) {
+                continue;
+            }
             // отказ (вид предмета, лимит аддона, конфликт) — просто пропускаем кандидата
             api.apply(item, pick.id(), pick.level());
         }

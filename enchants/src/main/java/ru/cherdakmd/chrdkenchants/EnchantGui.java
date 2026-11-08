@@ -124,8 +124,14 @@ public final class EnchantGui implements Listener {
         return String.join(", ", def.supports().stream().sorted().map(this::groupLabel).toList());
     }
     String conflictsLabel(EnchantDef def) {
-        return String.join(", ", EnchantCatalog.conflicts(def).stream()
+        List<String> names = new ArrayList<>(EnchantCatalog.conflicts(def).stream()
                 .map(id -> plugin.messages().raw("en." + id + ".name")).toList());
+        // 1.5.2: у режимов массовой добычи есть ещё и внешний конфликт —
+        // легендарное свойство тира «Карьер». Показываем его в карточке.
+        if (ForgeMiningCompat.isMegaMining(def.id())) {
+            names.add("Карьер (тир-предмет)");
+        }
+        return String.join(", ", names);
     }
     void stop() { stopped = true; closeAll(); }
     void closeAll() {

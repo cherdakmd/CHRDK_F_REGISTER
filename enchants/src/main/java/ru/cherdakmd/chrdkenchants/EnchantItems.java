@@ -91,20 +91,28 @@ public final class EnchantItems {
         return read(item).getOrDefault(id, 0);
     }
 
-    /** Точно записывает карту чар в PDC и перерисовывает лор. */
+    /**
+     * Записывает карту чар в PDC и перерисовывает лор. 1.5.2: последняя
+     * граница перед PDC — «Карьер» тир-предмета и чары {@code megamine} не
+     * окажутся в одном наборе, даже если вызывающий обошёл {@link #apply} и
+     * {@code canApplyFromBook} (мастерская, purify, внешний copy). Уже выданный
+     * предмет чинится только при следующей записи, без silent-переписывания
+     * PDC при простом чтении.
+     */
     public void write(ItemStack item, Map<String, Integer> enchants) {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) {
             return;
         }
-        String encoded = EnchantCodec.encode(enchants);
+        Map<String, Integer> safe = ForgeMiningCompat.stripMegaMining(enchants, item);
+        String encoded = EnchantCodec.encode(safe);
         if (encoded.isEmpty()) {
             meta.getPersistentDataContainer().remove(key);
         } else {
             meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, encoded);
         }
-        applyAttributes(item, meta, enchants);
-        refreshLore(meta, enchants);
+        applyAttributes(item, meta, safe);
+        refreshLore(meta, safe);
         item.setItemMeta(meta);
     }
 
@@ -151,15 +159,19 @@ public final class EnchantItems {
      * Добавляет чару с уровнем. 1.4.282: даже низкоуровневый вызов больше не
      * может поставить две чары одной conflictGroup на один предмет — это
      * последняя граница перед записью PDC (стол, API, админ-выдача, мастерская).
+     * С 1.5.2 здесь же отсекается «Карьер» CHRDK_TierForge: чара массовой
+     * добычи не встаёт на тир-предмет с колонной (см. {@link ForgeMiningCompat}).
      *
-     * @return {@code false}, если чара conflicts с уже стоящими (PDC не тронут)
+     * @return {@code false}, если чара conflicts с уже стоящими или с «Карьером»
+     *         (PDC не тронут)
      */
     public boolean apply(ItemStack item, EnchantDef def, int level) {
         if (item == null || def == null) {
             return false;
         }
         Map<String, Integer> enchants = new LinkedHashMap<>(read(item));
-        if (!enchants.containsKey(def.id()) && EnchantConflicts.conflictsWith(enchants, def.id())) {
+        if (ForgeMiningCompat.blocked(item, def.id())
+                || !enchants.containsKey(def.id()) && EnchantConflicts.conflictsWith(enchants, def.id())) {
             return false;
         }
         enchants.put(def.id(), Math.min(def.maxLevel(), Math.max(1, level)));

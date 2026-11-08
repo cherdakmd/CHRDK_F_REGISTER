@@ -41,8 +41,8 @@
       "text": "fdebe780b6e7964249b5c4bc4752908cbdd67722e4d4bb0a4b1f64d94cd15ea1"
     },
     "commands": {
-      "reason": "Сверены: пять постов стены в сутки, четыре карточки с никнеймами, per-игровые топы и daily-cards ledger; приватность дайджеста неизменна",
-      "sources": "8e973153f3b75b0420e8d1b71c7957dc04054394688f39624b1b98148236b339",
+      "reason": "Сверены: запрет «Карьера» (quarry) и чар megamine на всех путях выдачи, приоритет колонны у уже выданных предметов",
+      "sources": "a38e9462c6db9b15a95176fc6e17a8fcc0c216d89cd75d3540cec373d345b9f9",
       "text": "13b15e747e5e4aa93ff7ed9ce580f47e2c7952f5f319b46c6e854fc3eaec3252"
     },
     "cosmetics": {
@@ -66,9 +66,9 @@
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "9b5f3f2a2f10139e9e52222991f4e48b24a94429c8938b83885aef37a54b125f",
-      "text": "eb4d46a57319a2c56aed075ca386f6db0271d2df40e428db86c176cfc0e6c807"
+      "reason": "Сверены: запрет «Карьера» (quarry) и чар megamine, фильтр пула ролла и приоритет колонны у уже выданных предметов",
+      "sources": "70130a76295cc8408251f39a0aef87daf573331e4cb3adcfeb7f7bd24a08e887",
+      "text": "2e9bf678cb246d007917e831522baf222e57b8d6c0aa428f5aecb527ff9b88cb"
     },
     "faq": {
       "reason": "Сверены: пять постов стены в сутки, четыре карточки с никнеймами, per-игровые топы и daily-cards ledger; приватность дайджеста неизменна",
@@ -131,8 +131,8 @@
       "text": "13e6d38670572890ab2567279a5ca76f8e353eab6ade09a877eee2e884c6e272"
     },
     "profile": {
-      "reason": "Сверены: пять постов стены в сутки, четыре карточки с никнеймами, per-игровые топы и daily-cards ledger; приватность дайджеста неизменна",
-      "sources": "564c3dc783030ee741ac8cca9f661053d14b7c2e8330ac58964afeb76796ed24",
+      "reason": "Сверены: запрет «Карьера» (quarry) и чар megamine на всех путях выдачи, приоритет колонны у уже выданных предметов",
+      "sources": "f4aaa9e8c2dc3c5055f601898177be90b2698584e7d17a6364d7834ab4e8413a",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
@@ -176,9 +176,9 @@
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "9b5f3f2a2f10139e9e52222991f4e48b24a94429c8938b83885aef37a54b125f",
-      "text": "6fecc5f6cbd3088f29bccb6fbb695467bfa0a24142db052c1a7d61be43037161"
+      "reason": "Сверены: запрет «Карьера» (quarry) и чар megamine, фильтр пула ролла и приоритет колонны у уже выданных предметов",
+      "sources": "70130a76295cc8408251f39a0aef87daf573331e4cb3adcfeb7f7bd24a08e887",
+      "text": "ac0f5a78ebc73ba572251ac5589c5ac7bad348675a8d4210dea8be236650601e"
     },
     "titles": {
       "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",

@@ -135,7 +135,7 @@ public final class TierAnvilListener implements Listener {
                             : TierRoller.roll(plugin.config().tiers(), random));
             if (roll == null) return;
             List<TierProperty> properties = propertyKeeper.preview(player.getUniqueId(), key,
-                    () -> plugin.items().rollFor(roll, ItemKind.classify(left.getType().name())));
+                    () -> plugin.items().rollFor(roll, ItemKind.classify(left.getType().name()), left));
             ItemStack result = left.clone();
             result.setAmount(1);
             plugin.items().apply(result, roll, properties);
@@ -174,7 +174,7 @@ public final class TierAnvilListener implements Listener {
 
         String mergeKey = "merge:" + left.getType().name() + ":" + next;
         List<TierProperty> properties = propertyKeeper.preview(player.getUniqueId(), mergeKey,
-                () -> plugin.items().rollFor(target, ItemKind.classify(left.getType().name())));
+                () -> plugin.items().rollFor(target, ItemKind.classify(left.getType().name()), left));
         ItemStack result = left.clone();
         // 1.4.89: наковальня всегда отдаёт один предмет — стек не должен расти,
         // даже если сторонний плагин разрешил стакать экипировку.
