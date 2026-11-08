@@ -32,7 +32,7 @@ class DailyPlayerCardTest {
                 DAY, "#chrdk_abc123");
         assertTrue(text.contains("Шахтёр дня"));
         assertTrue(text.contains("Alex"));
-        assertTrue(text.contains("1842 блоков"));
+        assertTrue(text.contains("1842 блока"));
         assertTrue(text.contains("96 алмазов"));
         assertTrue(text.contains("3 ноября 2026"));
         assertTrue(text.contains("#chrdk_abc123"));
