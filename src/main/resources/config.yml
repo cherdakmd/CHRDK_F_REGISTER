@@ -59,9 +59,16 @@ security:
   unauthenticated-command-burst: 10
   unauthenticated-commands-per-second: 2
   max-command-length: 2048
+  # Попытки запрещённых корней: не более 3 сразу, затем 1/сек на игрока. Сверх
+  # квоты команда всё равно отменяется, но чат, аудит и алерт не флудятся.
+  blocked-attempt-burst: 3
+  blocked-attempts-per-second: 1
+  # Сводный алерт администрации — не чаще раза за N секунд.
+  blocked-alert-seconds: 30
   # Если список отсутствует, применяется этот встроенный набор. [] явно снимает запрет.
   # Команды остаются доступны консоли/RCON. Namespace и штатные aliases проверяются.
   # Свои плагины-обёртки добавляйте сюда; защита не изолирует недоверенные плагины.
+  # Запрет действует на ВСЕХ игроков, включая OP и LuckPerms `*`, без исключений.
   console-only-commands:
     - op
     - deop
@@ -123,6 +130,80 @@ security:
     - runas
     - dispatch
     - console
+    # Раскрытие сборки: версии ядра и список плагинов.
+    - pl
+    - plugins
+    - version
+    - ver
+    - about
+    - icanhasbukkit
+    - help
+    - '?'
+    - timings
+    - tps
+    - mspt
+    # Сторонние плагины рабочего набора (32 плагина в /pl).
+    - lp
+    - luckperms
+    - perm
+    - perms
+    - permissions
+    - papi
+    - placeholderapi
+    - skinsrestorer
+    - sr
+    - skins
+    - plasmovoice
+    - pv
+    - plvoice
+    - cameraman
+    - camera
+    - cam
+    # CHRDK_Core: сводка защиты, админ-панель, ранги, почести, соц. шпион.
+    - guard
+    - rankadmin
+    - socialspy
+    - spy
+    - adminpanel
+    - apanel
+    - staffpanel
+    - honoradmin
+    - honorsadmin
+    # Админ-корни и алиасы аддонов CHRDK_*.
+    - achadmin
+    - artifactsadmin
+    - auctionadmin
+    - ahadmin
+    - bpadmin
+    - claimadmin
+    - classadmin
+    - classesadmin
+    - clsadmin
+    - goalsadmin
+    - dailyadmin
+    - dlyadmin
+    - shopadmin
+    - dshopadmin
+    - marketadmin
+    - disastersadmin
+    - enchantsadmin
+    - guildadmin
+    - guildsadmin
+    - clanadmin
+    - clansadmin
+    - ga
+    - huntadmin
+    - ordersadmin
+    - petsadmin
+    - profadmin
+    - professionsadmin
+    - profsadmin
+    - questsadmin
+    - ranksadmin
+    - skillsadmin
+    - tpadmin
+    - tiersadmin
+    - vkadmin
 
 donatepay:
   # 1.4.167: продажи идут только через TradeMC (trademc.enabled: true), поэтому

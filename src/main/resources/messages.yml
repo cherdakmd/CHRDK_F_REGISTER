@@ -35,7 +35,7 @@ messages:
     login-slots: '<yellow>Сейчас слишком много игроков ожидают входа. Повторите подключение чуть позже.</yellow>'
     login-timeout: '<yellow>Время на вход истекло. Подключитесь повторно и завершите авторизацию.</yellow>'
     status-console: '<red>Сводка защиты доступна только из консоли сервера или RCON.</red>'
-    status: '<gray>Защита: %enabled%; IP в памяти: %addresses%; отклонённые входы: %logins%; кики за спам: %spam%; запрещённые команды: %blocked%; слоты: %slots%; таймауты: %timeouts%.</gray>'
+    status: '<gray>Защита: %enabled%; IP в памяти: %addresses%; отклонённые входы: %logins%; кики за спам: %spam%; запрещённые команды: %blocked%; записано в аудит: %audited%; подавлено сверх квоты: %suppressed%; слоты: %slots%; таймауты: %timeouts%.</gray>'
   "presentation":
     "trial": "Приветственный ранг"
     "pass": "Ранг активен"

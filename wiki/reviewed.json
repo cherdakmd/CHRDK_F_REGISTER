@@ -1,198 +1,198 @@
 {
   "pages": {
     "about": {
-      "reason": "Вторая итерация катастроф: граница порций budget сверена после правки плана фаз",
-      "sources": "292f39f97a48493b0a97487705a1eb952648336e7f81395dba127b446e7970e0",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "53ca68991b137c2456cefe3c65c1d9def8316e9f9b26c13fa8d15ecfe0af373a",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "Третья итерация катастроф: осколки, магазин, стойкость, шесть достижений каталога и мягкие хуки сверены",
-      "sources": "a51de3d1b132d0f76838f613a4c4114fe708375f76faca8b24746a1e7c32087b",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "f9883026b1c073d77fd137af57fd337d1c8453bbb962de7520058cf81893f750",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "Вторая итерация катастроф: граница порций budget сверена после правки плана фаз",
-      "sources": "5a485e884c81fbfd5ab14ec13c9bd545bf3035bf5991299ab21d6fefa6d31b6a",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "2b885a083a76b30633947f3d35d31d1db7fddfbfd9495eddf3f2f68b2c55840d",
       "text": "fcdffb1098428fac2bd42d1c4acb73bb9a024d1823d5398b8845bb2f415a506f"
     },
     "auction": {
-      "reason": "Вторая итерация катастроф: граница порций budget сверена после правки плана фаз",
-      "sources": "4ae5afff25e3f0ae0420b093952c296ce7525be3fa001763ba91c35834d2411c",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "894bd3ff3e19f3058d0bb3b3ab2f7c02aee13c1af920656f820a513ddf0eaba0",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "Вторая итерация катастроф: граница порций budget сверена после правки плана фаз",
-      "sources": "8b99acfb1d7cf0f1b40ffeafdaa44bdf983cc84f63eefa0c9321ec36241e8e6b",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "c20ea4ba1365b046bbebb13e36de1e0f0d088650902287c5c1a1178287445b53",
       "text": "f368077b5f1961a1982957afe3b8523b60c8330f3dfd1891003d01ea1c4fd6db"
     },
     "chat": {
-      "reason": "Вторая итерация катастроф: граница порций budget сверена после правки плана фаз",
-      "sources": "292f39f97a48493b0a97487705a1eb952648336e7f81395dba127b446e7970e0",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "53ca68991b137c2456cefe3c65c1d9def8316e9f9b26c13fa8d15ecfe0af373a",
       "text": "ca6c93fc33fca52eecc7d38744bc86f619ea0b6a7bcc2314b84ca6c5399d8a1c"
     },
     "claims": {
-      "reason": "Вторая итерация катастроф: граница порций budget сверена после правки плана фаз",
-      "sources": "558dcc8b376e14f8546c6168ca2db8e3a6ab418c20b9bf223e58ca575420c375",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "50b40c8de756124817380c567eb4320440d4f001b73d42ffc1494647656b5c29",
       "text": "bf1b24b85ecdaee84580c0d5ea4b9c1120b8dd072e38aa68b52e49fc2a0c472c"
     },
     "classes": {
-      "reason": "Тесты магазина переведены на разбор YAML без Bukkit Registry и уточнён кламп нулевой базы; логика и docs не менялись",
-      "sources": "91966e277ef78caf2c539b9c2afda4e5c4bce89dc9306b071a6f5dc486c52a8c",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "afceb3caff1f6d9ae2c31309c43ce1afffa00f1494e39b65a0aa2522831c28d2",
       "text": "fdebe780b6e7964249b5c4bc4752908cbdd67722e4d4bb0a4b1f64d94cd15ea1"
     },
     "commands": {
-      "reason": "Точные причины отказов наковальни Кузни: искра требует вещь без тира, остальные расходники — с тиром; логика и баланс не менялись",
-      "sources": "dd5c82d4c2533dcdc01bc0417d36f69b8988aa4b75af2e4b2eb839a9cac3a34e",
-      "text": "deb43c99022eb3fe2ccf7355ab726dd06531737319b93f376265cfe1479186fb"
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "941b2347e59c86b2fc43ac73c9255f838cf55bc3959ceb4d4a50505e31fdeef5",
+      "text": "6ff56430a624ad33136de118509bf5b861e732c034df415c5e680a464c1f6039"
     },
     "cosmetics": {
-      "reason": "Вторая итерация катастроф: граница порций budget сверена после правки плана фаз",
-      "sources": "b1fbe835b3fddef773609723915a619d68cf809fa752f8577d12c2967d7ce844",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "6e121fcc64b75067f27078611842e5aa50b18de756cfd29460f6aec4c51e448d",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "Вторая итерация катастроф: граница порций budget сверена после правки плана фаз",
-      "sources": "41cbfd5c6b749f33693695cf7d2db7009d41873569683baaf31635e878e539ae",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "7de2e1bfe74daf1e517385b86d1c0bef235aa55a35ac8f158d46b505d694d2e7",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "disasters": {
-      "reason": "Третья итерация катастроф: осколки, магазин, стойкость, шесть достижений каталога и мягкие хуки сверены",
-      "sources": "deacee5f42e722db6f0a0cb746abfd6864ba537e20052c95df28263ec394f462",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "ac326a2455a50bbf30b51dd935b5e1a8b342579810f2f78b056c0562cc30343a",
       "text": "dd99cd1f21290668ef4d7c8ead28497aa0f50dc4ffd34ee6d8e9f02a0d013d9b"
     },
     "economy": {
-      "reason": "Тесты магазина переведены на разбор YAML без Bukkit Registry и уточнён кламп нулевой базы; логика и docs не менялись",
-      "sources": "7151949fa897fdac20292db6ab6c97f0e1e89ddc70e9454507a9a96f1715143c",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "cf75e6bc273a0852bcf7e93828016bbe0e15e2a7958d8f7819e9a5a738c16783",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "Точные причины отказов наковальни Кузни: искра требует вещь без тира, остальные расходники — с тиром; логика и баланс не менялись",
-      "sources": "9074fe9b74d4c3c16cd2594faa5573d15fd70d42a273e262ef00602fd67d248e",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "e28c1046a79f05d67156476f0b98e1411d7586dc80c8851ded6358e3c72c307a",
       "text": "eb4d46a57319a2c56aed075ca386f6db0271d2df40e428db86c176cfc0e6c807"
     },
     "faq": {
-      "reason": "Тесты магазина переведены на разбор YAML без Bukkit Registry и уточнён кламп нулевой базы; логика и docs не менялись",
-      "sources": "3310d53c5e6bae9bf51cfdc452a563ba414dd37272a99315d9c217b5ec5942e5",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "f0a85fb409c26d1972573f4f5c794885ebcb61baa80f4d86fb00edf667b98132",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "Вторая итерация катастроф: граница порций budget сверена после правки плана фаз",
-      "sources": "ccc37745afd4cbd70df0ea292be7c14678f2623e74225ec3ec5b6b58fb4e7cc2",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "4b1360478fe736e414ce9c0c097006b9cb09e8483c2aebc18eb437b16ef3255b",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "Вторая итерация катастроф: граница порций budget сверена после правки плана фаз",
-      "sources": "558dcc8b376e14f8546c6168ca2db8e3a6ab418c20b9bf223e58ca575420c375",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "50b40c8de756124817380c567eb4320440d4f001b73d42ffc1494647656b5c29",
       "text": "e166f2671aabcdf55ecf59d1465ddb19a36343f6d07983eb8b8821b3a63cce34"
     },
     "honors": {
-      "reason": "Вторая итерация катастроф: граница порций budget сверена после правки плана фаз",
-      "sources": "292f39f97a48493b0a97487705a1eb952648336e7f81395dba127b446e7970e0",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "53ca68991b137c2456cefe3c65c1d9def8316e9f9b26c13fa8d15ecfe0af373a",
       "text": "6bc29d5a2d7783845f8b3d9b085e85982faec5b3029d841092386f36b1d4c4b0"
     },
     "hunt": {
-      "reason": "Тесты магазина переведены на разбор YAML без Bukkit Registry и уточнён кламп нулевой базы; логика и docs не менялись",
-      "sources": "5ab0f599556fcf0abe8b4a1939efeae95c7c3b658e1e73b482f0bfa95b09abdf",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "45916956364aede52bb9ad2d85f8ab22037c322d6d55b6f180ce59994580ff98",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "Тесты магазина переведены на разбор YAML без Bukkit Registry и уточнён кламп нулевой базы; логика и docs не менялись",
-      "sources": "08bb1a4723476d2153a0e299f0dec186573f1dc89c9c71e964c71e86d5a6f0d6",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "e52e2440992b9e3267dfceada0ab3b40e616405018a5d4df58ab6f7d9390829f",
       "text": "6a3b9fedc0d15e6ef23ae50e7bf41cdf79f9efcc79299101944c041b5c2d9222"
     },
     "menu": {
-      "reason": "Тесты магазина переведены на разбор YAML без Bukkit Registry и уточнён кламп нулевой базы; логика и docs не менялись",
-      "sources": "ec07427b2102d2db92a55fbe591db16db8c014caf243106b5fb85d6f1ebe2eba",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "25b2d3bcf843e2f4e7346d7518f78fa6302b5fe7018c0ec20bc98d7e14118d57",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "moderation": {
-      "reason": "Вторая итерация катастроф: граница порций budget сверена после правки плана фаз",
-      "sources": "292f39f97a48493b0a97487705a1eb952648336e7f81395dba127b446e7970e0",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "53ca68991b137c2456cefe3c65c1d9def8316e9f9b26c13fa8d15ecfe0af373a",
       "text": "255b8cacb80c9ea7b1236f73feaa226a121bb9b58cff81fef2d46b65abae4073"
     },
     "orders": {
-      "reason": "Вторая итерация катастроф: граница порций budget сверена после правки плана фаз",
-      "sources": "5ee1bfa9214c567d4fa9133d08ffc22c01c8efe64785e611688b9ad7e8771894",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "ab4bff38310cac79abb95526a8b279ef07dea8701214af19e1739fe32a045bb2",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "perktree": {
-      "reason": "Тесты магазина переведены на разбор YAML без Bukkit Registry и уточнён кламп нулевой базы; логика и docs не менялись",
-      "sources": "91966e277ef78caf2c539b9c2afda4e5c4bce89dc9306b071a6f5dc486c52a8c",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "afceb3caff1f6d9ae2c31309c43ce1afffa00f1494e39b65a0aa2522831c28d2",
       "text": "148006c785c6f0e5adf6725d87605f5e508b957636fdac87ea64939e7bd63b79"
     },
     "pets": {
-      "reason": "Вторая итерация катастроф: граница порций budget сверена после правки плана фаз",
-      "sources": "3283c84d6d499059c16ba3adabd45c80f763f33c9494cac04c80d41d9c50546c",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "ed85b47edf01c30ce0c3f7240214446f43a837ab1999c880d2ceb50850009b2d",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "Тесты магазина переведены на разбор YAML без Bukkit Registry и уточнён кламп нулевой базы; логика и docs не менялись",
-      "sources": "9d2b8181c6b38d61d8bdf94cb290a56e7efd748d7b93b4cf8a4e25f92ed762e9",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "f1fca3633abc395b3a948dab408798c5a6e1c5616b6afa4f0a3988bc3b789f09",
       "text": "13e6d38670572890ab2567279a5ca76f8e353eab6ade09a877eee2e884c6e272"
     },
     "profile": {
-      "reason": "Точные причины отказов наковальни Кузни: искра требует вещь без тира, остальные расходники — с тиром; логика и баланс не менялись",
-      "sources": "6a899441ecc1d77da1800f57e1eaa0446ef34350b928b504d51029cb049f8709",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "2cc41fce4897d580d83196422efba72025807d05c75be6f5982e4a197a7dd966",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
-      "reason": "Вторая итерация катастроф: граница порций budget сверена после правки плана фаз",
-      "sources": "2c1d2d827e1dab33588cca0a000f181a31e94005489e38dd76a3c8006b25cfd0",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "1bff966592c2ab967ed0a009fcec502e5a6d6bd2bacccd995a849657cc91fd2f",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "Тесты магазина переведены на разбор YAML без Bukkit Registry и уточнён кламп нулевой базы; логика и docs не менялись",
-      "sources": "dbd197e5bf102d991342a9ecbe91c00a04921f2dff3156335437af572441837a",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "95115d24b5261757b53cccd19e9c4b51fd897f0a817380fc29c52d6d662678f2",
       "text": "b551d73e8dcc85c81ff7c908f7c89e1ebfb441b46d082a6a714124d77bfbb2c2"
     },
     "shop": {
-      "reason": "Тесты магазина переведены на разбор YAML без Bukkit Registry и уточнён кламп нулевой базы; логика и docs не менялись",
-      "sources": "08bb1a4723476d2153a0e299f0dec186573f1dc89c9c71e964c71e86d5a6f0d6",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "e52e2440992b9e3267dfceada0ab3b40e616405018a5d4df58ab6f7d9390829f",
       "text": "78c3e3e10e0a134e99df65d8037f7d77233f31e79f3982ee6b6d5d60b895928a"
     },
     "skills": {
-      "reason": "Тесты магазина переведены на разбор YAML без Bukkit Registry и уточнён кламп нулевой базы; логика и docs не менялись",
-      "sources": "4f0d707dac440bd0cadca4486044962077e012e4f06577eb80766d9af06eb2cb",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "c062b6a539808a58b848712855a0875a9878ccc71e53b68075d0edff00d202d8",
       "text": "4145bd09f8c7604a0b17976f7d5395a9fae287b1f76c38ac971429465b9cd85b"
     },
     "social-link": {
-      "reason": "Вторая итерация катастроф: граница порций budget сверена после правки плана фаз",
-      "sources": "365f4a90679067ca0c65c8570e00e6742ae0dcd1f0ae1dd43acd7ea876f1815b",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "efe47076db1726dcfec0d4917d1bee947c325b64db62cd71cb799b45a5c540b7",
       "text": "4c8cab4b751d6f98f2dfca7e7cd7e2770ee7f7000984ccc7c7b57ec8949a3ae4"
     },
     "start": {
-      "reason": "Вторая итерация катастроф: граница порций budget сверена после правки плана фаз",
-      "sources": "1ff692ac57523d5815aa7fe924a0b14bd52958d5a20f06782646df89629993c6",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "e308768c2f345ffefb5a721919fee34ce2751f9ae241d977b02ec4d4e0eb32c6",
       "text": "c2835fdf2d1945079115e6a252d472ce72ad9ad79f4ed47ad58e269b467d595f"
     },
     "starter-kit": {
-      "reason": "Вторая итерация катастроф: граница порций budget сверена после правки плана фаз",
-      "sources": "5a485e884c81fbfd5ab14ec13c9bd545bf3035bf5991299ab21d6fefa6d31b6a",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "2b885a083a76b30633947f3d35d31d1db7fddfbfd9495eddf3f2f68b2c55840d",
       "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
     },
     "teleports": {
-      "reason": "Вторая итерация катастроф: граница порций budget сверена после правки плана фаз",
-      "sources": "07b83248c089ba93fc4816a43b414d9706fe752a726730bf8fc51fab4c6a72b2",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "5e970810e7e7a40bdba1f5d56d42c67a41e026626e0099a1a7e7c7f8acc06374",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "Точные причины отказов наковальни Кузни: искра требует вещь без тира, остальные расходники — с тиром; логика и баланс не менялись",
-      "sources": "9074fe9b74d4c3c16cd2594faa5573d15fd70d42a273e262ef00602fd67d248e",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "e28c1046a79f05d67156476f0b98e1411d7586dc80c8851ded6358e3c72c307a",
       "text": "6fecc5f6cbd3088f29bccb6fbb695467bfa0a24142db052c1a7d61be43037161"
     },
     "titles": {
-      "reason": "Вторая итерация катастроф: граница порций budget сверена после правки плана фаз",
-      "sources": "9cef67d1a683986d48c328738b1f2193f29467b70a29c042c2e75feab3ecb766",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "45abe2a408a03d21283967fe57b65f24ca24df201d48491727dfbeb17de5d33b",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Пререлиз 1.5.2-rc.4: bump версии, заметки, памятка, README и вики сверены; границы как у rc.3",
-      "sources": "08bb1a4723476d2153a0e299f0dec186573f1dc89c9c71e964c71e86d5a6f0d6",
-      "text": "b70a72c8e18944b147ad85b21522b9e8a182d33cbede2bb54bdbd854051c1cda"
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "e52e2440992b9e3267dfceada0ab3b40e616405018a5d4df58ab6f7d9390829f",
+      "text": "8ef50f0a90781c9f5aa8277303e22484b52b4f5eee2d529fdd757d52aadc12dc"
     },
     "vk": {
-      "reason": "Вторая итерация катастроф: граница порций budget сверена после правки плана фаз",
-      "sources": "365f4a90679067ca0c65c8570e00e6742ae0dcd1f0ae1dd43acd7ea876f1815b",
+      "reason": "Запрещённые команды CHRDK_Core: финальная сверка после правки ServerGuard (130 корней, аудит, квоты)",
+      "sources": "efe47076db1726dcfec0d4917d1bee947c325b64db62cd71cb799b45a5c540b7",
       "text": "94f2d5f3cf83ae414f1a577156884ae1329734bf55951e2707569c3ce923c199"
     }
   },

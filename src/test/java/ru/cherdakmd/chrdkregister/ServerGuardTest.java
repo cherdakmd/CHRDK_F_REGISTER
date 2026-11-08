@@ -40,6 +40,7 @@ class ServerGuardTest {
             case "kick"->{kicks.incrementAndGet();yield null;}
             case "sendMessage"->{if(a.length==1 && a[0] instanceof Component text)sent.add(text);yield null;}
             case "isOp", "hasPermission"->true;
+            case "getName"->"GuardTestPlayer";
             case "toString"->"GuardTestPlayer";
             case "hashCode"->System.identityHashCode(p);
             case "equals"->p==a[0];
@@ -218,4 +219,54 @@ class ServerGuardTest {
         now.set(30_000_000_000L);var retry=login("192.0.2.1",id);guard.onPreLogin(retry);assertEquals(AsyncPlayerPreLoginEvent.Result.ALLOWED,retry.getLoginResult());
     }
 
+    private ServerGuard auditedGuard(List<BlockedCommandAttempt> attempts) {
+        return new ServerGuard(GuardSettings.parse(config),()->texts,
+                p->authenticated.contains(p.getUniqueId()),registry::get,()->aliases,warnings::add,
+                now::get,()->Integer.MAX_VALUE,attempts::add);
+    }
+    @Test void forbiddenRootsAreBlockedForOpAuditedAndRateLimitedWithoutKick() {
+        var attempts=new ArrayList<BlockedCommandAttempt>();var guard=auditedGuard(attempts);
+        var client=client("192.0.2.7");authenticated.add(client.player.getUniqueId());
+        // proxy отвечает true на isOp/hasPermission: обхода через OP или LuckPerms '*' нет.
+        for(int i=0;i<5;i++) {
+            var event=command(client,"/minecraft:lp user Steve permission set *",false);
+            guard.onCommand(event);assertTrue(event.isCancelled());
+        }
+        assertEquals(0,client.kicks.get(),"попытка запрещённой команды не кикает и не банит");
+        assertEquals(3,attempts.size(),"в аудит попадают только попытки по квоте (burst=3)");
+        assertEquals("lp",attempts.getFirst().root());
+        assertEquals(client.player.getUniqueId(),attempts.getFirst().uuid());
+        assertEquals("GuardTestPlayer",attempts.getFirst().player());
+        assertEquals("192.0.2.7",attempts.getFirst().address());
+        assertEquals(3,client.messages.size(),"сообщение игроку тоже ограничено квотой");
+        // Через секунду квота пополняется, но команда по-прежнему отменяется.
+        now.set(1_000_000_000L);
+        var later=command(client,"/op Steve",false);guard.onCommand(later);
+        assertTrue(later.isCancelled());assertEquals(4,attempts.size());
+        assertEquals("op",attempts.getLast().root());
+        assertEquals(0,client.kicks.get());
+    }
+    @Test void attemptCountersReachSummaryWithoutPasswordsOrAddresses() {
+        var attempts=new ArrayList<BlockedCommandAttempt>();var guard=auditedGuard(attempts);
+        var client=client("192.0.2.1");authenticated.add(client.player.getUniqueId());
+        guard.onCommand(command(client,"/lp user Steve permission set * PRIVATE_SECRET",false));
+        now.set(31_000_000_000L);guard.pulse(List.of(client.player));
+        assertEquals(1,warnings.size());
+        assertTrue(warnings.getFirst().contains("аудит=1"),warnings.getFirst());
+        assertFalse(warnings.getFirst().contains("PRIVATE_SECRET"));
+        assertFalse(warnings.getFirst().contains("192.0.2.1"));
+        assertFalse(warnings.getFirst().contains("GuardTestPlayer"));
+        assertEquals(0,client.kicks.get());
+    }
+    @Test void reloadAppliesNewAttemptQuotaImmediately() {
+        var attempts=new ArrayList<BlockedCommandAttempt>();var guard=auditedGuard(attempts);
+        var client=client("192.0.2.7");authenticated.add(client.player.getUniqueId());
+        for(int i=0;i<3;i++)guard.onCommand(command(client,"/pl",false));
+        assertEquals(3,attempts.size());
+        config.set("security.blocked-attempt-burst",1);guard.reload(GuardSettings.parse(config));
+        guard.onCommand(command(client,"/pl",false));
+        assertEquals(4,attempts.size(),"после reload действует новая квота");
+        guard.onCommand(command(client,"/pl",false));
+        assertEquals(4,attempts.size(),"вторая попытка сверх квоты подавлена");
+    }
 }

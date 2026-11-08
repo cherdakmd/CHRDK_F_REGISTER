@@ -212,7 +212,14 @@ public final class RegisterPlugin extends JavaPlugin {
         serverGuard = new ServerGuard(GuardSettings.parse(getConfig()), this::messages,
                 player -> accessManager != null && accessManager.getStage(player) == AccessManager.PlayerStage.AUTHENTICATED,
                 name -> getServer().getCommandMap().getCommand(name), () -> getServer().getCommandAliases(),
-                getLogger()::warning, System::nanoTime, () -> getServer().getMaxPlayers());
+                getLogger()::warning, System::nanoTime, () -> getServer().getMaxPlayers(),
+                attempt -> {
+                    // Append-only аудит попыток обойти console-only. IP маскируется внутри AuditLog.
+                    AuditLog log = auditLog();
+                    if (log != null) log.log(AuditLog.SECURITY_COMMAND_BLOCKED, attempt.player(),
+                            attempt.root(), attempt.address(),
+                            AuditLog.details("uuid", attempt.uuid().toString(), "source", "player-chat"));
+                });
         getServer().getPluginManager().registerEvents(serverGuard, this);
         getServer().getScheduler().runTaskTimer(this, () -> serverGuard.pulse(getServer().getOnlinePlayers()), 20L, 20L);
         PluginCommand guardCommand = getCommand("guard");

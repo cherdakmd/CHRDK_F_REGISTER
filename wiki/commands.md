@@ -25,6 +25,14 @@ review: [core, claims, teleports, diamond-shop, tier-forge]
 Скобки в игру не вводятся. Для количества магазин использует **штуки**,
 для банковских операций — **целые алмазы**.
 
+**Серверные команды игрокам недоступны.** `CHRDK_Core` отменяет их в чате для
+всех, включая OP: `/op`, `/execute`, `/give`, `/tp`, `/lp`, `/papi`, `/pl`,
+`/ver`, `/help`, `/adminpanel`, `/shopadmin`, `/tiersadmin` и остальные корни из
+`security.console-only-commands`. Это защита от выдачи прав и разведки сборки, а
+не замена паролю и 2FA; администраторы работают из консоли или RCON. Вместо
+`/help` игроку доступны `/menu` и `/guide`. Полный список и границы — в
+[защите сервера](https://github.com/cherdakmd/CHRDK_F_REGISTER/blob/main/docs/SERVER_GUARD.md).
+
 ## Сначала условия, затем подтверждение
 
 - `/pay ник сумма [preview]` → `/pay ник сумма confirm`.
