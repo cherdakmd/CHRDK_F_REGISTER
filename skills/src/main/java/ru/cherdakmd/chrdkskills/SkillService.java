@@ -8,9 +8,15 @@ import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.EconomyConfirmations;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Прокачка навыков: начисление опыта, уровни, вехи и активные перки.
@@ -41,6 +47,13 @@ public final class SkillService {
     private final SkillStore store;
     /** Двухшаговое подтверждение сброса навыка: TTL и одноразовость из ядра. */
     private final EconomyConfirmations confirmations = new EconomyConfirmations();
+    /** Кулдаун уведомления о заблокированном опыте: не спамим на каждый блок. */
+    private final Map<UUID, Long> balanceNotices = new ConcurrentHashMap<>();
+
+    /** Снимок правила баланса для одного начисления. */
+    private record BalanceView(Map<SkillType, Integer> prestige,
+                               Collection<SkillType> tracked, int maxLead) {
+    }
 
     /** Результат обращения к {@link #requestPrestige}. */
     public enum PrestigeResult { DISABLED, NOT_MAX, AT_CAP, PENDING, DONE }
@@ -292,6 +305,14 @@ public final class SkillService {
         if (!plugin.config().skill(skill).enabled()) {
             return Award.none(skill);
         }
+        // 1.5.2: нельзя уходить вперёд по ступеням престижа, качая только
+        // самый дешёвый навык (майнинг). Проверяем до любого начисления XP.
+        BalanceView balance = balanceView(player);
+        if (balance != null && !PrestigeXpGate.allows(
+                balance.prestige(), balance.tracked(), skill, balance.maxLead())) {
+            notifyBalanceBlock(player, skill, balance);
+            return Award.none(skill);
+        }
         long perUnit = plugin.config().xpFor(skill);
         if (perUnit <= 0L) {
             return Award.none(skill);
@@ -315,6 +336,44 @@ public final class SkillService {
         long total = store.addXp(key(player), skill, gained);
         announceLevels(player, skill, oldLevel, newLevel);
         return new Award(skill, gained, oldLevel, newLevel, granted);
+    }
+
+    /** {@code null} — баланс выключен или престиж отключён полностью. */
+    private BalanceView balanceView(Player player) {
+        SkillsConfig cfg = plugin.config();
+        if (!cfg.prestigeEnabled() || !cfg.prestigeBalanceEnabled()) {
+            return null;
+        }
+        Set<SkillType> tracked = EnumSet.noneOf(SkillType.class);
+        for (SkillType type : SkillType.values()) {
+            if (cfg.skill(type).enabled()) {
+                tracked.add(type);
+            }
+        }
+        if (tracked.isEmpty()) {
+            return null;
+        }
+        return new BalanceView(store.allPrestige(key(player)), tracked,
+                cfg.prestigeBalanceMaxLead());
+    }
+
+    /** Одно уведомление за {@code prestige.balance.notice-seconds}. */
+    private void notifyBalanceBlock(Player player, SkillType skill, BalanceView view) {
+        long now = System.currentTimeMillis();
+        long window = TimeUnit.SECONDS.toMillis(plugin.config().prestigeBalanceNoticeSeconds());
+        Long last = balanceNotices.putIfAbsent(player.getUniqueId(), now);
+        if (last != null) {
+            if (now - last < window) {
+                return;
+            }
+            balanceNotices.put(player.getUniqueId(), now);
+        }
+        String name = plugin.messages().raw("skill." + skill.id() + ".name");
+        plugin.messages().send(player, "prestige-balance-blocked",
+                "skill", Messages.trusted(name),
+                "lead", Integer.toString(PrestigeXpGate.lead(view.prestige(), view.tracked(), skill)),
+                "min", Integer.toString(PrestigeXpGate.minimum(view.prestige(), view.tracked())),
+                "max_lead", Integer.toString(view.maxLead()));
     }
 
     /** Админское начисление: то же, но без ограничения «единиц» и с проверкой прав. */

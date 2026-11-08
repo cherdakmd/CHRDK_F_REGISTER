@@ -50,6 +50,10 @@ public final class SkillsConfig {
     private final double prestigePerkPerStep;
     private final int prestigeDiamondsPerStep;
     private final boolean prestigeAnnounceTiers;
+    /** 1.5.2: баланс прокачки — XP не идёт навыку, оторвавшемуся по ступеням. */
+    private final boolean prestigeBalanceEnabled;
+    private final int prestigeBalanceMaxLead;
+    private final int prestigeBalanceNoticeSeconds;
     private final DiamondDrops.Settings diamonds;
     private final DiamondCapMath.Settings diamondCap;
     private final Set<String> excludedDropMaterials;
@@ -63,6 +67,8 @@ public final class SkillsConfig {
                          boolean abilitiesHud, boolean prestigeEnabled,
                          double prestigeXpPerStep, double prestigePerkPerStep,
                          int prestigeDiamondsPerStep, boolean prestigeAnnounceTiers,
+                         boolean prestigeBalanceEnabled, int prestigeBalanceMaxLead,
+                         int prestigeBalanceNoticeSeconds,
                          DiamondDrops.Settings diamonds, DiamondCapMath.Settings diamondCap,
                          Set<String> excludedDropMaterials) {
         this.abilitiesEnabled = abilitiesEnabled;
@@ -86,6 +92,9 @@ public final class SkillsConfig {
         this.prestigePerkPerStep = prestigePerkPerStep;
         this.prestigeDiamondsPerStep = prestigeDiamondsPerStep;
         this.prestigeAnnounceTiers = prestigeAnnounceTiers;
+        this.prestigeBalanceEnabled = prestigeBalanceEnabled;
+        this.prestigeBalanceMaxLead = prestigeBalanceMaxLead;
+        this.prestigeBalanceNoticeSeconds = prestigeBalanceNoticeSeconds;
         this.diamonds = diamonds;
         this.diamondCap = diamondCap;
         this.excludedDropMaterials = excludedDropMaterials;
@@ -201,7 +210,13 @@ public final class SkillsConfig {
                 clamp(cfg.getDouble("prestige.xp-per-step", 0.03), 0.0, 0.10),
                 clamp(cfg.getDouble("prestige.perk-per-step", 0.01), 0.0, 0.05),
                 (int) clamp(cfg.getLong("prestige.diamonds-per-step", 4L), 0L, 32L),
-                cfg.getBoolean("prestige.announce-tiers", true), diamonds, diamondCap,
+                cfg.getBoolean("prestige.announce-tiers", true),
+                cfg.getBoolean("prestige.balance.enabled", true),
+                PrestigeXpGate.clampLead((int) clamp(
+                        cfg.getLong("prestige.balance.max-lead", 0L),
+                        0L, (long) PrestigeMath.MAX_PER_SKILL)),
+                (int) clamp(cfg.getLong("prestige.balance.notice-seconds", 60L), 5L, 3600L),
+                diamonds, diamondCap,
                 Collections.unmodifiableSet(excluded));
     }
 
@@ -327,6 +342,21 @@ public final class SkillsConfig {
     /** Объявлять ли новое звание в общий чат. */
     public boolean prestigeAnnounceTiers() {
         return prestigeAnnounceTiers;
+    }
+
+    /** Включён ли баланс прокачки престижа (по умолчанию да). */
+    public boolean prestigeBalanceEnabled() {
+        return prestigeBalanceEnabled;
+    }
+
+    /** Допустимый отрыв по ступеням, 0..10. */
+    public int prestigeBalanceMaxLead() {
+        return prestigeBalanceMaxLead;
+    }
+
+    /** Кулдаун уведомления о блокировке опыта, секунды. */
+    public int prestigeBalanceNoticeSeconds() {
+        return prestigeBalanceNoticeSeconds;
     }
 
     /** Формула физического дропа алмазов (потолки уже закламплены). */

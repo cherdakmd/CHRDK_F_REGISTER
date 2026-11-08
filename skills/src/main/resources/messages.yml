@@ -23,6 +23,7 @@ messages:
   prestige-top-header: "<gold>✦ Топ престижа сервера</gold>"
   prestige-top-line: "<gray>%place%. <white>%name%</white> — %total%</gray>"
   prestige-top-empty: "<gray>Пока никто не брал престиж.</gray>"
+  prestige-balance-blocked: "<yellow>Опыт навыка %skill% приостановлен: его престиж опережает остальные на %lead% ст. (минимум %min%, разрешено не более +%max_lead%). Прокачайте отстающие навыки до 100 и возьмите престиж — <white>/skills prestige all</white>.</yellow>"
   extra-catch: "<aqua>Рыбалка: лишний улов!</aqua>"
   arrow-kept: "<gray>Стрельба: стрела сохранена.</gray>"
   extra-potion: "<light_purple>Алхимия: вторая порция ингредиента.</light_purple>"
