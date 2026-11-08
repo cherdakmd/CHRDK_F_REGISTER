@@ -215,6 +215,43 @@ final class ConfigSchemaEngineTest {
     }
 
     @Test
+    void mixedIndentKeysAtSamePositionProduceReadableYaml() {
+        // Все три отсутствующих ключа вставляются в одну точку — конец секции
+        // trading. Два из них глубже (внутри gui) и обязаны пойти ПЕРВЫМИ:
+        // иначе внешний скаляр «закроет» секцию и YAML не прочитается.
+        String reference = """
+                messages:
+                  "trading":
+                    "outer-new": "ONE"
+                    "gui":
+                      "inner-new-one": "TWO"
+                      "inner-new-two": "THREE"
+                  "admin":
+                    "usage": "..."
+                """;
+        String user = """
+                messages:
+                  "trading":
+                    "gui":
+                      "old": "OLD"
+                  "admin":
+                    "usage": "..."
+                """;
+        ConfigSchemaEngine.Spec spec = new ConfigSchemaEngine.Spec("messages.yml",
+                MESSAGES_MARKER, ConfigSchemaEngine.MarkerMode.COMMENT, 1, Map.of());
+
+        ConfigSchemaEngine.Result result = ConfigSchemaEngine.apply(reference, user, spec);
+
+        assertTrue(result.changed(), "смешанные отступы не должны ронять YAML");
+        YamlConfiguration live = yaml(result.text());
+        assertEquals("ONE", live.getString("messages.trading.outer-new"));
+        assertEquals("TWO", live.getString("messages.trading.gui.inner-new-one"));
+        assertEquals("THREE", live.getString("messages.trading.gui.inner-new-two"));
+        assertEquals("OLD", live.getString("messages.trading.gui.old"));
+        assertEquals("...", live.getString("messages.admin.usage"));
+    }
+
+    @Test
     void brokenOwnerYamlIsLeftAlone() {
         String reference = """
                 general:

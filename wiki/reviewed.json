@@ -1,198 +1,198 @@
 {
   "pages": {
     "about": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "66ac1f4448f09942ec428283e8631837b15d6ad1dacf908e4c6a9dd2deecfae7",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "6c76d21785b095bb9e9151867ba05e274eaac96cb3301179dce6096db172d243",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "35fc1aef311956539b9885932892700f69865c4a8b10d8ed80d896059bf3a5e5",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "a42fbc9dafc3b85bc292388f6ed3fd70e078f7c49550a1afb329ce8a1336a946",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "b2975b408f253daed482b5f592cbc3fc6c0c4b6a7ec8f337cb50f075905015cf",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "b7361fa4d36b7f8c3ac2964c34906a61594fff4b3b53fbd2f44e52f8ca244c5b",
       "text": "fcdffb1098428fac2bd42d1c4acb73bb9a024d1823d5398b8845bb2f415a506f"
     },
     "auction": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "eca7c923df70a7ab5105fd1dbfb2f2e8c16c19504388f46be70b6b2ff1d918ac",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "0ab6062512f29b5daf6dbcbceacda686525cebfcf54c8f6fcb5594ece74dcfb1",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "8ac0b05d12222ce246f60da0209603cbf72547203914615cedbb9f5f818ea473",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "c69f536c6fc65b01d4f41bef6231544130e912507699e2d874693a49b885a90e",
       "text": "f368077b5f1961a1982957afe3b8523b60c8330f3dfd1891003d01ea1c4fd6db"
     },
     "chat": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "66ac1f4448f09942ec428283e8631837b15d6ad1dacf908e4c6a9dd2deecfae7",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "6c76d21785b095bb9e9151867ba05e274eaac96cb3301179dce6096db172d243",
       "text": "ca6c93fc33fca52eecc7d38744bc86f619ea0b6a7bcc2314b84ca6c5399d8a1c"
     },
     "claims": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "129228c80c65a53b67fbfd047113307c88e8202ef85f87767d8da1e1ba17c78e",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "535ac59971f350fa1fde9c00973c80691322d037f29b61a5803109ae7ee7d7b4",
       "text": "3144ca61235b895be5cb61e6d120d5dc6d6d0d7c26f87819431b4756659e8e12"
     },
     "classes": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "098d465a9460858a507cd708e97739ca90a5d598815e8a1fcc6d3918723cab92",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "7bc5e74022cb9347c4af894ac45f952e13f57bb5d08283c8d3fd5c502d971c92",
       "text": "fdebe780b6e7964249b5c4bc4752908cbdd67722e4d4bb0a4b1f64d94cd15ea1"
     },
     "commands": {
-      "reason": "Дневные акции /shop: три типа акций, UTC-ротация, бонус внутри сделки, потолки и GUI сверены с кодом и документацией",
-      "sources": "7a0b90a82bebf4e8f7c6cd24699474d17ad7560fd0a1a038ed4f4d60b9e19dc0",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "5dd1a7f6064c4acba1d8642b323275eda95d9441666bbe0b85d3227928a4cfb4",
       "text": "13b15e747e5e4aa93ff7ed9ce580f47e2c7952f5f319b46c6e854fc3eaec3252"
     },
     "cosmetics": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "3b5843baac4159985d471043e72f0361fe4cdca1d62e4b28a491bce4bb2585e6",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "0455cd8c343c3feed98c049a5072daffa0833e1a9ab38b193e6d3b05986da336",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "815d931ee399bc5aa2c5453811e6dff46d323b8036898c7c1988707547c02f22",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "1569651a806f8dd7148cd77af512a56ecfc9ff7e70fcfcd02326fb07a3e6292d",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "disasters": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "ae92de53cfe423676e16fe57678975a99210c3c8be80a4d5be4d09a615f6fbd2",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "5d59d5e91a7a6e5c542d2a71e5a6797617d9c89adf0d96fcfb862875d62c66bf",
       "text": "dd99cd1f21290668ef4d7c8ead28497aa0f50dc4ffd34ee6d8e9f02a0d013d9b"
     },
     "economy": {
-      "reason": "Дневные акции /shop: три типа акций, UTC-ротация, бонус внутри сделки, потолки и GUI сверены с кодом и документацией",
-      "sources": "5a020b25af98af03d672aa39e8ba9bc95c666bdf990d71c373f1d656efa08dbf",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "ea6d6acb8661207744e7d44fd99c35023c9c02f0df2e6229d638f4dac1eadca4",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "0acb35589d5fc2dcd9c8b1ae4f13c0448fe8c9c1c1df93490b4564b8f5084142",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "9b5f3f2a2f10139e9e52222991f4e48b24a94429c8938b83885aef37a54b125f",
       "text": "eb4d46a57319a2c56aed075ca386f6db0271d2df40e428db86c176cfc0e6c807"
     },
     "faq": {
-      "reason": "Дневные акции /shop: три типа акций, UTC-ротация, бонус внутри сделки, потолки и GUI сверены с кодом и документацией",
-      "sources": "b2bb00dac8e38f5f22900f632dc1d047136ed4d145da7b2596a471b78866168c",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "4c036b35d3ae36c3d3cd3f59547fee7619bf0298e512d2c7bbeda50578bbfe06",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "fa8272e083f54d8dd2ec04d1b40250f946092513f4a47d505c53bdc39ffa1aee",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "434ce32e5528b894f46a5cc0b99020857e7e97dfd4d10d0cb6d881664c4befb1",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "129228c80c65a53b67fbfd047113307c88e8202ef85f87767d8da1e1ba17c78e",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "535ac59971f350fa1fde9c00973c80691322d037f29b61a5803109ae7ee7d7b4",
       "text": "e166f2671aabcdf55ecf59d1465ddb19a36343f6d07983eb8b8821b3a63cce34"
     },
     "honors": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "66ac1f4448f09942ec428283e8631837b15d6ad1dacf908e4c6a9dd2deecfae7",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "6c76d21785b095bb9e9151867ba05e274eaac96cb3301179dce6096db172d243",
       "text": "6bc29d5a2d7783845f8b3d9b085e85982faec5b3029d841092386f36b1d4c4b0"
     },
     "hunt": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "14c4fff262c029ff1a64df9133e157db88779a0d4bb86b631be2fc9a55536c0b",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "36ba7fbb71e7f836f15464e74a3c42a05b3c2ff53789569daa92adc98c7b5fe5",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "Дневные акции /shop: три типа акций, UTC-ротация, бонус внутри сделки, потолки и GUI сверены с кодом и документацией",
-      "sources": "6ecdf18849b2074e082cae0c5199a71c5e50650e691f6cf9a0284a2b3bdd4b61",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "e5e725d4b2dba7d596f89377b8a6d13dd57131b9a8f7e71791495489c90b98b6",
       "text": "6a3b9fedc0d15e6ef23ae50e7bf41cdf79f9efcc79299101944c041b5c2d9222"
     },
     "menu": {
-      "reason": "Дневные акции /shop: три типа акций, UTC-ротация, бонус внутри сделки, потолки и GUI сверены с кодом и документацией",
-      "sources": "2ae6dd319051d1d6ca163213f5234c294d939c52dc369763bb793b3403cf60db",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "7e6853d78132e7bf20689091561cba4d08e3ec2f976d6c3a4d8fb020753d5a29",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "moderation": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "66ac1f4448f09942ec428283e8631837b15d6ad1dacf908e4c6a9dd2deecfae7",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "6c76d21785b095bb9e9151867ba05e274eaac96cb3301179dce6096db172d243",
       "text": "255b8cacb80c9ea7b1236f73feaa226a121bb9b58cff81fef2d46b65abae4073"
     },
     "orders": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "cb8a91563e7d63ff5ae7ba34e620c20c176dc6a6d29dbf4b738ab023fd46de4f",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "e2e1677d58415124734708b64c30bfd54c947694e992ccf5845c1d2d2101943a",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "perktree": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "098d465a9460858a507cd708e97739ca90a5d598815e8a1fcc6d3918723cab92",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "7bc5e74022cb9347c4af894ac45f952e13f57bb5d08283c8d3fd5c502d971c92",
       "text": "148006c785c6f0e5adf6725d87605f5e508b957636fdac87ea64939e7bd63b79"
     },
     "pets": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "84318baecbc997ce0bedf081df3a313599332ddf7d301cbad1e5ec826c085850",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "81d21dff5a3933c06cead8b8399d944a1e9ddd52cc1078b0bb047cc4aeb5dd4b",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "9ad5bb91e15a668fdd82f555db3bc6aa2aba4c66f54a805a739fa96225e22e95",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "47834eb9cc7540e74d8e58a60f69a801892d153c0d67846215ba6b9839a96c6d",
       "text": "13e6d38670572890ab2567279a5ca76f8e353eab6ade09a877eee2e884c6e272"
     },
     "profile": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "c9f873e555ffdfeb5576d2aa27ccbfe13364c69666cad14d745b5e1130df67f2",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "2f52f44bc926f886a105b293474c9754e73c64d65020b58910857f44eb595409",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "45d823e3de41aeb4d9a996da44c8153b9bb402c6c3ea8d5439f9a74eab139d9d",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "3331e4c4e8a1fe6a79a03fadb7005999c185c98f1483367aade9dfb2c183e54a",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "aa339690c6da4f4e7fab2db3c197eb028d382159ce2c605ddcdac0c706fcde1a",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "31eef842ddbbd256534f9f80415caf734a8f589329e5ed4ac3fd898b82edaee9",
       "text": "b551d73e8dcc85c81ff7c908f7c89e1ebfb441b46d082a6a714124d77bfbb2c2"
     },
     "shop": {
-      "reason": "Дневные акции /shop: три типа акций, UTC-ротация, бонус внутри сделки, потолки и GUI сверены с кодом и документацией",
-      "sources": "6ecdf18849b2074e082cae0c5199a71c5e50650e691f6cf9a0284a2b3bdd4b61",
-      "text": "4986d30ec383f17724d97e008bd348b364f9dceaa183eb1b4b6000114fd04408"
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "e5e725d4b2dba7d596f89377b8a6d13dd57131b9a8f7e71791495489c90b98b6",
+      "text": "44b0b3c1a14fc26a26f166363e932f532bdfb98841c928614469144d55701928"
     },
     "skills": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "732a13817cfa134e98bb644806f7648034084bc65d1e976ec4d3342398438e34",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "a8d7cda59b2c7d709f60da5b04a92e26b6021597b2e529af048a63e7d0d5df0f",
       "text": "4145bd09f8c7604a0b17976f7d5395a9fae287b1f76c38ac971429465b9cd85b"
     },
     "social-link": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "7f2767a7ff762e76e534b54d8e03621b44c1196675a6f16743913c4d89a4ed52",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "ec65bc08d73d453a7f220833af85a86033179ffb7c98e6e82d3146baaee649e7",
       "text": "4c8cab4b751d6f98f2dfca7e7cd7e2770ee7f7000984ccc7c7b57ec8949a3ae4"
     },
     "start": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "c19adc6942042f49e4ca3f4126037ec1100892e8feec4a5897b75945d4c0124f",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "4580008174209b1baeb73dedc0d80a238353156274af4408cda78c4fbeeaaad1",
       "text": "c2835fdf2d1945079115e6a252d472ce72ad9ad79f4ed47ad58e269b467d595f"
     },
     "starter-kit": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "b2975b408f253daed482b5f592cbc3fc6c0c4b6a7ec8f337cb50f075905015cf",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "b7361fa4d36b7f8c3ac2964c34906a61594fff4b3b53fbd2f44e52f8ca244c5b",
       "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
     },
     "teleports": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "34ccf148bfaa60657db6d637cf8d208313b261570721f196e3cddaab8c4ca1a2",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "524a767cad5b35fa4c35bfdb7e83a2f5d77ed456b2f4da52491ec7fc678530c9",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "0acb35589d5fc2dcd9c8b1ae4f13c0448fe8c9c1c1df93490b4564b8f5084142",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "9b5f3f2a2f10139e9e52222991f4e48b24a94429c8938b83885aef37a54b125f",
       "text": "6fecc5f6cbd3088f29bccb6fbb695467bfa0a24142db052c1a7d61be43037161"
     },
     "titles": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "fde04653fa94046fc1b29ee10601b883ce95484e8be7944588681e4f95144bb5",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "9a16b139b1e8e95d8abe12b8572aa261674eabb5e9c1a92f13ae0480ae225bfc",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Дневные акции /shop: три типа акций, UTC-ротация, бонус внутри сделки, потолки и GUI сверены с кодом и документацией",
-      "sources": "6ecdf18849b2074e082cae0c5199a71c5e50650e691f6cf9a0284a2b3bdd4b61",
-      "text": "90f21fd47306990d69f9357b5a1a968a950c724efa66031eb71c2e9baef3d900"
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "e5e725d4b2dba7d596f89377b8a6d13dd57131b9a8f7e71791495489c90b98b6",
+      "text": "04c4c8734b76fd8cbcc7f6e13c6407114f7f0379873e1aea3f5286a25d881ad1"
     },
     "vk": {
-      "reason": "Товар +8 чанков навсегда: SKU, вечный бонус claims-data.json, /claimadmin chunks и аддитивная миграция сверены",
-      "sources": "7f2767a7ff762e76e534b54d8e03621b44c1196675a6f16743913c4d89a4ed52",
+      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
+      "sources": "ec65bc08d73d453a7f220833af85a86033179ffb7c98e6e82d3146baaee649e7",
       "text": "94f2d5f3cf83ae414f1a577156884ae1329734bf55951e2707569c3ce923c199"
     }
   },

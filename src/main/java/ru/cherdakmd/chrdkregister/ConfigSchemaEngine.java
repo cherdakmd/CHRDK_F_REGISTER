@@ -11,6 +11,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -320,25 +321,42 @@ final class ConfigSchemaEngine {
                     position--;
                 }
             }
-            insertions.add(new Insertion(position, order++, String.join("\n", block)));
+            insertions.add(new Insertion(position, anchor.indent(), order++,
+                    String.join("\n", block)));
             report.add("добавлен ключ/раздел " + path);
         }
         if (insertions.isEmpty()) {
             return user;
         }
-        // Вставки применяются с конца, чтобы более ранние индексы не сдвинулись;
-        // при равной позиции сохраняется порядок следования в эталоне.
-        insertions.sort(Comparator.<Insertion>comparingInt(Insertion::position)
-                .thenComparingInt(Insertion::order).reversed());
-        List<String> result = new ArrayList<>(List.of(normalize(user).split("\n", -1)));
+        // Вставки с ОДНОЙ позицией объединяются в один блок. Внутри блока
+        // сначала идут более глубокие отступы: они принадлежат внутренней
+        // секции, которая заканчивается ровно в этой точке. Если поставить
+        // первым ключ внешней секции (скаляр с меньшим отступом), следующий за
+        // ним потомок окажется «после скаляра» и YAML станет нечитаемым —
+        // движок тогда честно откажется от всей правки.
+        Map<Integer, List<Insertion>> groups = new TreeMap<>();
         for (Insertion insertion : insertions) {
-            int at = Math.min(insertion.position(), result.size());
-            result.addAll(at, List.of(insertion.text().split("\n", -1)));
+            groups.computeIfAbsent(insertion.position(), ignored -> new ArrayList<>())
+                    .add(insertion);
+        }
+        List<Integer> positions = new ArrayList<>(groups.keySet());
+        positions.sort(Comparator.reverseOrder()); // с конца: ранние индексы не сдвинутся
+        List<String> result = new ArrayList<>(List.of(normalize(user).split("\n", -1)));
+        for (int position : positions) {
+            List<Insertion> group = groups.get(position);
+            group.sort(Comparator.<Insertion>comparingInt(Insertion::indent).reversed()
+                    .thenComparingInt(Insertion::order));
+            List<String> block = new ArrayList<>();
+            for (Insertion insertion : group) {
+                block.addAll(List.of(insertion.text().split("\n", -1)));
+            }
+            int at = Math.min(position, result.size());
+            result.addAll(at, block);
         }
         return String.join("\n", result);
     }
 
-    private record Insertion(int position, int order, String text) {
+    private record Insertion(int position, int indent, int order, String text) {
     }
 
     private static String rescaleIndent(String line, int from, int to) {
