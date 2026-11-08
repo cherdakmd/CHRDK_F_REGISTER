@@ -27,10 +27,10 @@ public final class WallDigestCard {
 
     public static final int WIDTH = 1280;
     public static final int HEIGHT = 720;
-    private static final Color CREAM = new Color(0xff, 0xf5, 0xdf);
-    private static final Color ACCENT = new Color(0xff, 0xd6, 0x8a);
-    private static final Color BADGE = new Color(0xf1, 0xcf, 0x8e);
-    private static final Color SHADOW = new Color(0x20, 0x31, 0x2b);
+    static final Color CREAM = new Color(0xff, 0xf5, 0xdf);
+    static final Color ACCENT = new Color(0xff, 0xd6, 0x8a);
+    static final Color BADGE = new Color(0xf1, 0xcf, 0x8e);
+    static final Color SHADOW = new Color(0x20, 0x31, 0x2b);
     /** Базовая линия даты: бейдж заканчивается на 155, ascent заголовка ~58. */
     private static final int TITLE_BASELINE = 236;
     /** Одна и та же запасная строка уходит и на постер, и в текст записи. */
@@ -179,7 +179,7 @@ public final class WallDigestCard {
         return lines;
     }
 
-    private static void drawBackground(Graphics2D g) {
+    static void drawBackground(Graphics2D g) {
         try (InputStream in = WallDigestCard.class.getResourceAsStream("/assets/world-background.jpg")) {
             if (in != null) {
                 BufferedImage source = ImageIO.read(in);
@@ -196,7 +196,7 @@ public final class WallDigestCard {
     }
 
     /** Затемнение слева, чтобы кремовый текст читался на любом участке фона. */
-    private static void drawGradient(Graphics2D g) {
+    static void drawGradient(Graphics2D g) {
         for (int x = 0; x < WIDTH; x++) {
             double falloff = Math.max(0, 1 - x / 1160.0);
             int alpha = (int) Math.round(218 * Math.pow(falloff, 0.65));
@@ -205,7 +205,7 @@ public final class WallDigestCard {
         }
     }
 
-    private static Font font(String resource, int style, float size) {
+    static Font font(String resource, int style, float size) {
         try (InputStream in = WallDigestCard.class.getResourceAsStream(resource)) {
             if (in != null) {
                 return Font.createFont(Font.TRUETYPE_FONT, in).deriveFont(style, size);
@@ -216,7 +216,7 @@ public final class WallDigestCard {
         return new Font(Font.SANS_SERIF, style, (int) size);
     }
 
-    private static void text(Graphics2D g, String line, int x, int y, Font face, Color color) {
+    static void text(Graphics2D g, String line, int x, int y, Font face, Color color) {
         g.setFont(face);
         g.setColor(SHADOW);
         g.drawString(line, x + 2, y + 2);
@@ -224,7 +224,7 @@ public final class WallDigestCard {
         g.drawString(line, x, y);
     }
 
-    private static List<String> wrap(String text, FontMetrics metrics, int width) {
+    static List<String> wrap(String text, FontMetrics metrics, int width) {
         List<String> result = new ArrayList<>();
         String current = "";
         for (String raw : text.split("\\s+")) {

@@ -54,6 +54,7 @@ public final class VkPlugin extends JavaPlugin {
     private SocialEventAnnouncer eventAnnouncer;
     private SocialInteractionHub interactionHub;
     private WallDigestService wallDigest;
+    private DailyCardsService dailyCards;
     private boolean placeholdersRetryScheduled;
     private BukkitTask saveTask;
 
@@ -144,6 +145,13 @@ public final class VkPlugin extends JavaPlugin {
                 new WallDigestStore(getDataFolder().toPath(), getLogger()), store);
         this.wallDigest.start();
 
+        // Четыре персональные карточки игроков в 09/12/15/18 + дайджест в 21:00
+        // = ровно пять записей на стене сообщества за сутки.
+        this.dailyCards = new DailyCardsService(this, this.wallDigest,
+                DailyCardsConfig.parse(getConfig()),
+                new DailyCardsStore(getDataFolder().toPath(), getLogger()));
+        this.dailyCards.start();
+
         getLogger().info("[CHRDK_VK] Включён (привязок: " + store.linkCount()
                 + ", API настроен: " + config.apiConfigured()
                 + ", социальные привязки: " + socialService.store().linkCount() + ").");
@@ -185,6 +193,10 @@ public final class VkPlugin extends JavaPlugin {
         if (saveTask != null) {
             saveTask.cancel();
             saveTask = null;
+        }
+        if (dailyCards != null) {
+            dailyCards.shutdown();
+            dailyCards = null;
         }
         if (wallDigest != null) {
             wallDigest.shutdown();
@@ -247,6 +259,9 @@ public final class VkPlugin extends JavaPlugin {
             }
             if (this.wallDigest != null) {
                 this.wallDigest.applyConfig(WallDigestConfig.parse(fresh));
+            }
+            if (this.dailyCards != null) {
+                this.dailyCards.applyConfig(DailyCardsConfig.parse(fresh));
             }
             return true;
         } catch (Exception exception) {

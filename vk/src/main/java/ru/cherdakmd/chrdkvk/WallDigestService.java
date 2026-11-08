@@ -77,6 +77,11 @@ public final class WallDigestService implements Listener {
                 + config.scheduleLabel() + ", владелец стены — CHRDK_VK");
     }
 
+    /** Тот же коллектор читают персональные карточки дня (пакетный доступ). */
+    WallDigestCollector collector() {
+        return collector;
+    }
+
     /** Перезагрузка конфига плагина: новое расписание и ключ без рестарта сервера. */
     public void applyConfig(WallDigestConfig next) {
         if (next == null || stopped) {
@@ -151,15 +156,15 @@ public final class WallDigestService implements Listener {
     }
 
     /**
-     * Добытые блоки. Только сам факт разрушения: тип блока, координаты и ник
-     * игрока на публичную стену не уходят.
+     * Добытые блоки. В обезличенный дайджест уходит только сумма, а имя
+     * сохраняется локально для карточки «Шахтёр дня».
      */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
         if (stopped || !config.enabled() || !config.includeBlocks()) {
             return;
         }
-        collector.recordBlocksBroken(1);
+        collector.recordBlocksBroken(event.getPlayer().getName(), 1);
     }
 
     /**
@@ -169,12 +174,12 @@ public final class WallDigestService implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onDiamondPickup(EntityPickupItemEvent event) {
         if (stopped || !config.enabled() || !config.includeDiamonds()
-                || !(event.getEntity() instanceof Player)) {
+                || !(event.getEntity() instanceof Player player)) {
             return;
         }
         var stack = event.getItem().getItemStack();
         if (stack.getType() == Material.DIAMOND) {
-            collector.recordDiamonds(stack.getAmount());
+            collector.recordDiamonds(player.getName(), stack.getAmount());
         }
     }
 
@@ -187,13 +192,17 @@ public final class WallDigestService implements Listener {
         if (stopped || !config.enabled() || !config.includeMobs()) {
             return;
         }
-        if (!(event.getEntity() instanceof Monster) || event.getEntity().getKiller() == null) {
+        if (!(event.getEntity() instanceof Monster)) {
+            return;
+        }
+        Player killer = event.getEntity().getKiller();
+        if (killer == null) {
             return;
         }
         if (ru.cherdakmd.chrdkregister.api.MobRewardPolicy.temporary(event.getEntity())) {
             return;
         }
-        collector.recordMobKills(1);
+        collector.recordMobKills(killer.getName(), 1);
     }
 
     /** Опрос престижа идёт на главном потоке: Bukkit API так безопаснее. */

@@ -20,6 +20,10 @@ public final class WallDigestCollector {
     /** Не более трёх попыток публикации за сутки, чтобы сбой VK не спамил стену. */
     public static final int MAX_ATTEMPTS = 3;
 
+    /** Лидер номинации: ник и его величина. {@code null}, если данных нет. */
+    public record Leader(String name, long value) {
+    }
+
     public record Digest(
             String day,
             int prestigeEvents,
@@ -65,6 +69,9 @@ public final class WallDigestCollector {
         state.blocksBroken = 0;
         state.diamondsGained = 0;
         state.mobKills = 0;
+        state.blocksByPlayer.clear();
+        state.diamondsByPlayer.clear();
+        state.mobKillsByPlayer.clear();
         state.prestigeGains.clear();
         state.postingDay = ""; // прошлая незавершённая попытка больше не актуальна
         // Снимок престижа и lastPostedDay намеренно сохраняются между сутками.
@@ -115,23 +122,102 @@ public final class WallDigestCollector {
 
     /** Один сломанный игроком блок. Считается только факт, не тип и не координаты. */
     public synchronized void recordBlocksBroken(long blocks) {
+        recordBlocksBroken(null, blocks);
+    }
+
+    /** То же, но с ником: нужно для карточки «Шахтёр дня». */
+    public synchronized void recordBlocksBroken(String playerName, long blocks) {
         if (blocks > 0) {
             state.blocksBroken = addCapped(state.blocksBroken, blocks);
+            addTo(state.blocksByPlayer, playerName, blocks);
         }
     }
 
     /** Алмазы, реально подобранные игроком: сумма количеств выпавших предметов. */
     public synchronized void recordDiamonds(long diamonds) {
+        recordDiamonds(null, diamonds);
+    }
+
+    public synchronized void recordDiamonds(String playerName, long diamonds) {
         if (diamonds > 0) {
             state.diamondsGained = addCapped(state.diamondsGained, diamonds);
+            addTo(state.diamondsByPlayer, playerName, diamonds);
         }
     }
 
     /** Победа над враждебным мобом; игроки и временные мобы событий не дают. */
     public synchronized void recordMobKills(long kills) {
+        recordMobKills(null, kills);
+    }
+
+    public synchronized void recordMobKills(String playerName, long kills) {
         if (kills > 0) {
             state.mobKills = addCapped(state.mobKills, kills);
+            addTo(state.mobKillsByPlayer, playerName, kills);
         }
+    }
+
+    /** Лидер по добытым блокам за сутки. */
+    public synchronized Leader topBlocks() {
+        return top(state.blocksByPlayer);
+    }
+
+    /** Лидер по поднятым алмазам за сутки. */
+    public synchronized Leader topDiamonds() {
+        return top(state.diamondsByPlayer);
+    }
+
+    /** Лидер по победам над мобами за сутки. */
+    public synchronized Leader topMobKills() {
+        return top(state.mobKillsByPlayer);
+    }
+
+    /** Лидер по последнему известному престижу (снимок переживает рестарт). */
+    public synchronized Leader topPrestige() {
+        Leader best = null;
+        for (Map.Entry<String, Integer> row : state.prestigeSnapshot.entrySet()) {
+            int value = row.getValue() == null ? 0 : row.getValue();
+            if (value <= 0 || row.getKey() == null || row.getKey().isBlank()) {
+                continue;
+            }
+            if (best == null || value > best.value()
+                    || (value == best.value() && row.getKey().compareToIgnoreCase(best.name()) < 0)) {
+                best = new Leader(row.getKey(), value);
+            }
+        }
+        return best;
+    }
+
+    /** Сколько алмазов поднял конкретный игрок за эти сутки. */
+    public synchronized long diamondsOf(String playerName) {
+        if (playerName == null) {
+            return 0L;
+        }
+        return state.diamondsByPlayer.getOrDefault(playerName, 0L);
+    }
+
+    private static void addTo(Map<String, Long> target, String playerName, long delta) {
+        String name = playerName == null ? "" : playerName.trim();
+        if (name.isEmpty()) {
+            return;
+        }
+        long current = target.getOrDefault(name, 0L);
+        target.put(name, addCapped(current, delta));
+    }
+
+    private static Leader top(Map<String, Long> source) {
+        Leader best = null;
+        for (Map.Entry<String, Long> row : source.entrySet()) {
+            long value = row.getValue() == null ? 0L : row.getValue();
+            if (value <= 0 || row.getKey() == null || row.getKey().isBlank()) {
+                continue;
+            }
+            if (best == null || value > best.value()
+                    || (value == best.value() && row.getKey().compareToIgnoreCase(best.name()) < 0)) {
+                best = new Leader(row.getKey(), value);
+            }
+        }
+        return best;
     }
 
     /** Счётчик не должен уронить слушатель события даже за очень активные сутки. */

@@ -39,6 +39,10 @@ public final class WallDigestStore {
         long blocksBroken;
         long diamondsGained;
         long mobKills;
+        /** Те же агрегаты по игрокам — для персональных карточек «Шахтёр/Охотник дня». */
+        Map<String, Long> blocksByPlayer = new LinkedHashMap<>();
+        Map<String, Long> diamondsByPlayer = new LinkedHashMap<>();
+        Map<String, Long> mobKillsByPlayer = new LinkedHashMap<>();
         /** Прирост престижа за текущие сутки по игрокам (для топа). */
         Map<String, Integer> prestigeGains = new LinkedHashMap<>();
         /** Последние известные значения престижа (переживают рестарт). */
@@ -72,6 +76,9 @@ public final class WallDigestStore {
             }
             if (loaded.prestigeGains == null) loaded.prestigeGains = new LinkedHashMap<>();
             if (loaded.prestigeSnapshot == null) loaded.prestigeSnapshot = new LinkedHashMap<>();
+            if (loaded.blocksByPlayer == null) loaded.blocksByPlayer = new LinkedHashMap<>();
+            if (loaded.diamondsByPlayer == null) loaded.diamondsByPlayer = new LinkedHashMap<>();
+            if (loaded.mobKillsByPlayer == null) loaded.mobKillsByPlayer = new LinkedHashMap<>();
             if (loaded.day == null) loaded.day = "";
             if (loaded.lastPostedDay == null) loaded.lastPostedDay = "";
             if (loaded.postingDay == null) loaded.postingDay = "";

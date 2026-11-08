@@ -2,6 +2,7 @@ package ru.cherdakmd.chrdkvk;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
@@ -138,6 +139,48 @@ class WallDigestCollectorTest {
         collector.recordBlocksBroken(Long.MAX_VALUE);
         collector.recordBlocksBroken(10);
         assertEquals(Long.MAX_VALUE, collector.snapshot(DAY).blocksBroken());
+    }
+
+    @Test
+    void perPlayerActivityFeedsDailyNominations() {
+        WallDigestCollector collector = fresh(WallDigestConfig.DEFAULT);
+        collector.recordBlocksBroken("Alex", 5);
+        collector.recordBlocksBroken("Steve", 9);
+        collector.recordDiamonds("Alex", 12);
+        collector.recordDiamonds("Steve", 3);
+        collector.recordMobKills("Maria", 4);
+        collector.recordMobKills("Alex", 2);
+        collector.observePrestige("Maria", 7);
+        collector.observePrestige("Alex", 3);
+
+        assertEquals("Steve", collector.topBlocks().name());
+        assertEquals(9L, collector.topBlocks().value());
+        assertEquals("Alex", collector.topDiamonds().name());
+        assertEquals(12L, collector.topDiamonds().value());
+        assertEquals("Maria", collector.topMobKills().name());
+        assertEquals(4L, collector.topMobKills().value());
+        assertEquals(3L, collector.diamondsOf("Steve"));
+        assertEquals(7L, collector.topPrestige().value());
+        assertEquals("Maria", collector.topPrestige().name());
+
+        // Суммы в дайджесте остаются обезличенными.
+        WallDigestCollector.Digest digest = collector.snapshot(DAY);
+        assertEquals(14, digest.blocksBroken());
+        assertEquals(15, digest.diamondsGained());
+        assertEquals(6, digest.mobKills());
+    }
+
+    @Test
+    void perPlayerTopsAreResetOnNewDay() {
+        WallDigestCollector collector = fresh(WallDigestConfig.DEFAULT);
+        collector.recordBlocksBroken("Steve", 4);
+        collector.recordMobKills("Steve", 2);
+        assertEquals("Steve", collector.topBlocks().name());
+        collector.snapshot("2026-11-04");
+        assertNull(collector.topBlocks());
+        assertNull(collector.topMobKills());
+        assertNull(collector.topDiamonds());
+        assertEquals(0L, collector.diamondsOf("Steve"));
     }
 
     @Test
