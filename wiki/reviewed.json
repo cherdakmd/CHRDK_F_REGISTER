@@ -131,8 +131,8 @@
       "text": "13e6d38670572890ab2567279a5ca76f8e353eab6ade09a877eee2e884c6e272"
     },
     "profile": {
-      "reason": "Сверены: запрет колонны (Карьер/Забойщик) с чарами megamine и админская команда /vkadmin testpost для чата и стены",
-      "sources": "7c4546583bc3a1c3014c4994aa0ca30d9fa497d7d5160e741878b290662382bc",
+      "reason": "Сверен /vkadmin testcard: PNG через photos→wall.post, маркер, guid и отсутствие ledger; живая публикация не выполнялась",
+      "sources": "98c30fd59006e773974229ae2e0187192742d43d0bb1f7463262b3140e8907e2",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
@@ -156,8 +156,8 @@
       "text": "2cbe0faac3c272b71b3eb81fb78f5051b9eaa58e4ff682276af2c6bbdf74a98b"
     },
     "social-link": {
-      "reason": "Сверены: запрет колонны (Карьер/Забойщик) с чарами megamine и админская команда /vkadmin testpost для чата и стены",
-      "sources": "4e626b7f902424ae905a48364649068ec53a87234eb485edf500708ea82102d4",
+      "reason": "Сверен /vkadmin testcard: PNG через photos→wall.post, маркер, guid и отсутствие ledger; живая публикация не выполнялась",
+      "sources": "af68769ad3c3a655b721bd069685a5b3d91988e28f310c44966e77cf6dbb0e14",
       "text": "65f8ffa165ab0b2dfba6cebd5633dbe78011e5000e4ca5e731d11ec3e68167f7"
     },
     "start": {
@@ -191,8 +191,8 @@
       "text": "238b43656d6df7186d842e6cfda78d158046d66c29320dedbb4bc7b4341b0856"
     },
     "vk": {
-      "reason": "Сверены: запрет колонны (Карьер/Забойщик) с чарами megamine и админская команда /vkadmin testpost для чата и стены",
-      "sources": "4e626b7f902424ae905a48364649068ec53a87234eb485edf500708ea82102d4",
+      "reason": "Сверен /vkadmin testcard: PNG через photos→wall.post, маркер, guid и отсутствие ledger; живая публикация не выполнялась",
+      "sources": "af68769ad3c3a655b721bd069685a5b3d91988e28f310c44966e77cf6dbb0e14",
       "text": "2288103e1234a0d2bbe060f0aaa25c941879f059d6e13acc49d5177267f75d76"
     }
   },

@@ -320,6 +320,7 @@ public final class VkCommandHandler implements CommandExecutor, TabCompleter {
                         "peer_id", Long.toString(service.effectiveGroupChatPeerId()));
             }
             case "testpost" -> handleTestPost(sender, args, messages);
+            case "testcard" -> handleTestCard(sender, args, messages);
             case "lookup" -> handleLookup(sender, args, messages);
             case "chatban" -> handleChatBan(sender, args, messages);
             case "unlink" -> {
@@ -415,6 +416,50 @@ public final class VkCommandHandler implements CommandExecutor, TabCompleter {
                             "url", plugin.config().wallPostUrl(postId)),
                     error -> messages.send(sender, "admin.testpost-wall-failed", "error", error));
         }
+    }
+
+    /** Маркер тестовой карточки: тот же фильтр новостей, что у testpost. */
+    static String testCardMarker(UUID uuid) {
+        return VkWallPublisher.TEST_POST_MARKER + "card_"
+                + uuid.toString().replace("-", "").substring(0, 8);
+    }
+
+    /** Текст тестовой карточки: произвольный текст админа или дефолт + маркер. */
+    static String testCardText(String custom, String senderName, Instant now, String marker) {
+        String body = custom == null || custom.isBlank()
+                ? "🧪 Тест CHRDK_VK: проверка публикации PNG-карточки от " + senderName
+                        + " (" + TEST_POST_TIME.format(now) + " МСК). "
+                        + "Техническая запись, не игровая новость."
+                : custom.trim();
+        return body + "\n" + marker;
+    }
+
+    /**
+     * {@code /vkadmin testcard [текст]} — разовая проверка всей цепочки загрузки
+     * фото. В отличие от {@code testpost} публикует реальную PNG-карточку через
+     * {@code VkWallPublisher.publish}, но не пишет суточные ledger'ы и не
+     * анонсируется как игровая новость.
+     */
+    private void handleTestCard(CommandSender sender, String[] args, Messages messages) {
+        String custom = args.length > 1
+                ? String.join(" ", Arrays.copyOfRange(args, 1, args.length)).trim() : "";
+        if (custom.length() > MAX_TEST_POST_TEXT) {
+            messages.send(sender, "admin.testcard-too-long",
+                    "max", Integer.toString(MAX_TEST_POST_TEXT));
+            return;
+        }
+        if (!plugin.config().apiConfigured()) {
+            messages.send(sender, "admin.testcard-not-ready");
+            return;
+        }
+        String marker = testCardMarker(UUID.randomUUID());
+        String text = testCardText(custom, sender.getName(), Instant.now(), marker);
+        messages.send(sender, "admin.testcard-queued");
+        service.publishTestCard(text,
+                postId -> messages.send(sender, "admin.testcard-ok",
+                        "post_id", Long.toString(postId),
+                        "url", plugin.config().wallPostUrl(postId)),
+                error -> messages.send(sender, "admin.testcard-failed", "error", error));
     }
 
     private void handleLookup(CommandSender sender, String[] args, Messages messages) {
@@ -515,7 +560,7 @@ public final class VkCommandHandler implements CommandExecutor, TabCompleter {
             }
             if (args.length == 1) {
                 return filterPrefix(List.of("status", "lookup", "chatban", "unlink", "setchat",
-                        "testchat", "testpost", "sync", "reload"), args[0]);
+                        "testchat", "testpost", "testcard", "sync", "reload"), args[0]);
             }
             if (args.length == 2 && args[0].equalsIgnoreCase("setchat")) {
                 return filterPrefix(List.of("off", "2000000001"), args[1]);

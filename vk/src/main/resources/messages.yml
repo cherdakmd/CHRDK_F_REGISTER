@@ -99,7 +99,7 @@ vk:
   gui-close-name: "<!italic><red>Закрыть</red>"
 
 admin:
-  usage: "<gray>Использование: <aqua>/vkadmin [status|lookup|chatban|unlink|setchat|testchat|testpost|sync|reload]</aqua></gray>"
+  usage: "<gray>Использование: <aqua>/vkadmin [status|lookup|chatban|unlink|setchat|testchat|testpost|testcard|sync|reload]</aqua></gray>"
   status: "<aqua>[CHRDK_VK]</aqua> <gray>API: %configured% · Long Poll: %worker% · Беседа: <white>%chat_peer%</white> · Привязок: <white>%links%</white> · VK Donut: <gold>%donuts%</gold> · Банов чата: <white>%chatbans%</white> · Пост: <white>#%last_post%</white></gray>"
   setchat-ok: "<green>Мост глобального чата подключён к беседе ВК <white>peer_id=%peer_id%</white>.</green>"
   setchat-off: "<yellow>Оперативная привязка беседы сброшена (значение из config.yml: <white>%config_peer%</white>).</yellow>"
@@ -113,6 +113,12 @@ admin:
   testpost-wall-queued: "<aqua>[CHRDK_VK]</aqua> <gray>Публикую тестовую запись на стену сообщества…</gray>"
   testpost-wall-ok: "<green>Тестовая запись опубликована: <white>%url%</white> (post_id=%post_id%).</green>"
   testpost-wall-failed: "<red>Тестовая запись не опубликована: <white>%error%</white></red>"
+  # /vkadmin testcard: та же цепочка photos → wall.post, но с PNG и без ledger'ов.
+  testcard-not-ready: "<yellow>VK API не настроен: проверьте general.enabled, community.group-id и community.access-token (нужны права wall и photos).</yellow>"
+  testcard-too-long: "<red>Текст тестовой карточки длиннее %max% символов.</red>"
+  testcard-queued: "<aqua>[CHRDK_VK]</aqua> <gray>Публикую тестовую PNG-карточку на стену сообщества…</gray>"
+  testcard-ok: "<green>Тестовая карточка с фото опубликована: <white>%url%</white> (post_id=%post_id%).</green>"
+  testcard-failed: "<red>Тестовая карточка с фото не опубликована: <white>%error%</white></red>"
   lookup-none: "<yellow>Привязка ВКонтакте для <white>%player%</white> не найдена.</yellow>"
   lookup-vk-unlinked: "<yellow>Профиль <white>id%vk_id%</white> сейчас не привязан ни к одному игроку <dark_gray>(бан моста чата: %chatban%)</dark_gray>.</yellow>"
   lookup-found: "<aqua>[CHRDK_VK]</aqua> <white>%player%</white> <gray>→ <white>id%vk_id%</white> · группа: %member% · Donut: %donut% · оповещения: %notify% · вход: %frozen% · бан моста: %chatban%</gray>"

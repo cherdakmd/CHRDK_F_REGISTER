@@ -18,6 +18,7 @@ import ru.cherdakmd.chrdksocial.SocialEventText;
 import ru.cherdakmd.chrdksocial.SocialEventThrottle;
 import ru.cherdakmd.chrdksocial.SocialInteractionHub;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -286,6 +287,72 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
                 String shortReason = reason.length() > 180 ? reason.substring(0, 180) : reason;
                 plugin.getLogger().log(Level.WARNING,
                         "[vkadmin testpost] wall.post не удался: " + reason, failure);
+                onMainThread(() -> onFailure.accept(shortReason));
+            }
+        });
+    }
+
+    /** guid тестовой карточки не пересекается со штатными постами дня. */
+    static final String TEST_CARD_GUID_PREFIX = "chrdk-testcard-";
+
+    static String testCardGuid(UUID uuid) {
+        return TEST_CARD_GUID_PREFIX + uuid;
+    }
+
+    /** Тестовая карточка: тот же рендер Java2D, но без игровых данных и значений. */
+    static DailyCardsConfig testCardConfig() {
+        DailyCardsConfig base = DailyCardsConfig.DEFAULT;
+        return new DailyCardsConfig(base.enabled(), base.zone(), false,
+                base.richestHour(), base.prestigeHour(), base.minerHour(), base.hunterHour(),
+                base.retryMinutes(), "ТЕСТ CHRDK_VK · НЕ ИГРОВАЯ НОВОСТЬ");
+    }
+
+    static byte[] renderTestCard(DailyCardsConfig cards, String day) throws IOException {
+        DailyNomination nomination =
+                new DailyNomination(DailyCardKind.RICHEST, "CHRDK_TEST", 0L, 0L);
+        return DailyPlayerCard.render(nomination, cards, day);
+    }
+
+    /**
+     * Тестовая PNG-карточка для {@code /vkadmin testcard}: полная штатная цепочка
+     * {@code photos.getWallUploadServer → photos.saveWallPhoto → wall.post}, но
+     * без суточных ledger'ов, аудита и сдвига {@code last_announced_post_id}.
+     * Текст обязан содержать {@link VkWallPublisher#TEST_POST_MARKER}; сеть и
+     * рендер уходят в фоновый поток, ответы админу — в главный.
+     */
+    public void publishTestCard(String text, LongConsumer onSuccess, Consumer<String> onFailure) {
+        VkApiClient client = this.apiClient;
+        VkConfig cfg = plugin.config();
+        if (client == null || !cfg.apiConfigured() || cfg.groupId() <= 0L) {
+            onFailure.accept("VK API не настроен: general.enabled, community.group-id, "
+                    + "access-token (нужны права wall и photos)");
+            return;
+        }
+        if (text == null || text.isBlank()) {
+            onFailure.accept("Пустой текст тестовой карточки");
+            return;
+        }
+        if (!text.contains(VkWallPublisher.TEST_POST_MARKER)) {
+            onFailure.accept("Текст тестовой карточки потерял маркер #chrdk_test_");
+            return;
+        }
+        long groupId = cfg.groupId();
+        String guid = testCardGuid(UUID.randomUUID());
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                DailyCardsConfig cards = testCardConfig();
+                byte[] png = renderTestCard(cards, cards.dayKey(Instant.now()));
+                long postId = new VkWallPublisher(client, groupId).publish(png, text, guid);
+                onMainThread(() -> onSuccess.accept(postId));
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+                onMainThread(() -> onFailure.accept("Публикация прервана"));
+            } catch (Exception failure) {
+                String reason = failure.getMessage() == null
+                        ? failure.getClass().getSimpleName() : failure.getMessage();
+                String shortReason = reason.length() > 180 ? reason.substring(0, 180) : reason;
+                plugin.getLogger().log(Level.WARNING,
+                        "[vkadmin testcard] публикация PNG-карточки не удалась: " + reason, failure);
                 onMainThread(() -> onFailure.accept(shortReason));
             }
         });

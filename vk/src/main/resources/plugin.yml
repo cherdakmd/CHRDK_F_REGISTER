@@ -19,7 +19,7 @@ commands:
     permission: chrdkvk.use
   vkadmin:
     description: "Администрирование интеграции и беседы ВКонтакте"
-    usage: "/<command> [status|lookup|chatban|unlink|setchat|testchat|testpost|sync|reload]"
+    usage: "/<command> [status|lookup|chatban|unlink|setchat|testchat|testpost|testcard|sync|reload]"
     permission: chrdkvk.admin
   link:
     description: "Показать одноразовый код входа (ВК или MAX)"
