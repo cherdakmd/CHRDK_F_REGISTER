@@ -62,6 +62,30 @@ class GeneralPrereleaseTest(unittest.TestCase):
                 ['--check', '--tag', TAG, '--version', VERSION]))
             configured.assert_not_called()
 
+    def test_text_only_never_calls_the_photo_uploader(self):
+        class FakeVK:
+            group, peer = 123456, 2000000001
+            transport = None
+
+            def upload(self, image):
+                raise AssertionError('загрузчик фото не должен вызываться')
+
+            def check_connection(self):
+                return None
+
+        fake = FakeVK()
+        wrapper = prerelease_general.TextOnlyVK(fake)
+        self.assertEqual(wrapper.upload(b'png'), '')
+        self.assertEqual(wrapper.group, fake.group)
+        with patch.object(prerelease_general.prerelease, 'configured',
+                          return_value=(object(), fake)), \
+             patch.object(prerelease_general.prerelease, 'publish_announcement',
+                          return_value=(999, True)) as mocked:
+            self.assertEqual(0, prerelease_general.main(
+                ['--publish', '--text-only', '--tag', TAG, '--version', VERSION]))
+            self.assertIsInstance(mocked.call_args.kwargs['vk'],
+                                  prerelease_general.TextOnlyVK)
+
     def test_ledger_key_is_distinct_from_the_vk_only_prerelease(self):
         post = prerelease_general.build_general_post(TAG, VERSION)
         self.assertNotIn('vk-v1.5.2-rc.5', post.key)

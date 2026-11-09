@@ -35,6 +35,25 @@ MAX_ATTEMPTS = prerelease.MAX_ATTEMPTS
 RETRY_SECONDS = prerelease.RETRY_SECONDS
 
 
+class TextOnlyVK:
+    """Отправка без постера: загрузчик фото не вызывается совсем.
+
+    Для повтора после сбоя ``photos.*``: сообщение ещё не уходило (в журнале
+    ``prepared``), маркер в истории не найден, поэтому текстовый анонс не
+    создаёт дубль. Все проверки, журнал и ``messages.send`` остаются у обычного
+    VK; перехватывается только ``upload()``.
+    """
+
+    def __init__(self, vk):
+        self._vk = vk
+
+    def __getattr__(self, name):
+        return getattr(self._vk, name)
+
+    def upload(self, image):
+        return ''
+
+
 def build_general_post(tag, version, root=ROOT, now=None):
     """Детерминированный Post: ключ привязан к тегу, маркер считается из ключа."""
     if (not GENERAL_TAG.fullmatch(tag or '') or not VERSION.fullmatch(version or '')
@@ -58,6 +77,8 @@ def main(argv=None):
     actions.add_argument('--publish', action='store_true', help='Отправить в беседу ВК с дедупликацией')
     parser.add_argument('--tag', required=True, help='Тег пререлиза, например v1.5.2-rc.6')
     parser.add_argument('--version', required=True, help='Версия комплекта, например 1.5.2-rc.6')
+    parser.add_argument('--text-only', action='store_true',
+                        help='Не загружать постер: отправить анонс текстом (для повтора после сбоя photos.*)')
     args = parser.parse_args(argv)
     post = build_general_post(args.tag, args.version)
     length, image = prerelease.check(post)
@@ -67,6 +88,8 @@ def main(argv=None):
         print(post.text)
         return 0
     gh, vk = prerelease.configured()
+    if args.text_only:
+        vk = TextOnlyVK(vk)
     sent, last_error = False, None
     for attempt in range(1, MAX_ATTEMPTS + 1):
         try:
