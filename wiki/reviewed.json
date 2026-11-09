@@ -1,198 +1,198 @@
 {
   "pages": {
     "about": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "6c76d21785b095bb9e9151867ba05e274eaac96cb3301179dce6096db172d243",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "c98b563152fdd733f55d9f3705aa35519502d0af6dcda1925b13f20174c8c480",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "a42fbc9dafc3b85bc292388f6ed3fd70e078f7c49550a1afb329ce8a1336a946",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "ad3facd5031bb4adc6dbe101469cf38a03b08e8407384649c4c8d7ea02ee61f7",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "b7361fa4d36b7f8c3ac2964c34906a61594fff4b3b53fbd2f44e52f8ca244c5b",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "d6c86bd52b8e8300338e2f83fba83d0d64efabfb6cd860e9b506bac8ff220f0c",
       "text": "fcdffb1098428fac2bd42d1c4acb73bb9a024d1823d5398b8845bb2f415a506f"
     },
     "auction": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "0ab6062512f29b5daf6dbcbceacda686525cebfcf54c8f6fcb5594ece74dcfb1",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "681b9c82763d3b4556b751bfdfcaf80be54ab91626a228e1ba99cc6eae6f2e93",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "c69f536c6fc65b01d4f41bef6231544130e912507699e2d874693a49b885a90e",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "f7e880b9b43d28f3d415de23afb931500251a004604162aab4be9a07665afaeb",
       "text": "f368077b5f1961a1982957afe3b8523b60c8330f3dfd1891003d01ea1c4fd6db"
     },
     "chat": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "6c76d21785b095bb9e9151867ba05e274eaac96cb3301179dce6096db172d243",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "c98b563152fdd733f55d9f3705aa35519502d0af6dcda1925b13f20174c8c480",
       "text": "ca6c93fc33fca52eecc7d38744bc86f619ea0b6a7bcc2314b84ca6c5399d8a1c"
     },
     "claims": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "535ac59971f350fa1fde9c00973c80691322d037f29b61a5803109ae7ee7d7b4",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "bd304c191b13594ea971e83df7ff7ad519cef457d1781f67b13e045949545fd8",
       "text": "3144ca61235b895be5cb61e6d120d5dc6d6d0d7c26f87819431b4756659e8e12"
     },
     "classes": {
-      "reason": "Сверены мягкая зона XP, ранговые allowance, /skills balance, уведомления по состоянию и JUnit; дроп алмазов не изменён",
-      "sources": "6a6ed2a9f75f5da300542fc82905dc9cc788a01f5196b0d1b74b70d5f3cca7c5",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "dcb4b154c3609862f1948e207ce62c9cdc234928dd892e0fa655844c4c712703",
       "text": "fdebe780b6e7964249b5c4bc4752908cbdd67722e4d4bb0a4b1f64d94cd15ea1"
     },
     "commands": {
-      "reason": "Сверены: запрет колонны (Карьер/Забойщик) с чарами megamine и админская команда /vkadmin testpost для чата и стены",
-      "sources": "2f5089695d3ebf2ff22bd6eda20b75e2941be8aa726040fddd8b7d98772b41a8",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "3ab237fef6d2e71fa9f33cf9e987b0e58612482536cbba9f73227431a6b9593d",
       "text": "13b15e747e5e4aa93ff7ed9ce580f47e2c7952f5f319b46c6e854fc3eaec3252"
     },
     "cosmetics": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "0455cd8c343c3feed98c049a5072daffa0833e1a9ab38b193e6d3b05986da336",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "af1d02cbdb703f077efd7a56ec48fa167842fda96293ab80c2b5c11b1c796be5",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "1569651a806f8dd7148cd77af512a56ecfc9ff7e70fcfcd02326fb07a3e6292d",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "d917d76aa849b9c79aeba6372cd5c77fe9a7199c8111662aaeffc855ddff430a",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "disasters": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "5d59d5e91a7a6e5c542d2a71e5a6797617d9c89adf0d96fcfb862875d62c66bf",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "476e96879e03c0f9ee8d5d1963285d200fa99569f88d51462171c75e56417c8d",
       "text": "dd99cd1f21290668ef4d7c8ead28497aa0f50dc4ffd34ee6d8e9f02a0d013d9b"
     },
     "economy": {
-      "reason": "Сверены: пять постов стены в сутки, четыре карточки с никнеймами, per-игровые топы и daily-cards ledger; приватность дайджеста неизменна",
-      "sources": "7fe18cd7aa338390a7ed384c323b47ad34f85bdeb5c91157907714f8bdf87643",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "a19595dd8c856f6d0dc5ee512c5072d25126224e0ffa78af92eb6bcd12a0c30a",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "Сверены: колонна Карьер/Забойщик несовместима с чарами megamine на всех путях записи; тестовая команда стены не трогает ledger",
-      "sources": "ca872eff7bff7fd11a53cc2066a2976fc7e1c455eeb9831d146e13d443393114",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "6e0a756d9ed3637a559397c158760392675bc8d5eee6b9bc0fb5e2f14e4377f0",
       "text": "c9b27cd4a4970ad227e240e742adc52dca1533312ec7b590663add3b164ba1a2"
     },
     "faq": {
-      "reason": "Сверены: пять постов стены в сутки, четыре карточки с никнеймами, per-игровые топы и daily-cards ledger; приватность дайджеста неизменна",
-      "sources": "93541198767de61a740629e8a19b4d20762388df49c673a9952516ae740bf3ea",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "dd9fd00035bbee43b6d62805e4efc286c3aaca4236c35d3a3c778fcdd6e507c5",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "434ce32e5528b894f46a5cc0b99020857e7e97dfd4d10d0cb6d881664c4befb1",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "14430607e52c8f016d731b911a052c9e3e88b1c7738b58646745e430d58b5a96",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "535ac59971f350fa1fde9c00973c80691322d037f29b61a5803109ae7ee7d7b4",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "bd304c191b13594ea971e83df7ff7ad519cef457d1781f67b13e045949545fd8",
       "text": "e166f2671aabcdf55ecf59d1465ddb19a36343f6d07983eb8b8821b3a63cce34"
     },
     "honors": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "6c76d21785b095bb9e9151867ba05e274eaac96cb3301179dce6096db172d243",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "c98b563152fdd733f55d9f3705aa35519502d0af6dcda1925b13f20174c8c480",
       "text": "6bc29d5a2d7783845f8b3d9b085e85982faec5b3029d841092386f36b1d4c4b0"
     },
     "hunt": {
-      "reason": "Сверены мягкая зона XP, ранговые allowance, /skills balance, уведомления по состоянию и JUnit; дроп алмазов не изменён",
-      "sources": "d932c6af9effb98f624c394af00b2213acc4a73a4c0b1ba36c2f258bcca2e055",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "b71fe44900cc5ca9015eed51cdaff1ea0c2bf7a8f1688d9cd23fdc6f9bef4567",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "Сверены: пять постов стены в сутки, четыре карточки с никнеймами, per-игровые топы и daily-cards ledger; приватность дайджеста неизменна",
-      "sources": "af8f095c88604448837801e4dea798093f1c5ac3aa88facd1f3807b7cc0d812c",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "bff7f5282eb27c72fbded6e39edd701babd05676721b4abcf363cb85740c871a",
       "text": "6a3b9fedc0d15e6ef23ae50e7bf41cdf79f9efcc79299101944c041b5c2d9222"
     },
     "menu": {
-      "reason": "Сверены: пять постов стены в сутки, четыре карточки с никнеймами, per-игровые топы и daily-cards ledger; приватность дайджеста неизменна",
-      "sources": "5c1f4755795d0e11e5855bda06e4895317351f1bf9e8cdd72e7433e2392dc60d",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "6b6de644c3fd2f0e5f980f6664230aa224b36a90620f26c02b39ec76c3e82700",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "moderation": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "6c76d21785b095bb9e9151867ba05e274eaac96cb3301179dce6096db172d243",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "c98b563152fdd733f55d9f3705aa35519502d0af6dcda1925b13f20174c8c480",
       "text": "255b8cacb80c9ea7b1236f73feaa226a121bb9b58cff81fef2d46b65abae4073"
     },
     "orders": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "e2e1677d58415124734708b64c30bfd54c947694e992ccf5845c1d2d2101943a",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "499c417fb2f1f3fcbc8889bc7d06f6e44dbae7f3ddd09940a71cb34dc793a008",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "perktree": {
-      "reason": "Сверены мягкая зона XP, ранговые allowance, /skills balance, уведомления по состоянию и JUnit; дроп алмазов не изменён",
-      "sources": "6a6ed2a9f75f5da300542fc82905dc9cc788a01f5196b0d1b74b70d5f3cca7c5",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "dcb4b154c3609862f1948e207ce62c9cdc234928dd892e0fa655844c4c712703",
       "text": "148006c785c6f0e5adf6725d87605f5e508b957636fdac87ea64939e7bd63b79"
     },
     "pets": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "81d21dff5a3933c06cead8b8399d944a1e9ddd52cc1078b0bb047cc4aeb5dd4b",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "7062bb49ea03b5c789c15bd6b857cfb60d53c12cbdedd94f8181e7b152592eb5",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "Сверены мягкая зона XP, ранговые allowance, /skills balance, уведомления по состоянию и JUnit; дроп алмазов не изменён",
-      "sources": "e1ff79b6c1d1c67605a7bce9a7e185faef5de3c1266ee227e82205e646d2cae2",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "ed8cfd1a2f1e360196a102cac3f4d09f947738791db84300005033a6974efb3f",
       "text": "13e6d38670572890ab2567279a5ca76f8e353eab6ade09a877eee2e884c6e272"
     },
     "profile": {
-      "reason": "rc.9: проверены текстовые посты стены, подпись обсудить, PNG в беседу и опциональный photo-режим; страницы профиля, привязки и VK сверены",
-      "sources": "fb8495654388d7fe59f064b30bd8eff4137d507e5beb12e2229b29299e6b2d7c",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "5d582d8014b5b57174ddecbd0a2c5c28a28d7f2f5b1710ed14c1c8e56373aa51",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "3331e4c4e8a1fe6a79a03fadb7005999c185c98f1483367aade9dfb2c183e54a",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "5ceca9a91b8047a398c86e7cc6a450b18d98b73ca8ae84e9b22bfd49473d744f",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "31eef842ddbbd256534f9f80415caf734a8f589329e5ed4ac3fd898b82edaee9",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "5c41e6e6ca11d59287f4b201bb410a5bf01b7f9f48a1cdea88e3a29aa78b1f52",
       "text": "b551d73e8dcc85c81ff7c908f7c89e1ebfb441b46d082a6a714124d77bfbb2c2"
     },
     "shop": {
-      "reason": "Сверены: пять постов стены в сутки, четыре карточки с никнеймами, per-игровые топы и daily-cards ledger; приватность дайджеста неизменна",
-      "sources": "af8f095c88604448837801e4dea798093f1c5ac3aa88facd1f3807b7cc0d812c",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "bff7f5282eb27c72fbded6e39edd701babd05676721b4abcf363cb85740c871a",
       "text": "ea26b94a87ea9b7287d9afad8fe96c8633ed8cc92e9fb091369ebd814b3a86a6"
     },
     "skills": {
-      "reason": "Сверены мягкая зона XP, ранговые allowance, /skills balance, уведомления по состоянию и JUnit; дроп алмазов не изменён",
-      "sources": "53bbd4d1015042e0bfc0f8f39ae4b41f22b13e2bb163751f286d7ac2e6cd420d",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "06358f570c881254fa865381cd7530f8ea88afdb4322bda5727a3e3cb2c88395",
       "text": "2cbe0faac3c272b71b3eb81fb78f5051b9eaa58e4ff682276af2c6bbdf74a98b"
     },
     "social-link": {
-      "reason": "rc.9: проверены текстовые посты стены, подпись обсудить, PNG в беседу и опциональный photo-режим; страницы профиля, привязки и VK сверены",
-      "sources": "0d70fc711bf919039e3a5da9b6acadce5f23a385f98363bc25cc50d2d999f17d",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "feb726d8b2f6d5d234cc8e892b4056b23eb23184c022fdfa06115fe89538f89c",
       "text": "65f8ffa165ab0b2dfba6cebd5633dbe78011e5000e4ca5e731d11ec3e68167f7"
     },
     "start": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "4580008174209b1baeb73dedc0d80a238353156274af4408cda78c4fbeeaaad1",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "9d33157848121c1fb75b36d2c23e164961369a19fd0bcb810a6693173c6cb0d2",
       "text": "c2835fdf2d1945079115e6a252d472ce72ad9ad79f4ed47ad58e269b467d595f"
     },
     "starter-kit": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "b7361fa4d36b7f8c3ac2964c34906a61594fff4b3b53fbd2f44e52f8ca244c5b",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "d6c86bd52b8e8300338e2f83fba83d0d64efabfb6cd860e9b506bac8ff220f0c",
       "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
     },
     "teleports": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "524a767cad5b35fa4c35bfdb7e83a2f5d77ed456b2f4da52491ec7fc678530c9",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "cd1205cb9dfcd89dd4fe80f5978bd3cd5273b33a8183c76f612fd07622ed4637",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "Сверены: колонна Карьер/Забойщик несовместима с чарами megamine на всех путях записи; тестовая команда стены не трогает ledger",
-      "sources": "ca872eff7bff7fd11a53cc2066a2976fc7e1c455eeb9831d146e13d443393114",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "6e0a756d9ed3637a559397c158760392675bc8d5eee6b9bc0fb5e2f14e4377f0",
       "text": "8bfa7eee45f251d4f571e67782e4e245c8a0c9faf55062068f625f72771dc03c"
     },
     "titles": {
-      "reason": "config-schema diamond-shop v3: автодописывание promotions:/текстов, исправление ConfigSchemaEngine, сверка документов и вики",
-      "sources": "9a16b139b1e8e95d8abe12b8572aa261674eabb5e9c1a92f13ae0480ae225bfc",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "bcecf516434968f39a87f22979ea0227b8ae3be4614381de8dfd080f754d8b97",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Сверены: пять постов стены в сутки, четыре карточки с никнеймами, per-игровые топы и daily-cards ledger; приватность дайджеста неизменна",
-      "sources": "af8f095c88604448837801e4dea798093f1c5ac3aa88facd1f3807b7cc0d812c",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "bff7f5282eb27c72fbded6e39edd701babd05676721b4abcf363cb85740c871a",
       "text": "238b43656d6df7186d842e6cfda78d158046d66c29320dedbb4bc7b4341b0856"
     },
     "vk": {
-      "reason": "rc.9: проверены текстовые посты стены, подпись обсудить, PNG в беседу и опциональный photo-режим; страницы профиля, привязки и VK сверены",
-      "sources": "0d70fc711bf919039e3a5da9b6acadce5f23a385f98363bc25cc50d2d999f17d",
+      "reason": "совместимое слияние атрибутов: внутренний Listener/утилита и защита от пустого компонента, публичные описания не менялись",
+      "sources": "feb726d8b2f6d5d234cc8e892b4056b23eb23184c022fdfa06115fe89538f89c",
       "text": "695ab2766011ccdd4aa7aabde63e5e8fd9e2e750fe334a4d79eba49298df1845"
     }
   },

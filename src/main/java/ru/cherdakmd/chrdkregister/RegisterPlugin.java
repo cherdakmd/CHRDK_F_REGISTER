@@ -4,6 +4,7 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
+import ru.cherdakmd.chrdkregister.item.ItemAttributeMergeListener;
 import ru.cherdakmd.chrdkregister.libs.bstats.bukkit.Metrics;
 import ru.cherdakmd.chrdkregister.libs.bstats.charts.SimplePie;
 import ru.cherdakmd.chrdkregister.libs.bstats.charts.SingleLineChart;
@@ -226,6 +227,9 @@ public final class RegisterPlugin extends JavaPlugin {
         PluginCommand guardCommand = getCommand("guard");
         if (guardCommand != null) guardCommand.setExecutor((sender, command, label, args) -> serverGuard.status(sender));
         getServer().getPluginManager().registerEvents(chatService, this);
+        // HIGHEST этого слушателя должен пройти до HIGHEST AnvilCostListener,
+        // иначе котировка цены запомнит результат до слияния атрибутов.
+        getServer().getPluginManager().registerEvents(new ItemAttributeMergeListener(this), this);
         getServer().getPluginManager().registerEvents(new AnvilCostListener(this), this);
         getServer().getPluginManager().registerEvents(passMenuService, this);
         getServer().getPluginManager().registerEvents(donateMenuService, this);
