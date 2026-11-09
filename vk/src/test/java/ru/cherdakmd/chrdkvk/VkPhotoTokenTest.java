@@ -58,35 +58,46 @@ final class VkPhotoTokenTest {
         assertTrue(plugin.contains("new VkApiClient(cfg.apiBaseUrl(), cfg.photoAccessToken(), cfg.apiVersion()"));
         assertFalse(plugin.contains("access_token="),
                 "значение ключа не должно попадать в логи плагина");
-        assertTrue(plugin.contains("community.photo-user-token не задан"));
+        assertTrue(plugin.contains("wall.post-mode: photo"));
+        assertTrue(plugin.contains("community.photo-user-token"));
+        assertTrue(plugin.contains("используется текстовый режим"));
+        assertFalse(plugin.contains("постеры стены отключены"));
     }
 
     @Test
-    void scheduledPostersRequirePhotoTokenAndUseBothClients() throws IOException {
+    void scheduledPostersUseTextByDefaultAndKeepPhotoTokenOptional() throws IOException {
         for (String path : new String[]{
                 "src/main/java/ru/cherdakmd/chrdkvk/DailyCardsService.java",
                 "src/main/java/ru/cherdakmd/chrdkvk/WallDigestService.java"}) {
             String source = read(path);
             assertTrue(source.contains("plugin.communityApiClient()"), path);
             assertTrue(source.contains("plugin.photoApiClient()"), path);
-            assertTrue(source.contains("photoPublishConfigured()"), path);
-            assertTrue(source.contains("VK API error 27"), path);
+            assertTrue(source.contains("cfg.photoWallEnabled()"), path);
+            assertTrue(source.contains("publisher.publishText(wallText, guid)"), path);
+            assertTrue(source.contains("cfg.withDiscuss(baseText)"), path);
+            assertTrue(source.contains("publishChatCard(png, baseText, guid"), path);
+            assertFalse(source.contains("photoPublishConfigured()"), path);
+            assertFalse(source.contains("VK API error 27"), path);
         }
         String handler = read("src/main/java/ru/cherdakmd/chrdkvk/VkCommandHandler.java");
         int handlerStart = handler.indexOf("private void handleTestCard(");
         assertTrue(handlerStart >= 0);
         String handleMethod = handler.substring(handlerStart, handlerStart + 1200);
-        assertTrue(handleMethod.contains("photoPublishConfigured()"),
-                "/vkadmin testcard не должен уходить в очередь без фото-ключа");
+        assertTrue(handleMethod.contains("service.groupChatBridgeReady()"),
+                "/vkadmin testcard проверяет беседу ВК");
+        assertTrue(handleMethod.contains("chatCardsEnabled()"));
+        assertFalse(handleMethod.contains("photoPublishConfigured()"));
 
         String service = read("src/main/java/ru/cherdakmd/chrdkvk/VkService.java");
         int start = service.indexOf("public void publishTestCard(");
         int end = service.indexOf("private void onMainThread", start);
         assertTrue(start >= 0 && end > start);
         String method = service.substring(start, end);
-        assertTrue(method.contains("cfg.photoPublishConfigured()"));
-        assertTrue(method.contains("plugin.photoApiClient()"));
-        assertFalse(method.contains("new VkWallPublisher(client, groupId)"));
+        assertTrue(method.contains("publishChatCard(png, text, guid)"));
+        assertTrue(method.contains("renderTestCard(cards"));
+        assertFalse(method.contains("cfg.photoPublishConfigured()"));
+        assertFalse(method.contains("plugin.photoApiClient()"));
+        assertFalse(method.contains("new VkWallPublisher"), "стена в testcard не участвует");
     }
 
     @Test
@@ -99,7 +110,8 @@ final class VkPhotoTokenTest {
         assertTrue(method.contains("cfg.apiConfigured()"));
         assertFalse(method.contains("photoPublishConfigured()"),
                 "текстовый wall.post не должен требовать пользовательский ключ");
-        assertTrue(method.contains("new VkWallPublisher(client, groupId).publishText(text, guid)"));
+        assertTrue(method.contains("cfg.withDiscuss(text)"), "тест стены получает подпись");
+        assertTrue(method.contains("new VkWallPublisher(client, groupId).publishText(wallText, guid)"));
     }
 
     @Test
@@ -109,6 +121,10 @@ final class VkPhotoTokenTest {
         assertTrue(config.contains("VK API error 27"));
         assertTrue(config.contains("wall,photos,offline"));
         assertTrue(config.contains("НЕ Callback secret"));
+        assertTrue(config.contains("post-mode: text"));
+        assertTrue(config.contains("chat-cards: true"));
+        assertTrue(config.contains("discuss-label: \"обсудить\""));
+        assertTrue(config.contains("https://vk.me/join/IAYORcZm0ZVtjPdoDazBHP5yymulHst4fxM="));
         assertFalse(config.contains("vk1.a.SECRET"));
     }
 }

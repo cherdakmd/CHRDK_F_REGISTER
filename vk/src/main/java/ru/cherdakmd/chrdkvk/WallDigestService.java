@@ -26,7 +26,7 @@ import ru.cherdakmd.chrdkskills.ChrdkSkillsApi;
  * Оркестратор суточного дайджеста. Живёт целиком в CHRDK_VK на сервере
  * владельца: слушает Bukkit-события, раз в несколько минут опрашивает престиж
  * через публичный ServicesManager API навыков, в назначенное время рисует
- * постер и публикует его на стену сообщества.
+ * PNG для беседы и публикует запись на стену сообщества текстом.
  *
  * <p>Владелец стены ровно один — этот плагин. Советы, оперативные события и
  * релизные новости по-прежнему уходят в беседу и на стену не дублируются.
@@ -71,10 +71,9 @@ public final class WallDigestService implements Listener {
             plugin.getLogger().warning("[wall-digest] нет community.group-id/access-token — стена недоступна");
             return;
         }
-        if (!plugin.config().photoPublishConfigured()) {
-            plugin.getLogger().warning("[wall-digest] нет community.photo-user-token — "
-                    + "постер с фото отключён: ключ сообщества даёт VK API error 27");
-            return;
+        if (plugin.config().textOnlyWall()) {
+            plugin.getLogger().info("[wall-digest] текстовый режим стены: wall.post без PNG, "
+                    + "дайджест-карточка уходит в беседу ВК");
         }
         registerListenerOnce();
         scheduleTasks();
@@ -102,10 +101,8 @@ public final class WallDigestService implements Listener {
             plugin.getLogger().info("[wall-digest] автопостинг выключен перезагрузкой конфига");
             return;
         }
-        if (!plugin.config().photoPublishConfigured()) {
-            plugin.getLogger().warning("[wall-digest] нет community.photo-user-token — "
-                    + "постер с фото отключён перезагрузкой конфига");
-            return;
+        if (plugin.config().textOnlyWall()) {
+            plugin.getLogger().info("[wall-digest] текстовый режим стены после перезагрузки конфига");
         }
         refreshClients();
         registerListenerOnce();
@@ -121,8 +118,10 @@ public final class WallDigestService implements Listener {
     }
 
     private void refreshClients() {
-        this.publisher = new VkWallPublisher(plugin.communityApiClient(),
-                plugin.photoApiClient(), plugin.config().groupId());
+        VkConfig cfg = plugin.config();
+        this.publisher = cfg.photoWallEnabled()
+                ? new VkWallPublisher(plugin.communityApiClient(), plugin.photoApiClient(), cfg.groupId())
+                : new VkWallPublisher(plugin.communityApiClient(), cfg.groupId());
     }
 
     private void scheduleTasks() {
@@ -262,13 +261,18 @@ public final class WallDigestService implements Listener {
 
         WallDigestCollector.Digest digest = collector.snapshot(day);
         try {
+            VkConfig cfg = plugin.config();
             byte[] png = WallDigestCard.render(digest, config);
             String marker = "#chrdk_" + shortHash(day);
-            String text = WallDigestCard.message(digest, config, marker);
-            long postId = publisher.publish(png, text, "chrdk-wall-" + day);
+            String baseText = WallDigestCard.message(digest, config, marker);
+            String guid = "chrdk-wall-" + day;
+            String wallText = cfg.withDiscuss(baseText);
+            long postId = cfg.photoWallEnabled()
+                    ? publisher.publish(png, wallText, guid)
+                    : publisher.publishText(wallText, guid);
             collector.markPosted(day, postId);
-            plugin.getLogger().info("[wall-digest] запись опубликована: "
-                    + plugin.config().wallPostUrl(postId));
+            plugin.getLogger().info("[wall-digest] запись опубликована: " + cfg.wallPostUrl(postId));
+            sendChatCard(cfg, png, baseText, guid);
             if (plugin.socialService() != null) {
                 plugin.socialService().audit().write("social.wall.digest", "", "vk", "post=" + postId);
             }
@@ -280,6 +284,28 @@ public final class WallDigestService implements Listener {
                     "[wall-digest] публикация не удалась: " + failure.getMessage(), failure);
         } finally {
             collector.save();
+        }
+    }
+
+    /** Ошибка беседы не отменяет уже опубликованную запись стены. */
+    private void sendChatCard(VkConfig cfg, byte[] png, String text, String guid) {
+        if (!cfg.chatCardsEnabled() || plugin.service() == null) {
+            return;
+        }
+        try {
+            boolean sent = plugin.service().publishChatCard(png, text, guid);
+            if (sent) {
+                plugin.getLogger().info("[wall-digest] PNG-дайджест отправлен в беседу");
+            } else {
+                plugin.getLogger().warning("[wall-digest] PNG-дайджест не отправлен: беседа ВК не настроена");
+            }
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            plugin.getLogger().warning("[wall-digest] отправка PNG в беседу прервана");
+        } catch (IOException | RuntimeException chatFailure) {
+            plugin.getLogger().log(Level.WARNING,
+                    "[wall-digest] не удалось отправить PNG в беседу: " + chatFailure.getMessage(),
+                    chatFailure);
         }
     }
 

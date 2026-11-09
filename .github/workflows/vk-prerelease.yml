@@ -18,9 +18,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Версия CHRDK_VK, например 1.5.2-rc.5'
+        description: 'Версия CHRDK_VK, например 1.5.2-rc.9'
         required: true
-        default: '1.5.2-rc.5'
+        default: '1.5.2-rc.9'
         type: string
       announce:
         description: 'Отправить новость о пререлизе в беседу ВК'
@@ -119,6 +119,7 @@ jobs:
           listing="$(unzip -Z1 "$jar")"
           for entry in 'ru/cherdakmd/chrdkvk/WallDigestCard.class' \
                        'ru/cherdakmd/chrdkvk/VkWallPublisher.class' \
+                       'ru/cherdakmd/chrdkvk/VkChatPhotoPublisher.class' \
                        'assets/DejaVuSans.ttf' 'assets/DejaVuSans-Bold.ttf' \
                        'assets/world-background.jpg'; do
             grep -Fxq "$entry" <<< "$listing" || { echo "В JAR нет $entry" >&2; exit 1; }

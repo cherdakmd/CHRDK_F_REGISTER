@@ -65,11 +65,16 @@ public final class VkPlugin extends JavaPlugin {
         migrateBundledMessages(getDataFolder().toPath().resolve("messages.yml"));
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
         this.config = VkConfig.parse(getConfig());
-        if (config.apiConfigured() && !config.photoPublishConfigured()) {
-            getLogger().warning("[CHRDK_VK] community.photo-user-token не задан: "
-                    + "постеры стены отключены до настройки пользовательского ключа "
-                    + "администратора (wall,photos,offline); ключ сообщества даёт VK API error 27 "
-                    + "на photos.getWallUploadServer");
+        if (config.apiConfigured()) {
+            if (config.photoWallEnabled()) {
+                getLogger().info("[CHRDK_VK] стена: режим photo (PNG + wall.post), беседа: PNG");
+            } else if ("photo".equalsIgnoreCase(config.wallPostMode())) {
+                getLogger().warning("[CHRDK_VK] wall.post-mode: photo, но community.photo-user-token "
+                        + "не задан — используется текстовый режим; PNG уходят в беседу");
+            } else {
+                getLogger().info("[CHRDK_VK] стена: текстовые посты с подписью «обсудить», "
+                        + "PNG-карточки уходят в беседу");
+            }
         }
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
         if (this.coreApi == null) {
@@ -145,8 +150,8 @@ public final class VkPlugin extends JavaPlugin {
                     if (socialService != null) socialService.store().saveIfDirty();
                 }, 20L * 30, 20L * 30);
 
-        // Суточный дайджест на стену сообщества: сбор событий, постер,
-        // загрузка фото и wall.post выполняются этим же плагином на сервере.
+        // Суточный дайджест на стену сообщества: сбор событий, текстовый
+        // wall.post и PNG в беседу выполняются этим же плагином на сервере.
         this.wallDigest = new WallDigestService(this, WallDigestConfig.parse(getConfig()),
                 new WallDigestStore(getDataFolder().toPath(), getLogger()), store);
         this.wallDigest.start();
@@ -428,6 +433,11 @@ public final class VkPlugin extends JavaPlugin {
         return config;
     }
 
+    /** Единственный экземпляр сервиса: нужен постерам для отправки PNG в беседу. */
+    public VkService service() {
+        return service;
+    }
+
     /** Клиент с ключом сообщества: сообщения, Long Poll и финальный wall.post. */
     public VkApiClient communityApiClient() {
         return new VkApiClient(config());
@@ -436,8 +446,8 @@ public final class VkPlugin extends JavaPlugin {
     /**
      * Клиент только для {@code photos.*}: отдельный пользовательский ключ
      * администратора из {@code community.photo-user-token}. Ключ сообщества
-     * сюда намеренно не подставляется: без пользовательского ключа постеры
-     * отключены, чтобы не получать VK API error 27 при group auth.
+     * сюда намеренно не подставляется: без пользовательского ключа стена
+     * работает текстом, чтобы не получать VK API error 27 при group auth.
      */
     public VkApiClient photoApiClient() {
         VkConfig cfg = config();

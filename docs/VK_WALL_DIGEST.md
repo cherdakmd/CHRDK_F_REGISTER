@@ -1,18 +1,23 @@
 # Дайджест на стену сообщества ВК (plugin-owned)
 
-Статус: **реализовано в ветке, после стабильного 1.5.2**. Выпущен отдельный
-пререлиз только модуля: тег `vk-v1.5.2-rc.5`, один ассет
-`chrdk-vk-1.5.2-rc.5.jar`, заметки `docs/releases/vk-1.5.2-rc.5.md`.
+Статус: **реализовано в ветке, после стабильного 1.5.2**. Актуальная схема —
+отдельный пререлиз только модуля `vk-v1.5.2-rc.9`: один ассет
+`chrdk-vk-1.5.2-rc.9.jar`, заметки `docs/releases/vk-1.5.2-rc.9.md`.
+По умолчанию стена получает **текст**, а PNG-карточки уходят **в беседу ВК**.
 Стабильный `v1.5.2` и его ассеты не переписаны, `plugin_version` остался
-`1.5.2`. Установки на живой сервер не было.
+`1.5.2-rc.6`. Установки на живой сервер агентом не было.
 
 ## Что именно публикуется
 
-**Пять оформленных постов в сутки** на стену сообщества (не пост на каждое
-событие): четыре персональные карточки игроков в 09:00 / 12:00 / 15:00 / 18:00
-и итоговый дайджест в 21:00 по Москве. Оперативные события, советы и релизные
-новости по-прежнему уходят в беседу и на стену не дублируются. Владелец стены
-ровно один — `CHRDK_VK`.
+**Пять текстовых постов в сутки** на стену сообщества (не пост на каждое
+событие): четыре записи по персональным карточкам игроков в 09:00 / 12:00 /
+15:00 / 18:00 и итоговый дайджест в 21:00 по Москве. К каждому из пяти постов,
+а также к `/vkadmin testpost wall`, добавляется подпись
+`обсудить — https://vk.me/join/IAYORcZm0ZVtjPdoDazBHP5yymulHst4fxM=`.
+Сами PNG-карточки теперь отправляются **в беседу ВК**; в сообщения беседы
+подпись не добавляется. Оперативные события, советы и релизные новости тоже
+остаются в беседе и на стену не дублируются. Владелец стены ровно один —
+`CHRDK_VK`.
 
 ### Четыре карточки игроков
 
@@ -26,28 +31,33 @@
 
 Карточки рисуются тем же Java2D-стилем, что и дайджест, и содержат **ники
 победителей** — по явному решению владельца opt-out беседы для этих четырёх
-постов не применяется. При этом UUID, IP, координаты, суммы реальных платежей,
-SKU и время входа не публикуются; `show-values: false` скрывает и числа.
-В дайджесте 21:00 имена по-прежнему выключены по умолчанию.
+карточек и их текстовых записей не применяется. При этом UUID, IP, координаты,
+суммы реальных платежей, SKU и время входа не публикуются; `show-values: false`
+скрывает и числа. В дайджесте 21:00 имена по-прежнему выключены по умолчанию.
+PNG уходит сообщением в беседу, а на стене остаётся тот же текст с подписью
+«обсудить».
 
 Каждая карточка уходит один раз в сутки: `daily-cards.json` хранит отметки по
 номинациям и попытки, окно повторов — `retry-minutes` после своего часа, не
 более трёх попыток. `guid = chrdk-card-<номинация>-<день>`, в тексте — короткий
 маркер. Если процесс прервался между `wall.post` и записью ledger, такие сутки
-пропускаются: дубль на публичной стене хуже одного пропущенного поста. Если за
-сутки нет данных для номинации (например, никто не убивал мобов), карточка
-пропускается с предупреждением в лог — публиковать выдуманного лидера нельзя.
+пропускаются: дубль на публичной стене хуже одного пропущенного поста. Ошибка
+отправки PNG в беседу логируется отдельно и не отменяет уже созданную запись
+стены. Если за сутки нет данных для номинации (например, никто не убивал
+мобов), карточка пропускается с предупреждением в лог — публиковать выдуманного
+лидера нельзя.
 
 ### Итоговый дайджест
 
-Карточка 1280×720 в стиле уже существующих постеров сообщества: фон
+PNG 1280×720 для беседы в стиле уже существующих постеров сообщества: фон
 `world-background.jpg`, градиент, логотип «ЧЕРДАК», бейдж «ИТОГИ ДНЯ», дата,
-до шести блоков и подвал «ТВОЙ МИР. ТВОЯ ИСТОРИЯ.». Дата теперь рисуется ниже
-базовой линии 236 (было 194): верх букв больше не заходит на бейдж, а строки
-отчёта подбирают отступ и шаг по числу блоков, чтобы не наезжать на подвал.
-Блоки:
+до шести блоков и подвал «ТВОЙ МИР. ТВОЯ ИСТОРИЯ.». На стену уходит короткий
+текст с теми же обезличенными числами и подписью «обсудить»; картинка на стене
+по умолчанию не прикрепляется. Дата на PNG рисуется ниже базовой линии 236
+(было 194): верх букв больше не заходит на бейдж, а строки отчёта подбирают
+отступ и шаг по числу блоков, чтобы не наезжать на подвал. Блоки:
 
-| Блок | Источник | Что уходит на публичную стену |
+| Блок | Источник | Что видно в тексте стены и на PNG беседы |
 | --- | --- | --- |
 | Престиж | `ChrdkSkillsApi.totalPrestige(Player)` через `ServicesManager`, опрос раз в `poll-minutes` | число новых ступеней; топ-3 ника только при `show-player-names: true` и только с учётом opt-out |
 | Поддержка сервера | `PassGrantedEvent` из CHRDK_Core | число выдач проходки/ранга; тестовые платежи отсекаются по `source` |
@@ -64,7 +74,7 @@ SKU и время входа не публикуются; `show-values: false` �
 
 Суммы, SKU, UUID, IP, время входа и названия товаров **не публикуются никогда** —
 ни в текст, ни в картинку, ни в аудит. По умолчанию
-`show-player-names: false`: на стене только обезличенные цифры. Opt-out игрока
+`show-player-names: false`: и на стене, и в PNG беседы только обезличенные цифры. Opt-out игрока
 берётся из уже существующего `VkStore.receivesGroupChat(...)` (тот же флаг, что
 скрывает сообщения беседы) — отдельной команды не добавлялось.
 
@@ -76,11 +86,13 @@ SKU и время входа не публикуются; `show-values: false` �
 BlockBreakEvent / EntityPickupItemEvent / EntityDeathEvent
         + PassGrantedEvent / PlayerJoinEvent + ChrdkSkillsApi
         ↓  WallDigestCollector → wall-digest.json ( getDataFolder() )
-        ↓  WallDigestCard (Java2D, шрифт и фон внутри JAR) → PNG
-        ↓  VkWallPublisher: photos.getWallUploadServer
-        ↓  multipart POST → photos.saveWallPhoto
-        ↓  wall.post(owner_id=-group_id, from_group=1, attachments=photo…, guid=…)
-        ↓  SocialAudit: social.wall.digest
+        ↓  WallDigestCard / DailyPlayerCard (Java2D, ресурсы внутри JAR) → PNG
+        ├── VkWallPublisher.publishText → wall.post(owner_id=-group_id,
+        │       from_group=1, message=<текст + «обсудить — ссылка»>, guid=…)
+        │       └── SocialAudit: social.wall.digest / social.wall.card
+        └── VkChatPhotoPublisher → photos.getMessagesUploadServer(peer_id)
+                ↓  multipart POST → photos.saveMessagesPhoto
+                ↓  messages.send(group_id, peer_id, attachment=photo…, random_id=…)
 ```
 
 GitHub Actions, GitHub Issues, служебный чат и write-токен репозитория **не
@@ -88,7 +100,10 @@ GitHub Actions, GitHub Issues, служебный чат и write-токен р�
 Python-контур `tools/social/` (`cards.py`, `publisher.py`) не трогался: его
 allowlist по-прежнему запрещает `wall.post`, `wall.get` и
 `photos.saveWallPhoto`, а `tools/social/test_social.py` этот запрет проверяет.
-Два контура не пересекаются и не создают двух владельцев стены.
+Java-публикатор беседы повторяет уже отработанный там messages-upload контур
+(`photos.getMessagesUploadServer → photos.saveMessagesPhoto → messages.send`),
+но работает сам, на ключе сообщества плагина. Два контура не пересекаются и не
+создают двух владельцев стены.
 
 ## Файлы
 
@@ -98,19 +113,22 @@ allowlist по-прежнему запрещает `wall.post`, `wall.get` и
 | `WallDigestStore.java` | персистентный ledger: счётчики, снимок престижа, дедуп, попытки |
 | `WallDigestCollector.java` | чистая JVM-логика суток, приростов, топа и трёх новых счётчиков активности |
 | `WallDigestCard.java` | Java2D постер (дата ниже бейджа, адаптивный шаг строк) и короткий текст записи |
-| `VkWallPublisher.java` | photos → wall.post, allowlist хостов загрузки |
+| `VkConfig.java` | `wall.post-mode`, `wall.discuss-*`, `wall.chat-cards`, fallback `photo → text`, подпись стены |
+| `VkWallPublisher.java` | текстовый `wall.post` и опциональные photos → wall.post, общий allowlist хостов загрузки |
+| `VkChatPhotoPublisher.java` | PNG в беседу: messages-upload, вложение и стабильный `random_id` |
+| `VkService.java` | `publishChatCard`, текст `testpost wall` с подписью, `testcard` в беседу |
 | `WallDigestService.java` | слушатели, таймеры, окно повторов, аудит; переменные события пишут и per-игровые счётчики |
 | `DailyCardKind.java`, `DailyCardsConfig.java` | четыре номинации и часы 09/12/15/18, ключи `wall-daily-cards.*` |
 | `DailyCardsStore.java`, `DailyCardsLedger.java` | `daily-cards.json`: дедуп по номинациям, попытки, защита от дубля после рестарта |
 | `DailyPlayerCard.java`, `DailyNomination.java` | Java2D-карточка с ником и результатом, санитизация ника, текст записи |
-| `DailyCardsService.java` | сбор лидеров на главном потоке, сеть в async, аудит `social.wall.card` |
-| `VkApiClient.java` | `call(...)`, `postMultipart(...)`; `Transport` получил default-метод, старые fake-транспорты не сломаны |
+| `DailyCardsService.java` | сбор лидеров на главном потоке, текст стены и PNG беседы в async, аудит `social.wall.card` |
+| `VkApiClient.java` | `call(...)`, `postMultipart(...)`, `messages.send` с вложением и `group_id`; `Transport` получил default-метод, старые fake-транспорты не сломаны |
 | `VkPlugin.java` | создание/старт/остановка сервиса |
-| `vk/src/main/resources/config.yml` | секции `wall-digest` и `wall-daily-cards` с комментариями |
+| `vk/src/main/resources/config.yml` | секции `wall`, `wall-digest` и `wall-daily-cards` с комментариями |
 | `vk/src/main/resources/plugin.yml` | `softdepend: CHRDK_Skills` |
 | `vk/src/main/resources/assets/` | `DejaVuSans.ttf`, `DejaVuSans-Bold.ttf`, `world-background.jpg` |
 | `vk/build.gradle` | `compileOnly/testImplementation project(':skills')` |
-| `vk/src/test/java/.../WallDigest*Test.java`, `VkWallPublisherTest.java` | офлайн-тесты |
+| `vk/src/test/java/.../WallDigest*Test.java`, `VkWallPublisherTest.java`, `VkChatPhotoPublisherTest.java`, `VkWallDiscussTest.java` | офлайн-тесты |
 
 `ChrdkRegisterApi.API_VERSION` остался **42**: используется уже существующий
 `default`-метод `ChrdkSkillsApi.totalPrestige(Player)` и существующее
@@ -120,11 +138,12 @@ allowlist по-прежнему запрещает `wall.post`, `wall.get` и
 
 ## Включение и права
 
-Новые ключи **необязательны**: при их отсутствии читаются дефолты, поэтому после
-замены JAR feature поднимается без ручного редактирования чужого `config.yml`
-и без перезаписи владельческих значений. Штатная перезагрузка конфига плагина
-подхватывает новое расписание и ключ без рестарта сервера
-(`WallDigestService.applyConfig`). Схема миграций `vk/config-schema.yml`
+Новые ключи `wall.post-mode`, `wall.discuss-*`, `wall.chat-cards` и ключи
+расписания **необязательны**: при их отсутствии читаются дефолты из ресурса
+JAR, поэтому после замены JAR схема поднимается без ручного редактирования
+чужого `config.yml` и без перезаписи владельческих значений. Штатная
+перезагрузка конфига плагина подхватывает режим стены и расписание без
+рестарта сервера (`WallDigestService.applyConfig`). Схема миграций `vk/config-schema.yml`
 намеренно не вводилась — чтобы не возвращать владельцу все стоковые ключи
 модуля, как это делает v2→v3 у магазина. Отключение: `wall-digest.enabled: false`.
 
@@ -137,25 +156,30 @@ allowlist по-прежнему запрещает `wall.post`, `wall.get` и
 временный сбой VK не спамит стену и не приводит к дублям. Пять постов в сутки —
 это верхняя граница, а не пять попыток на каждый пост.
 
-**Обязательные внешние условия** (без них плагин пишет предупреждение и постеры
-не уходят):
+**Внешние условия rc.9**:
 
-1. `community.access-token` — ключ сообщества с правом `wall`; используется для
-   сообщений, Bots Long Poll и финального `wall.post`. Бот должен быть
-   администратором сообщества, иначе `wall.post` вернёт код 38.
-2. `community.photo-user-token` — классический пользовательский ключ
-   администратора сообщества (`vk1.a.*`, scopes `wall,photos,offline`). Он
-   используется **только** для `photos.getWallUploadServer`,
-   `photos.saveWallPhoto` и multipart-загрузки PNG. Ключ сообщества вызывает
-   у этих методов `VK API error 27` («method is unavailable with group auth»),
-   даже когда галочка `photos` выдана и текстовый `wall.post` проходит.
-3. `community.group-id` задан (`apiConfigured()`).
+1. `community.group-id` и `community.access-token` — сообщество и ключ с правом
+   `wall`; ключ используется для сообщений, Bots Long Poll, `wall.post` и
+   messages-upload в беседу. Бот должен быть администратором сообщества, иначе
+   `wall.post` вернёт код 38. Без них плагин пишет предупреждение и не
+   планирует суточные публикации.
+2. Для PNG в беседе нужен уже привязанный `group-chat.peer-id` (или сохранённый
+   `/vkadmin setchat` peer), `group-chat.enabled: true` и `wall.chat-cards: true`.
+   Приглашение из подписи само по себе не подставляет `peer_id`: бот не
+   определяет числовой ID беседы из `vk.me/join/...`.
+3. `wall.post-mode: text` по умолчанию. Режим `photo` из rc.8 остаётся опцией:
+   он требует `community.photo-user-token` — классический пользовательский ключ
+   администратора (`vk1.a.*`, scopes `wall,photos,offline`) — и включает PNG на
+   стене через `photos.getWallUploadServer` / `photos.saveWallPhoto`. Ключ
+   сообщества вызывает у этих методов `VK API error 27`; без пользовательского
+   ключа даже `photo` автоматически работает как `text`, а не отключает постеры.
+4. `wall.discuss-label`, `wall.discuss-url` задают подпись. Пустой URL её
+   отключает; ссылка добавляется только к тексту стены, не к сообщениям беседы.
 
 Пользовательский ключ — не Callback secret, не MAX-токен и не ключ сообщества.
-Его получает владелец, хранит в `config.yml` на сервере и не коммитит. Если ключ
-не задан, `photoPublishConfigured()` ложный: автопостинг постеров не
-планируется, а `/vkadmin testcard` возвращает понятную ошибку вместо `error 27`.
-`community.access-token` при этом остаётся рабочим для текста и чата.
+Его получает владелец, хранит в `config.yml` на сервере и не коммитит. В
+текстовом режиме rc.9 он не нужен: стена, беседа и `/vkadmin testcard` работают
+на одном `community.access-token`. Агент не запрашивает и не сохраняет ключи.
 
 `wall.get` с ключом сообщества по-прежнему не используется (в `VkConfig` он
 выключен), `wall.announce-new-posts` по-прежнему делает «стена → игровой чат»,
@@ -167,11 +191,13 @@ allowlist по-прежнему запрещает `wall.post`, `wall.get` и
 один и тот же тестовый текст в беседу ВК и/или на стену, не дожидаясь 09:00–21:00.
 Без аргументов выбирается `both`, свой текст ограничен 1000 символами, `guid`
 имеет вид `chrdk-test-<UUID>`, а в конце текста стоит `#chrdk_test_<8 hex>`.
+Ветка `wall` (и wall-часть `both`) дополнительно получает подпись
+«обсудить — ссылка»; текст в беседу уходит без этой подписи.
 
 Отличия от штатных пяти постов:
 
 * тестовая запись идёт **только текстом** — без `WallDigestCard`/
-  `DailyPlayerCard`, без `photos.getWallUploadServer` и `photos.saveWallPhoto`;
+  `DailyPlayerCard`, без загрузки PNG;
 * не пишет ни в `wall-digest.json`, ни в `daily-cards.json`, не меняет
   `postingDay`/`lastPostedDay` и счётчики попыток;
 * маркер отсекается в `VkService.eligibleWallPost`, поэтому `wall_post_new`
@@ -183,18 +209,20 @@ allowlist по-прежнему запрещает `wall.post`, `wall.get` и
 публикует сама по себе: живой `wall.post` произойдёт только когда администратор
 её выполнит на сервере с настроенным ключом.
 
-`/vkadmin testcard [текст]` — отдельная разовая проверка уже **фото-цепочки**.
+`/vkadmin testcard [текст]` с rc.9 — разовая проверка **отправки PNG в беседу**.
 Она рендерит техническую PNG-карточку 1280×720 (`CHRDK_TEST`, значения скрыты,
-подвал «ТЕСТ CHRDK_VK · НЕ ИГРОВАЯ НОВОСТЬ») и публикует её через
-`VkWallPublisher.publish(byte[], text, guid)`: `photos.*` идут с
-`community.photo-user-token`, финальный `wall.post` — с `community.access-token`.
-Маркер `#chrdk_test_card_<8 hex>` отсекается в `VkService.eligibleWallPost`,
+подвал «ТЕСТ CHRDK_VK · НЕ ИГРОВАЯ НОВОСТЬ») и отправляет её через
+`VkChatPhotoPublisher`: `photos.getMessagesUploadServer(peer_id)` → multipart →
+`photos.saveMessagesPhoto` → `messages.send` с вложением. Всё идёт на
+`community.access-token`; `community.photo-user-token` и `wall.post` не нужны,
+запись на стене не создаётся. Маркер `#chrdk_test_card_<8 hex>` сохраняется,
 `guid=chrdk-testcard-<UUID>` не пересекается со штатными постами, суточные
-ledger'ы и `last_announced_post_id` не трогаются. Без пользовательского ключа
-команда сразу отвечает локализованным сообщением про
-`community.photo-user-token`, не доходя до VK.
-Именно эта команда на `vk-v1.5.2-rc.7` подтвердила `error 27` на живом ключе
-сообщества; rc.8 добавляет разделение токенов.
+ledger'ы и `last_announced_post_id` не трогаются. Если не привязана беседа или
+`wall.chat-cards: false`, команда сразу отвечает локализованным сообщением, не
+доходя до VK. Подпись «обсудить» в тестовое сообщение не добавляется.
+Исторически эта команда на rc.7 подтвердила `error 27` у wall-upload с group
+auth; rc.8 добавил опциональный пользовательский ключ, а rc.9 перенёс проверку
+на messages-upload в беседу.
 
 ## Дедупликация и отказы
 
@@ -207,9 +235,11 @@ ledger'ы и `last_announced_post_id` не трогаются. Без польз
   стене хуже одного пропущенного поста.
 * Дополнительно `wall.post` получает стабильный `guid = chrdk-wall-<день>`, а в
   конце текста записи стоит короткий маркер `#chrdk_<hash>` для ручной сверки.
+  Сообщение беседы получает стабильный положительный `random_id` из того же
+  guid, чтобы повтор не создал дубль.
 * Адрес загрузки фото проверяется по allowlist `vk.com`, `userapi.com`,
-  `vkuserphoto.ru` и только по HTTPS — ответ API не может отправить PNG на
-  сторонний хост.
+  `vkuserphoto.ru` и только по HTTPS — общий для wall-upload (режим `photo`)
+  и messages-upload (беседа); ответ API не может отправить PNG на сторонний хост.
 
 ## Проверки
 
@@ -219,9 +249,12 @@ ledger'ы и `last_announced_post_id` не трогаются. Без польз
 дедуп/повторы/рестарт `daily-cards.json`, реальный PNG карточки игрока и текст
 без приватных данных, независимые флаги конфига, рендер постера на шесть блоков
 без перекрытия подвала, клампы конфига и пояс, реальный PNG нужного размера,
-обезличенный текст дайджеста и вся цепочка `photos → wall.post` на
-fake-транспорте, включая отказ чужого upload-хоста.
+обезличенный текст дайджеста, цепочка `photos → wall.post` для режима `photo`,
+цепочка `photos.getMessagesUploadServer → photos.saveMessagesPhoto →
+messages.send` для беседы на fake-транспорте, отказ чужого upload-хоста,
+подпись «обсудить» только на стене и fallback `photo → text` без user token.
 
 Живой `api.vk.com` из песочницы недоступен, `java`/`javac` в ней отсутствуют:
 компиляция и JUnit выполняются в CI, а реальная публикация — только на сервере
-владельца после выдачи прав ключа. RCON, TradeMC и живой smoke не выполнялись.
+владельца после настройки `community.access-token` и `peer_id` беседы.
+RCON, `/vkadmin testcard`, `messages.send` и живой smoke агентом не выполнялись.

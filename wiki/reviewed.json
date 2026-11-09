@@ -131,8 +131,8 @@
       "text": "13e6d38670572890ab2567279a5ca76f8e353eab6ade09a877eee2e884c6e272"
     },
     "profile": {
-      "reason": "VK rc.8: разделение community и пользовательского ключей для photos.*, guard /vkadmin testcard, обновлены config.yml, постеры, docs и wiki/vk.md",
-      "sources": "66aa9e1a3465e284a5fb500e0d76c27fc14aa88cc7caa163d3fe73e613a73f3f",
+      "reason": "rc.9: проверены текстовые посты стены, подпись обсудить, PNG в беседу и опциональный photo-режим; страницы профиля, привязки и VK сверены",
+      "sources": "fb8495654388d7fe59f064b30bd8eff4137d507e5beb12e2229b29299e6b2d7c",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
@@ -156,8 +156,8 @@
       "text": "2cbe0faac3c272b71b3eb81fb78f5051b9eaa58e4ff682276af2c6bbdf74a98b"
     },
     "social-link": {
-      "reason": "VK rc.8: разделение community и пользовательского ключей для photos.*, guard /vkadmin testcard, обновлены config.yml, постеры, docs и wiki/vk.md",
-      "sources": "1f0b9b74c629f007480da6e44ff7dc2b2b28ab2d6bada182bcef50c1e1b24f4e",
+      "reason": "rc.9: проверены текстовые посты стены, подпись обсудить, PNG в беседу и опциональный photo-режим; страницы профиля, привязки и VK сверены",
+      "sources": "0d70fc711bf919039e3a5da9b6acadce5f23a385f98363bc25cc50d2d999f17d",
       "text": "65f8ffa165ab0b2dfba6cebd5633dbe78011e5000e4ca5e731d11ec3e68167f7"
     },
     "start": {
@@ -191,9 +191,9 @@
       "text": "238b43656d6df7186d842e6cfda78d158046d66c29320dedbb4bc7b4341b0856"
     },
     "vk": {
-      "reason": "VK rc.8: разделение community и пользовательского ключей для photos.*, guard /vkadmin testcard, обновлены config.yml, постеры, docs и wiki/vk.md",
-      "sources": "1f0b9b74c629f007480da6e44ff7dc2b2b28ab2d6bada182bcef50c1e1b24f4e",
-      "text": "4093c197687cf03876ba447e67fc0a3b561ec92758e8cc7d052f6fb6f5abb0fa"
+      "reason": "rc.9: проверены текстовые посты стены, подпись обсудить, PNG в беседу и опциональный photo-режим; страницы профиля, привязки и VK сверены",
+      "sources": "0d70fc711bf919039e3a5da9b6acadce5f23a385f98363bc25cc50d2d999f17d",
+      "text": "695ab2766011ccdd4aa7aabde63e5e8fd9e2e750fe334a4d79eba49298df1845"
     }
   },
   "schema": 1

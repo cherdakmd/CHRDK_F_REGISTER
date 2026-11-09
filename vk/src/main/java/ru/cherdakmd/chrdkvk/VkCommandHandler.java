@@ -427,7 +427,7 @@ public final class VkCommandHandler implements CommandExecutor, TabCompleter {
     /** Текст тестовой карточки: произвольный текст админа или дефолт + маркер. */
     static String testCardText(String custom, String senderName, Instant now, String marker) {
         String body = custom == null || custom.isBlank()
-                ? "🧪 Тест CHRDK_VK: проверка публикации PNG-карточки от " + senderName
+                ? "🧪 Тест CHRDK_VK: проверка отправки PNG-карточки в беседу от " + senderName
                         + " (" + TEST_POST_TIME.format(now) + " МСК). "
                         + "Техническая запись, не игровая новость."
                 : custom.trim();
@@ -435,10 +435,10 @@ public final class VkCommandHandler implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * {@code /vkadmin testcard [текст]} — разовая проверка всей цепочки загрузки
-     * фото. В отличие от {@code testpost} публикует реальную PNG-карточку через
-     * {@code VkWallPublisher.publish}, но не пишет суточные ledger'ы и не
-     * анонсируется как игровая новость.
+     * {@code /vkadmin testcard [текст]} — разовая проверка отправки реальной
+     * PNG-карточки <b>в беседу ВК</b> через {@link VkChatPhotoPublisher}.
+     * В отличие от {@code testpost} не публикует запись на стену, не пишет
+     * суточные ledger'ы и не анонсируется как игровая новость.
      */
     private void handleTestCard(CommandSender sender, String[] args, Messages messages) {
         String custom = args.length > 1
@@ -448,7 +448,8 @@ public final class VkCommandHandler implements CommandExecutor, TabCompleter {
                     "max", Integer.toString(MAX_TEST_POST_TEXT));
             return;
         }
-        if (!plugin.config().apiConfigured() || !plugin.config().photoPublishConfigured()) {
+        if (!plugin.config().apiConfigured() || !plugin.config().chatCardsEnabled()
+                || !service.groupChatBridgeReady()) {
             messages.send(sender, "admin.testcard-not-ready");
             return;
         }
@@ -456,9 +457,7 @@ public final class VkCommandHandler implements CommandExecutor, TabCompleter {
         String text = testCardText(custom, sender.getName(), Instant.now(), marker);
         messages.send(sender, "admin.testcard-queued");
         service.publishTestCard(text,
-                postId -> messages.send(sender, "admin.testcard-ok",
-                        "post_id", Long.toString(postId),
-                        "url", plugin.config().wallPostUrl(postId)),
+                () -> messages.send(sender, "admin.testcard-ok"),
                 error -> messages.send(sender, "admin.testcard-failed", "error", error));
     }
 

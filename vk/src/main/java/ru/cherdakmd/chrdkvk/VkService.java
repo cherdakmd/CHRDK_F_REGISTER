@@ -255,6 +255,26 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
     }
 
     /**
+     * PNG-карточка в беседу сообщества. Использует ключ сообщества и контур
+     * {@code photos.getMessagesUploadServer → photos.saveMessagesPhoto → messages.send},
+     * поэтому {@code community.photo-user-token} здесь не нужен. Вызывать из
+     * фонового потока: сетевая часть выполняется синхронно.
+     */
+    public boolean publishChatCard(byte[] png, String text, String guid)
+            throws IOException, InterruptedException {
+        VkConfig cfg = plugin.config();
+        if (!cfg.chatCardsEnabled() || !groupChatBridgeReady()) {
+            return false;
+        }
+        VkApiClient client = this.apiClient;
+        if (client == null) {
+            return false;
+        }
+        return new VkChatPhotoPublisher(client, cfg.groupId(), effectiveGroupChatPeerId())
+                .send(png, text, guid);
+    }
+
+    /**
      * Тестовая запись на стену для {@code /vkadmin testpost}: только
      * {@code wall.post} без фото и без постера. Не трогает {@code wall-digest.json},
      * {@code daily-cards.json} и {@code last_announced_post_id} — маркер
@@ -274,9 +294,10 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
         }
         long groupId = cfg.groupId();
         String guid = "chrdk-test-" + UUID.randomUUID();
+        String wallText = cfg.withDiscuss(text);
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
-                long postId = new VkWallPublisher(client, groupId).publishText(text, guid);
+                long postId = new VkWallPublisher(client, groupId).publishText(wallText, guid);
                 onMainThread(() -> onSuccess.accept(postId));
             } catch (InterruptedException interrupted) {
                 Thread.currentThread().interrupt();
@@ -314,26 +335,18 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
     }
 
     /**
-     * Тестовая PNG-карточка для {@code /vkadmin testcard}: полная штатная цепочка
-     * {@code photos.getWallUploadServer → photos.saveWallPhoto → wall.post}, но
-     * без суточных ledger'ов, аудита и сдвига {@code last_announced_post_id}.
-     * {@code photos.*} идут с {@code community.photo-user-token}, финальный
-     * {@code wall.post} — с ключом сообщества. Текст обязан содержать
-     * {@link VkWallPublisher#TEST_POST_MARKER}; сеть и рендер уходят в фоновый
-     * поток, ответы админу — в главный.
+     * Тестовая PNG-карточка для {@code /vkadmin testcard}: с rc.9 уходит
+     * <b>в беседу</b> через {@link VkChatPhotoPublisher}, а не на стену.
+     * Проверяет тот же контур, что штатные карточки и дайджест, но не пишет
+     * суточные ledger'ы, аудит и не сдвигает {@code last_announced_post_id}.
+     * Текст обязан содержать {@link VkWallPublisher#TEST_POST_MARKER}; рендер и
+     * сеть уходят в фоновый поток, ответ админу — в главный.
      */
-    public void publishTestCard(String text, LongConsumer onSuccess, Consumer<String> onFailure) {
-        VkApiClient client = this.apiClient;
+    public void publishTestCard(String text, Runnable onSuccess, Consumer<String> onFailure) {
         VkConfig cfg = plugin.config();
-        if (client == null || !cfg.apiConfigured() || cfg.groupId() <= 0L) {
-            onFailure.accept("VK API не настроен: general.enabled, community.group-id, "
-                    + "access-token (нужны права wall и photos)");
-            return;
-        }
-        if (!cfg.photoPublishConfigured()) {
-            onFailure.accept("Не задан community.photo-user-token: для загрузки PNG нужен "
-                    + "пользовательский ключ администратора (wall,photos,offline), "
-                    + "а не ключ сообщества");
+        if (!cfg.apiConfigured() || !cfg.chatCardsEnabled() || !groupChatBridgeReady()) {
+            onFailure.accept("Беседа ВК не настроена: general.enabled, community.group-id, "
+                    + "community.access-token, group-chat.enabled, group-chat.peer-id, wall.chat-cards");
             return;
         }
         if (text == null || text.isBlank()) {
@@ -344,24 +357,25 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
             onFailure.accept("Текст тестовой карточки потерял маркер #chrdk_test_");
             return;
         }
-        long groupId = cfg.groupId();
         String guid = testCardGuid(UUID.randomUUID());
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
                 DailyCardsConfig cards = testCardConfig();
                 byte[] png = renderTestCard(cards, cards.dayKey(Instant.now()));
-                long postId = new VkWallPublisher(client, plugin.photoApiClient(), groupId)
-                        .publish(png, text, guid);
-                onMainThread(() -> onSuccess.accept(postId));
+                if (!publishChatCard(png, text, guid)) {
+                    throw new IOException("VK не принял сообщение с PNG-карточкой");
+                }
+                onMainThread(onSuccess);
             } catch (InterruptedException interrupted) {
                 Thread.currentThread().interrupt();
-                onMainThread(() -> onFailure.accept("Публикация прервана"));
+                onMainThread(() -> onFailure.accept("Отправка прервана"));
             } catch (Exception failure) {
                 String reason = failure.getMessage() == null
                         ? failure.getClass().getSimpleName() : failure.getMessage();
                 String shortReason = reason.length() > 180 ? reason.substring(0, 180) : reason;
                 plugin.getLogger().log(Level.WARNING,
-                        "[vkadmin testcard] публикация PNG-карточки не удалась: " + reason, failure);
+                        "[vkadmin testcard] отправка PNG-карточки в беседу не удалась: "
+                                + reason, failure);
                 onMainThread(() -> onFailure.accept(shortReason));
             }
         });

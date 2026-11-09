@@ -107,8 +107,10 @@ final class VkTestCardTest {
         assertTrue(handler.contains("case \"testcard\" -> handleTestCard(sender, args, messages)"));
         assertTrue(handler.contains("\"testpost\", \"testcard\", \"sync\""));
         assertTrue(handler.contains("service.publishTestCard(text"));
-        assertTrue(handler.contains("photoPublishConfigured()"),
-                "без пользовательского ключа команда не должна ставить тест в очередь");
+        assertTrue(handler.contains("service.groupChatBridgeReady()"),
+                "тест карточки проверяет беседу, а не пользовательский фото-ключ");
+        assertTrue(handler.contains("chatCardsEnabled()"));
+        assertFalse(handler.contains("photoPublishConfigured()"));
         assertTrue(handler.contains("admin.testcard-queued"));
         assertTrue(handler.contains("admin.testcard-ok"));
         assertTrue(handler.contains("admin.testcard-failed"));
@@ -118,15 +120,16 @@ final class VkTestCardTest {
         int end = service.indexOf("private void onMainThread", start);
         assertTrue(start >= 0 && end > start);
         String method = service.substring(start, end);
-        assertTrue(method.contains("new VkWallPublisher(client, plugin.photoApiClient(), groupId)"),
-                "photos.* уходят с пользовательского ключа, wall.post — с community");
-        assertTrue(method.contains(".publish(png, text, guid)"),
-                "должна использоваться полная цепочка photos → wall.post");
-        assertTrue(method.contains("cfg.photoPublishConfigured()"),
-                "без community.photo-user-token тест не должен уходить в error 27");
+        assertTrue(method.contains("publishChatCard(png, text, guid)"),
+                "PNG уходит в беседу через messages-upload, без wall.post");
         assertTrue(method.contains("renderTestCard(cards"));
         assertTrue(method.contains("VkWallPublisher.TEST_POST_MARKER"));
         assertTrue(method.contains("testCardGuid(UUID.randomUUID())"));
+        assertFalse(method.contains("new VkWallPublisher"), "запись на стену не создаётся");
+        assertFalse(method.contains("cfg.photoPublishConfigured()"),
+                "community.photo-user-token для беседы не нужен");
+        assertFalse(method.contains("plugin.photoApiClient()"));
+        assertFalse(method.contains("withDiscuss"), "подпись «обсудить» только для стены");
         assertFalse(method.contains("ledger"), "тест не пишет суточные ledger'ы");
         assertFalse(method.contains("audit()"), "тест не пишет социальный аудит");
         assertFalse(method.contains("markPosted"));
@@ -149,13 +152,15 @@ final class VkTestCardTest {
         Messages messages = messages();
         assertTrue(messages.has("admin.testcard-not-ready"));
         assertTrue(messages.has("admin.testcard-queued"));
+        String notReady = messages.raw("admin.testcard-not-ready");
+        assertTrue(notReady.contains("Беседа ВК не настроена"));
+        assertFalse(notReady.contains("photo-user-token"));
         String tooLong = messages.raw("admin.testcard-too-long", "max", "1000");
         assertFalse(tooLong.contains("%max%"));
-        String ok = messages.raw("admin.testcard-ok",
-                "url", "https://vk.ru/wall-237779683_42", "post_id", "42");
+        String ok = messages.raw("admin.testcard-ok");
+        assertTrue(ok.contains("беседу ВК"));
         assertFalse(ok.contains("%url%"));
         assertFalse(ok.contains("%post_id%"));
-        assertTrue(ok.contains("42"));
         String failed = messages.raw("admin.testcard-failed", "error", "VK API error 27");
         assertFalse(failed.contains("%error%"));
         assertTrue(failed.contains("27"));

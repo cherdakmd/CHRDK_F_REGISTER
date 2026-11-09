@@ -17,9 +17,10 @@ import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
  * в 21:00 это ровно пять записей на стене сообщества за сутки.
  *
  * <p>Планировщик тикает на главном потоке раз в минуту: сбор никнеймов и
- * балансов требует Bukkit API. Сама сеть (photos → wall.post) уходит в
- * асинхронную задачу и не блокирует тики. Владелец стены по-прежнему один —
- * {@code CHRDK_VK}; GitHub Actions и внешний ledger в рантайме не участвуют.</p>
+ * балансов требует Bukkit API. Сама сеть ({@code wall.post} текстом и PNG в
+ * беседу) уходит в асинхронную задачу и не блокирует тики. Владелец стены
+ * по-прежнему один — {@code CHRDK_VK}; GitHub Actions и внешний ledger в
+ * рантайме не участвуют.</p>
  */
 public final class DailyCardsService {
 
@@ -56,10 +57,9 @@ public final class DailyCardsService {
             plugin.getLogger().warning("[daily-cards] нет community.group-id/access-token — стена недоступна");
             return;
         }
-        if (!plugin.config().photoPublishConfigured()) {
-            plugin.getLogger().warning("[daily-cards] нет community.photo-user-token — "
-                    + "постеры с фото отключены: ключ сообщества даёт VK API error 27");
-            return;
+        if (plugin.config().textOnlyWall()) {
+            plugin.getLogger().info("[daily-cards] текстовый режим стены: wall.post без PNG, "
+                    + "карточки уходят в беседу ВК");
         }
         schedule();
         plugin.getLogger().info("[daily-cards] четыре карточки игроков включены: " + config.scheduleLabel());
@@ -76,10 +76,8 @@ public final class DailyCardsService {
             plugin.getLogger().info("[daily-cards] автопостинг выключен перезагрузкой конфига");
             return;
         }
-        if (!plugin.config().photoPublishConfigured()) {
-            plugin.getLogger().warning("[daily-cards] нет community.photo-user-token — "
-                    + "постеры с фото отключены перезагрузкой конфига");
-            return;
+        if (plugin.config().textOnlyWall()) {
+            plugin.getLogger().info("[daily-cards] текстовый режим стены после перезагрузки конфига");
         }
         refreshClients();
         schedule();
@@ -93,8 +91,10 @@ public final class DailyCardsService {
     }
 
     private void refreshClients() {
-        this.publisher = new VkWallPublisher(plugin.communityApiClient(),
-                plugin.photoApiClient(), plugin.config().groupId());
+        VkConfig cfg = plugin.config();
+        this.publisher = cfg.photoWallEnabled()
+                ? new VkWallPublisher(plugin.communityApiClient(), plugin.photoApiClient(), cfg.groupId())
+                : new VkWallPublisher(plugin.communityApiClient(), cfg.groupId());
     }
 
     private void schedule() {
@@ -140,17 +140,22 @@ public final class DailyCardsService {
         }
     }
 
-    /** Сетевая часть в асинхронной задаче: PNG → VK → локальный ledger. */
+    /** Сетевая часть: текст на стену + PNG в беседу + локальный ledger. */
     private void publish(DailyCardKind kind, DailyNomination nomination, String day) {
         try {
+            VkConfig cfg = plugin.config();
             byte[] png = DailyPlayerCard.render(nomination, config, day);
             String marker = "#chrdk_" + shortHash(day + kind.id());
-            String text = DailyPlayerCard.message(nomination, config, day, marker);
-            long postId = publisher.publish(png, text,
-                    "chrdk-card-" + kind.id() + "-" + day);
+            String baseText = DailyPlayerCard.message(nomination, config, day, marker);
+            String guid = "chrdk-card-" + kind.id() + "-" + day;
+            String wallText = cfg.withDiscuss(baseText);
+            long postId = cfg.photoWallEnabled()
+                    ? publisher.publish(png, wallText, guid)
+                    : publisher.publishText(wallText, guid);
             ledger.markPosted(kind, postId);
             plugin.getLogger().info("[daily-cards] «" + kind.title() + "» → "
-                    + nomination.playerName() + ": " + plugin.config().wallPostUrl(postId));
+                    + nomination.playerName() + ": " + cfg.wallPostUrl(postId));
+            sendChatCard(cfg, png, baseText, guid, kind.title());
             if (plugin.socialService() != null) {
                 plugin.socialService().audit().write("social.wall.card", "", "vk",
                         "kind=" + kind.id() + " post=" + postId);
@@ -165,6 +170,29 @@ public final class DailyCardsService {
                             + failure.getMessage(), failure);
         } finally {
             ledger.save();
+        }
+    }
+
+    /** Ошибка беседы не отменяет уже опубликованную запись стены. */
+    private void sendChatCard(VkConfig cfg, byte[] png, String text, String guid, String title) {
+        if (!cfg.chatCardsEnabled() || plugin.service() == null) {
+            return;
+        }
+        try {
+            boolean sent = plugin.service().publishChatCard(png, text, guid);
+            if (sent) {
+                plugin.getLogger().info("[daily-cards] PNG-карточка «" + title + "» отправлена в беседу");
+            } else {
+                plugin.getLogger().warning("[daily-cards] PNG-карточка «" + title
+                        + "» не отправлена: беседа ВК не настроена");
+            }
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            plugin.getLogger().warning("[daily-cards] отправка PNG в беседу прервана");
+        } catch (IOException | RuntimeException chatFailure) {
+            plugin.getLogger().log(Level.WARNING,
+                    "[daily-cards] не удалось отправить PNG в беседу: " + chatFailure.getMessage(),
+                    chatFailure);
         }
     }
 

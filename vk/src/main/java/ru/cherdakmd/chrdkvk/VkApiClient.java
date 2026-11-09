@@ -216,11 +216,32 @@ public final class VkApiClient {
 
     /** Отправляет текстовое сообщение пользователю или в беседу ({@code messages.send}). */
     public boolean sendMessage(long peerId, String text) throws IOException, InterruptedException {
-        return sendMessage(peerId, text, null);
+        return sendMessage(peerId, text, null, null, 0);
     }
 
     /** Отправляет текстовое сообщение с опциональной JSON-клавиатурой бота ({@code keyboard}). */
     public boolean sendMessage(long peerId, String text, String keyboardJson)
+            throws IOException, InterruptedException {
+        return sendMessage(peerId, text, null, keyboardJson, 0);
+    }
+
+    /**
+     * Отправляет сообщение с необязательным вложением {@code photo<owner>_<id>}.
+     * Стабильный {@code randomId > 0} защищает от дублей при повторной отправке
+     * карточки; {@code 0} означает обычный случайный идентификатор.
+     */
+    public boolean sendMessage(long peerId, String text, String attachment,
+                               String keyboardJson, int randomId)
+            throws IOException, InterruptedException {
+        return sendMessage(peerId, 0L, text, attachment, keyboardJson, randomId);
+    }
+
+    /**
+     * То же, но с явным {@code groupId} сообщества: так отправляет карточки
+     * беседы {@link VkChatPhotoPublisher}, повторяя контур новостей проекта.
+     */
+    public boolean sendMessage(long peerId, long groupId, String text, String attachment,
+                               String keyboardJson, int randomId)
             throws IOException, InterruptedException {
         if (peerId <= 0L || text == null || text.isBlank()) {
             return false;
@@ -228,9 +249,17 @@ public final class VkApiClient {
         String cropped = text.length() > 3_800 ? text.substring(0, 3_800) + "…" : text;
         Map<String, String> params = new LinkedHashMap<>();
         params.put("peer_id", Long.toString(peerId));
-        params.put("random_id", Integer.toString(ThreadLocalRandom.current().nextInt(1, Integer.MAX_VALUE)));
+        if (groupId > 0L) {
+            params.put("group_id", Long.toString(groupId));
+        }
+        int id = randomId > 0 ? randomId
+                : ThreadLocalRandom.current().nextInt(1, Integer.MAX_VALUE);
+        params.put("random_id", Integer.toString(id));
         params.put("message", cropped);
         params.put("dont_parse_links", "1");
+        if (attachment != null && !attachment.isBlank()) {
+            params.put("attachment", attachment);
+        }
         if (keyboardJson != null && !keyboardJson.isBlank()) {
             params.put("keyboard", keyboardJson);
         }

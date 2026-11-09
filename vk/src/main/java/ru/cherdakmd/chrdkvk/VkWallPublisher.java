@@ -24,7 +24,9 @@ import java.util.UUID;
  * <p>С 1.5.2-rc.8 {@code photos.*} могут идти с отдельного пользовательского
  * ключа администратора ({@code community.photo-user-token}), а финальный
  * {@code wall.post} всегда остаётся на ключе сообщества: VK не разрешает
- * загрузку фото с group auth и возвращает {@code error 27}.</p>
+ * загрузку фото с group auth и возвращает {@code error 27}. С rc.9 этот контур
+ * включается только при {@code wall.post-mode: photo} и наличии user token;
+ * по умолчанию стена получает {@link #publishText} без фото.</p>
  *
  * <p>Адрес загрузки проверяется по allowlist доменов VK (как в Python-контуре
  * соцсетей): ответ API не может заставить плагин отправить файл куда-то ещё.</p>
@@ -39,7 +41,7 @@ public final class VkWallPublisher {
     public static final String TEST_POST_MARKER = "#chrdk_test_";
 
     private static final Duration UPLOAD_TIMEOUT = Duration.ofSeconds(30);
-    private static final int MAX_PNG_BYTES = 5 * 1024 * 1024;
+    static final int MAX_PNG_BYTES = 5 * 1024 * 1024;
 
     /** Ключ сообщества: wall.post, сообщения, Long Poll. */
     private final VkApiClient api;
@@ -168,7 +170,8 @@ public final class VkWallPublisher {
         return uri;
     }
 
-    private static byte[] encodeMultipart(String boundary, byte[] png) throws IOException {
+    /** Переиспользуется и для загрузки фото в сообщения беседы. */
+    static byte[] encodeMultipart(String boundary, byte[] png) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         out.write(("--" + boundary + "\r\n"
                 + "Content-Disposition: form-data; name=\"photo\"; filename=\"chrdk-digest.png\"\r\n"
