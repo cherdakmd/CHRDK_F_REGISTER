@@ -13,6 +13,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDropItemEvent;
 import org.bukkit.inventory.ItemStack;
+import ru.cherdakmd.chrdkregister.api.MineTreasureLootPolicy;
 import java.util.*;
 
 /** Native break для каждого блока; бонусы только после финального разрешённого дропа. */
@@ -92,7 +93,7 @@ public final class ToolEffectsListener implements Listener {
         List<Yield> yields = new ArrayList<>();
         for (Item entity : List.copyOf(event.getItems())) {
             ItemStack stack = entity.getItemStack();
-            if (stack.hasItemMeta() || stack.getAmount() <= 0 || stack.getAmount() > stack.getMaxStackSize()) continue;
+            if (MineTreasureLootPolicy.isForeignDrop(stack) || stack.getAmount() <= 0 || stack.getAmount() > stack.getMaxStackSize()) continue;
             Material before = stack.getType();
             if (smelt) {
                 Material after = Material.valueOf(MiningPolicy.smelt(source.type.name(), before.name(), silk));

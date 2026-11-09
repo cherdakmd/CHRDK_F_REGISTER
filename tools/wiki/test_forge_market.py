@@ -57,7 +57,7 @@ class ForgeMarketContractTest(unittest.TestCase):
         version = re.search(r"^plugin_version=(.+)$", props, re.M)
         self.assertIsNotNone(version, "plugin_version обязателен")
         current = version.group(1).strip()
-        self.assertEqual("1.5.2-rc.6", current)
+        self.assertEqual("1.5.2-rc.10", current)
         self.assertRegex(current, r"^1\.5\.\d+-rc\.[1-9]\d*$", "выпуск остаётся пререлизом")
         self.assertTrue((ROOT / "docs/releases" / (current + ".md")).is_file(),
                         "для текущего пререлиза нужны полные заметки в архиве")

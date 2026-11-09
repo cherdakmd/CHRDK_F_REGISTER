@@ -1,17 +1,14 @@
 #!/usr/bin/env python3
-"""Локальная установка Mine Treasure v1.6.5 RU в <мир>/datapacks.
+"""Локальная установка патченого Mine Treasure v1.6.5 RU в <мир>/datapacks.
 
-Скрипт НЕ публикует ZIP в репозитории и не меняет содержимое датапака: он
-проверяет присланный архив (в том числе `.txt`, который на самом деле ZIP),
-копирует его под корректным именем `.zip` в папку датапаков мира и печатает
-Paper/Bukkit pack id `file/<имя>`. Для повторного запуска установка идемпотентна.
+В репозитории лежит готовый исправленный ZIP (кодеки 26.3 и PDC-метка CHRDK);
+скрипт НЕ пересобирает и НЕ переводит датапак, а проверяет архив и копирует его
+под корректным именем `.zip` в папку датапаков мира. Для повторного запуска
+установка идемпотентна. Полная сверка с манифестом — tools/datapacks/build_mine_treasure.py --check.
 
 Пример:
-  python3 tools/datapacks/install_mine_treasure.py --check \
-      --source /tmp/arena-coding-uploads/mine-treasure-1.6.5-ru.txt
-  python3 tools/datapacks/install_mine_treasure.py \
-      --source /tmp/arena-coding-uploads/mine-treasure-1.6.5-ru.txt \
-      --world /path/to/server
+  python3 tools/datapacks/install_mine_treasure.py --check
+  python3 tools/datapacks/install_mine_treasure.py --world /path/to/server
 """
 from __future__ import annotations
 
@@ -19,20 +16,29 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import sys
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_NAME = "mine-treasure-1.6.5-ru.zip"
-KNOWN_SHA256 = "0ff4bd2ad1a5db22920db23f1f2c88d577ceff607164638d0e1a45264075bf92"
-KNOWN_SIZE = 1_747_330
+DEFAULT_SOURCE = ROOT / "datapacks/mine-treasure-ru" / DEFAULT_NAME
+KNOWN_SHA256 = "d51346e81b32fda61e7d4ba7a9475289815857451f4bea8a69d45f61527f3ec6"
+KNOWN_SIZE = 1_758_991
+UNPREFIXED = re.compile(r'("attribute"\s*:\s*)"water_movement_efficiency"')
+SLOT_ARRAY = re.compile(r'("slot"\s*:\s*)\[\s*"([a-z_]+)"\s*\]')
+PDC_CONTAINER = "PublicBukkitValues"
+PDC_KEY = "chrdk:mine_treasure_item"
+PDC_VALUE = "1"
 REQUIRED_ENTRIES = (
     "data/mt/function/init.mcfunction",
     "data/minecraft/tags/function/load.json",
     "data/minecraft/tags/function/tick.json",
     "LICENSE.md",
+    "CHRDK-COMPAT.md",
 )
 
 
@@ -51,6 +57,10 @@ class Report:
     max_format: tuple[int, int]
     description: str
     license_present: bool
+    compat_marker: bool
+    block_tables: int
+    pdc_markers: int
+    codec_errors: int
 
 
 def sha256_file(path: Path) -> str:
@@ -125,14 +135,45 @@ def validate_archive(source: Path) -> Report:
         if missing:
             raise InstallError("в архиве нет обязательных записей: " + ", ".join(missing))
         json_files = 0
+        block_tables = 0
+        pdc_markers = 0
+        codec_errors = 0
         for name in names:
+            if name.startswith("data/minecraft/loot_table/blocks/") and name.endswith(".json"):
+                block_tables += 1
             if not name.endswith(".json"):
                 continue
+            text = archive.read(name).decode("utf-8-sig")
             try:
-                json.loads(archive.read(name).decode("utf-8-sig"))
+                data = json.loads(text)
             except (UnicodeDecodeError, json.JSONDecodeError) as error:
                 raise InstallError(f"невалидный JSON: {name}: {error}") from error
             json_files += 1
+            codec_errors += len(UNPREFIXED.findall(text)) + len(SLOT_ARRAY.findall(text))
+
+            def walk(value):
+                nonlocal pdc_markers
+                if isinstance(value, dict):
+                    if value.get("type") == "minecraft:set_components":
+                        components = value.get("components")
+                        custom = components.get("minecraft:custom_data") if isinstance(components, dict) else None
+                        pdc = custom.get(PDC_CONTAINER) if isinstance(custom, dict) else None
+                        if isinstance(pdc, dict) and pdc.get(PDC_KEY) == PDC_VALUE:
+                            pdc_markers += 1
+                    for nested in value.values():
+                        walk(nested)
+                elif isinstance(value, list):
+                    for nested in value:
+                        walk(nested)
+
+            walk(data)
+        if codec_errors:
+            raise InstallError(f"в архиве остались спорные кодеки: {codec_errors}; "
+                               "нужен патченый ZIP из репозитория")
+        if pdc_markers == 0:
+            raise InstallError("нет PDC-метки CHRDK; это исходный, а не патченый ZIP")
+        if block_tables == 0:
+            raise InstallError("нет переопределённых таблиц блоков Mine Treasure")
     size = source.stat().st_size
     return Report(
         source=source.resolve(),
@@ -144,6 +185,10 @@ def validate_archive(source: Path) -> Report:
         max_format=max_format,
         description=description.replace("\n", " ").strip(),
         license_present="LICENSE.md" in names,
+        compat_marker="CHRDK-COMPAT.md" in names,
+        block_tables=block_tables,
+        pdc_markers=pdc_markers,
+        codec_errors=0,
     )
 
 
@@ -213,22 +258,25 @@ def print_report(report: Report) -> None:
     print(f"Размер:        {report.size} байт")
     print(f"SHA-256:       {report.sha256}")
     print(f"Записей:       {report.entries}; JSON: {report.json_files}; "
-          f"LICENSE.md: {'да' if report.license_present else 'нет'}")
+          f"LICENSE.md: {'да' if report.license_present else 'нет'}; "
+          f"CHRDK-COMPAT.md: {'да' if report.compat_marker else 'нет'}")
     print(f"Формат пака:   min={report.min_format[0]}.{report.min_format[1]}, "
           f"max={report.max_format[0]}.{report.max_format[1]}")
+    print(f"Совместимость: таблиц блоков {report.block_tables}; PDC-меток {report.pdc_markers}; "
+          f"ошибок кодека {report.codec_errors}")
     print(f"Описание:      {report.description}")
     if report.sha256 == KNOWN_SHA256 and report.size == KNOWN_SIZE:
-        print("Контрольная сумма совпадает с присланным Mine Treasure v1.6.5 RU.")
+        print("Контрольная сумма совпадает с патченым Mine Treasure v1.6.5 RU из репозитория.")
     else:
-        print("ВНИМАНИЕ: контрольная сумма отличается от присланного архива; "
-              "убедитесь, что это нужная русская сборка.")
+        print("ВНИМАНИЕ: контрольная сумма отличается от патченого архива; "
+              "убедитесь, что это нужная сборка CHRDK.")
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--source", required=True, type=Path,
-                        help="путь к присланному ZIP (расширение может быть .txt)")
+    parser.add_argument("--source", type=Path, default=DEFAULT_SOURCE,
+                        help=f"патченый ZIP (по умолчанию {DEFAULT_SOURCE})")
     parser.add_argument("--world", type=Path,
                         help="папка мира с level.dat или корень сервера")
     parser.add_argument("--name", default=DEFAULT_NAME,

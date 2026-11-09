@@ -1,198 +1,198 @@
 {
   "pages": {
     "about": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "9686c932594b06a1aefa4b2bb6822a847c00f8d89e388957422c5431a2c2d9b0",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "44c4f7892fdd06d06215a427f8e17fb5b94ee358e25a1fa20901d8d46d31521b",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "34ef9ebb8d0d262925d754638aeac9a877fe0dff0c35a2757c0e8ff27696ebfe",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "73cbf6081c4ba30e1a5a6fe367dc199f5e5f7ee6d5635f44b443bbeb8910d5e2",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "272048e9133e89c1ba7df27390793c0b22a85614ebd463a63c224befa9cbb378",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "55f4731836ea23b85ef16f809a8d517dfa6971109d1acf26433751dd578bceb2",
       "text": "fcdffb1098428fac2bd42d1c4acb73bb9a024d1823d5398b8845bb2f415a506f"
     },
     "auction": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "3899ac4fdb4f07042d6bf6e4ffa433508eab196187ad0f3ea61efc7b87bba3ea",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "858b78d2ee5b7e71463a1dc62f67525008e25556f1de27a428fe71446e4e1d83",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "f5fbd336e49228193a205ec41100b8694d805dcfcb466e968a0df4d2ab00dddf",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "08bbbe9a1aaeebf9be2561c60c8c708bdbfc66e1ebf03f1c64c837138cac1cfc",
       "text": "f368077b5f1961a1982957afe3b8523b60c8330f3dfd1891003d01ea1c4fd6db"
     },
     "chat": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "9686c932594b06a1aefa4b2bb6822a847c00f8d89e388957422c5431a2c2d9b0",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "44c4f7892fdd06d06215a427f8e17fb5b94ee358e25a1fa20901d8d46d31521b",
       "text": "ca6c93fc33fca52eecc7d38744bc86f619ea0b6a7bcc2314b84ca6c5399d8a1c"
     },
     "claims": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "b31ca9a08085821c80c9a87b339050d6886c6a4a5adfec98b0ec25db45c1e929",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "665ed5ee554a9c2b7a57cc748400e7abaf66007caebb533c252a7861d4a904ba",
       "text": "3144ca61235b895be5cb61e6d120d5dc6d6d0d7c26f87819431b4756659e8e12"
     },
     "classes": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "db27606d863edb89f4ed501f790414f6059e08a96ea64028ee60edd5bec2c158",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "8d1d1b8d6cd27974f0eb3cc7dfc096092ad9dabb687412e83116cb23716e6ff5",
       "text": "fdebe780b6e7964249b5c4bc4752908cbdd67722e4d4bb0a4b1f64d94cd15ea1"
     },
     "commands": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "71e24a00ef12ac97f2f6ce44ca454018719b3c57976cfb3f4e99c0c13806bf4b",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "ca173204deda293572e7264aa80d2d58c5429ed9e78c7990f64609255483202b",
       "text": "13b15e747e5e4aa93ff7ed9ce580f47e2c7952f5f319b46c6e854fc3eaec3252"
     },
     "cosmetics": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "0393ef43a5f635eb4bbb641e4bce56aef97c902fe8bbb4761699555e9c72325e",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "3300544243249c4faa37068517c4a9a4d119171375fb4d978c2d88e371ba3724",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "441fc78929c3e11fbeffd89046d869a957cf92a65375f1f54e660e1e3d0493bc",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "c53a5a1a97960c18a491b7c5b4550b98db9f8e550c9ff4eef1d45bcb86210cdb",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "disasters": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "689929073fae04b9c31cd137baa8959e100e64b6c748051acda838f0de7eceef",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "59de09f96d1100d66c8bcaf3f0503f2f3c7faea5cb563fcceea73b3f81270d63",
       "text": "dd99cd1f21290668ef4d7c8ead28497aa0f50dc4ffd34ee6d8e9f02a0d013d9b"
     },
     "economy": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "e8fd36020da5a29bbc06445e1fbe1a6b92e0afd5a030af3b39b9a7751a9fa6e8",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "c53eb5ac41059277f2123f6177b71a80a3152424f03a534b36a78a34c37e4e7f",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "991b591f9c49a6fd38f656c572943fe7da297df64f50c09473be927caa7920c5",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "e2f41f32e2bd9e7536f60c1e1e28843f1bab6a4d0aa725fed9d659db747ddf0d",
       "text": "c9b27cd4a4970ad227e240e742adc52dca1533312ec7b590663add3b164ba1a2"
     },
     "faq": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "6793f3f87b8fa47dc451ede71174dcea909d20ad4fdcd86c77238b04b02ff000",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "6dacbf544fb80ddbed992c21c257c6ea813b58ffc6277c30ce44ee9d838dc25f",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "c93af2179a935b07477f5b35d10bc47bf41511e9fab25bb9cdd167916b6d7e01",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "f5cb553e937ea50bc6b7079f88e0ef7a1b1060739db267e5e933b8de287b4723",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "b31ca9a08085821c80c9a87b339050d6886c6a4a5adfec98b0ec25db45c1e929",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "665ed5ee554a9c2b7a57cc748400e7abaf66007caebb533c252a7861d4a904ba",
       "text": "e166f2671aabcdf55ecf59d1465ddb19a36343f6d07983eb8b8821b3a63cce34"
     },
     "honors": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "9686c932594b06a1aefa4b2bb6822a847c00f8d89e388957422c5431a2c2d9b0",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "44c4f7892fdd06d06215a427f8e17fb5b94ee358e25a1fa20901d8d46d31521b",
       "text": "6bc29d5a2d7783845f8b3d9b085e85982faec5b3029d841092386f36b1d4c4b0"
     },
     "hunt": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "ac015bed00c4709943fd89355f940d92d0ff53b71f09aaa62ebfb3f6f8221778",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "2c8b717634ac16c8f0e1c7653573fb47c96e0fd9a177b9c261fbf7e039245c44",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "e1bb1fedb3a07f7beb8c4880b2bf3354115af7726cd9ea75a954ef040ec960f2",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "0c0c8e300300cc0dfd99246697e2c7e6b6e3592900cc7d2636b44f41b915b821",
       "text": "6a3b9fedc0d15e6ef23ae50e7bf41cdf79f9efcc79299101944c041b5c2d9222"
     },
     "menu": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "21434dce0b01c82117fe5c0752ce7ed21c9dd56a9ea1ad30b714f272e7a7e114",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "cb0f96a065c19d1d6e42bb7abcc40d14f1e035ad75497f6b98c035ae1f8becc4",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "moderation": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "9686c932594b06a1aefa4b2bb6822a847c00f8d89e388957422c5431a2c2d9b0",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "44c4f7892fdd06d06215a427f8e17fb5b94ee358e25a1fa20901d8d46d31521b",
       "text": "255b8cacb80c9ea7b1236f73feaa226a121bb9b58cff81fef2d46b65abae4073"
     },
     "orders": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "06b113225e6ef5e75d0336f031551b790078c9abbbe0456dfda7a6986b5ed96e",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "4d71e820c71e431098fe4b4b5a109f1033cea6c10ea6246cf7137a85141f5e1d",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "perktree": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "db27606d863edb89f4ed501f790414f6059e08a96ea64028ee60edd5bec2c158",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "8d1d1b8d6cd27974f0eb3cc7dfc096092ad9dabb687412e83116cb23716e6ff5",
       "text": "148006c785c6f0e5adf6725d87605f5e508b957636fdac87ea64939e7bd63b79"
     },
     "pets": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "53bcabb37e9d06975eaeb971d02db0d71e858bfaff8ee205317755de811cb4b9",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "24f0b2357faf73ca47f85ac3e3a15999aa26ca50a2d3356b668abab32ac760e8",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "99e6d40ea03a149c2ddc2bb4218ae2413502ffcb8ee70a93c854be50cc3bb31d",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "93779015c0170853b7fdae0bc39cb67ad4d1211e23dc9f9bb0e0da051d48edc4",
       "text": "13e6d38670572890ab2567279a5ca76f8e353eab6ade09a877eee2e884c6e272"
     },
     "profile": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "db3dd5142e4eaff79c3201bb317bd3340b0d0ded4cf178b52b4e551c431a5eb5",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "5a064c59b1dc4ac4ba1b330083731299fe185b122062a44c46648884ffaa34bc",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "0a2574d13d02dab28c041f28d7e05de0ede976b5b1dcdadec01ad7039f12e49a",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "7c49eecedd60bc148bb1a2ff3f4275108d9c3c21f85716a05b82367e0e9c2b38",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "0857d36c91cfb6ad06a1b43f2d2c1bc7dc97434bf25ed19defcb7de8899ad692",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "3d1322562ba7b8f77ce538aada7b1b5114d0fbf43075fcf18585a8348c261a37",
       "text": "b551d73e8dcc85c81ff7c908f7c89e1ebfb441b46d082a6a714124d77bfbb2c2"
     },
     "shop": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "e1bb1fedb3a07f7beb8c4880b2bf3354115af7726cd9ea75a954ef040ec960f2",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "0c0c8e300300cc0dfd99246697e2c7e6b6e3592900cc7d2636b44f41b915b821",
       "text": "ea26b94a87ea9b7287d9afad8fe96c8633ed8cc92e9fb091369ebd814b3a86a6"
     },
     "skills": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "0458966aaa124581cf716e2733ef672a45e63e00df237b5f6a77bef492323c1b",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "fe1059a12c56d2f024c77089cc4306ffbdc2f3a4fd098f8c7f944bff249481d9",
       "text": "2cbe0faac3c272b71b3eb81fb78f5051b9eaa58e4ff682276af2c6bbdf74a98b"
     },
     "social-link": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "8304397c886dddfbe3ad630e5d6a96fcb2d2553ec9ca8c48ad865f206cec1cd7",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "c0ab9001a90614e439b6c4dca1b5cf5ce89a4a0d3a099fba031ba0c16e4010bd",
       "text": "65f8ffa165ab0b2dfba6cebd5633dbe78011e5000e4ca5e731d11ec3e68167f7"
     },
     "start": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "53c2672db3333d6435b445965a5c21d5cfb0f7d2880fa62e2b1d696aa23acc93",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "e4168f3fee9e79a8505b61d722106b99589c2f1b2a6542317486cad3d0694310",
       "text": "c2835fdf2d1945079115e6a252d472ce72ad9ad79f4ed47ad58e269b467d595f"
     },
     "starter-kit": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "272048e9133e89c1ba7df27390793c0b22a85614ebd463a63c224befa9cbb378",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "55f4731836ea23b85ef16f809a8d517dfa6971109d1acf26433751dd578bceb2",
       "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
     },
     "teleports": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "187c8e7b4aa2a05d687f1c76da076e3c58e706d6f9c9a099d71a9050096f8544",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "96fb271cb008c4ea5ba3bf66f8b531161084182ed96ddcb3bbd2fe765e504138",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "991b591f9c49a6fd38f656c572943fe7da297df64f50c09473be927caa7920c5",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "e2f41f32e2bd9e7536f60c1e1e28843f1bab6a4d0aa725fed9d659db747ddf0d",
       "text": "8bfa7eee45f251d4f571e67782e4e245c8a0c9faf55062068f625f72771dc03c"
     },
     "titles": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "1326b7e19b278c1c794d00d510fde178dd6c1a83f7f604efc0ff294d677225b0",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "886636b729846a730f36b9e5b4a7e82e573c59105a50ac2821cdd9d5c03526f7",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "e1bb1fedb3a07f7beb8c4880b2bf3354115af7726cd9ea75a954ef040ec960f2",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "0c0c8e300300cc0dfd99246697e2c7e6b6e3592900cc7d2636b44f41b915b821",
       "text": "238b43656d6df7186d842e6cfda78d158046d66c29320dedbb4bc7b4341b0856"
     },
     "vk": {
-      "reason": "внутренняя серверная интеграция Mine Treasure: новый класс и секция config.yml, команды, цены и публичные описания не менялись",
-      "sources": "8304397c886dddfbe3ad630e5d6a96fcb2d2553ec9ca8c48ad865f206cec1cd7",
+      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
+      "sources": "c0ab9001a90614e439b6c4dca1b5cf5ce89a4a0d3a099fba031ba0c16e4010bd",
       "text": "695ab2766011ccdd4aa7aabde63e5e8fd9e2e750fe334a4d79eba49298df1845"
     }
   },

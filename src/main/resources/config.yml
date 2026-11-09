@@ -1756,9 +1756,12 @@ migrations:
 # =====================================================================
 # CHRDK_Core НЕ поставляет и не распаковывает ZIP. Положите присланный архив
 # (расширение .txt у загрузки на самом деле ZIP) в <мир>/datapacks под именем
-# file-name. Помощник: tools/datapacks/install_mine_treasure.py.
-# Плагин через Paper DatapackManager проверит id file/<имя ZIP> и, если пак
-# выключен, один раз вызовет setEnabled(true). Уже включённый пак не трогается.
+# file-name. В репозитории лежит патченый ZIP с исправленными кодеками и
+# PDC-меткой CHRDK; помощник tools/datapacks/install_mine_treasure.py только
+# проверяет и копирует его. Плагин через Paper DatapackManager проверит
+# id file/<имя ZIP> и, если пак выключен, один раз вызовет setEnabled(true).
+# Уже включённый пак не трогается. Слияние лута (без двойного дропа) включено
+# в CHRDK_Skills/Enchants/TierForge/Artifacts через MineTreasureLootPolicy.
 # Старый config.yml без этой секции работает с указанными ниже значениями.
 integrations:
   mine-treasure:

@@ -64,9 +64,10 @@ jobs:
           python3 tools/clan_shop/build_bundle.py --check
           python3 -m unittest discover -s tools/clan_shop -p 'test_*.py' -v
 
-      - name: Check datapack installers and Incendium NBT format
+      - name: Check datapack installers, patched Mine Treasure and Incendium NBT format
         run: |
           python3 -m pip install -r tools/datapacks/requirements.txt
+          python3 tools/datapacks/build_mine_treasure.py --check
           python3 tools/datapacks/check_incendium.py
           python3 -m unittest discover -s tools/datapacks -p 'test_*.py' -v
 

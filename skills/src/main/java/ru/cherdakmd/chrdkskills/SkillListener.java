@@ -38,6 +38,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
+import ru.cherdakmd.chrdkregister.api.MineTreasureLootPolicy;
 import ru.cherdakmd.chrdkregister.api.RankBonus;
 
 import java.util.ArrayList;
@@ -194,7 +195,11 @@ public final class SkillListener implements Listener {
         }
         List<ItemStack> drops;
         try {
-            drops = new ArrayList<>(block.getDrops(player.getInventory().getItemInMainHand(), player));
+            // Mine Treasure добавляет mt: пул в 43 ванильные таблицы блоков.
+            // Повторно разыгрывать его награды perk'ом нельзя: берём только
+            // простые ванильные стеки, у MT-предметов есть PDC/ItemMeta.
+            drops = MineTreasureLootPolicy.vanillaOnly(
+                    block.getDrops(player.getInventory().getItemInMainHand(), player));
         } catch (RuntimeException exception) {
             drops = List.of();
         }

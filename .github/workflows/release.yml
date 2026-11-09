@@ -45,7 +45,7 @@ jobs:
           fi
           echo "version=$plugin_version" >> "$GITHUB_OUTPUT"
 
-      - name: Check messages and release validation tests
+      - name: Check messages, patched Mine Treasure and release validation tests
         run: |
           python3 .github/scripts/check_retired_addons.py
           python3 -m unittest discover -s .github/scripts -p 'test_retired_addons.py' -v
@@ -53,6 +53,7 @@ jobs:
           python3 -m unittest discover -s .github/scripts -p 'test_gradle_build.py' -v
           python3 -m unittest discover -s .github/scripts -p 'test_prepare_papi.py' -v
           python3 .github/scripts/check_messages.py
+          python3 tools/datapacks/build_mine_treasure.py --check
 
       - name: Verify TradeMC kit and regression tests
         run: |
@@ -151,3 +152,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "${{ github.event.release.tag_name }}" "${{ env.zip }}" "${{ env.vk_jar }}" "${{ env.disasters_jar }}" --clobber
+
+      # Готовый датапак — единственный ассет Mine Treasure в общем RC.
+      # Installer, docs и отдельный JAR датапака не прикладываются.
+      - name: Attach patched Mine Treasure datapack ZIP
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "datapacks/mine-treasure-ru/mine-treasure-1.6.5-ru.zip" --clobber
