@@ -35,12 +35,33 @@ docs/datapacks/MINE-TREASURE-COMPATIBILITY.md.
 Новые/правленые данные: datapacks/mine-treasure-ru/*.zip,
 tools/datapacks/build_mine_treasure.py, mine_treasure_manifest.json,
 install_mine_treasure.py и тесты, docs/datapacks/*, .github/workflows/*,
-wiki/reviewed.json. Старый config.yml без секции integrations.mine-treasure
-работает с дефолтами; bump схемы конфигов не требуется.
+docs/design/PLAYER-DATA-FILES.md, wiki/reviewed.json. Старый config.yml без
+секции integrations.mine-treasure работает с дефолтами; bump схемы конфигов
+не требуется. Владельческий tablist.footer тоже чинится рантаймом.
+
+TAB: вместо двух дублирующих сроков привязки ВК одна строка
+%chrdksocial_tab% с понятным следующим шагом. После привязки счётчик и дедлайн
+исчезают; старые строки во владельческом config.yml ядра сливаются рантаймом,
+файл НЕ перезаписывается. /link сжат до одной инструкции «код → бот ВК».
+Повтор «Вы в игре» рядом со статусом «в игре» скрывается автоматически.
+
+Данные игроков: plugins/CHRDK_VK/players/social.yml (связи ВК/MAX, первый вход,
+донатный доступ, награда), plugins/CHRDK_Core/players/warns.yml и
+players/bans.yml. Глобальные social-links.json и moderation.json остаются с
+SHA-256. При первом запуске этой версии старые поля переносятся автоматически,
+исходные JSON уходят в *.before-players-*.bak; нечитаемые YAML копируются в
+*.yml.broken и не затираются последующими сохранениями до ручной правки. При
+автоматическом fail-open перед перезаписью global JSON создаётся ещё один .bak.
+Ручную правку делайте ТОЛЬКО при остановленном сервере, правила — в
+players/README.md и docs/design/PLAYER-DATA-FILES.md. Пароли, 2FA и токены
+туда не пишутся. Полный backup plugins/CHRDK_Core, plugins/CHRDK_VK и worlds
+обязателен.
 
 Живой Minecraft-клиент, GUI, выдача предметов и /bal, RCON, установка и игровой
-smoke НЕ проверялись. Java/JUnit/Gradle локально не запускались. Версия
-сайта/вики — 1.5.2-rc.10. Подробности, SHA-256, backup и границы:
+smoke НЕ проверялись. Java/JUnit/Gradle и браузерные Playwright-тесты локально
+не запускались (JVM и Chromium в песочнице отсутствуют); tree-sitter-разбор
+Java, Python-наборы, контракты сообщений, freshness и сборка вики прошли.
+Версия сайта/вики — 1.5.2-rc.10. Подробности, SHA-256, backup и границы:
 docs/releases/1.5.2-rc.10.md.
 
 CHRDK_Queue и снятые JAR убрать вручную из plugins/, plugins/update/, staging.

@@ -366,10 +366,18 @@ public final class SocialService {
         return config.donatePermanent() && store.donorGranted(playerName);
     }
 
-    /** Явная строка для TAB: «привязан» / «проход» / «БЕЗ ПРИВЯЗКИ: осталось N дн.». */
+    /** Совместимый высокоуровневый статус для старых внешних шаблонов PAPI. */
     public String tabStatus(String playerName, long now) {
         String provider = linkProvider(playerName);
         return SocialAccessPolicy.tabStatus(store.isLinked(playerName), provider,
+                donateUntil(playerName), graceDeadline(playerName, now), now,
+                config.mandatoryActive(), emergencyActive(now), permanentDonorAccess(playerName));
+    }
+
+    /** Одна понятная строка TAB; после привязки счётчик и дедлайн не показываются. */
+    public String tabLine(String playerName, long now) {
+        String provider = linkProvider(playerName);
+        return SocialAccessPolicy.tabLine(store.isLinked(playerName), provider,
                 donateUntil(playerName), graceDeadline(playerName, now), now,
                 config.mandatoryActive(), emergencyActive(now), permanentDonorAccess(playerName));
     }

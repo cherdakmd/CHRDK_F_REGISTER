@@ -1557,8 +1557,10 @@ auto-messages:
     - {"text": "<gray>Катастрофы CHERDAK не задевают приваты и спавн: <white>/disasters</white> покажет, когда ждать следующую. Изменённые блоки возвращаются по таймеру, опыта и алмазов с них нет.</gray>", "plugin": "CHRDK_Disasters", "permission": "chrdkdisasters.use"}
 
 # ================================================================
-# Админ-панель аудита игроков (/adminpanel). Варны, роли и журнал лежат в
-# отдельном moderation.json; бан дублируется в ванильный BanList по имени.
+# Админ-панель аудита игроков (/adminpanel). Варны и зеркало банов лежат в
+# редактируемых players/warns.yml и players/bans.yml; роли и журнал — в
+# moderation.json с SHA-256. Бан дублируется в ванильный BanList по имени.
+# При первом запуске старые поля переносятся с backup moderation.json.
 # Пятый активный варн кикает игрока и банит его без срока.
 moderation:
   # Отключает автоматический бан на пороге варнов и нашу проверку входа.
@@ -1622,12 +1624,12 @@ tablist:
   #   %tab_warns% — СВОИ активные варны и порог автобана игрока («3/5»).
   #   %tab_warns_public% — общий список нарушителей (ник + счётчик), одинаковый
   #   для всех; включается moderation.warns-public-in-tab, по умолчанию пусто.
-  #   %chrdksocial_status% — ЯВНЫЙ выбор игрока: «✅ привязан (ВК)»,
-  #   «✅ проход: 27 дн.» или «⚠ БЕЗ ПРИВЯЗКИ: осталось 14 дн.» / «⛔ ВХОД ЗАКРЫТ».
-  #   %chrdksocial_access% — остаток товара «Вход без ВК и MAX» («27 дн.», «нет»),
-  #   %chrdksocial_link% — статус привязки («ВК», «MAX», «осталось 12 дн.»).
-  #   Все три приходят из CHRDK_VK через PlaceholderAPI; без CHRDK_VK/PlaceholderAPI
-  #   в TAB будет пустая строка, а в логе CHRDK_VK — громкое предупреждение.
+  #   %chrdksocial_tab% — ОДНА цельная строка CHRDK_VK: понятный следующий шаг,
+  #   срок до привязки или факт «привязан» без счётчика. Приходит через PAPI.
+  #   Старые %chrdksocial_status% / %chrdksocial_link% / %chrdksocial_access%
+  #   во владельческом footer автоматически сливаются в эту строку рантаймом:
+  #   config.yml не перезаписывается. Без CHRDK_VK/PlaceholderAPI строка скрывается,
+  #   а CHRDK_VK пишет громкое предупреждение в лог.
   #   %pass_type% — приветственный/обычный/нет, %auth_status% — состояние входа,
   #   %auth_hint% — следующий шаг, %security% — состояние 2FA,
   #   %navigation% — доступные ссылки после входа (до входа: пустая строка).
@@ -1654,8 +1656,7 @@ tablist:
     - "<gray>%auth_status%</gray> <dark_gray>│</dark_gray> <gray>2FA: %security%</gray>"
     - "<gray>Варны <yellow>%tab_warns%</yellow> <dark_gray>│</dark_gray> <gray>порог — автобан</gray>"
     - "<gray>%tab_warns_public%</gray>"
-    - "<gold>%chrdksocial_status%</gold>"
-    - "<gray>Привязка <green>%chrdksocial_link%</green> <dark_gray>│</dark_gray> Проход <aqua>%chrdksocial_access%</aqua></gray>"
+    - "%chrdksocial_tab%"
     - "<gray>%auth_hint%</gray>"
     - "<yellow>✦</yellow> <gray>%tab_tip%</gray>"
     - "%tab_separator%"

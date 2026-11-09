@@ -144,7 +144,7 @@ public final class RegisterPlugin extends JavaPlugin {
         // одновременно перехватывать одно сообщение или глотать чужой чат.
         this.chatInput = new GuiChatInput(this);
         getServer().getPluginManager().registerEvents(chatInput, this);
-        // Админ-панель: moderation.json живёт отдельно от data.json аккаунтов.
+        // Админ-панель: moderation.json и players/*.yml живут отдельно от data.json аккаунтов.
         this.moderationStore = new ModerationStore(getDataFolder().toPath(), getLogger());
         this.moderationLedger = moderationStore.load();
         this.moderation = new ModerationService(this, moderationLedger, moderationStore,

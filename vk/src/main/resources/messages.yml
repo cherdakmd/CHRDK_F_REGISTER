@@ -157,6 +157,8 @@ social:
   "gate-disabled": "<yellow>Обязательная привязка сейчас отключена администратором.</yellow>"
   "disabled": "<yellow>Социальный модуль временно отключён.</yellow>"
   "linked": "<green>✅ Аккаунт привязан к %provider%. Можно играть — ограничения сняты.</green>"
+  "link-done": "<green>✅ %provider% уже привязан (id %vk_id%). Можно играть: счётчик привязки в TAB скрыт.</green>"
+  "link-next-step": "<aqua><bold>Привязка к ВКонтакте.</bold></aqua> <white>Код:</white> <click:copy_to_clipboard:'%code%'><hover:show_text:'<green>Скопировать код</green>'><bold><gold>[%code%]</gold></bold></hover></click> <dark_gray>(действует %minutes% мин.)</dark_gray> <gray>Напишите этот код боту сообщества <click:open_url:'%vk%'><underlined>ВКонтакте</underlined></click> одним сообщением. Ограничения снимутся сразу, перезаходить не нужно. <red>Пароль и код 2FA боту не отправляйте.</red></gray>"
   "unlinked": "<yellow>Привязка снята администратором. Новый код входа: <click:copy_to_clipboard:'%code%'><bold><gold>[%code%]</gold></bold></click></yellow>"
   "reward": "<green>🎁 Награда за первую привязку: +%levels% уровней опыта.</green>"
   "code-cooldown": "<yellow>Новый код можно запросить через %seconds% сек.; текущий код ещё действует.</yellow>"

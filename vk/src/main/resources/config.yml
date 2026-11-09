@@ -286,7 +286,11 @@ social:
   # Одноразовая награда за первую привязку (0 = выключено)
   reward-xp-levels: 0
   emergency-minutes: 30
-  # Повреждённый social-links.json: true — аварийный режим вместо тотального кика
+  # Повреждённый social-links.json или players/social.yml: true — аварийный
+  # режим вместо тотального кика. Привязки, firstSeen, донатный доступ и
+  # награда хранятся в редактируемом players/social.yml; rollout, emergency,
+  # чаты и новости — в social-links.json с SHA-256. При первом запуске этой
+  # версии старые поля переносятся автоматически, исходный JSON уходит в .bak.
   fail-open-on-corruption: true
   vk-community-url: "https://vk.ru/chrdk_reborn"
   # Публичная ссылка на бота MAX (диплинк), показывается в игре

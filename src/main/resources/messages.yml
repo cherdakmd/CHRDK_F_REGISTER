@@ -46,7 +46,7 @@ messages:
     "two-factor": "Подтвердите вход: /2fa код"
     "two-factor-setup": "Привяжите 2FA, чтобы войти: /2fa setup"
     "renew": "Продлите доступ: /pass donate"
-    "play": "Вы в игре. Исследуйте мир и развивайте персонажа."
+    "play": "Откройте /menu · свой профиль: /profile"
     "secured": "включена"
     "unsecured": "не подключена"
   "trial":

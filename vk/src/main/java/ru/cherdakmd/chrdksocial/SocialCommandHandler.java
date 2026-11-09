@@ -44,15 +44,18 @@ public final class SocialCommandHandler implements CommandExecutor, TabCompleter
             return true;
         }
         if (service.store().isLinked(player.getName())) {
-            sender.sendMessage("§aВаш аккаунт уже привязан: " + service.status(player.getName()));
+            var binding = service.store().binding(player.getName());
+            String provider = binding.map(value -> SocialService.providerLabel(value.provider())).orElse("мессенджеру");
+            String externalId = binding.map(value -> Long.toString(value.externalId())).orElse("—");
+            plugin.messages().send(player, "social.link-done",
+                    "provider", provider, "vk_id", externalId);
             return true;
         }
         String code = service.issueCode(player);
-        plugin.messages().send(player, "social.gate-code",
-                "code", code, "minutes", Math.max(1, service.config().codeTtlSeconds() / 60));
-        // Инструкция по ВК с живым кодом и ссылкой на сообщество (MAX в разработке).
-        plugin.messages().send(player, "social.gate-howto",
-                "code", code, "vk", service.config().vkCommunityUrl());
+        // Одна понятная инструкция вместо двух сообщений с одним и тем же кодом.
+        plugin.messages().send(player, "social.link-next-step",
+                "code", code, "minutes", Math.max(1, service.config().codeTtlSeconds() / 60),
+                "vk", service.config().vkCommunityUrl());
         if (service.config().donateActive()) {
             plugin.messages().send(player, "social.gate-donate", "url", service.config().donateUrl());
         }

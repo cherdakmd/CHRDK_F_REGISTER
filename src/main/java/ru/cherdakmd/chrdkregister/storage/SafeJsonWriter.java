@@ -14,8 +14,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 
 /**
- * Запись файлов состояния: временный файл рядом, атомарная замена, один
- * писатель на файл и понятный лог, если диск не принял данные.
+ * Запись текстовых файлов состояния (JSON или YAML): временный файл рядом,
+ * атомарная замена, один писатель на файл и понятный лог, если диск не принял данные.
  *
  * <p>Зачем это нужно:</p>
  * <ul>
@@ -62,7 +62,7 @@ public final class SafeJsonWriter {
      * выстраиваются в очередь, а папка создаётся сама.</p>
      *
      * @param file    куда писать; {@code null} — писать некуда
-     * @param content готовый JSON
+     * @param content готовый текст состояния (JSON или YAML)
      * @param logger  лог плагина; {@code null} — не логировать
      * @param tag     префикс сообщений, например {@code [CHRDK_Claims]}
      * @return {@code true} — файл на диске; {@code false} — не вышло, данные

@@ -1,199 +1,199 @@
 {
   "pages": {
     "about": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "44c4f7892fdd06d06215a427f8e17fb5b94ee358e25a1fa20901d8d46d31521b",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "8fcaa88b446b197c006ef70d3025e8f62a9bf974c2aa9b91ca5a4475825faa5a",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "73cbf6081c4ba30e1a5a6fe367dc199f5e5f7ee6d5635f44b443bbeb8910d5e2",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "a517d73d63d6b361033bc6ff2c624d071b54d451573a408eff1cb129c96fd32e",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "55f4731836ea23b85ef16f809a8d517dfa6971109d1acf26433751dd578bceb2",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "b2a60f91c525908035ccbd7e3a3abf4e67512df9a08581643a062e2e9fb1b147",
       "text": "fcdffb1098428fac2bd42d1c4acb73bb9a024d1823d5398b8845bb2f415a506f"
     },
     "auction": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "858b78d2ee5b7e71463a1dc62f67525008e25556f1de27a428fe71446e4e1d83",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "f06f3425cba4c1d66c7792983e20d5160f92627d9afcd4dda376686da5aa17a7",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "08bbbe9a1aaeebf9be2561c60c8c708bdbfc66e1ebf03f1c64c837138cac1cfc",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "c0fd1114e518da06e922bfc666fe7da13d81d0e1edd4269a8a14cb143fe04e0d",
       "text": "f368077b5f1961a1982957afe3b8523b60c8330f3dfd1891003d01ea1c4fd6db"
     },
     "chat": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "44c4f7892fdd06d06215a427f8e17fb5b94ee358e25a1fa20901d8d46d31521b",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "8fcaa88b446b197c006ef70d3025e8f62a9bf974c2aa9b91ca5a4475825faa5a",
       "text": "ca6c93fc33fca52eecc7d38744bc86f619ea0b6a7bcc2314b84ca6c5399d8a1c"
     },
     "claims": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "665ed5ee554a9c2b7a57cc748400e7abaf66007caebb533c252a7861d4a904ba",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "bdba1a10861ac610a8721ea979ba6803990566597e499e75cd13209a1562170d",
       "text": "3144ca61235b895be5cb61e6d120d5dc6d6d0d7c26f87819431b4756659e8e12"
     },
     "classes": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "8d1d1b8d6cd27974f0eb3cc7dfc096092ad9dabb687412e83116cb23716e6ff5",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "8eaeebf1015fa6913128954ae0a0544c02229fd54286c220712dc2473f686d80",
       "text": "fdebe780b6e7964249b5c4bc4752908cbdd67722e4d4bb0a4b1f64d94cd15ea1"
     },
     "commands": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "ca173204deda293572e7264aa80d2d58c5429ed9e78c7990f64609255483202b",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "c80d5a72b43003580b65960e6ddcb3c881ff54184eb1c7896a4ace90bb320beb",
       "text": "13b15e747e5e4aa93ff7ed9ce580f47e2c7952f5f319b46c6e854fc3eaec3252"
     },
     "cosmetics": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "3300544243249c4faa37068517c4a9a4d119171375fb4d978c2d88e371ba3724",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "4546a42ffbaa6db6ec63fcb50d89ec2970f51a220b2c6ae5ff767642cc461aaa",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "c53a5a1a97960c18a491b7c5b4550b98db9f8e550c9ff4eef1d45bcb86210cdb",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "3056e5a3fc481ae3958aedf6809b3a42e59669ee042c1069d81aab84c051c32d",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "disasters": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "59de09f96d1100d66c8bcaf3f0503f2f3c7faea5cb563fcceea73b3f81270d63",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "dd62fa6f905e2e0606bd84ddbb0f2d1788d6b4912b756bf56303a10a28df158d",
       "text": "dd99cd1f21290668ef4d7c8ead28497aa0f50dc4ffd34ee6d8e9f02a0d013d9b"
     },
     "economy": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "c53eb5ac41059277f2123f6177b71a80a3152424f03a534b36a78a34c37e4e7f",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "2442806d53212b25eeaeae83ddd868fa049db84010a446d69b15ffde9155529c",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "e2f41f32e2bd9e7536f60c1e1e28843f1bab6a4d0aa725fed9d659db747ddf0d",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "8177dbbbcbb1349f1215b13ffe4202fc0b0c4fb5b376319b92678acdf46dc74e",
       "text": "c9b27cd4a4970ad227e240e742adc52dca1533312ec7b590663add3b164ba1a2"
     },
     "faq": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "6dacbf544fb80ddbed992c21c257c6ea813b58ffc6277c30ce44ee9d838dc25f",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "b5ce45ba41b90ea1694c287cb0d1ef8b917bfb47b2697f7da4af03462f55bcf7",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "f5cb553e937ea50bc6b7079f88e0ef7a1b1060739db267e5e933b8de287b4723",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "0e8bf329b0b766ba82dee52d707cc82866d6aae8778c75a85380e169d4664e99",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "665ed5ee554a9c2b7a57cc748400e7abaf66007caebb533c252a7861d4a904ba",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "bdba1a10861ac610a8721ea979ba6803990566597e499e75cd13209a1562170d",
       "text": "e166f2671aabcdf55ecf59d1465ddb19a36343f6d07983eb8b8821b3a63cce34"
     },
     "honors": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "44c4f7892fdd06d06215a427f8e17fb5b94ee358e25a1fa20901d8d46d31521b",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "8fcaa88b446b197c006ef70d3025e8f62a9bf974c2aa9b91ca5a4475825faa5a",
       "text": "6bc29d5a2d7783845f8b3d9b085e85982faec5b3029d841092386f36b1d4c4b0"
     },
     "hunt": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "2c8b717634ac16c8f0e1c7653573fb47c96e0fd9a177b9c261fbf7e039245c44",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "5e4b052a7147e14de06f741ac3d5bf4b1aa2f374bd1376ed6e5f7a1d24528da7",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "0c0c8e300300cc0dfd99246697e2c7e6b6e3592900cc7d2636b44f41b915b821",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "b2404f6feaacf3acec6fe99b10ebd283960eed6d685688ad72a966a66519ef10",
       "text": "6a3b9fedc0d15e6ef23ae50e7bf41cdf79f9efcc79299101944c041b5c2d9222"
     },
     "menu": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "cb0f96a065c19d1d6e42bb7abcc40d14f1e035ad75497f6b98c035ae1f8becc4",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "ca319adba2b1fadf9a7c7922ccf5c6827dc33ab6255a671cb6d08f2ffe7ecc10",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "moderation": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "44c4f7892fdd06d06215a427f8e17fb5b94ee358e25a1fa20901d8d46d31521b",
-      "text": "255b8cacb80c9ea7b1236f73feaa226a121bb9b58cff81fef2d46b65abae4073"
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "8fcaa88b446b197c006ef70d3025e8f62a9bf974c2aa9b91ca5a4475825faa5a",
+      "text": "a9f52f2bf3c79afd26856ce422e010dce30f6e3e403343623d465c766ccb5f60"
     },
     "orders": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "4d71e820c71e431098fe4b4b5a109f1033cea6c10ea6246cf7137a85141f5e1d",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "300abb2e8b7666329ff4c0047326be34ee7c5b02653a1c2ca03041ad9450ee7e",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "perktree": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "8d1d1b8d6cd27974f0eb3cc7dfc096092ad9dabb687412e83116cb23716e6ff5",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "8eaeebf1015fa6913128954ae0a0544c02229fd54286c220712dc2473f686d80",
       "text": "148006c785c6f0e5adf6725d87605f5e508b957636fdac87ea64939e7bd63b79"
     },
     "pets": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "24f0b2357faf73ca47f85ac3e3a15999aa26ca50a2d3356b668abab32ac760e8",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "d4c0110df9dc5747123fbf6a0c02e85ef0c632d623249f9675642c5b038b110c",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "93779015c0170853b7fdae0bc39cb67ad4d1211e23dc9f9bb0e0da051d48edc4",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "17261b146a751b7509171e90b021d8152166f04eb143636a641f28b6c55e019c",
       "text": "13e6d38670572890ab2567279a5ca76f8e353eab6ade09a877eee2e884c6e272"
     },
     "profile": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "5a064c59b1dc4ac4ba1b330083731299fe185b122062a44c46648884ffaa34bc",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "23efe1f3a6467abee47b8ff5f5ae608df3f1e45790185dbed16623494392cd1d",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "7c49eecedd60bc148bb1a2ff3f4275108d9c3c21f85716a05b82367e0e9c2b38",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "731358cf7a8f42242bb67083cccd0e628a1c6c4fca3962054e463a33bba7ba96",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "3d1322562ba7b8f77ce538aada7b1b5114d0fbf43075fcf18585a8348c261a37",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "d81f7d61eecb6a00475ebc10d9cda4ecd116286ff7ba2470e68443474297fa65",
       "text": "b551d73e8dcc85c81ff7c908f7c89e1ebfb441b46d082a6a714124d77bfbb2c2"
     },
     "shop": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "0c0c8e300300cc0dfd99246697e2c7e6b6e3592900cc7d2636b44f41b915b821",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "b2404f6feaacf3acec6fe99b10ebd283960eed6d685688ad72a966a66519ef10",
       "text": "ea26b94a87ea9b7287d9afad8fe96c8633ed8cc92e9fb091369ebd814b3a86a6"
     },
     "skills": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "fe1059a12c56d2f024c77089cc4306ffbdc2f3a4fd098f8c7f944bff249481d9",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "2d173a0691a9fdf549332a3a2cda3ea0f0f385339fe61dc98565e04ce3351b29",
       "text": "2cbe0faac3c272b71b3eb81fb78f5051b9eaa58e4ff682276af2c6bbdf74a98b"
     },
     "social-link": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "c0ab9001a90614e439b6c4dca1b5cf5ce89a4a0d3a099fba031ba0c16e4010bd",
-      "text": "65f8ffa165ab0b2dfba6cebd5633dbe78011e5000e4ca5e731d11ec3e68167f7"
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "908d7213a325502530a94b8b097ae6fa59be3be6f7a8f1f99004cf796c568f2d",
+      "text": "9b5f851a3c7dd53cf267d7df742a11729593b338a74d84f7933509693dc9e894"
     },
     "start": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "e4168f3fee9e79a8505b61d722106b99589c2f1b2a6542317486cad3d0694310",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "1c6e9ea7e5d64906a504668312cb60c6c3d1089abb320565169b08d11eb91ba2",
       "text": "c2835fdf2d1945079115e6a252d472ce72ad9ad79f4ed47ad58e269b467d595f"
     },
     "starter-kit": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "55f4731836ea23b85ef16f809a8d517dfa6971109d1acf26433751dd578bceb2",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "b2a60f91c525908035ccbd7e3a3abf4e67512df9a08581643a062e2e9fb1b147",
       "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
     },
     "teleports": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "96fb271cb008c4ea5ba3bf66f8b531161084182ed96ddcb3bbd2fe765e504138",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "9719d722c7b5645a215bfd6d7cb6610ffe63a55484198100a549825a0e3cae38",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "e2f41f32e2bd9e7536f60c1e1e28843f1bab6a4d0aa725fed9d659db747ddf0d",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "8177dbbbcbb1349f1215b13ffe4202fc0b0c4fb5b376319b92678acdf46dc74e",
       "text": "8bfa7eee45f251d4f571e67782e4e245c8a0c9faf55062068f625f72771dc03c"
     },
     "titles": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "886636b729846a730f36b9e5b4a7e82e573c59105a50ac2821cdd9d5c03526f7",
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "b1ca137907517534859ad4fa7915a545c7fa365ddcaaa2bee1365743b4070576",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "0c0c8e300300cc0dfd99246697e2c7e6b6e3592900cc7d2636b44f41b915b821",
-      "text": "238b43656d6df7186d842e6cfda78d158046d66c29320dedbb4bc7b4341b0856"
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "b2404f6feaacf3acec6fe99b10ebd283960eed6d685688ad72a966a66519ef10",
+      "text": "3e590523f540214c41787b6a51b0bff505000fbf1c53b56c7675bc2c8ff2ed88"
     },
     "vk": {
-      "reason": "патченый Mine Treasure RU: новый MineTreasureLootPolicy, слияние лута, config.yml, docs/CI/релиз, version 1.5.2-rc.10; команды, цены и публичные описания не менялись",
-      "sources": "c0ab9001a90614e439b6c4dca1b5cf5ce89a4a0d3a099fba031ba0c16e4010bd",
-      "text": "695ab2766011ccdd4aa7aabde63e5e8fd9e2e750fe334a4d79eba49298df1845"
+      "reason": "Сверены TAB, players/*.yml, fail-open/backup, /link и сообщения",
+      "sources": "908d7213a325502530a94b8b097ae6fa59be3be6f7a8f1f99004cf796c568f2d",
+      "text": "18d15334186d44929c0f741cf70f7682baf535dc9eaca0c62fd177b221f0e91b"
     }
   },
   "schema": 1

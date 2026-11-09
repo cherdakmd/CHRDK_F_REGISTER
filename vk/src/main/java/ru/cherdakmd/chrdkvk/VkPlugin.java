@@ -169,15 +169,16 @@ public final class VkPlugin extends JavaPlugin {
     }
 
     /**
-     * Счётчики TAB регистрируются только при наличии PlaceholderAPI: без PAPI
-     * плагин продолжает работать, а в TAB останутся пустые значения.
+     * Строка TAB регистрируется только при наличии PlaceholderAPI: без PAPI
+     * плагин продолжает работать, а ядро скрывает неразрешённую строку,
+     * не показывая сырой плейсхолдер.
      */
     private void registerPlaceholders() {
         if (socialPlaceholders != null) return;
         if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-            getLogger().severe("[CHRDK_SOCIAL] PlaceholderAPI не найден: счётчики привязки и прохода "
-                    + "(%chrdksocial_status%, %chrdksocial_link%, %chrdksocial_access%) в TAB НЕ работают. "
-                    + "Установите PlaceholderAPI и перезапустите сервер.");
+            getLogger().severe("[CHRDK_SOCIAL] PlaceholderAPI не найден: строка привязки "
+                    + "(%chrdksocial_tab%) в TAB НЕ работает. Установите PlaceholderAPI "
+                    + "и перезапустите сервер. Старые %chrdksocial_*% доступны только с PAPI.");
             // На случай нестандартного порядка загрузки — одна повторная попытка.
             if (!placeholdersRetryScheduled) {
                 placeholdersRetryScheduled = true;
@@ -189,9 +190,9 @@ public final class VkPlugin extends JavaPlugin {
             SocialPlaceholders expansion = new SocialPlaceholders(this, socialService);
             if (expansion.register()) {
                 this.socialPlaceholders = expansion;
-                getLogger().info("[CHRDK_SOCIAL] Счётчики TAB зарегистрированы (chrdksocial).");
+                getLogger().info("[CHRDK_SOCIAL] Строка TAB зарегистрирована (chrdksocial).");
             } else {
-                getLogger().warning("[CHRDK_SOCIAL] Идентификатор chrdksocial уже занят — счётчики TAB не зарегистрированы.");
+                getLogger().warning("[CHRDK_SOCIAL] Идентификатор chrdksocial уже занят — строка TAB не зарегистрирована.");
             }
         } catch (Throwable failure) {
             getLogger().log(Level.WARNING, "[CHRDK_SOCIAL] Не удалось зарегистрировать счётчики TAB", failure);
