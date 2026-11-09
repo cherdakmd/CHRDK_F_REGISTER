@@ -4,6 +4,7 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
+import ru.cherdakmd.chrdkregister.datapack.MineTreasureIntegration;
 import ru.cherdakmd.chrdkregister.item.ItemAttributeMergeListener;
 import ru.cherdakmd.chrdkregister.libs.bstats.bukkit.Metrics;
 import ru.cherdakmd.chrdkregister.libs.bstats.charts.SimplePie;
@@ -363,6 +364,8 @@ public final class RegisterPlugin extends JavaPlugin {
         updateChecker.start();
         hookPlaceholderApi();
         enableMetrics(config);
+        // Только включает уже установленный в <мир>/datapacks ZIP; сам архив не поставляется.
+        MineTreasureIntegration.start(this);
         getLogger().info("CHRDK_Core enabled for Purpur 1.21.11 (pass, password auth, TOTP 2FA, chat, "
                 + "brute-force protection, donation journal).");
     }

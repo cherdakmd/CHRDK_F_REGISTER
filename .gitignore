@@ -31,6 +31,11 @@ config/chrdk_f_register-data.json
 # Собранный вики-сайт (GitHub Pages собирает его в Actions)
 /site/
 
+# Локальная копия стороннего Mine Treasure RU: лицензия оригинала не разрешает
+# публикацию ZIP без явного согласия автора. В репозиторий кладём только код/доки.
+/mine-treasure-1.6.5-ru.zip
+/datapacks/mine-treasure-ru/*.zip
+
 # Локальное окружение проверок Python
 .venv/
 
