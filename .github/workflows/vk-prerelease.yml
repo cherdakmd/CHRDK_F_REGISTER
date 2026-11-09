@@ -7,8 +7,11 @@ name: VK plugin prerelease
 # gradle.properties не меняется: версию получает только этот JAR.
 #
 # Основной триггер — push тега vk-v*. Workflow берётся из самого тега,
-# поэтому не требует добавления файла в main. workflow_dispatch оставлен
-# для будущих запусков, когда workflow окажется в default branch.
+# поэтому не требует добавления файла в main. По умолчанию пререлиз
+# публикуется только на GitHub: живой анонс в беседу ВК выключен и
+# включается лишь вручную через workflow_dispatch с announce=true.
+# workflow_dispatch оставлен для будущих запусков, когда workflow окажется
+# в default branch.
 on:
   push:
     tags: ['vk-v*']
@@ -57,7 +60,8 @@ jobs:
           if [[ "$event" == "push" ]]; then
             tag="$GITHUB_REF_NAME"
             version="${tag#vk-v}"
-            announce='true'
+            # Без явного ручного разрешения пререлиз не пишет в беседу ВК.
+            announce='false'
           else
             version='${{ inputs.version }}'
             tag="vk-v$version"
