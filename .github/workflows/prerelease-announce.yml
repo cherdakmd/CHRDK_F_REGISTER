@@ -1,0 +1,114 @@
+name: General RC announcement (VK chat)
+
+# Анонс ОБЩЕГО пререлиза комплекта (v1.*-rc.*) в беседу ВКонтакте.
+# Триггер — push тега: workflow берётся из самого тега, поэтому не требует
+# добавления файла в main. Стабильные релизы сюда не попадают; для RC без
+# подготовленной заметки docs/social/prereleases/<version>.json job тихо
+# завершается без публикации.
+#
+# Публикация выполняется только после того, как Release-workflow собрал и
+# приложил все три ассета. Стабильная новость run.py/content.news() по-прежнему
+# отклоняет prerelease — этот контур отдельный и явно включаемый.
+on:
+  push:
+    tags: ['v1.*-rc.*']
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  announce:
+    name: Announce the general prerelease in the VK chat
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Resolve version and check the player note
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          version="${tag#v}"
+          if [[ ! "$version" =~ ^1\.[0-9]+\.[0-9]+-rc\.[1-9][0-9]*$ ]]; then
+            echo "Тег $tag не похож на общий RC: анонс пропущен" >&2
+            echo "announce=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ ! -f "docs/social/prereleases/$version.json" ]]; then
+            echo "Нет заметки docs/social/prereleases/$version.json: анонс пропущен"
+            echo "announce=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "announce=true" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Общий RC $tag из $GITHUB_SHA: анонс разрешён заметкой"
+
+      - uses: actions/setup-python@v5
+        if: steps.meta.outputs.announce == 'true'
+        with:
+          python-version: '3.12'
+
+      - name: Install renderer and fonts
+        if: steps.meta.outputs.announce == 'true'
+        run: |
+          python3 -m pip install -r tools/social/requirements.txt
+          sudo apt-get update -qq
+          sudo apt-get install -y fonts-dejavu-core
+
+      - name: Wait for the prerelease with all three assets
+        if: steps.meta.outputs.announce == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag='${{ steps.meta.outputs.tag }}'
+          version='${{ steps.meta.outputs.version }}'
+          expected=("chrdk-plugins-$version.zip" "chrdk-vk-$version.jar" "chrdk-disasters-$version.jar")
+          ready=false
+          for attempt in $(seq 1 90); do
+            state="$(gh release view "$tag" --json isPrerelease,assets \
+                     --jq '[.isPrerelease, (.assets | map(.name) | join(" "))] | @tsv' 2>/dev/null || true)"
+            flag="$(printf '%s' "$state" | cut -f1)"
+            names="$(printf '%s' "$state" | cut -f2)"
+            ok=true
+            for asset in "${expected[@]}"; do
+              grep -Fxq "$asset" <<< "${names// /$'\n'}" || ok=false
+            done
+            if [[ "$flag" == "true" && "$ok" == "true" ]]; then
+              ready=true
+              break
+            fi
+            sleep 20
+          done
+          if [[ "$ready" != "true" ]]; then
+            echo "Релиз $tag с тремя ассетами не появился за 30 минут: анонс не отправлен" >&2
+            exit 1
+          fi
+          gh release view "$tag" --json isPrerelease,assets \
+            --jq '"Релиз \(.tag_name): prerelease=\(.isPrerelease), ассетов \(.assets | length)"'
+
+      - name: Offline preview of the announcement
+        if: steps.meta.outputs.announce == 'true'
+        run: |
+          python3 tools/social/prerelease_general.py --check \
+            --tag '${{ steps.meta.outputs.tag }}' \
+            --version '${{ steps.meta.outputs.version }}'
+
+      - name: Publish the announcement to the VK chat
+        if: steps.meta.outputs.announce == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PRERELEASE_ANNOUNCE: 'true'
+          VK_NEWS_ACCESS_TOKEN: ${{ secrets.VK_NEWS_ACCESS_TOKEN }}
+          VK_NEWS_GROUP_ID: ${{ vars.VK_NEWS_GROUP_ID }}
+          VK_NEWS_PEER_ID: ${{ vars.VK_NEWS_PEER_ID }}
+        run: |
+          python3 tools/social/prerelease_general.py --publish \
+            --tag '${{ steps.meta.outputs.tag }}' \
+            --version '${{ steps.meta.outputs.version }}'
