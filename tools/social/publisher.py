@@ -76,7 +76,8 @@ class Ledger:
                     raise SafetyError('Конфликт или неподдерживаемая схема журнала')
                 for key, record in body['records'].items():
                     if (not re.fullmatch(r'(tip:\d{4}-\d{2}-\d{2}(?::12)?|release:v1\.\d+\.\d+|test:1\.\d+\.\d+'
-                                         r'|prerelease:vk-v1\.\d+\.\d+-rc\.[1-9]\d*)', key)
+                                         r'|prerelease:vk-v1\.\d+\.\d+-rc\.[1-9]\d*'
+                                         r'|prerelease:v1\.\d+\.\d+-rc\.[1-9]\d*)', key)
                             or not isinstance(record, dict) or record.get('status') not in ('prepared', 'posting', 'posted')
                             or not re.fullmatch(r'[0-9a-f]{64}', record.get('digest', ''))
                             or 'attachment' in record
