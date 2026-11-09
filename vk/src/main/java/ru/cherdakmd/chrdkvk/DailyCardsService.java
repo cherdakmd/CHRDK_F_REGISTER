@@ -56,6 +56,11 @@ public final class DailyCardsService {
             plugin.getLogger().warning("[daily-cards] нет community.group-id/access-token — стена недоступна");
             return;
         }
+        if (!plugin.config().photoPublishConfigured()) {
+            plugin.getLogger().warning("[daily-cards] нет community.photo-user-token — "
+                    + "постеры с фото отключены: ключ сообщества даёт VK API error 27");
+            return;
+        }
         schedule();
         plugin.getLogger().info("[daily-cards] четыре карточки игроков включены: " + config.scheduleLabel());
     }
@@ -71,6 +76,11 @@ public final class DailyCardsService {
             plugin.getLogger().info("[daily-cards] автопостинг выключен перезагрузкой конфига");
             return;
         }
+        if (!plugin.config().photoPublishConfigured()) {
+            plugin.getLogger().warning("[daily-cards] нет community.photo-user-token — "
+                    + "постеры с фото отключены перезагрузкой конфига");
+            return;
+        }
         refreshClients();
         schedule();
         plugin.getLogger().info("[daily-cards] расписание обновлено: " + next.scheduleLabel());
@@ -83,7 +93,8 @@ public final class DailyCardsService {
     }
 
     private void refreshClients() {
-        this.publisher = new VkWallPublisher(new VkApiClient(plugin.config()), plugin.config().groupId());
+        this.publisher = new VkWallPublisher(plugin.communityApiClient(),
+                plugin.photoApiClient(), plugin.config().groupId());
     }
 
     private void schedule() {

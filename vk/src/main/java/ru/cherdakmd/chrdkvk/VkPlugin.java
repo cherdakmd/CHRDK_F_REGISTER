@@ -65,6 +65,12 @@ public final class VkPlugin extends JavaPlugin {
         migrateBundledMessages(getDataFolder().toPath().resolve("messages.yml"));
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
         this.config = VkConfig.parse(getConfig());
+        if (config.apiConfigured() && !config.photoPublishConfigured()) {
+            getLogger().warning("[CHRDK_VK] community.photo-user-token не задан: "
+                    + "постеры стены отключены до настройки пользовательского ключа "
+                    + "администратора (wall,photos,offline); ключ сообщества даёт VK API error 27 "
+                    + "на photos.getWallUploadServer");
+        }
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
         if (this.coreApi == null) {
             getLogger().warning("[CHRDK_VK] Сервис ChrdkRegisterApi не найден — проверьте порядок запуска CHRDK_Core.");
@@ -420,6 +426,23 @@ public final class VkPlugin extends JavaPlugin {
 
     public VkConfig config() {
         return config;
+    }
+
+    /** Клиент с ключом сообщества: сообщения, Long Poll и финальный wall.post. */
+    public VkApiClient communityApiClient() {
+        return new VkApiClient(config());
+    }
+
+    /**
+     * Клиент только для {@code photos.*}: отдельный пользовательский ключ
+     * администратора из {@code community.photo-user-token}. Ключ сообщества
+     * сюда намеренно не подставляется: без пользовательского ключа постеры
+     * отключены, чтобы не получать VK API error 27 при group auth.
+     */
+    public VkApiClient photoApiClient() {
+        VkConfig cfg = config();
+        return new VkApiClient(cfg.apiBaseUrl(), cfg.photoAccessToken(), cfg.apiVersion(),
+                new VkApiClient.HttpTransport());
     }
 
     public Messages messages() {

@@ -21,6 +21,11 @@ import java.util.UUID;
  * и отрицательным {@code owner_id}. Ни GitHub Actions, ни служебный чат,
  * ни внешний ledger в этой цепочке не участвуют.</p>
  *
+ * <p>С 1.5.2-rc.8 {@code photos.*} могут идти с отдельного пользовательского
+ * ключа администратора ({@code community.photo-user-token}), а финальный
+ * {@code wall.post} всегда остаётся на ключе сообщества: VK не разрешает
+ * загрузку фото с group auth и возвращает {@code error 27}.</p>
+ *
  * <p>Адрес загрузки проверяется по allowlist доменов VK (как в Python-контуре
  * соцсетей): ответ API не может заставить плагин отправить файл куда-то ещё.</p>
  */
@@ -36,11 +41,25 @@ public final class VkWallPublisher {
     private static final Duration UPLOAD_TIMEOUT = Duration.ofSeconds(30);
     private static final int MAX_PNG_BYTES = 5 * 1024 * 1024;
 
+    /** Ключ сообщества: wall.post, сообщения, Long Poll. */
     private final VkApiClient api;
+    /** Пользовательский ключ администратора: только photos.* и multipart. */
+    private final VkApiClient photoApi;
     private final long groupId;
 
+    /** Обратная совместимость: один клиент на все методы. */
     public VkWallPublisher(VkApiClient api, long groupId) {
+        this(api, api, groupId);
+    }
+
+    /**
+     * @param api      клиент с ключом сообщества для {@code wall.post}
+     * @param photoApi клиент с пользовательским ключом для {@code photos.*};
+     *                 {@code null} означает старый режим «всё на одном ключе»
+     */
+    public VkWallPublisher(VkApiClient api, VkApiClient photoApi, long groupId) {
         this.api = api;
+        this.photoApi = photoApi == null ? api : photoApi;
         this.groupId = groupId;
     }
 
@@ -57,13 +76,13 @@ public final class VkWallPublisher {
         }
         String safeGuid = guid == null || guid.isBlank() ? UUID.randomUUID().toString() : guid;
 
-        JsonObject uploadServer = api.call("photos.getWallUploadServer",
+        JsonObject uploadServer = photoApi.call("photos.getWallUploadServer",
                 Map.of("group_id", Long.toString(groupId))).getAsJsonObject();
         URI uploadUri = validateUploadUrl(required(uploadServer, "upload_url"));
 
         String boundary = "chrdk" + UUID.randomUUID().toString().replace("-", "");
         byte[] multipart = encodeMultipart(boundary, png);
-        String raw = api.postMultipart(uploadUri, multipart,
+        String raw = photoApi.postMultipart(uploadUri, multipart,
                 "multipart/form-data; boundary=" + boundary, UPLOAD_TIMEOUT);
         JsonObject uploaded;
         try {
@@ -72,7 +91,7 @@ public final class VkWallPublisher {
             throw new IOException("VK вернул некорректный ответ загрузки фото", badJson);
         }
 
-        JsonElement saved = api.call("photos.saveWallPhoto", Map.of(
+        JsonElement saved = photoApi.call("photos.saveWallPhoto", Map.of(
                 "group_id", Long.toString(groupId),
                 "photo", required(uploaded, "photo"),
                 "hash", required(uploaded, "hash"),

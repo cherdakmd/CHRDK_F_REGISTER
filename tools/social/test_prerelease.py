@@ -216,5 +216,29 @@ class Rc7NoteTest(unittest.TestCase):
             configured.assert_not_called()
 
 
+class Rc8NoteTest(unittest.TestCase):
+    """Dual-token VK-only пререлиз: заметка короткая, без сети и wall.post."""
+
+    TAG = 'vk-v1.5.2-rc.8'
+    VERSION = '1.5.2-rc.8'
+
+    def test_note_is_readable_and_check_renders_png(self):
+        post = prerelease.build_post(self.TAG, self.VERSION)
+        self.assertEqual(post.key, 'prerelease:' + self.TAG)
+        self.assertIn(self.VERSION, post.text)
+        self.assertIn('пользовательский ключ', post.text.lower())
+        self.assertNotIn('wall.post', post.text)
+        length, image = prerelease.check(post)
+        self.assertLessEqual(length, 4000)
+        self.assertTrue(image.startswith(b'\x89PNG\r\n\x1a\n'))
+        self.assertGreater(len(image), 10_000)
+
+    def test_check_mode_never_touches_vk(self):
+        with patch.object(prerelease, 'configured') as configured:
+            self.assertEqual(0, prerelease.main(
+                ['--check', '--tag', self.TAG, '--version', self.VERSION]))
+            configured.assert_not_called()
+
+
 if __name__ == '__main__':
     unittest.main()

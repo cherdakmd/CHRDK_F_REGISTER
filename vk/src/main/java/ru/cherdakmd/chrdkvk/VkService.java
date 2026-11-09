@@ -317,8 +317,10 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
      * Тестовая PNG-карточка для {@code /vkadmin testcard}: полная штатная цепочка
      * {@code photos.getWallUploadServer → photos.saveWallPhoto → wall.post}, но
      * без суточных ledger'ов, аудита и сдвига {@code last_announced_post_id}.
-     * Текст обязан содержать {@link VkWallPublisher#TEST_POST_MARKER}; сеть и
-     * рендер уходят в фоновый поток, ответы админу — в главный.
+     * {@code photos.*} идут с {@code community.photo-user-token}, финальный
+     * {@code wall.post} — с ключом сообщества. Текст обязан содержать
+     * {@link VkWallPublisher#TEST_POST_MARKER}; сеть и рендер уходят в фоновый
+     * поток, ответы админу — в главный.
      */
     public void publishTestCard(String text, LongConsumer onSuccess, Consumer<String> onFailure) {
         VkApiClient client = this.apiClient;
@@ -326,6 +328,12 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
         if (client == null || !cfg.apiConfigured() || cfg.groupId() <= 0L) {
             onFailure.accept("VK API не настроен: general.enabled, community.group-id, "
                     + "access-token (нужны права wall и photos)");
+            return;
+        }
+        if (!cfg.photoPublishConfigured()) {
+            onFailure.accept("Не задан community.photo-user-token: для загрузки PNG нужен "
+                    + "пользовательский ключ администратора (wall,photos,offline), "
+                    + "а не ключ сообщества");
             return;
         }
         if (text == null || text.isBlank()) {
@@ -342,7 +350,8 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
             try {
                 DailyCardsConfig cards = testCardConfig();
                 byte[] png = renderTestCard(cards, cards.dayKey(Instant.now()));
-                long postId = new VkWallPublisher(client, groupId).publish(png, text, guid);
+                long postId = new VkWallPublisher(client, plugin.photoApiClient(), groupId)
+                        .publish(png, text, guid);
                 onMainThread(() -> onSuccess.accept(postId));
             } catch (InterruptedException interrupted) {
                 Thread.currentThread().interrupt();

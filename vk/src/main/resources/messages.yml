@@ -114,7 +114,7 @@ admin:
   testpost-wall-ok: "<green>Тестовая запись опубликована: <white>%url%</white> (post_id=%post_id%).</green>"
   testpost-wall-failed: "<red>Тестовая запись не опубликована: <white>%error%</white></red>"
   # /vkadmin testcard: та же цепочка photos → wall.post, но с PNG и без ledger'ов.
-  testcard-not-ready: "<yellow>VK API не настроен: проверьте general.enabled, community.group-id и community.access-token (нужны права wall и photos).</yellow>"
+  testcard-not-ready: "<yellow>VK API не настроен: проверьте general.enabled, community.group-id, community.access-token и community.photo-user-token (пользовательский ключ с wall,photos,offline).</yellow>"
   testcard-too-long: "<red>Текст тестовой карточки длиннее %max% символов.</red>"
   testcard-queued: "<aqua>[CHRDK_VK]</aqua> <gray>Публикую тестовую PNG-карточку на стену сообщества…</gray>"
   testcard-ok: "<green>Тестовая карточка с фото опубликована: <white>%url%</white> (post_id=%post_id%).</green>"

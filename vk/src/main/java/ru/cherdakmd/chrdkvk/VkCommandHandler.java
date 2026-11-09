@@ -448,7 +448,7 @@ public final class VkCommandHandler implements CommandExecutor, TabCompleter {
                     "max", Integer.toString(MAX_TEST_POST_TEXT));
             return;
         }
-        if (!plugin.config().apiConfigured()) {
+        if (!plugin.config().apiConfigured() || !plugin.config().photoPublishConfigured()) {
             messages.send(sender, "admin.testcard-not-ready");
             return;
         }

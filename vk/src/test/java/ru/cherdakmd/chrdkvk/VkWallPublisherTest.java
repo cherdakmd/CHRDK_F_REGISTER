@@ -22,6 +22,7 @@ class VkWallPublisherTest {
 
     private static final class FakeTransport implements VkApiClient.Transport {
         final List<String> forms = new ArrayList<>();
+        final List<URI> formUris = new ArrayList<>();
         final List<URI> uploadUris = new ArrayList<>();
         byte[] uploadedBody;
         String uploadUrl = "https://pu.vk.com/upload";
@@ -30,6 +31,7 @@ class VkWallPublisherTest {
         @Override
         public String postForm(URI uri, String formBody, Duration timeout) {
             forms.add(formBody);
+            formUris.add(uri);
             String path = uri.getPath();
             if (path.endsWith("/photos.getWallUploadServer")) {
                 return "{\"response\":{\"upload_url\":\"" + uploadUrl + "\"}}";
@@ -57,7 +59,11 @@ class VkWallPublisherTest {
     }
 
     private static VkApiClient api(FakeTransport fake) {
-        return new VkApiClient("https://api.vk.com/method/", "token", "5.199", fake);
+        return api(fake, "token");
+    }
+
+    private static VkApiClient api(FakeTransport fake, String token) {
+        return new VkApiClient("https://api.vk.com/method/", token, "5.199", fake);
     }
 
     @Test
@@ -81,6 +87,44 @@ class VkWallPublisherTest {
         assertTrue(multipart.contains("name=\"photo\""));
         assertTrue(multipart.contains("filename=\"chrdk-digest.png\""));
         assertTrue(multipart.contains("Content-Type: image/png"));
+    }
+
+    @Test
+    void photoMethodsUseUserTokenAndWallPostUsesCommunityToken() throws Exception {
+        FakeTransport community = new FakeTransport();
+        FakeTransport user = new FakeTransport();
+        VkApiClient communityApi = api(community, "COMMUNITY_TOKEN");
+        VkApiClient photoApi = api(user, "USER_TOKEN");
+
+        long postId = new VkWallPublisher(communityApi, photoApi, 123L)
+                .publish(PNG_HEAD, "Итоги дня", "guid");
+
+        assertEquals(88L, postId);
+        assertEquals(2, user.forms.size(), "photos.* ушли на пользовательский ключ");
+        assertEquals(1, community.forms.size(), "wall.post остался на ключе сообщества");
+        assertTrue(user.formUris.get(0).getPath().endsWith("/photos.getWallUploadServer"));
+        assertTrue(user.formUris.get(1).getPath().endsWith("/photos.saveWallPhoto"));
+        assertTrue(community.formUris.get(0).getPath().endsWith("/wall.post"));
+        for (String form : user.forms) {
+            assertTrue(form.contains("access_token=USER_TOKEN"), form);
+            assertFalse(form.contains("COMMUNITY_TOKEN"));
+        }
+        String wallPost = community.forms.get(0);
+        assertTrue(wallPost.contains("access_token=COMMUNITY_TOKEN"));
+        assertFalse(wallPost.contains("USER_TOKEN"));
+        assertTrue(wallPost.contains("from_group=1"));
+        assertTrue(wallPost.contains("attachments=photo-123_77"));
+        assertEquals(1, user.uploadUris.size(), "multipart тоже идёт через фото-клиент");
+        assertTrue(community.uploadUris.isEmpty());
+    }
+
+    @Test
+    void nullPhotoClientKeepsLegacySingleTokenMode() throws Exception {
+        FakeTransport fake = new FakeTransport();
+        long postId = new VkWallPublisher(api(fake), null, 123L)
+                .publish(PNG_HEAD, "Итоги дня", "guid");
+        assertEquals(88L, postId);
+        assertEquals(3, fake.forms.size());
     }
 
     @Test

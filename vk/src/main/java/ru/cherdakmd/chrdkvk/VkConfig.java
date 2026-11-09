@@ -18,6 +18,7 @@ public record VkConfig(
         String communityUrl,
         String wikiUrl,
         String accessToken,
+        String photoAccessToken,
         String apiVersion,
         String apiBaseUrl,
         boolean keyboardsEnabled,
@@ -83,6 +84,9 @@ public record VkConfig(
         String wikiUrl = sanitizeHttpsUrl(cfg.getString("community.wiki-url", DEFAULT_WIKI_URL),
                 DEFAULT_WIKI_URL);
         String accessToken = trim(cfg.getString("community.access-token", ""));
+        // Пользовательский ключ администратора только для photos.*; не ключ сообщества,
+        // не Callback secret и не MAX-токен. Пустое значение = старый режим с error 27.
+        String photoAccessToken = trim(cfg.getString("community.photo-user-token", ""));
         String apiVersion = trimOrDefault(cfg.getString("community.api-version", DEFAULT_API_VERSION),
                 DEFAULT_API_VERSION);
         String apiBase = sanitizeHttpsUrl(cfg.getString("community.api-base-url", DEFAULT_API_BASE_URL),
@@ -154,7 +158,8 @@ public record VkConfig(
         boolean allowRemoteFreeze = cfg.getBoolean("security.allow-remote-freeze", true);
 
         return new VkConfig(
-                enabled, groupId, communityUrl, wikiUrl, accessToken, apiVersion, apiBase,
+                enabled, groupId, communityUrl, wikiUrl, accessToken, photoAccessToken,
+                apiVersion, apiBase,
                 keyboardsEnabled, inlineSecurityButtons,
                 longPollEnabled, waitSeconds, reconnectSeconds,
                 codeLength, codeTtlSeconds, cooldownSeconds, maxAccountsPerVk,
@@ -177,6 +182,16 @@ public record VkConfig(
     /** Готов ли клиент к обращениям в VK API (заданы и group-id, и токен сообщества). */
     public boolean apiConfigured() {
         return enabled && groupId > 0L && !accessToken.isEmpty();
+    }
+
+    /**
+     * Готов ли контур постеров к загрузке PNG: помимо ключа сообщества задан
+     * отдельный пользовательский ключ администратора для {@code photos.*}.
+     * Без него VK возвращает {@code error 27} на
+     * {@code photos.getWallUploadServer} при group auth.
+     */
+    public boolean photoPublishConfigured() {
+        return apiConfigured() && !photoAccessToken.isEmpty();
     }
 
     /** Прямая ссылка на запись стены сообщества ВКонтакте. */

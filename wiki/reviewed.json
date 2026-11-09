@@ -131,8 +131,8 @@
       "text": "13e6d38670572890ab2567279a5ca76f8e353eab6ade09a877eee2e884c6e272"
     },
     "profile": {
-      "reason": "Сверен /vkadmin testcard: PNG через photos→wall.post, маркер, guid и отсутствие ledger; живая публикация не выполнялась",
-      "sources": "98c30fd59006e773974229ae2e0187192742d43d0bb1f7463262b3140e8907e2",
+      "reason": "VK rc.8: разделение community и пользовательского ключей для photos.*, guard /vkadmin testcard, обновлены config.yml, постеры, docs и wiki/vk.md",
+      "sources": "66aa9e1a3465e284a5fb500e0d76c27fc14aa88cc7caa163d3fe73e613a73f3f",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
@@ -156,8 +156,8 @@
       "text": "2cbe0faac3c272b71b3eb81fb78f5051b9eaa58e4ff682276af2c6bbdf74a98b"
     },
     "social-link": {
-      "reason": "Сверен /vkadmin testcard: PNG через photos→wall.post, маркер, guid и отсутствие ledger; живая публикация не выполнялась",
-      "sources": "af68769ad3c3a655b721bd069685a5b3d91988e28f310c44966e77cf6dbb0e14",
+      "reason": "VK rc.8: разделение community и пользовательского ключей для photos.*, guard /vkadmin testcard, обновлены config.yml, постеры, docs и wiki/vk.md",
+      "sources": "1f0b9b74c629f007480da6e44ff7dc2b2b28ab2d6bada182bcef50c1e1b24f4e",
       "text": "65f8ffa165ab0b2dfba6cebd5633dbe78011e5000e4ca5e731d11ec3e68167f7"
     },
     "start": {
@@ -191,9 +191,9 @@
       "text": "238b43656d6df7186d842e6cfda78d158046d66c29320dedbb4bc7b4341b0856"
     },
     "vk": {
-      "reason": "Сверен /vkadmin testcard: PNG через photos→wall.post, маркер, guid и отсутствие ledger; живая публикация не выполнялась",
-      "sources": "af68769ad3c3a655b721bd069685a5b3d91988e28f310c44966e77cf6dbb0e14",
-      "text": "2288103e1234a0d2bbe060f0aaa25c941879f059d6e13acc49d5177267f75d76"
+      "reason": "VK rc.8: разделение community и пользовательского ключей для photos.*, guard /vkadmin testcard, обновлены config.yml, постеры, docs и wiki/vk.md",
+      "sources": "1f0b9b74c629f007480da6e44ff7dc2b2b28ab2d6bada182bcef50c1e1b24f4e",
+      "text": "4093c197687cf03876ba447e67fc0a3b561ec92758e8cc7d052f6fb6f5abb0fa"
     }
   },
   "schema": 1

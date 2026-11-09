@@ -17,6 +17,8 @@ class VkConfigTest {
         assertTrue(cfg.enabled());
         assertEquals(0L, cfg.groupId());
         assertFalse(cfg.apiConfigured(), "без токена и group-id сетевой клиент выключен");
+        assertEquals("", cfg.photoAccessToken(), "в стоке пользовательский ключ не задан");
+        assertFalse(cfg.photoPublishConfigured());
         assertEquals("https://vk.ru/chrdk_reborn", cfg.communityUrl());
         assertEquals(6, cfg.codeLength());
         assertEquals(300, cfg.codeTtlSeconds());
@@ -43,6 +45,24 @@ class VkConfigTest {
         VkConfig cfg = VkConfig.parse(yaml);
         assertEquals(0, cfg.wallPollMinutes());
         assertTrue(cfg.announceWallPosts(), "События wall_post_new остаются доступны");
+    }
+
+    @Test
+    void photoUserTokenIsOptionalTrimmedAndRequiredForPosters() {
+        YamlConfiguration yaml = new YamlConfiguration();
+        yaml.set("community.group-id", 123456L);
+        yaml.set("community.access-token", "vk1.a.community");
+        VkConfig cfg = VkConfig.parse(yaml);
+        assertEquals("", cfg.photoAccessToken());
+        assertTrue(cfg.apiConfigured(), "текстовый wall.post работает и без фото-ключа");
+        assertFalse(cfg.photoPublishConfigured(), "постеры без пользовательского ключа отключены");
+
+        yaml.set("community.photo-user-token", "  vk1.a.user  ");
+        cfg = VkConfig.parse(yaml);
+        assertEquals("vk1.a.user", cfg.photoAccessToken());
+        assertTrue(cfg.photoPublishConfigured());
+        assertEquals("vk1.a.community", cfg.accessToken(),
+                "ключ сообщества не подменяется пользовательским");
     }
 
     @Test

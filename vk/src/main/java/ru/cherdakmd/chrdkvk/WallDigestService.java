@@ -71,6 +71,11 @@ public final class WallDigestService implements Listener {
             plugin.getLogger().warning("[wall-digest] нет community.group-id/access-token — стена недоступна");
             return;
         }
+        if (!plugin.config().photoPublishConfigured()) {
+            plugin.getLogger().warning("[wall-digest] нет community.photo-user-token — "
+                    + "постер с фото отключён: ключ сообщества даёт VK API error 27");
+            return;
+        }
         registerListenerOnce();
         scheduleTasks();
         plugin.getLogger().info("[wall-digest] дайджест на стену включён: ежедневно "
@@ -97,6 +102,11 @@ public final class WallDigestService implements Listener {
             plugin.getLogger().info("[wall-digest] автопостинг выключен перезагрузкой конфига");
             return;
         }
+        if (!plugin.config().photoPublishConfigured()) {
+            plugin.getLogger().warning("[wall-digest] нет community.photo-user-token — "
+                    + "постер с фото отключён перезагрузкой конфига");
+            return;
+        }
         refreshClients();
         registerListenerOnce();
         scheduleTasks();
@@ -111,8 +121,8 @@ public final class WallDigestService implements Listener {
     }
 
     private void refreshClients() {
-        VkApiClient api = new VkApiClient(plugin.config());
-        this.publisher = new VkWallPublisher(api, plugin.config().groupId());
+        this.publisher = new VkWallPublisher(plugin.communityApiClient(),
+                plugin.photoApiClient(), plugin.config().groupId());
     }
 
     private void scheduleTasks() {

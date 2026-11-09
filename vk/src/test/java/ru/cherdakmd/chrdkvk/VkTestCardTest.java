@@ -107,6 +107,8 @@ final class VkTestCardTest {
         assertTrue(handler.contains("case \"testcard\" -> handleTestCard(sender, args, messages)"));
         assertTrue(handler.contains("\"testpost\", \"testcard\", \"sync\""));
         assertTrue(handler.contains("service.publishTestCard(text"));
+        assertTrue(handler.contains("photoPublishConfigured()"),
+                "без пользовательского ключа команда не должна ставить тест в очередь");
         assertTrue(handler.contains("admin.testcard-queued"));
         assertTrue(handler.contains("admin.testcard-ok"));
         assertTrue(handler.contains("admin.testcard-failed"));
@@ -116,8 +118,12 @@ final class VkTestCardTest {
         int end = service.indexOf("private void onMainThread", start);
         assertTrue(start >= 0 && end > start);
         String method = service.substring(start, end);
-        assertTrue(method.contains("VkWallPublisher(client, groupId).publish(png, text, guid)"),
+        assertTrue(method.contains("new VkWallPublisher(client, plugin.photoApiClient(), groupId)"),
+                "photos.* уходят с пользовательского ключа, wall.post — с community");
+        assertTrue(method.contains(".publish(png, text, guid)"),
                 "должна использоваться полная цепочка photos → wall.post");
+        assertTrue(method.contains("cfg.photoPublishConfigured()"),
+                "без community.photo-user-token тест не должен уходить в error 27");
         assertTrue(method.contains("renderTestCard(cards"));
         assertTrue(method.contains("VkWallPublisher.TEST_POST_MARKER"));
         assertTrue(method.contains("testCardGuid(UUID.randomUUID())"));

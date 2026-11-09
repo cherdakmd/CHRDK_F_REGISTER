@@ -147,7 +147,7 @@ jobs:
           version='${{ steps.meta.outputs.version }}'
           tag='${{ steps.meta.outputs.tag }}'
           jar="vk/build/libs/chrdk-vk-$version.jar"
-          args=(--title "CHRDK_VK $version — дайджест стены (пререлиз)"
+          args=(--title "CHRDK_VK $version — пререлиз только модуля"
                 --notes-file "docs/releases/vk-$version.md" --prerelease)
           # При push тег уже существует; --target нужен только для dispatch.
           if [[ '${{ github.event_name }}' != "push" ]]; then
