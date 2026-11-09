@@ -44,8 +44,9 @@ final class VkWallDiscussTest {
             assertTrue(source.contains("String wallText = cfg.withDiscuss(baseText);"), path);
             assertTrue(source.contains("publishText(wallText, guid)"), path);
             assertTrue(source.contains("publisher.publish(png, wallText, guid)"), path);
-            assertTrue(source.contains("publishChatCard(png, baseText, guid"), path);
-            assertFalse(source.contains("publishChatCard(png, wallText"), path);
+            assertTrue(source.contains("sendChatCard(cfg, png, baseText, guid"), path);
+            assertTrue(source.contains("publishChatCard(png, text, guid)"), path);
+            assertFalse(source.contains("sendChatCard(cfg, png, wallText"), path);
         }
         String service = read("src/main/java/ru/cherdakmd/chrdkvk/VkService.java");
         int wallStart = service.indexOf("public void publishTestWallPost(");

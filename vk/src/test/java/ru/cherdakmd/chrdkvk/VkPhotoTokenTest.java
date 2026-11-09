@@ -75,7 +75,8 @@ final class VkPhotoTokenTest {
             assertTrue(source.contains("cfg.photoWallEnabled()"), path);
             assertTrue(source.contains("publisher.publishText(wallText, guid)"), path);
             assertTrue(source.contains("cfg.withDiscuss(baseText)"), path);
-            assertTrue(source.contains("publishChatCard(png, baseText, guid"), path);
+            assertTrue(source.contains("sendChatCard(cfg, png, baseText, guid"), path);
+            assertTrue(source.contains("publishChatCard(png, text, guid)"), path);
             assertFalse(source.contains("photoPublishConfigured()"), path);
             assertFalse(source.contains("VK API error 27"), path);
         }
