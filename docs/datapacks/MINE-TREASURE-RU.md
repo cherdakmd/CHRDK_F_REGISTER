@@ -3,8 +3,8 @@
 Это **не Incendium** и не новый перевод: присланный
 `/tmp/arena-coding-uploads/mine-treasure-1.6.5-ru.txt` — уже русский ZIP
 Mine Treasure v1.6.5. Повторный перевод не делался. По 12 ответам владельца
-(q1…q12) в репозиторий теперь **закоммичен исправленный ZIP**, а следующий общий
-пререлиз плагинов подготовлен, но **тег/Release сейчас не создаются**.
+(q1…q12) в репозиторий **закоммичен исправленный ZIP**, а полный общий
+пререлиз `v1.5.2-rc.10` **опубликован отдельным решением владельца**.
 
 ## Решения владельца
 
@@ -12,7 +12,7 @@ Mine Treasure v1.6.5. Повторный перевод не делался. П�
 | --- | --- | --- |
 | q1 лицензия | `owner_risk` | ZIP публикуется по решению владельца; **разрешение Frozytime не проверено и не выдаётся за полученное**. Риск принимает владелец. |
 | q2 артефакт | `patched_zip` | В Git идёт не побайтовый оригинал, а патченый ZIP с новым SHA-256. |
-| q3 цель релиза | `plugin_rc` | Новый **общий** RC после `1.5.2-rc.6` (`1.5.2-rc.10`), не rc.9, не стабильный `1.5.2`, не смена `Latest`. Тег/Release — позже, отдельной командой. |
+| q3 цель релиза | `plugin_rc` | Новый **общий** RC после `1.5.2-rc.6` (`1.5.2-rc.10`), не rc.9, не стабильный `1.5.2`, не смена `Latest`. Тег и GitHub prerelease созданы отдельной командой владельца. |
 | q4 ассеты | `zip_only` | Как ассет датапака — только готовый ZIP; SHA-256 пишется в notes. Installer, docs и отдельный JAR датапака не являются release-ассетами. Обычные ассеты комплекта плагинов остаются. |
 | q5 включение | `keep_reflection` | `MineTreasureIntegration` с Paper `DatapackManager` через рефлексию и fallback `/datapack enable "file/<name>"` не менялся; bootstrap/`DATAPACK_DISCOVERY` не добавлялся. |
 | q6 откат | `migration` | План учитывает уже выданные предметы, PDC и scoreboard `mt.*`; in-place миграции нет. |
@@ -99,6 +99,9 @@ Paper 26.3 вызывает `LootGenerateEvent` из `LootTable#fill(Container..
 
 ## Установка
 
+Полная пошаговая инструкция для опубликованного RC — в
+[STAGING-INSTALL-1.5.2-rc.10.md](../STAGING-INSTALL-1.5.2-rc.10.md). Кратко:
+
 1. **Остановите сервер и сделайте backup мира**, `playerdata`, PDC-зависимых
    данных плагинов и scoreboard. Скрипт пишет в `<мир>/datapacks`, но не
    проверяет, что сервер выключен.
@@ -151,19 +154,22 @@ integrations:
 лишь для паков, зарегистрированных другим Paper-плагином. `setEnabled(true)`
 сам перезагружает ресурсы; отдельного `Server#reloadData()` из CHRDK нет.
 
-## Релиз (подготовлено, не опубликовано)
+## Релиз (опубликован)
 
-- `plugin_version` подготовлен как `1.5.2-rc.10`; заметки
+- `plugin_version=1.5.2-rc.10`; тег `v1.5.2-rc.10` и
+  [GitHub prerelease](https://github.com/cherdakmd/CHRDK_F_REGISTER/releases/tag/v1.5.2-rc.10)
+  созданы по отдельному решению владельца. Заметки
   `docs/releases/1.5.2-rc.10.md`, краткий анонс
   `docs/social/prereleases/1.5.2-rc.10.json` и памятка
   `docs/releases/update-memo.txt` содержат SHA-256 ZIP.
-- `.github/workflows/release.yml` проверяет патченый ZIP и отдельным шагом
-  прикладывает `datapacks/mine-treasure-ru/mine-treasure-1.6.5-ru.zip` к общему RC.
-- **Тег `v1.5.2-rc.10`, GitHub Release, `Latest`, Pages и PR не создавались и не
-  двигались.** `vk-v1.5.2-rc.9`, стабильный `v1.5.2`, rc.6 и прежние ассеты не
-  переписывались. Публикация RC — отдельная явная команда владельца.
-- Installer, docs и JAR не прикладываются как ассеты датапака; готовый ZIP и
-  SHA-256 в notes — весь scope q4.
+- `.github/workflows/release.yml` проверил патченый ZIP и отдельным шагом
+  приложил `datapacks/mine-treasure-ru/mine-treasure-1.6.5-ru.zip` к общему RC.
+- **Всего у prerelease четыре ассета**: общий ZIP, отдельные VK/Disasters JAR и
+  готовый patched Mine Treasure ZIP. `Latest` остаётся `v1.5.2`; Pages, PR,
+  `main`, `vk-v1.5.2-rc.9`, стабильные и исторические rc-ассеты не переписывались.
+- Installer, docs и отдельный JAR датапака не прикладываются как ассеты; готовый
+  ZIP и SHA-256 в notes — весь scope q4. Пошаговая установка — в
+  [STAGING-INSTALL-1.5.2-rc.10.md](../STAGING-INSTALL-1.5.2-rc.10.md).
 
 ## Границы и статус проверки
 
