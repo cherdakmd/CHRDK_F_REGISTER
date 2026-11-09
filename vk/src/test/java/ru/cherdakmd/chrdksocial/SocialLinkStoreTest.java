@@ -104,7 +104,8 @@ class SocialLinkStoreTest {
         SocialLinkStore second = store(dir);
         assertTrue(second.loadFailed());
         assertTrue(Files.isRegularFile(dir.resolve("social-links.json.broken")));
-        assertEquals(0, second.linkCount(), "подделанный global JSON не загружает привязки");
+        assertEquals(1, second.linkCount(),
+                "валидный players/social.yml читается отдельно от подделанного global JSON");
 
         // До подтверждения администратором ни один файл не перезаписывается.
         second.link("Other", "vk", 2L, "2", 1, 200L);
