@@ -8,7 +8,7 @@ depend: [CHRDK_Core]
 commands:
   skills:
     description: "Единое меню: навыки, дерево перков, топ и престиж; звания, бонусы и топ престижа"
-    usage: "/skills [menu|list|top|rating|tree [домен]|perks|energy|prestige [<навык>|all]|prestigetop|use <навык>|<навык>]"
+    usage: "/skills [menu|list|top|rating|tree [домен]|perks|energy|prestige [<навык>|all]|prestigetop|balance|use <навык>|<навык>]"
   skillsadmin:
     description: "Администрирование навыков"
     permission: chrdkskills.admin

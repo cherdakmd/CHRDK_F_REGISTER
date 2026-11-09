@@ -87,6 +87,9 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
         if (args[0].equalsIgnoreCase("prestigetop")) {
             return handlePrestigeTop(player);
         }
+        if (args[0].equalsIgnoreCase("balance")) {
+            return handleBalance(player);
+        }
         SkillType skill = SkillType.byId(args[0]);
         if (skill == null) {
             plugin.messages().send(player, "unknown-skill");
@@ -177,6 +180,52 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
         if (place == 1) {
             plugin.messages().send(player, "prestige-top-empty");
         }
+        return true;
+    }
+
+    /** Таблица «навык → ступень → уровень → множитель» и что делать дальше. */
+    private boolean handleBalance(Player player) {
+        if (!plugin.config().prestigeEnabled() || !plugin.config().prestigeBalanceEnabled()) {
+            plugin.messages().send(player, "prestige-disabled");
+            return true;
+        }
+        SkillService.BalanceReport report = service.balanceReport(player);
+        if (report == null) {
+            plugin.messages().send(player, "prestige-disabled");
+            return true;
+        }
+        plugin.messages().send(player, "balance-header",
+                "allowance", String.valueOf(report.allowance()),
+                "base", String.valueOf(report.baseMaxLead()),
+                "rank_bonus", String.valueOf(report.rankBonus()),
+                "rank", String.valueOf(report.rankLevel()),
+                "hard_cap", String.valueOf(report.hardCap()));
+        for (SkillService.BalanceRow row : report.rows()) {
+            String name = plugin.messages().raw("skill." + row.skill().id() + ".name");
+            if (!row.tracked()) {
+                plugin.messages().send(player, "balance-line-off", "name", Messages.trusted(name));
+            } else if (row.factor() <= 0.0) {
+                plugin.messages().send(player, "balance-line-stop",
+                        "name", Messages.trusted(name),
+                        "step", String.valueOf(row.step()),
+                        "level", String.valueOf(row.level()),
+                        "lead", String.valueOf(row.lead()));
+            } else if (row.factor() >= 1.0) {
+                plugin.messages().send(player, "balance-line-full",
+                        "name", Messages.trusted(name),
+                        "step", String.valueOf(row.step()),
+                        "level", String.valueOf(row.level()));
+            } else {
+                plugin.messages().send(player, "balance-line",
+                        "name", Messages.trusted(name),
+                        "step", String.valueOf(row.step()),
+                        "level", String.valueOf(row.level()),
+                        "lead", String.valueOf(row.lead()),
+                        "factor", PrestigeXpGate.factorText(row.factor()));
+            }
+        }
+        plugin.messages().send(player, "balance-footer",
+                "minimum", String.valueOf(report.minimum()));
         return true;
     }
 
@@ -314,7 +363,7 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
             if (args.length == 1) {
                 List<String> options = new ArrayList<>(List.of(
                         "list", "top", "rating", "menu", "tree", "perks", "perktree",
-                        "use", "energy", "prestige", "prestigetop"));
+                        "use", "energy", "prestige", "prestigetop", "balance"));
                 for (SkillType skill : SkillRegistry.all()) {
                     options.add(skill.id());
                 }

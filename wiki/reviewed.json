@@ -36,8 +36,8 @@
       "text": "3144ca61235b895be5cb61e6d120d5dc6d6d0d7c26f87819431b4756659e8e12"
     },
     "classes": {
-      "reason": "Сверены: баланс прокачки престижа — опыт навыку не идёт при отрыве ступеней от минимальной; конфиг, уведомление и тесты",
-      "sources": "f3217c95fe4dfeabe884d2ebab25d7f21e1630e4e6fe1f2b509ba8ebe03fff97",
+      "reason": "Сверены мягкая зона XP, ранговые allowance, /skills balance, уведомления по состоянию и JUnit; дроп алмазов не изменён",
+      "sources": "6a6ed2a9f75f5da300542fc82905dc9cc788a01f5196b0d1b74b70d5f3cca7c5",
       "text": "fdebe780b6e7964249b5c4bc4752908cbdd67722e4d4bb0a4b1f64d94cd15ea1"
     },
     "commands": {
@@ -91,8 +91,8 @@
       "text": "6bc29d5a2d7783845f8b3d9b085e85982faec5b3029d841092386f36b1d4c4b0"
     },
     "hunt": {
-      "reason": "Сверены: баланс прокачки престижа — опыт навыку не идёт при отрыве ступеней от минимальной; конфиг, уведомление и тесты",
-      "sources": "e62394c58e2e767a49e2084c46069f5b7d5af87e976b7393ad4557e5056cc3ea",
+      "reason": "Сверены мягкая зона XP, ранговые allowance, /skills balance, уведомления по состоянию и JUnit; дроп алмазов не изменён",
+      "sources": "d932c6af9effb98f624c394af00b2213acc4a73a4c0b1ba36c2f258bcca2e055",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
@@ -116,8 +116,8 @@
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "perktree": {
-      "reason": "Сверены: баланс прокачки престижа — опыт навыку не идёт при отрыве ступеней от минимальной; конфиг, уведомление и тесты",
-      "sources": "f3217c95fe4dfeabe884d2ebab25d7f21e1630e4e6fe1f2b509ba8ebe03fff97",
+      "reason": "Сверены мягкая зона XP, ранговые allowance, /skills balance, уведомления по состоянию и JUnit; дроп алмазов не изменён",
+      "sources": "6a6ed2a9f75f5da300542fc82905dc9cc788a01f5196b0d1b74b70d5f3cca7c5",
       "text": "148006c785c6f0e5adf6725d87605f5e508b957636fdac87ea64939e7bd63b79"
     },
     "pets": {
@@ -126,8 +126,8 @@
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "Сверены: баланс прокачки престижа — опыт навыку не идёт при отрыве ступеней от минимальной; конфиг, уведомление и тесты",
-      "sources": "169655119753a430f6c17597e0bfd1911381c2d1d1f241e75586f770d8a5e8d5",
+      "reason": "Сверены мягкая зона XP, ранговые allowance, /skills balance, уведомления по состоянию и JUnit; дроп алмазов не изменён",
+      "sources": "e1ff79b6c1d1c67605a7bce9a7e185faef5de3c1266ee227e82205e646d2cae2",
       "text": "13e6d38670572890ab2567279a5ca76f8e353eab6ade09a877eee2e884c6e272"
     },
     "profile": {
@@ -151,9 +151,9 @@
       "text": "ea26b94a87ea9b7287d9afad8fe96c8633ed8cc92e9fb091369ebd814b3a86a6"
     },
     "skills": {
-      "reason": "Сверены: баланс прокачки престижа — опыт навыку не идёт при отрыве ступеней от минимальной; конфиг, уведомление и тесты",
-      "sources": "4afcfccded13cae52d4c1dd523e20154aa7a05cf7d9afe4e86c4176043314150",
-      "text": "ff39c5d7b89c05fe8d7d14245cd8a3b7dff003b375eee4330447992f157530ed"
+      "reason": "Сверены мягкая зона XP, ранговые allowance, /skills balance, уведомления по состоянию и JUnit; дроп алмазов не изменён",
+      "sources": "53bbd4d1015042e0bfc0f8f39ae4b41f22b13e2bb163751f286d7ac2e6cd420d",
+      "text": "2cbe0faac3c272b71b3eb81fb78f5051b9eaa58e4ff682276af2c6bbdf74a98b"
     },
     "social-link": {
       "reason": "Сверены: запрет колонны (Карьер/Забойщик) с чарами megamine и админская команда /vkadmin testpost для чата и стены",

@@ -5,6 +5,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import ru.cherdakmd.chrdkregister.Messages;
+import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 import ru.cherdakmd.chrdkregister.api.EconomyConfirmations;
 
 import java.util.ArrayList;
@@ -47,12 +48,34 @@ public final class SkillService {
     private final SkillStore store;
     /** Двухшаговое подтверждение сброса навыка: TTL и одноразовость из ядра. */
     private final EconomyConfirmations confirmations = new EconomyConfirmations();
-    /** Кулдаун уведомления о заблокированном опыте: не спамим на каждый блок. */
-    private final Map<UUID, Long> balanceNotices = new ConcurrentHashMap<>();
+    /** Кулдаун actionbar-подсказки: не дёргаем полосу на каждый блок. */
+    private final Map<UUID, Long> balanceBars = new ConcurrentHashMap<>();
+    /** Последнее объявленное состояние «навык → множитель»: чат без повторов. */
+    private final Map<String, BalanceState> balanceStates = new ConcurrentHashMap<>();
 
     /** Снимок правила баланса для одного начисления. */
     private record BalanceView(Map<SkillType, Integer> prestige,
-                               Collection<SkillType> tracked, int maxLead) {
+                               Collection<SkillType> tracked, int allowance,
+                               int hardCap, double softStep, double minFactor,
+                               int rankLevel, int baseMaxLead, int rankBonus) {
+    }
+
+    /** Состояние, о котором уже написали в чат (только память, без skills.json). */
+    record BalanceState(double factor, int allowance) {
+        boolean same(double otherFactor, int otherAllowance) {
+            return Double.compare(factor, otherFactor) == 0 && allowance == otherAllowance;
+        }
+    }
+
+    /** Отчёт для {@code /skills balance}: сводка плюс строка на каждый навык. */
+    public record BalanceReport(int allowance, int hardCap, int minimum,
+                                int rankLevel, int baseMaxLead, int rankBonus,
+                                List<BalanceRow> rows) {
+    }
+
+    /** Одна строка отчёта. */
+    public record BalanceRow(SkillType skill, int step, int level, int lead,
+                             double factor, boolean tracked) {
     }
 
     /** Результат обращения к {@link #requestPrestige}. */
@@ -305,13 +328,24 @@ public final class SkillService {
         if (!plugin.config().skill(skill).enabled()) {
             return Award.none(skill);
         }
-        // 1.5.2: нельзя уходить вперёд по ступеням престижа, качая только
-        // самый дешёвый навык (майнинг). Проверяем до любого начисления XP.
+        // Баланс престижа: мягкая зона урезает XP, жёсткий потолок его ставит.
+        // Считаем до начисления, но применяем после бустеров ядра и престижа.
         BalanceView balance = balanceView(player);
-        if (balance != null && !PrestigeXpGate.allows(
-                balance.prestige(), balance.tracked(), skill, balance.maxLead())) {
-            notifyBalanceBlock(player, skill, balance);
-            return Award.none(skill);
+        double balanceFactor = 1.0;
+        int lead = 0;
+        if (balance != null) {
+            lead = PrestigeXpGate.lead(balance.prestige(), balance.tracked(), skill);
+            balanceFactor = PrestigeXpGate.factor(balance.prestige(), balance.tracked(), skill,
+                    balance.allowance(), balance.hardCap(), balance.softStep(), balance.minFactor());
+            if (balanceFactor >= 1.0) {
+                clearBalanceState(player, skill);
+            } else {
+                notifyBalance(player, skill, lead, balance.allowance(), balanceFactor,
+                        balance.hardCap());
+            }
+            if (balanceFactor <= 0.0) {
+                return Award.none(skill);
+            }
         }
         long perUnit = plugin.config().xpFor(skill);
         if (perUnit <= 0L) {
@@ -326,6 +360,8 @@ public final class SkillService {
         // действия: иначе ветеран получал бы экспоненциальный опыт.
         gained = Math.round(gained * PrestigeMath.xpFactor(
                 prestigeLevel(player, skill), plugin.config().prestigeXpPerStep()));
+        // Мягкая зона: хотя бы 1 XP за реальное действие (scaledXp).
+        gained = PrestigeXpGate.scaledXp(gained, balanceFactor);
         gained = Math.max(0L, Math.min(plugin.config().maxXpPerAction(), gained));
         int oldLevel = level(player, skill);
         if (store.xp(key(player), skill) > Long.MAX_VALUE - gained) return Award.none(skill);
@@ -353,27 +389,101 @@ public final class SkillService {
         if (tracked.isEmpty()) {
             return null;
         }
-        return new BalanceView(store.allPrestige(key(player)), tracked,
-                cfg.prestigeBalanceMaxLead());
+        // Эффективная ступень ранга (включая особые звания), мягко: старое ядро
+        // или аддон без API просто не дают послабления, а не роняют прокачку.
+        int rankLevel = effectiveRankLevel(plugin.coreApi(), player.getName());
+        int rankBonus = PrestigeXpGate.rankBonus(cfg.prestigeBalanceRankMaxLead(), rankLevel);
+        int allowance = PrestigeXpGate.allowance(cfg.prestigeBalanceBaseMaxLead(),
+                cfg.prestigeBalanceRankMaxLead(), rankLevel, cfg.prestigeBalanceHardCap());
+        return new BalanceView(store.allPrestige(key(player)), tracked, allowance,
+                cfg.prestigeBalanceHardCap(), cfg.prestigeBalanceSoftStep(),
+                cfg.prestigeBalanceMinXpFactor(), rankLevel,
+                cfg.prestigeBalanceBaseMaxLead(), rankBonus);
     }
 
-    /** Одно уведомление за {@code prestige.balance.notice-seconds}. */
-    private void notifyBalanceBlock(Player player, SkillType skill, BalanceView view) {
+    /**
+     * Эффективная ступень ранга без жёсткой зависимости от свежего Core.
+     * Проверяется юнит-тестами без Bukkit: null, ошибка ядра и бинарно
+     * несовместимая сборка дают 0, XP при этом продолжает начисляться.
+     */
+    static int effectiveRankLevel(ChrdkRegisterApi api, String playerName) {
+        if (api == null) {
+            return 0;
+        }
+        try {
+            return Math.max(0, api.rankLevel(playerName));
+        } catch (RuntimeException | LinkageError outdated) {
+            return 0;
+        }
+    }
+
+    /** Отчёт для {@code /skills balance}; {@code null}, если правило выключено. */
+    public BalanceReport balanceReport(Player player) {
+        BalanceView view = balanceView(player);
+        if (view == null) {
+            return null;
+        }
+        int minimum = PrestigeXpGate.minimum(view.prestige(), view.tracked());
+        List<BalanceRow> rows = new ArrayList<>();
+        for (SkillType type : SkillType.values()) {
+            boolean tracked = view.tracked().contains(type);
+            rows.add(new BalanceRow(type,
+                    PrestigeXpGate.step(view.prestige(), type), level(player, type),
+                    tracked ? PrestigeXpGate.lead(view.prestige(), view.tracked(), type) : 0,
+                    tracked ? PrestigeXpGate.factor(view.prestige(), view.tracked(), type,
+                            view.allowance(), view.hardCap(), view.softStep(), view.minFactor()) : 1.0,
+                    tracked));
+        }
+        return new BalanceReport(view.allowance(), view.hardCap(), minimum, view.rankLevel(),
+                view.baseMaxLead(), view.rankBonus(), List.copyOf(rows));
+    }
+
+    /**
+     * Actionbar — с кулдауном, чат — только при смене состояния. Ранг истёк или
+     * куплен: allowance пересчитывается на следующем действии без отката данных.
+     */
+    private void notifyBalance(Player player, SkillType skill, int lead, int allowance,
+                               double factor, int hardCap) {
         long now = System.currentTimeMillis();
         long window = TimeUnit.SECONDS.toMillis(plugin.config().prestigeBalanceNoticeSeconds());
-        Long last = balanceNotices.putIfAbsent(player.getUniqueId(), now);
-        if (last != null) {
-            if (now - last < window) {
-                return;
+        Long lastBar = balanceBars.putIfAbsent(player.getUniqueId(), now);
+        if (lastBar == null || now - lastBar >= window) {
+            balanceBars.put(player.getUniqueId(), now);
+            String name = plugin.messages().raw("skill." + skill.id() + ".name");
+            if (plugin.config().actionbar()) {
+                if (factor <= 0.0) {
+                    player.sendActionBar(plugin.messages().get("prestige-balance-bar-stop",
+                            "skill", Messages.trusted(name)));
+                } else {
+                    player.sendActionBar(plugin.messages().get("prestige-balance-bar",
+                            "skill", Messages.trusted(name),
+                            "factor", PrestigeXpGate.factorText(factor)));
+                }
             }
-            balanceNotices.put(player.getUniqueId(), now);
+        }
+        String key = player.getUniqueId() + ":" + skill.id();
+        BalanceState previous = balanceStates.put(key, new BalanceState(factor, allowance));
+        if (previous != null && previous.same(factor, allowance)) {
+            return;
         }
         String name = plugin.messages().raw("skill." + skill.id() + ".name");
-        plugin.messages().send(player, "prestige-balance-blocked",
-                "skill", Messages.trusted(name),
-                "lead", Integer.toString(PrestigeXpGate.lead(view.prestige(), view.tracked(), skill)),
-                "min", Integer.toString(PrestigeXpGate.minimum(view.prestige(), view.tracked())),
-                "max_lead", Integer.toString(view.maxLead()));
+        if (factor <= 0.0) {
+            plugin.messages().send(player, "prestige-balance-state-stop",
+                    "skill", Messages.trusted(name),
+                    "lead", Integer.toString(lead),
+                    "hard_cap", Integer.toString(hardCap));
+        } else {
+            plugin.messages().send(player, "prestige-balance-state",
+                    "skill", Messages.trusted(name),
+                    "factor", PrestigeXpGate.factorText(factor),
+                    "lead", Integer.toString(lead),
+                    "allowance", Integer.toString(allowance));
+        }
+    }
+
+    /** Вернулись к полному опыту: сбрасываем состояние, чтобы новый отрыв снова объявился. */
+    private void clearBalanceState(Player player, SkillType skill) {
+        balanceStates.remove(player.getUniqueId() + ":" + skill.id());
     }
 
     /** Админское начисление: то же, но без ограничения «единиц» и с проверкой прав. */

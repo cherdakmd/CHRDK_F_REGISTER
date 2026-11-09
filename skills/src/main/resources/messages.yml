@@ -23,7 +23,19 @@ messages:
   prestige-top-header: "<gold>✦ Топ престижа сервера</gold>"
   prestige-top-line: "<gray>%place%. <white>%name%</white> — %total%</gray>"
   prestige-top-empty: "<gray>Пока никто не брал престиж.</gray>"
-  prestige-balance-blocked: "<yellow>Опыт навыка %skill% приостановлен: его престиж опережает остальные на %lead% ст. (минимум %min%, разрешено не более +%max_lead%). Прокачайте отстающие навыки до 100 и возьмите престиж — <white>/skills prestige all</white>.</yellow>"
+  # Баланс престижа: actionbar тихий, чат — только при смене состояния.
+  prestige-balance-bar: "<gold>%skill% ×%factor% · алмазы идут как обычно</gold>"
+  prestige-balance-bar-stop: "<red>%skill%: опыт остановлен · алмазы идут как обычно</red>"
+  prestige-balance-state: "<yellow>%skill%: опыт ×%factor% (отрыв %lead% ст., разрешено +%allowance%). Докачайте отстающие навыки до 100, затем /skills prestige all.</yellow>"
+  prestige-balance-state-stop: "<yellow>%skill%: опыт остановлен (отрыв %lead% ст., стоп с %hard_cap%). Докачайте отстающие навыки до 100, затем /skills prestige all. Алмазы, перки и профессия идут как обычно.</yellow>"
+
+  # ------------------------- /skills balance -------------------------
+  balance-header: "<gold>Баланс престижа · разрешено +%allowance% ст. (база %base% + ранг +%rank_bonus%, L%rank%), стоп с %hard_cap%</gold>"
+  balance-line: "<gray>%name%</gray> <dark_gray>·</dark_gray> ст. %step% <dark_gray>·</dark_gray> ур. %level% <dark_gray>·</dark_gray> отрыв %lead% <dark_gray>·</dark_gray> <yellow>×%factor%</yellow>"
+  balance-line-full: "<gray>%name%</gray> <dark_gray>·</dark_gray> ст. %step% <dark_gray>·</dark_gray> ур. %level% <dark_gray>·</dark_gray> <green>полный опыт</green>"
+  balance-line-stop: "<gray>%name%</gray> <dark_gray>·</dark_gray> ст. %step% <dark_gray>·</dark_gray> ур. %level% <dark_gray>·</dark_gray> отрыв %lead% <dark_gray>·</dark_gray> <red>ОПЫТ ОСТАНОВЛЕН</red>"
+  balance-line-off: "<dark_gray>%name% — выключен в конфиге, в расчёте не участвует</dark_gray>"
+  balance-footer: "<gray>Минимум по включённым навыкам: %minimum%. Докачайте отстающие до 100, затем <yellow>/skills prestige all</yellow>. Алмазы, перки и профессия идут как обычно.</gray>"
   extra-catch: "<aqua>Рыбалка: лишний улов!</aqua>"
   arrow-kept: "<gray>Стрельба: стрела сохранена.</gray>"
   extra-potion: "<light_purple>Алхимия: вторая порция ингредиента.</light_purple>"
