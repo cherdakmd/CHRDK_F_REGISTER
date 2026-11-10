@@ -1,0 +1,22 @@
+name: Backup diagnostic
+on:
+  push:
+    branches: [arena/3fffd525-chrdk-f-register]
+    paths:
+      - '.github/workflows/backup-diagnostic.yml'
+      - 'src/main/java/ru/cherdakmd/chrdkregister/storage/**'
+      - 'src/test/java/ru/cherdakmd/chrdkregister/storage/**'
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v4
+      - run: timeout 180 ./gradlew test --tests 'ru.cherdakmd.chrdkregister.storage.*' --info --console=plain
