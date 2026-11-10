@@ -1,198 +1,198 @@
 {
   "pages": {
     "about": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "0dd7ca1e3d0aff73fc48ea7b19b23c58b2b92fded557b5b5e348137b2207fa50",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "b09d3c81a6d220fcaaa2e3de87e97ed60d190f0b277f2eaecab3266dfe31b5c2",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "a0d9f061f356ee352398cea0b017386ed3e3e506bf45361d6096635be833e665",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "b26a18f85b3b4c525d52ca7727833cbe36b2501211d7bbbb3a76f199d6ac5f5a",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "5781df729df8c40dd2a80739126ae927d4d30404d64abc4739989ce584903429",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "c12858357733d3799f7f311039b283140c896e9673be520b6e9503568e130eb7",
       "text": "fcdffb1098428fac2bd42d1c4acb73bb9a024d1823d5398b8845bb2f415a506f"
     },
     "auction": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "af73f66f25c5ef761b2443ada83f9f26c314aa26d45254c9d607039c07b07e70",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "3caae53c00c80e523b98a29dc1ffdfb64cd0327156feadcba538f93d7cb0d44c",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "292a4c92d95cabf2d0216d4811fcdd19e54064c50cc2378ba7561f5a9235a53a",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "5ed6e277434690da97cf71924c553502a3d1b44c2062b542c55e1aaf583033f7",
       "text": "f368077b5f1961a1982957afe3b8523b60c8330f3dfd1891003d01ea1c4fd6db"
     },
     "chat": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "0dd7ca1e3d0aff73fc48ea7b19b23c58b2b92fded557b5b5e348137b2207fa50",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "b09d3c81a6d220fcaaa2e3de87e97ed60d190f0b277f2eaecab3266dfe31b5c2",
       "text": "ca6c93fc33fca52eecc7d38744bc86f619ea0b6a7bcc2314b84ca6c5399d8a1c"
     },
     "claims": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "d44c3b77c90e40d7f908c3e749ec6b5dfd1a10bc1b434c2fa63c75b75b5c63b2",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "ab196e63a81e5031cd851ca0afb173e38c5d85f1a592720f7a7050e8504f6d82",
       "text": "3144ca61235b895be5cb61e6d120d5dc6d6d0d7c26f87819431b4756659e8e12"
     },
     "classes": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "59436c6d13a4d7cdab23ee4f45eef6d654af950821b8f57aed2c81ae99d3937a",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "5cd510a69de7aa9ba875ce772301898d31be865d6797bf6b79428bbab389082a",
       "text": "fdebe780b6e7964249b5c4bc4752908cbdd67722e4d4bb0a4b1f64d94cd15ea1"
     },
     "commands": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "86c5c1dfcc38bc40db4ddd427035b586a5c2eb4190855ed7975c90608fcce70a",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "17306f6594f4c9e122c6ff25ddb7682f36747b950ff517d552facf208b9a2494",
       "text": "13b15e747e5e4aa93ff7ed9ce580f47e2c7952f5f319b46c6e854fc3eaec3252"
     },
     "cosmetics": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "85c06803df3bf10e7281f7c75d20d98aa8d2a94192eba54ed010a96b93d9c24a",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "e26da7b329f1eaf0ee878af8f012b814cc0e4f3eaa673d188a4c8a1eb402befe",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "798775b4bd1e3c5c1d275ea9263b1c57aa24bc5f5b324abf1926c705028237c5",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "a677f11dd49cf50bc3eb4f590fd99cce743172967a1d4b061dd9c61868d31c67",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "disasters": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "a912d161101ba6b0833bb215ff3d720a231da947c44b94c9784253b8e7539c9a",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "0080b52ff0c93862e93c281b820405cdd4b06d557468b6b4cd5e754aad114239",
       "text": "dd99cd1f21290668ef4d7c8ead28497aa0f50dc4ffd34ee6d8e9f02a0d013d9b"
     },
     "economy": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "b1c71fc93d1bcde07f3c0bbb5865736bb81df528ba35b0dce61a7a79bf677b14",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "a91cf6a08b41864709d7118b80053237fd1bc9391fd2c08806940c7b841252a0",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "0ca242e7dca2bb2261012b80eb90739a979217a27134ab38a06534d314a80344",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "52b7fe9af96b1005f142241076b26011b86a5e987976b92d074737b34c399055",
       "text": "c9b27cd4a4970ad227e240e742adc52dca1533312ec7b590663add3b164ba1a2"
     },
     "faq": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "7899fa6edeb1fa42a05fdbbf7703ae25ac3fa1e487f2a998d38aae4fe21b224e",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "108c4fd505d526ae5a9dace13bb9f678a7ab7bd8a41a03c2a08e34dda43981da",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "164fc834366df74d1f85d0a3b7153f081be1196768e31f28070995884f290b2d",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "983e0c6dd560f53f190f9d1dad83c85af18776c6144e7896c5f73ba3b929836c",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "d44c3b77c90e40d7f908c3e749ec6b5dfd1a10bc1b434c2fa63c75b75b5c63b2",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "ab196e63a81e5031cd851ca0afb173e38c5d85f1a592720f7a7050e8504f6d82",
       "text": "e166f2671aabcdf55ecf59d1465ddb19a36343f6d07983eb8b8821b3a63cce34"
     },
     "honors": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "0dd7ca1e3d0aff73fc48ea7b19b23c58b2b92fded557b5b5e348137b2207fa50",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "b09d3c81a6d220fcaaa2e3de87e97ed60d190f0b277f2eaecab3266dfe31b5c2",
       "text": "6bc29d5a2d7783845f8b3d9b085e85982faec5b3029d841092386f36b1d4c4b0"
     },
     "hunt": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "950cf742b42d71a53358c8a4b9df8bd50d3fc392616ae5b1347fe08313fcb2e8",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "a4945a78817093b0317f535b4798ff4057103de5e0cd60fa0092c47789b762d4",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "ad7367a616b9fde2a8555bfd9da18606928ed33d870b4b29dced9d293c1004d4",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "dcc5d4ef9e2143a3b92fae7da59567cd177e146ee65d44b4c5c7a9a8cec1e023",
       "text": "6a3b9fedc0d15e6ef23ae50e7bf41cdf79f9efcc79299101944c041b5c2d9222"
     },
     "menu": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "47251ae80d76eed21dfd8e4f36576a96569235bb22bad7b46c21c93b75cf26a4",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "7c6549d196c9814cd71db85ebd448a0e43d2955e9b4137d2a4122f901c0d1ca8",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "moderation": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "0dd7ca1e3d0aff73fc48ea7b19b23c58b2b92fded557b5b5e348137b2207fa50",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "b09d3c81a6d220fcaaa2e3de87e97ed60d190f0b277f2eaecab3266dfe31b5c2",
       "text": "a9f52f2bf3c79afd26856ce422e010dce30f6e3e403343623d465c766ccb5f60"
     },
     "orders": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "6a1b6a78657685bbe08dc8093236800ce5b02536bdb33a8855e01492aa7907ef",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "6911d439a7e5bb6994a537ba9029ce4893b4072c7e6a03f83d7353594313b472",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "perktree": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "59436c6d13a4d7cdab23ee4f45eef6d654af950821b8f57aed2c81ae99d3937a",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "5cd510a69de7aa9ba875ce772301898d31be865d6797bf6b79428bbab389082a",
       "text": "148006c785c6f0e5adf6725d87605f5e508b957636fdac87ea64939e7bd63b79"
     },
     "pets": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "d9e601658a2d5d464b0bb9ccb4281853a5192edb8618340d035d5b7e38a2f6b1",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "9a1e74347695f925c3bb7d7d1c797bce405fd9b184c12f5b012a4a50f407bef2",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "820db6a4e77366e0461b5a5cae73afebbba35e668d3c549cad0edfae0d94a54a",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "7417a1a0853045404c38cfd30b8aa4b62ac76966be24edc53fd898649cb48396",
       "text": "13e6d38670572890ab2567279a5ca76f8e353eab6ade09a877eee2e884c6e272"
     },
     "profile": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "451aba8cf762c9ec0a7bb639b8c2219b855d4e42e01eefed5e1c6274c3862bc4",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "92f871b9ab9070f4ed47c6ab0395d08319101412d40eebda2dcaecaf084572ec",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "545fdc18b404fbfc1438fa39eb6e49e7dbce712afaf93c89394ff107b8f9890d",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "c401a5ffe4210bee2b10712ae94778494995756a8980e5f9a9f2d36b9608de62",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "a558c4ac5cf99b32de2b180728e09c3ea8700e4250f4687978d04314b30b3994",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "146bca8a654ee4699c90d89bbcbf86369c9d950a556d4cc78ecf157dd6cd6ccc",
       "text": "b551d73e8dcc85c81ff7c908f7c89e1ebfb441b46d082a6a714124d77bfbb2c2"
     },
     "shop": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "ad7367a616b9fde2a8555bfd9da18606928ed33d870b4b29dced9d293c1004d4",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "dcc5d4ef9e2143a3b92fae7da59567cd177e146ee65d44b4c5c7a9a8cec1e023",
       "text": "ea26b94a87ea9b7287d9afad8fe96c8633ed8cc92e9fb091369ebd814b3a86a6"
     },
     "skills": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "d11656e575258385153e87a615bfaf6f4bb855e16579846390c86bef04759c54",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "ac60438f18591654067a685afd7095251f06f27fabb001ace0c3bb59f9d9b83d",
       "text": "2cbe0faac3c272b71b3eb81fb78f5051b9eaa58e4ff682276af2c6bbdf74a98b"
     },
     "social-link": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "2b6d308035b508c9da87ce16bd305215e6fa1bbd9b2f139dabfdcc91354a684c",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "8c5571cb0d5efe5ca4778278aac631685d8230ce3df66f7484b87a00a6282bca",
       "text": "1f6cf95d9c8c2180dbf871aa9b19a7bfcde5405cf77b75954b7575920d2aef14"
     },
     "start": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "f94c6cb980eccc10362d1918710b44df2ef40141b18e1a5398064dbc1213fb4a",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "895c07d4dfb76f89e3803ab71e366cf5ae2ea9211889fdb81d8d0b4bc2230488",
       "text": "c2835fdf2d1945079115e6a252d472ce72ad9ad79f4ed47ad58e269b467d595f"
     },
     "starter-kit": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "5781df729df8c40dd2a80739126ae927d4d30404d64abc4739989ce584903429",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "c12858357733d3799f7f311039b283140c896e9673be520b6e9503568e130eb7",
       "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
     },
     "teleports": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "abb7e8c3c0c332554e7c197fad0519d38f0ef15c3f4bff027a40b936a28c8fea",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "8f1d50fd28ccdbec0952a1f87c88581cf10407457503ec6f7980039af163a5e2",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "0ca242e7dca2bb2261012b80eb90739a979217a27134ab38a06534d314a80344",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "52b7fe9af96b1005f142241076b26011b86a5e987976b92d074737b34c399055",
       "text": "8bfa7eee45f251d4f571e67782e4e245c8a0c9faf55062068f625f72771dc03c"
     },
     "titles": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "dc5689f32d32f3e790f7ca5170b4671f13d40768a106edb16ad91eacfa001262",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "024654ea6f06efa7b5120b6f1a4fe3462ee55925638203f4353570f026662113",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Сверен накопительный стабильный 1.5.2-fix: все RC, состав ассетов, миграции и откат",
-      "sources": "ad7367a616b9fde2a8555bfd9da18606928ed33d870b4b29dced9d293c1004d4",
-      "text": "3d07ff83bd1c8c02d2f22a608a0301e21d09014c4c7ace84807a4a08e6398ca5"
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "dcc5d4ef9e2143a3b92fae7da59567cd177e146ee65d44b4c5c7a9a8cec1e023",
+      "text": "acab27748d7c58b1b9a17a67c3c2c6c175b1fa5a779c94fc7034c1a7e0aa4d74"
     },
     "vk": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "2b6d308035b508c9da87ce16bd305215e6fa1bbd9b2f139dabfdcc91354a684c",
+      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
+      "sources": "8c5571cb0d5efe5ca4778278aac631685d8230ce3df66f7484b87a00a6282bca",
       "text": "b592e465a73dd13186763622b51190400cffd40960e233f58c63379b88a9bba9"
     }
   },

@@ -75,6 +75,7 @@ public final class RegisterPlugin extends JavaPlugin {
     private HonorStore honorStore;
     private HonorService honors;
     private HonorGui honorGui;
+    private ru.cherdakmd.chrdkregister.storage.BackupService backupService;
 
     /** Имя папки данных до переименования ядра (1.4.44). */
     private static final String LEGACY_DATA_FOLDER = "CHRDK_F_REGISTER";
@@ -358,6 +359,8 @@ public final class RegisterPlugin extends JavaPlugin {
 
         accessManager.start();
         rewardBoosts.start();
+        this.backupService = new ru.cherdakmd.chrdkregister.storage.BackupService(this);
+        backupService.start();
         chatService.start();
         this.updateChecker = new UpdateChecker(this, accessManager, getLogger());
         getServer().getPluginManager().registerEvents(updateChecker, this);
@@ -392,6 +395,7 @@ public final class RegisterPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (backupService != null) backupService.stop();
         // Нельзя оставить готовый результат с клиентским cost=39 после снятия full-price guard.
         getServer().getOnlinePlayers().forEach(player -> {
             if (player.getOpenInventory() instanceof org.bukkit.inventory.view.AnvilView) player.closeInventory();
@@ -503,6 +507,7 @@ public final class RegisterPlugin extends JavaPlugin {
         if (starterKitService != null) {
             starterKitService.reload(StarterKitSettings.parse(getConfig()));
         }
+        if (backupService != null) backupService.reload();
         if (shopService != null) {
             shopService.logProblems();
         }
@@ -601,6 +606,17 @@ public final class RegisterPlugin extends JavaPlugin {
             labelsCommand.refreshMessages();
         }
         return messages.validate();
+    }
+
+    public ru.cherdakmd.chrdkregister.storage.BackupService backups() { return backupService; }
+
+    /** Сбрасывает собственные WAL перед копированием; аддоны сбрасывают свои по своим таймерам. */
+    public void flushForBackup() {
+        if (store != null) store.flush();
+        if (bankStore != null) bankStore.flush();
+        if (labelPreferences != null) labelPreferences.saveNow();
+        if (honors != null) honors.save();
+        if (moderation != null) moderation.save();
     }
 
     /** Flushes the storage and creates a manual backup (used by {@code /pass backup}). */

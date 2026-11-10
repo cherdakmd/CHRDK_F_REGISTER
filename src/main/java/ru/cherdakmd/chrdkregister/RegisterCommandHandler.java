@@ -1145,11 +1145,22 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         String action = args.length >= 2 ? args[1].toLowerCase(Locale.ROOT) : "create";
         switch (action) {
             case "create", "now" -> {
+                if (!plugin.backups().create(sender)) messages.send(sender, "backup.busy");
+            }
+            case "legacy" -> {
                 var created = plugin.createBackup("manual");
                 sender.sendMessage(created.map(path -> messages.get("backup.created", "path", path.getFileName()))
                         .orElseGet(() -> messages.get("backup.create-failed")));
             }
+            case "verify" -> {
+                if (args.length < 3) messages.send(sender, "usage.backup-verify", "label", label);
+                else plugin.backups().verify(sender, args[2]);
+            }
             case "list" -> {
+                var snapshots = plugin.backups().list();
+                for (var snapshot : snapshots) {
+                    messages.send(sender, "backup.snapshot-entry", "backup", snapshot.getFileName());
+                }
                 var backups = accessManager.store().listBackups();
                 if (backups.isEmpty()) {
                     messages.send(sender, "backup.empty");
@@ -1164,6 +1175,10 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             case "restore" -> {
                 if (args.length < 3) {
                     messages.send(sender, "usage.backup-restore", "label", label);
+                    return;
+                }
+                if (args[2].endsWith(ru.cherdakmd.chrdkregister.storage.BackupArchive.SUFFIX)) {
+                    messages.send(sender, "backup.offline-restore");
                     return;
                 }
                 java.nio.file.Path target = plugin.getDataFolder().toPath()
@@ -1849,7 +1864,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 return completePlayerNames(args[1]);
             }
             if ("backup".equals(sub)) {
-                return List.of("create", "list", "restore");
+                return List.of("create", "list", "verify", "legacy", "restore");
             }
             if ("update".equals(sub)) {
                 String prefix = args[1].toLowerCase(Locale.ROOT);
@@ -1879,6 +1894,9 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 return accessManager.store().listBackups().stream()
                         .map(path -> path.getFileName().toString())
                         .toList();
+            }
+            if ("backup".equals(sub) && "verify".equals(action)) {
+                return plugin.backups().list().stream().map(path -> path.getFileName().toString()).toList();
             }
         }
         if (args.length == 4 && "testpay".equals(args[0].toLowerCase(Locale.ROOT))) {

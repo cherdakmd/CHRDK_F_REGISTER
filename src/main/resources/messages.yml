@@ -90,8 +90,9 @@ messages:
   # ---------------------------------------------------------------
   "usage":
     "rank-my": "<yellow>Использование: /%label% my [ник]</yellow>"
-    "backup": "<yellow>Использование: /%label% backup <create|list|restore <файл>></yellow>"
-    "backup-restore": "<yellow>Использование: /%label% backup restore <файл></yellow>"
+    "backup": "<yellow>Использование: /%label% backup <create|list|verify <ZIP>|legacy|restore <legacy-файл>></yellow>"
+    "backup-restore": "<yellow>Использование: /%label% backup restore <legacy-файл></yellow>"
+    "backup-verify": "<yellow>Использование: /%label% backup verify <ZIP-файл></yellow>"
     "login": "<yellow>Использование: /login <пароль> [код_2FA]</yellow>"
     "pass-boost": "<yellow>Использование: /%label% boost <ник_на_Boosty></yellow> — привязать подписку; /%label% boost reset — отвязать"
     "pass-approve": "<yellow>Использование: /%label% approve <id> [ник] [дней]</yellow>"
@@ -585,7 +586,7 @@ messages:
       <yellow>/%label% doctor</yellow><gray> — самопроверка конфигурации</gray>
       <yellow>/%label% paidaudit</yellow><gray> — отчёт сверки покупок без изменения прав</gray>
       <yellow>/%label% audit [ник] [N]</yellow><gray> — последние записи аудита</gray>
-      <yellow>/%label% backup <create|list|restore></yellow><gray> — резервные копии данных</gray>
+      <yellow>/%label% backup <create|list|verify></yellow><gray> — проверяемые снимки данных всех CHRDK</gray>
       <yellow>/%label% luckperms [setup|status]</yellow><gray> — авто-настройка групп LuckPerms (default → ранг → admin)</gray>
       <yellow>/%label% update check|download</yellow><gray> — проверить релиз / подготовить обновление (download только из консоли)</gray>
       <yellow>/%label% reload</yellow><gray> — перезагрузить config.yml</gray>
@@ -919,7 +920,14 @@ messages:
     "hint": "<dark_gray>Восстановление: /%label% backup restore <файл></dark_gray>"
     "invalid-path": "<red>Недопустимый путь к файлу бэкапа.</red>"
     "restore-failed": "<red>Не удалось восстановить из указанного файла.</red>"
-    "restored": "<green>✓ Данные восстановлены из %file%.</green>"
+    "restored": "<green>✓ Данные аккаунтов восстановлены из %file%.</green>"
+    "busy": "<yellow>Другой снимок или проверка уже выполняются. Повторите позже.</yellow>"
+    "snapshot-entry": "<gray>- ZIP: %backup%</gray>"
+    "snapshot-created": "<green>✓ Проверенный снимок создан: %path%</green><dark_gray> Скопируйте его вне сервера; файл содержит авторизационные данные.</dark_gray>"
+    "snapshot-failed": "<red>Снимок НЕ создан: %error%</red><gray> Старые снимки не удалены; проверьте диск и консоль.</gray>"
+    "snapshot-verified": "<green>✓ %path%: %files% файлов, %bytes% байт; CRC, SHA-256 и JSON верны.</green>"
+    "snapshot-invalid": "<red>Снимок не прошёл проверку: %error%</red><gray> Не используйте его для восстановления.</gray>"
+    "offline-restore": "<yellow>Полный ZIP нельзя восстанавливать на работающем сервере.</yellow><gray> Остановите сервер и используйте tools/backup/restore_chrdk_backup.py из исходников.</gray>"
 
   # ---------------------------------------------------------------
   # doctor — Диагностика /pass doctor

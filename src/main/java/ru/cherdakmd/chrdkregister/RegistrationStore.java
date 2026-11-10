@@ -257,14 +257,21 @@ public final class RegistrationStore {
             try {
                 Files.createDirectories(file.getParent());
                 Path temporary = file.resolveSibling(file.getFileName() + ".tmp");
-                try (Writer writer = Files.newBufferedWriter(temporary, StandardCharsets.UTF_8)) {
+                try (var channel = java.nio.channels.FileChannel.open(temporary,
+                        java.nio.file.StandardOpenOption.CREATE,
+                        java.nio.file.StandardOpenOption.TRUNCATE_EXISTING,
+                        java.nio.file.StandardOpenOption.WRITE);
+                     Writer writer = java.nio.channels.Channels.newWriter(channel, StandardCharsets.UTF_8)) {
                     writer.write(json);
+                    writer.flush();
+                    channel.force(true);
                 }
                 try {
                     Files.move(temporary, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-                } catch (Exception unsupportedAtomicMove) {
+                } catch (java.nio.file.AtomicMoveNotSupportedException unsupportedAtomicMove) {
                     Files.move(temporary, file, StandardCopyOption.REPLACE_EXISTING);
                 }
+                ru.cherdakmd.chrdkregister.storage.BackupArchive.forceDirectory(file.toAbsolutePath().getParent());
                 try {
                     Files.setPosixFilePermissions(file, PosixFilePermissions.fromString("rw-------"));
                 } catch (UnsupportedOperationException ignored) {
