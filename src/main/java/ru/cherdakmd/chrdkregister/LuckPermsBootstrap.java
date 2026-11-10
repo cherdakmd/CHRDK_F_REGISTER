@@ -15,14 +15,22 @@ import java.util.function.Supplier;
 /**
  * Авто-настройка LuckPerms по схеме CHRDK ({@code /pass luckperms setup|status}).
  *
- * <p>Схема из трёх групп (создаётся идемпотентно — повторный запуск только достраивает):
+ * <p>Схема создаётся идемпотентно — повторный запуск только достраивает:
  * {@code default} — база для всех (права {@code chrdk*.use} всех аддонов), {@code pass} —
  * наследует default и собирает кастомные права проходки
  * ({@code integrations.pass-group-permissions}), выдаётся автоматически через
- * {@link LuckPermsPassSync} при активной проходке; {@code admin} — наследует default
- * и получает все {@code chrdk*.admin} + модераторские права чата.</p>
+ * {@link LuckPermsPassSync} при активной проходке; {@code moderator} — ограниченные
+ * права модерации без управления ролями; {@code admin} — все {@code chrdk*.admin}.</p>
  */
 public final class LuckPermsBootstrap {
+
+    public static final String MODERATOR_GROUP = "moderator";
+    private static final String MODERATOR_NODE = "group." + MODERATOR_GROUP;
+    private static final List<String> MODERATOR_PERMS = List.of(
+            "chrdkregister.admin.panel",
+            "chrdkregister.chat.mute",
+            "chrdkregister.admin.audit"
+    );
 
     /** Базовые права игрока — все аддоны семейства (.use из их plugin.yml). Держать синхронно при новых аддонах. */
     private static final List<String> DEFAULT_PERMS = List.of(
@@ -47,6 +55,9 @@ public final class LuckPermsBootstrap {
     /** Админские права семейства + модераторские права чата. */
     private static final List<String> ADMIN_PERMS = List.of(
             "chrdkregister.admin",
+            "chrdkregister.admin.panel",
+            "chrdkregister.admin.moderators",
+            "chrdkregister.admin.audit",
             "chrdkregister.chat.color",
             "chrdkregister.chat.bypass",
             "chrdkregister.chat.socialspy",
@@ -133,6 +144,10 @@ public final class LuckPermsBootstrap {
         specs.add(new GroupSpec(passGroupName(), 10, "default",
                 withoutBypass(List.copyOf(config.get().passGroupPermissions()),
                         config.get().lpSocialBypassPermission())));
+        List<String> moderatorPerms = config.get().lpModeratorSocialspy()
+                ? mergeUnique(MODERATOR_PERMS, List.of("chrdkregister.chat.socialspy"))
+                : MODERATOR_PERMS;
+        specs.add(new GroupSpec(MODERATOR_GROUP, 50, "default", moderatorPerms));
         specs.add(new GroupSpec("admin", 100, "default", ADMIN_PERMS));
         // Группы товаров каталога: вес выше проходки, но ниже админа. Права товара
         // («+8 домов» и подобные) выдаются вместе с группой на срок покупки.
@@ -323,6 +338,31 @@ public final class LuckPermsBootstrap {
             }
         }
         return merged;
+    }
+
+    /** Добавить или снять встроенную группу модератора по нику, включая офлайн-игрока. */
+    public CompletableFuture<Void> setModerator(String playerName, boolean add) {
+        LuckPerms api = hooks.luckPerms().orElseThrow(
+                () -> new IllegalStateException("LuckPerms не зарегистрирован"));
+        return api.getUserManager().lookupUniqueId(playerName).thenCompose(uuid ->
+                api.getUserManager().modifyUser(uuid, user -> {
+                    Node node = Node.builder(MODERATOR_NODE).build();
+                    if (add) {
+                        user.data().add(node);
+                    } else {
+                        user.data().remove(node);
+                    }
+                }));
+    }
+
+    /** Проверить фактическую LP-группу модератора, включая офлайн-хранилище. */
+    public CompletableFuture<Boolean> hasModeratorGroup(String playerName) {
+        LuckPerms api = hooks.luckPerms().orElseThrow(
+                () -> new IllegalStateException("LuckPerms не зарегистрирован"));
+        return api.getUserManager().lookupUniqueId(playerName)
+                .thenCompose(uuid -> api.getUserManager().loadUser(uuid))
+                .thenApply(user -> user.getNodes().stream().anyMatch(node ->
+                        node.getKey().equalsIgnoreCase(MODERATOR_NODE) && node.getValue()));
     }
 
     /** Нужна ли группа проходки подсказка: LuckPerms есть, а группа (настроенная) не создана. */

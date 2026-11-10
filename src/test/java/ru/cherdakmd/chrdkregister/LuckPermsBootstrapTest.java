@@ -34,9 +34,9 @@ class LuckPermsBootstrapTest {
     }
 
     @Test
-    void schemeHasDefaultPassAdminWithWeightsAndParents() throws Exception {
+    void schemeHasDefaultPassModeratorAdminWithWeightsAndParents() throws Exception {
         List<LuckPermsBootstrap.GroupSpec> scheme = bootstrap("").scheme();
-        assertEquals(3, scheme.size());
+        assertEquals(4, scheme.size());
         LuckPermsBootstrap.GroupSpec base = scheme.get(0);
         assertEquals("default", base.name());
         assertEquals(0, base.weight());
@@ -45,7 +45,11 @@ class LuckPermsBootstrapTest {
         assertEquals("pass", pass.name());
         assertEquals(10, pass.weight());
         assertEquals("default", pass.parent());
-        LuckPermsBootstrap.GroupSpec admin = scheme.get(2);
+        LuckPermsBootstrap.GroupSpec moderator = scheme.get(2);
+        assertEquals("moderator", moderator.name());
+        assertEquals(50, moderator.weight());
+        assertEquals("default", moderator.parent());
+        LuckPermsBootstrap.GroupSpec admin = scheme.get(3);
         assertEquals("admin", admin.name());
         assertEquals(100, admin.weight());
         assertEquals("default", admin.parent());
@@ -96,9 +100,9 @@ class LuckPermsBootstrapTest {
         List<LuckPermsBootstrap.GroupSpec> scheme = bootstrap("").scheme();
         assertTrue(scheme.get(0).permissions().contains("chrdksocial.use"),
                 "базовые права социального плагина есть даже без загруженного CHRDK_VK");
-        assertTrue(scheme.get(2).permissions().contains("chrdksocial.admin"));
+        assertTrue(scheme.get(3).permissions().contains("chrdksocial.admin"));
         assertFalse(scheme.get(0).permissions().contains("chrdksocial.bypass"));
-        assertFalse(scheme.get(2).permissions().contains("chrdksocial.bypass"));
+        assertFalse(scheme.get(3).permissions().contains("chrdksocial.bypass"));
 
         assertEquals(List.of("chrdkregister.menu", "chrdksocial.admin"),
                 LuckPermsBootstrap.withoutBypass(
@@ -158,6 +162,28 @@ class LuckPermsBootstrapTest {
         assertEquals(List.of("chrdksocial.bypass"), group.get().permissions());
         assertFalse(scheme.get(0).permissions().contains("chrdksocial.bypass"),
                 "default не наследует обход привязки");
+    }
+
+    @Test
+    void moderatorHasOnlyModerationPermissionsAndNoPrivilegeEscalation() throws Exception {
+        LuckPermsBootstrap.GroupSpec moderator = bootstrap("").scheme().stream()
+                .filter(spec -> spec.name().equals(LuckPermsBootstrap.MODERATOR_GROUP)).findFirst().orElseThrow();
+        assertEquals(List.of("chrdkregister.admin.panel", "chrdkregister.chat.mute",
+                "chrdkregister.admin.audit"), moderator.permissions());
+        for (String forbidden : List.of("chrdkregister.admin", "chrdkregister.admin.moderators",
+                "chrdkregister.chat.socialspy", "chrdksocial.bypass", "*")) {
+            assertFalse(moderator.permissions().contains(forbidden));
+        }
+        assertFalse(PluginConfig.fromBukkitConfig(new YamlConfiguration()).lpModeratorSocialspy());
+    }
+
+    @Test
+    void moderatorSocialspyIsAnExplicitOptIn() throws Exception {
+        LuckPermsBootstrap.GroupSpec moderator = bootstrap(
+                "integrations:\n  lp-moderator-socialspy: true\n").scheme().stream()
+                .filter(spec -> spec.name().equals("moderator")).findFirst().orElseThrow();
+        assertTrue(moderator.permissions().contains("chrdkregister.chat.socialspy"));
+        assertFalse(moderator.permissions().contains("chrdkregister.admin.moderators"));
     }
 
     @Test

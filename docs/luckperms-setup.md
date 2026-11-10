@@ -27,7 +27,34 @@ pass luckperms status
 | `default` | 0 | — | базовые права игрока, явные запреты служебных команд |
 | `<integrations.pass-group>` (`pass`) | 10 | `default` | активный донатный ранг/проходка |
 | `social-day` | 20 | `default` | временная группа товара [`social-access-day`](shop/social-access-day.md) |
+| `moderator` | 50 | `default` | панель, наказания и аудит; без управления ролями и полного admin |
 | `admin` | 100 | `default` | административные права, разрешения служебных команд |
+
+## Встроенная группа модератора
+
+`setup` добавляет в `moderator` только `chrdkregister.admin.panel`,
+`chrdkregister.chat.mute` и `chrdkregister.admin.audit`. Полное
+`chrdkregister.admin`, право назначать модераторов, OP и wildcard в группу не
+входят. Просмотр личных сообщений включается отдельно:
+`integrations.lp-moderator-socialspy: true`, затем `/pass reload` и повторный
+`/pass luckperms setup`.
+
+Назначение и снятие синхронизируют роль Core и LP-группу одной командой:
+
+```text
+pass luckperms setup
+pass moderator add <ник>
+pass moderator status <ник>
+pass moderator list
+pass moderator remove <ник>
+```
+
+Те же изменения выполняют `/adminpanel moderator add|remove <ник>` и кнопки GUI.
+Core и LuckPerms — разные хранилища, поэтому это не распределённая транзакция:
+роль Core сохраняется сразу, а результат LP сообщается отдельно. При ошибке LP
+повторите команду после восстановления LuckPerms; повторный вызов исправляет
+рассинхронизацию, в том числе для роли, созданной до обновления. Без LuckPerms
+роль Core продолжает работать, но прав наказаний из LP-группы не появится.
 
 ## Права социального плагина
 
@@ -71,7 +98,7 @@ social:
    вернёт одноразовую ссылку на <https://luckperms.net/editor/> — данные групп
    подгружаются в браузер, обратно импортируется готовый набор команд.
    Ссылка одноразовая, не публикуйте её в чате.
-2. В редакторе проверьте четыре группы из таблицы выше. Для `social-day`
+2. В редакторе проверьте группы из таблицы выше. Для `social-day`
    выставьте **weight 20**, родителя `default` и ровно один узел
    `chrdksocial.bypass` со значением `true`.
 3. Убедитесь, что `chrdksocial.bypass` **отсутствует** в `default`, `pass` и

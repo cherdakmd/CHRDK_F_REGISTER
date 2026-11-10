@@ -1,198 +1,198 @@
 {
   "pages": {
     "about": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "b09d3c81a6d220fcaaa2e3de87e97ed60d190f0b277f2eaecab3266dfe31b5c2",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "741396dbec264886ea9666daa1887a08122e6d0a1c4f04c699d8c8b2f96ba78a",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "b26a18f85b3b4c525d52ca7727833cbe36b2501211d7bbbb3a76f199d6ac5f5a",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "570d31cd4a1e3a2782aa21ebd453b8a704423af504f0105e1dfb5fb90d6ab713",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "c12858357733d3799f7f311039b283140c896e9673be520b6e9503568e130eb7",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "ea620f8617a1fcf241f56e68e7c447c15aca82a23bf605ca14c1a9ba53686be8",
       "text": "fcdffb1098428fac2bd42d1c4acb73bb9a024d1823d5398b8845bb2f415a506f"
     },
     "auction": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "3caae53c00c80e523b98a29dc1ffdfb64cd0327156feadcba538f93d7cb0d44c",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "47fe4931018e43d809478899b6eea3793f25b4b0aff5aee596e2fe7053911534",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "5ed6e277434690da97cf71924c553502a3d1b44c2062b542c55e1aaf583033f7",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "1ab45689a6b3fdb4cf13e0254a85eab18cc405025f7ee99bfcae757c70843510",
       "text": "f368077b5f1961a1982957afe3b8523b60c8330f3dfd1891003d01ea1c4fd6db"
     },
     "chat": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "b09d3c81a6d220fcaaa2e3de87e97ed60d190f0b277f2eaecab3266dfe31b5c2",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "741396dbec264886ea9666daa1887a08122e6d0a1c4f04c699d8c8b2f96ba78a",
       "text": "ca6c93fc33fca52eecc7d38744bc86f619ea0b6a7bcc2314b84ca6c5399d8a1c"
     },
     "claims": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "ab196e63a81e5031cd851ca0afb173e38c5d85f1a592720f7a7050e8504f6d82",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "987ff4ba9249598f08b41f6137a95b5a0ca3a30fea2f8250d0005081aa35577b",
       "text": "3144ca61235b895be5cb61e6d120d5dc6d6d0d7c26f87819431b4756659e8e12"
     },
     "classes": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "5cd510a69de7aa9ba875ce772301898d31be865d6797bf6b79428bbab389082a",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "4cb34d56a024fa08d24295d3776a5035bcd68043f0f159aa56f49e4121f02c0d",
       "text": "fdebe780b6e7964249b5c4bc4752908cbdd67722e4d4bb0a4b1f64d94cd15ea1"
     },
     "commands": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "17306f6594f4c9e122c6ff25ddb7682f36747b950ff517d552facf208b9a2494",
-      "text": "13b15e747e5e4aa93ff7ed9ce580f47e2c7952f5f319b46c6e854fc3eaec3252"
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "0ad2842e14a4fa8434b6970926e1ef574acfadddeb61bb54c0e0e9667dfdeb40",
+      "text": "3296406152bceb2efa2ebf39a602f5956e570cbe1416b120c5e02f4c6cbe4212"
     },
     "cosmetics": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "e26da7b329f1eaf0ee878af8f012b814cc0e4f3eaa673d188a4c8a1eb402befe",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "8a86e423b0df1ffd4e82f9ccdcc3eef5f6425ab2410b3b642cf9557b1a03d7b3",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "a677f11dd49cf50bc3eb4f590fd99cce743172967a1d4b061dd9c61868d31c67",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "4b1205382a2b95dd67061ba3ebac3c43f5e6cf099ea7bdb43e2d1e2400c8f526",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "disasters": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "0080b52ff0c93862e93c281b820405cdd4b06d557468b6b4cd5e754aad114239",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "a9accc54911f846557344e72cfd11282705b2e68792c59742f521596caf5c440",
       "text": "dd99cd1f21290668ef4d7c8ead28497aa0f50dc4ffd34ee6d8e9f02a0d013d9b"
     },
     "economy": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "a91cf6a08b41864709d7118b80053237fd1bc9391fd2c08806940c7b841252a0",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "ff8da5635b8ea9ab674f28305081c039fc04d2355b5868bfceee2b57ec06105e",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "52b7fe9af96b1005f142241076b26011b86a5e987976b92d074737b34c399055",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "ac2dca3d2285933cfbf24855ed7bb8c1d118db99593ecbeb7f116ec4980addf2",
       "text": "c9b27cd4a4970ad227e240e742adc52dca1533312ec7b590663add3b164ba1a2"
     },
     "faq": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "108c4fd505d526ae5a9dace13bb9f678a7ab7bd8a41a03c2a08e34dda43981da",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "7b72817bea90fc1d4085318952793a0734346a8f865a116bcf717e0d7370251f",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "983e0c6dd560f53f190f9d1dad83c85af18776c6144e7896c5f73ba3b929836c",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "e7b95207e9eb58ff080ee60da399361a664d8f61a09a1afa5494b847779190ff",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "ab196e63a81e5031cd851ca0afb173e38c5d85f1a592720f7a7050e8504f6d82",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "987ff4ba9249598f08b41f6137a95b5a0ca3a30fea2f8250d0005081aa35577b",
       "text": "e166f2671aabcdf55ecf59d1465ddb19a36343f6d07983eb8b8821b3a63cce34"
     },
     "honors": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "b09d3c81a6d220fcaaa2e3de87e97ed60d190f0b277f2eaecab3266dfe31b5c2",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "741396dbec264886ea9666daa1887a08122e6d0a1c4f04c699d8c8b2f96ba78a",
       "text": "6bc29d5a2d7783845f8b3d9b085e85982faec5b3029d841092386f36b1d4c4b0"
     },
     "hunt": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "a4945a78817093b0317f535b4798ff4057103de5e0cd60fa0092c47789b762d4",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "adc0365cd6f5dd34be0f2099390cdee0db01c250e06b6f2c7211955fdbab8e59",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "dcc5d4ef9e2143a3b92fae7da59567cd177e146ee65d44b4c5c7a9a8cec1e023",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "de6333814d75e894c978d252787b73869ee2e64c8bebbe66f9b7751dafb414e3",
       "text": "6a3b9fedc0d15e6ef23ae50e7bf41cdf79f9efcc79299101944c041b5c2d9222"
     },
     "menu": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "7c6549d196c9814cd71db85ebd448a0e43d2955e9b4137d2a4122f901c0d1ca8",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "ccda2b08a5bbc036789545866bcfe73df09882aec45dd8d8ea3901388ce7a79a",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "moderation": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "b09d3c81a6d220fcaaa2e3de87e97ed60d190f0b277f2eaecab3266dfe31b5c2",
-      "text": "a9f52f2bf3c79afd26856ce422e010dce30f6e3e403343623d465c766ccb5f60"
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "741396dbec264886ea9666daa1887a08122e6d0a1c4f04c699d8c8b2f96ba78a",
+      "text": "6d8005e0c6401cbdbac9595256c43dde07633b522a765a7a6c080da0ca212b5e"
     },
     "orders": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "6911d439a7e5bb6994a537ba9029ce4893b4072c7e6a03f83d7353594313b472",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "6559bfa6a76bc1b629a225dd996f8fc27facbbaca3c11842eec77a8414b1dee6",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "perktree": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "5cd510a69de7aa9ba875ce772301898d31be865d6797bf6b79428bbab389082a",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "4cb34d56a024fa08d24295d3776a5035bcd68043f0f159aa56f49e4121f02c0d",
       "text": "148006c785c6f0e5adf6725d87605f5e508b957636fdac87ea64939e7bd63b79"
     },
     "pets": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "9a1e74347695f925c3bb7d7d1c797bce405fd9b184c12f5b012a4a50f407bef2",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "68b328784891dc92dce8a120e19fd449acf6b09acfd1456a670a6b8edee9774f",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "7417a1a0853045404c38cfd30b8aa4b62ac76966be24edc53fd898649cb48396",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "fa975e5990a0447622e7eb7a1a941d0ded0c7e0344c29407b3c3128286c86b78",
       "text": "13e6d38670572890ab2567279a5ca76f8e353eab6ade09a877eee2e884c6e272"
     },
     "profile": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "92f871b9ab9070f4ed47c6ab0395d08319101412d40eebda2dcaecaf084572ec",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "a8011d9d34dfc801528fc40db5863b8725603b3c374eb757595863b5369d6367",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "c401a5ffe4210bee2b10712ae94778494995756a8980e5f9a9f2d36b9608de62",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "da4502b5bee863a7b83b12a6f41794b404e61101f1cba6c14a9976fefa61e0d3",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "146bca8a654ee4699c90d89bbcbf86369c9d950a556d4cc78ecf157dd6cd6ccc",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "34ceda26a07a677bda504da1b21f3b92f22f2d30622e3c276b52fbee0fd5a873",
       "text": "b551d73e8dcc85c81ff7c908f7c89e1ebfb441b46d082a6a714124d77bfbb2c2"
     },
     "shop": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "dcc5d4ef9e2143a3b92fae7da59567cd177e146ee65d44b4c5c7a9a8cec1e023",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "de6333814d75e894c978d252787b73869ee2e64c8bebbe66f9b7751dafb414e3",
       "text": "ea26b94a87ea9b7287d9afad8fe96c8633ed8cc92e9fb091369ebd814b3a86a6"
     },
     "skills": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "ac60438f18591654067a685afd7095251f06f27fabb001ace0c3bb59f9d9b83d",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "e007ee0f1c9d361981dd58c248eb1caa262e801b4a412113033ffe35a483e65a",
       "text": "2cbe0faac3c272b71b3eb81fb78f5051b9eaa58e4ff682276af2c6bbdf74a98b"
     },
     "social-link": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "8c5571cb0d5efe5ca4778278aac631685d8230ce3df66f7484b87a00a6282bca",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "3b66bdfd45109a8b68a09ea1bbb7e23b943b0e91c84b3e954c2f161ae5368209",
       "text": "1f6cf95d9c8c2180dbf871aa9b19a7bfcde5405cf77b75954b7575920d2aef14"
     },
     "start": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "895c07d4dfb76f89e3803ab71e366cf5ae2ea9211889fdb81d8d0b4bc2230488",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "7e02506044220e2120815ae973dd60bfadb27ce1e1b097bb20dcf9ddcd46eb9a",
       "text": "c2835fdf2d1945079115e6a252d472ce72ad9ad79f4ed47ad58e269b467d595f"
     },
     "starter-kit": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "c12858357733d3799f7f311039b283140c896e9673be520b6e9503568e130eb7",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "ea620f8617a1fcf241f56e68e7c447c15aca82a23bf605ca14c1a9ba53686be8",
       "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
     },
     "teleports": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "8f1d50fd28ccdbec0952a1f87c88581cf10407457503ec6f7980039af163a5e2",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "318f8733ee4a8952ee97fd3506526f2550eae66e1f6fda479324a5582d14a8ab",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "52b7fe9af96b1005f142241076b26011b86a5e987976b92d074737b34c399055",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "ac2dca3d2285933cfbf24855ed7bb8c1d118db99593ecbeb7f116ec4980addf2",
       "text": "8bfa7eee45f251d4f571e67782e4e245c8a0c9faf55062068f625f72771dc03c"
     },
     "titles": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "024654ea6f06efa7b5120b6f1a4fe3462ee55925638203f4353570f026662113",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "51b7c0ed574ee98ccf030a230e11487c136d8a0e2f9605413df8b8268eac70bd",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "dcc5d4ef9e2143a3b92fae7da59567cd177e146ee65d44b4c5c7a9a8cec1e023",
-      "text": "acab27748d7c58b1b9a17a67c3c2c6c175b1fa5a779c94fc7034c1a7e0aa4d74"
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "de6333814d75e894c978d252787b73869ee2e64c8bebbe66f9b7751dafb414e3",
+      "text": "6c7fc3d3759106a8b639ec5922295e4d2affe1a524fc3086f98cb43fa024dee7"
     },
     "vk": {
-      "reason": "Исправлен бесконечный цикл verify на границе лимита; backup-документация и неизменные игровые правила сверены",
-      "sources": "8c5571cb0d5efe5ca4778278aac631685d8230ce3df66f7484b87a00a6282bca",
+      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
+      "sources": "3b66bdfd45109a8b68a09ea1bbb7e23b943b0e91c84b3e954c2f161ae5368209",
       "text": "b592e465a73dd13186763622b51190400cffd40960e233f58c63379b88a9bba9"
     }
   },
