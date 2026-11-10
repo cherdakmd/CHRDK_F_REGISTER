@@ -26,7 +26,7 @@ jobs:
           EOF
           set -o pipefail
           set +e
-          timeout 90 ./gradlew :test --tests 'ru.cherdakmd.chrdkregister.storage.BackupArchiveTest' -I /tmp/test-events.gradle --info --console=plain | tee /tmp/backup-test.log
+          timeout 90 ./gradlew :test --tests 'ru.cherdakmd.chrdkregister.storage.BackupArchiveTest.createsVerifiedManifestAndExcludesSecretsCachesLogsAndConfigs' -I /tmp/test-events.gradle --info --console=plain | tee /tmp/backup-test.log
           status=$?
           if [[ $status -ne 0 ]]; then
             grep -E 'BackupArchiveTest >|STARTED|PASSED|FAILED' /tmp/backup-test.log | tail -20 | sed 's/^/::error::/'
