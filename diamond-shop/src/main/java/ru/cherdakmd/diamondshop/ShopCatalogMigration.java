@@ -21,7 +21,7 @@ final class ShopCatalogMigration {
         Path file = ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(plugin).resolve("config.yml");
         try (var old = plugin.getResource("catalog-legacy-1.4.244.yml"); var previous = plugin.getResource("catalog-legacy-1.4.249.yml"); var latest = plugin.getResource("config.yml")) {
             if (old == null || previous == null || latest == null || !Files.isRegularFile(file)) return;
-            var legacy = new YamlConfiguration(); var fresh = new YamlConfiguration(); var live = new YamlConfiguration();
+            var legacy = new YamlConfiguration(); var fresh = new YamlConfiguration(); YamlConfiguration live = new YamlConfiguration();
             legacy.load(new InputStreamReader(old,StandardCharsets.UTF_8));
             fresh.load(new InputStreamReader(latest,StandardCharsets.UTF_8));
             var prior = new YamlConfiguration();
