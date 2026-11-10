@@ -241,8 +241,10 @@ public final class BackupArchive {
             String week = date.getYear() + "-W" + date.get(WeekFields.ISO.weekOfWeekBasedYear());
             weekly.putIfAbsent(week, path);
         }
-        daily.values().stream().sorted().limit(retention.daily).forEach(keep::add);
-        weekly.values().stream().sorted().limit(retention.weekly).forEach(keep::add);
+        daily.entrySet().stream().sorted(Map.Entry.<String, Path>comparingByKey().reversed())
+                .limit(retention.daily).map(Map.Entry::getValue).forEach(keep::add);
+        weekly.entrySet().stream().sorted(Map.Entry.<String, Path>comparingByKey().reversed())
+                .limit(retention.weekly).map(Map.Entry::getValue).forEach(keep::add);
         for (Path path : all) if (!keep.contains(path)) Files.deleteIfExists(path);
     }
 
