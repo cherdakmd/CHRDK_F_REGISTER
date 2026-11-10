@@ -78,16 +78,13 @@ public final class MilestoneMigration {
         if(!Files.exists(file)) return Map.of();
         try {
             if(!Files.isRegularFile(file)||Files.size(file)>32L*1024*1024) throw new IllegalArgumentException("legacy capacity/type");
-            YamlConfiguration yaml = new YamlConfiguration();
-            // DB-aware: StoragePath materializes в temp, поэтому читаем content и парсим из String
+            YamlConfiguration yaml;
+            // DB-aware: StoragePath materializes в temp, поэтому читаем content и парсим из Reader
             if (file instanceof ChrdkStorageFileSystem.StoragePath) {
                 String content = Files.readString(file, StandardCharsets.UTF_8);
-                try {
-                    yaml.loadFromString(content);
-                } catch (org.bukkit.configuration.InvalidConfigurationException e) {
-                    throw new IOException("Invalid YAML in DB-backed stats.yml", e);
-                }
+                yaml = YamlConfiguration.loadConfiguration(new StringReader(content));
             } else {
+                yaml = new YamlConfiguration();
                 yaml.load(file.toFile());
             }
             if(yaml.contains("players")) {
