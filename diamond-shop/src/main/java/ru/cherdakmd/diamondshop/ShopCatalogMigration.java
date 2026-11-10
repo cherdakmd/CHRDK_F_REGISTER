@@ -26,10 +26,14 @@ final class ShopCatalogMigration {
             fresh.load(new InputStreamReader(latest,StandardCharsets.UTF_8));
             var prior = new YamlConfiguration();
             prior.load(new InputStreamReader(previous,StandardCharsets.UTF_8));
-            // DB-aware: StoragePath materializes в temp, поэтому читаем content и парсим из Reader
+            // DB-aware: StoragePath materializes в temp, поэтому читаем content и парсим из String
             if (file instanceof ChrdkStorageFileSystem.StoragePath) {
                 String content = Files.readString(file, StandardCharsets.UTF_8);
-                live = YamlConfiguration.loadConfiguration(new StringReader(content));
+                try {
+                    live.loadFromString(content);
+                } catch (org.bukkit.configuration.InvalidConfigurationException e) {
+                    throw new java.io.IOException("Invalid YAML in DB-backed config.yml", e);
+                }
             } else {
                 live.load(file.toFile()); // Строгий parse: повреждённый YAML не перезаписываем.
             }
