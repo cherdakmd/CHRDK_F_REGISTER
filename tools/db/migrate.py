@@ -31,6 +31,11 @@ except ImportError:
 ROOT = Path(__file__).resolve().parents[2]
 INVENTORY = ROOT / "src/main/resources/storage-inventory.json"
 
+# Lazy import to avoid circular deps and allow --dry-run without pymysql/yaml
+def _strategies():
+    from migrators import STRATEGIES
+    return STRATEGIES
+
 
 def load_inventory() -> dict:
     return json.loads(INVENTORY.read_text(encoding="utf-8"))
@@ -128,16 +133,43 @@ def import_files(inventory: dict, source_root: Path, batch: str, db_config: dict
                         "status": "imported",
                     })
                 else:
-                    # Normalized strategies require per-table parsers (TODO)
-                    report["files"].append({
-                        "module": entry["module"],
-                        "path": entry["path"],
-                        "strategy": entry["strategy"],
-                        "size": len(content),
-                        "sha256": sha256_hex(sha),
-                        "status": "skipped",
-                        "reason": "normalized strategy not yet implemented",
-                    })
+                    # Normalized strategies: parse and write to normalized tables
+                    strategy = entry["strategy"]
+                    strategies = _strategies()
+                    if strategy in strategies:
+                        try:
+                            row_count = strategies[strategy](
+                                content, path, cursor, batch, entry["owner"]
+                            )
+                            report["files"].append({
+                                "module": entry["module"],
+                                "path": entry["path"],
+                                "strategy": strategy,
+                                "size": len(content),
+                                "sha256": sha256_hex(sha),
+                                "status": "imported",
+                                "rows": row_count,
+                            })
+                        except Exception as error:
+                            report["files"].append({
+                                "module": entry["module"],
+                                "path": entry["path"],
+                                "strategy": strategy,
+                                "size": len(content),
+                                "sha256": sha256_hex(sha),
+                                "status": "error",
+                                "error": str(error),
+                            })
+                    else:
+                        report["files"].append({
+                            "module": entry["module"],
+                            "path": entry["path"],
+                            "strategy": strategy,
+                            "size": len(content),
+                            "sha256": sha256_hex(sha),
+                            "status": "skipped",
+                            "reason": f"strategy {strategy} not implemented",
+                        })
             # Record migration source
             for file_report in report["files"]:
                 if file_report["status"] in ("imported", "skipped"):

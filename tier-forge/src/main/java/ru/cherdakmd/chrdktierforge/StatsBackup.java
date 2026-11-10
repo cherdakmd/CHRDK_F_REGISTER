@@ -1,5 +1,7 @@
 package ru.cherdakmd.chrdktierforge;
 
+import ru.cherdakmd.chrdkregister.storage.ChrdkStorageFileSystem;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -47,12 +49,15 @@ final class StatsBackup {
     /**
      * Сдвинуть существующие копии и сохранить текущий файл как `.bak1`.
      * Если файла ещё нет (первый запуск) — просто ничего не делает.
+     *
+     * <p>DB-aware: если target — StoragePath, backups тоже в DB (через resolveSibling).</p>
      */
     void rotate() throws IOException {
         if (keep <= 0 || !Files.isRegularFile(target)) {
             return;
         }
         List<Path> backups = backups();
+        // DB-aware: StoragePath.resolveSibling создаёт DB paths, legacy Path создаёт filesystem paths
         Files.deleteIfExists(backups.get(backups.size() - 1)); // самая старая уходит
         for (int i = backups.size() - 2; i >= 0; i--) {
             Path from = backups.get(i);
