@@ -24,11 +24,12 @@ jobs:
           cat > /tmp/test-events.gradle <<'EOF'
           gradle.projectsEvaluated { allprojects { tasks.withType(Test).configureEach { testLogging { events 'started', 'passed', 'failed', 'skipped' } } } }
           EOF
+          (sleep 30; for pid in $(pgrep -f GradleWorkerMain || true); do jcmd "$pid" Thread.print; done) > /tmp/backup-threads.log 2>&1 &
           set -o pipefail
           set +e
           timeout 90 ./gradlew :test --tests 'ru.cherdakmd.chrdkregister.storage.BackupArchiveTest.rejectsHashMismatchAndTraversal' -I /tmp/test-events.gradle --info --console=plain | tee /tmp/backup-test.log
           status=$?
           if [[ $status -ne 0 ]]; then
-            grep -E 'BackupArchiveTest >|expected:|AssertionFailedError|STARTED|PASSED|FAILED' /tmp/backup-test.log | tail -20 | sed 's/^/::error::/'
+            grep -E 'BackupArchiveTest|readLimited|verify\(|rejectsHash|java.lang|await|park|read\(|Zip' /tmp/backup-threads.log | head -45 | sed 's/^/::error::/'
             exit $status
           fi
