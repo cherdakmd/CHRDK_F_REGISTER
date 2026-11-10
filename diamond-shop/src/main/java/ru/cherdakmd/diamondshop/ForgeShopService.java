@@ -127,7 +127,8 @@ final class ForgeShopService {
             if (m != null && m.isItem() && m.name().equals(key)) frozenRates.put(key, value);
         });
         long now = System.currentTimeMillis();
-        if (!service.store().canRecordTurnover(player.getUniqueId(), money, config.dailyTurnoverLimit(), now)) {
+        double limit = service.dailyLimit(player);
+        if (!service.store().canRecordTurnover(player.getUniqueId(), money, limit, now)) {
             return fail("trading.daily-limit", money);
         }
         var trade = new ShopExchange(UUID.randomUUID(), service.store().market(),
@@ -136,7 +137,7 @@ final class ForgeShopService {
                 ChargeInventory.encode(before), ChargeInventory.encode(after),
                 0, 0, null, null, null, offer.grant());
         if (!ShopInventory.valid(trade)) return fail("trading.unavailable", money);
-        if (!service.store().prepareForge(trade, now, config.dailyTurnoverLimit())) {
+        if (!service.store().prepareForge(trade, now, limit)) {
             return fail("trading.unavailable", money);
         }
         if (!service.recoverPending()) return fail("trading.pending", money);

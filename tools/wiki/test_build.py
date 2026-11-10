@@ -117,7 +117,7 @@ class WikiBuildTest(unittest.TestCase):
         self.assertIn("/shop quote buy iron_ingot 3", commands)
         readme = (self.root / "README.md").read_text()
         shop = readme.split("## Аддон CHRDK_DiamondShop —", 1)[1].split("\n---\n", 1)[0]
-        self.assertIn("249 товаров", shop)
+        self.assertIn("248 товаров", shop)
         self.assertIn("/shop quote", shop)
         self.assertIn("точная неоплаченная доля", shop)
         self.assertNotIn("/shop withdraw 32", shop)

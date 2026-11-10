@@ -13,7 +13,7 @@ commands:
   shopadmin:
     aliases: [dshopadmin, marketadmin]
     description: Администрирование алмазного магазина
-    usage: /<command> [stock|top|reload|recovery|audit]
+    usage: /<command> [stock|top|reload|recovery|audit|edit|set|remove|restore|cap]
     permission: chrdkshop.admin
 permissions:
   chrdkshop.use:

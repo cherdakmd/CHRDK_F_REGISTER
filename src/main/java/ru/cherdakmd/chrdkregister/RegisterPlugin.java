@@ -4,6 +4,8 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
+import ru.cherdakmd.chrdkregister.datapack.MineTreasureIntegration;
+import ru.cherdakmd.chrdkregister.item.ItemAttributeMergeListener;
 import ru.cherdakmd.chrdkregister.libs.bstats.bukkit.Metrics;
 import ru.cherdakmd.chrdkregister.libs.bstats.charts.SimplePie;
 import ru.cherdakmd.chrdkregister.libs.bstats.charts.SingleLineChart;
@@ -55,6 +57,7 @@ public final class RegisterPlugin extends JavaPlugin {
     private UpdateChecker updateChecker;
     private SpawnService spawnService;
     private GuideBookService guideBookService;
+    private StarterKitService starterKitService;
     private RegistrationStore store;
     private ShopService shopService;
     private ExecutionService executor;
@@ -84,6 +87,8 @@ public final class RegisterPlugin extends JavaPlugin {
         OptionalTotpMigration.apply(this);
         PresentationMigration.apply(this);
         PremiumPresentationMigration.apply(this);
+        ClaimsChunksProductMigration.apply(this);
+        ConfigUpgrader.apply(this);
         PluginConfig config = PluginConfig.fromBukkitConfig(getConfig());
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
 
@@ -139,7 +144,7 @@ public final class RegisterPlugin extends JavaPlugin {
         // одновременно перехватывать одно сообщение или глотать чужой чат.
         this.chatInput = new GuiChatInput(this);
         getServer().getPluginManager().registerEvents(chatInput, this);
-        // Админ-панель: moderation.json живёт отдельно от data.json аккаунтов.
+        // Админ-панель: moderation.json и players/*.yml живут отдельно от data.json аккаунтов.
         this.moderationStore = new ModerationStore(getDataFolder().toPath(), getLogger());
         this.moderationLedger = moderationStore.load();
         this.moderation = new ModerationService(this, moderationLedger, moderationStore,
@@ -210,12 +215,22 @@ public final class RegisterPlugin extends JavaPlugin {
         serverGuard = new ServerGuard(GuardSettings.parse(getConfig()), this::messages,
                 player -> accessManager != null && accessManager.getStage(player) == AccessManager.PlayerStage.AUTHENTICATED,
                 name -> getServer().getCommandMap().getCommand(name), () -> getServer().getCommandAliases(),
-                getLogger()::warning, System::nanoTime, () -> getServer().getMaxPlayers());
+                getLogger()::warning, System::nanoTime, () -> getServer().getMaxPlayers(),
+                attempt -> {
+                    // Append-only аудит попыток обойти console-only. IP маскируется внутри AuditLog.
+                    AuditLog log = auditLog();
+                    if (log != null) log.log(AuditLog.SECURITY_COMMAND_BLOCKED, attempt.player(),
+                            attempt.root(), attempt.address(),
+                            AuditLog.details("uuid", attempt.uuid().toString(), "source", "player-chat"));
+                });
         getServer().getPluginManager().registerEvents(serverGuard, this);
         getServer().getScheduler().runTaskTimer(this, () -> serverGuard.pulse(getServer().getOnlinePlayers()), 20L, 20L);
         PluginCommand guardCommand = getCommand("guard");
         if (guardCommand != null) guardCommand.setExecutor((sender, command, label, args) -> serverGuard.status(sender));
         getServer().getPluginManager().registerEvents(chatService, this);
+        // HIGHEST этого слушателя должен пройти до HIGHEST AnvilCostListener,
+        // иначе котировка цены запомнит результат до слияния атрибутов.
+        getServer().getPluginManager().registerEvents(new ItemAttributeMergeListener(this), this);
         getServer().getPluginManager().registerEvents(new AnvilCostListener(this), this);
         getServer().getPluginManager().registerEvents(passMenuService, this);
         getServer().getPluginManager().registerEvents(donateMenuService, this);
@@ -239,6 +254,12 @@ public final class RegisterPlugin extends JavaPlugin {
                 GuideBookSettings.parse(getConfig()));
         getServer().getPluginManager().registerEvents(guideBookService, this);
         guideBookService.start();
+
+        this.starterKitService = new StarterKitService(this,
+                new StarterKitStore(getDataFolder().toPath(), getLogger()),
+                StarterKitSettings.parse(getConfig()));
+        getServer().getPluginManager().registerEvents(starterKitService, this);
+        starterKitService.start();
 
         Path pluginsFolder = getDataFolder().getParentFile() != null
                 ? getDataFolder().getParentFile().toPath() : getDataFolder().toPath();
@@ -343,6 +364,8 @@ public final class RegisterPlugin extends JavaPlugin {
         updateChecker.start();
         hookPlaceholderApi();
         enableMetrics(config);
+        // Только включает уже установленный в <мир>/datapacks ZIP; сам архив не поставляется.
+        MineTreasureIntegration.start(this);
         getLogger().info("CHRDK_Core enabled for Purpur 1.21.11 (pass, password auth, TOTP 2FA, chat, "
                 + "brute-force protection, donation journal).");
     }
@@ -410,6 +433,10 @@ public final class RegisterPlugin extends JavaPlugin {
             guideBookService.shutdown();
             guideBookService = null;
         }
+        if (starterKitService != null) {
+            starterKitService.shutdown();
+            starterKitService = null;
+        }
         if (spawnService != null) {
             spawnService.shutdown();
             spawnService = null;
@@ -442,6 +469,7 @@ public final class RegisterPlugin extends JavaPlugin {
         OptionalTotpMigration.apply(this);
         PresentationMigration.apply(this);
         PremiumPresentationMigration.apply(this);
+        ClaimsChunksProductMigration.apply(this);
         PluginConfig updated = PluginConfig.fromBukkitConfig(getConfig());
         if (serverGuard != null) serverGuard.reload(GuardSettings.parse(getConfig()));
         if (accessManager != null) {
@@ -471,6 +499,9 @@ public final class RegisterPlugin extends JavaPlugin {
         }
         if (guideBookService != null) {
             guideBookService.reload(GuideBookSettings.parse(getConfig()));
+        }
+        if (starterKitService != null) {
+            starterKitService.reload(StarterKitSettings.parse(getConfig()));
         }
         if (shopService != null) {
             shopService.logProblems();
@@ -627,6 +658,11 @@ public final class RegisterPlugin extends JavaPlugin {
         return guideBookService;
     }
 
+    /** Случайный стартовый комплект новичка (секция {@code starter-kit}). */
+    public StarterKitService starterKit() {
+        return starterKitService;
+    }
+
     /** Инвентарное меню {@code /pass menu} (иконки вместо текстовых справок). */
     public PassMenuService passMenu() {
         return passMenuService;
@@ -648,6 +684,11 @@ public final class RegisterPlugin extends JavaPlugin {
     /** Банк алмазов: /bal, /pay, /baltop и депозиты. */
     public BankService bank() {
         return bankService;
+    }
+
+    /** Текущая (в т.ч. после /pass reload) конфигурация плагина. */
+    public PluginConfig config() {
+        return accessManager != null ? accessManager.config() : null;
     }
 
     /** Разделы аддонов для {@code /profile} (API v8). */

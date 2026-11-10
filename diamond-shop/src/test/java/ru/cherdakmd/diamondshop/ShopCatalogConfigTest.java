@@ -32,7 +32,7 @@ class ShopCatalogConfigTest {
     @Test
     void shippedCatalogIsLargeAndConsistent() throws IOException {
         List<RawItem> items = parse();
-        assertEquals(249,items.size(),"размер поставляемого каталога");
+        assertEquals(248,items.size(),"размер поставляемого каталога");
 
         Set<String> materials = new HashSet<>();
         Set<String> currency = Set.of("DIAMOND", "DIAMOND_BLOCK");

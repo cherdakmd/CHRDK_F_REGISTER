@@ -21,6 +21,9 @@ import java.util.Locale;
  * MiniMessage/&amp;-коды, подстановки: {@code %player% %online% %max% %tps% %ping%
  * %world% %pass_status% %pass_left% %pass_days%}, кадры {@code %tab_*%} и любые
  * внешние плейсхолдеры PlaceholderAPI ({@code %chrdk_*%} и других плагинов).
+ * Социальный статус занимает одну строку {@code %chrdksocial_tab%}; старые
+ * три плейсхолдера совмещаются с ним рантаймом {@link TabFooterNormalizer},
+ * без перезаписи владельческого {@code config.yml}.
  *
  * Кадры {@code %tab_*%} маскируются на время PAPI-прохода: их анимированные
  * значения подставляет {@code Messages.fill}, а не внешний expansion.
@@ -53,14 +56,21 @@ public final class TabListService implements Listener {
      * шаблон возвращается без изменений — это честный детерминированный fallback.
      */
     static String resolveExternalPlaceholders(String template, Player player) {
-        if (player == null || template == null || template.indexOf('%') < 0) return template;
+        if (template == null || template.indexOf('%') < 0) return template;
+        if (player == null) return TabFooterNormalizer.hideUnresolvedSocialLine(template);
         try {
-            if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) return template;
+            if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+                return TabFooterNormalizer.hideUnresolvedSocialLine(template);
+            }
             String masked = maskTabTokens(template);
             String resolved = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, masked);
-            return resolved == null ? template : unmaskTabTokens(resolved);
+            if (resolved == null) return TabFooterNormalizer.hideUnresolvedSocialLine(template);
+            String unmasked = unmaskTabTokens(resolved);
+            // Expansion ещё не зарегистрирован: не показываем сырой %chrdksocial_tab%.
+            return unmasked.contains(TabFooterNormalizer.SOCIAL_LINE)
+                    ? TabFooterNormalizer.hideUnresolvedSocialLine(unmasked) : unmasked;
         } catch (Throwable ignored) {
-            return template;
+            return TabFooterNormalizer.hideUnresolvedSocialLine(template);
         }
     }
 
@@ -239,7 +249,7 @@ public final class TabListService implements Listener {
                 cfg.getBoolean(root + ".enabled", true),
                 refreshTicks(cfg.getInt(root + ".refresh-ticks", 40)),
                 cfg.getStringList(root + ".header"),
-                cfg.getStringList(root + ".footer"),
+                TabFooterNormalizer.normalizeFooter(cfg.getStringList(root + ".footer")),
                 cfg.getString(root + ".player-name-format", ""),
                 // tablist.show-rank-name читает RegisterPlugin → ChatService.setRankNameInTab;
                 // второй parse в Settings был мёртвым полем и удалён.
@@ -556,7 +566,14 @@ public final class TabListService implements Listener {
         List<Component> out = new ArrayList<>(templates.size());
         Object[] placeholders = context.placeholders();
         for (String template : templates) {
-            out.add(messages.renderTemplate(resolveExternalPlaceholders(template, player), placeholders));
+            // «Вы в игре…» под строкой «в игре │ 2FA» — исторический дубль.
+            if (TabFooterNormalizer.isAuthHintOnlyLine(template)
+                    && TabFooterNormalizer.isRedundantAuthenticatedHint(context.presentation())) {
+                continue;
+            }
+            String resolved = resolveExternalPlaceholders(template, player);
+            if (resolved != null && resolved.contains(TabFooterNormalizer.HIDE_LINE)) continue;
+            out.add(messages.renderTemplate(resolved, placeholders));
         }
         return out;
     }

@@ -4,6 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
+import ru.cherdakmd.chrdkregister.ConfigUpgrader;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
@@ -52,15 +53,29 @@ public final class VkPlugin extends JavaPlugin {
     private SocialPlaceholders socialPlaceholders;
     private SocialEventAnnouncer eventAnnouncer;
     private SocialInteractionHub interactionHub;
+    private WallDigestService wallDigest;
+    private DailyCardsService dailyCards;
     private boolean placeholdersRetryScheduled;
     private BukkitTask saveTask;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        ConfigUpgrader.apply(this);
         migrateBundledMessages(getDataFolder().toPath().resolve("messages.yml"));
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
         this.config = VkConfig.parse(getConfig());
+        if (config.apiConfigured()) {
+            if (config.photoWallEnabled()) {
+                getLogger().info("[CHRDK_VK] стена: режим photo (PNG + wall.post), беседа: PNG");
+            } else if ("photo".equalsIgnoreCase(config.wallPostMode())) {
+                getLogger().warning("[CHRDK_VK] wall.post-mode: photo, но community.photo-user-token "
+                        + "не задан — используется текстовый режим; PNG уходят в беседу");
+            } else {
+                getLogger().info("[CHRDK_VK] стена: текстовые посты с подписью «обсудить», "
+                        + "PNG-карточки уходят в беседу");
+            }
+        }
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
         if (this.coreApi == null) {
             getLogger().warning("[CHRDK_VK] Сервис ChrdkRegisterApi не найден — проверьте порядок запуска CHRDK_Core.");
@@ -98,6 +113,14 @@ public final class VkPlugin extends JavaPlugin {
         // мост чата, уведомления и автопостинг новостей живут в этом же JAR.
         SocialConfig socialConfig = SocialConfig.parse(getConfig());
         this.socialService = new SocialService(this, socialConfig);
+        // vk-links.json — исторический реестр /vk; импорт в players/social.yml
+        // делается до регистрации TAB и gate-слушателей, без обратной записи.
+        try {
+            socialService.importLegacyVkLinks();
+        } catch (RuntimeException failure) {
+            getLogger().log(Level.WARNING,
+                    "[CHRDK_SOCIAL] Импорт vk-links.json пропущен; read-only резерв активен", failure);
+        }
         this.maxService = new MaxService(this, socialService, socialConfig);
         socialService.attachMax(maxService);
         socialService.start();
@@ -135,21 +158,35 @@ public final class VkPlugin extends JavaPlugin {
                     if (socialService != null) socialService.store().saveIfDirty();
                 }, 20L * 30, 20L * 30);
 
+        // Суточный дайджест на стену сообщества: сбор событий, текстовый
+        // wall.post и PNG в беседу выполняются этим же плагином на сервере.
+        this.wallDigest = new WallDigestService(this, WallDigestConfig.parse(getConfig()),
+                new WallDigestStore(getDataFolder().toPath(), getLogger()), store);
+        this.wallDigest.start();
+
+        // Четыре персональные карточки игроков в 09/12/15/18 + дайджест в 21:00
+        // = ровно пять записей на стене сообщества за сутки.
+        this.dailyCards = new DailyCardsService(this, this.wallDigest,
+                DailyCardsConfig.parse(getConfig()),
+                new DailyCardsStore(getDataFolder().toPath(), getLogger()));
+        this.dailyCards.start();
+
         getLogger().info("[CHRDK_VK] Включён (привязок: " + store.linkCount()
                 + ", API настроен: " + config.apiConfigured()
-                + ", социальные привязки: " + socialService.store().linkCount() + ").");
+                + ", социальные привязки: " + socialService.linkCount() + ").");
     }
 
     /**
-     * Счётчики TAB регистрируются только при наличии PlaceholderAPI: без PAPI
-     * плагин продолжает работать, а в TAB останутся пустые значения.
+     * Строка TAB регистрируется только при наличии PlaceholderAPI: без PAPI
+     * плагин продолжает работать, а ядро скрывает неразрешённую строку,
+     * не показывая сырой плейсхолдер.
      */
     private void registerPlaceholders() {
         if (socialPlaceholders != null) return;
         if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-            getLogger().severe("[CHRDK_SOCIAL] PlaceholderAPI не найден: счётчики привязки и прохода "
-                    + "(%chrdksocial_status%, %chrdksocial_link%, %chrdksocial_access%) в TAB НЕ работают. "
-                    + "Установите PlaceholderAPI и перезапустите сервер.");
+            getLogger().severe("[CHRDK_SOCIAL] PlaceholderAPI не найден: строка привязки "
+                    + "(%chrdksocial_tab%) в TAB НЕ работает. Установите PlaceholderAPI "
+                    + "и перезапустите сервер. Старые %chrdksocial_*% доступны только с PAPI.");
             // На случай нестандартного порядка загрузки — одна повторная попытка.
             if (!placeholdersRetryScheduled) {
                 placeholdersRetryScheduled = true;
@@ -161,9 +198,9 @@ public final class VkPlugin extends JavaPlugin {
             SocialPlaceholders expansion = new SocialPlaceholders(this, socialService);
             if (expansion.register()) {
                 this.socialPlaceholders = expansion;
-                getLogger().info("[CHRDK_SOCIAL] Счётчики TAB зарегистрированы (chrdksocial).");
+                getLogger().info("[CHRDK_SOCIAL] Строка TAB зарегистрирована (chrdksocial).");
             } else {
-                getLogger().warning("[CHRDK_SOCIAL] Идентификатор chrdksocial уже занят — счётчики TAB не зарегистрированы.");
+                getLogger().warning("[CHRDK_SOCIAL] Идентификатор chrdksocial уже занят — строка TAB не зарегистрирована.");
             }
         } catch (Throwable failure) {
             getLogger().log(Level.WARNING, "[CHRDK_SOCIAL] Не удалось зарегистрировать счётчики TAB", failure);
@@ -176,6 +213,14 @@ public final class VkPlugin extends JavaPlugin {
         if (saveTask != null) {
             saveTask.cancel();
             saveTask = null;
+        }
+        if (dailyCards != null) {
+            dailyCards.shutdown();
+            dailyCards = null;
+        }
+        if (wallDigest != null) {
+            wallDigest.shutdown();
+            wallDigest = null;
         }
         // Анонс остановки — ДО shutdown(): иначе исходящие executors уже закрыты.
         if (eventAnnouncer != null) {
@@ -231,6 +276,12 @@ public final class VkPlugin extends JavaPlugin {
             }
             if (this.interactionHub != null) {
                 this.interactionHub.applyConfig(SocialInteractionConfig.parse(fresh));
+            }
+            if (this.wallDigest != null) {
+                this.wallDigest.applyConfig(WallDigestConfig.parse(fresh));
+            }
+            if (this.dailyCards != null) {
+                this.dailyCards.applyConfig(DailyCardsConfig.parse(fresh));
             }
             return true;
         } catch (Exception exception) {
@@ -389,6 +440,28 @@ public final class VkPlugin extends JavaPlugin {
 
     public VkConfig config() {
         return config;
+    }
+
+    /** Единственный экземпляр сервиса: нужен постерам для отправки PNG в беседу. */
+    public VkService service() {
+        return service;
+    }
+
+    /** Клиент с ключом сообщества: сообщения, Long Poll и финальный wall.post. */
+    public VkApiClient communityApiClient() {
+        return new VkApiClient(config());
+    }
+
+    /**
+     * Клиент только для {@code photos.*}: отдельный пользовательский ключ
+     * администратора из {@code community.photo-user-token}. Ключ сообщества
+     * сюда намеренно не подставляется: без пользовательского ключа стена
+     * работает текстом, чтобы не получать VK API error 27 при group auth.
+     */
+    public VkApiClient photoApiClient() {
+        VkConfig cfg = config();
+        return new VkApiClient(cfg.apiBaseUrl(), cfg.photoAccessToken(), cfg.apiVersion(),
+                new VkApiClient.HttpTransport());
     }
 
     public Messages messages() {

@@ -9,6 +9,7 @@ depend:
 # останется сырой текст плейсхолдеров.
 softdepend:
   - PlaceholderAPI
+  - CHRDK_Skills
 description: "Единый социальный плагин: обязательная привязка через ВКонтакте или MAX, защита сессий, мосты чата и новости релизов"
 commands:
   vk:
@@ -18,7 +19,7 @@ commands:
     permission: chrdkvk.use
   vkadmin:
     description: "Администрирование интеграции и беседы ВКонтакте"
-    usage: "/<command> [status|lookup|chatban|unlink|setchat|testchat|sync|reload]"
+    usage: "/<command> [status|lookup|chatban|unlink|setchat|testchat|testpost|testcard|sync|reload]"
     permission: chrdkvk.admin
   link:
     description: "Показать одноразовый код входа (ВК или MAX)"

@@ -33,6 +33,7 @@ class ForgeMarketContractTest(unittest.TestCase):
         cls.bank = read(ROOT / "src/main/java/ru/cherdakmd/chrdkregister/BankService.java")
         cls.forge_material = read(FORGE / "ForgeMaterial.java")
         cls.materials = read(FORGE / "ForgeMaterials.java")
+        cls.diagnostics = read(FORGE / "ForgeInputDiagnostics.java")
         cls.items = read(FORGE / "TierItems.java")
         cls.anvil = read(FORGE / "ForgeAnvilListener.java")
         cls.service = read(SHOP / "ForgeShopService.java")
@@ -51,15 +52,17 @@ class ForgeMarketContractTest(unittest.TestCase):
         end = self.items.index("public void bumpUpgrade(", start)
         return self.items[start:end]
 
-    def test_version_and_core_api_are_current(self):
+    def test_version_and_core_api_are_current_stable_fix(self):
         props = read(ROOT / "gradle.properties")
         version = re.search(r"^plugin_version=(.+)$", props, re.M)
         self.assertIsNotNone(version, "plugin_version обязателен")
         current = version.group(1).strip()
-        self.assertEqual("1.5.1", current)
-        self.assertRegex(current, r"^1\.\d+\.\d+$", "выпуск стабильный, не пререлиз")
+        self.assertEqual("1.5.2-fix", current)
+        self.assertRegex(current, r"^1\.5\.\d+-fix$", "накопительный выпуск остаётся стабильным fix")
         self.assertTrue((ROOT / "docs/releases" / (current + ".md")).is_file(),
-                        "для текущего стабильного выпуска нужны полные заметки в архиве")
+                        "для текущего стабильного fix нужны полные заметки в архиве")
+        self.assertTrue((ROOT / "docs/social/releases" / (current + ".json")).is_file(),
+                        "для стабильного анонса нужна краткая заметка игрокам")
         self.assertIn("int API_VERSION = 42;", self.api)
         self.assertIn("ForgeMaterialSource forgeMaterialSource()", self.api)
         self.assertIn("ForgeMarketCatalog", self.exchange)
@@ -134,11 +137,14 @@ class ForgeMarketContractTest(unittest.TestCase):
         self.assertIn("UUID.randomUUID().toString()", self.materials)
 
     def test_seed_is_only_way_to_first_tier_and_preserves_foreign_metadata(self):
-        self.assertIn("if (tierId != null) { fail(\"forge-input\"); return null; }", self.materials)
+        # 7 ноября 2026: отказ искры больше не падает в общий forge-input
+        # (тот текст требовал тир-вещь, хотя искре нужна вещь БЕЗ тира).
+        self.assertIn("if (tierId != null) { fail(ForgeInputDiagnostics.SEED_TIERED); return null; }", self.materials)
         self.assertIn("plugin.config().find(\"common\")", self.materials)
         self.assertIn("forgeMaterialCopy(main, tier, properties, uidValue, next, null, false)", self.materials)
         self.assertIn("isUnidentified(main)", self.materials)
-        self.assertIn("main.getAmount() != 1", self.materials)
+        self.assertIn("ForgeInputDiagnostics.of(main.getAmount(),", self.materials)
+        self.assertIn("public static final String STACK = \"forge-input-stack\"", self.diagnostics)
         self.assertIn("refreshTierModifiers(copy); // migration-only", self.assemble_block())
         self.assertNotIn("applyEnchantments", self.assemble_block())
 

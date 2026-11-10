@@ -59,9 +59,16 @@ security:
   unauthenticated-command-burst: 10
   unauthenticated-commands-per-second: 2
   max-command-length: 2048
+  # Попытки запрещённых корней: не более 3 сразу, затем 1/сек на игрока. Сверх
+  # квоты команда всё равно отменяется, но чат, аудит и алерт не флудятся.
+  blocked-attempt-burst: 3
+  blocked-attempts-per-second: 1
+  # Сводный алерт администрации — не чаще раза за N секунд.
+  blocked-alert-seconds: 30
   # Если список отсутствует, применяется этот встроенный набор. [] явно снимает запрет.
   # Команды остаются доступны консоли/RCON. Namespace и штатные aliases проверяются.
   # Свои плагины-обёртки добавляйте сюда; защита не изолирует недоверенные плагины.
+  # Запрет действует на ВСЕХ игроков, включая OP и LuckPerms `*`, без исключений.
   console-only-commands:
     - op
     - deop
@@ -123,6 +130,80 @@ security:
     - runas
     - dispatch
     - console
+    # Раскрытие сборки: версии ядра и список плагинов.
+    - pl
+    - plugins
+    - version
+    - ver
+    - about
+    - icanhasbukkit
+    - help
+    - '?'
+    - timings
+    - tps
+    - mspt
+    # Сторонние плагины рабочего набора (32 плагина в /pl).
+    - lp
+    - luckperms
+    - perm
+    - perms
+    - permissions
+    - papi
+    - placeholderapi
+    - skinsrestorer
+    - sr
+    - skins
+    - plasmovoice
+    - pv
+    - plvoice
+    - cameraman
+    - camera
+    - cam
+    # CHRDK_Core: сводка защиты, админ-панель, ранги, почести, соц. шпион.
+    - guard
+    - rankadmin
+    - socialspy
+    - spy
+    - adminpanel
+    - apanel
+    - staffpanel
+    - honoradmin
+    - honorsadmin
+    # Админ-корни и алиасы аддонов CHRDK_*.
+    - achadmin
+    - artifactsadmin
+    - auctionadmin
+    - ahadmin
+    - bpadmin
+    - claimadmin
+    - classadmin
+    - classesadmin
+    - clsadmin
+    - goalsadmin
+    - dailyadmin
+    - dlyadmin
+    - shopadmin
+    - dshopadmin
+    - marketadmin
+    - disastersadmin
+    - enchantsadmin
+    - guildadmin
+    - guildsadmin
+    - clanadmin
+    - clansadmin
+    - ga
+    - huntadmin
+    - ordersadmin
+    - petsadmin
+    - profadmin
+    - professionsadmin
+    - profsadmin
+    - questsadmin
+    - ranksadmin
+    - skillsadmin
+    - tpadmin
+    - tiersadmin
+    - vkadmin
 
 donatepay:
   # 1.4.167: продажи идут только через TradeMC (trademc.enabled: true), поэтому
@@ -945,6 +1026,27 @@ shop:
       commands: []
       trademc-export: false
 
+    # --- Вечное расширение лимита привата (ветка, после 1.5.2-rc.4) --------
+    # Продаётся УДОБСТВО/СТАТУС (больше чанков под защитой), не земля и не
+    # ресурсы: сам чанк по-прежнему приватится /claim за 160 ⛁ с рентой 10 ⛁/сут.
+    # days: 30 — обязательное техническое поле каталога (ShopCatalog не пускает
+    # товар без срока, shop.max-total-days=365). Бонус НЕ сгорает: выдача один
+    # раз кладёт +8 в claims-data.json, срок записи на него не влияет.
+    # Повторная покупка добавляет ещё +8 (до потолка суммарного срока 365 дней —
+    # 12 покупок, дальше shopbuy требует ручной сверки). Отзыв товара бонус не
+    # снимает: это вечное изменение, админ правит его /claimadmin chunks.
+    # trademc-export: false — 26 карточек TradeMC остаются снимком 1.5.1.
+    - id: claims-chunks-plus
+      name: "<aqua>+8 чанков привата навсегда</aqua>"
+      price: 159
+      days: 30
+      group: ""
+      description: "Разовое расширение лимита привата на +8 чанков НАВСЕГДА. Не сгорает и не требует продления; повторная покупка добавляет ещё +8. Ранг и персональный лимит сохраняются"
+      tag: ""
+      permissions: []
+      commands: ["claimadmin chunks %player% add 8"]
+      trademc-export: false
+
 
 # =====================================================================
 #  ВИКИ ИГРОКА (1.4.171): сайт с командами, ценами и лимитами
@@ -1048,6 +1150,7 @@ server-menu:
     - {"category": "world", "icon": "RED_BED", "name": "<gold><bold>Поставить дом</bold></gold>", "lore": "<gray>Встаньте в нужной точке и введите</gray>\n<dark_gray>/sethome имя</dark_gray>\n<dark_gray>Лимит точек зависит от ранга</dark_gray>"}
     - {"category": "world", "icon": "ENDER_PEARL", "name": "<gold><bold>Случайный телепорт</bold></gold>", "lore": "<gray>RTP за алмазы</gray>\n<dark_gray>Цена — в настройках телепортов</dark_gray>", "command": "rtp", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
     - {"category": "world", "icon": "OAK_DOOR", "name": "<gold><bold>Телепорт к игроку</bold></gold>", "lore": "<gray>Запрос: /tpa ник</gray>\n<dark_gray>Принять: /tpaccept</dark_gray>", "command": "tpa", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
+    - {"category": "world", "icon": "SAND", "name": "<gold><bold>Катастрофы</bold></gold>", "lore": "<gray>Пыльная буря, метеориты и землетрясение</gray>\n<dark_gray>Клик: /disasters — когда ждать следующую</dark_gray>", "command": "disasters", "plugin": "CHRDK_Disasters", "permission": "chrdkdisasters.use"}
     # ------------------------------ снаряжение ------------------------------
     - {"category": "gear", "icon": "ENCHANTED_BOOK", "name": "<gold><bold>Кастомные чары</bold></gold>", "lore": "<gray>Каталог чар и описания</gray>\n<dark_gray>Получение — через игровую механику</dark_gray>", "command": "enchants", "plugin": "CHRDK_Enchants", "permission": "chrdkenchants.use"}
     - {"category": "gear", "icon": "SMITHING_TABLE", "name": "<gold><bold>Редкости снаряжения</bold></gold>", "lore": "<gray>Тиры крафта и характеристики</gray>", "command": "tiers", "plugin": "CHRDK_TierForge", "permission": "chrdktierforge.use"}
@@ -1085,6 +1188,22 @@ economy:
   baltop-size: 10
   # Разрешать переводы игрокам не в сети (счёт открывается при первом входе).
   allow-offline-pay: true
+
+# Наковальня (Core API40). Ванильное «Слишком дорого» от 40 снято, чтобы полная
+# цена кастомных книг чар, Кузни и тиров списывалась честно. Обычная ванильная
+# ковка с накопленным штрафом предыдущих работ (cumulative-cost) может дойти до
+# 10–16 тысяч уровней; выше потолка опыт больше не списывается.
+# Накопленный RepairCost старых предметов НЕ переписывается.
+anvil:
+  # Максимальная полная цена в уровнях опыта (минимум 40). Дороже — только валюта.
+  max-level-price: 150
+  # Сколько уровней полной цены стоит один алмаз с /bal (1..1000).
+  # Цена считается из всей суммы, а не из превышения потолка.
+  levels-per-diamond: 10
+  # Потолок цены в алмазах (1..10000): защита от предметов с огромным штрафом.
+  max-diamond-price: 64
+  # false — дороже потолка просто «слишком дорого», без валютной альтернативы.
+  currency-payment: true
 
 # Интеграции со сторонними плагинами (мягкие зависимости — без них плагин работает как обычно)
 integrations:
@@ -1179,6 +1298,24 @@ guide:
   # Игравшим до обновления книгу не навязываем — они берут её командой /guide.
   # false = книга не выдаётся автоматически, но /guide продолжает работать.
   give-on-first-join: true
+
+starter-kit:
+  # Случайный стартовый комплект новичка (разовая выдача после авторизации).
+  # Текст подтверждения — messages.yml: starter-kit.granted.
+  enabled: true
+  # Алмазы на счёт /bal (bank.json) и физическими предметами в инвентарь.
+  # Физические 32 — стартовый подарок, а не добыча: дневной лимит Skills не тратится.
+  bank-diamonds: 1000
+  inventory-diamonds: 32
+  # Сколько предметов брони, инструментов и «артефактов» в комплекте.
+  # Артефакты смешанные: половина из каталога CHRDK_Artifacts, половина ванильная.
+  armor-pieces: 4
+  tools: 3
+  artifacts: 2
+  # false — в броске участвуют только светлые артефакты каталога.
+  include-cursed-artifacts: true
+  # Игравшие до обновления комплект не получают; флаг выдачи — starter-kits.json.
+  # Все значения зажаты в безопасных пределах кодом, даже если YAML исправлен вручную.
 
 spawn:
   # Случайный спавн (1.4.106): новичок появляется в случайной точке мира после регистрации/входа,
@@ -1417,10 +1554,13 @@ auto-messages:
     - {"text": "<gray>Хотите поддержать CHERDAK? <click:run_command:'/donate'><white>/donate</white></click> даст официальную ссылку. Не переводите деньги по реквизитам из чужих личных сообщений.</gray>", "permission": "chrdkregister.donate"}
     - {"text": "<gray>CHERDAK рядом и вне игры: <white>/vk link</white> выдаёт код для личных сообщений сообщества. Входы и самозащита — в ЛС; беседа — для общения и новостей. Пароли и коды 2FA боту не отправляйте.</gray>", "plugin": "CHRDK_VK", "permission": "chrdkvk.use"}
     - {"text": "<gray>На CHERDAK работает <white>Plasmo Voice</white>: голосовой чат с учётом расстояния между игроками. Нужен клиентский мод Plasmo Voice и настроенный микрофон; текстовые каналы и правила общения остаются прежними.</gray>"}
+    - {"text": "<gray>Катастрофы CHERDAK не задевают приваты и спавн: <white>/disasters</white> покажет, когда ждать следующую. Изменённые блоки возвращаются по таймеру, опыта и алмазов с них нет.</gray>", "plugin": "CHRDK_Disasters", "permission": "chrdkdisasters.use"}
 
 # ================================================================
-# Админ-панель аудита игроков (/adminpanel). Варны, роли и журнал лежат в
-# отдельном moderation.json; бан дублируется в ванильный BanList по имени.
+# Админ-панель аудита игроков (/adminpanel). Варны и зеркало банов лежат в
+# редактируемых players/warns.yml и players/bans.yml; роли и журнал — в
+# moderation.json с SHA-256. Бан дублируется в ванильный BanList по имени.
+# При первом запуске старые поля переносятся с backup moderation.json.
 # Пятый активный варн кикает игрока и банит его без срока.
 moderation:
   # Отключает автоматический бан на пороге варнов и нашу проверку входа.
@@ -1484,12 +1624,12 @@ tablist:
   #   %tab_warns% — СВОИ активные варны и порог автобана игрока («3/5»).
   #   %tab_warns_public% — общий список нарушителей (ник + счётчик), одинаковый
   #   для всех; включается moderation.warns-public-in-tab, по умолчанию пусто.
-  #   %chrdksocial_status% — ЯВНЫЙ выбор игрока: «✅ привязан (ВК)»,
-  #   «✅ проход: 27 дн.» или «⚠ БЕЗ ПРИВЯЗКИ: осталось 14 дн.» / «⛔ ВХОД ЗАКРЫТ».
-  #   %chrdksocial_access% — остаток товара «Вход без ВК и MAX» («27 дн.», «нет»),
-  #   %chrdksocial_link% — статус привязки («ВК», «MAX», «осталось 12 дн.»).
-  #   Все три приходят из CHRDK_VK через PlaceholderAPI; без CHRDK_VK/PlaceholderAPI
-  #   в TAB будет пустая строка, а в логе CHRDK_VK — громкое предупреждение.
+  #   %chrdksocial_tab% — ОДНА цельная строка CHRDK_VK: понятный следующий шаг,
+  #   срок до привязки или факт «привязан» без счётчика. Приходит через PAPI.
+  #   Старые %chrdksocial_status% / %chrdksocial_link% / %chrdksocial_access%
+  #   во владельческом footer автоматически сливаются в эту строку рантаймом:
+  #   config.yml не перезаписывается. Без CHRDK_VK/PlaceholderAPI строка скрывается,
+  #   а CHRDK_VK пишет громкое предупреждение в лог.
   #   %pass_type% — приветственный/обычный/нет, %auth_status% — состояние входа,
   #   %auth_hint% — следующий шаг, %security% — состояние 2FA,
   #   %navigation% — доступные ссылки после входа (до входа: пустая строка).
@@ -1516,8 +1656,7 @@ tablist:
     - "<gray>%auth_status%</gray> <dark_gray>│</dark_gray> <gray>2FA: %security%</gray>"
     - "<gray>Варны <yellow>%tab_warns%</yellow> <dark_gray>│</dark_gray> <gray>порог — автобан</gray>"
     - "<gray>%tab_warns_public%</gray>"
-    - "<gold>%chrdksocial_status%</gold>"
-    - "<gray>Привязка <green>%chrdksocial_link%</green> <dark_gray>│</dark_gray> Проход <aqua>%chrdksocial_access%</aqua></gray>"
+    - "%chrdksocial_tab%"
     - "<gray>%auth_hint%</gray>"
     - "<yellow>✦</yellow> <gray>%tab_tip%</gray>"
     - "%tab_separator%"
@@ -1612,3 +1751,27 @@ reward-boost:
 # Не удаляйте маркер: после миграции totp.required можно осознанно включить обратно.
 migrations:
   optional-totp-1-4-211: true
+
+# =====================================================================
+# Mine Treasure v1.6.5 RU: включение датапака, уже лежащего в мире
+# =====================================================================
+# CHRDK_Core НЕ поставляет и не распаковывает ZIP. Положите присланный архив
+# (расширение .txt у загрузки на самом деле ZIP) в <мир>/datapacks под именем
+# file-name. В репозитории лежит патченый ZIP с исправленными кодеками и
+# PDC-меткой CHRDK; помощник tools/datapacks/install_mine_treasure.py только
+# проверяет и копирует его. Плагин через Paper DatapackManager проверит
+# id file/<имя ZIP> и, если пак выключен, один раз вызовет setEnabled(true).
+# Уже включённый пак не трогается. Слияние лута (без двойного дропа) включено
+# в CHRDK_Skills/Enchants/TierForge/Artifacts через MineTreasureLootPolicy.
+# Старый config.yml без этой секции работает с указанными ниже значениями.
+integrations:
+  mine-treasure:
+    # false — ядро только пишет в журнал и не вызывает /datapack enable.
+    auto-enable: true
+    # true — если пак не найден, дополнительно вызвать refreshPacks() и поискать
+    # снова. Обычно достаточно полного рестарта сервера; по умолчанию выключено.
+    refresh-on-start: false
+    file-name: "mine-treasure-1.6.5-ru.zip"
+    # Пусто — id вычисляется как file/<file-name>. Заполните только для паков,
+    # которые регистрирует другой Paper-плагин (например CHRDK_Core/mt).
+    pack-id: ""

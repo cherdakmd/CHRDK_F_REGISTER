@@ -171,16 +171,25 @@ final class ForgeMaterials implements Listener {
 
     /** Preview не меняет входные вещи: результат собирается из clone, оплата проверяется отдельно. */
     Plan build(ItemStack main, ItemStack off, ForgeMaterial kind, String selectedId) {
-        if (main == null || off == null || kind == null || kind(off) != kind) { fail("forge-input"); return null; }
+        if (main == null || off == null || kind == null || kind(off) != kind) {
+            fail(ForgeInputDiagnostics.MISSING); return null;
+        }
         var itemKind = ItemKind.classify(main.getType().name());
-        if (main.getAmount() != 1 || itemKind == null || !plugin.config().kindAllowed(itemKind)
-                || plugin.items().isUnidentified(main) || main.getItemMeta() == null) { fail("forge-input"); return null; }
+        String tierId = plugin.items().tierOf(main);
+        // 7 ноября 2026: одна общая строка «нужна опознанная тир-вещь» скрывала
+        // шесть разных причин, а для искры была прямо противоположной правде.
+        String diagnostic = ForgeInputDiagnostics.of(main.getAmount(),
+                plugin.items().isUnidentified(main), main.getItemMeta() != null,
+                itemKind, plugin.config().kindAllowed(itemKind), kind.seed(), tierId != null);
+        if (diagnostic != null) {
+            fail(diagnostic, "kind", itemKind == null ? "?" : itemKind.name().toLowerCase(Locale.ROOT));
+            return null;
+        }
         if (!operationEnabled(kind)) { fail("forge-unavailable"); return null; }
 
-        String tierId = plugin.items().tierOf(main);
         var tier = tierId == null ? null : plugin.config().find(tierId);
         if (kind.seed()) return seedPlan(main, off, kind, itemKind, tierId);
-        if (tier == null) { fail("forge-input"); return null; }
+        if (tier == null) { fail(ForgeInputDiagnostics.NEED_TIER); return null; }
 
         String identity = main.getItemMeta().getPersistentDataContainer().get(uid, PersistentDataType.STRING);
         long oldSequence = main.getItemMeta().getPersistentDataContainer().getOrDefault(sequence, PersistentDataType.LONG, 0L);
@@ -194,6 +203,10 @@ final class ForgeMaterials implements Listener {
         Consumer<ItemMeta> mutation = null;
         boolean rename = false;
         int units = 1, xp;
+        // 1.5.2: при чаре megamine не выдаём ни «Карьер», ни «Забойщик».
+        var enchantsApi = plugin.enchantsApi();
+        boolean megaMining = enchantsApi != null
+                && MiningCompatPolicy.hasMegaMining(enchantsApi.enchantsOf(main));
 
         if (kind == ForgeMaterial.ASCEND) {
             String nextTier = TierDef.next(tierId);
@@ -202,11 +215,13 @@ final class ForgeMaterials implements Listener {
             int index = TierDef.indexOf(nextTier);
             units = ForgeMaterial.ascendCost(index); xp = ForgeMaterial.ascendXp(index);
             if (!plugin.config().propertiesEnabled()) { fail("forge-unavailable"); return null; }
-            properties = new ArrayList<>(TierProperties.roll(nextTier, itemKind, plugin.config().propertiesPerItem(), choice));
+            properties = new ArrayList<>(TierProperties.roll(nextTier, itemKind,
+                    plugin.config().propertiesPerItem(), choice, MiningCompatPolicy.forbidden(megaMining)));
         } else if (kind == ForgeMaterial.TEMPER) {
             upgrade = ForgeUpgrade.byId(selectedId);
             int current = upgrade == null ? 0 : plugin.items().upgradeLevel(main, upgrade.id());
-            if (!plugin.config().improveEnabled() || upgrade == null || !upgrade.fits(itemKind) || current < 1 || current >= upgrade.maxLevel()) {
+            if (!plugin.config().improveEnabled() || upgrade == null || !upgrade.fits(itemKind) || current < 1 || current >= upgrade.maxLevel()
+                    || megaMining && MiningCompatPolicy.isColumnMiningUpgrade(upgrade.id())) {
                 fail("forge-upgrade-invalid"); return null;
             }
             xp = 8 + current * 2;
@@ -221,13 +236,18 @@ final class ForgeMaterials implements Listener {
             properties.set(properties.indexOf(selected), alternatives.get(choice.nextInt(alternatives.size())));
             xp = 12 + TierDef.indexOf(tierId) * 3;
         } else if (kind == ForgeMaterial.REPAIR) {
-            if (!(main.getItemMeta() instanceof Damageable damageable) || !damageable.hasDamage()) { fail("forge-input"); return null; }
+            if (!(main.getItemMeta() instanceof Damageable damageable) || !damageable.hasDamage()) {
+                fail(ForgeInputDiagnostics.REPAIR_UNDAMAGED); return null;
+            }
             mutation = meta -> { if (meta instanceof Damageable d) d.setDamage(0); };
             xp = ForgeMaterial.REPAIR_XP;
         } else if (kind == ForgeMaterial.INSCRIBE) {
             upgrade = ForgeUpgrade.byId(selectedId);
             if (!plugin.config().improveEnabled() || upgrade == null || !upgrade.fits(itemKind)
-                    || plugin.items().upgradeLevel(main, upgrade.id()) != 0) { fail("forge-upgrade-invalid"); return null; }
+                    || plugin.items().upgradeLevel(main, upgrade.id()) != 0
+                    || megaMining && MiningCompatPolicy.isColumnMiningUpgrade(upgrade.id())) {
+                fail("forge-upgrade-invalid"); return null;
+            }
             String id = upgrade.id();
             mutation = meta -> plugin.items().setUpgradeLevel(meta, id, 1);
             xp = ForgeMaterial.INSCRIBE_XP;
@@ -241,7 +261,7 @@ final class ForgeMaterials implements Listener {
             // NAME: другая кузнечная кличка, без переролла чар.
             String current = plugin.items().forgeNameOf(main);
             String picked = anotherName(itemKind, current, choice);
-            if (picked == null) { fail("forge-input"); return null; }
+            if (picked == null) { fail(ForgeInputDiagnostics.NAME_POOL_EMPTY); return null; }
             mutation = meta -> plugin.items().setForgeNickname(meta, picked);
             rename = true;
             xp = ForgeMaterial.NAME_XP;
@@ -253,14 +273,18 @@ final class ForgeMaterials implements Listener {
 
     /** Только искра расширяет eligibility до вещи без тира; первая редкость — строго «Обычный». */
     private Plan seedPlan(ItemStack main, ItemStack off, ForgeMaterial kind, ItemKind itemKind, String tierId) {
-        if (tierId != null) { fail("forge-input"); return null; }
+        if (tierId != null) { fail(ForgeInputDiagnostics.SEED_TIERED); return null; }
         var tier = plugin.config().find("common");
         if (tier == null) { fail("forge-unavailable"); return null; }
         String canonical = off.getItemMeta().getPersistentDataContainer().get(seedUuid, PersistentDataType.STRING);
-        if (!ForgeMarketCatalog.canonicalUuid(canonical)) { fail("forge-input"); return null; }
+        if (!ForgeMarketCatalog.canonicalUuid(canonical)) {
+            fail(ForgeInputDiagnostics.SEED_INVALID); return null;
+        }
         // 36-символьный UUID НЕ передаётся в validUid: только производный 12-hex.
         String uidValue = ForgeMaterial.seedUid(canonical);
-        if (!TierModifierIds.validUid(uidValue)) { fail("forge-legacy"); return null; }
+        if (!TierModifierIds.validUid(uidValue)) {
+            fail(ForgeInputDiagnostics.SEED_UID); return null;
+        }
         long next = ForgeMaterial.nextSequence(0L);
         Random choice = ForgeMaterial.choice(canonical, next, kind, "common");
         var properties = new ArrayList<>(TierProperties.roll("common", itemKind,

@@ -15,6 +15,8 @@ public final class MilestoneAwards {
         boolean available();
         boolean registered(String source,UUID lineage);
         boolean register(String source,UUID lineage);
+        /** Уже закреплённый банком lineage; null — источник ещё не регистрировался. */
+        default UUID lineage(String source) { return null; }
         boolean known(UUID owner);
         long credited(String source,UUID lineage,UUID owner);
         boolean credit(String source,UUID lineage,UUID owner,long total);
@@ -45,6 +47,11 @@ public final class MilestoneAwards {
         public boolean available() { return api.get()!=null&&api.get().personalBankAvailable(); }
         public boolean registered(String s,UUID l) { return api.get().incomeSourceAvailable(s,l); }
         public boolean register(String s,UUID l) { return api.get().registerIncomeSource(s,l); }
+        public UUID lineage(String s) {
+            var current = api.get();
+            return current instanceof IncomeSourceLineageProvider provider
+                    ? provider.incomeSourceLineage(s) : null;
+        }
         public boolean known(UUID owner) { return api.get().canReceiveBankIncome(owner); }
         public long credited(String s,UUID l,UUID owner) { return api.get().creditedEntitlement(s,l,owner.toString(),owner); }
         public boolean credit(String s,UUID l,UUID owner,long total) { return api.get().creditEntitlement(s,l,owner.toString(),owner,total); }
@@ -52,8 +59,34 @@ public final class MilestoneAwards {
     public MilestoneAwards(JavaPlugin plugin,Supplier<ChrdkRegisterApi> api,Supplier<ru.cherdakmd.chrdkregister.Messages> messages,String source,Map<UUID,Set<String>> legacy) throws Exception {
         if(!source.matches("[a-z][a-z0-9-]{0,47}")||api.get()==null||ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<20) throw new IllegalStateException("Нужен Core API 20+");
         this.plugin=plugin; this.api=api; this.messages=messages; this.source=source;
-        store=new MilestoneStore(plugin.getDataFolder().toPath(),source); store.initialize(legacy); tick();
+        store=new MilestoneStore(plugin.getDataFolder().toPath(),source); store.initialize(legacy); reconcileLineage(); tick();
         task=Bukkit.getScheduler().runTaskTimer(plugin,this::tick,20L,20L);
+    }
+    /**
+     * Банк мог уже закрепить этот источник за другим lineage: например, когда
+     * milestone-awards.json восстановили из свежей копии, а bank.json оставили
+     * от прежнего сервера. Пока локальный журнал не содержит обязательств,
+     * безопасно принять lineage банка; иначе выплаты приостанавливаются без
+     * попытки переписать чужие квитанции.
+     */
+    private void reconcileLineage() {
+        try {
+            UUID external = bank.lineage(source);
+            if (external == null || external.equals(store.lineage())) return;
+            if (store.registered() || !store.totals().isEmpty()) {
+                conflict = true;
+                plugin.getLogger().warning("Источник наград приостановлен: банк закрепил "
+                        + source + " за другим lineage. Не удаляйте milestone-awards.json; "
+                        + "сверьте backup журнала наград и bank.json.");
+                return;
+            }
+            store.adoptLineage(external);
+            plugin.getLogger().info("Источник наград " + source
+                    + ": принят lineage, уже зарегистрированный банком; новые деньги не создавались.");
+        } catch (Exception error) {
+            conflict = true;
+            failure(error);
+        }
     }
     public void close() { task.cancel(); }
     public MilestoneStore store() { return store; }

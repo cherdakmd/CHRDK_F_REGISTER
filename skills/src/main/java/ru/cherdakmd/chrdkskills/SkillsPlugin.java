@@ -5,14 +5,17 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
+import ru.cherdakmd.chrdkregister.ConfigUpgrader;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
+import ru.cherdakmd.chrdkregister.api.RankBonus;
 
 import java.util.Locale;
 
 /**
- * CHRDK_Skills — десять навыков с уровнями 1..100 и 60 перками.
+ * CHRDK_Skills — десять навыков с уровнями 1..100 и 12 ступенями перков
+ * на каждом (всего 120).
  *
  * <p>Опыт идёт из честных событий: разрушение блоков, бой, рыбалка, варка и
  * зачарование. Прогресс живёт в {@code skills.json} по UUID, уровень всегда
@@ -45,6 +48,7 @@ public final class SkillsPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        ConfigUpgrader.apply(this);
         this.store = new SkillStore(getDataFolder().toPath(), getLogger());
         // Конфиг читается до создания листенера: антинакрутка берёт из него TTL.
         reloadSkillsConfig();
@@ -110,6 +114,9 @@ public final class SkillsPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (gui != null) {
+            Bukkit.getServicesManager().unregister(SkillsMenuApi.class, gui);
+        }
         if (awards != null) awards.close();
         ru.cherdakmd.chrdkregister.api.CropReplanting.cancel(this);
         if (abilityTask != null) abilityTask.cancel();
@@ -190,6 +197,9 @@ public final class SkillsPlugin extends JavaPlugin {
     public void registerApi() {
         Bukkit.getServicesManager().register(ChrdkSkillsApi.class,
                 new SkillsApiImpl(service), this, ServicePriority.Normal);
+        // Единое меню: /perktree из CHRDK_Classes открывает тот же инвентарь.
+        Bukkit.getServicesManager().register(SkillsMenuApi.class, gui,
+                this, ServicePriority.Normal);
     }
 
     public Messages messages() {
@@ -218,6 +228,61 @@ public final class SkillsPlugin extends JavaPlugin {
         return effects;
     }
 
+    /** Персональный дневной лимит дропа алмазов для онлайн-игрока. */
+    public int diamondDailyCap(Player player, RankBonus knownBonus) {
+        if (player == null) {
+            return config().diamonds().dailyCap();
+        }
+        return diamondDailyCap(player.getName(),
+                skills().totalLevel(player), skills().totalPrestige(player), knownBonus);
+    }
+
+    /**
+     * Тот же лимит для {@code /profile}: ранг, Pass, буст и entitlement читаются
+     * по имени, уровни и престиж — из {@code skills.json} по UUID, поэтому
+     * раздел работает и для оффлайн-игрока.
+     */
+    public int diamondDailyCap(String playerName, int totalLevel, int totalPrestige) {
+        return diamondDailyCap(playerName, totalLevel, totalPrestige, null);
+    }
+
+    private int diamondDailyCap(String playerName, int totalLevel, int totalPrestige,
+                                RankBonus knownBonus) {
+        DiamondCapMath.Settings settings = config().diamondCap();
+        return DiamondCapMath.compute(config().diamonds().dailyCap(), settings,
+                capContext(playerName, totalLevel, totalPrestige, settings, knownBonus));
+    }
+
+    private DiamondCapMath.Context capContext(String name, int totalLevel,
+                                             int totalPrestige,
+                                             DiamondCapMath.Settings settings,
+                                             RankBonus knownBonus) {
+        ChrdkRegisterApi api = coreApi();
+        RankBonus bonus = knownBonus == null ? RankBonus.NONE : knownBonus;
+        boolean pass = false;
+        boolean boost = false;
+        boolean entitlement = false;
+        if (api != null && name != null) {
+            try {
+                if (knownBonus == null) {
+                    bonus = api.rankBonus(name);
+                }
+                pass = api.hasActivePass(name);
+                boost = api.rewardBoostRemainingMillis(name) > 0L;
+                String productId = settings.entitlementId();
+                entitlement = !productId.isEmpty() && api.hasEntitlement(name, productId);
+            } catch (RuntimeException | LinkageError ignored) {
+                // Ядро недоступно или старше контракта: остаёмся на базовом лимите.
+            }
+        }
+        if (bonus == null) {
+            bonus = RankBonus.NONE;
+        }
+        return new DiamondCapMath.Context(
+                bonus.level(), bonus.xpPercent(), bonus.dropPercent(), bonus.extraSkill(),
+                totalPrestige, totalLevel, pass, boost, entitlement);
+    }
+
     /** Тонкая обёртка: аддоны не видят внутренние классы и не могут сломать состояние. */
     private record SkillsApiImpl(SkillService service) implements ChrdkSkillsApi {
 
@@ -236,6 +301,11 @@ public final class SkillsPlugin extends JavaPlugin {
         @Override
         public int totalLevel(Player player) {
             return service.totalLevel(player);
+        }
+
+        @Override
+        public int totalPrestige(Player player) {
+            return service.totalPrestige(player);
         }
 
         @Override

@@ -63,7 +63,7 @@ jobs:
           fi
           echo "version=$plugin_version" >> "$GITHUB_OUTPUT"
 
-      - name: Check messages and release validation tests
+      - name: Check messages, patched Mine Treasure and release validation tests
         run: |
           python3 .github/scripts/check_retired_addons.py
           python3 -m unittest discover -s .github/scripts -p 'test_retired_addons.py' -v
@@ -71,6 +71,7 @@ jobs:
           python3 -m unittest discover -s .github/scripts -p 'test_gradle_build.py' -v
           python3 -m unittest discover -s .github/scripts -p 'test_prepare_papi.py' -v
           python3 .github/scripts/check_messages.py
+          python3 tools/datapacks/build_mine_treasure.py --check
 
       - name: Verify TradeMC kit and regression tests
         run: |
@@ -125,7 +126,7 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-      - name: Pack general plugin ZIP and prepare standalone CHRDK_VK JAR
+      - name: Pack general plugin ZIP and prepare standalone JARs
         shell: bash
         run: |
           set -euo pipefail
@@ -133,7 +134,7 @@ jobs:
           mkdir -p release
           find . -path '*/build/libs/*.jar' -type f \
             ! -name '*-sources.jar' ! -name '*-javadoc.jar' ! -name '*-dev.jar' \
-            ! -name 'chrdk-vk-*.jar' \
+            ! -name 'chrdk-vk-*.jar' ! -name 'chrdk-disasters-*.jar' \
             -exec cp '{}' release/ \;
           count="$(find release -maxdepth 1 -name '*.jar' | wc -l)"
           echo "Собрано JAR общего комплекта: $count"
@@ -159,11 +160,17 @@ jobs:
           unzip -l "chrdk-plugins-${version}.zip"
           cp "vk/build/libs/chrdk-vk-${version}.jar" "chrdk-vk-${version}.jar"
           python3 .github/scripts/verify_release.py --standalone "chrdk-vk-${version}.jar" CHRDK_VK "$version"
+          cp "disasters/build/libs/chrdk-disasters-${version}.jar" "chrdk-disasters-${version}.jar"
+          python3 .github/scripts/verify_release.py --standalone "chrdk-disasters-${version}.jar" CHRDK_Disasters "$version"
+          cp "datapacks/mine-treasure-ru/mine-treasure-1.6.5-ru.zip" "mine-treasure-1.6.5-ru.zip"
           checksums="chrdk-${version}-SHA256SUMS.txt"
-          sha256sum "chrdk-plugins-${version}.zip" "chrdk-vk-${version}.jar" > "$checksums"
+          sha256sum "chrdk-plugins-${version}.zip" "chrdk-vk-${version}.jar" \
+            "chrdk-disasters-${version}.jar" "mine-treasure-1.6.5-ru.zip" > "$checksums"
           sha256sum -c "$checksums"
           echo "zip=chrdk-plugins-${version}.zip" >> "$GITHUB_ENV"
           echo "vk_jar=chrdk-vk-${version}.jar" >> "$GITHUB_ENV"
+          echo "disasters_jar=chrdk-disasters-${version}.jar" >> "$GITHUB_ENV"
+          echo "datapack=mine-treasure-1.6.5-ru.zip" >> "$GITHUB_ENV"
           echo "checksums=$checksums" >> "$GITHUB_ENV"
 
       - name: Upload dry-run release candidate
@@ -174,6 +181,8 @@ jobs:
           path: |
             ${{ env.zip }}
             ${{ env.vk_jar }}
+            ${{ env.disasters_jar }}
+            ${{ env.datapack }}
             ${{ env.checksums }}
           if-no-files-found: error
           retention-days: 14
@@ -182,4 +191,4 @@ jobs:
         if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ env.zip }}" "${{ env.vk_jar }}" "${{ env.checksums }}" --clobber
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ env.zip }}" "${{ env.vk_jar }}" "${{ env.disasters_jar }}" "${{ env.datapack }}" "${{ env.checksums }}" --clobber

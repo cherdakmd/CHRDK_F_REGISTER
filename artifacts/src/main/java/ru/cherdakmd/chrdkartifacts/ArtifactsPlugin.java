@@ -3,6 +3,7 @@ package ru.cherdakmd.chrdkartifacts;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
+import ru.cherdakmd.chrdkregister.ConfigUpgrader;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkArtifactsApi;
@@ -45,6 +46,7 @@ public final class ArtifactsPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        ConfigUpgrader.apply(this);
         this.items = new ArtifactItems(this);
         this.cooldowns = new Cooldowns();
         this.cooldownStore = new CooldownStore(getDataFolder().toPath(), getLogger());

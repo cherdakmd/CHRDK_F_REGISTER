@@ -481,7 +481,9 @@ class PluginUpdateServiceTest {
         assertEquals(22, PluginUpdateService.MODULES.size());
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_VK"),
                 "CHRDK_VK публикуется отдельным JAR рядом с общим архивом, а не внутри ZIP");
-        Set<String> standalone = Set.of("CHRDK_VK");
+        assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_Disasters"),
+                "CHRDK_Disasters публикуется отдельным JAR рядом с общим архивом, а не внутри ZIP");
+        Set<String> standalone = Set.of("CHRDK_VK", "CHRDK_Disasters");
         Set<String> actual = new HashSet<>();
         List<Path> descriptors = new ArrayList<>();
         descriptors.add(Path.of("src/main/resources/plugin.yml"));

@@ -2,13 +2,13 @@ name: CHRDK_Skills
 version: ${version}
 main: ru.cherdakmd.chrdkskills.SkillsPlugin
 api-version: '26.3'
-description: "10 навыков с уровнями 1..100, 60 перков, витрина и публичный API: опыт из честных событий, антинакрутка и транзитные атрибуты"
+description: "10 навыков 1..100, 12 ступеней перков, престиж после потолка, физический дроп алмазов с потолками, единое меню с вкладками и деревом перков, антинакрутка и транзитные атрибуты"
 author: cherdakmd
 depend: [CHRDK_Core]
 commands:
   skills:
-    description: "Навыки: витрина, список, топ и карточка навыка"
-    usage: "/skills [menu|list|top|energy|use <навык>|<навык>]"
+    description: "Единое меню: навыки, дерево перков, топ и престиж; звания, бонусы и топ престижа"
+    usage: "/skills [menu|list|top|rating|tree [домен]|perks|energy|prestige [<навык>|all]|prestigetop|balance|use <навык>|<навык>]"
   skillsadmin:
     description: "Администрирование навыков"
     permission: chrdkskills.admin

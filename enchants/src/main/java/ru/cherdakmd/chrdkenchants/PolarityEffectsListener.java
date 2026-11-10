@@ -163,7 +163,9 @@ public final class PolarityEffectsListener implements Listener {
         if (enchants.isEmpty()) {
             return;
         }
-        // Порча: добыча может исчезнуть
+        // Порча: добыча может исчезнуть. Это осознанное проклятие, а не
+        // «двойной дроп»: оно снимает и ванильные стеки, и mt: награды, но
+        // не разыгрывает таблицу лута заново и не создаёт копии.
         int jinxed = enchants.getOrDefault("jinxed", 0);
         if (jinxed > 0 && random.nextInt(100) < EnchantParams.percent("jinxed", jinxed)) {
             if (!event.getItems().isEmpty()) {

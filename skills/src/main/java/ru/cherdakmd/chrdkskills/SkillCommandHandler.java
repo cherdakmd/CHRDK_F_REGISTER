@@ -59,6 +59,15 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
             plugin.messages().send(sender, "player-only");
             return true;
         }
+        if (args[0].equalsIgnoreCase("tree") || args[0].equalsIgnoreCase("perktree")
+                || args[0].equalsIgnoreCase("perks")) {
+            gui.open(player, SkillsMenuApi.Tab.TREE, args.length > 1 ? args[1] : null, 0);
+            return true;
+        }
+        if (args[0].equalsIgnoreCase("rating")) {
+            gui.open(player, SkillsMenuApi.Tab.TOP, null, 0);
+            return true;
+        }
         if (args[0].equalsIgnoreCase("energy")) {
             plugin.abilities().status(player); return true;
         }
@@ -71,6 +80,15 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
         }
         if (args[0].equalsIgnoreCase("top")) {
             return handleTop(player);
+        }
+        if (args[0].equalsIgnoreCase("prestige")) {
+            return handlePrestige(player, args);
+        }
+        if (args[0].equalsIgnoreCase("prestigetop")) {
+            return handlePrestigeTop(player);
+        }
+        if (args[0].equalsIgnoreCase("balance")) {
+            return handleBalance(player);
         }
         SkillType skill = SkillType.byId(args[0]);
         if (skill == null) {
@@ -90,14 +108,124 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
         for (SkillType skill : SkillRegistry.all()) {
             int level = service.level(player, skill);
             SkillCurve.LevelProgress progress = service.progress(player, skill);
-            plugin.messages().send(player, "list-line",
-                    "name", Messages.trusted(plugin.messages().raw("skill." + skill.id() + ".name")),
-                    "level", String.valueOf(level),
-                    "bar", SkillCurve.bar(progress.percent(), 10),
-                    "current", String.valueOf(progress.into()),
-                    "need", String.valueOf(progress.need()));
+            if (progress.maxed()) {
+                plugin.messages().send(player, "list-line-max",
+                        "name", Messages.trusted(plugin.messages().raw("skill." + skill.id() + ".name")),
+                        "level", String.valueOf(level),
+                        "bar", SkillCurve.bar(progress.percent(), 10),
+                        "xp", String.valueOf(service.xp(player, skill)));
+            } else {
+                plugin.messages().send(player, "list-line",
+                        "name", Messages.trusted(plugin.messages().raw("skill." + skill.id() + ".name")),
+                        "level", String.valueOf(level),
+                        "bar", SkillCurve.bar(progress.percent(), 10),
+                        "current", String.valueOf(progress.into()),
+                        "need", String.valueOf(progress.need()));
+            }
         }
         plugin.messages().send(player, "list-footer");
+        return true;
+    }
+
+    /** Без аргумента — витрина престижа; с аргументом — двухшаговый сброс. */
+    private boolean handlePrestige(Player player, String[] args) {
+        if (args.length == 1) {
+            gui.open(player, SkillsMenuApi.Tab.PRESTIGE, null, 0);
+            return true;
+        }
+        if (args.length != 2) {
+            plugin.messages().send(player, "prestige-usage");
+            return true;
+        }
+        SkillService.PrestigeResult result;
+        if (args[1].equalsIgnoreCase("all")) {
+            result = service.requestPrestigeAll(player);
+        } else {
+            SkillType skill = SkillType.byId(args[1]);
+            if (skill == null) {
+                plugin.messages().send(player, "unknown-skill");
+                return true;
+            }
+            result = service.requestPrestige(player, skill);
+        }
+        switch (result) {
+            case DISABLED -> plugin.messages().send(player, "prestige-disabled");
+            case AT_CAP -> plugin.messages().send(player, "prestige-at-cap",
+                    "cap", String.valueOf(PrestigeMath.MAX_PER_SKILL));
+            case NOT_MAX -> plugin.messages().send(player, "prestige-not-max",
+                    "level", String.valueOf(plugin.config().curve().maxLevel()));
+            case PENDING -> plugin.messages().send(player, "prestige-confirm");
+            case DONE -> {
+                plugin.messages().send(player, "prestige-done",
+                        "total", String.valueOf(service.totalPrestige(player)),
+                        "title", Messages.trusted(service.prestigeTier(player).title()));
+                plugin.getLogger().info("[CHRDK_Skills] " + player.getName()
+                        + " подтвердил престиж, серверный уровень "
+                        + service.totalPrestige(player));
+            }
+        }
+        return true;
+    }
+
+    /** Топ престижа в чат — та же выборка, что и на вкладке меню. */
+    private boolean handlePrestigeTop(Player player) {
+        plugin.messages().send(player, "prestige-top-header");
+        int place = 1;
+        for (SkillService.PrestigeEntry entry : service.prestigeTop()) {
+            plugin.messages().send(player, "prestige-top-line",
+                    "place", String.valueOf(place++),
+                    "name", entry.name(),
+                    "total", String.valueOf(entry.total()));
+        }
+        if (place == 1) {
+            plugin.messages().send(player, "prestige-top-empty");
+        }
+        return true;
+    }
+
+    /** Таблица «навык → ступень → уровень → множитель» и что делать дальше. */
+    private boolean handleBalance(Player player) {
+        if (!plugin.config().prestigeEnabled() || !plugin.config().prestigeBalanceEnabled()) {
+            plugin.messages().send(player, "prestige-disabled");
+            return true;
+        }
+        SkillService.BalanceReport report = service.balanceReport(player);
+        if (report == null) {
+            plugin.messages().send(player, "prestige-disabled");
+            return true;
+        }
+        plugin.messages().send(player, "balance-header",
+                "allowance", String.valueOf(report.allowance()),
+                "base", String.valueOf(report.baseMaxLead()),
+                "rank_bonus", String.valueOf(report.rankBonus()),
+                "rank", String.valueOf(report.rankLevel()),
+                "hard_cap", String.valueOf(report.hardCap()));
+        for (SkillService.BalanceRow row : report.rows()) {
+            String name = plugin.messages().raw("skill." + row.skill().id() + ".name");
+            if (!row.tracked()) {
+                plugin.messages().send(player, "balance-line-off", "name", Messages.trusted(name));
+            } else if (row.factor() <= 0.0) {
+                plugin.messages().send(player, "balance-line-stop",
+                        "name", Messages.trusted(name),
+                        "step", String.valueOf(row.step()),
+                        "level", String.valueOf(row.level()),
+                        "lead", String.valueOf(row.lead()));
+            } else if (row.factor() >= 1.0) {
+                plugin.messages().send(player, "balance-line-full",
+                        "name", Messages.trusted(name),
+                        "step", String.valueOf(row.step()),
+                        "level", String.valueOf(row.level()));
+            } else {
+                plugin.messages().send(player, "balance-line",
+                        "name", Messages.trusted(name),
+                        "step", String.valueOf(row.step()),
+                        "level", String.valueOf(row.level()),
+                        "lead", String.valueOf(row.lead()),
+                        "factor", PrestigeXpGate.factorText(row.factor()));
+            }
+        }
+        plugin.messages().send(player, "balance-footer",
+                "minimum", String.valueOf(report.minimum()));
         return true;
     }
 
@@ -127,11 +255,18 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
                 "level", String.valueOf(level));
         plugin.messages().send(player, "card-desc",
                 "text", Messages.trusted(plugin.messages().raw("skill." + skill.id() + ".desc")));
-        plugin.messages().send(player, "card-progress",
-                "bar", SkillCurve.bar(progress.percent(), 10),
-                "current", String.valueOf(progress.into()),
-                "need", String.valueOf(progress.need()),
-                "percent", String.valueOf(progress.percent()));
+        if (progress.maxed()) {
+            plugin.messages().send(player, "card-progress-max",
+                    "bar", SkillCurve.bar(progress.percent(), 10),
+                    "xp", String.valueOf(service.xp(player, skill)));
+        } else {
+            plugin.messages().send(player, "card-progress",
+                    "bar", SkillCurve.bar(progress.percent(), 10),
+                    "current", String.valueOf(progress.into()),
+                    "need", String.valueOf(progress.need()),
+                    "percent", String.valueOf(progress.percent()));
+        }
+        plugin.messages().send(player, "card-steps", "steps", SkillRegistry.thresholdLine());
         for (SkillPerk perk : SkillRegistry.perksOf(skill)) {
             boolean active = level >= perk.level();
             plugin.messages().send(player, active ? "card-perk-active" : "card-perk-locked",
@@ -226,7 +361,9 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (command.getName().equalsIgnoreCase("skills")) {
             if (args.length == 1) {
-                List<String> options = new ArrayList<>(List.of("list", "top", "menu", "use", "energy"));
+                List<String> options = new ArrayList<>(List.of(
+                        "list", "top", "rating", "menu", "tree", "perks", "perktree",
+                        "use", "energy", "prestige", "prestigetop", "balance"));
                 for (SkillType skill : SkillRegistry.all()) {
                     options.add(skill.id());
                 }
@@ -234,6 +371,12 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
             }
             if (args.length == 2 && args[0].equalsIgnoreCase("use"))
                 return filter(java.util.Arrays.stream(SkillAbility.values()).map(SkillAbility::id).toList(), args[1]);
+            if (args.length == 2 && args[0].equalsIgnoreCase("prestige")) {
+                List<String> ids = new ArrayList<>(SkillRegistry.all().stream()
+                        .map(SkillType::id).toList());
+                ids.add("all");
+                return filter(ids, args[1]);
+            }
             return List.of();
         }
         if (!command.getName().equalsIgnoreCase("skillsadmin")) {

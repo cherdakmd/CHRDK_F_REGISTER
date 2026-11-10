@@ -25,7 +25,7 @@ class StorefrontTest(unittest.TestCase):
         new = [p for p in live if p['id'] in {'clan-name-style', 'clan-emblem', 'clan-card-frame'}]
         self.assertEqual(3, len(new))
         self.assertTrue(all(p.get('trademc-export') is False for p in new))
-        self.assertEqual(32, len(live))
+        self.assertEqual(33, len(live))
         social = [p for p in live if p['id'] == 'social-access']
         self.assertEqual(1, len(social))
         self.assertIs(social[0].get('trademc-export'), False)

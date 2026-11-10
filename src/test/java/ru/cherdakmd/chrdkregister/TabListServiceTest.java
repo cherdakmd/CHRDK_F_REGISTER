@@ -123,6 +123,21 @@ class TabListServiceTest {
     }
 
     @Test
+    void hiddenSocialLineAndDuplicateInGameHintAreNotRendered() {
+        var ctx = new TabListService.TabContext("Steve", 1, 1, 20.0, 0, "w", "", "", 0,
+                new PresentationContext("", "в игре", "Вы в игре. Исследуйте мир", "включена", ""));
+        var lines = TabListService.renderLines(messages(),
+                List.of("%chrdksocial_tab%", "<gray>%auth_hint%</gray>", "остальная строка"), ctx);
+        assertEquals(1, lines.size(), "сырой PAPI-плейсхолдер и дубль «в игре» должны исчезнуть");
+        assertEquals("остальная строка", PLAIN.serialize(lines.get(0)));
+
+        var usefulHint = new TabListService.TabContext("Steve", 1, 1, 20.0, 0, "w", "", "", 0,
+                new PresentationContext("", "в игре", "Откройте /menu", "включена", ""));
+        assertEquals(1, TabListService.renderLines(messages(),
+                List.of("<gray>%auth_hint%</gray>"), usefulHint).size());
+    }
+
+    @Test
     void legacyAmpersandCodesWorkNextToMiniMessage() {
         Component line = TabListService.renderLines(messages(),
                 List.of("&6Игрок: &f%player% <gray>(%ping% мс)</gray>"), context()).get(0);

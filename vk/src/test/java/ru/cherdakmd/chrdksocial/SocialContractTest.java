@@ -48,10 +48,10 @@ class SocialContractTest {
         assertTrue(config.contains("https://platform-api2.max.ru/"));
         String messages = read("src/main/resources/messages.yml");
         for (String key : new String[]{"gate-choice", "gate-code", "gate-howto", "linked",
-                "gate-donate", "donate-welcome", "gate-grace", "gate-closed", "gate-staff",
-                "reminder-choice", "action-bar", "action-bar-closed", "action-nag",
-                "title", "subtitle", "command-blocked", "unlinked", "reward",
-                "code-cooldown", "disabled"}) {
+                "link-done", "link-next-step", "gate-donate", "donate-welcome",
+                "gate-grace", "gate-closed", "gate-staff", "reminder-choice",
+                "action-bar", "action-bar-closed", "action-nag", "title", "subtitle",
+                "command-blocked", "unlinked", "reward", "code-cooldown", "disabled"}) {
             assertTrue(messages.contains(key), "нет сообщения social." + key);
         }
         String pluginYml = read("src/main/resources/plugin.yml");
@@ -198,14 +198,17 @@ class SocialContractTest {
     @Test
     void tabCountersAreWiredEndToEnd() throws Exception {
         String core = read("../src/main/resources/config.yml");
-        assertTrue(core.contains("%chrdksocial_access%"));
-        assertTrue(core.contains("%chrdksocial_link%"));
+        assertTrue(core.contains("%chrdksocial_tab%"), "в TAB одна цельная строка");
+        assertFalse(core.contains("\"<gold>%chrdksocial_status%</gold>\""),
+                "дублирующая строка статуса удалена из эталона");
         assertTrue(core.contains("%tab_warns%"), "существующие счётчики не потеряны");
 
         String expansion = read("src/main/java/ru/cherdakmd/chrdksocial/SocialPlaceholders.java");
         assertTrue(expansion.contains("return \"chrdksocial\""));
+        assertTrue(expansion.contains("case \"tab\", \"line\""));
         assertTrue(expansion.contains("case \"access\""));
         assertTrue(expansion.contains("case \"link\""));
+        assertTrue(expansion.contains("social.tabLine(name, now)"));
         assertTrue(expansion.contains("SocialAccessPolicy.accessCounter("));
         assertTrue(expansion.contains("SocialAccessPolicy.linkCounter("));
 
@@ -232,8 +235,8 @@ class SocialContractTest {
         assertTrue(regression.contains("'social-access'"));
         assertTrue(regression.contains("'social-access-day'"));
         assertTrue(regression.contains("self.assertEqual(26, len(kit.catalog()[1]))"));
-        assertTrue(regression.contains("self.assertEqual(32, len(live))"),
-                "в живом каталоге два тарифа проходки, но комплект TradeMC прежний");
+        assertTrue(regression.contains("self.assertEqual(33, len(live))"),
+                "в живом каталоге два тарифа проходки и claims-chunks-plus, но комплект TradeMC прежний");
     }
 
     @Test
@@ -272,10 +275,10 @@ class SocialContractTest {
         assertTrue(messages.contains("1)"), "инструкция пошаговая");
 
         String config = read("src/main/resources/config.yml");
-        assertTrue(config.contains("reminder-seconds: 180"));
+        assertTrue(config.contains("reminder-seconds: 3600"));
         assertTrue(config.contains("nagging: true"));
-        assertTrue(config.contains("action-bar-seconds: 15"));
-        assertTrue(config.contains("action-nag-seconds: 120"));
+        assertTrue(config.contains("action-bar-seconds: 3600"));
+        assertTrue(config.contains("action-nag-seconds: 3600"));
     }
 
     @Test
@@ -287,6 +290,12 @@ class SocialContractTest {
         assertTrue(service.contains("if (!allowChatReminder(key, now)) return;"));
         assertTrue(service.contains("if (!allowChatReminder(key, now)) continue;"));
         assertFalse(service.contains("lastActionNag"), "старый раздельный кулдаун удалён");
+        assertTrue(service.contains("boolean showGate = !config.reminderNagging() || allowChatReminder(key, now);"),
+                "блок при входе тоже делит общий часовой кулдаун");
+        assertTrue(service.contains("lastFrozenNotice"),
+                "короткое «действие доступно после привязки» не спамит при каждом движении");
+        assertTrue(service.contains("restartReminderTimers()"),
+                "/social reload перезапускает таймеры с новыми интервалами");
         assertTrue(service.contains("\"vk\", config.vkCommunityUrl()"),
                 "ссылка на сообщество ВК подставляется во все шаблоны");
         assertTrue(service.contains("\"social.gate-howto\""));
@@ -294,19 +303,28 @@ class SocialContractTest {
         assertFalse(handler.contains("\"social.gate-howto\");"),
                 "/link не должен отправлять инструкцию с сырыми %code% и %vk%");
         assertTrue(handler.contains("\"vk\", service.config().vkCommunityUrl()"));
+        assertTrue(handler.contains("\"social.link-next-step\""),
+                "/link объясняет следующий шаг одной строкой");
     }
 
     @Test
-    void tabShowsExplicitUnlinkedCounterAndPapiLoadsBeforeVk() throws Exception {
+    void tabShowsOneSocialLineAndPapiLoadsBeforeVk() throws Exception {
         String core = read("../src/main/resources/config.yml");
-        assertTrue(core.contains("%chrdksocial_status%"));
-        assertTrue(core.contains("%chrdksocial_link%"));
-        assertTrue(core.contains("%chrdksocial_access%"));
+        assertTrue(core.contains("%chrdksocial_tab%"), "в TAB одна цельная строка");
+        assertFalse(core.contains("\"<gold>%chrdksocial_status%</gold>\""),
+                "старая дублирующая строка не возвращается в эталон");
+        String normalizer = read("../src/main/java/ru/cherdakmd/chrdkregister/TabFooterNormalizer.java");
+        assertTrue(normalizer.contains("normalizeFooter"));
+        assertTrue(normalizer.contains("hideUnresolvedSocialLine"));
         String expansion = read("src/main/java/ru/cherdakmd/chrdksocial/SocialPlaceholders.java");
+        assertTrue(expansion.contains("case \"tab\", \"line\""));
+        assertTrue(expansion.contains("social.tabLine(name, now)"));
         assertTrue(expansion.contains("case \"status\""));
         assertTrue(expansion.contains("social.tabStatus(name, now)"));
         String policy = read("src/main/java/ru/cherdakmd/chrdksocial/SocialAccessPolicy.java");
-        assertTrue(policy.contains("⚠ БЕЗ ПРИВЯЗКИ"));
+        assertTrue(policy.contains("Привяжите ВКонтакте"));
+        assertTrue(policy.contains("привязан — можно играть"));
+        assertTrue(policy.contains("⚠ БЕЗ ПРИВЯЗКИ"), "старый status сохранён для внешних шаблонов");
         assertTrue(policy.contains("⛔ ВХОД ЗАКРЫТ"));
         String pluginYml = read("src/main/resources/plugin.yml");
         assertTrue(pluginYml.contains("softdepend:"));
@@ -326,5 +344,35 @@ class SocialContractTest {
         assertTrue(workflow.contains("MAX_AUTOPUBLISH_ENABLED"));
         assertTrue(workflow.contains("MAX_BOT_TOKEN"));
         assertTrue(workflow.contains("MAX_NEWS_CHAT_ID"));
+    }
+
+    @Test
+    void playerDataFilesAreStructuredSeparatelyAndMigrated() throws Exception {
+        String socialStore = read("src/main/java/ru/cherdakmd/chrdksocial/SocialLinkStore.java");
+        assertTrue(socialStore.contains("players/social.yml"));
+        assertTrue(socialStore.contains("PLAYER_DATA_SCHEMA"));
+        assertTrue(socialStore.contains("pruneLegacyGlobal"));
+        assertTrue(socialStore.contains("backup(file, \"players-move\""));
+        String socialYaml = read("src/main/java/ru/cherdakmd/chrdksocial/SocialPlayerStore.java");
+        assertTrue(socialYaml.contains("first-seen-at"));
+        assertTrue(socialYaml.contains("reward-claimed-at"));
+        assertTrue(socialYaml.contains("profiles"));
+        assertFalse(socialYaml.contains("checksum"), "редактируемый YAML не защищён встроенной суммой");
+
+        String coreStore = read("../src/main/java/ru/cherdakmd/chrdkregister/ModerationStore.java");
+        assertTrue(coreStore.contains("players/warns.yml"));
+        assertTrue(coreStore.contains("players/bans.yml"));
+        assertTrue(coreStore.contains("backup(file, \"players-split\""));
+        String coreYaml = read("../src/main/java/ru/cherdakmd/chrdkregister/ModerationPlayerStore.java");
+        assertTrue(coreYaml.contains("warns.yml"));
+        assertTrue(coreYaml.contains("bans.yml"));
+        assertTrue(coreYaml.contains("next-warn-id"));
+        String helper = read("../src/main/java/ru/cherdakmd/chrdkregister/storage/PlayerDataFiles.java");
+        assertTrue(helper.contains("writeReadme"));
+        assertTrue(helper.contains("preserveBroken"));
+        String doc = read("../docs/design/PLAYER-DATA-FILES.md");
+        assertTrue(doc.contains("players/social.yml"));
+        assertTrue(doc.contains("players/warns.yml"));
+        assertTrue(doc.contains("players/bans.yml"));
     }
 }

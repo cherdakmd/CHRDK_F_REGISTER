@@ -1,0 +1,27 @@
+name: CHRDK_Disasters
+version: ${version}
+main: ru.cherdakmd.chrdkdisasters.DisastersPlugin
+api-version: '26.3'
+description: "Шесть катастроф CHRDK: фазы, защита приватов, осколки, магазин и прокачка стойкости"
+author: cherdakmd
+depend: [CHRDK_Core]
+softdepend: [CHRDK_Claims, CHRDK_Achievements, CHRDK_Skills, PlaceholderAPI]
+commands:
+  disasters:
+    description: "Статус, магазин осколков и прокачка стойкости"
+    usage: "/disasters [status|shop|buy <diamonds|supplies|ward>]"
+    permission: chrdkdisasters.use
+  disastersadmin:
+    description: "Управление катастрофами"
+    usage: "/disastersadmin <start <kind> [level] [player]|list|stop [id]|restore|reload|on|off>"
+    permission: chrdkdisasters.admin
+permissions:
+  chrdkdisasters.use:
+    description: "Смотреть статус, открывать магазин и покупать товары за осколки"
+    default: true
+  chrdkdisasters.admin:
+    description: "Запуск, остановка, откат и перезагрузка катастроф"
+    default: op
+  chrdkdisasters.bypass:
+    description: "Катастрофы не случаются у этого игрока и не приносят осколков"
+    default: false

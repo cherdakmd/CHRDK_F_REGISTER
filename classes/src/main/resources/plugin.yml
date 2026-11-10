@@ -14,8 +14,8 @@ commands:
     aliases: [classes, klass, klassy]
     permission: chrdkclasses.use
   perktree:
-    description: "Дерево перков: узлы, приём и сброс с подтверждением"
-    usage: "/perktree [open [домен]|info [домен]|unlock <домен> <узел>|select <домен> <приём>|reset [домен]|confirm <токен>]"
+    description: "Вкладка «Дерево перков» в едином меню /skills: 10 тиров, узлы, приём, подсказка и сброс с подтверждением"
+    usage: "/perktree [help|open [домен] [страница]|info [домен]|unlock <домен> <узел>|select <домен> <приём>|reset [домен]|confirm <токен>] — open открывает вкладку в /skills"
     permission: chrdkclasses.use
   ability:
     description: "Умение своего класса: /ability — первое, /ability 2 — второе"

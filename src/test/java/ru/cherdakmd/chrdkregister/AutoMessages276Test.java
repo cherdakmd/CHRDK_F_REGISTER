@@ -21,7 +21,7 @@ class AutoMessages276Test {
         var before = old.getMapList("auto-messages.messages");
         var after = fresh.getMapList("auto-messages.messages");
         assertEquals(41, before.size(), "сток 275 остаётся эталоном");
-        assertEquals(42, after.size(), "1.4.282 добавляет подсказку о Plasmo Voice в конец");
+        assertEquals(43, after.size(), "1.4.282 добавила Plasmo Voice, CHRDK_Disasters — подсказку о /disasters");
         for (int i = 0; i < before.size(); i++) {
             var a = new LinkedHashMap<>(before.get(i));
             var b = new LinkedHashMap<>(after.get(i));

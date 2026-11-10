@@ -121,7 +121,7 @@ public final class ClaimStore {
             old.rentOffer=n.rentOffer; old.tenant=n.tenant; old.rentPrice=n.rentPrice; old.rentUntil=n.rentUntil; old.rentRenew=n.rentRenew;
             old.clearMembers(); old.members.addAll(n.members); n.explicitRoles().forEach(old::applyRole); old.copyClanSharing(n); world.put(e.getKey(),old);
         }
-        claims.clear(); claims.putAll(copy.claims); treasury.clear(); treasury.putAll(copy.treasury); notices.clear(); notices.putAll(copy.notices); limits.clear(); limits.putAll(copy.limits);
+        claims.clear(); claims.putAll(copy.claims); treasury.clear(); treasury.putAll(copy.treasury); notices.clear(); notices.putAll(copy.notices); limits.clear(); limits.putAll(copy.limits); bonuses.clear(); bonuses.putAll(copy.bonuses);
         chunksClaimedTotal=copy.chunksClaimedTotal; diamondsSpent=copy.diamondsSpent; taxBurned=copy.taxBurned; revision++;
     }
     synchronized Claim protectedClaimAt(String world,int x,int z) {
@@ -169,6 +169,8 @@ public final class ClaimStore {
     private final Map<String, List<String>> notices = new LinkedHashMap<>();
     /** Персональные лимиты чанков, выданные администратором (ник → чанков). */
     private final Map<String, Integer> limits = new LinkedHashMap<>();
+    /** Вечные купленные бонусы чанков (ник -> +N), не зависят от срока товара. */
+    private final Map<String, Integer> bonuses = new LinkedHashMap<>();
     private final AtomicBoolean saving = new AtomicBoolean();
     private final Object writeLock = new Object();
 
@@ -277,6 +279,7 @@ public final class ClaimStore {
         treasury.clear();
         notices.clear();
         limits.clear();
+        bonuses.clear();
         chunksClaimedTotal = 0;
         diamondsSpent = 0;
         taxBurned = 0;
@@ -423,6 +426,20 @@ public final class ClaimStore {
                 }
             }
         }
+        // Необязательный блок: старые claims-data.json читаются без него.
+        // Отрицательные и нулевые значения из повреждённого файла не создают записей.
+        if (data.get("bonus-chunks") instanceof Map<?, ?> map) {
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                if (entry.getKey() == null) {
+                    continue;
+                }
+                String name = String.valueOf(entry.getKey()).trim();
+                int bonus = clamp((int) longOf(entry.getValue()), 0, 100_000);
+                if (!name.isEmpty() && bonus > 0) {
+                    bonuses.put(name, bonus);
+                }
+            }
+        }
         for (List<Claim> group : ClaimTerritories.groups(all())) {
             if (group.size() > 1) ClaimTerritories.normalize(group, group, version < 3);
         }
@@ -478,6 +495,9 @@ public final class ClaimStore {
             data.put("treasury", new LinkedHashMap<>(treasury));
             if (!limits.isEmpty()) {
                 data.put("limits", new LinkedHashMap<>(limits));
+            }
+            if (!bonuses.isEmpty()) {
+                data.put("bonus-chunks", new LinkedHashMap<>(bonuses));
             }
             if (!notices.isEmpty()) {
                 Map<String, List<String>> copy = new LinkedHashMap<>();
@@ -916,24 +936,75 @@ public final class ClaimStore {
         return Map.copyOf(limits);
     }
 
+    // ------------------------------------------------------- bonus chunks --
+
+    /** Вечный купленный бонус чанков игрока (0, если покупок не было). */
+    public synchronized int bonusChunks(String name) {
+        return name == null ? 0 : bonuses.getOrDefault(keyIgnoreCase(bonuses, name), 0);
+    }
+
+    /**
+     * Добавляет вечный бонус. Отрицательные значения снимают бонус, но не ниже нуля.
+     * Сумма ограничена 100000, как и персональный лимит; переполнение не обнуляет
+     * уже купленные чанки. Возвращает новое значение.
+     */
+    public synchronized int addBonusChunks(String name, int delta) {
+        requireMutation();
+        if (name == null || name.isBlank() || delta == 0) {
+            return bonusChunks(name);
+        }
+        String key = keyIgnoreCase(bonuses, name);
+        int next = (int) Math.min(100_000L, Math.max(0L, (long) bonusChunks(name) + delta));
+        if (next == 0) {
+            if (key != null) bonuses.remove(key);
+        } else {
+            bonuses.put(key == null ? name : key, next);
+        }
+        touch();
+        return next;
+    }
+
+    /** Устанавливает вечный бонус напрямую (админская сверка). */
+    public synchronized int setBonusChunks(String name, int value) {
+        requireMutation();
+        if (name == null || name.isBlank()) {
+            return 0;
+        }
+        String key = keyIgnoreCase(bonuses, name);
+        int next = clamp(value, 0, 100_000);
+        if (next == 0) {
+            if (key != null) bonuses.remove(key);
+        } else {
+            bonuses.put(key == null ? name : key, next);
+        }
+        touch();
+        return next;
+    }
+
+    /** Все вечные бонусы (для админской статистики/диагностики). */
+    public synchronized Map<String, Integer> bonusChunks() {
+        return Map.copyOf(bonuses);
+    }
+
     // ------------------------------------------------------------ transfer --
 
-    /** Итог переноса владений: приваты, казна, отложенные вести, персональный лимит. */
-    public record TransferSummary(int claims, int treasury, int notices, boolean limitMoved) {
+    /** Итог переноса владений: приваты, казна, вести, персональный лимит, вечный бонус чанков. */
+    public record TransferSummary(int claims, int treasury, int notices, boolean limitMoved, int bonusChunks) {
     }
 
     /**
      * Переносит всё с одного ника на другой — сценарий смены ника игрока.
      *
-     * <p>Переносятся приваты (владение), казна, отложенные вести и персональный
-     * лимит; ники сравниваются без учёта регистра. Если получатель был участником
-     * чужого привата, из списка участников он удаляется — он теперь владелец.</p>
+     * <p>Переносятся приваты (владение), казна, отложенные вести, персональный
+     * лимит и вечный купленный бонус чанков; ники сравниваются без учёта регистра.
+     * Если получатель был участником чужого привата, из списка участников он
+     * удаляется — он теперь владелец.</p>
      */
     public synchronized TransferSummary transferAll(String from, String to) {
         requireMutation();
         if (from == null || to == null || from.isBlank() || to.isBlank()
                 || from.equalsIgnoreCase(to)) {
-            return new TransferSummary(0, 0, 0, false);
+            return new TransferSummary(0, 0, 0, false, 0);
         }
         List<Claim> moving = ofOwner(from);
         Set<Claim> movingSet = new java.util.HashSet<>(moving);
@@ -987,10 +1058,25 @@ public final class ClaimStore {
             }
         }
 
-        if (movedClaims > 0 || movedTreasury > 0 || movedNotices > 0 || limitMoved) {
+        // Вечный бонус переезжает вместе с ником; у получателя он суммируется со своим.
+        int movedBonus = 0;
+        String fromBonus = keyIgnoreCase(bonuses, from);
+        if (fromBonus != null) {
+            Integer removed = bonuses.remove(fromBonus);
+            if (removed != null && removed > 0) {
+                String toBonus = keyIgnoreCase(bonuses, to);
+                String key = toBonus == null ? to : toBonus;
+                int combined = (int) Math.min(100_000L,
+                        (long) bonuses.getOrDefault(key, 0) + removed);
+                bonuses.put(key, combined);
+                movedBonus = removed;
+            }
+        }
+
+        if (movedClaims > 0 || movedTreasury > 0 || movedNotices > 0 || limitMoved || movedBonus > 0) {
             touch();
         }
-        return new TransferSummary(movedClaims, movedTreasury, movedNotices, limitMoved);
+        return new TransferSummary(movedClaims, movedTreasury, movedNotices, limitMoved, movedBonus);
     }
 
     private static <V> String keyIgnoreCase(Map<String, V> map, String name) {

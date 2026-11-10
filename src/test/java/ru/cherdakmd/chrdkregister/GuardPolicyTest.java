@@ -15,6 +15,22 @@ class GuardPolicyTest {
             for(String prefix:List.of("/","/minecraft:","/bukkit:"," /MINECRAFT:"))
                 assertTrue(GuardPolicy.consoleOnly(prefix+root.toUpperCase()+" payload",GuardSettings.DEFAULT_CONSOLE_ONLY,k->null),prefix+root);
     }
+    @Test void thirdPartyAddonAndReconRootsAreConsoleOnly() {
+        for(String root:List.of("lp","luckperms","papi","placeholderapi","skinsrestorer","sr","plasmovoice",
+                "pv","cameraman","pl","plugins","version","ver","about","icanhasbukkit","help","?","timings","tps",
+                "guard","adminpanel","apanel","rankadmin","socialspy","spy","honoradmin",
+                "achadmin","shopadmin","dshopadmin","disastersadmin","tiersadmin","vkadmin",
+                "guildadmin","ga","bpadmin","profadmin","tpadmin","skillsadmin"))
+            for(String prefix:List.of("/","/minecraft:","/bukkit:"," /PAPER:"))
+                assertTrue(GuardPolicy.consoleOnly(prefix+root.toUpperCase()+" payload",
+                        GuardSettings.DEFAULT_CONSOLE_ONLY,k->null),prefix+root);
+    }
+    @Test void ordinaryGameplayCommandsStayAllowed() {
+        for(String text:List.of("/shop sell","/shop cap","/rank","/pass menu","/pass my","/menu","/guide",
+                "/tiers forge","/skills","/profile","/disasters shop","/msg friend /lp","/login secret",
+                "/register /fill /op","/2fa 123456"))
+            assertFalse(GuardPolicy.consoleOnly(text,GuardSettings.DEFAULT_CONSOLE_ONLY,k->null),text);
+    }
     @Test void passwordsMessagesAndOrdinaryCommandsAreNotScannedAsCode() {
         for(String text:List.of("/login gamerule", "/register /fill /fill", "/2fa 123456", "/msg friend /stop", "/shop sellall", "/claim menu", "/tpa player"))
             assertFalse(GuardPolicy.consoleOnly(text,GuardSettings.DEFAULT_CONSOLE_ONLY,k->null),text);
@@ -53,5 +69,17 @@ class GuardPolicyTest {
         c.set("security.global-per-second",0);
         var settings=GuardSettings.parse(c);
         assertEquals(100000,settings.maxAddresses());assertEquals(30,settings.loginSeconds());assertEquals(1,settings.globalPerSecond());
+    }
+    @Test void blockedAttemptQuotaHasSafeDefaultsAndIsClamped() {
+        var c=YamlConfiguration.loadConfiguration(new InputStreamReader(getClass().getResourceAsStream("/config.yml"),StandardCharsets.UTF_8));
+        var defaults=GuardSettings.parse(c);
+        assertEquals(3,defaults.blockedAttemptBurst());assertEquals(1,defaults.blockedAttemptsPerSecond());
+        assertEquals(30,defaults.blockedAlertSeconds());
+        assertEquals(GuardSettings.DEFAULT_CONSOLE_ONLY,defaults.consoleOnly());
+        c.set("security.blocked-attempt-burst",-5);c.set("security.blocked-attempts-per-second",999);
+        c.set("security.blocked-alert-seconds",0);
+        var clamped=GuardSettings.parse(c);
+        assertEquals(1,clamped.blockedAttemptBurst());assertEquals(20,clamped.blockedAttemptsPerSecond());
+        assertEquals(5,clamped.blockedAlertSeconds());
     }
 }

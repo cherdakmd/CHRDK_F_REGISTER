@@ -7,6 +7,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.world.LootGenerateEvent;
 import org.bukkit.inventory.ItemStack;
+import ru.cherdakmd.chrdkregister.api.MineTreasureLootPolicy;
 
 import java.util.List;
 import java.util.Random;
@@ -45,6 +46,12 @@ public final class TierWorldListener implements Listener {
     /** Сундуки, бочки и находки структур: лут-таблица наполняет инвентарь. */
     @EventHandler(ignoreCancelled = true)
     public void onLootGenerate(LootGenerateEvent event) {
+        // mt: сундуки Mine Treasure уже сбалансированы своим датапаком: тир CHRDK
+        // переписал бы имя/лор/атрибуты чужой награды. Артефакты CHRDK при этом
+        // в mt: сундуки всё равно добавляются (короткое имя таблицы).
+        if (MineTreasureLootPolicy.isMineTreasureTable(event.getLootTable())) {
+            return;
+        }
         TierForgeConfig config = plugin.config();
         if (config == null || !config.worldLootEnabled()) {
             return;

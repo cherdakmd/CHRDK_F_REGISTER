@@ -11,6 +11,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 import ru.cherdakmd.chrdkvk.VkPlugin;
+import ru.cherdakmd.chrdkvk.VkStore;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -69,13 +70,21 @@ public final class SocialService {
     private BukkitTask reminderTask;
     private BukkitTask actionBarTask;
     private BukkitTask newsTask;
+    private volatile boolean running;
     /**
      * Общий кулдаун ЛЮБОГО напоминания в чат. Раньше периодическое сообщение и
      * пинг при действиях жили каждый со своим таймером и приходили друг за другом
      * («НАПОМИНАНИЕ» + «Не забудь выбрать» подряд). Теперь оба источника делят
      * одну паузу, поэтому игрок видит не чаще одного напоминания за интервал.
+     * Запись НЕ удаляется при выходе: перезаход в течение часа не обнуляет паузу.
      */
     private final ConcurrentHashMap<String, Long> lastChatReminder = new ConcurrentHashMap<>();
+    /**
+     * Отдельная пауза для короткого «действие доступно после привязки»: оно
+     * отвечает на отменённый клик/команду замороженного игрока, поэтому не должно
+     * приходить на каждое движение, но и не обязано съедать общий кулдаун чата.
+     */
+    private final ConcurrentHashMap<String, Long> lastFrozenNotice = new ConcurrentHashMap<>();
 
     public SocialService(VkPlugin plugin, SocialConfig config) {
         this.plugin = plugin;
@@ -115,12 +124,144 @@ public final class SocialService {
 
     public void sendFrozenNotice(Player player, String code) {
         if (player == null || !player.isOnline()) return;
+        String key = SocialLinkCodeManager.canonical(player.getName());
+        long now = System.currentTimeMillis();
+        long pause = config.reminderSeconds() * 1000L;
+        Long last = lastFrozenNotice.get(key);
+        if (last != null && now - last < pause) return;
+        lastFrozenNotice.put(key, now);
+        if (lastFrozenNotice.size() > 4096) {
+            lastFrozenNotice.entrySet().removeIf(entry -> now - entry.getValue() > pause * 4L);
+        }
         plugin.messages().send(player, "social.command-blocked",
                 "code", code, "url", config.donateUrl(), "vk", config.vkCommunityUrl());
     }
 
     public SocialLinkStore store() {
         return store;
+    }
+
+    /**
+     * Один раз на старте переносит исторические связи из vk-links.json в
+     * players/social.yml. Сам vk-links.json остаётся источником бонусов /vk.
+     */
+    public int importLegacyVkLinks() {
+        var vk = plugin.vkService();
+        if (vk == null || store.loadFailed() || store.playersFrozen()) return 0;
+        List<SocialLinkStore.LegacyVkLink> links = legacyVkLinks(vk.store());
+        int imported = store.importLegacyVkLinks(links, config.maxAccountsPerProfile(),
+                System.currentTimeMillis());
+        if (imported > 0) {
+            audit.write("social.legacy-vk-import", "", PROVIDER_VK,
+                    "импортировано=" + imported + ", исходных=" + links.size());
+        }
+        return imported;
+    }
+
+    /** Канонический снимок всех legacy-связей: порядок vk-links.json сохраняется. */
+    private static List<SocialLinkStore.LegacyVkLink> legacyVkLinks(VkStore vkStore) {
+        if (vkStore == null) return List.of();
+        List<SocialLinkStore.LegacyVkLink> links = new ArrayList<>();
+        for (var snapshot : vkStore.allLinks()) {
+            if (snapshot == null || snapshot.vkUserId() <= 0L) continue;
+            String name = snapshot.canonicalName();
+            if (name == null || name.isBlank()) name = snapshot.playerName();
+            links.add(new SocialLinkStore.LegacyVkLink(name, snapshot.vkUserId(), snapshot.linkedAt()));
+        }
+        return links;
+    }
+
+    /** Связь как она есть в vk-links.json, без проверок лимитов и коллизий YAML. */
+    private Optional<VkStore.LinkSnapshot> rawLegacyVkBinding(String playerName) {
+        if (playerName == null || playerName.isBlank()) return Optional.empty();
+        try {
+            var vk = plugin.vkService();
+            return vk == null ? Optional.empty() : vk.store().byPlayer(playerName);
+        } catch (RuntimeException failure) {
+            plugin.getLogger().log(Level.FINE,
+                    "[CHRDK_SOCIAL] Не удалось прочитать историческую VK-привязку", failure);
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Read-only запасной источник: старые привязки видны даже до импорта,
+     * но только если они не конфликтуют с YAML и укладываются в лимит профиля.
+     */
+    public Optional<VkStore.LinkSnapshot> legacyVkBinding(String playerName) {
+        var raw = rawLegacyVkBinding(playerName);
+        if (raw.isEmpty() || store.isLinked(playerName)) return Optional.empty();
+        var vk = plugin.vkService();
+        if (vk == null) return Optional.empty();
+        try {
+            if (!store.legacyVkBindingAllowed(playerName, raw.get().vkUserId(),
+                    legacyVkLinks(vk.store()), config.maxAccountsPerProfile())) return Optional.empty();
+        } catch (RuntimeException failure) {
+            plugin.getLogger().log(Level.FINE,
+                    "[CHRDK_SOCIAL] Не удалось сверить историческую VK-привязку", failure);
+            return Optional.empty();
+        }
+        return raw;
+    }
+
+    /** Один общий статус для TAB, gating и команд: YAML + legacy vk-links.json. */
+    public boolean isLinked(String playerName) {
+        return store.isLinked(playerName) || legacyVkBinding(playerName).isPresent();
+    }
+
+    /** Сколько привязок видно игре: импорт YAML + ещё не перенесённый legacy. */
+    public int linkCount() {
+        int count = store.linkCount();
+        var vk = plugin.vkService();
+        if (vk == null) return count;
+        try {
+            List<SocialLinkStore.LegacyVkLink> links = legacyVkLinks(vk.store());
+            for (SocialLinkStore.LegacyVkLink link : links) {
+                if (link == null || store.isLinked(link.playerName())) continue;
+                if (store.legacyVkBindingAllowed(link.playerName(), link.vkUserId(),
+                        links, config.maxAccountsPerProfile())) count++;
+            }
+        } catch (RuntimeException failure) {
+            plugin.getLogger().log(Level.FINE,
+                    "[CHRDK_SOCIAL] Не удалось посчитать legacy VK-привязки", failure);
+        }
+        return count;
+    }
+
+    /** /vk unlink синхронно снимает импортированную VK-привязку из YAML. */
+    public boolean forgetVkLink(String playerName, long vkUserId) {
+        try {
+            boolean ok = store.forgetVkBinding(playerName, vkUserId);
+            if (ok) {
+                audit.write("social.vk-unlink-sync", playerName, PROVIDER_VK, "id=" + vkUserId);
+            } else {
+                plugin.getLogger().warning("[CHRDK_SOCIAL] Не удалось снять импортированную "
+                        + "VK-привязку из players/social.yml; проверьте backup и права на запись.");
+            }
+            return ok;
+        } catch (RuntimeException failure) {
+            plugin.getLogger().log(Level.WARNING,
+                    "[CHRDK_SOCIAL] Сбой синхронизации /vk unlink", failure);
+            return false;
+        }
+    }
+
+    /** /social unlink не должен оставлять read-only fallback в vk-links.json. */
+    private boolean forgetLegacyVkBinding(String playerName) {
+        try {
+            var vk = plugin.vkService();
+            if (vk == null || vk.store().unlink(playerName).isEmpty()) return false;
+            boolean saved = vk.store().saveNow();
+            if (!saved) {
+                plugin.getLogger().warning("[CHRDK_SOCIAL] Не удалось сохранить vk-links.json "
+                        + "после /social unlink; привязка может вернуться при рестарте.");
+            }
+            return saved;
+        } catch (RuntimeException failure) {
+            plugin.getLogger().log(Level.WARNING,
+                    "[CHRDK_SOCIAL] Сбой записи vk-links.json после /social unlink", failure);
+            return false;
+        }
     }
 
     public SocialLinkCodeManager codes() {
@@ -140,17 +281,14 @@ public final class SocialService {
         SocialCommandHandler commands = new SocialCommandHandler(this, plugin);
         plugin.registerSocialCommands(commands, commands);
         registerCoreBridges();
-        long period = 20L * Math.max(10, config.reminderSeconds());
-        reminderTask = Bukkit.getScheduler().runTaskTimer(plugin, this::remindPending, period, period);
-        // Постоянная строка над хотбаром у всех, кто ещё не выбрал способ входа.
-        actionBarTask = Bukkit.getScheduler().runTaskTimer(plugin, this::updateActionBars,
-                20L, 20L * config.reminderActionBarSeconds());
+        running = true;
+        restartReminderTimers();
         long newsPeriod = 20L * 60L * Math.max(5, config.newsPollMinutes());
         newsTask = Bukkit.getScheduler().runTaskTimer(plugin, this::scheduleNewsCheck,
                 20L * 30L, newsPeriod);
         plugin.getLogger().info("[CHRDK_SOCIAL] Обязательная привязка "
                 + (config.mandatoryActive() ? "включена" : "выключена")
-                + "; привязок: " + store.linkCount()
+                + "; привязок: " + linkCount()
                 + "; grace: " + config.graceDays() + " дн. общий + "
                 + config.newcomerGraceDays() + " дн. личный"
                 + "; доступ по донату: " + (config.donateActive() ? config.donateMode() : "выключен"));
@@ -159,9 +297,25 @@ public final class SocialService {
     public void applyConfig(SocialConfig next) {
         this.config = next;
         donorCache.clear();
+        // /social reload меняет интервалы: таймеры надо перезапустить, иначе до
+        // рестарта сервера продолжат работать старые периоды.
+        if (running) restartReminderTimers();
+    }
+
+    /** Периоды берутся из свежего конфига; вызывается при старте и reload. */
+    private void restartReminderTimers() {
+        if (reminderTask != null) reminderTask.cancel();
+        if (actionBarTask != null) actionBarTask.cancel();
+        long period = 20L * Math.max(10, config.reminderSeconds());
+        reminderTask = Bukkit.getScheduler().runTaskTimer(plugin, this::remindPending, period, period);
+        // Строка над хотбаром обновляется с тем же часовым интервалом: она
+        // появляется при входе и больше не висит перед глазами постоянно.
+        actionBarTask = Bukkit.getScheduler().runTaskTimer(plugin, this::updateActionBars,
+                20L, 20L * Math.max(10, config.reminderActionBarSeconds()));
     }
 
     public void shutdown() {
+        running = false;
         if (reminderTask != null) reminderTask.cancel();
         if (actionBarTask != null) actionBarTask.cancel();
         if (newsTask != null) newsTask.cancel();
@@ -209,13 +363,13 @@ public final class SocialService {
         if (store.loadFailed()) return !config.failOpenOnCorruption();
         long now = System.currentTimeMillis();
         if (emergencyActive(now)) return false;
-        if (store.isLinked(player.getName())) return false;
+        if (isLinked(player.getName())) return false;
         if (graceActive(player, now)) return false;
         return !donateAccess(player.getName());
     }
 
     public boolean needsInvitation(Player player) {
-        if (player == null || !config.enabled() || store.isLinked(player.getName())) return false;
+        if (player == null || !config.enabled() || isLinked(player.getName())) return false;
         long now = System.currentTimeMillis();
         return staffBypass(player) || graceActive(player, now) || emergencyActive(now)
                 || isFrozen(player);
@@ -329,17 +483,26 @@ public final class SocialService {
     }
 
     public String linkProvider(String playerName) {
-        return store.binding(playerName).map(SocialLinkStore.Binding::provider).orElse("");
+        return store.binding(playerName).map(SocialLinkStore.Binding::provider)
+                .orElseGet(() -> legacyVkBinding(playerName).isPresent() ? PROVIDER_VK : "");
     }
 
     public boolean permanentDonorAccess(String playerName) {
         return config.donatePermanent() && store.donorGranted(playerName);
     }
 
-    /** Явная строка для TAB: «привязан» / «проход» / «БЕЗ ПРИВЯЗКИ: осталось N дн.». */
+    /** Совместимый высокоуровневый статус для старых внешних шаблонов PAPI. */
     public String tabStatus(String playerName, long now) {
         String provider = linkProvider(playerName);
-        return SocialAccessPolicy.tabStatus(store.isLinked(playerName), provider,
+        return SocialAccessPolicy.tabStatus(isLinked(playerName), provider,
+                donateUntil(playerName), graceDeadline(playerName, now), now,
+                config.mandatoryActive(), emergencyActive(now), permanentDonorAccess(playerName));
+    }
+
+    /** Одна понятная строка TAB; после привязки счётчик и дедлайн не показываются. */
+    public String tabLine(String playerName, long now) {
+        String provider = linkProvider(playerName);
+        return SocialAccessPolicy.tabLine(isLinked(playerName), provider,
                 donateUntil(playerName), graceDeadline(playerName, now), now,
                 config.mandatoryActive(), emergencyActive(now), permanentDonorAccess(playerName));
     }
@@ -355,7 +518,7 @@ public final class SocialService {
         long now = System.currentTimeMillis();
         // Один раз фиксируем первый вход: от него считается личный переходный срок.
         store.recordFirstSeen(player.getName(), now);
-        if (store.isLinked(player.getName())) {
+        if (isLinked(player.getName())) {
             settle(player, key);
             return;
         }
@@ -380,33 +543,42 @@ public final class SocialService {
         int days = SocialAccessPolicy.remainingDays(deadline, now);
         String url = config.donateUrl();
 
-        // Крупный заголовок и звук: блок в чате легко потерять среди системных сообщений.
-        if (config.reminderTitleOnJoin()) showEntryTitle(player);
-        if (config.reminderSound()) playNagSound(player);
+        // Один общий кулдаун на ВСЕ показы: полный блок при входе, периодическое
+        // напоминание и пинг при действиях. Запись переживает выход, поэтому
+        // перезаход в течение часа не обнуляет паузу и не повторяет пять строк
+        // инструкции. При nagging: false сохраняется прежнее поведение — только
+        // блок при входе, и он показывается при каждом входе.
+        boolean showGate = !config.reminderNagging() || allowChatReminder(key, now);
+        if (showGate) {
+            // Крупный заголовок и звук: блок в чате легко потерять среди системных сообщений.
+            if (config.reminderTitleOnJoin()) showEntryTitle(player);
+            if (config.reminderSound()) playNagSound(player);
 
-        plugin.messages().send(player, "social.gate-choice");
-        plugin.messages().send(player, "social.gate-code",
-                "code", code, "minutes", Math.max(1, config.codeTtlSeconds() / 60));
-        // Подробная инструкция именно по ВК: MAX в разработке и игрокам не предлагается.
-        plugin.messages().send(player, "social.gate-howto",
-                "code", code, "vk", config.vkCommunityUrl());
-        if (config.donateActive()) {
-            plugin.messages().send(player, "social.gate-donate", "url", url);
+            plugin.messages().send(player, "social.gate-choice");
+            plugin.messages().send(player, "social.gate-code",
+                    "code", code, "minutes", Math.max(1, config.codeTtlSeconds() / 60));
+            // Подробная инструкция именно по ВК: MAX в разработке и игрокам не предлагается.
+            plugin.messages().send(player, "social.gate-howto",
+                    "code", code, "vk", config.vkCommunityUrl());
+            if (config.donateActive()) {
+                plugin.messages().send(player, "social.gate-donate", "url", url);
+            }
+            if (isFrozen(player)) {
+                plugin.messages().send(player, "social.gate-closed", "url", url);
+            } else {
+                plugin.messages().send(player, "social.gate-grace",
+                        "days", days, "date", formatDeadline(deadline));
+            }
+            player.sendActionBar(actionBarComponent(player, code, days));
         }
-        if (isFrozen(player)) {
-            plugin.messages().send(player, "social.gate-closed", "url", url);
-        } else {
-            plugin.messages().send(player, "social.gate-grace",
-                    "days", days, "date", formatDeadline(deadline));
-        }
-        player.sendActionBar(actionBarComponent(player, code, days));
         audit.write("social.join-pending", player.getName(), "", "выдан код входа, требуется выбор способа входа");
     }
 
     public void onQuit(Player player) {
         String key = SocialLinkCodeManager.canonical(player.getName());
         pending.remove(key);
-        lastChatReminder.remove(key);
+        // lastChatReminder НЕ удаляем: общий часовой кулдаун должен пережить
+        // перезаход, иначе релог снова включит назойливые напоминания.
     }
 
     /* ------------------------- назойливое информирование ------------------------- */
@@ -415,12 +587,13 @@ public final class SocialService {
     private void settle(Player player, String key) {
         pending.remove(key);
         lastChatReminder.remove(key);
+        lastFrozenNotice.remove(key);
         clearActionBar(player);
     }
 
     /** @return {@code true}, если игрок уже выбрал способ входа и его не нужно беспокоить. */
     private boolean settled(Player player, String key) {
-        if (store.isLinked(player.getName()) || staffBypass(player) || donateAccess(player.getName())) {
+        if (isLinked(player.getName()) || staffBypass(player) || donateAccess(player.getName())) {
             settle(player, key);
             return true;
         }
@@ -563,7 +736,7 @@ public final class SocialService {
             return fromMax ? "❌ Код не найден или истёк. Запросите новый код в игре: /link" : null;
         }
         String playerName = verified.playerName();
-        if (store.isLinked(playerName)) {
+        if (isLinked(playerName)) {
             codes.consume(rawCode);
             return "✅ Аккаунт " + playerName + " уже привязан.";
         }
@@ -626,7 +799,9 @@ public final class SocialService {
     public String status(String playerName) {
         Optional<SocialLinkStore.Binding> binding = store.binding(playerName);
         String state = binding.map(value -> value.provider() + " #" + value.externalId())
-                .orElse("не привязан");
+                .orElseGet(() -> legacyVkBinding(playerName)
+                        .map(value -> "vk #" + value.vkUserId() + " (legacy)")
+                        .orElse("не привязан"));
         long now = System.currentTimeMillis();
         return "Привязка: " + state
                 + " | заморозка: " + (isFrozen(Bukkit.getPlayerExact(playerName)) ? "да" : "нет")
@@ -634,21 +809,28 @@ public final class SocialService {
                 + " | grace до: " + formatDeadline(graceDeadline(playerName, now))
                 + " | аварийный режим: " + (emergencyActive(now)
                         ? "до " + formatDeadline(store.emergencyUntil()) : "выключен")
-                + " | всего привязок: " + store.linkCount()
+                + " | всего привязок: " + linkCount()
                 + " | донатных доступов: " + store.donorCount();
     }
 
     public String unlink(String playerName, String actor) {
         Optional<SocialLinkStore.Binding> removed = store.unlink(playerName);
-        if (removed.isEmpty()) return "У игрока " + playerName + " нет привязки.";
-        audit.write("social.unlink", playerName, removed.get().provider(), "actor=" + actor);
+        Optional<VkStore.LinkSnapshot> legacy = rawLegacyVkBinding(playerName);
+        if (removed.isEmpty() && legacy.isEmpty()) return "У игрока " + playerName + " нет привязки.";
+        boolean legacyRemoved = legacy.isPresent() && forgetLegacyVkBinding(playerName);
+        String provider = removed.map(SocialLinkStore.Binding::provider)
+                .orElseGet(() -> legacy.isPresent() ? PROVIDER_VK : "");
+        audit.write("social.unlink", playerName, provider,
+                "actor=" + actor + ", legacy=" + (legacyRemoved ? "removed" : "absent-or-failed"));
         Player player = Bukkit.getPlayerExact(playerName);
         if (player != null && player.isOnline()) {
             pending.add(SocialLinkCodeManager.canonical(playerName));
             String code = issueCode(player);
             plugin.messages().send(player, "social.unlinked", "code", code);
         }
-        return "Привязка " + playerName + " снята. Игроку выдан новый код входа.";
+        return "Привязка " + playerName + " снята. Игроку выдан новый код входа."
+                + (legacy.isPresent() && !legacyRemoved
+                        ? " Внимание: vk-links.json не сохранён — проверьте лог и повторите." : "");
     }
 
     public String emergency(int minutes, String actor) {

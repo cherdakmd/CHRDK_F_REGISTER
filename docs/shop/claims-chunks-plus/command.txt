@@ -1,0 +1,53 @@
+КОМАНДЫ ТОВАРА claims-chunks-plus
+=================================
+
+1. ВЫДАЧА ПОКУПКИ (RCON / консоль сервера, выполняет магазин)
+
+   pass shopbuy %username% claims-chunks-plus
+
+   %username% подставляет TradeMC / платёжная система. Для ручной выдачи
+   конкретному игроку вместо %username% подставьте его ник, например:
+
+   pass shopbuy Steve claims-chunks-plus
+
+   Важно: команда вводится от КОНСОЛИ. Корень claimadmin закрыт для игроков
+   security.console-only-commands, обхода для OP и LuckPerms нет.
+
+2. ЧТО ВЫПОЛНЯЕТСЯ АВТОМАТИЧЕСКИ (поле commands товара, от консоли)
+
+   claimadmin chunks %player% add 8
+
+   %player% заменяется на ник покупателя в ShopService.runCommands.
+   Именно эта команда кладёт +8 в claims-data.json. Прописывать её вручную
+   при обычной продаже НЕ нужно.
+
+3. АДМИНСКАЯ СВЕРКА (консоль / RCON)
+
+   claimadmin chunks <ник>                 посмотреть бонус и лимиты
+   claimadmin chunks <ник> add <n>        добавить n чанков к бонусу
+   claimadmin chunks <ник> set <n>        установить бонус ровно в n
+   claimadmin chunks <ник> сброс          обнулить вечный бонус
+                                          (синонимы: reset, clear)
+
+   Диапазон n: 0..100000. Все действия пишутся в аудит:
+   admin-chunks-add / admin-chunks-set / admin-chunks-reset.
+
+4. ИГРОК ПРИВАТИТ ЧАНКИ САМ (не входит в покупку)
+
+   /claim buy [x z]      купить чанк за 160 алмазов
+   /claim menu           меню приватов
+   /claim balance        личный счёт и рента
+   /claim list           список своих приватов
+
+5. ПЕРЕНОС ПРИ СМЕНЕ НИКА
+
+   claimadmin transferall <старый_ник> <новый_ник>
+
+   Переносит приваты, казну, вести, персональный лимит и вечный бонус;
+   бонус получателя суммируется с перенесённым.
+
+6. ЧЕГО НЕТ
+
+   Отдельной карточки TradeMC у товара нет (trademc-export: false):
+   26 карточек и цены рангов остаются снимком 1.5.1. Команды
+   «pass shoprevoke», «/claimadmin limit» и «/claim buy» бонус не отменяют.

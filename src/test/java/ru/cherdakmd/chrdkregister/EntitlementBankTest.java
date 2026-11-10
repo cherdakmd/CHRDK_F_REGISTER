@@ -13,6 +13,12 @@ class EntitlementBankTest {
     final UUID lineage=UUID.randomUUID(), owner=UUID.randomUUID();
     BankStore load() { var b=new BankStore(dir,Logger.getAnonymousLogger()); b.load(); return b; }
     BankStore source() { var b=load(); assertTrue(b.registerIncomeSource("lottery",lineage)); return b; }
+    @Test void registeredLineageIsReadableWithoutChangingReceipts() {
+        assertNull(load().incomeSourceLineage("lottery"));
+        var b = source();
+        assertEquals(lineage, b.incomeSourceLineage("lottery"));
+        assertNull(b.incomeSourceLineage("bad source"));
+    }
     @Test void onlyDeltaIsCreditedAcrossSpendingRestartAndFutureIncome() {
         var b=source(); assertTrue(b.creditEntitlement("lottery",lineage,"player",owner,100));
         assertTrue(b.withdraw(owner,90)); b.saveNow(); b=load();

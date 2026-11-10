@@ -34,7 +34,7 @@ class ShopServiceEconomyTest {
     }
     @Test void quotesAndCatalogueAuditDoNotInitializeStockOrTouchJournalOrSnapshots() throws Exception {
         var s=service(10);String before=s.store().snapshotJson();boolean dirty=s.store().isDirty();
-        var audit=s.auditQuotes();assertEquals(249,audit.items());assertEquals(0,audit.errors());assertTrue(audit.buyOnly()>0);
+        var audit=s.auditQuotes();assertEquals(248,audit.items());assertEquals(0,audit.errors());assertTrue(audit.buyOnly()>0);
         for(var item:s.config().items()) {
             long buy=s.quantityQuote(item,1,true);assertTrue(buy>0,item.material());
             if(!item.sellEnabled()) assertEquals(-1,s.quantityQuote(item,1,false));

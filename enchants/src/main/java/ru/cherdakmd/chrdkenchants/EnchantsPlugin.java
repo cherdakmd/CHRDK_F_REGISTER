@@ -4,6 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
+import ru.cherdakmd.chrdkregister.ConfigUpgrader;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.configuration.ConfigSnapshot;
 import ru.cherdakmd.chrdkregister.api.ChrdkEnchantsApi;
@@ -54,6 +55,7 @@ public final class EnchantsPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        ConfigUpgrader.apply(this);
         if (!tryReloadEnchantsConfig()) {
             Bukkit.getPluginManager().disablePlugin(this);
             return;

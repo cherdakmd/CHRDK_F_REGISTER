@@ -1,189 +1,199 @@
 {
   "pages": {
     "about": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "0cd84c1e5a3ef0c117e47bf26959dcfca317223419d60e8ab094cdaa258b51fd",
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "0dd7ca1e3d0aff73fc48ea7b19b23c58b2b92fded557b5b5e348137b2207fa50",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "17cba3d4f3f6b473cb85947b01b867b77f167615af5cdef0eba0be1272029413",
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "a0d9f061f356ee352398cea0b017386ed3e3e506bf45361d6096635be833e665",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "79270ce52b2de3795784e78763ccade33ce7f8f09d1d00f8104e47c0b3898e6f",
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "5781df729df8c40dd2a80739126ae927d4d30404d64abc4739989ce584903429",
       "text": "fcdffb1098428fac2bd42d1c4acb73bb9a024d1823d5398b8845bb2f415a506f"
     },
     "auction": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "57065fa0843d7877265956f332f8458e035b347ec21f7fd438238f968cfecbd5",
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "af73f66f25c5ef761b2443ada83f9f26c314aa26d45254c9d607039c07b07e70",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "90cf5264dab98817e968f980c1dfcf8c41129c38f2fa65d00ef9cc900fd289c5",
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "292a4c92d95cabf2d0216d4811fcdd19e54064c50cc2378ba7561f5a9235a53a",
       "text": "f368077b5f1961a1982957afe3b8523b60c8330f3dfd1891003d01ea1c4fd6db"
     },
     "chat": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "0cd84c1e5a3ef0c117e47bf26959dcfca317223419d60e8ab094cdaa258b51fd",
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "0dd7ca1e3d0aff73fc48ea7b19b23c58b2b92fded557b5b5e348137b2207fa50",
       "text": "ca6c93fc33fca52eecc7d38744bc86f619ea0b6a7bcc2314b84ca6c5399d8a1c"
     },
     "claims": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "77c5812c24cd3a4dff51ade8795ff7252c13859157105ad380aadc8c860330b0",
-      "text": "bf1b24b85ecdaee84580c0d5ea4b9c1120b8dd072e38aa68b52e49fc2a0c472c"
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "d44c3b77c90e40d7f908c3e749ec6b5dfd1a10bc1b434c2fa63c75b75b5c63b2",
+      "text": "3144ca61235b895be5cb61e6d120d5dc6d6d0d7c26f87819431b4756659e8e12"
     },
     "classes": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "ab2bc58573e41b6d5617e9c128afc71d0db3381b6d51c3fbbaea745b67f07492",
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "59436c6d13a4d7cdab23ee4f45eef6d654af950821b8f57aed2c81ae99d3937a",
       "text": "fdebe780b6e7964249b5c4bc4752908cbdd67722e4d4bb0a4b1f64d94cd15ea1"
     },
     "commands": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "f142e0bcff06229a71f598b2af7b490933057c7b53824e724862a442b0e9bc79",
-      "text": "deb43c99022eb3fe2ccf7355ab726dd06531737319b93f376265cfe1479186fb"
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "86c5c1dfcc38bc40db4ddd427035b586a5c2eb4190855ed7975c90608fcce70a",
+      "text": "13b15e747e5e4aa93ff7ed9ce580f47e2c7952f5f319b46c6e854fc3eaec3252"
     },
     "cosmetics": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "957cc0d4d14e9a62051c1ac59299d5cdba4b442f8c5781e100a2297109cd5c1c",
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "85c06803df3bf10e7281f7c75d20d98aa8d2a94192eba54ed010a96b93d9c24a",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "79d7d95d51d83eef2606465365db60df69e1c9e559a93d4048eff101c9de598d",
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "798775b4bd1e3c5c1d275ea9263b1c57aa24bc5f5b324abf1926c705028237c5",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
+    "disasters": {
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "a912d161101ba6b0833bb215ff3d720a231da947c44b94c9784253b8e7539c9a",
+      "text": "dd99cd1f21290668ef4d7c8ead28497aa0f50dc4ffd34ee6d8e9f02a0d013d9b"
+    },
     "economy": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "e60786f36f92d0a6ad1345654f4c17ea698161f5331146855ff4c6694c07a1ea",
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "b1c71fc93d1bcde07f3c0bbb5865736bb81df528ba35b0dce61a7a79bf677b14",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "369a28bb84aaac742db9cf08389aba93b87a6133a0dd8985940d946592808470",
-      "text": "daba8068188cc03ac1ee0f787eb1322c4d33b14da0bdffe35c17b473843dc5aa"
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "0ca242e7dca2bb2261012b80eb90739a979217a27134ab38a06534d314a80344",
+      "text": "c9b27cd4a4970ad227e240e742adc52dca1533312ec7b590663add3b164ba1a2"
     },
     "faq": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "425959169a3da3b4cdd5bce8ad3c7718e8ced90960766333c797e5a4823a8d88",
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "7899fa6edeb1fa42a05fdbbf7703ae25ac3fa1e487f2a998d38aae4fe21b224e",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "c1713cdda5a47efb4f51907d2ac5c838f21c8a30e9d2c692ebd5b3841566b388",
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "164fc834366df74d1f85d0a3b7153f081be1196768e31f28070995884f290b2d",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "77c5812c24cd3a4dff51ade8795ff7252c13859157105ad380aadc8c860330b0",
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "d44c3b77c90e40d7f908c3e749ec6b5dfd1a10bc1b434c2fa63c75b75b5c63b2",
       "text": "e166f2671aabcdf55ecf59d1465ddb19a36343f6d07983eb8b8821b3a63cce34"
     },
     "honors": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "0cd84c1e5a3ef0c117e47bf26959dcfca317223419d60e8ab094cdaa258b51fd",
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "0dd7ca1e3d0aff73fc48ea7b19b23c58b2b92fded557b5b5e348137b2207fa50",
       "text": "6bc29d5a2d7783845f8b3d9b085e85982faec5b3029d841092386f36b1d4c4b0"
     },
     "hunt": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "e592dcca02a6fd329fb314a94b05f42c16c71f67f3341b6e5316314a7802dad7",
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "950cf742b42d71a53358c8a4b9df8bd50d3fc392616ae5b1347fe08313fcb2e8",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "4343c0895dd8a428f7661f092e0c8612a5b2ebd21843ce210e77d69b3940d54b",
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "ad7367a616b9fde2a8555bfd9da18606928ed33d870b4b29dced9d293c1004d4",
       "text": "6a3b9fedc0d15e6ef23ae50e7bf41cdf79f9efcc79299101944c041b5c2d9222"
     },
     "menu": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "e0e22b600483f7ee75ed9a108384943aa611e4600707d6d25789cef37c92035b",
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "47251ae80d76eed21dfd8e4f36576a96569235bb22bad7b46c21c93b75cf26a4",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "moderation": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "0cd84c1e5a3ef0c117e47bf26959dcfca317223419d60e8ab094cdaa258b51fd",
-      "text": "255b8cacb80c9ea7b1236f73feaa226a121bb9b58cff81fef2d46b65abae4073"
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "0dd7ca1e3d0aff73fc48ea7b19b23c58b2b92fded557b5b5e348137b2207fa50",
+      "text": "a9f52f2bf3c79afd26856ce422e010dce30f6e3e403343623d465c766ccb5f60"
     },
     "orders": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "400992a957ebe8360b0508251ec7121e42b3b04569a7c8dcc985587e0de165c6",
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "6a1b6a78657685bbe08dc8093236800ce5b02536bdb33a8855e01492aa7907ef",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "perktree": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "ab2bc58573e41b6d5617e9c128afc71d0db3381b6d51c3fbbaea745b67f07492",
-      "text": "e3e52c8c8644c30b0b8a870406bc7e45def6fe49313ca2f5d89c833f69250504"
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "59436c6d13a4d7cdab23ee4f45eef6d654af950821b8f57aed2c81ae99d3937a",
+      "text": "148006c785c6f0e5adf6725d87605f5e508b957636fdac87ea64939e7bd63b79"
     },
     "pets": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "6cdd9a89df81bce5f6922aba0cb90f3cbd8207096afe9d8f9dfb0e8212c15f4a",
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "d9e601658a2d5d464b0bb9ccb4281853a5192edb8618340d035d5b7e38a2f6b1",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "d6cc09f1de08b9f7ed625e1d2fa6e19bf9895ca27696a4c6b808201b100924ae",
-      "text": "b66278597912053a64a4f192bf0cf63795a8720263d4283683b9458eec8f0bff"
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "820db6a4e77366e0461b5a5cae73afebbba35e668d3c549cad0edfae0d94a54a",
+      "text": "13e6d38670572890ab2567279a5ca76f8e353eab6ade09a877eee2e884c6e272"
     },
     "profile": {
-      "reason": "Напоминания о привязке стали реже (общий кулдаун 180 с, action bar 15 с), игровые тексты и /link переписаны под пошаговую инструкцию для ВКонтакте с упоминанием прохода за 15 ₽; MAX в разработке и как способ входа не предлагается",
-      "sources": "dbfb4f4e138f600e568f60179da0bab0f8b6faa8df928c427fd59d7606ca3725",
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "451aba8cf762c9ec0a7bb639b8c2219b855d4e42e01eefed5e1c6274c3862bc4",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "d5f00eed58a040514cc8111870bb3d398629a69a6c55a3a2c296ee39e7c57c3b",
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "545fdc18b404fbfc1438fa39eb6e49e7dbce712afaf93c89394ff107b8f9890d",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "bd7d8e77a3b22f088ba27d6b8649ac29a329af704fa54853d1ea5477984f9729",
-      "text": "83fdfb3ddc5551875ec1f031676a80e3adb73e448dffae614c489441ea6f2c33"
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "a558c4ac5cf99b32de2b180728e09c3ea8700e4250f4687978d04314b30b3994",
+      "text": "b551d73e8dcc85c81ff7c908f7c89e1ebfb441b46d082a6a714124d77bfbb2c2"
     },
     "shop": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "4343c0895dd8a428f7661f092e0c8612a5b2ebd21843ce210e77d69b3940d54b",
-      "text": "62ef5965cc091b6cbd7e6af58d21e58ba2e8dd65d9e704cec710768ff7a47099"
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "ad7367a616b9fde2a8555bfd9da18606928ed33d870b4b29dced9d293c1004d4",
+      "text": "ea26b94a87ea9b7287d9afad8fe96c8633ed8cc92e9fb091369ebd814b3a86a6"
     },
     "skills": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "632affd6f2ff9e3db1f75b2391a2db68ce26f7c08cfc472234e44d6a57d0e410",
-      "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "d11656e575258385153e87a615bfaf6f4bb855e16579846390c86bef04759c54",
+      "text": "2cbe0faac3c272b71b3eb81fb78f5051b9eaa58e4ff682276af2c6bbdf74a98b"
     },
     "social-link": {
-      "reason": "Напоминания о привязке стали реже (общий кулдаун 180 с, action bar 15 с), игровые тексты и /link переписаны под пошаговую инструкцию для ВКонтакте с упоминанием прохода за 15 ₽; MAX в разработке и как способ входа не предлагается",
-      "sources": "bcf910bd6255618636cd11af19b579cd0f9db25cb2ffb0785130da7d4d610dc7",
-      "text": "69f88dbc6b859f6c70655723c5bc5f0267378925dcfb11086d8eb5db64653e5a"
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "2b6d308035b508c9da87ce16bd305215e6fa1bbd9b2f139dabfdcc91354a684c",
+      "text": "1f6cf95d9c8c2180dbf871aa9b19a7bfcde5405cf77b75954b7575920d2aef14"
     },
     "start": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "75105de2a85ddfd52415291cf056ef94ba1c99aa638133d0e549d880713e4b54",
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "f94c6cb980eccc10362d1918710b44df2ef40141b18e1a5398064dbc1213fb4a",
       "text": "c2835fdf2d1945079115e6a252d472ce72ad9ad79f4ed47ad58e269b467d595f"
     },
+    "starter-kit": {
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "5781df729df8c40dd2a80739126ae927d4d30404d64abc4739989ce584903429",
+      "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
+    },
     "teleports": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "0005449aff554825d5565c86276f5b6cfb0dcdbe994e8032d4b9c6b95a6cf4f9",
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "abb7e8c3c0c332554e7c197fad0519d38f0ef15c3f4bff027a40b936a28c8fea",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "369a28bb84aaac742db9cf08389aba93b87a6133a0dd8985940d946592808470",
-      "text": "a4d12cf48881e623761e39d44e627b95975f839a8737cfd76b9ee138317a4c07"
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "0ca242e7dca2bb2261012b80eb90739a979217a27134ab38a06534d314a80344",
+      "text": "8bfa7eee45f251d4f571e67782e4e245c8a0c9faf55062068f625f72771dc03c"
     },
     "titles": {
-      "reason": "Настройка LuckPerms доработана: chrdksocial.use/admin в базовых правах, узел обхода вырезается из default/admin/pass, группа social-day создаётся для товара 15 ₽ / 1 день; тарифы рангов, цены и QoL-баланс не меняются",
-      "sources": "c91fc94b06a85106ff313d8b23f4db5628f4f18c696b92c4c35160c460cf5aba",
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "dc5689f32d32f3e790f7ca5170b4671f13d40768a106edb16ad91eacfa001262",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Выпуск 1.5.1: версия шапки вики, заметки патча, ссылка на docs/releases/1.5.1.md; реализация 1.5.0 и исходники PvE не менялись",
-      "sources": "4343c0895dd8a428f7661f092e0c8612a5b2ebd21843ce210e77d69b3940d54b",
-      "text": "f78db5ac01d0fa2afb9193ffad8092b036e6e68f3b3a8bb4874fc62aeba3bdc8"
+      "reason": "Сверен накопительный стабильный 1.5.2-fix: все RC, состав ассетов, миграции и откат",
+      "sources": "ad7367a616b9fde2a8555bfd9da18606928ed33d870b4b29dced9d293c1004d4",
+      "text": "3d07ff83bd1c8c02d2f22a608a0301e21d09014c4c7ace84807a4a08e6398ca5"
     },
     "vk": {
-      "reason": "Напоминания о привязке стали реже (общий кулдаун 180 с, action bar 15 с), игровые тексты и /link переписаны под пошаговую инструкцию для ВКонтакте с упоминанием прохода за 15 ₽; MAX в разработке и как способ входа не предлагается",
-      "sources": "bcf910bd6255618636cd11af19b579cd0f9db25cb2ffb0785130da7d4d610dc7",
-      "text": "94f2d5f3cf83ae414f1a577156884ae1329734bf55951e2707569c3ce923c199"
+      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
+      "sources": "2b6d308035b508c9da87ce16bd305215e6fa1bbd9b2f139dabfdcc91354a684c",
+      "text": "b592e465a73dd13186763622b51190400cffd40960e233f58c63379b88a9bba9"
     }
   },
   "schema": 1

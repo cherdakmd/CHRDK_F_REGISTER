@@ -96,6 +96,20 @@ messages:
   ach.veteran.name: "Ветеран"
   ach.veteran.desc: "Провести в игре сто часов. Даёт бейдж «Ветеран»."
 
+  # ----------- путь: шесть достижений за катастрофы (1.5.2) -------------
+  ach.pervaya-katastrofa.name: "Первая катастрофа"
+  ach.pervaya-katastrofa.desc: "Пережить одну катастрофу CHRDK_Disasters рядом с эпицентром."
+  ach.desyat-katastrof.name: "Привык к бурям"
+  ach.desyat-katastrof.desc: "Пережить десять катастроф."
+  ach.pyatdesyat-katastrof.name: "Хронический свидетель"
+  ach.pyatdesyat-katastrof.desc: "Пережить пятьдесят катастроф."
+  ach.vse-shest-bedstvij.name: "Все шесть стихий"
+  ach.vse-shest-bedstvij.desc: "Пережить каждый из шести видов катастроф хотя бы один раз."
+  ach.sto-oskolkov.name: "Сто осколков"
+  ach.sto-oskolkov.desc: "Заработать сто осколков катастроф за участие."
+  ach.stojkost-pyat.name: "Стойкость пятого уровня"
+  ach.stojkost-pyat.desc: "Поднять уровень стойкости до пятого."
+
   # --------------------------- бой: 6 достижений ---------------------------
   ach.ohotnik.name: "Охотник"
   ach.ohotnik.desc: "Убить сто мобов."

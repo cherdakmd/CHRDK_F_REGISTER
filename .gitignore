@@ -31,6 +31,11 @@ config/chrdk_f_register-data.json
 # Собранный вики-сайт (GitHub Pages собирает его в Actions)
 /site/
 
+# Патченый Mine Treasure RU лежит в datapacks/mine-treasure-ru/ и коммитится
+# по явному решению владельца (риск лицензии принят им; разрешение не проверено).
+# Игнорируем только случайную копию оригинала в корне репозитория.
+/mine-treasure-1.6.5-ru.zip
+
 # Локальное окружение проверок Python
 .venv/
 

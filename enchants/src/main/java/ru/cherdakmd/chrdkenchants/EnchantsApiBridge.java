@@ -110,8 +110,9 @@ public final class EnchantsApiBridge implements ChrdkEnchantsApi {
         if (allowed.isEmpty()) {
             return false;
         }
-        plugin.items().apply(item, def, Math.max(1, level));
-        return true;
+        // 1.5.2: apply может отказать и по колонне тир-предмета — не выдаём
+        // успех, если PDC остался нетронутым.
+        return plugin.items().apply(item, def, Math.max(1, level));
     }
 
     @Override
@@ -125,8 +126,9 @@ public final class EnchantsApiBridge implements ChrdkEnchantsApi {
         }
         // 1.4.282: незеритовый апгрейд переносит чары, но не может склеить
         // «Жилодробитель» с «Дробителем» (или любую другую conflictGroup).
+        // 1.5.2: на предмете с колонной режимы массовой добычи не переносятся.
         Map<String, Integer> merged = EnchantConflicts.merge(source, plugin.items().read(to));
-        plugin.items().write(to, merged);
+        plugin.items().write(to, ForgeMiningCompat.stripMegaMining(merged, to));
     }
 
     @Override

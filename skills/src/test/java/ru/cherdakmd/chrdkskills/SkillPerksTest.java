@@ -32,7 +32,7 @@ class SkillPerksTest {
     @Test
     void firstPerkAtTen() {
         SkillPerks.Active active = SkillPerks.active(Map.of(SkillType.MINING, 10));
-        assertEquals(0.06, active.value(SkillPerk.Kind.BREAK_SPEED), 1e-9);
+        assertEquals(0.03, active.value(SkillPerk.Kind.BREAK_SPEED), 1e-9);
         assertEquals(1, active.perks().size());
         assertEquals("mining-strong-hand", active.perks().get(0).id());
     }
@@ -42,7 +42,7 @@ class SkillPerksTest {
         SkillPerks.Active active = SkillPerks.active(Map.of(SkillType.MINING, 100));
         assertEquals(0.20, active.value(SkillPerk.Kind.BREAK_SPEED), 1e-9);
         assertEquals(0.30, active.value(SkillPerk.Kind.DOUBLE_DROP), 1e-9);
-        assertEquals(6, active.perks().size(), "на 100-м работают все шесть перков");
+        assertEquals(12, active.perks().size(), "на 100-м работают все 12 ступеней");
 
         SkillPerks.Active combat = SkillPerks.active(Map.of(SkillType.COMBAT, 100));
         assertEquals(0.15, combat.value(SkillPerk.Kind.MELEE_DAMAGE), 1e-9);
@@ -51,6 +51,28 @@ class SkillPerksTest {
         SkillPerks.Active defense = SkillPerks.active(Map.of(SkillType.DEFENSE, 100));
         assertEquals(6.0, defense.value(SkillPerk.Kind.ARMOR), 1e-9);
         assertEquals(0.12, defense.value(SkillPerk.Kind.DAMAGE_REDUCTION), 1e-9);
+    }
+
+    @Test
+    void prestigeAddsVirtualBonusWithoutNewCatalogEntries() {
+        Map<SkillType, Integer> levels = Map.of(SkillType.MINING, 100);
+        SkillPerks.Active base = SkillPerks.active(levels);
+        SkillPerks.Active boosted = SkillPerks.active(levels,
+                Map.of(SkillType.MINING, 5), 0.01);
+        assertEquals(0.05,
+                boosted.value(SkillPerk.Kind.BREAK_SPEED)
+                        - base.value(SkillPerk.Kind.BREAK_SPEED), 1e-9,
+                "пять ступеней по 0.01 дают +5 % к скорости копания");
+        assertEquals(12, boosted.perks().size(),
+                "виртуальные бонусы не создают записей в каталоге перков");
+        assertTrue(boosted.value(SkillPerk.Kind.BREAK_SPEED) <= 1.0,
+                "доли по-прежнему клампятся");
+
+        SkillPerks.Active armor = SkillPerks.active(
+                Map.of(SkillType.DEFENSE, 100),
+                Map.of(SkillType.DEFENSE, 10), 0.01);
+        assertEquals(8.0, armor.value(SkillPerk.Kind.ARMOR), 1e-9,
+                "броня — абсолютная величина, престиж добавляет 2.0");
     }
 
     @Test
@@ -67,7 +89,7 @@ class SkillPerksTest {
         levels.put(SkillType.MINING, 10);
         levels.put(SkillType.FISHING, 100);
         SkillPerks.Active active = SkillPerks.active(levels);
-        assertEquals(0.06, active.value(SkillPerk.Kind.BREAK_SPEED), 1e-9,
+        assertEquals(0.03, active.value(SkillPerk.Kind.BREAK_SPEED), 1e-9,
                 "рыбалка не должна давать скорость копания");
         assertTrue(active.value(SkillPerk.Kind.EXTRA_CATCH) > 0.0);
     }
@@ -82,15 +104,15 @@ class SkillPerksTest {
     void perksAtListsOpenedPerks() {
         assertEquals(0, SkillPerks.perksAt(SkillType.MINING, 9).size());
         assertEquals(1, SkillPerks.perksAt(SkillType.MINING, 10).size());
-        assertEquals(2, SkillPerks.perksAt(SkillType.MINING, 25).size());
-        assertEquals(6, SkillPerks.perksAt(SkillType.MINING, 100).size());
+        assertEquals(3, SkillPerks.perksAt(SkillType.MINING, 25).size());
+        assertEquals(12, SkillPerks.perksAt(SkillType.MINING, 100).size());
     }
 
     @Test
     void nextPerkSkipsOpenedAndEndsAtNull() {
         SkillPerk next = SkillPerks.nextPerk(SkillType.MINING, 10);
         assertNotNull(next);
-        assertEquals(25, next.level());
+        assertEquals(15, next.level());
         assertNull(SkillPerks.nextPerk(SkillType.MINING, 100), "после 100-го открывать нечего");
         assertNull(SkillPerks.nextPerk(null, 1));
     }
@@ -98,7 +120,7 @@ class SkillPerksTest {
     @Test
     void thresholdsAreSortedWithoutDuplicates() {
         List<Integer> thresholds = SkillPerks.thresholds(SkillType.ENCHANTING);
-        assertEquals(List.of(10, 25, 50, 75, 100), thresholds);
+        assertEquals(SkillRegistry.THRESHOLDS, thresholds);
     }
 
     @Test

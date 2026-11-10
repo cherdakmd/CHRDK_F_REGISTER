@@ -1,0 +1,118 @@
+# =====================================================================
+# CHRDK_Disasters — собственные катастрофы сервера (Purpur 26.3 / Java 25).
+# Оригинальная реализация под MIT: сторонний GPL-плагин не копируется.
+#
+# ГЛАВНОЕ: по умолчанию ВСЁ ВЫКЛЮЧЕНО. Включите disasters.enabled,
+# перечислите миры и разрешите нужные катастрофы. Разрушительные площадные
+# виды (earthquake, tornado, flood) выключены отдельно даже при enabled: true.
+#
+# Вторая итерация: шесть катастроф и три фазы у каждого запуска —
+# предупреждение, активные тики, затухание. Активная фаза меняет блоки
+# порциями; предупреждение и затухание меняют только частицы и эффекты.
+# =====================================================================
+
+disasters:
+  # Общий выключатель. /disastersadmin on|off переключает без правки файла.
+  enabled: false
+  # Язык текстов: ru — messages.yml, другой — messages_<locale>.yml поверх него.
+  locale: "ru"
+
+  # Как часто проверять таймеры игроков (секунды).
+  tick-seconds: 30
+  # Случайная пауза между катастрофами у одного игрока (секунды).
+  # 1800..5400 = от 30 минут до 1,5 часов.
+  min-seconds: 1800
+  max-seconds: 5400
+  # Один общий кулдаун на игрока для ВСЕХ оповещений (как в CHRDK_VK).
+  announce-cooldown-seconds: 600
+  # Через сколько секунд вернуть изменённые блоки. 0 = не возвращать.
+  restore-after-seconds: 600
+  # Уровень катастрофы 1..5 влияет на число блоков и плотность эффектов.
+  max-level: 5
+  # Радиус площади в блоках. Проверка приватов идёт по ВСЕМ чанкам радиуса.
+  radius: 12
+  # Максимум блоков в снимке отката: защита памяти и мира.
+  max-blocks: 256
+  # Не трогать площадь вокруг спавна мира (0 = не проверять).
+  spawn-protection-radius: 64
+  # Учитывать приваты CHRDK_Claims. Отключать только на тестовом мире.
+  respect-claims: true
+  # Белый список миров. Пустой список = все миры (если enabled: true).
+  worlds: []
+
+  # Фазы одного запуска. tick-seconds — период шага активной фазы.
+  phases:
+    warn-seconds: 5
+    active-seconds: 20
+    fade-seconds: 5
+    tick-seconds: 2
+
+  # Звуки: допустимы только имена из DisasterFx.SOUND_NAMES, NONE = тишина.
+  # Неизвестное имя просто выключает звук, плагин не падает.
+  sounds:
+    enabled: true
+    volume: 0.7
+    pitch: 1.0
+    dust-storm: BLOCK_NOTE_BLOCK_BASS
+    meteor-shower: ENTITY_LIGHTNING_BOLT_IMPACT
+    earthquake: ENTITY_LIGHTNING_BOLT_THUNDER
+    tornado: ITEM_TRIDENT_RIPTIDE_1
+    flood: BLOCK_BEACON_ACTIVATE
+    blizzard: BLOCK_SNOW_BREAK
+
+  # Мягкие эффекты состояния без урона: снимаются на затухании/остановке.
+  # Игроки с chrdkdisasters.bypass их не получают. Уровень стойкости
+  # ослабляет amplifier и длительность эффекта.
+  player-effects:
+    enabled: true
+
+  # Третья итерация: осколки катастроф за участие.
+  # base-shards + per-level-shards * (уровень катастрофы - 1), затем бонус
+  # стойкости до bonus-cap. daily-cap считается по МСК и защищает от фермы.
+  rewards:
+    enabled: true
+    base-shards: 5
+    per-level-shards: 2
+    daily-cap: 120
+    bonus-cap: 1.5
+
+  # Свой уровень стойкости: треугольная шкала опыта base-xp * (L-1)*L/2.
+  # Даёт бонус осколков, ослабляет эффекты и добавляет шанс пропуска события.
+  progression:
+    base-xp: 100
+    xp-per-survive: 30
+    xp-per-level: 8
+    max-level: 10
+
+  # Обе интеграции мягкие: без CHRDK_Achievements и CHRDK_Skills disasters
+  # продолжает работать, просто не шлёт прогресс в чужие каталоги.
+  integrations:
+    achievements: true
+    skills: true
+    # Навык из CHRDK_Skills (SkillType): defense, mining, combat и т.д.
+    skill-id: "defense"
+    skills-units: 2
+
+  # /disasters shop: цены в осколках. diamonds кладёт алмазы на /bal через
+  # BankStore ядра (не физдроп, не добыча Skills), supplies выдаёт ванильные
+  # припасы, ward включает временный пропуск расписания у игрока.
+  shop:
+    diamonds:
+      price: 20
+      amount: 16
+    supplies:
+      price: 12
+      diamonds: 4
+    ward:
+      price: 30
+      minutes: 30
+
+  # Разрешённые катастрофы. dust-storm и blizzard не меняют блоки вообще;
+  # meteor-shower, earthquake, tornado и flood требуют снимка для отката.
+  kinds:
+    dust-storm: true
+    meteor-shower: true
+    earthquake: false
+    tornado: false
+    flood: false
+    blizzard: true

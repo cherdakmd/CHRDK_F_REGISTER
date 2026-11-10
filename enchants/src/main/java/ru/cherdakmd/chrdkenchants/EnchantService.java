@@ -41,8 +41,13 @@ public final class EnchantService {
         List<EnchantDef> pool = plugin.config().enabledEnchants().stream()
                 .filter(def -> polarity == null || def.polarity() == polarity)
                 .toList();
+        // 1.5.2: убираем «Жилодробитель»/«Дробитель» из пула ролла заранее,
+        // если на тир-предмете уже стоит колонна («Карьер»/«Забойщик»).
+        // Иначе случайный выбор тратил бы попытку источника на отклонённую чару.
         return EnchantRoller.applicable(pool, material, present,
-                plugin.config().maxPerItem(), plugin.config().maxLegendaryPerItem());
+                        plugin.config().maxPerItem(), plugin.config().maxLegendaryPerItem()).stream()
+                .filter(def -> !ForgeMiningCompat.blocked(item, def.id()))
+                .toList();
     }
 
     /**
@@ -113,7 +118,12 @@ public final class EnchantService {
         Map<String, Integer> itemEnchants = new java.util.LinkedHashMap<>(items.read(item));
         // 1.4.282: книга-«мутант» и уже испорченный предмет не проходят проверку
         // целиком, даже если по одной чаре конфликт маскируется порядком обхода.
-        if (!EnchantConflicts.validSet(bookEnchants) || !EnchantConflicts.validSet(itemEnchants)) {
+        // 1.5.2: на тир-предмете с колонной («Карьер»/«Забойщик») нельзя
+        // наложить чару megamine. Проверяем именно переносимый набор, чтобы
+        // другие чары на таком предмете (Автоплавка, Рука Мидаса…) по-прежнему
+        // накладывались.
+        if (!EnchantConflicts.validSet(bookEnchants) || !EnchantConflicts.validSet(itemEnchants)
+                || ForgeMiningCompat.blocked(item, bookEnchants)) {
             return "blocked";
         }
         for (String id : bookEnchants.keySet()) {

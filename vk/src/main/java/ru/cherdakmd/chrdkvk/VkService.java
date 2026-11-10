@@ -18,6 +18,7 @@ import ru.cherdakmd.chrdksocial.SocialEventText;
 import ru.cherdakmd.chrdksocial.SocialEventThrottle;
 import ru.cherdakmd.chrdksocial.SocialInteractionHub;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -36,6 +37,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.LongConsumer;
 import java.util.logging.Level;
 
 /**
@@ -250,6 +252,144 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
         }
         sendAsync(effectiveGroupChatPeerId(), text);
         return true;
+    }
+
+    /**
+     * PNG-карточка в беседу сообщества. Использует ключ сообщества и контур
+     * {@code photos.getMessagesUploadServer → photos.saveMessagesPhoto → messages.send},
+     * поэтому {@code community.photo-user-token} здесь не нужен. Вызывать из
+     * фонового потока: сетевая часть выполняется синхронно.
+     */
+    public boolean publishChatCard(byte[] png, String text, String guid)
+            throws IOException, InterruptedException {
+        VkConfig cfg = plugin.config();
+        if (!cfg.chatCardsEnabled() || !groupChatBridgeReady()) {
+            return false;
+        }
+        VkApiClient client = this.apiClient;
+        if (client == null) {
+            return false;
+        }
+        return new VkChatPhotoPublisher(client, cfg.groupId(), effectiveGroupChatPeerId())
+                .send(png, text, guid);
+    }
+
+    /**
+     * Тестовая запись на стену для {@code /vkadmin testpost}: только
+     * {@code wall.post} без фото и без постера. Не трогает {@code wall-digest.json},
+     * {@code daily-cards.json} и {@code last_announced_post_id} — маркер
+     * {@link VkWallPublisher#TEST_POST_MARKER} отсекается в {@link #eligibleWallPost}.
+     * Сеть уходит в фоновый поток, ответы админу возвращаются в главный поток.
+     */
+    public void publishTestWallPost(String text, LongConsumer onSuccess, Consumer<String> onFailure) {
+        VkApiClient client = this.apiClient;
+        VkConfig cfg = plugin.config();
+        if (client == null || !cfg.apiConfigured() || cfg.groupId() <= 0L) {
+            onFailure.accept("VK API не настроен: general.enabled, community.group-id, access-token");
+            return;
+        }
+        if (text == null || text.isBlank()) {
+            onFailure.accept("Пустой текст тестовой записи");
+            return;
+        }
+        long groupId = cfg.groupId();
+        String guid = "chrdk-test-" + UUID.randomUUID();
+        String wallText = cfg.withDiscuss(text);
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                long postId = new VkWallPublisher(client, groupId).publishText(wallText, guid);
+                onMainThread(() -> onSuccess.accept(postId));
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+                onMainThread(() -> onFailure.accept("Публикация прервана"));
+            } catch (Exception failure) {
+                String reason = failure.getMessage() == null
+                        ? failure.getClass().getSimpleName() : failure.getMessage();
+                String shortReason = reason.length() > 180 ? reason.substring(0, 180) : reason;
+                plugin.getLogger().log(Level.WARNING,
+                        "[vkadmin testpost] wall.post не удался: " + reason, failure);
+                onMainThread(() -> onFailure.accept(shortReason));
+            }
+        });
+    }
+
+    /** guid тестовой карточки не пересекается со штатными постами дня. */
+    static final String TEST_CARD_GUID_PREFIX = "chrdk-testcard-";
+
+    static String testCardGuid(UUID uuid) {
+        return TEST_CARD_GUID_PREFIX + uuid;
+    }
+
+    /** Тестовая карточка: тот же рендер Java2D, но без игровых данных и значений. */
+    static DailyCardsConfig testCardConfig() {
+        DailyCardsConfig base = DailyCardsConfig.DEFAULT;
+        return new DailyCardsConfig(base.enabled(), base.zone(), false,
+                base.richestHour(), base.prestigeHour(), base.minerHour(), base.hunterHour(),
+                base.retryMinutes(), "ТЕСТ CHRDK_VK · НЕ ИГРОВАЯ НОВОСТЬ");
+    }
+
+    static byte[] renderTestCard(DailyCardsConfig cards, String day) throws IOException {
+        DailyNomination nomination =
+                new DailyNomination(DailyCardKind.RICHEST, "CHRDK_TEST", 0L, 0L);
+        return DailyPlayerCard.render(nomination, cards, day);
+    }
+
+    /**
+     * Тестовая PNG-карточка для {@code /vkadmin testcard}: с rc.9 уходит
+     * <b>в беседу</b> через {@link VkChatPhotoPublisher}, а не на стену.
+     * Проверяет тот же контур, что штатные карточки и дайджест, но не пишет
+     * суточные ledger'ы, аудит и не сдвигает {@code last_announced_post_id}.
+     * Текст обязан содержать {@link VkWallPublisher#TEST_POST_MARKER}; рендер и
+     * сеть уходят в фоновый поток, ответ админу — в главный.
+     */
+    public void publishTestCard(String text, Runnable onSuccess, Consumer<String> onFailure) {
+        VkConfig cfg = plugin.config();
+        if (!cfg.apiConfigured() || !cfg.chatCardsEnabled() || !groupChatBridgeReady()) {
+            onFailure.accept("Беседа ВК не настроена: general.enabled, community.group-id, "
+                    + "community.access-token, group-chat.enabled, group-chat.peer-id, wall.chat-cards");
+            return;
+        }
+        if (text == null || text.isBlank()) {
+            onFailure.accept("Пустой текст тестовой карточки");
+            return;
+        }
+        if (!text.contains(VkWallPublisher.TEST_POST_MARKER)) {
+            onFailure.accept("Текст тестовой карточки потерял маркер #chrdk_test_");
+            return;
+        }
+        String guid = testCardGuid(UUID.randomUUID());
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                DailyCardsConfig cards = testCardConfig();
+                byte[] png = renderTestCard(cards, cards.dayKey(Instant.now()));
+                if (!publishChatCard(png, text, guid)) {
+                    throw new IOException("VK не принял сообщение с PNG-карточкой");
+                }
+                onMainThread(onSuccess);
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+                onMainThread(() -> onFailure.accept("Отправка прервана"));
+            } catch (Exception failure) {
+                String reason = failure.getMessage() == null
+                        ? failure.getClass().getSimpleName() : failure.getMessage();
+                String shortReason = reason.length() > 180 ? reason.substring(0, 180) : reason;
+                plugin.getLogger().log(Level.WARNING,
+                        "[vkadmin testcard] отправка PNG-карточки в беседу не удалась: "
+                                + reason, failure);
+                onMainThread(() -> onFailure.accept(shortReason));
+            }
+        });
+    }
+
+    private void onMainThread(Runnable task) {
+        if (!plugin.isEnabled()) {
+            return;
+        }
+        if (Bukkit.isPrimaryThread()) {
+            task.run();
+        } else {
+            Bukkit.getScheduler().runTask(plugin, task);
+        }
     }
 
     /** Тикет «Позвать администратора»: admin-peer-id или беседа сообщества. */
@@ -965,6 +1105,11 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
 
     public static boolean eligibleWallPost(VkApiClient.WallPost post, VkConfig cfg) {
         if (post == null || post.id() <= 0L) {
+            return false;
+        }
+        // 1.5.2: тестовая запись /vkadmin testpost — не игровая новость. Не
+        // анонсируем её в игровом чате и не двигаем last_announced_post_id.
+        if (post.text() != null && post.text().contains(VkWallPublisher.TEST_POST_MARKER)) {
             return false;
         }
         if (cfg.wallIgnorePinned() && post.pinned()) {

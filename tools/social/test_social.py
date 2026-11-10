@@ -138,6 +138,8 @@ class ContentTest(unittest.TestCase):
     def test_news_requires_public_zip_and_no_installation_claim(self):
         p = run.preview_news('1.4.272')
         self.assertIn('Установка на игровой сервер выполняется отдельно', p.text)
+        fix = run.preview_news('1.5.2-fix')
+        self.assertEqual('release:v1.5.2-fix', fix.key)
         release = {'tag_name': 'v1.4.272', 'draft': False, 'prerelease': False, 'assets': []}
         with self.assertRaises(SafetyError):
             news(release)

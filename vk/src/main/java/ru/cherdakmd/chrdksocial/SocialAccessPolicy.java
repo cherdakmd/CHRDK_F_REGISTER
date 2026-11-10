@@ -88,6 +88,15 @@ public final class SocialAccessPolicy {
         };
     }
 
+    /** Полное название мессенджера для понятной строки TAB. */
+    public static String providerTitle(String provider) {
+        return switch (provider == null ? "" : provider.trim().toLowerCase(Locale.ROOT)) {
+            case "vk" -> "ВКонтакте";
+            case "max" -> "MAX";
+            default -> "мессенджер";
+        };
+    }
+
     public static String linkCounter(String provider, long graceDeadline, long now,
                                      boolean required, boolean emergency) {
         if (provider != null && !provider.isBlank()) return providerLabel(provider);
@@ -112,6 +121,31 @@ public final class SocialAccessPolicy {
         if (emergency) return "⚠ аварийный вход";
         if (graceDeadline <= now) return "⛔ ВХОД ЗАКРЫТ";
         return "⚠ БЕЗ ПРИВЯЗКИ: осталось " + remainingDays(graceDeadline, now) + " дн.";
+    }
+
+    /**
+     * Одна строка для TAB: понятный выбор и следующий шаг, а не два счётчика
+     * подряд. Возвращает MiniMessage, потому что PAPI подставляет значение до
+     * рендера шаблона CHRDK_Core. После привязки строка не содержит ни срока,
+     * ни дедлайна — счётчик исчезает полностью.
+     */
+    public static String tabLine(boolean linked, String provider, long accessUntil,
+                                 long graceDeadline, long now, boolean required,
+                                 boolean emergency, boolean permanent) {
+        if (linked) {
+            return "<green>✅ " + providerTitle(provider) + " привязан — можно играть</green>";
+        }
+        if (permanent || accessUntil > now) {
+            return "<green>✅ Вход без ВК оплачен: " + accessCounter(accessUntil, now, permanent)
+                    + " · привязка не нужна</green>";
+        }
+        if (!required) return "<green>✅ Привязка не требуется — можно играть</green>";
+        if (emergency) return "<yellow>⚠ Аварийный вход: привяжите ВК через /link</yellow>";
+        if (graceDeadline <= now) {
+            return "<red>⛔ Вход закрыт: /link → код → бот ВКонтакте</red>";
+        }
+        return "<yellow>⚠ Привяжите ВКонтакте: /link → код боту. Осталось "
+                + remainingDays(graceDeadline, now) + " дн.</yellow>";
     }
 
     /** Остаток дней с округлением вверх: 1 час — это ещё «1 дн.». */

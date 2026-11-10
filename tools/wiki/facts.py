@@ -165,6 +165,15 @@ class FactBook:
             if len(values) != 1:
                 raise ValueError("Изменилась схема константы игрового буста")
             return int(values[0])
+        if name == "skills_steps":
+            source = (
+                self.root
+                / "skills/src/main/java/ru/cherdakmd/chrdkskills/SkillRegistry.java"
+            ).read_text(encoding="utf-8")
+            values = re.findall(r"public static final int PERKS_PER_SKILL = (\d+);", source)
+            if len(values) != 1:
+                raise ValueError("Изменилась схема каталога ступеней навыков")
+            return int(values[0])
         if name == "plugins":
             return len(self.modules)
         if name == "shop_count":

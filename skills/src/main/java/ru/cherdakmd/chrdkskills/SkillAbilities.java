@@ -15,6 +15,7 @@ import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerItemDamageEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
+import ru.cherdakmd.chrdkregister.Messages;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
@@ -74,9 +75,22 @@ final class SkillAbilities implements Listener {
             plugin.messages().send(player, error, "time", cooldown(player.getUniqueId(), ability), "cost", ability.cost()); return;
         }
         armed.put(player.getUniqueId(), new Armed(ability, now + ability.seconds() * 1000L, UUID.randomUUID(), player.getWorld().getUID()));
-        plugin.messages().send(player, "ability-activated", "name", plugin.messages().get(ability.nameKey()),
+        plugin.messages().send(player, "ability-activated",
+                "name", abilityName(plugin.messages(), ability),
                 "seconds", ability.seconds(), "energy", energy(player.getUniqueId()));
     }
+    /**
+     * Название приёма как доверенная разметка, а не {@code Component}.
+     *
+     * <p>{@code get()} вернул бы компонент; {@link Messages#fill} приводит
+     * подстановку к строке через {@code String.valueOf}, и в чат уезжал сырой
+     * {@code TextComponentImpl[content=...]}. {@code mini()} отдаёт готовую
+     * разметку из messages.yml, поэтому цвет имени сохраняется.</p>
+     */
+    static Messages.Trusted abilityName(Messages messages, SkillAbility ability) {
+        return ability == null ? Messages.trusted("") : messages.mini(ability.nameKey());
+    }
+
     void status(Player player) {
         plugin.messages().send(player, "ability-energy", "energy", energy(player.getUniqueId()), "max", SkillAbility.MAX_ENERGY);
     }
@@ -89,7 +103,7 @@ final class SkillAbilities implements Listener {
             store.regenerate(player.getUniqueId());
             Armed value = active(player);
             if (value != null && plugin.config().abilitiesHud()) player.sendActionBar(plugin.messages().get("ability-hud",
-                    "energy", energy(player.getUniqueId()), "name", plugin.messages().get(value.ability.nameKey()),
+                    "energy", energy(player.getUniqueId()), "name", abilityName(plugin.messages(), value.ability),
                     "seconds", Math.max(1, (value.until - now + 999) / 1000)));
         }
     }

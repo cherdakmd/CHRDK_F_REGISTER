@@ -4,6 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import ru.cherdakmd.chrdkregister.ConfigUpgrader;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
@@ -48,6 +49,7 @@ public final class ProfessionsPlugin extends JavaPlugin {
                 if (ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<40) throw new IllegalStateException("Нужен Core API 40+");
             } catch (ReflectiveOperationException failure) { throw new IllegalStateException("Нужен Core API 40+",failure); }
             saveDefaultConfig();
+            ConfigUpgrader.apply(this);
             this.config = ProfessionConfig.parse(getConfig(), getLogger());
             this.messages = Messages.load(this, config.locale(), getLogger());
             this.store = new ProfessionStore(getDataFolder().toPath(), getLogger());

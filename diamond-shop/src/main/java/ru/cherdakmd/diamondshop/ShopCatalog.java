@@ -5,8 +5,9 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Операции над каталогом: фильтр по разделу, вкладки витрины и поиск по названию
- * материала. Класс чистый — вся логика проверяется юнит-тестами без Bukkit.
+ * Операции над каталогом: фильтр по разделу, вкладки витрины и поиск по ключу
+ * товара или русскому названию чары. Класс чистый — вся логика проверяется
+ * юнит-тестами без Bukkit.
  */
 public final class ShopCatalog {
 
@@ -60,12 +61,26 @@ public final class ShopCatalog {
         if (items == null || items.isEmpty() || query == null) {
             return List.of();
         }
-        String needle = query.trim().toLowerCase(Locale.ROOT);
+        String needle = normalize(query);
         if (needle.isEmpty()) {
             return List.of();
         }
         return items.stream()
-                .filter(item -> item.material().toLowerCase(Locale.ROOT).contains(needle))
+                .filter(item -> normalize(haystack(item)).contains(needle))
                 .toList();
+    }
+
+    /**
+     * Ключ товара плюс русское название кастомной чары: {@code /shop find жилодробитель}
+     * находит {@code BOOK_CUSTOM_VEINMINER_3}, а не только латинский ключ.
+     */
+    private static String haystack(ru.cherdakmd.diamondshop.ShopConfig.ShopItem item) {
+        var spec = item.spec();
+        String name = ShopBookInfo.searchName(spec);
+        return name == null ? item.material() : item.material() + " " + name;
+    }
+
+    private static String normalize(String value) {
+        return value == null ? "" : value.trim().toLowerCase(Locale.ROOT).replace('ё', 'е');
     }
 }

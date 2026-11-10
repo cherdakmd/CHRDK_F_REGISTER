@@ -34,8 +34,8 @@ class QueueRemovalTest {
         assertEquals(22, PluginUpdateService.MODULES.size());
         assertEquals(42, ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
         var stock = yaml("config.yml");
-        assertEquals(48, stock.getMapList("server-menu.items").size());
-        assertEquals(42, stock.getList("auto-messages.messages").size());
+        assertEquals(49, stock.getMapList("server-menu.items").size());
+        assertEquals(43, stock.getList("auto-messages.messages").size());
         assertFalse(stock.saveToString().contains("CHRDK_Queue"));
         assertFalse(stock.saveToString().contains("Вход без очереди"));
         assertFalse(yaml("messages.yml").getString("messages.rank.ability-1").contains("очереди"));
@@ -89,8 +89,9 @@ class QueueRemovalTest {
         // Снята очередь и уточнён порог прибавок262: только тексты, не условия SKU.
         var oldProducts = legacy.getMapList("shop.products");
         var newProducts = live.getMapList("shop.products");
-        assertEquals(oldProducts.size() + 6, newProducts.size(),
-                "278–279 добавляют четыре SKU, social-access и social-access-day, не меняя условия старых");
+        assertEquals(oldProducts.size() + 7, newProducts.size(),
+                "278–279 добавляют четыре SKU, social-access и social-access-day, "
+                        + "плюс claims-chunks-plus, не меняя условия старых");
         newProducts = newProducts.stream()
                 .filter(product -> !PremiumPresentationMigration.PRODUCTS.contains(product.get("id")))
                 .filter(product -> !PresentationMigration.LATE_STOCK_PRODUCTS.contains(String.valueOf(product.get("id"))))

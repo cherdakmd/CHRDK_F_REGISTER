@@ -3,6 +3,7 @@ package ru.cherdakmd.chrdkskills;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -56,6 +57,8 @@ class SkillCurveTest {
         assertEquals(100, max.level());
         assertEquals(100, max.percent(), "на максимуме полоса полная");
         assertEquals(0, max.need(), "после 100-го уровня опыт не нужен");
+        assertTrue(max.maxed(), "МАКС вместо «305332/0 (100%)»");
+        assertFalse(progress.maxed(), "на 2-м уровне опыт до следующего ещё нужен");
 
         assertEquals(0, SkillCurve.progress(0, DEFAULT).percent());
     }

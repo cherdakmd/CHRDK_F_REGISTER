@@ -80,7 +80,14 @@ class ReleaseValidationTest(unittest.TestCase):
         memo = (root / "docs/releases/update-memo.txt").read_text(encoding="utf-8")
         current = memo.split("Ниже — предыдущие изменения", 1)[0]
         self.assertIn(f"Комплект {version}", current)
-        self.assertIn(f"{len(expected_plugins(root))} JAR одной версии", current)
+        # v1.5.2-rc.2 уже опубликован: его ZIP физически содержит 22 JAR.
+        # Модуль disasters добавлен в ветку после этого пререлиза и войдёт
+        # только в следующий комплект, поэтому историческую памятку не трогаем.
+        # После bump plugin_version эта оговорка перестаёт действовать и тест
+        # снова требует полный набор модулей из settings.gradle.
+        published_kits = {"1.5.2-rc.2": 22}
+        jars = published_kits.get(version, len(expected_plugins(root)))
+        self.assertIn(f"{jars} JAR одной версии", current)
         self.assertIn("CHRDK_Queue", current)
         self.assertIn("plugins/update/", current)
         self.assertIn("вручную", current)
@@ -89,6 +96,9 @@ class ReleaseValidationTest(unittest.TestCase):
     def test_numbered_rc_archive_is_valid_but_arbitrary_suffixes_are_not(self):
         self.jar("core.jar", version="1.4.281-rc.1")
         self.assertEqual({"Core"}, set(verify(self.directory, "1.4.281-rc.1", {"Core"})))
+        (self.directory / "core.jar").unlink()
+        self.jar("fix.jar", version="1.5.2-fix")
+        self.assertEqual({"Core"}, set(verify(self.directory, "1.5.2-fix", {"Core"})))
         for version in ("1.4.281-rc.0", "1.4.281-beta", "1.4.281-rc.x", "1.4.281-rc.-1"):
             with self.subTest(version=version), self.assertRaises(ValueError):
                 verify(self.directory, version, {"Core"})
@@ -108,7 +118,8 @@ class ReleaseValidationTest(unittest.TestCase):
         self.assertIn("CHRDK_Professions", names)
         self.assertEqual(22, len(names))
         self.assertNotIn("CHRDK_VK", names, "CHRDK_VK публикуется отдельно, а не внутри общего ZIP")
-        self.assertEqual({"CHRDK_VK": "vk"}, standalone_plugins(root))
+        self.assertNotIn("CHRDK_Disasters", names, "CHRDK_Disasters публикуется отдельно, а не внутри общего ZIP")
+        self.assertEqual({"CHRDK_VK": "vk", "CHRDK_Disasters": "disasters"}, standalone_plugins(root))
         self.assertNotIn("CHRDK_Bosses", names)
         self.assertNotIn("CHRDK_Treasures", names)
         self.assertNotIn("CHRDK_Streams", names)
@@ -135,7 +146,7 @@ class ReleaseWorkflowContractTest(unittest.TestCase):
         import re
         notes = re.search(r"1\.4\.\{200,201,\{220\.\.(\d+)\}\}\.md", source)
         self.assertIsNotNone(notes, "Release должен включать подробные инструкции перехода")
-        version = re.search(r"^plugin_version=(\d+)\.(\d+)\.(\d+)(?:-rc\.[1-9]\d*)?$", (root / "gradle.properties").read_text(), re.M)
+        version = re.search(r"^plugin_version=(\d+)\.(\d+)\.(\d+)(?:-rc\.[1-9]\d*|-fix)?$", (root / "gradle.properties").read_text(), re.M)
         self.assertIsNotNone(version)
         major, minor, patch = (int(part) for part in version.groups())
         if (major, minor) == (1, 4):
@@ -147,12 +158,14 @@ class ReleaseWorkflowContractTest(unittest.TestCase):
             self.assertIn('docs/releases/${version}.md', source,
                           "Заметки минорного выпуска должны входить в ZIP")
         self.assertIn("! -name 'chrdk-vk-*.jar'", source)
+        self.assertIn("! -name 'chrdk-disasters-*.jar'", source)
         self.assertIn('unzip -t "chrdk-plugins-${version}.zip"', source)
         self.assertIn('python3 .github/scripts/pack_release.py release "$version" "chrdk-plugins-${version}.zip"', source)
         self.assertIn('--standalone "chrdk-vk-${version}.jar" CHRDK_VK "$version"', source)
+        self.assertIn('--standalone "chrdk-disasters-${version}.jar" CHRDK_Disasters "$version"', source)
         self.assertNotIn("zip -j -9", source)
         self.assertNotIn("--zip", source)
-        self.assertIn('"${{ env.zip }}" "${{ env.vk_jar }}" "${{ env.checksums }}" --clobber', source)
+        self.assertIn('"${{ env.zip }}" "${{ env.vk_jar }}" "${{ env.disasters_jar }}" "${{ env.datapack }}" "${{ env.checksums }}" --clobber', source)
         # GitHub limits each run script to 21000 characters. Avoid parsing YAML/dependencies.
         for section in source.split("run: |\n")[1:]:
             script = section.split("\n      - name:", 1)[0]

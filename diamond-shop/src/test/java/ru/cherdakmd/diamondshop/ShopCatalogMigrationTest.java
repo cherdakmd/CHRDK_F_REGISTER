@@ -17,7 +17,7 @@ class ShopCatalogMigrationTest {
     @Test void unchangedCatalogUpgradesOnceAndOtherSettingsStay() throws Exception {
         var live=yaml("catalog-legacy-1.4.244.yml"); var old=yaml("catalog-legacy-1.4.244.yml"); var fresh=yaml("config.yml");
         live.set("pricing.spread-percent",17); live.set("pricing.daily-turnover-limit",300);
-        assertEquals(142,live.getMapList("items").size()); assertEquals(249,fresh.getMapList("items").size());
+        assertEquals(142,live.getMapList("items").size()); assertEquals(248,fresh.getMapList("items").size());
         assertTrue(ShopCatalogMigration.shouldUpgrade(live,old,fresh));
         live.set("items",fresh.get("items"));
         assertEquals(17,live.getInt("pricing.spread-percent")); assertEquals(300,live.getInt("pricing.daily-turnover-limit"));
@@ -26,8 +26,14 @@ class ShopCatalogMigrationTest {
     @Test void previousCatalogHasExactMigrationAndNewTerrainAndOreCoverage() throws Exception {
         var old=yaml("catalog-legacy-1.4.249.yml"); var fresh=yaml("config.yml");
         assertTrue(ShopCatalogMigration.shouldUpgrade(old,old,fresh));
-        assertTrue(fresh.getMapList("items").containsAll(old.getMapList("items")));
-        assertEquals(71,fresh.getMapList("items").size()-old.getMapList("items").size());
+        // 7 ноября 2026: SHULKER_SHELL выведен из продажи и НЕ воскрешается миграцией.
+        // Это единственное осознанное исключение из «новый каталог содержит старый».
+        var present=old.getMapList("items").stream()
+                .filter(m -> !"SHULKER_SHELL".equals(m.get("material"))).toList();
+        assertTrue(fresh.getMapList("items").containsAll(present));
+        assertTrue(old.getMapList("items").stream()
+                .anyMatch(m -> "SHULKER_SHELL".equals(m.get("material"))));
+        assertEquals(70,fresh.getMapList("items").size()-old.getMapList("items").size());
         var materials=new HashSet<String>();
         for(var item:fresh.getMapList("items")) {
             String material=item.get("material").toString(); materials.add(material);
