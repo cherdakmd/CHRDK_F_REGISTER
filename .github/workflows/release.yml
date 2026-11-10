@@ -3,21 +3,28 @@ name: Release
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Версия из gradle.properties для dry-run (например, 1.5.2)'
+        required: true
+        type: string
 
 permissions:
   contents: write
 
 jobs:
   build-and-upload:
-    name: Build plugins and attach the archive
+    name: Verify and package plugins
     # Самостоятельные релизы датапаков не являются релизами плагинов.
-    if: startsWith(github.event.release.tag_name, 'v1.')
+    # Ручной запуск собирает те же ассеты, но ничего не публикует в Release.
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.release.tag_name, 'v1.')
     runs-on: ubuntu-latest
     steps:
-      - name: Check out tagged source
+      - name: Check out tagged or candidate source
         uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.release.tag_name }}
+          ref: ${{ github.event.release.tag_name || github.ref }}
 
       - name: Set up Java
         uses: actions/setup-java@v5
@@ -29,19 +36,30 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Verify release tag matches plugin version
+      - name: Verify release tag or dry-run confirmation
         id: verify-version
         shell: bash
+        env:
+          CONFIRM_VERSION: ${{ inputs.version }}
+          RELEASE_PRERELEASE: ${{ github.event.release.prerelease }}
         run: |
+          set -euo pipefail
           plugin_version="$(sed -n 's/^plugin_version=//p' gradle.properties)"
-          tag_version="${GITHUB_REF_NAME#v}"
-          if [[ "$tag_version" != "$plugin_version" ]]; then
-            echo "Release tag $GITHUB_REF_NAME does not match plugin version $plugin_version" >&2
-            exit 1
-          fi
-          prerelease='${{ github.event.release.prerelease }}'
-          if [[ "$plugin_version" == *-rc.* && "$prerelease" != true ]]; then
-            echo 'RC can only be published as a GitHub prerelease' >&2; exit 1
+          if [[ "$GITHUB_EVENT_NAME" == release ]]; then
+            tag_version="${GITHUB_REF_NAME#v}"
+            if [[ "$tag_version" != "$plugin_version" ]]; then
+              echo "Release tag $GITHUB_REF_NAME does not match plugin version $plugin_version" >&2
+              exit 1
+            fi
+            if [[ "$plugin_version" == *-rc.* && "$RELEASE_PRERELEASE" != true ]]; then
+              echo 'RC can only be published as a GitHub prerelease' >&2; exit 1
+            fi
+          else
+            if [[ "$CONFIRM_VERSION" != "$plugin_version" ]]; then
+              echo "Dry-run confirmation $CONFIRM_VERSION does not match plugin version $plugin_version" >&2
+              exit 1
+            fi
+            echo "Dry-run only: $plugin_version will not be published"
           fi
           echo "version=$plugin_version" >> "$GITHUB_OUTPUT"
 
@@ -141,10 +159,27 @@ jobs:
           unzip -l "chrdk-plugins-${version}.zip"
           cp "vk/build/libs/chrdk-vk-${version}.jar" "chrdk-vk-${version}.jar"
           python3 .github/scripts/verify_release.py --standalone "chrdk-vk-${version}.jar" CHRDK_VK "$version"
+          checksums="chrdk-${version}-SHA256SUMS.txt"
+          sha256sum "chrdk-plugins-${version}.zip" "chrdk-vk-${version}.jar" > "$checksums"
+          sha256sum -c "$checksums"
           echo "zip=chrdk-plugins-${version}.zip" >> "$GITHUB_ENV"
           echo "vk_jar=chrdk-vk-${version}.jar" >> "$GITHUB_ENV"
+          echo "checksums=$checksums" >> "$GITHUB_ENV"
 
-      - name: Attach general ZIP and standalone CHRDK_VK JAR
+      - name: Upload dry-run release candidate
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-candidate-${{ steps.verify-version.outputs.version }}-${{ github.sha }}
+          path: |
+            ${{ env.zip }}
+            ${{ env.vk_jar }}
+            ${{ env.checksums }}
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Attach verified release assets
+        if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ env.zip }}" "${{ env.vk_jar }}" --clobber
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ env.zip }}" "${{ env.vk_jar }}" "${{ env.checksums }}" --clobber

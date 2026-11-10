@@ -152,12 +152,31 @@ class ReleaseWorkflowContractTest(unittest.TestCase):
         self.assertIn('--standalone "chrdk-vk-${version}.jar" CHRDK_VK "$version"', source)
         self.assertNotIn("zip -j -9", source)
         self.assertNotIn("--zip", source)
-        self.assertIn('"${{ env.zip }}" "${{ env.vk_jar }}" --clobber', source)
+        self.assertIn('"${{ env.zip }}" "${{ env.vk_jar }}" "${{ env.checksums }}" --clobber', source)
         # GitHub limits each run script to 21000 characters. Avoid parsing YAML/dependencies.
         for section in source.split("run: |\n")[1:]:
             script = section.split("\n      - name:", 1)[0]
             self.assertLess(len(script), 21000)
         self.assertTrue((root / "docs/releases/update-memo.txt").read_text().startswith("CHRDK"))
+
+    def test_release_has_dry_run_checksums_and_publish_gate(self):
+        root = Path(__file__).resolve().parents[2]
+        source = (root / ".github/workflows/release.yml").read_text()
+        self.assertIn("workflow_dispatch:", source)
+        self.assertIn("CONFIRM_VERSION: ${{ inputs.version }}", source)
+        self.assertIn('if [[ "$CONFIRM_VERSION" != "$plugin_version" ]]', source)
+        self.assertIn("Dry-run only:", source)
+        self.assertIn("if: github.event_name == 'workflow_dispatch'", source)
+        self.assertIn("if: github.event_name == 'release'", source)
+        self.assertIn('sha256sum -c "$checksums"', source)
+        self.assertIn("chrdk-${version}-SHA256SUMS.txt", source)
+
+    def test_all_archive_tasks_are_reproducible(self):
+        root = Path(__file__).resolve().parents[2]
+        source = (root / "build.gradle").read_text()
+        self.assertIn("tasks.withType(AbstractArchiveTask).configureEach", source)
+        self.assertIn("preserveFileTimestamps = false", source)
+        self.assertIn("reproducibleFileOrder = true", source)
 
 
 if __name__ == "__main__":
