@@ -96,7 +96,7 @@ class BackupArchiveTest {
     @Test
     void retentionKeepsLatestDailyWeeklyAndUnknownArchives() throws Exception {
         data("CHRDK_Core", "data.json", "{}");
-        BackupArchive.Retention retention = new BackupArchive.Retention(1, 1, 1);
+        BackupArchive.Retention retention = new BackupArchive.Retention(1, 2, 1);
         service().create("first", Instant.parse("2026-11-01T10:00:00Z"), retention);
         Path second = service().create("second", Instant.parse("2026-11-02T10:00:00Z"), retention);
         Path third = service().create("third", Instant.parse("2026-11-10T10:00:00Z"), retention);
