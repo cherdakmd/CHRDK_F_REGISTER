@@ -39,7 +39,7 @@ public final class RanksPlugin extends JavaPlugin implements Listener {
     public void onEnable() {
         saveDefaultConfig();
         ConfigUpgrader.apply(this);
-        this.store = new PlaytimeStore(getDataFolder().toPath(), getLogger());
+        this.store = new PlaytimeStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger());
         store.load();
         this.service = new RanksService(this);
         // 1.4.183: API ядра нужен уже при первой раскладке — иначе стартовый

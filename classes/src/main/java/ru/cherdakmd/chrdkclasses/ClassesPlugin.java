@@ -66,17 +66,17 @@ public final class ClassesPlugin extends JavaPlugin {
             ConfigUpgrader.apply(this);
             this.config = ClassConfig.parse(getConfig(), getLogger());
             this.messages = Messages.load(this, config.locale(), getLogger());
-            this.store = new ClassStore(getDataFolder().toPath(), getLogger());
+            this.store = new ClassStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger());
             store.load();
             this.skillsBridge = new SkillsBridge(this);
             this.ranksBridge = new RanksBridge(this);
             this.achievementsBridge = new AchievementsBridge(this);
             this.service = new TalentService(config, store, skillsBridge, ranksBridge,
                     achievementsBridge);
-            service.enableDevelopment(LegacyRulesFile.loadOrCreate(getDataFolder().toPath(),config,getLogger()));
+            service.enableDevelopment(LegacyRulesFile.loadOrCreate(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this),config,getLogger()));
             this.developmentGui = new DevelopmentGui(this);
             this.gameplay = new PveProgressListener(this);
-            this.perkTreeAudit = new PerkTreeAudit(getDataFolder().toPath(), getLogger());
+            this.perkTreeAudit = new PerkTreeAudit(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger());
             this.perkTrees = new PerkTreeService(gameplay.perkTrees(), perkTreeAudit);
             this.perkTreeGui = new PerkTreeGui(this, perkTrees);
             getServer().getPluginManager().registerEvents(perkTreeGui, this);

@@ -40,7 +40,7 @@ final class FullMoonController implements Listener {
     FullMoonController(HuntPlugin plugin, WildSafety safety) {
         this.plugin = plugin; this.safety = safety;
         ownerKey = new NamespacedKey(plugin, "moon_owner");
-        ledger = new FullMoonLedger(plugin.getDataFolder().toPath().resolve("full-moon.json"));
+        ledger = new FullMoonLedger(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(plugin).resolve("full-moon.json"));
         if (!ledger.healthy()) plugin.getLogger().severe("Повреждён full-moon.json: полнолуние отключено, файл сохранён для восстановления.");
         reload();
         // Только одно начальное перечисление уже загруженных чанков. Их сущности проверяются по одному чанку за тик.

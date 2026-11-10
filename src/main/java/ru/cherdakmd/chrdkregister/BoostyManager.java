@@ -53,7 +53,7 @@ public final class BoostyManager {
         PluginConfig.BoostySettings bs = initialConfig.boosty();
         tokenStore.seedFrom(bs.token(), bs.refreshToken(), bs.deviceId());
         this.client = new BoostyClient(initialConfig, tokenStore, plugin.getLogger());
-        this.bindingsFile = plugin.getDataFolder().toPath().resolve("boosty-bindings.json");
+        this.bindingsFile = ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(plugin).resolve("boosty-bindings.json");
         loadBindings();
     }
 

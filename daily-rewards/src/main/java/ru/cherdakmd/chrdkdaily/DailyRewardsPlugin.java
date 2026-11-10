@@ -36,7 +36,7 @@ public final class DailyRewardsPlugin extends JavaPlugin {
         saveDefaultConfig();
         ConfigUpgrader.apply(this);
         reloadDailyConfig(); // coreApi, messages, config
-        this.store = new DailyStore(getDataFolder().toPath(), getLogger());
+        this.store = new DailyStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger());
         this.store.load();
         this.service = new DailyService(this, store);
         rewardTask=Bukkit.getScheduler().runTaskTimer(this,service::tick,20L,20L);

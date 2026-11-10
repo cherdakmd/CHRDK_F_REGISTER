@@ -19,7 +19,7 @@ public final class GoalsService {
     }
 
     public void startPayments() throws java.io.IOException {
-        charges = new ChargeJournal(plugin.getDataFolder().toPath(), "common-goals", plugin.store().incomeId());
+        charges = new ChargeJournal(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(plugin), "common-goals", plugin.store().incomeId());
         plugin.store().bindFinance(this::paymentsBusy);
         if (charges.pending() != null && !ChargeInventory.valid(charges.pending())) throw new java.io.IOException("Неверный план взноса целей");
         recoverCharge(null);

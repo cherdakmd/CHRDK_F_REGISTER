@@ -16,7 +16,7 @@ final class ShopCatalogMigration {
                 && !Objects.equals(live.get("items"),fresh.get("items"));
     }
     static void apply(JavaPlugin plugin) {
-        Path file = plugin.getDataFolder().toPath().resolve("config.yml");
+        Path file = ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(plugin).resolve("config.yml");
         try (var old = plugin.getResource("catalog-legacy-1.4.244.yml"); var previous = plugin.getResource("catalog-legacy-1.4.249.yml"); var latest = plugin.getResource("config.yml")) {
             if (old == null || previous == null || latest == null || !Files.isRegularFile(file)) return;
             var legacy = new YamlConfiguration(); var fresh = new YamlConfiguration(); var live = new YamlConfiguration();

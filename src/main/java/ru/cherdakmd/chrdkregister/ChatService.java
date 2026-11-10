@@ -1350,7 +1350,7 @@ public final class ChatService implements Listener {
     public List<String> readChatHistory(String filter, int limit) {
         java.nio.file.Path chatDirectory = accessManager.audit() == null
                 ? null
-                : plugin.getDataFolder().toPath().resolve("logs").resolve("chat");
+                : ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(plugin).resolve("logs").resolve("chat");
         if (chatDirectory == null || java.nio.file.Files.notExists(chatDirectory)) return List.of();
         String needle = filter.toLowerCase(Locale.ROOT);
         List<String> result = new ArrayList<>();

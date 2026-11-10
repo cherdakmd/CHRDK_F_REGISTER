@@ -139,14 +139,14 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
         this.skillsApi = Bukkit.getServicesManager().load(
                 ru.cherdakmd.chrdkskills.ChrdkSkillsApi.class);
         // Перечитываем файл при каждом reload: владелец мог поправить его вручную.
-        this.overrides = ShopOverrides.load(getDataFolder().toPath(), getLogger());
+        this.overrides = ShopOverrides.load(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger());
         if (this.store == null) {
-            this.store = new ShopStore(getDataFolder().toPath(), getLogger());
+            this.store = new ShopStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger());
             this.store.load();
         }
         ShopConfig.ShopConfigData data = ShopConfig.parse(getConfig(), getLogger(), overrides);
         if (this.promoStore == null) {
-            this.promoStore = new ShopPromoStore(getDataFolder().toPath(), getLogger());
+            this.promoStore = new ShopPromoStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger());
             this.promoStore.load();
         }
         ShopPromoConfig.Settings promoSettings = ShopPromoConfig.from(getConfig(), data, getLogger());

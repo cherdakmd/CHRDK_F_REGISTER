@@ -108,7 +108,7 @@ public final class ConfigUpgrader {
                     "[config-schema] не прочитан эталон " + fileName, error);
             return false;
         }
-        Path file = plugin.getDataFolder().toPath().resolve(fileName);
+        Path file = ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(plugin).resolve(fileName);
         if (!Files.exists(file)) {
             // saveDefaultConfig()/saveResource() обычно уже создали файл; если
             // нет — эталон и есть новый конфиг, достаточно проставить маркер.

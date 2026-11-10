@@ -62,7 +62,7 @@ public final class VkPlugin extends JavaPlugin {
     public void onEnable() {
         saveDefaultConfig();
         ConfigUpgrader.apply(this);
-        migrateBundledMessages(getDataFolder().toPath().resolve("messages.yml"));
+        migrateBundledMessages(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this).resolve("messages.yml"));
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
         this.config = VkConfig.parse(getConfig());
         if (config.apiConfigured()) {
@@ -91,7 +91,7 @@ public final class VkPlugin extends JavaPlugin {
             }
         }
 
-        this.store = new VkStore(getDataFolder().toPath(), getLogger());
+        this.store = new VkStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger());
         this.store.load();
         this.service = new VkService(this, store);
         this.service.start();
@@ -161,14 +161,14 @@ public final class VkPlugin extends JavaPlugin {
         // Суточный дайджест на стену сообщества: сбор событий, текстовый
         // wall.post и PNG в беседу выполняются этим же плагином на сервере.
         this.wallDigest = new WallDigestService(this, WallDigestConfig.parse(getConfig()),
-                new WallDigestStore(getDataFolder().toPath(), getLogger()), store);
+                new WallDigestStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger()), store);
         this.wallDigest.start();
 
         // Четыре персональные карточки игроков в 09/12/15/18 + дайджест в 21:00
         // = ровно пять записей на стене сообщества за сутки.
         this.dailyCards = new DailyCardsService(this, this.wallDigest,
                 DailyCardsConfig.parse(getConfig()),
-                new DailyCardsStore(getDataFolder().toPath(), getLogger()));
+                new DailyCardsStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger()));
         this.dailyCards.start();
 
         getLogger().info("[CHRDK_VK] Включён (привязок: " + store.linkCount()
@@ -248,7 +248,7 @@ public final class VkPlugin extends JavaPlugin {
 
     /** Атомарная перезагрузка {@code config.yml} и {@code messages.yml} без полуобновлённого состояния. */
     public boolean reloadBundle() {
-        Path folder = getDataFolder().toPath();
+        Path folder = ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this);
         try {
             migrateBundledMessages(folder.resolve("messages.yml"));
             ConfigSnapshot<VkConfig> snapshot = ConfigSnapshot.load(

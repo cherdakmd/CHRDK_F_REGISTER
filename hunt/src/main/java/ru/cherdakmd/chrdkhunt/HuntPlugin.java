@@ -67,7 +67,7 @@ public final class HuntPlugin extends JavaPlugin {
             }
             this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
             if(coreApi==null||ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<38) throw new IllegalStateException("Нужен Core API 38+");
-            this.store = new HuntStore(getDataFolder().toPath(), getLogger());
+            this.store = new HuntStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger());
             store.load();
             this.finance = new HuntFinance(this);
             this.items = new HuntItems(this);
@@ -184,7 +184,7 @@ public final class HuntPlugin extends JavaPlugin {
         ConfigSnapshot<HuntConfig> candidate;
         try {
             candidate = ConfigSnapshot.load(
-                    getDataFolder().toPath().resolve("config.yml"), getResource("config.yml"), HuntConfig::parse,
+                    ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this).resolve("config.yml"), getResource("config.yml"), HuntConfig::parse,
                     (yaml, staged) -> Messages.loadChecked(this, yaml.getString("general.locale", "ru"), staged, settings == null));
         } catch (java.io.IOException | org.bukkit.configuration.InvalidConfigurationException | RuntimeException | LinkageError failure) {
             if (settings == null) getLogger().severe("Начальные настройки охоты не загружены (" + failure.getClass().getSimpleName() + "). Проверьте config.yml/messages.yml.");

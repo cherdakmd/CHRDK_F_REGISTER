@@ -41,7 +41,7 @@ public final class QuestsPlugin extends JavaPlugin {
             ConfigUpgrader.apply(this);
             this.config = QuestConfig.parse(getConfig(), getLogger());
             this.messages = Messages.load(this, config.locale(), getLogger());
-            this.store = new QuestStore(getDataFolder().toPath(), getLogger());
+            this.store = new QuestStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger());
             store.load();
             this.service = new QuestService(config, store);
             this.gui = new QuestsGui(this);

@@ -49,7 +49,7 @@ public final class ArtifactsPlugin extends JavaPlugin {
         ConfigUpgrader.apply(this);
         this.items = new ArtifactItems(this);
         this.cooldowns = new Cooldowns();
-        this.cooldownStore = new CooldownStore(getDataFolder().toPath(), getLogger());
+        this.cooldownStore = new CooldownStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger());
         this.cooldowns.restore(cooldownStore.load());
         this.traits = new ArtifactTraitService(this);
         this.passives = new PassiveEffectsService(this);
@@ -57,7 +57,7 @@ public final class ArtifactsPlugin extends JavaPlugin {
         reloadArtifactsConfig();
         try {
             if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 38) throw new IllegalStateException("Нужен Core API 38+");
-            this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"artifact-awards",ru.cherdakmd.chrdkregister.api.MilestoneMigration.json(getDataFolder().toPath().resolve("collection.json"),ru.cherdakmd.chrdkregister.api.MilestoneMigration.Kind.ARTIFACTS));
+            this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"artifact-awards",ru.cherdakmd.chrdkregister.api.MilestoneMigration.json(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this).resolve("collection.json"),ru.cherdakmd.chrdkregister.api.MilestoneMigration.Kind.ARTIFACTS));
         } catch (Exception | LinkageError error) {
             getLogger().log(java.util.logging.Level.SEVERE,"Модуль остановлен без сброса прогресса/наград",error);
             Bukkit.getPluginManager().disablePlugin(this); return;

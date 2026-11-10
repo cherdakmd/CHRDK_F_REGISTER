@@ -63,7 +63,7 @@ public final class EconomyTariffMigration {
     public static void apply(JavaPlugin plugin) {
         var changes = changes(plugin.getName());
         if (changes.isEmpty()) return;
-        if (migrateFile(plugin.getDataFolder().toPath().resolve("config.yml"), changes, plugin.getLogger()))
+        if (migrateFile(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(plugin).resolve("config.yml"), changes, plugin.getLogger()))
             plugin.reloadConfig();
     }
     /** Запись с backup перед заменой; испорченный YAML и ошибки диска не превращаются в дешёвый fallback. */

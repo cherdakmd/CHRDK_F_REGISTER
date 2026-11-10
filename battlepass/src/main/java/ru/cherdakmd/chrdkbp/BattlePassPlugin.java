@@ -81,7 +81,7 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
     public void onEnable() {
         saveDefaultConfig();
         ConfigUpgrader.apply(this);
-        this.store = new BattlePassStore(getDataFolder().toPath(), getLogger());
+        this.store = new BattlePassStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger());
         store.load();
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
         if(coreApi==null || !supportsRewardReceipts()) {
@@ -96,7 +96,7 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
         this.fx = new BattlePassFx(this);
         this.guide = new BattlePassGuide(this);
         Bukkit.getPluginManager().registerEvents(guide,this);
-        explorationStore = new ru.cherdakmd.chrdkregister.api.exploration.ExplorationStore(getDataFolder().toPath().resolve("exploration.json"), getLogger());
+        explorationStore = new ru.cherdakmd.chrdkregister.api.exploration.ExplorationStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this).resolve("exploration.json"), getLogger());
         explorationStore.load();
         atlas = new ru.cherdakmd.chrdkregister.api.exploration.ExplorationAtlas(this, explorationStore, this::messages,
                 () -> "season:" + season().startEpochMillis(), this::canUse,
@@ -168,7 +168,7 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
         if(guide!=null)guide.closeAll();
         if(menu!=null)menu.closeAll();
         try {
-            var migration = BattlePassStockMigration.apply(getDataFolder().toPath().resolve("config.yml"), this::getResource);
+            var migration = BattlePassStockMigration.apply(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this).resolve("config.yml"), this::getResource);
             if (migration.updated()) getLogger().info("Стоковые награды BP обновлены; ID/цели/прогресс сохранены. Backup: " + migration.backup().getFileName());
         } catch (java.io.IOException | org.bukkit.configuration.InvalidConfigurationException error) {
             getLogger().log(java.util.logging.Level.SEVERE,
@@ -176,7 +176,7 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
             return;
         }
         reloadConfig();
-        moneyReady = BattlePassMoneySource.initialize(getDataFolder().toPath(), coreApi, getLogger());
+        moneyReady = BattlePassMoneySource.initialize(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), coreApi, getLogger());
         if (!moneyReady) getLogger().severe("Денежные награды BP приостановлены: проверьте банк и battlepass-money.json, затем выполните reload. Прогресс и буст сохранены.");
 
         this.messages = Messages.load(this,

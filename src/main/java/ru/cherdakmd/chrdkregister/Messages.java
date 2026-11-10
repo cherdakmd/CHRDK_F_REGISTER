@@ -117,7 +117,7 @@ public final class Messages {
             }
         }
 
-        Path userFile = plugin.getDataFolder().toPath().resolve(fileName);
+        Path userFile = ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(plugin).resolve(fileName);
         if (!Files.exists(userFile)) {
             plugin.saveResource(fileName, false);
         }
@@ -177,7 +177,7 @@ public final class Messages {
         YamlConfiguration base = readChecked(plugin.getResource(RESOURCE_NAME));
         Map<String, String> defaults = new LinkedHashMap<>(flatten(base));
         if (!FILE_NAME.equals(fileName)) defaults.putAll(flatten(readChecked(plugin.getResource(fileName))));
-        Path file = plugin.getDataFolder().toPath().resolve(fileName);
+        Path file = ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(plugin).resolve(fileName);
         // Только первый запуск создаёт шаблон. На reload удалённый/недоступный файл — ошибка, не fallback.
         if (createMissing && !Files.exists(file)) plugin.saveResource(fileName, false);
         Map<String, String> overrides = checkedOverrides(base, file);

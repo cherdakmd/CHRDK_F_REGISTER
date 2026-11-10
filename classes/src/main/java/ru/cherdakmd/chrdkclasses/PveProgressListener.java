@@ -35,7 +35,7 @@ final class PveProgressListener implements Listener {
         this.plugin=plugin;
         natural=new NamespacedKey(plugin,"natural-v1"); rewarded=new NamespacedKey(plugin,"rewarded-v1");
         projectile=new NamespacedKey(plugin,"ability-projectile");
-        this.trees=new PerkTreeStore(plugin.getDataFolder().toPath(),plugin.getLogger());
+        this.trees=new PerkTreeStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(plugin),plugin.getLogger());
         trees.load();
         this.powder=new PveAwardPowderRouter(trees);
     }

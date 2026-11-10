@@ -89,8 +89,8 @@ public final class SocialService {
     public SocialService(VkPlugin plugin, SocialConfig config) {
         this.plugin = plugin;
         this.config = config;
-        this.store = new SocialLinkStore(plugin.getDataFolder().toPath(), plugin.getLogger());
-        this.audit = new SocialAudit(plugin.getDataFolder().toPath(), plugin.getLogger(),
+        this.store = new SocialLinkStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(plugin), plugin.getLogger());
+        this.audit = new SocialAudit(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(plugin), plugin.getLogger(),
                 java.time.ZoneId.of("Europe/Moscow"));
         this.newsExecutor = Executors.newSingleThreadExecutor(runnable -> {
             Thread thread = new Thread(runnable, "CHRDK-Social-News");

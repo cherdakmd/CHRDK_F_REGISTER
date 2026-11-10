@@ -35,7 +35,7 @@ public final class TeleportsPlugin extends JavaPlugin implements org.bukkit.even
         reloadTeleportsConfig();
         try {
             if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 30) throw new IllegalStateException("Нужен Core API 30+");
-            this.store = new HomeStore(getDataFolder().toPath(), getLogger());
+            this.store = new HomeStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger());
             this.payments = new ru.cherdakmd.chrdkregister.api.PaidActions(this,this::coreApi,this::messages,"teleports");
             if (!payments.store().valuesInitialized()) store.load();
             store.bind(payments.store());

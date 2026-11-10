@@ -21,7 +21,7 @@ final class GuildStyleController implements AutoCloseable {
             }, new ThreadPoolExecutor.AbortPolicy());
 
     GuildStyleController(GuildsPlugin plugin) {
-        this.plugin = plugin; this.store = new GuildStyleStore(plugin.getDataFolder().toPath(), plugin.getLogger());
+        this.plugin = plugin; this.store = new GuildStyleStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(plugin), plugin.getLogger());
     }
     void command(Player actor, String[] args) {
         if (!plugin.visible(actor)) return;

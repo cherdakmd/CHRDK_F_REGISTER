@@ -166,7 +166,7 @@ final class PresentationMigration {
     }
 
     static void apply(JavaPlugin plugin) {
-        Path config = plugin.getDataFolder().toPath().resolve("config.yml");
+        Path config = ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(plugin).resolve("config.yml");
         try (InputStream latest = plugin.getResource("config.yml")) {
             if (latest == null || !Files.exists(config)) {
                 return;

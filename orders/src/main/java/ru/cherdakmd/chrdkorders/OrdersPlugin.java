@@ -39,7 +39,7 @@ public final class OrdersPlugin extends JavaPlugin {
             this.messages = Messages.load(this, config.locale(), getLogger());
             this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
             if(coreApi==null||ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<22) throw new IllegalStateException("Нужен Core API 22+");
-            this.store = new OrdersStore(getDataFolder().toPath(), getLogger());
+            this.store = new OrdersStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger());
             store.load();
             this.finance = new OrdersFinance(this);
             this.service = new OrdersService(this);

@@ -48,7 +48,7 @@ public final class DisastersPlugin extends JavaPlugin {
     public void onEnable() {
         saveDefaultConfig();
         ConfigUpgrader.apply(this);
-        this.progress = new DisasterProgressStore(getDataFolder().toPath(), getLogger());
+        this.progress = new DisasterProgressStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger());
         this.progress.load();
         this.rewards = new DisasterRewards(this);
         this.shop = new DisasterShop(this);

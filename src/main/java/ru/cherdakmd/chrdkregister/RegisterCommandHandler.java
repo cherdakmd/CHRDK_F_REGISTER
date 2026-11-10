@@ -1080,7 +1080,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
 
     private boolean storeWritable() {
         try {
-            java.nio.file.Path folder = plugin.getDataFolder().toPath();
+            java.nio.file.Path folder = ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(plugin);
             java.nio.file.Files.createDirectories(folder);
             return java.nio.file.Files.isWritable(folder);
         } catch (Exception exception) {
@@ -1166,9 +1166,9 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                     messages.send(sender, "usage.backup-restore", "label", label);
                     return;
                 }
-                java.nio.file.Path target = plugin.getDataFolder().toPath()
+                java.nio.file.Path target = ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(plugin)
                         .resolve("backups").resolve(args[2].trim()).normalize();
-                if (!target.startsWith(plugin.getDataFolder().toPath().resolve("backups"))) {
+                if (!target.startsWith(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(plugin).resolve("backups"))) {
                     messages.send(sender, "backup.invalid-path");
                     return;
                 }

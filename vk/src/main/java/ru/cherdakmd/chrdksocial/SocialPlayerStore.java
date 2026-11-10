@@ -133,7 +133,7 @@ public final class SocialPlayerStore {
         try {
             String text = Files.readString(file, StandardCharsets.UTF_8);
             if (text == null || text.isBlank()) throw new IllegalStateException("пустой social.yml");
-            YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file.toFile());
+            YamlConfiguration yaml = YamlConfiguration.loadConfiguration(new java.io.StringReader(text));
             if (!yaml.isSet("schema") || yaml.getInt("schema", 0) != SCHEMA) {
                 throw new IllegalStateException("неизвестная схема social.yml");
             }

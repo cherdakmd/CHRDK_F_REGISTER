@@ -97,10 +97,10 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
             Bukkit.getPluginManager().disablePlugin(this); return;
         }
         teleportFinanceTask=Bukkit.getScheduler().runTaskTimer(this,teleportPayments::tick,100L,100L);
-        this.store = new ClaimStore(getDataFolder().toPath(), getLogger());
+        this.store = new ClaimStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger());
         store.load();
         store.membershipIndex(this::clanMembership);
-        this.audit = new ClaimAudit(getDataFolder().toPath(), getLogger());
+        this.audit = new ClaimAudit(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger());
         this.service = new ClaimsService(this);
         reloadClaimsConfig();
         var bank=new ClaimBankBridge(this); store.accounts(bank);
@@ -218,8 +218,8 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         ru.cherdakmd.chrdkregister.api.EconomyTariffMigration.apply(this);
         // Старый config.yml получает новые стоковые значения уведомлений один раз.
         // Файл правится построчно: комментарии и порядок ключей сохраняются.
-        if (ClaimNoticeMigration.apply(getDataFolder().toPath().resolve("config.yml"),
-                getDataFolder().toPath(), getLogger())) {
+        if (ClaimNoticeMigration.apply(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this).resolve("config.yml"),
+                ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger())) {
             reloadConfig();
         ru.cherdakmd.chrdkregister.api.EconomyTariffMigration.apply(this);
         }

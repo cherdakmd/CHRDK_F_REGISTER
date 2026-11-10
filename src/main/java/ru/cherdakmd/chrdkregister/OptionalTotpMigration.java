@@ -18,7 +18,7 @@ final class OptionalTotpMigration {
 
     static void apply(JavaPlugin plugin) {
         try {
-            if (migrate(plugin.getDataFolder().toPath().resolve("config.yml"))) {
+            if (migrate(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(plugin).resolve("config.yml"))) {
                 plugin.reloadConfig();
                 plugin.getLogger().info("2FA теперь добровольна; существующие привязки сохранены. Бэкап: " + BACKUP);
             }

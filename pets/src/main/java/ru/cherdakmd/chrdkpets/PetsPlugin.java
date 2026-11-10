@@ -37,7 +37,7 @@ public final class PetsPlugin extends JavaPlugin {
             ConfigUpgrader.apply(this);
             this.config = PetsConfig.parse(getConfig(), getLogger());
             this.messages = Messages.load(this, config.locale(), getLogger());
-            this.store = new PetStore(getDataFolder().toPath(), getLogger());
+            this.store = new PetStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger());
             store.load();
             int purged = store.purgeDead(config.keepDeadDays(), System.currentTimeMillis());
             if (purged > 0) {

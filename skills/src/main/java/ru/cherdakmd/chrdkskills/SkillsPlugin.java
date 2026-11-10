@@ -49,12 +49,12 @@ public final class SkillsPlugin extends JavaPlugin {
     public void onEnable() {
         saveDefaultConfig();
         ConfigUpgrader.apply(this);
-        this.store = new SkillStore(getDataFolder().toPath(), getLogger());
+        this.store = new SkillStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger());
         // Конфиг читается до создания листенера: антинакрутка берёт из него TTL.
         reloadSkillsConfig();
         try {
             if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 38) throw new IllegalStateException("Нужен Core API 38+");
-            this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"skills-awards",ru.cherdakmd.chrdkregister.api.MilestoneMigration.json(getDataFolder().toPath().resolve("skills.json"),ru.cherdakmd.chrdkregister.api.MilestoneMigration.Kind.SKILLS));
+            this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"skills-awards",ru.cherdakmd.chrdkregister.api.MilestoneMigration.json(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this).resolve("skills.json"),ru.cherdakmd.chrdkregister.api.MilestoneMigration.Kind.SKILLS));
         } catch (Exception | LinkageError error) {
             getLogger().log(java.util.logging.Level.SEVERE,"Модуль остановлен без сброса прогресса/наград",error);
             this.store = null;
@@ -62,7 +62,7 @@ public final class SkillsPlugin extends JavaPlugin {
         }
         this.store.load();
         this.service = new SkillService(this, store);
-        this.abilityStore = new SkillAbilityStore(getDataFolder().toPath(), getLogger());
+        this.abilityStore = new SkillAbilityStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger());
         abilityStore.load();
         this.abilities = new SkillAbilities(this, abilityStore);
         this.effects = new SkillEffects(this);

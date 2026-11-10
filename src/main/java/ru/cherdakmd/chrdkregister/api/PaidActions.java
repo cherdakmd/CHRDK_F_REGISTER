@@ -21,7 +21,7 @@ public final class PaidActions {
     private int refundCursor;
     public PaidActions(JavaPlugin plugin, Supplier<ChrdkRegisterApi> api, Supplier<Messages> messages, String source) throws IOException {
         this.plugin=plugin; this.api=api; this.messages=messages; this.source=source;
-        store=new PaidActionStore(plugin.getDataFolder().toPath()); journal=new ChargeJournal(plugin.getDataFolder().toPath(),source,store.lineage());
+        store=new PaidActionStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(plugin)); journal=new ChargeJournal(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(plugin),source,store.lineage());
         store.bind(this::paused);
         if (journal.pending()!=null && !ChargeInventory.valid(journal.pending())) throw new IOException("Неверный предметный план услуги");
         recover(null);

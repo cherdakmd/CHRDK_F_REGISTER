@@ -158,12 +158,12 @@ public final class AccessManager {
         this.config = config;
         this.messages = messages;
         this.store = store;
-        this.vkFactor = new VkSecondFactor(plugin.getDataFolder().toPath(), logger);
+        this.vkFactor = new VkSecondFactor(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(plugin), logger);
         this.donatePay = donatePay;
         this.logger = logger;
         donationPulses.put(donatePay.key(), new ProviderPulse(donatePay));
         donationPulses.put(EasyDonateClient.SOURCE, new ProviderPulse(new EasyDonateClient(config)));
-        this.audit = new AuditLog(plugin.getDataFolder().toPath(), logger, config.timeZone());
+        this.audit = new AuditLog(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(plugin), logger, config.timeZone());
         this.notifications = new NotificationService(this::config, logger);
         this.throttle = new AuthThrottle(store, this::config);
         this.donations = new DonationService(store, this::config, audit, notifications, logger,

@@ -28,7 +28,7 @@ public final class CollectionService {
 
     public CollectionService(ArtifactsPlugin plugin) {
         this.plugin = plugin;
-        this.store = new CollectionStore(plugin.getDataFolder().toPath(), plugin.getLogger());
+        this.store = new CollectionStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(plugin), plugin.getLogger());
         this.store.load();
     }
 

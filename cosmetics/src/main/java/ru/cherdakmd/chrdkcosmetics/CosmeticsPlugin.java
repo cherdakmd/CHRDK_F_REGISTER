@@ -48,7 +48,7 @@ public final class CosmeticsPlugin extends JavaPlugin implements Listener {
     public void onEnable() {
         saveDefaultConfig();
         ConfigUpgrader.apply(this);
-        this.store = new SelectionStore(getDataFolder().toPath(), getLogger());
+        this.store = new SelectionStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger());
         store.load();
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
         reloadCosmeticsConfig();

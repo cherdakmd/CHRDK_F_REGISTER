@@ -1,0 +1,17 @@
+# CHRDK centralized storage. Real credentials are supplied only via env.
+# FILE is the default and keeps the legacy JSON/YAML backend untouched.
+backend: FILE
+mysql:
+  host: ${CHRDK_DB_HOST}
+  port: 3306
+  database: ${CHRDK_DB_NAME}
+  user: ${CHRDK_DB_USER}
+  password: ${CHRDK_DB_PASSWORD}
+  tls: true
+  pool-size: 8
+  connect-timeout-ms: 5000
+  socket-timeout-ms: 10000
+migration:
+  source-root: plugins
+  read-only-fallback: true
+  timezone: UTC

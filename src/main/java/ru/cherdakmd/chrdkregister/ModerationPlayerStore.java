@@ -251,7 +251,7 @@ public final class ModerationPlayerStore {
     private static YamlConfiguration readYaml(Path file) throws IOException {
         String raw = Files.readString(file, StandardCharsets.UTF_8);
         if (raw == null || raw.isBlank()) throw new IllegalStateException("пустой YAML");
-        return YamlConfiguration.loadConfiguration(file.toFile());
+        return YamlConfiguration.loadConfiguration(new java.io.StringReader(raw));
     }
 
     private Result broken(Path file, Exception failure) {

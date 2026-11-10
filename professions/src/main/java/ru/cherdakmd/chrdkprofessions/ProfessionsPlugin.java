@@ -52,7 +52,7 @@ public final class ProfessionsPlugin extends JavaPlugin {
             ConfigUpgrader.apply(this);
             this.config = ProfessionConfig.parse(getConfig(), getLogger());
             this.messages = Messages.load(this, config.locale(), getLogger());
-            this.store = new ProfessionStore(getDataFolder().toPath(), getLogger());
+            this.store = new ProfessionStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger());
             store.load();
             this.service = new ProfessionService(config, store);
             this.gui = new ProfessionsGui(this);

@@ -64,7 +64,7 @@ public final class MaxService implements MaxBotRouter.Backend {
         if ("webhook".equals(next.maxTransport()) && next.webhookEnabled() && next.webhookConfigured()) {
             webhook = new MaxWebhookServer(next.webhookBind(), next.webhookPort(),
                     next.webhookPath(), next.webhookSecret(),
-                    plugin.getDataFolder().toPath().resolve(next.keystoreFile()),
+                    ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(plugin).resolve(next.keystoreFile()),
                     next.keystorePassword(), next.requireTls(),
                     update -> dispatch(update, System.currentTimeMillis()), plugin.getLogger());
             webhookStarted = webhook.start();

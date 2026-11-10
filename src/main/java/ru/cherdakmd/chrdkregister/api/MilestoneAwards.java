@@ -59,7 +59,7 @@ public final class MilestoneAwards {
     public MilestoneAwards(JavaPlugin plugin,Supplier<ChrdkRegisterApi> api,Supplier<ru.cherdakmd.chrdkregister.Messages> messages,String source,Map<UUID,Set<String>> legacy) throws Exception {
         if(!source.matches("[a-z][a-z0-9-]{0,47}")||api.get()==null||ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<20) throw new IllegalStateException("Нужен Core API 20+");
         this.plugin=plugin; this.api=api; this.messages=messages; this.source=source;
-        store=new MilestoneStore(plugin.getDataFolder().toPath(),source); store.initialize(legacy); reconcileLineage(); tick();
+        store=new MilestoneStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(plugin),source); store.initialize(legacy); reconcileLineage(); tick();
         task=Bukkit.getScheduler().runTaskTimer(plugin,this::tick,20L,20L);
     }
     /**

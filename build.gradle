@@ -53,6 +53,13 @@ dependencies {
     testImplementation "com.google.code.gson:gson:2.11.0"
     testImplementation "org.junit.jupiter:junit-jupiter:5.11.3"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+
+    // MySQL Connector/J — compileOnly: при backend=MYSQL админ кладёт драйвер
+    // в plugins/CHRDK_Core/libs/ или на classpath сервера. Это позволяет
+    // offline_fallback (backend=FILE) без лишних JAR и исключает лицензионные
+    // конфликты при распространении. При backend=MYSQL отсутствие драйвера
+    // приводит к fail-closed: плагин не стартует, см. ChrdkDatabase.
+    compileOnly "com.mysql:mysql-connector-j:8.3.0"
 }
 
 processResources {

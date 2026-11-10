@@ -33,7 +33,7 @@ final class PremiumPresentationMigration {
     }
 
     static void apply(JavaPlugin plugin) {
-        Path file = plugin.getDataFolder().toPath().resolve("config.yml");
+        Path file = ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(plugin).resolve("config.yml");
         try (var oldStream = plugin.getResource("premium-legacy-1.4.277.yml"); var freshStream = plugin.getResource("config.yml")) {
             if (oldStream == null || freshStream == null || !Files.isRegularFile(file)) return;
             var live = YamlConfiguration.loadConfiguration(file.toFile());

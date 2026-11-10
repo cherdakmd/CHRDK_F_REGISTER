@@ -165,7 +165,7 @@ public final class EnchantsPlugin extends JavaPlugin {
         ChrdkRegisterApi updatedApi;
         try {
             candidate = ConfigSnapshot.load(
-                    getDataFolder().toPath().resolve("config.yml"), getResource("config.yml"), EnchantsConfig::parse,
+                    ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this).resolve("config.yml"), getResource("config.yml"), EnchantsConfig::parse,
                     (yaml, staged) -> Messages.loadChecked(this, yaml.getString("general.locale", "ru"), staged, settings == null));
             updatedApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
         } catch (java.io.IOException | org.bukkit.configuration.InvalidConfigurationException | RuntimeException | LinkageError failure) {

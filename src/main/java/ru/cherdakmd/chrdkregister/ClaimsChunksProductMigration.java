@@ -49,7 +49,7 @@ final class ClaimsChunksProductMigration {
     }
 
     static void apply(JavaPlugin plugin) {
-        Path file = plugin.getDataFolder().toPath().resolve("config.yml");
+        Path file = ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(plugin).resolve("config.yml");
         try (var freshStream = plugin.getResource("config.yml")) {
             if (freshStream == null || !Files.isRegularFile(file)) return;
             var live = YamlConfiguration.loadConfiguration(file.toFile());

@@ -14,7 +14,7 @@ final class ProfessionWorkJournal {
     record Entry(int version,String id,String player,String profession,long until,String before,String after){}
     private final ProfessionsPlugin plugin;
     private final Path directory;
-    ProfessionWorkJournal(ProfessionsPlugin plugin){this.plugin=plugin;directory=plugin.getDataFolder().toPath().resolve("work-journal");}
+    ProfessionWorkJournal(ProfessionsPlugin plugin){this.plugin=plugin;directory=ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(plugin).resolve("work-journal");}
     private Path file(UUID id){return directory.resolve(id+".json");}
     boolean pending(UUID id){return Files.exists(file(id));}
     Entry read(UUID id)throws IOException{

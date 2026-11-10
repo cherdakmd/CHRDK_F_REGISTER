@@ -4,12 +4,16 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
+import ru.cherdakmd.chrdkregister.api.storage.ChrdkStorage;
 import ru.cherdakmd.chrdkregister.datapack.MineTreasureIntegration;
 import ru.cherdakmd.chrdkregister.item.ItemAttributeMergeListener;
 import ru.cherdakmd.chrdkregister.libs.bstats.bukkit.Metrics;
 import ru.cherdakmd.chrdkregister.libs.bstats.charts.SimplePie;
 import ru.cherdakmd.chrdkregister.libs.bstats.charts.SingleLineChart;
+import ru.cherdakmd.chrdkregister.storage.db.ChrdkDatabaseConfig;
+import ru.cherdakmd.chrdkregister.storage.db.ChrdkStorageImpl;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -61,6 +65,8 @@ public final class RegisterPlugin extends JavaPlugin {
     private RegistrationStore store;
     private ShopService shopService;
     private ExecutionService executor;
+    /** Единый сервис хранения; регистрируется до создания любых Store. */
+    private ChrdkStorage storageService;
     private RegisterCommandHandler commandHandler;
     private volatile Messages messages;
     /** Админ-панель аудита игроков: отдельное хранилище и сервис модерации. */
@@ -89,12 +95,35 @@ public final class RegisterPlugin extends JavaPlugin {
         PremiumPresentationMigration.apply(this);
         ClaimsChunksProductMigration.apply(this);
         ConfigUpgrader.apply(this);
+
+        // Storage service must exist before RegistrationStore/BankStore and before any addon onEnable().
+        Path databaseFile = getDataFolder().toPath().resolve("database.yml");
+        try {
+            if (!Files.isRegularFile(databaseFile)) saveResource("database.yml", false);
+            ChrdkDatabaseConfig dbConfig = ChrdkDatabaseConfig.load(databaseFile);
+            this.storageService = ChrdkStorageImpl.open(this, dbConfig);
+            getServer().getServicesManager().register(ChrdkStorage.class, storageService, this,
+                    ServicePriority.Normal);
+            getLogger().info("CHRDK_Core storage: " + dbConfig.redacted());
+            if (dbConfig.mode() == ru.cherdakmd.chrdkregister.api.storage.StorageMode.FILE_READONLY) {
+                getLogger().severe("backend=FILE_READONLY предназначен только для офлайн-сверки мигратора; "
+                        + "игровой сервер не запущен. Используйте FILE для rollback или MYSQL для работы.");
+                getServer().getPluginManager().disablePlugin(this);
+                return;
+            }
+        } catch (Exception error) {
+            getLogger().log(Level.SEVERE,
+                    "Не удалось инициализировать хранилище CHRDK; сервер остановлен для защиты данных", error);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+
         PluginConfig config = PluginConfig.fromBukkitConfig(getConfig());
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
 
         ru.cherdakmd.chrdkregister.api.PassivePotions.start(this);
         this.executor = new ExecutionService(getLogger());
-        this.store = new RegistrationStore(getDataFolder().toPath(), getLogger(),
+        this.store = new RegistrationStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger(),
                 config.storageWriteAsync() ? executor.taskExecutor() : null);
 
         DonatePayClient donatePayClient = new DonatePayClient(config);
@@ -107,7 +136,7 @@ public final class RegisterPlugin extends JavaPlugin {
         this.donateMenuService = new DonateMenuService(accessManager, messages);
         this.serverMenuService = new ServerMenuService(this, accessManager, messages);
         this.rankMenuService = new RankMenuService(this, accessManager, messages);
-        this.bankStore = new BankStore(getDataFolder().toPath(), getLogger());
+        this.bankStore = new BankStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger());
         this.bankStore.load();
         this.bankStore.debtReserve(owner -> {
             var providers = getServer().getServicesManager().getRegistrations(ru.cherdakmd.chrdkregister.api.PersonalDebtIndex.class);
@@ -138,14 +167,14 @@ public final class RegisterPlugin extends JavaPlugin {
         this.adminDonationsGui = new AdminDonationsGuiService(accessManager, messages, this);
         this.donateMenuService.setAdminJournalOpener(player -> adminDonationsGui.openMenu(player));
         this.passwordKeypad = new PasswordKeypadService(this, accessManager, messages);
-        this.labelPreferences = new LabelPreferences(getDataFolder().toPath(), getLogger());
+        this.labelPreferences = new LabelPreferences(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger());
         labelPreferences.load();
         // Один координатор чат-ввода: админ-панель и редактор званий не должны
         // одновременно перехватывать одно сообщение или глотать чужой чат.
         this.chatInput = new GuiChatInput(this);
         getServer().getPluginManager().registerEvents(chatInput, this);
         // Админ-панель: moderation.json и players/*.yml живут отдельно от data.json аккаунтов.
-        this.moderationStore = new ModerationStore(getDataFolder().toPath(), getLogger());
+        this.moderationStore = new ModerationStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger());
         this.moderationLedger = moderationStore.load();
         this.moderation = new ModerationService(this, moderationLedger, moderationStore,
                 ModerationConfig.fromConfig(getConfig()));
@@ -159,7 +188,7 @@ public final class RegisterPlugin extends JavaPlugin {
             adminPanelPlugin.setTabCompleter(adminPanelCommand);
         }
         // honors.json лежит отдельно от data.json: решение владельца не подделывает покупку.
-        this.honorStore = new HonorStore(getDataFolder().toPath(), getLogger());
+        this.honorStore = new HonorStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger());
         HonorConfig honorConfig = HonorConfig.fromConfig(getConfig());
         HonorStore.Load loaded = honorStore.loadWithStatus(honorConfig);
         this.honors = new HonorService(this, loaded.ledger(), honorStore, honorConfig);
@@ -244,19 +273,19 @@ public final class RegisterPlugin extends JavaPlugin {
         tabListService.reload();
 
         this.spawnService = new SpawnService(this, accessManager,
-                new SpawnStore(getDataFolder().toPath(), getLogger()),
+                new SpawnStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger()),
                 SpawnSettings.parse(getConfig(), getLogger()));
         getServer().getPluginManager().registerEvents(spawnService, this);
         spawnService.start();
 
         this.guideBookService = new GuideBookService(this,
-                new GuideStore(getDataFolder().toPath(), getLogger()),
+                new GuideStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger()),
                 GuideBookSettings.parse(getConfig()));
         getServer().getPluginManager().registerEvents(guideBookService, this);
         guideBookService.start();
 
         this.starterKitService = new StarterKitService(this,
-                new StarterKitStore(getDataFolder().toPath(), getLogger()),
+                new StarterKitStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger()),
                 StarterKitSettings.parse(getConfig()));
         getServer().getPluginManager().registerEvents(starterKitService, this);
         starterKitService.start();
@@ -445,6 +474,10 @@ public final class RegisterPlugin extends JavaPlugin {
         if (accessManager != null) {
             accessManager.shutdown();
             accessManager = null;
+        }
+        if (storageService != null) {
+            storageService.close();
+            storageService = null;
         }
         getServer().getServicesManager().unregisterAll(this);
         if (executor != null) {

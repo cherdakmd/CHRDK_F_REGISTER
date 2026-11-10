@@ -44,11 +44,11 @@ public final class AchievementsPlugin extends JavaPlugin {
     public void onEnable() {
         saveDefaultConfig();
         ConfigUpgrader.apply(this);
-        this.store = new AchievementStore(getDataFolder().toPath(), getLogger());
+        this.store = new AchievementStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger());
         reloadAchievementsConfig();
         try {
             if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 38) throw new IllegalStateException("Нужен Core API38 (1.4.281-rc.3+)");
-            this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"achievements-awards",ru.cherdakmd.chrdkregister.api.MilestoneMigration.json(getDataFolder().toPath().resolve("achievements.json"),ru.cherdakmd.chrdkregister.api.MilestoneMigration.Kind.ACHIEVEMENTS));
+            this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"achievements-awards",ru.cherdakmd.chrdkregister.api.MilestoneMigration.json(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this).resolve("achievements.json"),ru.cherdakmd.chrdkregister.api.MilestoneMigration.Kind.ACHIEVEMENTS));
         } catch (Exception | LinkageError error) {
             getLogger().log(java.util.logging.Level.SEVERE,"Модуль остановлен без сброса прогресса/наград",error);
             this.store = null;
@@ -59,7 +59,7 @@ public final class AchievementsPlugin extends JavaPlugin {
         awards.reconciler(player -> service.check(player));
         this.listener = new AchievementListener(this, service);
         this.gui = new AchievementGui(this, service);
-        explorationStore = new ru.cherdakmd.chrdkregister.api.exploration.ExplorationStore(getDataFolder().toPath().resolve("exploration.json"), getLogger());
+        explorationStore = new ru.cherdakmd.chrdkregister.api.exploration.ExplorationStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this).resolve("exploration.json"), getLogger());
         explorationStore.load();
         atlas = new ru.cherdakmd.chrdkregister.api.exploration.ExplorationAtlas(this, explorationStore, this::messages,
                 () -> "lifetime", p -> service.enabled() && coreApi() != null && coreApi().isAuthenticated(p)

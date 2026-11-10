@@ -70,7 +70,7 @@ public final class TierForgePlugin extends JavaPlugin {
         reloadTierConfig();
         try {
             if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 42) throw new IllegalStateException("Нужен Core API 42+ (RC16)");
-            this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"tierforge-awards",ru.cherdakmd.chrdkregister.api.MilestoneMigration.tierForge(getDataFolder().toPath().resolve("stats.yml")));
+            this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"tierforge-awards",ru.cherdakmd.chrdkregister.api.MilestoneMigration.tierForge(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this).resolve("stats.yml")));
         } catch (Exception | LinkageError error) {
             getLogger().log(java.util.logging.Level.SEVERE,"Модуль остановлен без сброса прогресса/наград",error);
             Bukkit.getPluginManager().disablePlugin(this); return;

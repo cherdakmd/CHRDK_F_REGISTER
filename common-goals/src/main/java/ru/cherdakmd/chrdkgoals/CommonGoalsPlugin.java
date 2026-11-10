@@ -41,7 +41,7 @@ public final class CommonGoalsPlugin extends JavaPlugin implements Listener {
         try {
             if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 38)
                 throw new IllegalStateException("Нужен Core API 38+");
-            this.store = new GoalStore(getDataFolder().toPath(), getLogger());
+            this.store = new GoalStore(ru.cherdakmd.chrdkregister.storage.ChrdkStoragePaths.dataFolder(this), getLogger());
             store.load();
             if (!store.healthy()) throw new IllegalStateException("Источник целей повреждён");
             this.service = new GoalsService(this);
