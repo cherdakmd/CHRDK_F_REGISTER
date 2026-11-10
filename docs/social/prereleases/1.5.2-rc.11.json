@@ -1,0 +1,13 @@
+{
+  "version": "1.5.2-rc.11",
+  "title": "CHRDK 1.5.2-rc.11 — привязки VK и lineage наград",
+  "caption": "Исторические привязки снова видны в TAB; конфликт наград TierForge закрыт без лишних денег",
+  "points": [
+    "В staging-логе rc.10 было 7 исторических привязок в vk-links.json и 0 в players/social.yml, поэтому TAB, /link и /social status не видели уже привязанных игроков. rc.11 исправляет этот рассинхрон: vk-links.json остаётся источником бонусов /vk, а социальное чтение получает те же связи.",
+    "При старте связи один раз импортируются в players/social.yml. Перед записью создаётся отдельный backup, сохраняются checksum глобального JSON, карантин .broken, ручные правки YAML, firstSeen, донатный доступ и награда. Уже привязанные игроки, чужие профили и дубли сверх max-accounts-per-profile пропускаются.",
+    "Даже если импорт пропущен, работает read-only fallback к VkStore с теми же проверками коллизий и лимита: %chrdksocial_tab%, /link, /social status, onJoin и isFrozen видят legacy-привязки без обхода обязательного входа. /vk unlink и /social unlink синхронно снимают связь из обоих хранилищ, не трогая MAX-привязки.",
+    "Отдельно исправлен award lineage conflict в CHRDK_TierForge. Если milestone-awards.json и bank.json разошлись, но локальный журнал ещё не содержит денежных обязательств, он принимает уже закреплённый банком lineage. Новые алмазы не создаются, receipts и entitlementSources не перезаписываются; при существующих выплатах финансовый guard по-прежнему останавливает источник.",
+    "Core API42 не повышался: новый capability реализован внутри CHRDK_Core, новых модулей и JAR нет. Добавлены тесты импорта, backup, идемпотентности, коллизий, quarantine, чтения lineage и отказа принять чужой lineage при обязательствах; tree-sitter, контракты, freshness и офлайн-превью анонса прошли, Java 25/JUnit/сборка 22 JAR проверяются CI.",
+    "Это общий prerelease после уже опубликованного rc.10: его тег, Release, ассеты и VK-анонс не переписываются. Latest остаётся 1.5.2, Pages, TradeMC, production и стабильная новость ВК не меняются. Release-workflow приложит общий ZIP, отдельные VK/Disasters JAR и patched Mine Treasure ZIP; установка и живой smoke выполняются владельцем только на изолированном staging после полного backup."
+  ]
+}

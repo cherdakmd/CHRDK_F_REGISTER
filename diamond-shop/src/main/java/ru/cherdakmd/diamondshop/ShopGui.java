@@ -69,6 +69,11 @@ public final class ShopGui implements Listener {
         inventory.setItem(ShopLayout.SLOT_CLOSE, named(Material.BARRIER, "trading.gui.close-name"));
         // RC16: раздел «Кузня» доступен и кнопкой, и командой /shop forge.
         inventory.setItem(ShopLayout.SLOT_FORGE, named(Material.ANVIL, "forge.shop.tab"));
+        // 7 ноября 2026: администратор попадает в редактор каталога прямо из витрины.
+        if (player.hasPermission("chrdkshop.admin")) {
+            inventory.setItem(ShopAdminGui.SHOP_EDIT_SLOT,
+                    named(Material.COMMAND_BLOCK, "trading.gui.admin-edit"));
+        }
 
         int from = safePage * ShopLayout.ITEMS_PER_PAGE;
         for (int slot = 0; slot < ShopLayout.ITEMS_PER_PAGE && from + slot < view.size(); slot++) {
@@ -120,7 +125,9 @@ public final class ShopGui implements Listener {
         var spec = item.spec();
         ItemStack icon;
         if (spec != null) {
-            icon = ShopBooks.create(spec);
+            // Кастомные чары показываем русским именем и с коротким описанием:
+            // по техническому id игрок не поймёт, что именно покупает.
+            icon = ShopBooks.create(spec, ShopBookInfo.displayName(spec));
             if (icon == null) {
                 icon = new ItemStack(Material.BARRIER);
             }
@@ -148,6 +155,17 @@ public final class ShopGui implements Listener {
                     "ref", item.refStock()));
             lore.add(plugin.messages().get("trading.gui.item-id",
                     "id", item.material().toLowerCase(Locale.ROOT)));
+            // Описание чары — первой строкой под ценой, чтобы проклятие и эффект
+            // были видны до покупки, а не только в /enchants info.
+            Component description = ShopBookInfo.description(spec);
+            if (description != null) {
+                lore.add(0, description);
+            }
+            ShopPromoService promos = service.promos();
+            if (promos != null && promos.enabled()
+                    && promos.plan(now).featured().contains(item.material())) {
+                lore.add(plugin.messages().get("trading.gui.promo-tag"));
+            }
             meta.lore(lore);
             icon.setItemMeta(meta);
         }
@@ -161,8 +179,18 @@ public final class ShopGui implements Listener {
             ShopService service = plugin.shopService();
             meta.displayName(plugin.messages().get("trading.gui.balance-name",
                     "balance", service.balance(player)));
-            meta.lore(List.of(plugin.messages().get("trading.gui.balance-lore",
-                    "turnover", PriceEngine.round(service.store().turnover()), "physical", service.physical(player))));
+            List<Component> lore = new ArrayList<>();
+            lore.add(plugin.messages().get("trading.gui.balance-lore",
+                    "turnover", PriceEngine.round(service.store().turnover()), "physical", service.physical(player)));
+            ShopPromoService promos = service.promos();
+            if (promos != null && promos.enabled()) {
+                long now = System.currentTimeMillis();
+                lore.add(plugin.messages().get("trading.gui.promo-line",
+                        "type", promos.typeLabel(now),
+                        "items", promos.featuredLabel(now),
+                        "left", promos.remaining(player.getUniqueId(), now)));
+            }
+            meta.lore(lore);
             icon.setItemMeta(meta);
         }
         return icon;
@@ -223,6 +251,12 @@ public final class ShopGui implements Listener {
             return;
         }
         if (slot == ShopLayout.SLOT_BALANCE) {
+            return;
+        }
+        if (slot == ShopAdminGui.SHOP_EDIT_SLOT) {
+            if (player.hasPermission("chrdkshop.admin") && plugin.shopAdminGui() != null) {
+                plugin.shopAdminGui().open(player, 0);
+            }
             return;
         }
         int index = ShopLayout.itemIndex(holder.page(), slot);

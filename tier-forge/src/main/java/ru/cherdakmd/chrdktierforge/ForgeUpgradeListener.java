@@ -1,5 +1,6 @@
 package ru.cherdakmd.chrdktierforge;
 
+import ru.cherdakmd.chrdkregister.api.MineTreasureLootPolicy;
 import ru.cherdakmd.chrdkregister.api.PassivePotions;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -647,8 +648,8 @@ public final class ForgeUpgradeListener implements Listener {
         for (Item dropEntity : event.getItems()) {
             ItemStack stack = dropEntity.getItemStack();
             // Чужие награды, именованные/PDC-предметы и нестандартные стопки не переписываем.
-            if (stack.getType().isAir() || stack.hasItemMeta() || stack.getAmount() <= 0
-                    || stack.getAmount() > stack.getMaxStackSize()
+            if (stack.getType().isAir() || MineTreasureLootPolicy.isForeignDrop(stack)
+                    || stack.getAmount() <= 0 || stack.getAmount() > stack.getMaxStackSize()
                     || !dropEntity.getPersistentDataContainer().isEmpty()) continue;
             ordinaryLoot = true;
             Material result = smeltResultOf(stack.getType());

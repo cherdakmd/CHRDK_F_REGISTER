@@ -43,24 +43,32 @@ import static ru.cherdakmd.chrdkachievements.AchievementMetric.PASS_ACTIVE;
 import static ru.cherdakmd.chrdkachievements.AchievementMetric.PLAY_SECONDS;
 import static ru.cherdakmd.chrdkachievements.AchievementMetric.REGISTERED;
 import static ru.cherdakmd.chrdkachievements.AchievementMetric.TWO_FACTOR;
+import static ru.cherdakmd.chrdkachievements.AchievementMetric.DISASTERS_SURVIVED;
+import static ru.cherdakmd.chrdkachievements.AchievementMetric.DISASTER_KINDS;
+import static ru.cherdakmd.chrdkachievements.AchievementMetric.DISASTER_SHARDS;
+import static ru.cherdakmd.chrdkachievements.AchievementMetric.DISASTER_LEVEL;
 
 /**
- * Каталог достижений: 72 записи, по 18 в каждом разделе.
+ * Каталог достижений: 78 записей. Исторические разделы — по 18, «Путь»
+ * дополнительно получил шесть записей за катастрофы CHRDK_Disasters.
  *
  * <p>Пороги подобраны так, чтобы путь от «первого шага» до «легенды» занимал
  * недели, а не часы: 200 часов игры, 100 км, 25 000 мобов, 250 000 блоков.
  * Награды — дни ранга и алмазы. Мета-достижений два: «Легенда» осталась
- * на историческом рубеже 47 (её не отнимают у тех, кто уже близок), а
- * «Легенда легенд» требует все остальные 71 и выдаёт третий бейдж-трофей.
- * Второй бейдж — у «Ветерана».</p>
+ * на историческом рубеже 47, а «Легенда легенд» требует все остальные 71
+ * из каталога 1.4.138 и выдаёт третий бейдж-трофей. Второй бейдж — у
+ * «Ветерана». Оба рубежа намеренно зафиксированы: рост каталога не должен
+ * отбирать уже заработанную цель.</p>
  *
- * <p>Волна 1.4.149 добавила по шесть достижений в каждый раздел: длинные
- * дистанции, боссов, руду, рыбалку, зачарования, зелья, банк и питомцев.
- * Метрики не менялись — старый прогресс продолжает считаться.</p>
+ * <p>Волна 1.4.149 добавила по шесть достижений в каждый раздел. Волна 1.5.2
+ * добавила шесть записей «Пути» с новыми метриками {@code disasters-*};
+ * строковые идентификаторы старых метрик не менялись, поэтому сохранённый
+ * прогресс игроков в achievements.json продолжает читаться.</p>
  */
 public final class AchievementRegistry {
 
-    public static final int EXPECTED_SIZE = 72;
+    public static final int EXPECTED_SIZE = 78;
+    /** Историческая норма разделов; «Путь» после волны катастроф шире. */
     public static final int PER_CATEGORY = 18;
 
     /**
@@ -70,8 +78,11 @@ public final class AchievementRegistry {
      */
     public static final int LEGEND_GOAL = 47;
 
-    /** «Легенда легенд» — все остальные достижения текущего каталога. */
-    public static final int MASTER_GOAL = EXPECTED_SIZE - 1;
+    /**
+     * «Легенда легенд» зафиксирована на 71: все достижения каталога 1.4.138
+     * кроме неё самой. Новые разделы каталога не повышают уже выданный рубеж.
+     */
+    public static final int MASTER_GOAL = 71;
 
     private static final Map<String, AchievementDef> REGISTRY = new LinkedHashMap<>();
 
@@ -97,6 +108,14 @@ public final class AchievementRegistry {
         register("hranitel-snov", PATH, BEDS_SLEPT, 250, 2, 12);
         register("nizhnij-dom", PATH, NETHER_VISITS, 100, 2, 16);
         register("gost-kraya", PATH, END_VISITS, 25, 2, 16);
+
+        /* ------------- путь: катастрофы CHRDK_Disasters (1.5.2) ------------- */
+        register("pervaya-katastrofa", PATH, DISASTERS_SURVIVED, 1, 0, 2);
+        register("desyat-katastrof", PATH, DISASTERS_SURVIVED, 10, 1, 8);
+        register("pyatdesyat-katastrof", PATH, DISASTERS_SURVIVED, 50, 2, 16);
+        register("vse-shest-bedstvij", PATH, DISASTER_KINDS, 6, 1, 12);
+        register("sto-oskolkov", PATH, DISASTER_SHARDS, 100, 1, 8);
+        register("stojkost-pyat", PATH, DISASTER_LEVEL, 5, 2, 16);
 
         /* ---------------------------------- бой ----------------------------------- */
         register("ohotnik", COMBAT, MOBS_KILLED, 100, 1, 4);

@@ -83,6 +83,18 @@ public final class MilestoneStore {
     public synchronized boolean imported() { return data.imported; }
     public synchronized boolean registered() { return data.registered; }
     public synchronized void markRegistered() throws IOException { writable(); if(data.registered) return; var n=copy(); n.registered=true; write(n); }
+    /**
+     * Принимает lineage, уже закреплённый банком, когда локальный журнал ещё не
+     * помечал источник зарегистрированным и не содержит денежных обязательств.
+     * Это исправляет расхождение после восстановления milestone-awards.json из другой
+     * копии; выдавать награды под чужим lineage нельзя.
+     */
+    public synchronized void adoptLineage(UUID external) throws IOException {
+        writable(); Objects.requireNonNull(external, "lineage");
+        if (data.registered || !totals().isEmpty())
+            throw new IllegalStateException("award lineage is already backed by local obligations");
+        var n = copy(); n.lineage = external; n.registered = true; write(n);
+    }
     public synchronized void initialize(Map<UUID,Set<String>> legacy) throws IOException {
         writable(); if(data.imported) return; var n=copy(); n.imported=true;
         for(var player:legacy.entrySet()) {

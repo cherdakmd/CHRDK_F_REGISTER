@@ -13,11 +13,13 @@ import java.util.Locale;
  * поэтому ядру не нужно знать ни о {@code social-links.json}, ни о товаре
  * {@code social-access}.
  *
- * <p>{@code %chrdksocial_access%} — остаток срока товара «Вход без ВК и MAX»
- * ({@code 27 дн.}, {@code нет} или {@code ∞}); {@code %chrdksocial_link%} —
- * персональный статус привязки ({@code ВК}, {@code MAX}, {@code ещё 12 дн.},
- * {@code обязательна}). Значения — обычный текст, без MiniMessage: так требует
- * PlaceholderAPI. Регистрируется только при установленном PAPI.</p>
+ * <p>{@code %chrdksocial_tab%} — одна готовая строка TAB с понятным следующим
+ * шагом и одним сроком, если привязки ещё нет; после привязки счётчик исчезает.
+ * Она содержит MiniMessage-теги и подставляется до рендера шаблона ядром.
+ * Старые {@code %chrdksocial_status%}, {@code %chrdksocial_link%} и
+ * {@code %chrdksocial_access%} оставлены для внешних шаблонов и совместимости,
+ * но эталонный footer CHRDK_Core их больше не дублирует. Старые значения —
+ * обычный текст без разметки. Регистрируется только при установленном PAPI.</p>
  */
 public final class SocialPlaceholders extends PlaceholderExpansion {
 
@@ -59,6 +61,7 @@ public final class SocialPlaceholders extends PlaceholderExpansion {
         if (name == null || name.isBlank()) return "";
         long now = System.currentTimeMillis();
         return switch (params.toLowerCase(Locale.ROOT)) {
+            case "tab", "line" -> social.tabLine(name, now);
             case "status" -> social.tabStatus(name, now);
             case "access" -> SocialAccessPolicy.accessCounter(
                     social.donateUntil(name), now, social.permanentDonorAccess(name));

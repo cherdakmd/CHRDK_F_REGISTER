@@ -50,7 +50,7 @@ class AutoMessagesUpdateTest {
     @Test void everyEntryParsesAndTargetsWorkingPlayerCommands() throws Exception {
         var config = yaml("config.yml");
         var entries = stock();
-        assertEquals(42, entries.size());
+        assertEquals(43, entries.size());
         assertEquals(config.getList("auto-messages.messages").size(), entries.size(), "ни один текст не отброшен парсером");
         var core = yaml("plugin.yml");
         var coreCommands = commands(core);
@@ -155,7 +155,7 @@ class AutoMessagesUpdateTest {
         assertEquals(7, live.getInt("auto-messages.minimum-players"));
         assertEquals("Свой префикс: ", live.getString("auto-messages.prefix"));
         assertEquals(List.of("Owner"), live.getStringList("tablist.pinned-names"));
-        assertEquals(42, ChatConfig.fromBukkitConfig(live).autoMessageEntries().size());
+        assertEquals(43, ChatConfig.fromBukkitConfig(live).autoMessageEntries().size());
         assertTrue(PresentationMigration.replacements(live, List.of(legacy), fresh).isEmpty());
     }
 

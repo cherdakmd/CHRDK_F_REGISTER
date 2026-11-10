@@ -36,8 +36,8 @@ gh workflow run release.yml --ref main -f version=1.5.2
 ```
 
 Ручной запуск выполняет тот же Gradle build, тесты, проверку 22 общих JAR,
-отдельного `CHRDK_VK`, ZIP CRC и версий, но **не создает тег, Release и не
-загружает публичные ассеты**. Результат сохраняется как временный artifact
+отдельных `CHRDK_VK`/`CHRDK_Disasters`, Mine Treasure, ZIP CRC и версий, но
+**не создает тег, Release и не загружает публичные ассеты**. Результат сохраняется как временный artifact
 `release-candidate-<версия>-<sha>`.
 
 Скачать candidate и проверить контрольные суммы:
@@ -48,7 +48,8 @@ unzip -t chrdk-plugins-1.5.2.zip
 ```
 
 Архив должен содержать ровно 22 JAR одной версии и `ОБНОВЛЕНИЕ.txt`.
-`chrdk-vk-<версия>.jar` остаётся отдельным файлом.
+`chrdk-vk-<версия>.jar`, `chrdk-disasters-<версия>.jar` и
+`mine-treasure-1.6.5-ru.zip` остаются отдельными файлами.
 
 ## 3. Провести обязательный staging gate
 
@@ -75,6 +76,8 @@ unzip -t chrdk-plugins-1.5.2.zip
 4. Опубликовать Release. Workflow ещё раз соберёт tagged source и прикрепит:
    - `chrdk-plugins-<версия>.zip`;
    - `chrdk-vk-<версия>.jar`;
+   - `chrdk-disasters-<версия>.jar`;
+   - `mine-treasure-1.6.5-ru.zip`;
    - `chrdk-<версия>-SHA256SUMS.txt`.
 5. Дождаться успешного Release workflow и сверить размер/число ассетов,
    контрольные суммы и ZIP. Не переписывать опубликованный стабильный тег.

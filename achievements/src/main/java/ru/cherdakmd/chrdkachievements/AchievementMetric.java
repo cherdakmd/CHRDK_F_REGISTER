@@ -78,7 +78,18 @@ public enum AchievementMetric {
     /** Сумма переводов, отправленных игроком. */
     BANK_SENT("bank-sent"),
     /** Сумма переводов, полученных игроком. */
-    BANK_RECEIVED("bank-received");
+    BANK_RECEIVED("bank-received"),
+
+    /* -------------- катастрофы (CHRDK_Disasters, волна 1.5.2) -------------- */
+
+    /** Пережитые катастрофы: одно событие = один зачёт. */
+    DISASTERS_SURVIVED("disasters-survived"),
+    /** Разные виды катастроф, пережитые хотя бы один раз. */
+    DISASTER_KINDS("disaster-kinds"),
+    /** Всего заработанных осколков катастроф. */
+    DISASTER_SHARDS("disaster-shards"),
+    /** Достигнутые уровни стойкости (прирост уровня). */
+    DISASTER_LEVEL("disaster-level");
 
     private final String id;
 

@@ -75,7 +75,9 @@ class Ledger:
                         or not isinstance(body.get('records'), dict)):
                     raise SafetyError('Конфликт или неподдерживаемая схема журнала')
                 for key, record in body['records'].items():
-                    if (not re.fullmatch(r'(tip:\d{4}-\d{2}-\d{2}(?::12)?|release:v1\.\d+\.\d+|test:1\.\d+\.\d+)', key)
+                    if (not re.fullmatch(r'(tip:\d{4}-\d{2}-\d{2}(?::12)?|release:v1\.\d+\.\d+(?:-fix)?|test:1\.\d+\.\d+'
+                                         r'|prerelease:vk-v1\.\d+\.\d+-rc\.[1-9]\d*'
+                                         r'|prerelease:v1\.\d+\.\d+-rc\.[1-9]\d*)', key)
                             or not isinstance(record, dict) or record.get('status') not in ('prepared', 'posting', 'posted')
                             or not re.fullmatch(r'[0-9a-f]{64}', record.get('digest', ''))
                             or 'attachment' in record
@@ -290,9 +292,13 @@ class VK:
         self.require_peer()
         if len(post.text) > 4000:
             raise SafetyError('Сообщение длиннее лимита 4000 символов: сократите текст, не разбивайте отправку вслепую')
-        data = self.call('messages.send', {'group_id': self.group, 'peer_id': self.peer,
-                                          'random_id': self.random_id(post), 'message': post.text,
-                                          'attachment': attachment, 'dont_parse_links': 1})
+        params = {'group_id': self.group, 'peer_id': self.peer,
+                  'random_id': self.random_id(post), 'message': post.text, 'dont_parse_links': 1}
+        # Пустое вложение допустимо только для текстового фолбэка, когда
+        # загрузчик карточки не подтвердил фото; параметр тогда не отправляем.
+        if attachment:
+            params['attachment'] = attachment
+        data = self.call('messages.send', params)
         if type(data) is int and data == 0:
             # В беседах VK может вернуть 0: подтверждаем только сообщением бота в истории.
             found = self.find(post.marker)

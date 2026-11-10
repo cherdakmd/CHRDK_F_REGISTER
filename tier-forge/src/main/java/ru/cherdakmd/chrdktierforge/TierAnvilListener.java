@@ -99,6 +99,15 @@ public final class TierAnvilListener implements Listener {
             ItemKind kind = ItemKind.classify(left.getType().name());
             ForgeUpgrade.Def def = ForgeUpgrade.forMaterial(right.getType().name(), kind,
                     plugin.config().improveMaterials());
+            // 1.5.2: «Забойщик» несовместим с чарами массовой добычи. Отказываем
+            // до списания материалов и до пересборки предмета.
+            if (def != null && MiningCompatPolicy.isColumnMiningUpgrade(def.id())
+                    && hasMegaMiningEnchant(left)) {
+                event.setResult(null);
+                notify(player, "improve-incompatible:" + def.id(), "forge-upgrade-incompatible",
+                        "name", def.displayName());
+                return;
+            }
             if (def != null && !isCatalyst(right) && plugin.config().kindAllowed(kind)) {
                 int level = plugin.items().upgradeLevel(left, def.id());
                 if (level >= def.maxLevel()) {
@@ -135,7 +144,7 @@ public final class TierAnvilListener implements Listener {
                             : TierRoller.roll(plugin.config().tiers(), random));
             if (roll == null) return;
             List<TierProperty> properties = propertyKeeper.preview(player.getUniqueId(), key,
-                    () -> plugin.items().rollFor(roll, ItemKind.classify(left.getType().name())));
+                    () -> plugin.items().rollFor(roll, ItemKind.classify(left.getType().name()), left));
             ItemStack result = left.clone();
             result.setAmount(1);
             plugin.items().apply(result, roll, properties);
@@ -174,7 +183,7 @@ public final class TierAnvilListener implements Listener {
 
         String mergeKey = "merge:" + left.getType().name() + ":" + next;
         List<TierProperty> properties = propertyKeeper.preview(player.getUniqueId(), mergeKey,
-                () -> plugin.items().rollFor(target, ItemKind.classify(left.getType().name())));
+                () -> plugin.items().rollFor(target, ItemKind.classify(left.getType().name()), left));
         ItemStack result = left.clone();
         // 1.4.89: наковальня всегда отдаёт один предмет — стек не должен расти,
         // даже если сторонний плагин разрешил стакать экипировку.
@@ -190,6 +199,11 @@ public final class TierAnvilListener implements Listener {
     }
 
     /** Подсказка без спама: повтор той же сигнатуры в этом окне молчит. */
+    private boolean hasMegaMiningEnchant(ItemStack left) {
+        var api = plugin.enchantsApi();
+        return api != null && MiningCompatPolicy.hasMegaMining(api.enchantsOf(left));
+    }
+
     private void notify(Player player, String signature, String key, Object... placeholders) {
         if (notices.shouldNotify(player.getUniqueId(), signature)) {
             plugin.messages().send(player, key, placeholders);

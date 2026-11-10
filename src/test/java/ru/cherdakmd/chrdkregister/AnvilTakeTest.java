@@ -56,6 +56,10 @@ class AnvilTakeTest {
         GameMode mode=GameMode.SURVIVAL;
         boolean auth=true,online=true,dead=false,accessible=true;
         String failOnce;
+        AnvilSettings policy=AnvilSettings.UNLIMITED;
+        long bankBalance=0,charged=0;
+        int refunds=0,notices=0;
+        boolean chargeOk=true;
         final List<ru.cherdakmd.chrdkregister.api.events.AnvilPaidResultEvent> paid=new ArrayList<>();
         void fault(String point) {
             if(point.equals(failOnce)) {failOnce=null;throw new IllegalStateException("injected "+point);}
@@ -69,6 +73,7 @@ class AnvilTakeTest {
             case "setExp"->{progress=(float)args[0];yield null;}
             case "setItemOnCursor"->{cursor=args[0]==null?new Stack("air",0):(ItemStack)args[0];fault("cursor");yield null;}
             case "updateInventory"->{updates++;yield null;}
+            case "sendMessage"->{notices++;yield null;}
             default->null;
         });
         final AnvilInventory inventory=AnvilCostsTest.proxy(AnvilInventory.class,(method,args)-> switch(method) {
@@ -86,8 +91,18 @@ class AnvilTakeTest {
         });
         final AnvilCostListener listener;
         Frame() {
-            var messages=Messages.from(new java.io.ByteArrayInputStream("messages:\n  anvil.take-help: 'XP %xp%'\n  anvil.full-price: 'XP %xp%'\n".getBytes(java.nio.charset.StandardCharsets.UTF_8)),null,java.util.logging.Logger.getAnonymousLogger());
-            listener=new AnvilCostListener(() -> messages,p -> auth,(v,p)->accessible,(v,p)->finishes++,e -> failures++,paid::add);
+            var messages=Messages.from(new java.io.ByteArrayInputStream(("messages:\n"
+                    + "  anvil.take-help: 'XP %xp%'\n  anvil.full-price: 'XP %xp%'\n"
+                    + "  anvil.currency-price: 'ALM %diamonds% XP %xp% LIMIT %limit% BAL %balance%'\n"
+                    + "  anvil.currency-help: 'ALM %diamonds% XP %xp% BAL %balance%'\n"
+                    + "  anvil.currency-paid: 'PAID %diamonds% XP %xp%'\n"
+                    + "  anvil.too-expensive: 'TOO XP %xp% LIMIT %limit%'\n").getBytes(java.nio.charset.StandardCharsets.UTF_8)),
+                    null,java.util.logging.Logger.getAnonymousLogger());
+            listener=new AnvilCostListener(() -> messages,p -> auth,(v,p)->accessible,(v,p)->finishes++,
+                    e -> failures++,paid::add,
+                    () -> policy,p -> bankBalance,
+                    (p,d) -> {if(!chargeOk) return false;charged+=d;bankBalance-=d;return true;},
+                    (p,d) -> {charged-=d;bankBalance+=d;refunds++;});
         }
         void quote() { AnvilCosts.remember(view,slots[2]); }
         InventoryClickEvent event(ClickType click) {return new InventoryClickEvent(view,InventoryType.SlotType.RESULT,2,click,InventoryAction.PICKUP_ALL);}
@@ -188,5 +203,64 @@ class AnvilTakeTest {
     @Test void nullAndZeroSizedResultsInvalidateTheQuoteWithoutResurrection() {
         var f=new Frame();f.quote();assertFalse(AnvilCosts.remember(f.view,new Stack("zero",0)));assertNull(AnvilCosts.quote(f.view));
         f.cost=80;f.quote();assertFalse(AnvilCosts.remember(f.view,null));assertNull(AnvilCosts.quote(f.view));
+    }
+
+    /* ---------------- Единый потолок 150 и оплата алмазами ---------------- */
+
+    @Test void noticeKeysSplitNativeFullPriceAndCurrencyWarning() {
+        assertEquals(null,AnvilCostListener.noticeKey(AnvilSettings.DEFAULTS,39));
+        assertEquals("anvil.full-price",AnvilCostListener.noticeKey(AnvilSettings.DEFAULTS,40));
+        assertEquals("anvil.full-price",AnvilCostListener.noticeKey(AnvilSettings.DEFAULTS,150));
+        assertEquals("anvil.currency-price",AnvilCostListener.noticeKey(AnvilSettings.DEFAULTS,151));
+        assertEquals("anvil.currency-price",AnvilCostListener.noticeKey(AnvilSettings.DEFAULTS,16_383));
+        assertEquals("anvil.too-expensive",AnvilCostListener.noticeKey(new AnvilSettings(150,10,64,false),10_000));
+    }
+
+    @Test void tenThousandLevelRepairNeverSpendsXpAndPaysDiamondsWithAWarning() {
+        var f=new Frame();f.policy=AnvilSettings.DEFAULTS;f.cost=16_383;f.quote();
+        var expected=f.slots[2].clone();
+        var left=f.slots[0].clone();var right=f.slots[1].clone();
+        assertEquals(39,f.cost); // клиент по-прежнему видит 39, полная цена живёт в котировке
+        f.take(); // без алмазов на /bal — предупреждение и ничего не списано
+        f.unchanged(left,right);assertEquals(100,f.level);assertEquals(0,f.charged);assertEquals(0,f.paid.size());
+        assertEquals(39,f.cost);assertTrue(f.notices>0);
+        assertNotNull(AnvilCosts.quote(f.view));
+        f.bankBalance=100;f.take();
+        assertEquals(100,f.level,"уровни опыта выше лимита не списываются");
+        assertEquals(0,f.charges,"giveExpLevels не вызывается");
+        assertEquals(64,f.charged,"16383/10 округляется вверх, но цена ограничена 64 алмазами");
+        assertEquals(36,f.bankBalance);
+        assertEquals(expected,f.cursor);assertNull(f.slots[0]);assertEquals(5,f.slots[1].getAmount());
+        assertEquals(-1,f.cost);assertNull(AnvilCosts.quote(f.view));
+        assertEquals(1,f.finishes);assertEquals(1,f.paid.size());
+        assertEquals(0,f.paid.getFirst().levels());assertEquals(64,f.paid.getFirst().diamonds());
+        f.take();assertEquals(64,f.charged,"повторный клик после очистки котировки не списывает повторно");
+    }
+
+    @Test void exactlyOneHundredFiftyLevelsStillPaidInExperience() {
+        var f=new Frame();f.policy=AnvilSettings.DEFAULTS;f.cost=150;f.level=200;f.quote();f.take();
+        assertEquals(50,f.level);assertEquals(1,f.charges);assertEquals(0,f.charged);
+        assertEquals(150,f.paid.getFirst().levels());assertEquals(0,f.paid.getFirst().diamonds());
+    }
+
+    @Test void declinedBankChargeAndFailedIssueRollBackDiamondsAndInventory() {
+        var f=new Frame();f.policy=AnvilSettings.DEFAULTS;f.cost=10_000;f.bankBalance=500;f.chargeOk=false;
+        f.quote();var left=f.slots[0].clone();var right=f.slots[1].clone();
+        f.take();f.unchanged(left,right);assertEquals(0,f.charged);assertEquals(1,f.failures);
+        assertEquals(0,f.paid.size());assertEquals(0,f.finishes);
+
+        var g=new Frame();g.policy=AnvilSettings.DEFAULTS;g.cost=10_000;g.bankBalance=500;g.failOnce="cursor";
+        g.quote();var gl=g.slots[0].clone();var gr=g.slots[1].clone();
+        g.take();g.unchanged(gl,gr);assertEquals(0,g.charged,"списание возвращено");assertEquals(1,g.refunds);
+        assertEquals(500,g.bankBalance);assertEquals(0,g.paid.size());assertEquals(0,g.finishes);
+    }
+
+    @Test void legacyRepairCostIsNeverRewrittenByTheCurrencyPath() {
+        var f=new Frame();f.policy=AnvilSettings.DEFAULTS;f.cost=16_383;f.bankBalance=100;f.quote();
+        var result=f.slots[2].clone();assertEquals(16_383,AnvilCosts.actual(f.view));
+        f.take();
+        assertEquals(result,f.cursor,"результат выдан без переписывания его RepairCost/PDC");
+        assertNull(f.slots[2]);assertEquals(-1,f.cost);
+        assertEquals(100,f.level,"накопленный штраф не конвертируется в уровни опыта");
     }
 }

@@ -102,7 +102,9 @@ class ForgeMarketContractTest {
         assertFalse(materials.contains("import org.bukkit.event.entity.EntityDeathEvent"));
         assertFalse(materials.contains("EntityDeathEvent event"));
         assertTrue(materials.contains("ForgeMaterial.HUNT_DROPS"));
-        assertTrue(materials.contains("if (tierId != null) { fail(\"forge-input\"); return null; }"));
+        // 7 ноября 2026: искра отклоняет вещь С тиром отдельным ключом, а не общим
+        // forge-input (тот текст ошибочно требовал тир-вещь как раз у искры).
+        assertTrue(materials.contains("if (tierId != null) { fail(ForgeInputDiagnostics.SEED_TIERED); return null; }"));
         assertTrue(materials.contains("ForgeMaterial.seedUid(canonical)"));
         assertTrue(materials.contains("TierModifierIds.validUid(uidValue)"));
         String items = read("tier-forge/src/main/java/ru/cherdakmd/chrdktierforge/TierItems.java");

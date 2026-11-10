@@ -24,6 +24,7 @@ import ru.cherdakmd.chrdkregister.pve.PveAwardContract;
 import ru.cherdakmd.chrdkregister.pve.PveAwardLedger;
 import ru.cherdakmd.chrdkregister.pve.PveRecipient;
 import org.bukkit.plugin.java.JavaPlugin;
+import ru.cherdakmd.chrdkregister.ConfigUpgrader;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
@@ -79,6 +80,7 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        ConfigUpgrader.apply(this);
         this.store = new BattlePassStore(getDataFolder().toPath(), getLogger());
         store.load();
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);

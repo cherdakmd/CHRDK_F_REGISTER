@@ -236,6 +236,33 @@ public final class AnvilApplyListener implements Listener {
             plugin.messages().send(event.getPlayer(),"anvil-curse-applied");
         }
     }
+
+    /**
+     * Ядро на HIGHEST дообъединяет атрибуты уже после нашего HIGH-превью.
+     * Обновляем запомненный результат, иначе строгая проверка quote при клике
+     * отвергла бы предмет с восстановленной базой Mine Treasure.
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPrepareResultReady(PrepareAnvilEvent event) {
+        refreshResult(event);
+    }
+
+    void refreshResult(PrepareAnvilEvent event) {
+        if (!(event.getView().getPlayer() instanceof Player viewer)) return;
+        var quote = quotes.get(viewer.getUniqueId());
+        if (quote == null || quote.view() != event.getView()) return;
+        ItemStack result = event.getResult();
+        if (result == null) {
+            quotes.remove(viewer.getUniqueId());
+            return;
+        }
+        if (Objects.equals(quote.result(), result)) return;
+        quotes.put(viewer.getUniqueId(), new AnvilQuotes.Quote<AnvilView, ItemStack>(
+                quote.view(), quote.left(), quote.right(), quote.rename(), result.clone(),
+                quote.cost(), quote.maximum(), quote.generation(), quote.cumulative(),
+                quote.creative(), quote.surcharge()));
+    }
+
     static boolean addsCurse(Map<String,Integer> before,Map<String,Integer> result) {
         return result.entrySet().stream().anyMatch(entry -> {
             var definition=EnchantRegistry.byId(entry.getKey());

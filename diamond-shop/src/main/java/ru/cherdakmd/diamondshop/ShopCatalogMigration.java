@@ -38,7 +38,7 @@ final class ShopCatalogMigration {
             try { Files.move(temp,file,StandardCopyOption.ATOMIC_MOVE,StandardCopyOption.REPLACE_EXISTING); }
             catch (AtomicMoveNotSupportedException e) { Files.move(temp,file,StandardCopyOption.REPLACE_EXISTING); }
             plugin.reloadConfig();
-            plugin.getLogger().info("Стоковый каталог обновлён до 249 товаров. Резервная копия: "+backup.getFileName());
+            plugin.getLogger().info("Стоковый каталог обновлён до 248 товаров. Резервная копия: "+backup.getFileName());
         } catch (Exception e) {
             plugin.getLogger().log(Level.WARNING,"Каталог не обновлён автоматически; проверьте config.yml и резервную копию.",e);
         }

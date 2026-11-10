@@ -1,9 +1,14 @@
 package ru.cherdakmd.chrdkclasses;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import ru.cherdakmd.chrdkskills.SkillsMenuApi;
+import ru.cherdakmd.chrdkskills.tree.PerkTreeDefinition;
+import ru.cherdakmd.chrdkskills.tree.PerkTreeMath;
+import ru.cherdakmd.chrdkskills.tree.PerkTreePowderSource;
 import ru.cherdakmd.chrdkskills.tree.PerkTreeRegistry;
 import ru.cherdakmd.chrdkskills.tree.PerkTreeState;
 import ru.cherdakmd.chrdkskills.tree.TreeDomain;
@@ -15,6 +20,12 @@ import java.util.Locale;
  * принимает {@link PerkTreeService}, тот же, что и у кликов в
  * {@link PerkTreeGui}. Сброс двухшаговый — {@code reset} выдаёт токен,
  * {@code confirm <токен>} применяет его.
+ *
+ * <p>Дерево больше не живёт в отдельном окне: {@code open} передаёт домен и
+ * страницу в {@link SkillsMenuApi}, который показывает вкладку «Дерево перков»
+ * общего меню {@code /skills}. Лишь когда {@code CHRDK_Skills} не предоставил
+ * сервис, команда открывает резервный инвентарь {@link PerkTreeGui} напрямую;
+ * повторные страницы перерисовываются в нём же, без второго окна.</p>
  */
 final class PerkTreeCommandHandler implements CommandExecutor {
 
@@ -44,13 +55,23 @@ final class PerkTreeCommandHandler implements CommandExecutor {
         }
         String sub = args.length == 0 ? "open" : args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
+            case "help" -> {
+                plugin.messages().sendList(player, "perktree-guide");
+                plugin.messages().send(player, "perktree-unified-hint");
+            }
             case "open" -> {
                 TreeDomain domain = args.length > 1 ? domain(args[1]) : primary(player);
                 if (domain == null || PerkTreeRegistry.of(domain).isEmpty()) {
                     plugin.messages().send(player, "perktree-unknown-domain");
                     return true;
                 }
-                gui.open(player, domain);
+                int page = page(args.length > 2 ? args[2] : null);
+                SkillsMenuApi menu = unifiedMenu();
+                if (menu != null) {
+                    menu.open(player, SkillsMenuApi.Tab.TREE, domain.id(), page);
+                } else {
+                    gui.open(player, domain, page);
+                }
             }
             case "info" -> {
                 TreeDomain domain = args.length > 1 ? domain(args[1]) : primary(player);
@@ -64,11 +85,24 @@ final class PerkTreeCommandHandler implements CommandExecutor {
                     plugin.messages().send(player, "perktree-no-tree");
                     return true;
                 }
+                String ability = state.selectedAbility() == null ? "—"
+                        : PerkTreeText.nodeNamePlain(plugin.messages(), state.selectedAbility());
                 plugin.messages().send(player, "perktree-info",
-                        "domain", domain.id(), "level", String.valueOf(state.level()),
+                        "domain", PerkTreeText.domain(plugin.messages(), domain),
+                        "level", String.valueOf(state.level()),
                         "powder", String.valueOf(state.powder()),
                         "tokens", String.valueOf(state.tokensAvailable()),
-                        "ability", state.selectedAbility() == null ? "—" : state.selectedAbility());
+                        "ability", ability);
+                PerkTreeDefinition definition = PerkTreeRegistry.of(domain).orElseThrow();
+                int tier = PerkTreeMath.availableTier(state.level(), definition.tiers());
+                int next = tier >= definition.tiers() ? 0
+                        : PerkTreeMath.LEVELS_PER_TOKEN
+                                - (state.level() % PerkTreeMath.LEVELS_PER_TOKEN);
+                plugin.messages().sendList(player, "perktree-info-hint",
+                        "tier", tier, "tiers", definition.tiers(), "next", next,
+                        "cap", definition.powderCap(),
+                        "base", PerkTreePowderSource.BASE_POWDER,
+                        "daily", PveAwardPowderRouter.DAILY_POWDER_CAP);
             }
             case "unlock", "select" -> {
                 if (args.length < 3) {
@@ -87,7 +121,7 @@ final class PerkTreeCommandHandler implements CommandExecutor {
                 if (result.ok()) {
                     plugin.messages().send(player,
                             sub.equals("select") ? "perktree-selected" : "perktree-unlocked",
-                            "node", args[2]);
+                            "node", PerkTreeText.nodeNamePlain(plugin.messages(), args[2]));
                 } else {
                     plugin.messages().send(player, "perktree-locked", "reason", result.reason());
                 }
@@ -120,6 +154,26 @@ final class PerkTreeCommandHandler implements CommandExecutor {
             default -> plugin.messages().send(player, "perktree-usage");
         }
         return true;
+    }
+
+    /** Мягкая связь: сервиса может не быть, если аддон навыков выключен. */
+    private static SkillsMenuApi unifiedMenu() {
+        try {
+            return Bukkit.getServicesManager().load(SkillsMenuApi.class);
+        } catch (LinkageError | RuntimeException error) {
+            return null;
+        }
+    }
+
+    private static int page(String raw) {
+        if (raw == null) {
+            return 0;
+        }
+        try {
+            return Math.max(0, Integer.parseInt(raw) - 1);
+        } catch (NumberFormatException ignored) {
+            return 0;
+        }
     }
 
     private TreeDomain primary(Player player) {

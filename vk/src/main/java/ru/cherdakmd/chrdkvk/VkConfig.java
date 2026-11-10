@@ -18,6 +18,7 @@ public record VkConfig(
         String communityUrl,
         String wikiUrl,
         String accessToken,
+        String photoAccessToken,
         String apiVersion,
         String apiBaseUrl,
         boolean keyboardsEnabled,
@@ -61,6 +62,10 @@ public record VkConfig(
         boolean wallIgnoreAds,
         boolean wallIgnoreReposts,
         int wallPreviewLength,
+        String wallPostMode,
+        String discussLabel,
+        String discussUrl,
+        boolean chatCardsEnabled,
         boolean allowRemoteLogout,
         boolean allowRemoteFreeze,
         boolean onboardingEnabled,
@@ -73,6 +78,9 @@ public record VkConfig(
     public static final String DEFAULT_WIKI_URL = "https://cherdakmd.github.io/CHRDK_F_REGISTER/";
     public static final String DEFAULT_API_BASE_URL = "https://api.vk.com/method/";
     public static final String DEFAULT_API_VERSION = "5.199";
+    /** Приглашение в беседу под текстовыми постами стены. */
+    public static final String DEFAULT_DISCUSS_URL =
+            "https://vk.me/join/IAYORcZm0ZVtjPdoDazBHP5yymulHst4fxM=";
     public static final long MIN_CONVERSATION_PEER_ID = 2_000_000_001L;
 
     public static VkConfig parse(FileConfiguration cfg) {
@@ -83,6 +91,9 @@ public record VkConfig(
         String wikiUrl = sanitizeHttpsUrl(cfg.getString("community.wiki-url", DEFAULT_WIKI_URL),
                 DEFAULT_WIKI_URL);
         String accessToken = trim(cfg.getString("community.access-token", ""));
+        // Пользовательский ключ администратора только для photos.* стены; не ключ
+        // сообщества, не Callback secret и не MAX-токен. Пустое значение = текст.
+        String photoAccessToken = trim(cfg.getString("community.photo-user-token", ""));
         String apiVersion = trimOrDefault(cfg.getString("community.api-version", DEFAULT_API_VERSION),
                 DEFAULT_API_VERSION);
         String apiBase = sanitizeHttpsUrl(cfg.getString("community.api-base-url", DEFAULT_API_BASE_URL),
@@ -149,12 +160,21 @@ public record VkConfig(
         boolean wallIgnoreAds = cfg.getBoolean("wall.ignore-ads", true);
         boolean wallIgnoreReposts = cfg.getBoolean("wall.ignore-reposts", true);
         int wallPreviewLength = Math.clamp(cfg.getInt("wall.preview-length", 140), 40, 300);
+        // rc.9: по умолчанию стена текстовая, PNG уходят в беседу. Режим photo
+        // остаётся опцией rc.8 и автоматически откатывается на text без user token.
+        String rawPostMode = trim(cfg.getString("wall.post-mode", "text")).toLowerCase(Locale.ROOT);
+        String wallPostMode = "photo".equals(rawPostMode) ? "photo" : "text";
+        String discussLabel = trimOrDefault(cfg.getString("wall.discuss-label", "обсудить"), "обсудить");
+        String discussUrl = sanitizeHttpsUrl(
+                cfg.getString("wall.discuss-url", DEFAULT_DISCUSS_URL), "");
+        boolean chatCardsEnabled = cfg.getBoolean("wall.chat-cards", true);
 
         boolean allowRemoteLogout = cfg.getBoolean("security.allow-remote-logout", true);
         boolean allowRemoteFreeze = cfg.getBoolean("security.allow-remote-freeze", true);
 
         return new VkConfig(
-                enabled, groupId, communityUrl, wikiUrl, accessToken, apiVersion, apiBase,
+                enabled, groupId, communityUrl, wikiUrl, accessToken, photoAccessToken,
+                apiVersion, apiBase,
                 keyboardsEnabled, inlineSecurityButtons,
                 longPollEnabled, waitSeconds, reconnectSeconds,
                 codeLength, codeTtlSeconds, cooldownSeconds, maxAccountsPerVk,
@@ -166,7 +186,8 @@ public record VkConfig(
                 groupChatBatchWindowMs, groupChatRelayJoinQuit, groupChatVkCooldownSeconds,
                 groupChatMaxLength, groupChatMcBadge, groupChatVkFormat,
                 announceWallPosts, wallPollMinutes, wallIgnorePinned, wallIgnoreAds, wallIgnoreReposts,
-                wallPreviewLength, allowRemoteLogout, allowRemoteFreeze,
+                wallPreviewLength, wallPostMode, discussLabel, discussUrl, chatCardsEnabled,
+                allowRemoteLogout, allowRemoteFreeze,
                 cfg.getBoolean("onboarding.enabled", true),
                 Math.clamp(cfg.getInt("onboarding.interval-seconds", 180), 60, 3600),
                 cfg.getLong("onboarding.peer-id", 0) >= MIN_CONVERSATION_PEER_ID ? cfg.getLong("onboarding.peer-id") : 0,
@@ -177,6 +198,47 @@ public record VkConfig(
     /** Готов ли клиент к обращениям в VK API (заданы и group-id, и токен сообщества). */
     public boolean apiConfigured() {
         return enabled && groupId > 0L && !accessToken.isEmpty();
+    }
+
+    /**
+     * Готов ли контур постеров к загрузке PNG: помимо ключа сообщества задан
+     * отдельный пользовательский ключ администратора для {@code photos.*}.
+     * Без него VK возвращает {@code error 27} на
+     * {@code photos.getWallUploadServer} при group auth.
+     */
+    public boolean photoPublishConfigured() {
+        return apiConfigured() && !photoAccessToken.isEmpty();
+    }
+
+    /**
+     * Включён ли режим PNG на стене: только {@code wall.post-mode: photo} +
+     * заданный {@code community.photo-user-token}. Без пользовательского ключа
+     * даже режим photo автоматически работает как text, а не отключает постеры.
+     */
+    public boolean photoWallEnabled() {
+        return "photo".equalsIgnoreCase(wallPostMode) && photoPublishConfigured();
+    }
+
+    /** По умолчанию true: стена получает текст, беседа — PNG-карточку. */
+    public boolean textOnlyWall() {
+        return !photoWallEnabled();
+    }
+
+    /** Строка «обсудить — https://…» или пусто, если ссылка отключена. */
+    public String discussLine() {
+        if (discussUrl == null || discussUrl.isEmpty()) {
+            return "";
+        }
+        return discussLabel + " — " + discussUrl;
+    }
+
+    /** Добавляет подпись «обсудить» к тексту поста стены. */
+    public String withDiscuss(String text) {
+        String line = discussLine();
+        if (line.isEmpty() || text == null) {
+            return text;
+        }
+        return text + "\n\n" + line;
     }
 
     /** Прямая ссылка на запись стены сообщества ВКонтакте. */

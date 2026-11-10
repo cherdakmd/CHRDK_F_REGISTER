@@ -3,6 +3,7 @@ package ru.cherdakmd.diamondshop;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
+import ru.cherdakmd.chrdkregister.ConfigUpgrader;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
@@ -20,16 +21,29 @@ import java.util.List;
 public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.event.Listener {
 
     private volatile ChrdkRegisterApi coreApi;
+    private volatile ru.cherdakmd.chrdkskills.ChrdkSkillsApi skillsApi;
     private volatile ShopService shopService;
     private ShopStore store;
     private ShopGui gui;
     private ShopQuantityGui quantities;
+    private ShopAdminGui adminGui;
+    private ShopOverrides overrides;
+    /** Прогресс дневных акций живёт отдельным файлом и переживает /shopadmin reload. */
+    private ShopPromoStore promoStore;
     private ForgeShopPrices forgePrices;
     private ForgeShopService forgeShop;
     private ForgeShopGui forgeShopGui;
     public ShopQuantityGui quantities(){return quantities;}
+    public ShopAdminGui shopAdminGui(){return adminGui;}
+    public ShopOverrides overrides(){return overrides;}
     public ForgeShopService forgeShop(){return forgeShop;}
     public ForgeShopGui forgeShopGui(){return forgeShopGui;}
+    /** Принять черновик GUI: записать shop-overrides.json и перечитать каталог. */
+    public void applyOverrides(ShopOverrides draft) {
+        overrides.replaceWith(draft);
+        overrides.save();
+        reloadShopConfig();
+    }
     private volatile Messages messages;
     private BukkitTask saveTask;
     private BukkitTask historyTask;
@@ -41,15 +55,18 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
         try { if(ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<29) throw new IllegalStateException("Нужен Core API 29+"); }
         catch(Exception e) { getLogger().severe("Магазин выключен: нужен актуальный CHRDK_Core API 29+"); Bukkit.getPluginManager().disablePlugin(this); return; }
         saveDefaultConfig();
+        ConfigUpgrader.apply(this);
         ShopCatalogMigration.apply(this);
         reloadShopConfig(); // stores первичную инициализацию всех сервисов
 
         Bukkit.getPluginManager().registerEvents(this,this);
         recoveryTask=Bukkit.getScheduler().runTaskTimer(this,()->shopService.recoverPending(),1L,20L);
         this.gui = new ShopGui(this);
+        this.adminGui = new ShopAdminGui(this);
         this.quantities=new ShopQuantityGui(this);
         getServer().getPluginManager().registerEvents(quantities,this);
         Bukkit.getPluginManager().registerEvents(gui, this);
+        Bukkit.getPluginManager().registerEvents(adminGui, this);
         Bukkit.getPluginManager().registerEvents(forgeShopGui, this);
 
         ShopCommandHandler commands = new ShopCommandHandler(this);
@@ -95,6 +112,7 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
     @Override
     public void onDisable() {
         if (gui != null) gui.closeAll();
+        if (adminGui != null) adminGui.closeAll();
         if(recoveryTask!=null) { recoveryTask.cancel(); recoveryTask=null; }
         if (migrationTask != null) { migrationTask.cancel(); migrationTask = null; }
         if (saveTask != null) {
@@ -114,15 +132,26 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
     /** Перечитывает config.yml/messages.yml и пересоздаёт сервис магазина. */
     public void reloadShopConfig() {
         if (gui != null) gui.closeAll();
+        if (adminGui != null) adminGui.closeAll();
         reloadConfig();
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
+        this.skillsApi = Bukkit.getServicesManager().load(
+                ru.cherdakmd.chrdkskills.ChrdkSkillsApi.class);
+        // Перечитываем файл при каждом reload: владелец мог поправить его вручную.
+        this.overrides = ShopOverrides.load(getDataFolder().toPath(), getLogger());
         if (this.store == null) {
             this.store = new ShopStore(getDataFolder().toPath(), getLogger());
             this.store.load();
         }
-        ShopConfig.ShopConfigData data = ShopConfig.parse(getConfig(), getLogger());
-        this.shopService = new ShopService(data, store, this::coreApi);
+        ShopConfig.ShopConfigData data = ShopConfig.parse(getConfig(), getLogger(), overrides);
+        if (this.promoStore == null) {
+            this.promoStore = new ShopPromoStore(getDataFolder().toPath(), getLogger());
+            this.promoStore.load();
+        }
+        ShopPromoConfig.Settings promoSettings = ShopPromoConfig.from(getConfig(), data, getLogger());
+        ShopPromoService promos = new ShopPromoService(promoSettings, promoStore);
+        this.shopService = new ShopService(data, store, this::coreApi, this::skillsApi, promos);
         this.forgePrices = ForgeShopPrices.parse(getConfig(), getLogger());
         if (this.forgeShopGui == null) this.forgeShopGui = new ForgeShopGui(this);
         this.forgeShop = new ForgeShopService(this, forgePrices);
@@ -131,6 +160,11 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
     /** API ядра; {@code null}, если основной плагин не загружен (очередь загрузки). */
     public ChrdkRegisterApi coreApi() {
         return coreApi;
+    }
+
+    /** Мягкий API CHRDK_Skills; {@code null}, если аддон не установлен. */
+    public ru.cherdakmd.chrdkskills.ChrdkSkillsApi skillsApi() {
+        return skillsApi;
     }
 
     public ShopService shopService() {

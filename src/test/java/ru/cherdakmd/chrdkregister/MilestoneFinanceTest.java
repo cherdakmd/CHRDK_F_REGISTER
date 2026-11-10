@@ -24,6 +24,7 @@ class MilestoneFinanceTest {
         public boolean available() { return available&&bank.available(); }
         public boolean registered(String s,UUID l) { return bank.incomeSourceAvailable(s,l); }
         public boolean register(String s,UUID l) { return bank.registerIncomeSource(s,l); }
+        public UUID lineage(String s) { return bank.incomeSourceLineage(s); }
         public boolean known(UUID id) { return known; }
         public long credited(String s,UUID l,UUID id) { return bank.creditedEntitlement(s,l,id.toString(),id); }
         public boolean credit(String s,UUID l,UUID id,long total) { return bank.creditEntitlement(s,l,id.toString(),id,total); }
@@ -144,6 +145,38 @@ class MilestoneFinanceTest {
         assertThrows(IOException.class,()->new MilestoneStore(dir,"achievements-awards"));
         assertThrows(IllegalArgumentException.class,()->MilestoneAwards.deliver(s,new Gateway(b),"achievements-awards",owner,17));
         assertEquals(0,b.balance(owner)); assertEquals(17,load().totals().get(owner));
+    }
+
+    @Test void bankLineageIsAdoptedOnlyBeforeLocalObligationsExist() throws Exception {
+        UUID bankLineage = UUID.randomUUID();
+        var b = bank();
+        assertTrue(b.registerIncomeSource(SOURCE, bankLineage));
+        assertEquals(bankLineage, b.incomeSourceLineage(SOURCE));
+
+        var s = initialized();
+        assertNotEquals(bankLineage, s.lineage());
+        assertFalse(s.registered());
+        assertTrue(s.totals().isEmpty());
+        s.adoptLineage(bankLineage);
+        var adopted = load();
+        assertEquals(bankLineage, adopted.lineage());
+        assertTrue(adopted.registered());
+        adopted.reserve(owner, "level:25", 17);
+        assertTrue(MilestoneAwards.deliver(adopted, new Gateway(bank()), SOURCE, owner, 17));
+        assertEquals(17, bank().balance(owner));
+    }
+
+    @Test void backedObligationsRefuseLineageAdoptionAndDoNotRewriteBank() throws Exception {
+        var s = initialized();
+        s.reserve(owner, "level:25", 17);
+        UUID other = UUID.randomUUID();
+        assertThrows(IllegalStateException.class, () -> s.adoptLineage(other));
+        assertEquals(17, load().totals().get(owner));
+
+        var registered = initialized();
+        registered.markRegistered();
+        assertThrows(IllegalStateException.class, () -> registered.adoptLineage(other));
+        assertTrue(load().registered());
     }
 
 }

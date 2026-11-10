@@ -4,6 +4,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.cherdakmd.chrdkregister.api.ApiAuthStage;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
+import ru.cherdakmd.chrdkregister.api.IncomeSourceLineageProvider;
 
 import java.util.Optional;
 
@@ -11,7 +12,7 @@ import java.util.Optional;
  * Реализация публичного API, регистрируемая в {@code ServicesManager} при включении плагина.
  * Тонкая обёртка над {@link AccessManager}: аддоны видят только стабильный контракт.
  */
-final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
+final class ChrdkRegisterApiImpl implements ChrdkRegisterApi, IncomeSourceLineageProvider {
 
     private final RegisterPlugin plugin;
     private final java.util.Set<String> blocked = java.util.concurrent.ConcurrentHashMap.newKeySet();
@@ -172,6 +173,7 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
     @Override public boolean personalBankAvailable() { return auctionBankReady(); }
     @Override public boolean registerIncomeSource(String source, java.util.UUID lineage) { return auctionBankReady() && bank.registerIncomeSource(source, lineage); }
     @Override public boolean incomeSourceAvailable(String source, java.util.UUID lineage) { return auctionBankReady() && bank.incomeSourceAvailable(source, lineage); }
+    @Override public java.util.UUID incomeSourceLineage(String source) { return auctionBankReady() ? bank.incomeSourceLineage(source) : null; }
     @Override public String shopSaleRemainder(java.util.UUID owner) { return auctionBankReady() ? bank.shopSaleRemainder(owner) : null; }
     @Override public java.util.UUID knownBankPlayer(String name) { return auctionBankReady() ? claimAccount(name) : null; }
     @Override public long creditedEntitlement(String source, java.util.UUID lineage, String key, java.util.UUID owner) {

@@ -42,7 +42,7 @@ class StreamsRemovalTest {
         assertEquals(9, LabelPreferences.Label.values().length);
         var current = yaml("config.yml");
         var items = current.getMapList("server-menu.items");
-        assertEquals(48, items.size());
+        assertEquals(49, items.size());
         assertEquals(3, items.stream().filter(item -> "social".equals(item.get("category"))).count());
         assertFalse(items.stream().anyMatch(item -> RetiredAddons.command(String.valueOf(item.get("command")))
                 || RetiredAddons.plugin(String.valueOf(item.get("plugin")))));
@@ -129,7 +129,7 @@ class StreamsRemovalTest {
         live.set("auto-messages.enabled", false); live.set("auto-messages.interval-seconds", 777);
         var changes = PresentationMigration.replacements(live, List.of(legacy), current);
         assertTrue(changes.containsAll(List.of("server-menu.items", "auto-messages.messages")));
-        assertEquals(3, legacy.getMapList("server-menu.items").size() - current.getMapList("server-menu.items").size(), "два новых просмотра экономики и CHRDK_VK сохранены");
+        assertEquals(2, legacy.getMapList("server-menu.items").size() - current.getMapList("server-menu.items").size(), "два новых просмотра экономики, CHRDK_VK и катастрофы сохранены");
         for (String key : changes) live.set(key, current.get(key));
         assertFalse(live.getBoolean("auto-messages.enabled")); assertEquals(777, live.getInt("auto-messages.interval-seconds"));
         assertTrue(PresentationMigration.replacements(live, List.of(legacy), current).isEmpty());

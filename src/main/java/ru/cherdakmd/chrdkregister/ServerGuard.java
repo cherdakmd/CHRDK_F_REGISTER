@@ -61,7 +61,11 @@ final class ServerGuard implements Listener {
     private final Map<UUID,Session> sessions=new HashMap<>();
     private final Map<Player,Reservation> reservations=new IdentityHashMap<>();
     private final AtomicLong loginRejected=new AtomicLong(), spamKicks=new AtomicLong(),
-            blockedCommands=new AtomicLong(), slotKicks=new AtomicLong(), timeoutKicks=new AtomicLong();
+            blockedCommands=new AtomicLong(), slotKicks=new AtomicLong(), timeoutKicks=new AtomicLong(),
+            auditedAttempts=new AtomicLong(), suppressedAttempts=new AtomicLong();
+    // Квоты попыток запрещённых корней: главный поток, без пароля/аргументов в ключе.
+    private final Map<UUID,GuardRates.Bucket> attemptBuckets=new HashMap<>();
+    private final Consumer<BlockedCommandAttempt> attemptSink;
     private final AtomicLong[] reasons=java.util.stream.Stream.of(GuardRates.Admission.values())
             .map(reason -> new AtomicLong()).toArray(AtomicLong[]::new);
     private final GuardDefense defense;
@@ -77,14 +81,25 @@ final class ServerGuard implements Listener {
     ServerGuard(GuardSettings settings,Supplier<Messages> messages,Predicate<Player> authenticated,
                 Function<String,Command> commands,Supplier<Map<String,String[]>> aliases,
                 Consumer<String> warning,LongSupplier clock,IntSupplier maxPlayers) {
+        this(settings,messages,authenticated,commands,aliases,warning,clock,maxPlayers,attempt -> { });
+    }
+    /** Полная сборка: sink получает только попытки, разрешённые квотой, и пишет их в аудит. */
+    ServerGuard(GuardSettings settings,Supplier<Messages> messages,Predicate<Player> authenticated,
+                Function<String,Command> commands,Supplier<Map<String,String[]>> aliases,
+                Consumer<String> warning,LongSupplier clock,IntSupplier maxPlayers,
+                Consumer<BlockedCommandAttempt> attemptSink) {
         this.messages=messages;this.authenticated=authenticated;this.commands=commands;
         this.aliases=aliases;this.warning=warning;this.clock=clock;this.maxPlayers=maxPlayers;
+        if(attemptSink==null)this.attemptSink=attempt -> { };
+        else this.attemptSink=attemptSink;
         this.settings=settings;lastReport=clock.getAsLong();defense=new GuardDefense(settings,lastReport);
     }
     private Messages messages() { return messages.get(); }
     void reload(GuardSettings settings) {
         long now=clock.getAsLong();defense.configure(settings,now);this.settings=settings;
         sessions.values().forEach(session -> session.reset(settings,now));
+        // Новые лимиты попыток должны действовать сразу, без ожидания перезахода.
+        attemptBuckets.clear();
     }
     private static String address(Player player) {
         var socket=player.getAddress();
@@ -165,8 +180,10 @@ final class ServerGuard implements Listener {
     @EventHandler(priority=EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent event) {
         reservations.remove(event.getPlayer());
-        Session session=sessions.get(event.getPlayer().getUniqueId());
-        if(session!=null && session.player==event.getPlayer())sessions.remove(event.getPlayer().getUniqueId());
+        UUID id=event.getPlayer().getUniqueId();
+        attemptBuckets.remove(id);
+        Session session=sessions.get(id);
+        if(session!=null && session.player==event.getPlayer())sessions.remove(id);
     }
 
     @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=false)
@@ -186,8 +203,21 @@ final class ServerGuard implements Listener {
         }
         if(GuardPolicy.consoleOnly(event.getMessage(),s.consoleOnly(),this::resolve)) {
             blockedCommands.incrementAndGet();
-            if(!event.isCancelled())messages().send(player,"security.console-only");event.setCancelled(true);
+            // Запрет не зависит от OP, ранга, LuckPerms `*` и факта входа: только игроки.
+            boolean notify=attemptAllowed(player,now,s);
+            if(notify && !event.isCancelled())messages().send(player,"security.console-only");
+            event.setCancelled(true);
+            if(notify)attemptSink.accept(new BlockedCommandAttempt(player.getName(),player.getUniqueId(),
+                    GuardPolicy.label(event.getMessage()),address(player)));
         }
+    }
+
+    /** Лимит повторных попыток: команда отменяется всегда, чат/аудит/алерт — только по квоте. */
+    private boolean attemptAllowed(Player player,long now,GuardSettings s) {
+        GuardRates.Bucket bucket=attemptBuckets.computeIfAbsent(player.getUniqueId(),
+                id -> new GuardRates.Bucket(s.blockedAttemptBurst(),s.blockedAttemptsPerSecond(),now));
+        if(!bucket.take(now)) { suppressedAttempts.incrementAndGet();return false; }
+        auditedAttempts.incrementAndGet();return true;
     }
     private GuardPolicy.Target resolve(String root) {
         Command command=commands.apply(root);
@@ -216,6 +246,7 @@ final class ServerGuard implements Listener {
             waiting.add(session);
         }
         sessions.keySet().removeIf(id -> !connected.contains(id));
+        attemptBuckets.keySet().removeIf(id -> !connected.contains(id));
         waiting.sort(Comparator.comparing((Session session)->!session.returning).thenComparingLong(session->session.unauthSince));
         int pending=0, ordinary=0, limit=pendingLimit(authed);Map<String,Integer> perIp=new HashMap<>();
         for(Session session:waiting) {
@@ -236,6 +267,7 @@ final class ServerGuard implements Listener {
             if(total!=reported || snapshot.attack()!=reportedAttack)
                 warning.accept("Защита CHRDK: повышенный режим="+snapshot.attack()+", отказов за интервал="+(total-reported)
                         +", входы="+loginRejected.get()+", спам="+spamKicks.get()+", команды="+blockedCommands.get()
+                        +", аудит="+auditedAttempts.get()+", подавлено="+suppressedAttempts.get()
                         +", слоты="+slotKicks.get()+", таймауты="+timeoutKicks.get()+" (с запуска)");
             lastReport=now;reported=total;reportedAttack=snapshot.attack();
         }
@@ -250,6 +282,7 @@ final class ServerGuard implements Listener {
         int effective=pendingLimit(authed);
         messages().send(sender,"security.status","enabled",s.enabled(),"addresses",snapshot.addresses(),
                 "logins",loginRejected.get(),"spam",spamKicks.get(),"blocked",blockedCommands.get(),
+                "audited",auditedAttempts.get(),"suppressed",suppressedAttempts.get(),
                 "slots",slotKicks.get(),"timeouts",timeoutKicks.get());
         messages().send(sender,"security.defense-status","attack",snapshot.attack(),"history",snapshot.history(),
                 "cooling",snapshot.cooling(),"reservations",reservations.size(),"ip",reasons[GuardRates.Admission.IP_RATE.ordinal()].get(),

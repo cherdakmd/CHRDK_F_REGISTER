@@ -3,10 +3,14 @@ package ru.cherdakmd.chrdkskills;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Logger;
 
@@ -28,6 +32,15 @@ public final class SkillsConfig {
     public record Milestone(int level, int diamonds) {
     }
 
+    /** Дефолты баланса престижа: база 2, аддитивка по рангу, стоп с 8. */
+    public static final int DEFAULT_BALANCE_BASE_MAX_LEAD = 2;
+    public static final List<Integer> DEFAULT_BALANCE_RANK_MAX_LEAD =
+            List.of(0, 1, 1, 2, 2, 3);
+    public static final int DEFAULT_BALANCE_HARD_CAP = 8;
+    public static final double DEFAULT_BALANCE_SOFT_STEP = 0.25;
+    public static final double DEFAULT_BALANCE_MIN_XP_FACTOR = 0.25;
+    public static final int DEFAULT_BALANCE_NOTICE_SECONDS = 5;
+
     private final boolean enabled;
     private final boolean abilitiesEnabled, abilitiesHud;
     private final boolean announce;
@@ -43,13 +56,38 @@ public final class SkillsConfig {
     private final long placedBlockTtlSeconds;
     private final int placedBlockMaxEntries;
     private final int leaderboardSize;
+    private final boolean prestigeEnabled;
+    private final double prestigeXpPerStep;
+    private final double prestigePerkPerStep;
+    private final int prestigeDiamondsPerStep;
+    private final boolean prestigeAnnounceTiers;
+    /** 1.5.2: баланс прокачки — база + ранг, мягкая зона и жёсткий потолок. */
+    private final boolean prestigeBalanceEnabled;
+    private final int prestigeBalanceBaseMaxLead;
+    private final List<Integer> prestigeBalanceRankMaxLead;
+    private final int prestigeBalanceHardCap;
+    private final double prestigeBalanceSoftStep;
+    private final double prestigeBalanceMinXpFactor;
+    private final int prestigeBalanceNoticeSeconds;
+    private final DiamondDrops.Settings diamonds;
+    private final DiamondCapMath.Settings diamondCap;
+    private final Set<String> excludedDropMaterials;
 
     private SkillsConfig(boolean enabled, boolean announce, boolean actionbar, boolean sounds,
                          boolean countCreative, int refreshTicks, SkillCurve.Params curve,
                          double xpRate, long maxXpPerAction,
                          Map<SkillType, SkillSettings> skills,
                          Map<Integer, Milestone> milestones, long placedBlockTtlSeconds,
-                         int placedBlockMaxEntries, int leaderboardSize, boolean abilitiesEnabled, boolean abilitiesHud) {
+                         int placedBlockMaxEntries, int leaderboardSize, boolean abilitiesEnabled,
+                         boolean abilitiesHud, boolean prestigeEnabled,
+                         double prestigeXpPerStep, double prestigePerkPerStep,
+                         int prestigeDiamondsPerStep, boolean prestigeAnnounceTiers,
+                         boolean prestigeBalanceEnabled, int prestigeBalanceBaseMaxLead,
+                         List<Integer> prestigeBalanceRankMaxLead, int prestigeBalanceHardCap,
+                         double prestigeBalanceSoftStep, double prestigeBalanceMinXpFactor,
+                         int prestigeBalanceNoticeSeconds,
+                         DiamondDrops.Settings diamonds, DiamondCapMath.Settings diamondCap,
+                         Set<String> excludedDropMaterials) {
         this.abilitiesEnabled = abilitiesEnabled;
         this.abilitiesHud = abilitiesHud;
         this.enabled = enabled;
@@ -66,6 +104,21 @@ public final class SkillsConfig {
         this.placedBlockTtlSeconds = placedBlockTtlSeconds;
         this.placedBlockMaxEntries = placedBlockMaxEntries;
         this.leaderboardSize = leaderboardSize;
+        this.prestigeEnabled = prestigeEnabled;
+        this.prestigeXpPerStep = prestigeXpPerStep;
+        this.prestigePerkPerStep = prestigePerkPerStep;
+        this.prestigeDiamondsPerStep = prestigeDiamondsPerStep;
+        this.prestigeAnnounceTiers = prestigeAnnounceTiers;
+        this.prestigeBalanceEnabled = prestigeBalanceEnabled;
+        this.prestigeBalanceBaseMaxLead = prestigeBalanceBaseMaxLead;
+        this.prestigeBalanceRankMaxLead = List.copyOf(prestigeBalanceRankMaxLead);
+        this.prestigeBalanceHardCap = prestigeBalanceHardCap;
+        this.prestigeBalanceSoftStep = prestigeBalanceSoftStep;
+        this.prestigeBalanceMinXpFactor = prestigeBalanceMinXpFactor;
+        this.prestigeBalanceNoticeSeconds = prestigeBalanceNoticeSeconds;
+        this.diamonds = diamonds;
+        this.diamondCap = diamondCap;
+        this.excludedDropMaterials = excludedDropMaterials;
     }
 
     public static SkillsConfig parse(FileConfiguration cfg, Logger logger) {
@@ -129,10 +182,92 @@ public final class SkillsConfig {
         int maxEntries = (int) clamp(cfg.getLong("limits.placed-block-max", 20_000L), 64L, 1_000_000L);
         int leaderboard = (int) clamp(cfg.getLong("limits.leaderboard-size", 10L), 3L, 50L);
 
+        DiamondDrops.Settings defaults = DiamondDrops.Settings.DEFAULT;
+        DiamondDrops.Settings diamonds = new DiamondDrops.Settings(
+                cfg.getBoolean("diamonds.enabled", defaults.enabled()),
+                cfg.getDouble("diamonds.base-chance", defaults.baseChance()),
+                cfg.getDouble("diamonds.level-chance-bonus", defaults.levelChanceBonus()),
+                cfg.getDouble("diamonds.rank-chance-per-level", defaults.rankChancePerLevel()),
+                cfg.getDouble("diamonds.rank-xp-chance-bonus", defaults.rankXpChanceBonus()),
+                cfg.getDouble("diamonds.prestige-chance", defaults.prestigeChance()),
+                cfg.getDouble("diamonds.max-chance", defaults.maxChance()),
+                cfg.getInt("diamonds.base-amount", defaults.baseAmount()),
+                cfg.getInt("diamonds.level-amount-bonus", defaults.levelAmountBonus()),
+                cfg.getInt("diamonds.prestige-amount-bonus", defaults.prestigeAmountBonus()),
+                cfg.getInt("diamonds.max-amount", defaults.maxAmount()),
+                cfg.getInt("diamonds.daily-cap", defaults.dailyCap()),
+                cfg.getDouble("diamonds.mob-chance-factor", defaults.mobChanceFactor()),
+                cfg.getInt("diamonds.mob-amount-bonus", defaults.mobAmountBonus()));
+        Set<String> excluded = new java.util.LinkedHashSet<>();
+        for (String raw : cfg.getStringList("diamonds.excluded-materials")) {
+            if (raw != null && !raw.isBlank()) {
+                excluded.add(raw.trim().toUpperCase(Locale.ROOT));
+            }
+        }
+        if (excluded.isEmpty()) {
+            excluded.add("DIAMOND_ORE");
+            excluded.add("DEEPSLATE_DIAMOND_ORE");
+        }
+
+        DiamondCapMath.Settings capDefaults = DiamondCapMath.Settings.DEFAULT;
+        DiamondCapMath.Settings diamondCap = new DiamondCapMath.Settings(
+                cfg.getInt("diamonds.cap.per-rank-level", capDefaults.perRankLevel()),
+                cfg.getInt("diamonds.cap.per-rank-xp-percent", capDefaults.perRankXpPercent()),
+                cfg.getInt("diamonds.cap.per-rank-drop-percent", capDefaults.perRankDropPercent()),
+                cfg.getInt("diamonds.cap.per-rank-extra-skill", capDefaults.perRankExtraSkill()),
+                cfg.getInt("diamonds.cap.per-prestige", capDefaults.perPrestige()),
+                cfg.getInt("diamonds.cap.per-ten-levels", capDefaults.perTenLevels()),
+                cfg.getInt("diamonds.cap.pass-bonus", capDefaults.passBonus()),
+                cfg.getInt("diamonds.cap.reward-boost-bonus", capDefaults.boostBonus()),
+                cfg.getInt("diamonds.cap.entitlement-bonus", capDefaults.entitlementBonus()),
+                cfg.getString("diamonds.cap.entitlement-id", capDefaults.entitlementId()),
+                cfg.getInt("diamonds.cap.max", capDefaults.max()));
+
+        // Баланс престижа: новый ключ base-max-lead, старый max-lead остаётся
+        // фолбэком для владельческих config.yml (аддитивная миграция без bump
+        // схемы). Штатный 0 из rc.6 — это прежний строгий паритет, а не особая
+        // правка владельца: он НЕ отменяет новую базу 2, иначе обновление JAR
+        // не амнистировало бы профиль с отрывом 2. Ослабший (>0) старый порог
+        // сохраняем как фолбэк, чтобы чужая настройка не перезаписывалась.
+        long legacyMaxLead = cfg.getLong("prestige.balance.max-lead",
+                DEFAULT_BALANCE_BASE_MAX_LEAD);
+        long baseFallback = legacyMaxLead > 0 ? legacyMaxLead : DEFAULT_BALANCE_BASE_MAX_LEAD;
+        int balanceBase = PrestigeXpGate.clampLead((int) clamp(
+                cfg.getLong("prestige.balance.base-max-lead", baseFallback),
+                0L, (long) PrestigeMath.MAX_PER_SKILL));
+        List<Integer> rankMaxLead = parseRankMaxLead(
+                cfg.getIntegerList("prestige.balance.rank-max-lead"));
+        int balanceHardCap = (int) clamp(
+                cfg.getLong("prestige.balance.hard-cap", DEFAULT_BALANCE_HARD_CAP),
+                1L, (long) PrestigeMath.MAX_PER_SKILL);
+        double balanceSoftStep = clamp(cfg.getDouble("prestige.balance.soft-step",
+                DEFAULT_BALANCE_SOFT_STEP), 0.0, 1.0);
+        double balanceMinFactor = clamp(cfg.getDouble("prestige.balance.min-xp-factor",
+                DEFAULT_BALANCE_MIN_XP_FACTOR), 0.0, 1.0);
+        // 60 секунд были штатным кулдауном ЧАТА в rc.6. Теперь ключ управляет
+        // actionbar и по умолчанию равен 5; владельческие значения, отличные от
+        // старого штатного, сохраняются. Иначе смена JAR оставила бы полосу раз
+        // в минуту, хотя чат больше не повторяется.
+        long noticeRaw = cfg.getLong("prestige.balance.notice-seconds",
+                DEFAULT_BALANCE_NOTICE_SECONDS);
+        if (noticeRaw == 60L) {
+            noticeRaw = DEFAULT_BALANCE_NOTICE_SECONDS;
+        }
+        int balanceNotice = (int) clamp(noticeRaw, 1L, 3600L);
+
         return new SkillsConfig(enabled, announce, actionbar, sounds, countCreative,
                 refreshTicks, curve, xpRate, maxXp,
                 skills, Collections.unmodifiableMap(milestones), ttl, maxEntries, leaderboard,
-                cfg.getBoolean("abilities.enabled", true), cfg.getBoolean("abilities.hud", true));
+                cfg.getBoolean("abilities.enabled", true), cfg.getBoolean("abilities.hud", true),
+                cfg.getBoolean("prestige.enabled", true),
+                clamp(cfg.getDouble("prestige.xp-per-step", 0.03), 0.0, 0.10),
+                clamp(cfg.getDouble("prestige.perk-per-step", 0.01), 0.0, 0.05),
+                (int) clamp(cfg.getLong("prestige.diamonds-per-step", 4L), 0L, 32L),
+                cfg.getBoolean("prestige.announce-tiers", true),
+                cfg.getBoolean("prestige.balance.enabled", true),
+                balanceBase, rankMaxLead, balanceHardCap, balanceSoftStep, balanceMinFactor,
+                balanceNotice, diamonds, diamondCap,
+                Collections.unmodifiableSet(excluded));
     }
 
     /** Значения опыта по умолчанию — те же, что в config.yml. */
@@ -232,6 +367,98 @@ public final class SkillsConfig {
 
     public int leaderboardSize() {
         return leaderboardSize;
+    }
+
+    /** Добровольный сброс навыка после 100-го уровня. */
+    public boolean prestigeEnabled() {
+        return prestigeEnabled;
+    }
+
+    /** Прибавка к множителю опыта за каждую ступень престижа навыка. */
+    public double prestigeXpPerStep() {
+        return prestigeXpPerStep;
+    }
+
+    /** Прибавка к профильному перку за каждую ступень. */
+    public double prestigePerkPerStep() {
+        return prestigePerkPerStep;
+    }
+
+    /** Физические алмазы за каждую новую ступень. */
+    public int prestigeDiamondsPerStep() {
+        return prestigeDiamondsPerStep;
+    }
+
+    /** Объявлять ли новое звание в общий чат. */
+    public boolean prestigeAnnounceTiers() {
+        return prestigeAnnounceTiers;
+    }
+
+    /** Включён ли баланс прокачки престижа (по умолчанию да). */
+    public boolean prestigeBalanceEnabled() {
+        return prestigeBalanceEnabled;
+    }
+
+    /** База разрешённого отрыва для всех игроков, 0..10. */
+    public int prestigeBalanceBaseMaxLead() {
+        return prestigeBalanceBaseMaxLead;
+    }
+
+    /** Аддитивка разрешённого отрыва по ступеням ранга 0..5 (неизменяемый список). */
+    public List<Integer> prestigeBalanceRankMaxLead() {
+        return prestigeBalanceRankMaxLead;
+    }
+
+    /** Отрыв, начиная с которого опыт останавливается у всех, 1..10. */
+    public int prestigeBalanceHardCap() {
+        return prestigeBalanceHardCap;
+    }
+
+    /** Падение множителя XP за каждую ступень сверх разрешённой, 0..1. */
+    public double prestigeBalanceSoftStep() {
+        return prestigeBalanceSoftStep;
+    }
+
+    /** Пол множителя XP в мягкой зоне, 0..1. */
+    public double prestigeBalanceMinXpFactor() {
+        return prestigeBalanceMinXpFactor;
+    }
+
+    /** Кулдаун actionbar-подсказки, секунды. Чат пишется только при смене состояния. */
+    public int prestigeBalanceNoticeSeconds() {
+        return prestigeBalanceNoticeSeconds;
+    }
+
+    /** Формула физического дропа алмазов (потолки уже закламплены). */
+    public DiamondDrops.Settings diamonds() {
+        return diamonds;
+    }
+
+    /** Коэффициенты персонального дневного лимита (diamonds.cap.*). */
+    public DiamondCapMath.Settings diamondCap() {
+        return diamondCap;
+    }
+
+    /** Материалы блоков, с которых бонусный алмаз не падает. */
+    public Set<String> excludedDropMaterials() {
+        return excludedDropMaterials;
+    }
+
+    /**
+     * Ровно {@link PrestigeXpGate#RANK_LEVELS} значений, индекс = ступень ранга.
+     * Короткий список дополняется дефолтами, лишние элементы отбрасываются,
+     * отрицательные и {@code null} прижимаются к нулю.
+     */
+    private static List<Integer> parseRankMaxLead(List<Integer> raw) {
+        List<Integer> result = new ArrayList<>(DEFAULT_BALANCE_RANK_MAX_LEAD);
+        if (raw == null) {
+            return List.copyOf(result);
+        }
+        for (int index = 0; index < Math.min(raw.size(), PrestigeXpGate.RANK_LEVELS); index++) {
+            Integer value = raw.get(index);
+            result.set(index, PrestigeXpGate.clampLead(value == null ? 0 : value));
+        }
+        return List.copyOf(result);
     }
 
     private static Integer parseInt(String value) {

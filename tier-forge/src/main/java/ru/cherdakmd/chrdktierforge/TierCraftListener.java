@@ -89,7 +89,7 @@ public final class TierCraftListener implements Listener {
                 player.getUniqueId(), result.getType().name(), () -> rollFresh(player, kind));
         if (roll == null) return;
         List<TierProperty> properties = propertyKeeper.preview(player.getUniqueId(),
-                result.getType().name(), () -> plugin.items().rollFor(roll, kind));
+                result.getType().name(), () -> plugin.items().rollFor(roll, kind, result));
         String uid = uidKeeper.preview(player.getUniqueId(), result.getType().name(),
                 () -> TierModifierIds.newUid(random));
         plugin.items().apply(result, roll, properties, uid);
@@ -149,7 +149,7 @@ public final class TierCraftListener implements Listener {
                 ItemKind kind = ItemKind.classify(result.getType().name());
                 String propertyKey = smithPropertyKey(result, tier);
                 preset = propertyKeeper.preview(player.getUniqueId(), propertyKey,
-                        () -> plugin.items().rollFor(snapshot, kind));
+                        () -> plugin.items().rollFor(snapshot, kind, base));
             }
         }
         plugin.items().copyForgeState(base, result);

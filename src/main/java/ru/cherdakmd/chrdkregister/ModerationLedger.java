@@ -23,6 +23,8 @@ import java.util.Map;
 public final class ModerationLedger {
 
     public static final int SCHEMA_VERSION = 1;
+    /** Варны и баны вынесены в players/warns.yml и players/bans.yml. */
+    public static final int PLAYER_DATA_SCHEMA = 1;
     public static final int DEFAULT_WARN_LIMIT = 5;
     /** Журнал в moderation.json не растёт бесконечно; старое уже есть в audit.jsonl. */
     public static final int MAX_JOURNAL = 5000;
@@ -133,6 +135,8 @@ public final class ModerationLedger {
     /** Снимок для Gson: только публичные поля, старые файлы с отсутствующими полями читаются. */
     public static final class State {
         public int version = SCHEMA_VERSION;
+        /** 0 — старый moderation.json с варнами/банами внутри; 1 — данные в players/. */
+        public int playerDataSchema;
         public long nextWarnId = 1L;
         public long nextJournalId = 1L;
         public List<Warn> warns = new ArrayList<>();
@@ -335,6 +339,7 @@ public final class ModerationLedger {
 
     public synchronized State snapshot() {
         State state = new State();
+        state.playerDataSchema = PLAYER_DATA_SCHEMA;
         state.nextWarnId = nextWarnId;
         state.nextJournalId = nextJournalId;
         for (Warn warn : warns) state.warns.add(warn.copy());

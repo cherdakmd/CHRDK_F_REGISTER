@@ -36,6 +36,9 @@ public final class ArtifactLootListener implements Listener {
         if (table == null || table.getKey() == null) {
             return;
         }
+        // Слияние q10: mt:chests/... совпадают с minecraft:chests/... по короткому
+        // имени в ArtifactsConfig, поэтому CHRDK-артефакт добавляется к луту
+        // Mine Treasure, а не заменяет его и не разыгрывается дважды.
         double chance = plugin.config().chestChancePercent(table.getKey().toString());
         if (chance <= 0 || random.nextDouble() * 100.0 >= chance) {
             return;

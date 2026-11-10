@@ -94,6 +94,32 @@ class SocialAccessPolicyTest {
     }
 
     @Test
+    void tabLineHasOneClearStepAndNoCounterAfterLink() {
+        long now = ROLLOUT;
+        long deadline = now + 14 * DAY;
+        assertEquals("<green>✅ ВКонтакте привязан — можно играть</green>",
+                SocialAccessPolicy.tabLine(true, "vk", 0, deadline, now, true, false, false));
+        String linked = SocialAccessPolicy.tabLine(true, "max", now + 30 * DAY,
+                deadline, now, true, false, true);
+        assertEquals("<green>✅ MAX привязан — можно играть</green>", linked);
+        assertFalse(linked.contains("дн."), "после привязки счётчик исчезает полностью");
+        assertFalse(linked.contains("осталось"));
+
+        assertEquals("<yellow>⚠ Привяжите ВКонтакте: /link → код боту. Осталось 14 дн.</yellow>",
+                SocialAccessPolicy.tabLine(false, "", 0, deadline, now, true, false, false));
+        assertEquals("<green>✅ Вход без ВК оплачен: 27 дн. · привязка не нужна</green>",
+                SocialAccessPolicy.tabLine(false, "", now + 27 * DAY, deadline, now, true, false, false));
+        assertEquals("<red>⛔ Вход закрыт: /link → код → бот ВКонтакте</red>",
+                SocialAccessPolicy.tabLine(false, "", 0, now - DAY, now, true, false, false));
+        assertEquals("<yellow>⚠ Аварийный вход: привяжите ВК через /link</yellow>",
+                SocialAccessPolicy.tabLine(false, "", 0, now - DAY, now, true, true, false));
+        assertEquals("<green>✅ Привязка не требуется — можно играть</green>",
+                SocialAccessPolicy.tabLine(false, "", 0, deadline, now, false, false, false));
+        assertEquals("ВКонтакте", SocialAccessPolicy.providerTitle("vk"));
+        assertEquals("MAX", SocialAccessPolicy.providerTitle("max"));
+    }
+
+    @Test
     void unknownDonateModeIsFailClosed() {
         assertEquals(SocialAccessPolicy.MODE_OFF, SocialAccessPolicy.normalizeMode("whatever"));
         assertEquals(SocialAccessPolicy.MODE_OFF, SocialAccessPolicy.normalizeMode(null));

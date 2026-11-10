@@ -17,7 +17,7 @@ import java.util.Map;
 public final class ClaimsAdminCommandHandler implements CommandExecutor, TabCompleter {
 
     private static final List<String> SUBS = List.of("reload", "bypass", "delete", "deleteall",
-            "info", "give", "transfer", "limit", "transferall", "backup", "audit",
+            "info", "give", "transfer", "limit", "chunks", "transferall", "backup", "audit",
             "purge", "rent", "stats", "recovery", "tpfinance", "tprecover", "tpresolve");
 
     private final ClaimsPlugin plugin;
@@ -55,6 +55,7 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
             case "give" -> give(sender, args);
             case "transfer" -> transfer(sender, args);
             case "limit" -> limit(sender, args);
+            case "chunks" -> chunks(sender, args);
             case "transferall" -> transferAll(sender, args);
             case "backup" -> backup(sender, args);
             case "audit" -> audit(sender, args);
@@ -249,6 +250,56 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
         }
     }
 
+    /**
+     * Вечный купленный бонус чанков: просмотр, выдача из shopbuy и админская сверка.
+     * Бонус не имеет срока; отзыв товара в /pass его не снимает.
+     */
+    private void chunks(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            usage(sender);
+            return;
+        }
+        String name = args[1];
+        if (args.length < 3) {
+            plugin.messages().send(sender, "admin-chunks-info",
+                    "name", name,
+                    "bonus", String.valueOf(plugin.store().bonusChunks(name)),
+                    "limit", String.valueOf(plugin.service().limitOf(name)),
+                    "base", String.valueOf(plugin.service().baseLimitOf(name)));
+            return;
+        }
+        String action = args[2].toLowerCase(Locale.ROOT);
+        if (action.equals("сброс") || action.equals("reset") || action.equals("clear")) {
+            int was = plugin.store().bonusChunks(name);
+            plugin.store().setBonusChunks(name, 0);
+            plugin.audit("admin-chunks-reset", sender.getName() + " -> " + name + " was=" + was);
+            plugin.messages().send(sender, "admin-chunks-reset", "name", name,
+                    "was", String.valueOf(was));
+            return;
+        }
+        if (!action.equals("add") && !action.equals("set")) {
+            usage(sender);
+            return;
+        }
+        if (args.length < 4) {
+            usage(sender);
+            return;
+        }
+        Integer value = parseAmount(args[3]);
+        if (value == null || value < 0 || value > 100_000) {
+            plugin.messages().send(sender, "admin-chunks-invalid");
+            return;
+        }
+        int next = action.equals("add")
+                ? plugin.store().addBonusChunks(name, value)
+                : plugin.store().setBonusChunks(name, value);
+        plugin.audit("admin-chunks-" + action,
+                sender.getName() + " -> " + name + " value=" + value + " total=" + next);
+        plugin.messages().send(sender, "admin-chunks-set", "name", name,
+                "bonus", String.valueOf(next),
+                "limit", String.valueOf(plugin.service().limitOf(name)));
+    }
+
     /** Массовая передача приватов и вестей. Личные счета/источники миграции не переназначаются. */
     private void transferAll(CommandSender sender, String[] args) {
         if (args.length < 3) {
@@ -265,9 +316,10 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
         try { summary = plugin.store().transferAll(from, to); }
         catch (IllegalStateException protectedLand) { plugin.messages().send(sender, "finance.transfer-protected"); return; }
         plugin.audit("admin-transferall", sender.getName() + " " + from + " -> " + to
-                + " claims=" + summary.claims() + " treasury=" + summary.treasury());
+                + " claims=" + summary.claims() + " treasury=" + summary.treasury()
+                + " bonusChunks=" + summary.bonusChunks());
         if (summary.claims() == 0 && summary.treasury() == 0
-                && summary.notices() == 0 && !summary.limitMoved()) {
+                && summary.notices() == 0 && !summary.limitMoved() && summary.bonusChunks() == 0) {
             plugin.messages().send(sender, "finance.admin-transferall-none", "name", from);
             return;
         }
@@ -275,7 +327,8 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
                 "from", from, "name", to,
                 "claims", String.valueOf(summary.claims()),
                 "treasury", String.valueOf(summary.treasury()),
-                "notices", String.valueOf(summary.notices()));
+                "notices", String.valueOf(summary.notices()),
+                "bonus", String.valueOf(summary.bonusChunks()));
         String notice = plugin.messages().plain("finance.admin-transferall-received",
                 "from", from,
                 "claims", String.valueOf(summary.claims()),
@@ -484,6 +537,12 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
             return result;
         }
         if (args.length == 3 && args[0].equalsIgnoreCase("limit")) {
+            result.add("сброс");
+            return result;
+        }
+        if (args.length == 3 && args[0].equalsIgnoreCase("chunks")) {
+            result.add("add");
+            result.add("set");
             result.add("сброс");
             return result;
         }

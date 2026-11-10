@@ -46,17 +46,29 @@ final class ForgeAnvilListener implements Listener {
         if (material==ForgeMaterial.ASCEND || material==ForgeMaterial.SEED || material==ForgeMaterial.REPAIR
                 || material==ForgeMaterial.NAME) return List.of("");
         if (left==null || !left.hasItemMeta()) return List.of();
+        // 1.5.2: «Забойщик» не предлагаем, если на предмете уже стоит чара
+        // массовой добычи (veinminer/excavator) — иначе колонна и площадь/жила
+        // складывались бы за один удар.
+        boolean megaMining = hasMegaMiningEnchant(left);
         if (material==ForgeMaterial.TEMPER) return plugin.items().upgradesOf(left).entrySet().stream()
-                .filter(e -> e.getValue()>0 && e.getValue()<e.getKey().maxLevel() && e.getKey().fits(ItemKind.classify(left.getType().name()))).map(e -> e.getKey().id()).sorted().toList();
+                .filter(e -> e.getValue()>0 && e.getValue()<e.getKey().maxLevel() && e.getKey().fits(ItemKind.classify(left.getType().name())))
+                .filter(e -> !megaMining || !MiningCompatPolicy.isColumnMiningUpgrade(e.getKey().id()))
+                .map(e -> e.getKey().id()).sorted().toList();
         if (material==ForgeMaterial.INSCRIBE) {
             var kind=ItemKind.classify(left.getType().name());
             return ForgeUpgrade.ALL.stream().filter(d -> d.fits(kind) && plugin.items().upgradeLevel(left,d.id())==0)
+                    .filter(d -> !megaMining || !MiningCompatPolicy.isColumnMiningUpgrade(d.id()))
                     .map(ForgeUpgrade.Def::id).sorted().toList();
         }
         if (material==ForgeMaterial.REMOVE) return plugin.items().upgradesOf(left).keySet().stream()
                 .map(ForgeUpgrade.Def::id).sorted().toList();
         return plugin.items().propertiesOf(left).stream().map(TierProperty::id).sorted().toList();
     }
+    private boolean hasMegaMiningEnchant(ItemStack left) {
+        var api = plugin.enchantsApi();
+        return api != null && MiningCompatPolicy.hasMegaMining(api.enchantsOf(left));
+    }
+
     private String choiceName(ForgeMaterial material,String id) {
         if (material==ForgeMaterial.ASCEND) return plugin.messages().plain("forge-ascend-action");
         if (material==ForgeMaterial.SEED || material==ForgeMaterial.REPAIR || material==ForgeMaterial.NAME)

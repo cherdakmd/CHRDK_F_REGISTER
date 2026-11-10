@@ -1,0 +1,106 @@
+name: RC6 announcement retry (VK chat)
+
+# Разовая повторная отправка анонса v1.5.2-rc.6 после сбоя загрузчика фото.
+# Тег уже опубликован и пересоздавать его нельзя, поэтому триггер — обычный
+# push в рабочую ветку с маркером [announce-rc6] в сообщении коммита.
+# Workflow из ветки, а не из main; случайный push без маркера ничего не шлёт.
+on:
+  push:
+    branches: ['arena/35241455-chrdk-f-register']
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  announce:
+    name: Retry the v1.5.2-rc.6 announcement in the VK chat
+    if: contains(github.event.head_commit.message, '[announce-rc6]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install renderer and fonts
+        run: |
+          python3 -m pip install -r tools/social/requirements.txt
+          sudo apt-get update -qq
+          sudo apt-get install -y fonts-dejavu-core
+
+      - name: Check the published prerelease and its three assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag='v1.5.2-rc.6'
+          version='1.5.2-rc.6'
+          gh release view "$tag" --json isPrerelease,assets \
+            --jq '"prerelease=\(.isPrerelease), ассетов \(.assets | length)"'
+          for asset in "chrdk-plugins-$version.zip" "chrdk-vk-$version.jar" "chrdk-disasters-$version.jar"; do
+            gh release view "$tag" --json assets --jq '.assets[].name' | grep -Fxq "$asset"
+          done
+          echo 'Все три ассета на месте.'
+
+      - name: Offline preview of the announcement
+        run: |
+          python3 tools/social/prerelease_general.py --check \
+            --tag v1.5.2-rc.6 --version 1.5.2-rc.6
+
+      - name: Publish with the card, then fall back to plain text
+        id: publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PRERELEASE_ANNOUNCE: 'true'
+          VK_NEWS_ACCESS_TOKEN: ${{ secrets.VK_NEWS_ACCESS_TOKEN }}
+          VK_NEWS_GROUP_ID: ${{ vars.VK_NEWS_GROUP_ID }}
+          VK_NEWS_PEER_ID: ${{ vars.VK_NEWS_PEER_ID }}
+        shell: bash
+        run: |
+          set +e
+          for name in VK_NEWS_ACCESS_TOKEN VK_NEWS_GROUP_ID VK_NEWS_PEER_ID GH_TOKEN GITHUB_REPOSITORY PRERELEASE_ANNOUNCE; do
+            if [[ -n "${!name:-}" ]]; then
+              echo "::notice title=RC6 env::$name задано"
+            else
+              echo "::error title=RC6 env::$name ПУСТО"
+            fi
+          done
+          python3 tools/social/prerelease_general.py --publish \
+            --tag v1.5.2-rc.6 --version 1.5.2-rc.6 2>&1 | tee /tmp/rc6-card.log
+          card_rc=${PIPESTATUS[0]}
+          if [[ "$card_rc" -eq 0 ]]; then
+            echo 'Анонс с карточкой отправлен.'; exit 0
+          fi
+          echo "Карточка не ушла (rc=$card_rc), повторяем текстом без загрузчика фото."
+          python3 tools/social/prerelease_general.py --publish --text-only \
+            --tag v1.5.2-rc.6 --version 1.5.2-rc.6 2>&1 | tee /tmp/rc6-text.log
+          text_rc=${PIPESTATUS[0]}
+          if [[ "$text_rc" -eq 0 ]]; then
+            echo 'Анонс отправлен текстом.'; exit 0
+          fi
+          echo "### Причина отказа" >> "$GITHUB_STEP_SUMMARY"
+          tail -n 20 /tmp/rc6-card.log >> "$GITHUB_STEP_SUMMARY"
+          tail -n 20 /tmp/rc6-text.log >> "$GITHUB_STEP_SUMMARY"
+          # Логи job лежат за blob-хранилищем, недоступным из песочницы.
+          # Дублируем причину в annotations: они читаются через api.github.com.
+          tail -n 20 /tmp/rc6-card.log | while IFS= read -r line; do
+            [[ -n "$line" ]] && echo "::error title=RC6 card::$line"
+          done
+          tail -n 20 /tmp/rc6-text.log | while IFS= read -r line; do
+            [[ -n "$line" ]] && echo "::error title=RC6 text::$line"
+          done
+          exit 1
+
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc6-announce-diagnostics-${{ github.sha }}
+          path: /tmp/rc6-*.log
+          if-no-files-found: ignore
+          retention-days: 14

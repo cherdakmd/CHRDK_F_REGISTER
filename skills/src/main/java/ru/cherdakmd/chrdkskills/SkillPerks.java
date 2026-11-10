@@ -39,6 +39,40 @@ public final class SkillPerks {
     }
 
     /**
+     * Считает активные перки вместе с бонусами престижа.
+     *
+     * <p>Престиж добавляет <b>виртуальные</b> прибавки к профильному виду
+     * эффекта каждого навыка — им не нужны	id в {@code messages.yml}, поэтому
+     * в список {@link Active#perks()} они не попадают, а в карту величин
+     * попадают и подхватываются {@link SkillEffects}, двойным дропом и боем.
+     * Сумма по-прежнему клампится: престиж не может дать больше 100 % шанса.</p>
+     */
+    public static Active active(Map<SkillType, Integer> levels,
+                                Map<SkillType, Integer> prestige, double perStep) {
+        Active base = active(levels);
+        if (prestige == null || prestige.isEmpty() || perStep <= 0.0) {
+            return base;
+        }
+        Map<SkillPerk.Kind, Double> sums = new EnumMap<>(SkillPerk.Kind.class);
+        sums.putAll(base.values());
+        for (Map.Entry<SkillType, Integer> entry : prestige.entrySet()) {
+            SkillType skill = entry.getKey();
+            if (skill == null) {
+                continue;
+            }
+            double value = PrestigeMath.perkValue(skill,
+                    entry.getValue() == null ? 0 : entry.getValue(), perStep);
+            if (value > 0.0) {
+                sums.merge(PrestigeMath.perkKind(skill), value, Double::sum);
+            }
+        }
+        Map<SkillPerk.Kind, Double> clamped = new EnumMap<>(SkillPerk.Kind.class);
+        sums.forEach((kind, value) -> clamped.put(kind, kind.percent()
+                ? Math.min(1.0, value) : value));
+        return new Active(Map.copyOf(clamped), base.perks());
+    }
+
+    /**
      * Считает активные перки.
      *
      * @param levels уровни навыков (навык → уровень, 1..max)
