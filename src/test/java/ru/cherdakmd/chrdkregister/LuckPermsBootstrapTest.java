@@ -178,6 +178,12 @@ class LuckPermsBootstrapTest {
     }
 
     @Test
+    void moderatorUsesOneDedicatedInheritanceNode() {
+        assertEquals("group.moderator", LuckPermsPassSync.groupNodeName(
+                LuckPermsBootstrap.MODERATOR_GROUP));
+    }
+
+    @Test
     void moderatorSocialspyIsAnExplicitOptIn() throws Exception {
         LuckPermsBootstrap.GroupSpec moderator = bootstrap(
                 "integrations:\n  lp-moderator-socialspy: true\n").scheme().stream()
