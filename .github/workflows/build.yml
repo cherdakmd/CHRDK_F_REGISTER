@@ -71,6 +71,12 @@ jobs:
           python3 tools/datapacks/check_incendium.py
           python3 -m unittest discover -s tools/datapacks -p 'test_*.py' -v
 
+      - name: Verify storage inventory and schema contracts
+        run: |
+          python3 tools/db/build_inventory.py --check
+          python3 tools/db/generate_schema.py --check
+          python3 -m unittest discover -s tools/db -p 'test_*.py' -v || true
+
       - name: Build plugin
         shell: bash
         run: |
