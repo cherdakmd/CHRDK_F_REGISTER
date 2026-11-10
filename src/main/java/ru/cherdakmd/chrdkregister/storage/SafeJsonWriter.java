@@ -8,6 +8,8 @@ import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import java.nio.channels.FileChannel;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
@@ -84,8 +86,12 @@ public final class SafeJsonWriter {
                     if (parent != null) {
                         Files.createDirectories(parent);
                     }
-                    try (Writer writer = Files.newBufferedWriter(temp, StandardCharsets.UTF_8)) {
+                    try (FileChannel channel = FileChannel.open(temp, StandardOpenOption.CREATE,
+                            StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
+                         Writer writer = java.nio.channels.Channels.newWriter(channel, StandardCharsets.UTF_8)) {
                         writer.write(content);
+                        writer.flush();
+                        channel.force(true);
                     }
                     move(temp, target);
                     reportRecovered(slot, target, logger, tag);
@@ -132,6 +138,7 @@ public final class SafeJsonWriter {
         } catch (AtomicMoveNotSupportedException exception) {
             Files.move(from, to, StandardCopyOption.REPLACE_EXISTING);
         }
+        BackupArchive.forceDirectory(to.toAbsolutePath().getParent());
     }
 
     /** Пауза перед повтором; {@code false} — поток прервали, повторять нельзя. */

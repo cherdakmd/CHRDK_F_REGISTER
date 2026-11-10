@@ -1377,6 +1377,19 @@ storage:
   backup-count: 14
   # Делать бэкап при запуске сервера
   backup-on-start: true
+  snapshots:
+    # Проверяемые ZIP-снимки состояния всех CHRDK_* (отдельно от legacy gzip аккаунтов).
+    enabled: true
+    # Первый снимок через 10 секунд после запуска Core, следующие — по расписанию.
+    on-start: true
+    interval-minutes: 60
+    # Хранятся самые свежие N снимков плюс один за каждый из N дней и N недель.
+    keep-hourly: 6
+    keep-daily: 14
+    keep-weekly: 8
+    # Путь: plugins/CHRDK_Core/backups/snapshots/. Архивы содержат хэши паролей и TOTP:
+    # хранить приватно, копировать вне сервера; конфиги, токены, логи и кэши не включаются.
+    # Восстановление всего ZIP — только на остановленном сервере, см. tools/backup/restore_chrdk_backup.py.
 
 audit:
   # Вести журнал событий (аудит) в папке audit/ в формате JSONL

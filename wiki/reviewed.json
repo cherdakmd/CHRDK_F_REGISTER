@@ -1,198 +1,198 @@
 {
   "pages": {
     "about": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "0dd7ca1e3d0aff73fc48ea7b19b23c58b2b92fded557b5b5e348137b2207fa50",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "ac0e1d2a1b7d383cd135130bc5d1a0ffa2af53b6eff1eb07033778538bd2c019",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "a0d9f061f356ee352398cea0b017386ed3e3e506bf45361d6096635be833e665",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "0f0a3209a6a8d6cf759d2833c63c9a9912059c00d01bf4c0fca454b456e8510a",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "5781df729df8c40dd2a80739126ae927d4d30404d64abc4739989ce584903429",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "16b49a412d42aaecd137bd80ecfcc342e2f4f7b49ecf8ccf90f1cb8a73acac22",
       "text": "fcdffb1098428fac2bd42d1c4acb73bb9a024d1823d5398b8845bb2f415a506f"
     },
     "auction": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "af73f66f25c5ef761b2443ada83f9f26c314aa26d45254c9d607039c07b07e70",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "103e28a5e223bf98c564a6fc23d4017eeecb2e2a2ef6c3c37f9c4271bccd83fa",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "292a4c92d95cabf2d0216d4811fcdd19e54064c50cc2378ba7561f5a9235a53a",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "5a77dc010c0198cb54d1849f09e458a18ec079f5c2b4c7a56fb27141c94c798b",
       "text": "f368077b5f1961a1982957afe3b8523b60c8330f3dfd1891003d01ea1c4fd6db"
     },
     "chat": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "0dd7ca1e3d0aff73fc48ea7b19b23c58b2b92fded557b5b5e348137b2207fa50",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "ac0e1d2a1b7d383cd135130bc5d1a0ffa2af53b6eff1eb07033778538bd2c019",
       "text": "ca6c93fc33fca52eecc7d38744bc86f619ea0b6a7bcc2314b84ca6c5399d8a1c"
     },
     "claims": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "d44c3b77c90e40d7f908c3e749ec6b5dfd1a10bc1b434c2fa63c75b75b5c63b2",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "f0006e1eb1c61a51380798a0a7c5fb1e11e3be1ba52839fc899616a8f60e6fe1",
       "text": "3144ca61235b895be5cb61e6d120d5dc6d6d0d7c26f87819431b4756659e8e12"
     },
     "classes": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "59436c6d13a4d7cdab23ee4f45eef6d654af950821b8f57aed2c81ae99d3937a",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "f873bf891d2f290a6867683ef139d863799f7b0d50708e6ae756601401dd80cf",
       "text": "fdebe780b6e7964249b5c4bc4752908cbdd67722e4d4bb0a4b1f64d94cd15ea1"
     },
     "commands": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "86c5c1dfcc38bc40db4ddd427035b586a5c2eb4190855ed7975c90608fcce70a",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "7ca454ecb016b138de0b0871dccfc78de76dbcf443a854e0aa284885b553289a",
       "text": "13b15e747e5e4aa93ff7ed9ce580f47e2c7952f5f319b46c6e854fc3eaec3252"
     },
     "cosmetics": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "85c06803df3bf10e7281f7c75d20d98aa8d2a94192eba54ed010a96b93d9c24a",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "c91cbb2f4c01da5ac86776be039d5e67d418d9d95595b8764ee9441a1ee894a8",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "798775b4bd1e3c5c1d275ea9263b1c57aa24bc5f5b324abf1926c705028237c5",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "782145b8094a61ba182b7d5e64bd6a7eafc63b441a942604cbb98808ab484abf",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "disasters": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "a912d161101ba6b0833bb215ff3d720a231da947c44b94c9784253b8e7539c9a",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "3f96f53a65c29f24d8d52ba8dbcff4335f93c0567c0790722d52e6982669ee2a",
       "text": "dd99cd1f21290668ef4d7c8ead28497aa0f50dc4ffd34ee6d8e9f02a0d013d9b"
     },
     "economy": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "b1c71fc93d1bcde07f3c0bbb5865736bb81df528ba35b0dce61a7a79bf677b14",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "890eb636eb55fe05cbe97b54c32e2b6e48ffd93a2407a24341a527f7414681f3",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "0ca242e7dca2bb2261012b80eb90739a979217a27134ab38a06534d314a80344",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "df2ae6c14f843433e8cb15151a2d304e33af9512ac36e50e18ba6a118b35c0ae",
       "text": "c9b27cd4a4970ad227e240e742adc52dca1533312ec7b590663add3b164ba1a2"
     },
     "faq": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "7899fa6edeb1fa42a05fdbbf7703ae25ac3fa1e487f2a998d38aae4fe21b224e",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "4b727949668868ccbafb01eb2f2e88869523c4a19c0d0c461e947cfb21234517",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "164fc834366df74d1f85d0a3b7153f081be1196768e31f28070995884f290b2d",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "89dd0b5a64c81b0e72090079f44b2d4a873fac26c6f3fc2c3e6d379d46288c01",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "d44c3b77c90e40d7f908c3e749ec6b5dfd1a10bc1b434c2fa63c75b75b5c63b2",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "f0006e1eb1c61a51380798a0a7c5fb1e11e3be1ba52839fc899616a8f60e6fe1",
       "text": "e166f2671aabcdf55ecf59d1465ddb19a36343f6d07983eb8b8821b3a63cce34"
     },
     "honors": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "0dd7ca1e3d0aff73fc48ea7b19b23c58b2b92fded557b5b5e348137b2207fa50",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "ac0e1d2a1b7d383cd135130bc5d1a0ffa2af53b6eff1eb07033778538bd2c019",
       "text": "6bc29d5a2d7783845f8b3d9b085e85982faec5b3029d841092386f36b1d4c4b0"
     },
     "hunt": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "950cf742b42d71a53358c8a4b9df8bd50d3fc392616ae5b1347fe08313fcb2e8",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "ac18d889a6fc275f4ecc4201593913ebca90b722f726ef1c77ce4aadc7a44198",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "ad7367a616b9fde2a8555bfd9da18606928ed33d870b4b29dced9d293c1004d4",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "ce648feebbd61d594c6880cb165cdec21ac26f71994cfc1d2dd71b0503a00d9a",
       "text": "6a3b9fedc0d15e6ef23ae50e7bf41cdf79f9efcc79299101944c041b5c2d9222"
     },
     "menu": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "47251ae80d76eed21dfd8e4f36576a96569235bb22bad7b46c21c93b75cf26a4",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "53944c3a1b49c3409377bcf9940c9f574bd08e97eb1d4dc879807a15298cc569",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "moderation": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "0dd7ca1e3d0aff73fc48ea7b19b23c58b2b92fded557b5b5e348137b2207fa50",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "ac0e1d2a1b7d383cd135130bc5d1a0ffa2af53b6eff1eb07033778538bd2c019",
       "text": "a9f52f2bf3c79afd26856ce422e010dce30f6e3e403343623d465c766ccb5f60"
     },
     "orders": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "6a1b6a78657685bbe08dc8093236800ce5b02536bdb33a8855e01492aa7907ef",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "8a0ba87226f80e55da64f822c82d2b231709fadb56101b501ebf7025c4b21af5",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "perktree": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "59436c6d13a4d7cdab23ee4f45eef6d654af950821b8f57aed2c81ae99d3937a",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "f873bf891d2f290a6867683ef139d863799f7b0d50708e6ae756601401dd80cf",
       "text": "148006c785c6f0e5adf6725d87605f5e508b957636fdac87ea64939e7bd63b79"
     },
     "pets": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "d9e601658a2d5d464b0bb9ccb4281853a5192edb8618340d035d5b7e38a2f6b1",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "0b3778048eb7693d9c1aca534167cdbed2320b9ff4ae47ded8f5f958ff6c481d",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "820db6a4e77366e0461b5a5cae73afebbba35e668d3c549cad0edfae0d94a54a",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "ee1a0861d502f4e871aed89cc48e10fed54a535012c1efd6195fb7f6f73d0a6d",
       "text": "13e6d38670572890ab2567279a5ca76f8e353eab6ade09a877eee2e884c6e272"
     },
     "profile": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "451aba8cf762c9ec0a7bb639b8c2219b855d4e42e01eefed5e1c6274c3862bc4",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "432813c5a934110e771f5fd827465609f338bfff19ffc613051cdae37fc701f5",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "545fdc18b404fbfc1438fa39eb6e49e7dbce712afaf93c89394ff107b8f9890d",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "8bcbc63d4c70dbbcbbd0d642b151c2929f1e4aa0d3286e229ab1e5dd44fddb61",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "a558c4ac5cf99b32de2b180728e09c3ea8700e4250f4687978d04314b30b3994",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "4b71590cd7a202ce33cf59e2f33f5f5fde162d606b2f505da1ac538b4cd07284",
       "text": "b551d73e8dcc85c81ff7c908f7c89e1ebfb441b46d082a6a714124d77bfbb2c2"
     },
     "shop": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "ad7367a616b9fde2a8555bfd9da18606928ed33d870b4b29dced9d293c1004d4",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "ce648feebbd61d594c6880cb165cdec21ac26f71994cfc1d2dd71b0503a00d9a",
       "text": "ea26b94a87ea9b7287d9afad8fe96c8633ed8cc92e9fb091369ebd814b3a86a6"
     },
     "skills": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "d11656e575258385153e87a615bfaf6f4bb855e16579846390c86bef04759c54",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "87dea0f2451102184b275074abd022eb2af824bdb0b5c87c8a9f828a4985c94b",
       "text": "2cbe0faac3c272b71b3eb81fb78f5051b9eaa58e4ff682276af2c6bbdf74a98b"
     },
     "social-link": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "2b6d308035b508c9da87ce16bd305215e6fa1bbd9b2f139dabfdcc91354a684c",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "523d8255fe58798cf6ab044ff0c7fd1c02ad6ca22e29d5b5dab28648561e063e",
       "text": "1f6cf95d9c8c2180dbf871aa9b19a7bfcde5405cf77b75954b7575920d2aef14"
     },
     "start": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "f94c6cb980eccc10362d1918710b44df2ef40141b18e1a5398064dbc1213fb4a",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "d44e3e0e5544ca0eb20f50385888b668f8a20316f5fcddb2d6805713e5ec2cf0",
       "text": "c2835fdf2d1945079115e6a252d472ce72ad9ad79f4ed47ad58e269b467d595f"
     },
     "starter-kit": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "5781df729df8c40dd2a80739126ae927d4d30404d64abc4739989ce584903429",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "16b49a412d42aaecd137bd80ecfcc342e2f4f7b49ecf8ccf90f1cb8a73acac22",
       "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
     },
     "teleports": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "abb7e8c3c0c332554e7c197fad0519d38f0ef15c3f4bff027a40b936a28c8fea",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "c4c8ea32af2ae0001c05d95f7d908f9455fc5eb8cd84b40b8957f53fff3a24d2",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "0ca242e7dca2bb2261012b80eb90739a979217a27134ab38a06534d314a80344",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "df2ae6c14f843433e8cb15151a2d304e33af9512ac36e50e18ba6a118b35c0ae",
       "text": "8bfa7eee45f251d4f571e67782e4e245c8a0c9faf55062068f625f72771dc03c"
     },
     "titles": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "dc5689f32d32f3e790f7ca5170b4671f13d40768a106edb16ad91eacfa001262",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "82b8ed54c9527d0760030076a7431bd379d6e88964f46b89ec78dab24f80746a",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Сверен накопительный стабильный 1.5.2-fix: все RC, состав ассетов, миграции и откат",
-      "sources": "ad7367a616b9fde2a8555bfd9da18606928ed33d870b4b29dced9d293c1004d4",
-      "text": "3d07ff83bd1c8c02d2f22a608a0301e21d09014c4c7ace84807a4a08e6398ca5"
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "ce648feebbd61d594c6880cb165cdec21ac26f71994cfc1d2dd71b0503a00d9a",
+      "text": "acab27748d7c58b1b9a17a67c3c2c6c175b1fa5a779c94fc7034c1a7e0aa4d74"
     },
     "vk": {
-      "reason": "Сверен общий пререлиз 1.5.2-rc.11: импорт legacy VK, read-only fallback, синхронизация unlink и lineage guard",
-      "sources": "2b6d308035b508c9da87ce16bd305215e6fa1bbd9b2f139dabfdcc91354a684c",
+      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
+      "sources": "523d8255fe58798cf6ab044ff0c7fd1c02ad6ca22e29d5b5dab28648561e063e",
       "text": "b592e465a73dd13186763622b51190400cffd40960e233f58c63379b88a9bba9"
     }
   },
