@@ -103,7 +103,7 @@ class BackupArchiveTest {
         Path unknown = third.resolveSibling("custom.chrdk.zip");
         Files.copy(third, unknown);
         Path latest = service().create("fourth", Instant.parse("2026-11-10T11:00:00Z"), retention);
-        assertEquals(3, service().list().size());
+        assertEquals(3, service().list().size(), service().list().toString());
         assertTrue(Files.exists(latest));
         assertTrue(Files.exists(second));
         assertTrue(Files.exists(unknown));
