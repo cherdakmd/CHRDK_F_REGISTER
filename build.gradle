@@ -2,6 +2,16 @@ plugins {
     id 'java'
 }
 
+// Одинаковые исходники должны давать побайтово сравнимые архивы независимо
+// от времени сборки и порядка обхода файловой системы. Настройка общая для
+// ядра и всех аддонов, включая тестовые/дополнительные archive tasks.
+allprojects {
+    tasks.withType(AbstractArchiveTask).configureEach {
+        preserveFileTimestamps = false
+        reproducibleFileOrder = true
+    }
+}
+
 group = project.maven_group
 version = project.plugin_version
 base {
