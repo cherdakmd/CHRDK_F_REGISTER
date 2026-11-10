@@ -22,7 +22,7 @@ jobs:
       - shell: bash
         run: |
           cat > /tmp/test-events.gradle <<'EOF'
-          allprojects { tasks.withType(Test).configureEach { testLogging { events 'started', 'passed', 'failed', 'skipped' } } }
+          gradle.projectsEvaluated { allprojects { tasks.withType(Test).configureEach { testLogging { events 'started', 'passed', 'failed', 'skipped' } } } }
           EOF
           set -o pipefail
           set +e
