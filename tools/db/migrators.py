@@ -347,10 +347,119 @@ def normalize_social_players(content: bytes, path: Path, cursor, batch: str, nam
     return rows
 
 
+def normalize_moderation(content: bytes, path: Path, cursor, batch: str, namespace: str) -> int:
+    """Parse moderation.json/players/warns.yml/bans.yml → chrdk_moderation_global/sanction.
+
+    moderation.json: global settings, warns/bans counters.
+    players/*.yml: per-player sanctions.
+    """
+    if path.name.endswith(".yml"):
+        if yaml is None:
+            raise RuntimeError("PyYAML not installed")
+        data = yaml.safe_load(content.decode("utf-8"))
+        if not isinstance(data, dict):
+            raise ValueError(f"{path.name} is not a dict")
+        rows = 0
+        sanction_kind = "warn" if "warns" in path.name else "ban"
+        for uuid, sanction in data.items():
+            if not isinstance(sanction, dict):
+                continue
+            sanction_id = f"{uuid}:{sanction_kind}:{sanction.get('issuedAt', 0)}"
+            cursor.execute(
+                "INSERT INTO chrdk_sanction (id, uuid, kind, payload, "
+                "namespace, source_path, source_sha256, batch) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s) "
+                "ON DUPLICATE KEY UPDATE kind = VALUES(kind), payload = VALUES(payload), "
+                "source_path = VALUES(source_path), source_sha256 = VALUES(source_sha256), "
+                "batch = VALUES(batch)",
+                (sanction_id.encode(), uuid.encode(), sanction_kind.encode(),
+                 json.dumps(sanction).encode(),
+                 namespace.encode(), str(path).encode(), b'\x00' * 32, batch),
+            )
+            rows += 1
+        return rows
+    else:
+        # moderation.json
+        data = json.loads(content.decode("utf-8"))
+        cursor.execute(
+            "INSERT INTO chrdk_moderation_global (id, payload, "
+            "namespace, source_path, source_sha256, batch) "
+            "VALUES (%s, %s, %s, %s, %s, %s) "
+            "ON DUPLICATE KEY UPDATE payload = VALUES(payload), "
+            "source_path = VALUES(source_path), source_sha256 = VALUES(source_sha256), "
+            "batch = VALUES(batch)",
+            ("global".encode(), json.dumps(data).encode(),
+             namespace.encode(), str(path).encode(), b'\x00' * 32, batch),
+        )
+        return 1
+
+
+def normalize_exploration(content: bytes, path: Path, cursor, batch: str, namespace: str) -> int:
+    """Parse exploration.json → chrdk_exploration.
+
+    Schema: Map<uuid, ExplorationProgress>.
+    """
+    data = json.loads(content.decode("utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError(f"{path.name} is not a dict")
+
+    rows = 0
+    for uuid, progress in data.items():
+        if not isinstance(progress, dict):
+            continue
+        cursor.execute(
+            "INSERT INTO chrdk_exploration (uuid, payload, "
+            "namespace, source_path, source_sha256, batch) "
+            "VALUES (%s, %s, %s, %s, %s, %s) "
+            "ON DUPLICATE KEY UPDATE payload = VALUES(payload), "
+            "source_path = VALUES(source_path), source_sha256 = VALUES(source_sha256), "
+            "batch = VALUES(batch)",
+            (uuid.encode(), json.dumps(progress).encode(),
+             namespace.encode(), str(path).encode(), b'\x00' * 32, batch),
+        )
+        rows += 1
+    return rows
+
+
+def auth_reset(content: bytes, path: Path, cursor, batch: str, namespace: str) -> int:
+    """Parse vk-second-factor.json → chrdk_auth_reset.
+
+    Schema: Map<uuid, AuthResetRequest>.
+    """
+    data = json.loads(content.decode("utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError(f"{path.name} is not a dict")
+
+    rows = 0
+    for uuid, request in data.items():
+        if not isinstance(request, dict):
+            continue
+        cursor.execute(
+            "INSERT INTO chrdk_auth_reset (uuid, reason, issued_by, code_hash, "
+            "expires_at_ms, used_at_ms, payload, "
+            "namespace, source_path, source_sha256, batch) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "ON DUPLICATE KEY UPDATE reason = VALUES(reason), issued_by = VALUES(issued_by), "
+            "expires_at_ms = VALUES(expires_at_ms), payload = VALUES(payload), "
+            "source_path = VALUES(source_path), source_sha256 = VALUES(source_sha256), "
+            "batch = VALUES(batch)",
+            (uuid.encode(), request.get("reason", "manual").encode(),
+             request.get("issuedBy", "admin").encode(), None,
+             request.get("expiresAt", 0), request.get("usedAt", 0),
+             json.dumps(request).encode(),
+             namespace.encode(), str(path).encode(), b'\x00' * 32, batch),
+        )
+        rows += 1
+    return rows
+
+
 # Strategy registry
 STRATEGIES = {
     "normalized_player": normalize_player,
     "normalized_finance": normalize_finance,
     "normalized_social": normalize_social,
     "normalized_social_players": normalize_social_players,
+    "normalized_moderation": normalize_moderation,
+    "normalized_exploration": normalize_exploration,
+    "auth_reset": auth_reset,
 }

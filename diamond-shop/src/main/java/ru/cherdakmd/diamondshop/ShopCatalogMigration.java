@@ -2,6 +2,8 @@ package ru.cherdakmd.diamondshop;
 
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
+import ru.cherdakmd.chrdkregister.storage.ChrdkStorageFileSystem;
+
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -24,7 +26,14 @@ final class ShopCatalogMigration {
             fresh.load(new InputStreamReader(latest,StandardCharsets.UTF_8));
             var prior = new YamlConfiguration();
             prior.load(new InputStreamReader(previous,StandardCharsets.UTF_8));
-            live.load(file.toFile()); // Строгий parse: повреждённый YAML не перезаписываем.
+            // DB-aware: StoragePath materializes в temp, поэтому читаем content и парсим из Reader
+            if (file instanceof ChrdkStorageFileSystem.StoragePath) {
+                String content = Files.readString(file, StandardCharsets.UTF_8);
+                YamlConfiguration loaded = YamlConfiguration.loadConfiguration(new StringReader(content));
+                live.set("items", loaded.get("items"));
+            } else {
+                live.load(file.toFile()); // Строгий parse: повреждённый YAML не перезаписываем.
+            }
             if (!shouldUpgrade(live,legacy,fresh) && !shouldUpgrade(live,prior,fresh)) {
                 if (!Objects.equals(live.get("items"),fresh.get("items")))
                     plugin.getLogger().info("Базовые записи пользовательского каталога сохранены. Тариф покупки pricing.purchase-multipliers применяется отдельно; новые товары при необходимости перенесите из config.yml внутри JAR.");
@@ -34,7 +43,13 @@ final class ShopCatalogMigration {
             Files.copy(file,backup); // Сначала успешная резервная копия, затем изменение.
             live.set("items",fresh.get("items"));
             Path temp = file.resolveSibling("config-catalog.tmp");
-            live.save(temp.toFile());
+            // DB-aware: StoragePath.save(temp.toFile()) не пишет обратно в БД, поэтому используем saveToString
+            if (file instanceof ChrdkStorageFileSystem.StoragePath) {
+                String yamlContent = live.saveToString();
+                Files.writeString(temp, yamlContent, StandardCharsets.UTF_8);
+            } else {
+                live.save(temp.toFile());
+            }
             try { Files.move(temp,file,StandardCopyOption.ATOMIC_MOVE,StandardCopyOption.REPLACE_EXISTING); }
             catch (AtomicMoveNotSupportedException e) { Files.move(temp,file,StandardCopyOption.REPLACE_EXISTING); }
             plugin.reloadConfig();
