@@ -29,8 +29,7 @@ final class ShopCatalogMigration {
             // DB-aware: StoragePath materializes в temp, поэтому читаем content и парсим из Reader
             if (file instanceof ChrdkStorageFileSystem.StoragePath) {
                 String content = Files.readString(file, StandardCharsets.UTF_8);
-                YamlConfiguration loaded = YamlConfiguration.loadConfiguration(new StringReader(content));
-                live.set("items", loaded.get("items"));
+                live = YamlConfiguration.loadConfiguration(new StringReader(content));
             } else {
                 live.load(file.toFile()); // Строгий parse: повреждённый YAML не перезаписываем.
             }
