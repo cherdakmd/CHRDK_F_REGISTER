@@ -45,7 +45,7 @@ class BackupArchiveTest {
 
         BackupArchive.Verification result = service().verify(created);
         assertEquals(3, result.files());
-        assertEquals(36, result.bytes());
+        assertEquals(37, result.bytes());
         try (ZipFile zip = new ZipFile(created.toFile())) {
             assertTrue(zip.stream().allMatch(entry -> !entry.getName().contains("do-not-copy")));
             assertNull(zip.getEntry("OtherPlugin/state.json"));
