@@ -30,7 +30,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             List.of("add", "remove", "check", "unregister", "reset2fa", "status", "tabcheck", "reload",
                     "pending", "donations", "health", "approve", "reject", "sessions", "logoutall", "stats", "doctor", "audit",
                     "backup", "gift", "testpay", "testpay-live", "shoppay", "recheck", "donationsgui",
-                    "luckperms", "update", "shopbuy", "shoprevoke", "shopgift");
+                    "luckperms", "moderator", "update", "shopbuy", "shoprevoke", "shopgift");
     private static final List<String> MUTE_DURATIONS = List.of("10m", "30m", "1h", "6h", "1d", "7d");
     private static final List<String> TWO_FACTOR_SUBCOMMANDS =
             List.of("setup", "confirm", "disable", "status", "cancel", "qr");
@@ -756,7 +756,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 return true;
             }
             case "luckperms" -> {
-                // Авто-настройка LuckPerms по схеме CHRDK: default → <pass-group> → admin
+                // Авто-настройка LuckPerms: default, <pass-group>, moderator и admin
                 String action = args.length > 1 ? args[1].toLowerCase(Locale.ROOT) : "status";
                 LuckPermsBootstrap bootstrap = accessManager.luckPermsBootstrap();
                 if (!bootstrap.available()) {
@@ -812,6 +812,10 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                     }
                     default -> messages.send(sender, "usage.pass-luckperms", "label", label);
                 }
+                return true;
+            }
+            case "moderator" -> {
+                handleModerator(sender, label, args);
                 return true;
             }
             case "recheck" -> {
@@ -949,6 +953,52 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 sendAdminHelp(sender, label);
                 return true;
             }
+        }
+    }
+
+    /** Единая роль Core + LP-группа; фактическую синхронизацию выполняет ModerationService. */
+    private void handleModerator(CommandSender sender, String label, String[] args) {
+        String action = args.length > 1 ? args[1].toLowerCase(Locale.ROOT) : "list";
+        if ("list".equals(action)) {
+            List<String> names = plugin.moderation().ledger().moderators().stream()
+                    .map(entry -> entry.name).sorted(String.CASE_INSENSITIVE_ORDER).toList();
+            messages.send(sender, "moderator.list", "players",
+                    names.isEmpty() ? messages.plain("moderator.list-empty") : String.join(", ", names));
+            return;
+        }
+        if (("status".equals(action) || "add".equals(action) || "remove".equals(action))
+                && args.length < 3) {
+            messages.send(sender, "usage.pass-moderator", "label", label);
+            return;
+        }
+        switch (action) {
+            case "add" -> plugin.moderation().addModerator(sender, args[2]);
+            case "remove" -> plugin.moderation().removeModerator(sender, args[2]);
+            case "status" -> {
+                String target = args[2];
+                messages.send(sender, "moderator.status-core", "player", target,
+                        "state", messages.plain(plugin.moderation().ledger().isModerator(target)
+                                ? "moderator.state-yes" : "moderator.state-no"));
+                LuckPermsBootstrap bootstrap = accessManager.luckPermsBootstrap();
+                if (!bootstrap.available()) {
+                    messages.send(sender, "lp.unavailable");
+                    return;
+                }
+                plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () ->
+                        bootstrap.hasModeratorGroup(target).whenComplete((present, error) ->
+                                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                                    if (error != null) {
+                                        messages.send(sender, "lp.setup-fail", "error",
+                                                error.getMessage() == null ? "unknown" : error.getMessage());
+                                        return;
+                                    }
+                                    messages.send(sender, "moderator.status-lp", "player", target,
+                                            "group", LuckPermsBootstrap.MODERATOR_GROUP,
+                                            "state", messages.plain(present
+                                                    ? "moderator.state-yes" : "moderator.state-no"));
+                                })));
+            }
+            default -> messages.send(sender, "usage.pass-moderator", "label", label);
         }
     }
 
@@ -1866,6 +1916,11 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             if ("backup".equals(sub)) {
                 return List.of("create", "list", "verify", "legacy", "restore");
             }
+            if ("moderator".equals(sub)) {
+                String prefix = args[1].toLowerCase(Locale.ROOT);
+                return List.of("add", "remove", "list", "status").stream()
+                        .filter(value -> value.startsWith(prefix)).toList();
+            }
             if ("update".equals(sub)) {
                 String prefix = args[1].toLowerCase(Locale.ROOT);
                 return (canDownloadUpdates(sender) ? List.of("check", "download") : List.of("check"))
@@ -1879,6 +1934,9 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         if (args.length == 3) {
             String sub = args[0].toLowerCase(Locale.ROOT);
             String action = args[1].toLowerCase(Locale.ROOT);
+            if ("moderator".equals(sub) && List.of("add", "remove", "status").contains(action)) {
+                return completePlayerNames(args[2]);
+            }
             if ("shopbuy".equals(sub) || "shoprevoke".equals(sub) || "shopgift".equals(sub)) {
                 String prefix = args[2].toLowerCase(Locale.ROOT);
                 return plugin.shop().catalog().ids().stream()

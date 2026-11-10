@@ -82,8 +82,8 @@ class LuckPermsHookLifecycleTest {
         assertSame(api, hooks.luckPerms().orElseThrow());
         assertTrue(bootstrap.available());
         List<LuckPermsBootstrap.GroupStatus> statuses = bootstrap.status().join();
-        assertEquals(List.of("default", "pass", "admin"), loaded);
-        assertEquals(3, statuses.size());
+        assertEquals(List.of("default", "pass", "moderator", "admin"), loaded);
+        assertEquals(4, statuses.size());
         assertTrue(statuses.stream().noneMatch(LuckPermsBootstrap.GroupStatus::exists));
     }
 
@@ -98,7 +98,7 @@ class LuckPermsHookLifecycleTest {
         hooks.resolve();
         assertTrue(bootstrap.available());
         assertSame(api, hooks.luckPerms().orElseThrow());
-        assertEquals(3, bootstrap.status().join().size());
+        assertEquals(4, bootstrap.status().join().size());
         registration.set(null);
         hooks.resolve();
         assertFalse(bootstrap.available());

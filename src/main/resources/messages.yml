@@ -107,7 +107,8 @@ messages:
     "pass-shoprevoke": "<yellow>Использование: /%label% shoprevoke <ник> <товар> — снять товар и его группу.</yellow>"
     "pass-shopgift": "<yellow>Использование: /%label% shopgift <ник> <товар> [даритель] [payment=номер_платежа] — подарить товар каталога.</yellow>"
     "pass-my": "<yellow>Использование: /%label% my [ник] — активные покупки.</yellow>"
-    "pass-luckperms": "<yellow>Использование: /%label% luckperms [setup|status] — авто-настройка групп LuckPerms (default → ранг → admin) или просмотр схемы.</yellow>"
+    "pass-luckperms": "<yellow>Использование: /%label% luckperms [setup|status] — авто-настройка групп LuckPerms (default, ранг, moderator, admin) или просмотр схемы.</yellow>"
+    "pass-moderator": "<yellow>Использование: /%label% moderator <add|remove|status> <ник> или /%label% moderator list</yellow>"
     "pass-reset2fa": "<yellow>Использование: /%label% reset2fa <ник></yellow>"
     "pass-sessions": "<yellow>Использование: /%label% sessions <ник></yellow>"
     "pass-unregister": "<yellow>Использование: /%label% unregister <ник></yellow>"
@@ -874,13 +875,24 @@ messages:
   # ---------------------------------------------------------------
   "lp":
     "unavailable": "<red>LuckPerms не найден на сервере — авто-настройка групп невозможна.</red>"
-    "setup-start": "<gray>Настраиваю группы LuckPerms по схеме default → ранг → admin…</gray>"
+    "setup-start": "<gray>Настраиваю группы LuckPerms: default, ранг, moderator и admin…</gray>"
     "setup-done": "<green>✓ LuckPerms настроен: группы %groups% (создано: %created%, узлов выставлено: %nodes%).</green>"
     "setup-fail": "<red>Авто-настройка LuckPerms не удалась: %error%</red>"
     "setup-hint-pass": "<yellow>Группа '%group%' создана. Включите авто-выдачу рангов: integrations.pass-group: \"%group%\" в config.yml + /pass reload.</yellow>"
     "status-header": "<gold>=== Группы LuckPerms (схема CHRDK) ===</gold>"
     "status-line": "<gray>- %group%: существует, вес %weight%, прав %perms%</gray>"
     "status-missing": "<yellow>- %group%: НЕ создана — выполните /%label% luckperms setup</yellow>"
+    "moderator-synced": "<green>✓ LuckPerms: группа %group% синхронизирована для %player%.</green>"
+    "moderator-sync-failed": "<red>Роль Core изменена, но LP-группа %group% для %player% не синхронизирована. Повторите команду и проверьте консоль.</red>"
+    "moderator-unavailable": "<yellow>Роль Core для %player% сохранена. LuckPerms недоступен: права группы не изменены.</yellow>"
+
+  moderator:
+    list: "<gold>Модераторы Core:</gold> <gray>%players%</gray>"
+    list-empty: "пусто"
+    status-core: "<gray>%player%: роль Core — %state%</gray>"
+    status-lp: "<gray>%player%: LP-группа %group% — %state%</gray>"
+    state-yes: "<green>есть</green>"
+    state-no: "<red>нет</red>"
 
   # ---------------------------------------------------------------
   # update — Проверка обновлений (секция updates в config.yml)

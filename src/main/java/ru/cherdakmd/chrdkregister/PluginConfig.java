@@ -44,6 +44,8 @@ public final class PluginConfig {
      * его выдаёт только временная группа товара social-day.
      */
     private String lpSocialBypassPermission = "chrdksocial.bypass";
+    /** Добавлять просмотр личных сообщений в LP-группу moderator (по умолчанию выключен). */
+    private boolean lpModeratorSocialspy = false;
     /** Проверять обновления ядра на GitHub (updates.enabled). */
     private boolean updatesEnabled = true;
     /** Репозиторий релизов для проверки обновлений (updates.repo). */
@@ -451,6 +453,7 @@ public final class PluginConfig {
         String bypass = config.getString("integrations.lp-social-bypass-permission", "chrdksocial.bypass");
         parsed.lpSocialBypassPermission = bypass == null || bypass.isBlank()
                 ? "chrdksocial.bypass" : bypass.trim().toLowerCase(java.util.Locale.ROOT);
+        parsed.lpModeratorSocialspy = config.getBoolean("integrations.lp-moderator-socialspy", false);
         parsed.trialEnabled = config.getBoolean("pass.trial.enabled", true);
         parsed.trialDays = Math.max(1, Math.min(365, config.getInt("pass.trial.days", 14)));
         parsed.updatesEnabled = config.getBoolean("updates.enabled", true);
@@ -591,6 +594,11 @@ public final class PluginConfig {
     /** Узел, который запрещено выдавать группам default/admin при авто-настройке LuckPerms. */
     public String lpSocialBypassPermission() {
         return lpSocialBypassPermission;
+    }
+
+    /** Разрешён ли moderator просмотр личных сообщений через /socialspy. */
+    public boolean lpModeratorSocialspy() {
+        return lpModeratorSocialspy;
     }
 
     /** Включена ли фоновая проверка обновлений ядра на GitHub. */

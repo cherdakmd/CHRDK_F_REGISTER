@@ -130,10 +130,13 @@ review: [core, claims, teleports, diamond-shop, tier-forge]
 ## LuckPerms: права и группы
 
 `/pass luckperms setup` (право `chrdkregister.admin`) один раз создаёт схему
-групп: `default` (вес 0), группа проходки `pass` (10), `admin` (100) и
-временные группы товаров каталога — в том числе `social-day` (20) для
-[дневного прохода без ВК](social-link.html). `/pass luckperms status`
+групп: `default` (вес 0), группа проходки `pass` (10), `moderator` (50),
+`admin` (100) и временные группы товаров каталога — в том числе `social-day`
+(20) для [дневного прохода без ВК](social-link.html). `/pass luckperms status`
 показывает вес и число узлов каждой группы; повторный `setup` безопасен.
+`/pass moderator add|remove <ник>` синхронизирует LP-группу и роль Core,
+`status <ник>` проверяет обе, `list` показывает состав. Права социального
+шпиона группа не получает без отдельного opt-in владельца.
 
 Права социального плагина: `chrdksocial.use` — всем, `chrdksocial.admin` —
 администрации, `chrdksocial.bypass` — **только** временной группе `social-day`

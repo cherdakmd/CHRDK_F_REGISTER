@@ -57,7 +57,7 @@ class ForgeMarketContractTest(unittest.TestCase):
         version = re.search(r"^plugin_version=(.+)$", props, re.M)
         self.assertIsNotNone(version, "plugin_version обязателен")
         current = version.group(1).strip()
-        self.assertEqual("1.5.3", current)
+        self.assertEqual("1.5.4", current)
         self.assertRegex(current, r"^1\.5\.\d+(?:-fix)?$", "следующий выпуск остаётся стабильным")
         self.assertTrue((ROOT / "docs/releases" / (current + ".md")).is_file(),
                         "для текущего стабильного fix нужны полные заметки в архиве")

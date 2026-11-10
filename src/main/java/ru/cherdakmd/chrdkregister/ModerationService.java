@@ -280,11 +280,13 @@ public final class ModerationService {
         }
         if (!ledger.addModerator(target, actor.getName(), System.currentTimeMillis())) {
             plugin.messages().send(actor, "admin.role-already", "player", target);
+            syncModeratorGroup(actor, target, true); // исправить старую роль без LP-группы
             return false;
         }
         save();
         audit(AuditLog.MODERATION_ROLE_ADD, actor, target, Map.of());
         plugin.messages().send(actor, "admin.role-added", "player", target, "actor", actor.getName());
+        syncModeratorGroup(actor, target, true);
         return true;
     }
 
@@ -300,12 +302,36 @@ public final class ModerationService {
         String target = ModerationLedger.display(name);
         if (!ledger.removeModerator(target, actor.getName(), System.currentTimeMillis())) {
             plugin.messages().send(actor, "admin.role-missing", "player", target);
+            syncModeratorGroup(actor, target, false); // удалить возможную потерянную LP-группу
             return false;
         }
         save();
         audit(AuditLog.MODERATION_ROLE_REMOVE, actor, target, Map.of());
         plugin.messages().send(actor, "admin.role-removed", "player", target, "actor", actor.getName());
+        syncModeratorGroup(actor, target, false);
         return true;
+    }
+
+    /** Core остаётся работоспособным без LP; при наличии LP результат синхронизации сообщается отдельно. */
+    private void syncModeratorGroup(CommandSender actor, String target, boolean add) {
+        LuckPermsBootstrap bootstrap = plugin.accessManager().luckPermsBootstrap();
+        if (!bootstrap.available()) {
+            plugin.messages().send(actor, "lp.moderator-unavailable", "player", target);
+            return;
+        }
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () ->
+                bootstrap.setModerator(target, add).whenComplete((ignored, error) ->
+                        plugin.getServer().getScheduler().runTask(plugin, () -> {
+                            if (error == null) {
+                                plugin.messages().send(actor, "lp.moderator-synced",
+                                        "player", target, "group", LuckPermsBootstrap.MODERATOR_GROUP);
+                            } else {
+                                plugin.getLogger().warning("Не удалось синхронизировать moderator для "
+                                        + target + ": " + error.getMessage());
+                                plugin.messages().send(actor, "lp.moderator-sync-failed",
+                                        "player", target, "group", LuckPermsBootstrap.MODERATOR_GROUP);
+                            }
+                        })));
     }
 
     /* --------------------- мут, кик и бан по IP ---------------------------- */

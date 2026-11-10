@@ -1219,7 +1219,7 @@ integrations:
   # false = группа выдаётся при любом активном ранге, включая приветственный (старое поведение)
   pass-group-paid-only: true
   # Дополнительные права для группы ранга. Применяются по /pass luckperms setup:
-  # он создаёт/достраивает схему default → <pass-group> → admin (права всех chrdk*-аддонов).
+  # он создаёт/достраивает default, <pass-group>, moderator и admin (права chrdk*-аддонов).
   pass-group-permissions: []
   # Защита служебных команд от обычных игроков при /pass luckperms setup: в группу
   # default выставляются ЯВНЫЕ запреты (/plugins, /version, /timings, /op, /ban,
@@ -1232,6 +1232,10 @@ integrations:
   # при /pass luckperms setup — даже если право зарегистрировано плагином.
   # Смените здесь и в vk/config.yml (social.bypass-permission), если переименовали узел.
   lp-social-bypass-permission: "chrdksocial.bypass"
+  # Группа moderator создаётся /pass luckperms setup: панель, наказания и аудит.
+  # Просмотр личных сообщений /socialspy по умолчанию НЕ входит в её права.
+  # Не добавляйте сюда chrdkregister.admin.moderators: назначать роли может только старший админ.
+  lp-moderator-socialspy: false
 
 auth:
   # Время жизни сессии по IP в минутах (0 = отключить сессию, спрашивать пароль при каждом входе)

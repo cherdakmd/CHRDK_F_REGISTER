@@ -629,6 +629,10 @@ public final class RegisterPlugin extends JavaPlugin {
         return store;
     }
 
+    public AccessManager accessManager() {
+        return accessManager;
+    }
+
     /** Сырые переводы банка для полного профиля в админ-панели. */
     public BankStore bankStore() {
         return bankStore;
