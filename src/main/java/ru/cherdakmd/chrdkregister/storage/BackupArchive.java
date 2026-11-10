@@ -349,7 +349,7 @@ public final class BackupArchive {
         forceDirectory(to.toAbsolutePath().getParent());
     }
 
-    static void forceDirectory(Path directory) {
+    public static void forceDirectory(Path directory) {
         if (directory == null) return;
         try (FileChannel channel = FileChannel.open(directory, StandardOpenOption.READ)) {
             channel.force(true);

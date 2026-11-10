@@ -1,198 +1,198 @@
 {
   "pages": {
     "about": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "ac0e1d2a1b7d383cd135130bc5d1a0ffa2af53b6eff1eb07033778538bd2c019",
+      "reason": "Исправлена видимость fsync-хелпера; страницы и новые backup-правила сверены, игровое поведение не менялось",
+      "sources": "df84199cf0dab08459d9ce481e7ba3dad1dd167787eb5acae4cbc12eaeca0edf",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "0f0a3209a6a8d6cf759d2833c63c9a9912059c00d01bf4c0fca454b456e8510a",
+      "reason": "Сверка 1.5.3: Core API42 и игровые правила аддонов не менялись; общие Core-зависимости учтены",
+      "sources": "e8c5bc5dc47a51fd6c66f376da9d6eab66ca65fc998675d64a946b7672c7a4ac",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "16b49a412d42aaecd137bd80ecfcc342e2f4f7b49ecf8ccf90f1cb8a73acac22",
+      "reason": "Сверка 1.5.3: Core API42 и игровые правила аддонов не менялись; общие Core-зависимости учтены",
+      "sources": "a1113683016ecc3c60399450b153daef3664684498ec068bcff377e069233306",
       "text": "fcdffb1098428fac2bd42d1c4acb73bb9a024d1823d5398b8845bb2f415a506f"
     },
     "auction": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "103e28a5e223bf98c564a6fc23d4017eeecb2e2a2ef6c3c37f9c4271bccd83fa",
+      "reason": "Сверка 1.5.3: Core API42 и игровые правила аддонов не менялись; общие Core-зависимости учтены",
+      "sources": "21e64bcc492363b50cdf3d03be20119c5aedb868fd3de83e833795faac4cd6ca",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "5a77dc010c0198cb54d1849f09e458a18ec079f5c2b4c7a56fb27141c94c798b",
+      "reason": "Сверка 1.5.3: Core API42 и игровые правила аддонов не менялись; общие Core-зависимости учтены",
+      "sources": "d03001a2d1e095e866a2f9e05e88867baf96eac92ab353816c2867be4bdd1723",
       "text": "f368077b5f1961a1982957afe3b8523b60c8330f3dfd1891003d01ea1c4fd6db"
     },
     "chat": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "ac0e1d2a1b7d383cd135130bc5d1a0ffa2af53b6eff1eb07033778538bd2c019",
+      "reason": "Исправлена видимость fsync-хелпера; страницы и новые backup-правила сверены, игровое поведение не менялось",
+      "sources": "df84199cf0dab08459d9ce481e7ba3dad1dd167787eb5acae4cbc12eaeca0edf",
       "text": "ca6c93fc33fca52eecc7d38744bc86f619ea0b6a7bcc2314b84ca6c5399d8a1c"
     },
     "claims": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "f0006e1eb1c61a51380798a0a7c5fb1e11e3be1ba52839fc899616a8f60e6fe1",
+      "reason": "Сверка 1.5.3: Core API42 и игровые правила аддонов не менялись; общие Core-зависимости учтены",
+      "sources": "de40fc0b12479464ee61e9d430396edc53012c07be8385cc02641d30220568d4",
       "text": "3144ca61235b895be5cb61e6d120d5dc6d6d0d7c26f87819431b4756659e8e12"
     },
     "classes": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "f873bf891d2f290a6867683ef139d863799f7b0d50708e6ae756601401dd80cf",
+      "reason": "Сверка 1.5.3: Core API42 и игровые правила аддонов не менялись; общие Core-зависимости учтены",
+      "sources": "1dac1ff91e57f0d5c8af86ecf962730ad7b8c72e5bfb963fe6654ebd92192a4d",
       "text": "fdebe780b6e7964249b5c4bc4752908cbdd67722e4d4bb0a4b1f64d94cd15ea1"
     },
     "commands": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "7ca454ecb016b138de0b0871dccfc78de76dbcf443a854e0aa284885b553289a",
+      "reason": "Исправлена видимость fsync-хелпера; страницы и новые backup-правила сверены, игровое поведение не менялось",
+      "sources": "56cc629aa0740481411b96b496969ef4fde343225fbb6cf3e310d2be0e66092a",
       "text": "13b15e747e5e4aa93ff7ed9ce580f47e2c7952f5f319b46c6e854fc3eaec3252"
     },
     "cosmetics": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "c91cbb2f4c01da5ac86776be039d5e67d418d9d95595b8764ee9441a1ee894a8",
+      "reason": "Сверка 1.5.3: Core API42 и игровые правила аддонов не менялись; общие Core-зависимости учтены",
+      "sources": "41076fae8f4a32d2429df67e3acd0545ec4814a474edf0ada91c9196ec18c402",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "782145b8094a61ba182b7d5e64bd6a7eafc63b441a942604cbb98808ab484abf",
+      "reason": "Сверка 1.5.3: Core API42 и игровые правила аддонов не менялись; общие Core-зависимости учтены",
+      "sources": "b3a7b6a97a01471d0b427c9798ab51f22634756635549d70f57abe54886fcfba",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "disasters": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "3f96f53a65c29f24d8d52ba8dbcff4335f93c0567c0790722d52e6982669ee2a",
+      "reason": "Сверка 1.5.3: Core API42 и игровые правила аддонов не менялись; общие Core-зависимости учтены",
+      "sources": "147d99088dd14729b763ea88283161bf0e108b5aca9a9a1acb993f7033e47a08",
       "text": "dd99cd1f21290668ef4d7c8ead28497aa0f50dc4ffd34ee6d8e9f02a0d013d9b"
     },
     "economy": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "890eb636eb55fe05cbe97b54c32e2b6e48ffd93a2407a24341a527f7414681f3",
+      "reason": "Исправлена видимость fsync-хелпера; страницы и новые backup-правила сверены, игровое поведение не менялось",
+      "sources": "d7c1afcb58ecb26cabb100828c6ea97040fcdfc8d409884c134dac249185d690",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "df2ae6c14f843433e8cb15151a2d304e33af9512ac36e50e18ba6a118b35c0ae",
+      "reason": "Сверка 1.5.3: Core API42 и игровые правила аддонов не менялись; общие Core-зависимости учтены",
+      "sources": "9e810df15ad9dda05f47024969c2bfb44fc27a2399cb13d42b3ec6bfe00b6e71",
       "text": "c9b27cd4a4970ad227e240e742adc52dca1533312ec7b590663add3b164ba1a2"
     },
     "faq": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "4b727949668868ccbafb01eb2f2e88869523c4a19c0d0c461e947cfb21234517",
+      "reason": "Исправлена видимость fsync-хелпера; страницы и новые backup-правила сверены, игровое поведение не менялось",
+      "sources": "abe436713cc5b0dac456504c3c247a308954d72e700a1285fda3ff7a1fc7670b",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "89dd0b5a64c81b0e72090079f44b2d4a873fac26c6f3fc2c3e6d379d46288c01",
+      "reason": "Сверка 1.5.3: Core API42 и игровые правила аддонов не менялись; общие Core-зависимости учтены",
+      "sources": "d886697315759edb5ef62fb9bd8b4d63a1d263625d658c29ffda8eb2f1710857",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "f0006e1eb1c61a51380798a0a7c5fb1e11e3be1ba52839fc899616a8f60e6fe1",
+      "reason": "Сверка 1.5.3: Core API42 и игровые правила аддонов не менялись; общие Core-зависимости учтены",
+      "sources": "de40fc0b12479464ee61e9d430396edc53012c07be8385cc02641d30220568d4",
       "text": "e166f2671aabcdf55ecf59d1465ddb19a36343f6d07983eb8b8821b3a63cce34"
     },
     "honors": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "ac0e1d2a1b7d383cd135130bc5d1a0ffa2af53b6eff1eb07033778538bd2c019",
+      "reason": "Исправлена видимость fsync-хелпера; страницы и новые backup-правила сверены, игровое поведение не менялось",
+      "sources": "df84199cf0dab08459d9ce481e7ba3dad1dd167787eb5acae4cbc12eaeca0edf",
       "text": "6bc29d5a2d7783845f8b3d9b085e85982faec5b3029d841092386f36b1d4c4b0"
     },
     "hunt": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "ac18d889a6fc275f4ecc4201593913ebca90b722f726ef1c77ce4aadc7a44198",
+      "reason": "Сверка 1.5.3: Core API42 и игровые правила аддонов не менялись; общие Core-зависимости учтены",
+      "sources": "31e7e1fe3d175e2c6f530a98d2ce5576d0befc66c97bc56fb60751f377ac17dc",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "ce648feebbd61d594c6880cb165cdec21ac26f71994cfc1d2dd71b0503a00d9a",
+      "reason": "Исправлена видимость fsync-хелпера; страницы и новые backup-правила сверены, игровое поведение не менялось",
+      "sources": "eabfa13bbc3484d1c5f710c86d12cd1eb9b3d4f0d99385b81f5d11622ba4ec2a",
       "text": "6a3b9fedc0d15e6ef23ae50e7bf41cdf79f9efcc79299101944c041b5c2d9222"
     },
     "menu": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "53944c3a1b49c3409377bcf9940c9f574bd08e97eb1d4dc879807a15298cc569",
+      "reason": "Исправлена видимость fsync-хелпера; страницы и новые backup-правила сверены, игровое поведение не менялось",
+      "sources": "1fcb4b1c74c4ad2fdd071758744e8a5d2ad7c9997c8c8bd5687c703403aa2b1a",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "moderation": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "ac0e1d2a1b7d383cd135130bc5d1a0ffa2af53b6eff1eb07033778538bd2c019",
+      "reason": "Исправлена видимость fsync-хелпера; страницы и новые backup-правила сверены, игровое поведение не менялось",
+      "sources": "df84199cf0dab08459d9ce481e7ba3dad1dd167787eb5acae4cbc12eaeca0edf",
       "text": "a9f52f2bf3c79afd26856ce422e010dce30f6e3e403343623d465c766ccb5f60"
     },
     "orders": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "8a0ba87226f80e55da64f822c82d2b231709fadb56101b501ebf7025c4b21af5",
+      "reason": "Сверка 1.5.3: Core API42 и игровые правила аддонов не менялись; общие Core-зависимости учтены",
+      "sources": "97e1e00fc07c5831ebae35bb647fba40776a239eb491ea586bc1e3d33f21c6c4",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "perktree": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "f873bf891d2f290a6867683ef139d863799f7b0d50708e6ae756601401dd80cf",
+      "reason": "Сверка 1.5.3: Core API42 и игровые правила аддонов не менялись; общие Core-зависимости учтены",
+      "sources": "1dac1ff91e57f0d5c8af86ecf962730ad7b8c72e5bfb963fe6654ebd92192a4d",
       "text": "148006c785c6f0e5adf6725d87605f5e508b957636fdac87ea64939e7bd63b79"
     },
     "pets": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "0b3778048eb7693d9c1aca534167cdbed2320b9ff4ae47ded8f5f958ff6c481d",
+      "reason": "Сверка 1.5.3: Core API42 и игровые правила аддонов не менялись; общие Core-зависимости учтены",
+      "sources": "a45df98059359e02c4dae49d48496c482582521fec845a87572768aaedec3469",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "ee1a0861d502f4e871aed89cc48e10fed54a535012c1efd6195fb7f6f73d0a6d",
+      "reason": "Сверка 1.5.3: Core API42 и игровые правила аддонов не менялись; общие Core-зависимости учтены",
+      "sources": "ed98691e713e14f8f2ace5df9b485840f5e35f3ac18c0b677e3f41d4944ec701",
       "text": "13e6d38670572890ab2567279a5ca76f8e353eab6ade09a877eee2e884c6e272"
     },
     "profile": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "432813c5a934110e771f5fd827465609f338bfff19ffc613051cdae37fc701f5",
+      "reason": "Исправлена видимость fsync-хелпера; страницы и новые backup-правила сверены, игровое поведение не менялось",
+      "sources": "b907c3b5b8402120813c5b35b308a24862b9e9bb9e9de9d2b342921708599f84",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "8bcbc63d4c70dbbcbbd0d642b151c2929f1e4aa0d3286e229ab1e5dd44fddb61",
+      "reason": "Сверка 1.5.3: Core API42 и игровые правила аддонов не менялись; общие Core-зависимости учтены",
+      "sources": "7fce193a08874aee53e70c8ced22d9daeb4d32ee5794869d592a0fab71e93ed7",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "4b71590cd7a202ce33cf59e2f33f5f5fde162d606b2f505da1ac538b4cd07284",
+      "reason": "Исправлена видимость fsync-хелпера; страницы и новые backup-правила сверены, игровое поведение не менялось",
+      "sources": "95a5e977249a325d61fd3b6e4304784c55a7c03980096e202f7f5ae9e55bb8ea",
       "text": "b551d73e8dcc85c81ff7c908f7c89e1ebfb441b46d082a6a714124d77bfbb2c2"
     },
     "shop": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "ce648feebbd61d594c6880cb165cdec21ac26f71994cfc1d2dd71b0503a00d9a",
+      "reason": "Сверка 1.5.3: Core API42 и игровые правила аддонов не менялись; общие Core-зависимости учтены",
+      "sources": "eabfa13bbc3484d1c5f710c86d12cd1eb9b3d4f0d99385b81f5d11622ba4ec2a",
       "text": "ea26b94a87ea9b7287d9afad8fe96c8633ed8cc92e9fb091369ebd814b3a86a6"
     },
     "skills": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "87dea0f2451102184b275074abd022eb2af824bdb0b5c87c8a9f828a4985c94b",
+      "reason": "Сверка 1.5.3: Core API42 и игровые правила аддонов не менялись; общие Core-зависимости учтены",
+      "sources": "1503db4cb974cca3748ffb8ad6d73260a76b3386c833e26588de981fc0e22505",
       "text": "2cbe0faac3c272b71b3eb81fb78f5051b9eaa58e4ff682276af2c6bbdf74a98b"
     },
     "social-link": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "523d8255fe58798cf6ab044ff0c7fd1c02ad6ca22e29d5b5dab28648561e063e",
+      "reason": "Сверка 1.5.3: Core API42 и игровые правила аддонов не менялись; общие Core-зависимости учтены",
+      "sources": "a5d62f7586d65f8e8e158d3b7082c0d21ad098ddb16b222e83e15fa7ff40bb7c",
       "text": "1f6cf95d9c8c2180dbf871aa9b19a7bfcde5405cf77b75954b7575920d2aef14"
     },
     "start": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "d44e3e0e5544ca0eb20f50385888b668f8a20316f5fcddb2d6805713e5ec2cf0",
+      "reason": "Исправлена видимость fsync-хелпера; страницы и новые backup-правила сверены, игровое поведение не менялось",
+      "sources": "98f56bdf4b207816edee0486de5df5580063dd08360c00a1843990aa7c5de8c3",
       "text": "c2835fdf2d1945079115e6a252d472ce72ad9ad79f4ed47ad58e269b467d595f"
     },
     "starter-kit": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "16b49a412d42aaecd137bd80ecfcc342e2f4f7b49ecf8ccf90f1cb8a73acac22",
+      "reason": "Сверка 1.5.3: Core API42 и игровые правила аддонов не менялись; общие Core-зависимости учтены",
+      "sources": "a1113683016ecc3c60399450b153daef3664684498ec068bcff377e069233306",
       "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
     },
     "teleports": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "c4c8ea32af2ae0001c05d95f7d908f9455fc5eb8cd84b40b8957f53fff3a24d2",
+      "reason": "Исправлена видимость fsync-хелпера; страницы и новые backup-правила сверены, игровое поведение не менялось",
+      "sources": "fbb900f88cad23ef8b65e1629bd0af94564314363aafe98c987b61cc1d08b52a",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "df2ae6c14f843433e8cb15151a2d304e33af9512ac36e50e18ba6a118b35c0ae",
+      "reason": "Сверка 1.5.3: Core API42 и игровые правила аддонов не менялись; общие Core-зависимости учтены",
+      "sources": "9e810df15ad9dda05f47024969c2bfb44fc27a2399cb13d42b3ec6bfe00b6e71",
       "text": "8bfa7eee45f251d4f571e67782e4e245c8a0c9faf55062068f625f72771dc03c"
     },
     "titles": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "82b8ed54c9527d0760030076a7431bd379d6e88964f46b89ec78dab24f80746a",
+      "reason": "Сверка 1.5.3: Core API42 и игровые правила аддонов не менялись; общие Core-зависимости учтены",
+      "sources": "eb3d1a65d025367359b2f982cdea35def8954de62788fc340429906e9633a8c2",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "ce648feebbd61d594c6880cb165cdec21ac26f71994cfc1d2dd71b0503a00d9a",
+      "reason": "Исправлена видимость fsync-хелпера; страницы и новые backup-правила сверены, игровое поведение не менялось",
+      "sources": "eabfa13bbc3484d1c5f710c86d12cd1eb9b3d4f0d99385b81f5d11622ba4ec2a",
       "text": "acab27748d7c58b1b9a17a67c3c2c6c175b1fa5a779c94fc7034c1a7e0aa4d74"
     },
     "vk": {
-      "reason": "Финальная сверка 1.5.3: новые storage/backup не меняют игровые правила; updates и BACKUP описывают новые команды и ограничения",
-      "sources": "523d8255fe58798cf6ab044ff0c7fd1c02ad6ca22e29d5b5dab28648561e063e",
+      "reason": "Сверка 1.5.3: Core API42 и игровые правила аддонов не менялись; общие Core-зависимости учтены",
+      "sources": "a5d62f7586d65f8e8e158d3b7082c0d21ad098ddb16b222e83e15fa7ff40bb7c",
       "text": "b592e465a73dd13186763622b51190400cffd40960e233f58c63379b88a9bba9"
     }
   },
