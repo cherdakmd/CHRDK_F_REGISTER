@@ -48,6 +48,9 @@ public final class SocialLinkStore {
 
     public record Binding(String provider, long externalId, String externalName, long linkedAt) { }
 
+    /** Историческая привязка из vk-links.json: только чтение, без обратной записи. */
+    public record LegacyVkLink(String playerName, long vkUserId, long linkedAt) { }
+
     /** Глобальная часть состояния: без связей, firstSeen, donors и rewarded. */
     private static final class GlobalDocument {
         int schema = SCHEMA;
@@ -481,6 +484,176 @@ public final class SocialLinkStore {
         playersDirty = true;
         savePlayersNow();
         return LinkStatus.LINKED;
+    }
+
+    /**
+     * Односторонний импорт исторических VK-привязок из vk-links.json в
+     * players/social.yml. vk-links.json не меняется; уже существующие связи,
+     * чужие профили и превышение лимита профиля пропускаются. Перед первой
+     * записью создаётся backup YAML, а битый/замороженный файл не перезаписывается.
+     *
+     * @return сколько связей действительно добавлено
+     */
+    public synchronized int importLegacyVkLinks(List<LegacyVkLink> links, int maxAccountsPerProfile, long now) {
+        if (links == null || links.isEmpty() || loadFailed || playersFrozen) return 0;
+        int limit = Math.max(1, maxAccountsPerProfile);
+        Map<String, Integer> used = new LinkedHashMap<>();
+        for (SocialPlayerStore.Player player : players.players.values()) {
+            if (player == null || player.link == null) continue;
+            String profile = SocialPlayerStore.profileKey(player.link.provider, player.link.externalId);
+            used.merge(profile, 1, Integer::sum);
+        }
+        Map<String, LegacyVkLink> accepted = new LinkedHashMap<>();
+        for (LegacyVkLink link : links) {
+            if (link == null || link.vkUserId() <= 0L) continue;
+            String key = canonical(link.playerName());
+            if (key.isEmpty()) continue;
+            SocialPlayerStore.Player existing = players.player(key, false);
+            if (existing != null && existing.link != null) continue;
+            String profile = SocialPlayerStore.profileKey("vk", link.vkUserId());
+            String owner = players.profiles.get(profile);
+            if (owner != null && !owner.equals(key)) continue;
+            if (used.getOrDefault(profile, 0) >= limit) continue;
+            if (accepted.putIfAbsent(key, link) != null) continue;
+            used.merge(profile, 1, Integer::sum);
+        }
+        if (accepted.isEmpty()) return 0;
+        Path playersFile = playerStore.file();
+        try {
+            if (Files.isRegularFile(playersFile)) {
+                PlayerDataFiles.backup(playersFile, "legacy-vk-import", logger, TAG);
+            }
+        } catch (IOException | RuntimeException failure) {
+            logger.severe(TAG + " Backup players/social.yml перед импортом vk-links.json не создан: "
+                    + failure.getClass().getSimpleName() + ". Импорт пропущен, файл не изменён.");
+            return 0;
+        }
+        SocialPlayerStore.Document candidate = copyPlayers(players);
+        int written = 0;
+        for (Map.Entry<String, LegacyVkLink> entry : accepted.entrySet()) {
+            String key = entry.getKey();
+            LegacyVkLink source = entry.getValue();
+            SocialPlayerStore.Player player = candidate.player(key, true);
+            if (player == null || player.link != null) continue;
+            player.link = new SocialPlayerStore.Link();
+            player.link.provider = "vk";
+            player.link.externalId = source.vkUserId();
+            player.link.externalName = "id" + source.vkUserId();
+            player.link.linkedAt = source.linkedAt() > 0L ? source.linkedAt() : now;
+            candidate.profiles.put(SocialPlayerStore.profileKey("vk", source.vkUserId()), key);
+            written++;
+        }
+        if (written == 0 || !playerStore.save(candidate)) {
+            logger.severe(TAG + " Не удалось записать players/social.yml после импорта vk-links.json.");
+            return 0;
+        }
+        players = candidate;
+        playersDirty = false;
+        logger.info(TAG + " Импортировано исторических VK-привязок в players/social.yml: " + written
+                + "; vk-links.json оставлен без изменений.");
+        return written;
+    }
+
+    /** Сколько уже существующих связей YAML используют этот профиль мессенджера. */
+    public synchronized int profileUsage(String provider, long externalId) {
+        String wanted = SocialPlayerStore.profileKey(provider, externalId);
+        int used = 0;
+        for (SocialPlayerStore.Player player : players.players.values()) {
+            if (player == null || player.link == null) continue;
+            if (wanted.equals(SocialPlayerStore.profileKey(player.link.provider, player.link.externalId))) used++;
+        }
+        return used;
+    }
+
+    /**
+     * Разрешает read-only fallback к vk-links.json только для связей, которые
+     * не конфликтуют с YAML и попадают в лимит профиля. Порядок legacy-связей
+     * детерминирован: при historical-дублях первые N считаются привязанными.
+     */
+    public synchronized boolean legacyVkBindingAllowed(String playerName, long vkUserId,
+                                                        List<LegacyVkLink> allLinks, int maxAccountsPerProfile) {
+        String key = canonical(playerName);
+        if (key.isEmpty() || vkUserId <= 0L || allLinks == null || isLinked(playerName)) return false;
+        String profile = SocialPlayerStore.profileKey("vk", vkUserId);
+        String owner = players.profiles.get(profile);
+        if (owner != null && !owner.equals(key)) return false;
+        int rank = 0;
+        for (LegacyVkLink link : allLinks) {
+            if (link == null || link.vkUserId() != vkUserId) continue;
+            rank++;
+            if (canonical(link.playerName()).equals(key)) break;
+        }
+        return rank > 0
+                && profileUsage("vk", vkUserId) + rank <= Math.max(1, maxAccountsPerProfile);
+    }
+
+    /**
+     * Снимает импортированную VK-привязку из YAML, когда её удалили через
+     * исторический /vk unlink. MAX-привязку и другой vk-id не трогает.
+     *
+     * @return false, если безопасная запись YAML невозможна
+     */
+    public synchronized boolean forgetVkBinding(String playerName, long vkUserId) {
+        if (loadFailed || playersFrozen || vkUserId <= 0L) return false;
+        String key = canonical(playerName);
+        SocialPlayerStore.Player current = players.player(key, false);
+        if (current == null || current.link == null) return true;
+        SocialPlayerStore.Link link = current.link;
+        if (!"vk".equals(SocialPlayerStore.normalizeProvider(link.provider))
+                || link.externalId != vkUserId) return true;
+        SocialPlayerStore.Document candidate = copyPlayers(players);
+        SocialPlayerStore.Player copy = candidate.player(key, false);
+        if (copy == null || copy.link == null) return true;
+        copy.link = null;
+        candidate.profiles.remove(SocialPlayerStore.profileKey("vk", vkUserId), key);
+        try {
+            Path playersFile = playerStore.file();
+            if (Files.isRegularFile(playersFile)) {
+                PlayerDataFiles.backup(playersFile, "legacy-vk-unlink", logger, TAG);
+            }
+        } catch (IOException | RuntimeException failure) {
+            logger.severe(TAG + " Backup players/social.yml перед синхронным /vk unlink не создан: "
+                    + failure.getClass().getSimpleName() + ". Файл не изменён.");
+            return false;
+        }
+        if (!playerStore.save(candidate)) {
+            logger.severe(TAG + " Не удалось записать players/social.yml после /vk unlink.");
+            return false;
+        }
+        players = candidate;
+        playersDirty = false;
+        return true;
+    }
+
+    /** Полная копия персональных данных: импорт сначала пишет её, потом меняет память. */
+    private static SocialPlayerStore.Document copyPlayers(SocialPlayerStore.Document source) {
+        SocialPlayerStore.Document copy = new SocialPlayerStore.Document();
+        copy.schema = source.schema;
+        for (Map.Entry<String, SocialPlayerStore.Player> entry : source.players.entrySet()) {
+            SocialPlayerStore.Player original = entry.getValue();
+            if (original == null) {
+                copy.players.put(entry.getKey(), null);
+                continue;
+            }
+            SocialPlayerStore.Player player = new SocialPlayerStore.Player();
+            player.firstSeenAt = original.firstSeenAt;
+            player.rewardClaimedAt = original.rewardClaimedAt;
+            if (original.link != null) {
+                player.link = new SocialPlayerStore.Link();
+                player.link.provider = original.link.provider;
+                player.link.externalId = original.link.externalId;
+                player.link.externalName = original.link.externalName;
+                player.link.linkedAt = original.link.linkedAt;
+            }
+            if (original.donor != null) {
+                player.donor = new SocialPlayerStore.Donor();
+                player.donor.grantedAt = original.donor.grantedAt;
+                player.donor.source = original.donor.source;
+            }
+            copy.players.put(entry.getKey(), player);
+        }
+        copy.profiles.putAll(source.profiles);
+        return copy;
     }
 
     public synchronized Optional<Binding> unlink(String playerName) {

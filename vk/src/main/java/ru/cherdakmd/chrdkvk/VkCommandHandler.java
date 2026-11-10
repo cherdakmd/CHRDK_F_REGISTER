@@ -222,6 +222,8 @@ public final class VkCommandHandler implements CommandExecutor, TabCompleter {
             api.setLoginFrozen(player.getName(), false, VkService.PROVIDER_ID);
         }
         service.store().saveNow();
+        var social = plugin.socialService();
+        if (social != null) social.forgetVkLink(player.getName(), removed.get().vkUserId());
         messages.send(player, "vk.unlink-ok", "vk_id", Long.toString(removed.get().vkUserId()));
     }
 
@@ -340,6 +342,8 @@ public final class VkCommandHandler implements CommandExecutor, TabCompleter {
                     api.setLoginFrozen(target, false, "vkadmin");
                 }
                 service.store().saveNow();
+                var social = plugin.socialService();
+                if (social != null) social.forgetVkLink(target, removed.get().vkUserId());
                 messages.send(sender, "admin.unlink-ok", "player", removed.get().playerName());
             }
             case "sync" -> {

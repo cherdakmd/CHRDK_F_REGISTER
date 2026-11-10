@@ -255,4 +255,126 @@ class SocialLinkStoreTest {
                 store.link("New", "max", 42L, "42", 1, 200L));
         assertTrue(store(dir).discoveredChats().isEmpty());
     }
+
+
+    private static long backupCount(Path dir, String label) throws Exception {
+        try (var files = Files.list(dir.resolve("players"))) {
+            return files.filter(path -> path.getFileName().toString()
+                    .contains(".before-" + label + "-")).count();
+        }
+    }
+
+    @Test
+    void legacyVkLinksAreImportedOnceWithBackupAndUntouchedGlobal(@TempDir Path dir) throws Exception {
+        SocialLinkStore store = store(dir);
+        store.recordFirstSeen("Alex", 1_000L);
+        store.grantDonor("Alex", "manual:оплата на сайте", 2_000L);
+        store.setLastNewsTag("v1.5.2-rc.10");
+        String globalBefore = Files.readString(dir.resolve("social-links.json"), StandardCharsets.UTF_8);
+        var links = java.util.List.of(
+                new SocialLinkStore.LegacyVkLink("alex", 777L, 3_000L),
+                new SocialLinkStore.LegacyVkLink("Kate", 888L, 4_000L));
+
+        assertEquals(2, store.importLegacyVkLinks(links, 1, 5_000L));
+        assertEquals("vk", store.binding("ALEX").orElseThrow().provider());
+        assertEquals(777L, store.binding("Alex").orElseThrow().externalId());
+        assertEquals(3_000L, store.binding("Alex").orElseThrow().linkedAt());
+        assertEquals("alex", store.ownerOf("vk", 777L).orElseThrow());
+        assertEquals(1_000L, store.firstSeenAt("Alex"),
+                "импорт сохраняет первый вход и ручные поля игрока");
+        assertTrue(store.donorGranted("Alex"), "донатный доступ не теряется");
+        assertEquals(globalBefore,
+                Files.readString(dir.resolve("social-links.json"), StandardCharsets.UTF_8),
+                "checksum глобального JSON не переписывается импортом");
+        assertEquals(1, backupCount(dir, "legacy-vk-import"));
+
+        assertEquals(0, store.importLegacyVkLinks(links, 1, 6_000L),
+                "повторный старт не импортирует уже перенесённые связи");
+        assertEquals(1, backupCount(dir, "legacy-vk-import"),
+                "повторный импорт не создаёт лишний backup");
+
+        SocialLinkStore reloaded = store(dir);
+        assertFalse(reloaded.loadFailed());
+        assertEquals(2, reloaded.linkCount());
+        assertTrue(reloaded.isLinked("Kate"));
+        assertEquals(1_000L, reloaded.firstSeenAt("Alex"));
+        assertTrue(reloaded.donorGranted("Alex"));
+    }
+
+    @Test
+    void legacyVkImportRespectsCollisionsAndProfileLimit(@TempDir Path dir) throws Exception {
+        SocialLinkStore store = store(dir);
+        assertEquals(SocialLinkStore.LinkStatus.LINKED,
+                store.link("Owner", "max", 42L, "42", 1, 100L));
+        assertEquals(SocialLinkStore.LinkStatus.LINKED,
+                store.link("VkOwner", "vk", 777L, "777", 1, 100L));
+        var links = java.util.List.of(
+                new SocialLinkStore.LegacyVkLink("owner", 999L, 100L),
+                new SocialLinkStore.LegacyVkLink("other", 777L, 100L),
+                new SocialLinkStore.LegacyVkLink("fresh", 1000L, 100L),
+                new SocialLinkStore.LegacyVkLink("second", 1000L, 100L),
+                new SocialLinkStore.LegacyVkLink("bad", -1L, 100L),
+                new SocialLinkStore.LegacyVkLink("", 1001L, 100L));
+
+        assertEquals(1, store.importLegacyVkLinks(links, 1, 200L));
+        assertEquals("max", store.binding("Owner").orElseThrow().provider(),
+                "уже привязанный игрок не перезаписывается legacy VK");
+        assertEquals(42L, store.binding("Owner").orElseThrow().externalId());
+        assertTrue(store.isLinked("fresh"));
+        assertFalse(store.isLinked("second"), "второй игрок на один VK-профиль не импортируется");
+        assertFalse(store.isLinked("other"), "чужой профиль не захватывается");
+        assertEquals(3, store.linkCount());
+
+        var duplicateProfile = java.util.List.of(
+                new SocialLinkStore.LegacyVkLink("unbound", 2000L, 0L),
+                new SocialLinkStore.LegacyVkLink("late", 2000L, 0L));
+        assertTrue(store.legacyVkBindingAllowed("unbound", 2000L, duplicateProfile, 1));
+        assertFalse(store.legacyVkBindingAllowed("late", 2000L, duplicateProfile, 1),
+                "read-only fallback тоже respect max-accounts-per-profile");
+        assertFalse(store.legacyVkBindingAllowed("fresh", 1000L,
+                java.util.List.of(new SocialLinkStore.LegacyVkLink("fresh", 1000L, 0L)), 1),
+                "импортированная связь уже видна через YAML");
+        assertFalse(store.legacyVkBindingAllowed("other", 777L,
+                java.util.List.of(new SocialLinkStore.LegacyVkLink("other", 777L, 0L)), 1),
+                "профиль, занятый другим игроком, не даёт обход gate");
+    }
+
+    @Test
+    void brokenPlayerYamlBlocksLegacyImport(@TempDir Path dir) throws Exception {
+        store(dir).link("Player", "vk", 5L, "id5", 1, 100L);
+        Files.writeString(dir.resolve("players/social.yml"),
+                "schema: nope\nplayers: [не карта]\n", StandardCharsets.UTF_8);
+        SocialLinkStore broken = store(dir);
+        assertTrue(broken.loadFailed());
+        assertTrue(broken.playersFrozen());
+
+        assertEquals(0, broken.importLegacyVkLinks(
+                java.util.List.of(new SocialLinkStore.LegacyVkLink("other", 9L, 100L)), 1, 200L));
+        assertTrue(Files.readString(broken.playersFile(), StandardCharsets.UTF_8)
+                .contains("schema: nope"), "битый YAML не перезаписывается импортом");
+        assertEquals(0, backupCount(dir, "legacy-vk-import"));
+    }
+
+    @Test
+    void forgetVkBindingLeavesMaxAndOtherIdsIntact(@TempDir Path dir) throws Exception {
+        SocialLinkStore store = store(dir);
+        store.link("MaxPlayer", "max", 42L, "42", 1, 100L);
+        store.link("VkPlayer", "vk", 777L, "id777", 1, 100L);
+
+        assertTrue(store.forgetVkBinding("maxplayer", 777L));
+        assertTrue(store.forgetVkBinding("vkplayer", 888L));
+        assertEquals("max", store.binding("MaxPlayer").orElseThrow().provider());
+        assertEquals("vk", store.binding("VkPlayer").orElseThrow().provider());
+
+        assertTrue(store.forgetVkBinding("vkplayer", 777L));
+        assertFalse(store.isLinked("VkPlayer"));
+        assertFalse(store.ownerOf("vk", 777L).isPresent());
+        assertEquals(1, backupCount(dir, "legacy-vk-unlink"));
+
+        SocialLinkStore reloaded = store(dir);
+        assertFalse(reloaded.loadFailed());
+        assertTrue(reloaded.isLinked("MaxPlayer"));
+        assertFalse(reloaded.isLinked("VkPlayer"));
+    }
+
 }

@@ -113,6 +113,14 @@ public final class VkPlugin extends JavaPlugin {
         // мост чата, уведомления и автопостинг новостей живут в этом же JAR.
         SocialConfig socialConfig = SocialConfig.parse(getConfig());
         this.socialService = new SocialService(this, socialConfig);
+        // vk-links.json — исторический реестр /vk; импорт в players/social.yml
+        // делается до регистрации TAB и gate-слушателей, без обратной записи.
+        try {
+            socialService.importLegacyVkLinks();
+        } catch (RuntimeException failure) {
+            getLogger().log(Level.WARNING,
+                    "[CHRDK_SOCIAL] Импорт vk-links.json пропущен; read-only резерв активен", failure);
+        }
         this.maxService = new MaxService(this, socialService, socialConfig);
         socialService.attachMax(maxService);
         socialService.start();
@@ -165,7 +173,7 @@ public final class VkPlugin extends JavaPlugin {
 
         getLogger().info("[CHRDK_VK] Включён (привязок: " + store.linkCount()
                 + ", API настроен: " + config.apiConfigured()
-                + ", социальные привязки: " + socialService.store().linkCount() + ").");
+                + ", социальные привязки: " + socialService.linkCount() + ").");
     }
 
     /**

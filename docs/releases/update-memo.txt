@@ -1,6 +1,67 @@
 CHRDK — обновление плагинов
 ===========================
 
+Комплект 1.5.2-rc.11 — ПРЕРЕЛИЗ, не стабильное обновление
+---------------------------------------------------------
+22 JAR одной версии + памятка; chrdk-vk-1.5.2-rc.11.jar и
+chrdk-disasters-1.5.2-rc.11.jar отдельно. Общий архив —
+chrdk-plugins-1.5.2-rc.11.zip; четвёртый ассет датапака — тот же
+mine-treasure-1.6.5-ru.zip (1 758 991 байт, SHA-256
+d51346e81b32fda61e7d4ba7a9475289815857451f4bea8a69d45f61527f3ec6). Installer,
+docs и отдельный JAR датапака как release-ассеты не прикладываются.
+ПРЕДВАРИТЕЛЬНАЯ СБОРКА: только изолированный staging после полного backup;
+production, TradeMC, Pages и стабильная новость ВК не меняются. Latest остаётся
+v1.5.2; тег, Release, четыре ассета и VK-анонс v1.5.2-rc.10, стабильный 1.5.2,
+общие rc.1 ... rc.6 и отдельные vk-v1.5.2-rc.5/7/8/9 не переписываются. Полный
+общий пререлиз v1.5.2-rc.11 публикуется по явной команде владельца: annotated
+тег и GitHub prerelease создаются, Release-workflow приложит общий ZIP,
+отдельные VK/Disasters JAR и patched Mine Treasure ZIP; штатный анонс в беседе
+ВК разрешён, wall.post и стабильная новость не используются.
+
+Что исправлено поверх rc.10: исторический vk-links.json (7 старых привязок в
+логе) один раз при старте импортируется в players/social.yml. До и после импорта
+социальное чтение имеет read-only fallback к VkStore, поэтому %chrdksocial_tab%,
+/link, /social status, TAB, onJoin и isFrozen видят legacy привязки даже при
+пропущенной записи YAML. vk-links.json НЕ удалять и не переписывать импортом:
+это по-прежнему источник бонусов /vk, уведомлений и VK Donut. Перед первой
+записью создаётся players/social.yml.before-legacy-vk-import-*.bak; сохранены
+checksum глобального social-links.json, карантин .broken, ручные правки YAML,
+firstSeen/donor/rewarded и обратный индекс profiles. Уже привязанные игроки,
+чужие профили и дубли сверх social.max-accounts-per-profile пропускаются;
+повторный старт не создаёт новый backup. /vk unlink и /vkadmin unlink синхронно
+снимают импортированную VK-связь из YAML (только provider=vk и тот же id,
+с backup *.before-legacy-vk-unlink-*.bak); /social unlink убирает и legacy
+vk-links.json, чтобы read-only источник не возвращал привязку после рестарта.
+MAX-привязки и чужие vk-id не затрагиваются.
+
+Второй фикс — award lineage conflict в CHRDK_TierForge. BankStore теперь умеет
+читать уже закреплённый lineage источника, а MilestoneAwards при старте сверяет
+его с milestone-awards.json. Если локальный журнал ещё не помечал источник
+зарегистрированным и не содержит денежных обязательств, он принимает lineage
+банка; новые деньги не создаются, receipts и entitlementSources не
+перезаписываются. При существующих awards/receipts выплаты приостанавливаются с
+понятной записью в лог, а финансовый guard и тест
+otherNamespaceCannotStealRegisteredLineageAndWrongGenerationDoesNotMint остаются.
+Новый capability IncomeSourceLineageProvider реализован только в Core и не
+расширяет стабильный ChrdkRegisterApi: Core API42 без повышения API_VERSION,
+нового модуля и JAR не появилось.
+
+Обновление staging: остановить сервер, сделать полный backup plugins/CHRDK_Core,
+plugins/CHRDK_VK, players/*.yml, vk-links.json и worlds, заменить 22 JAR одной
+версии + отдельные VK/Disasters, не выполнять /pass update, сохранить владельческий
+config.yml и tablist.footer, полностью перезапустить сервер. Конфиг не требует
+bump схемы. Smoke: /link и /vk status у уже привязанного ника, одна строка TAB,
+/social status с legacy, /vk unlink confirm + повторный /link, /bal и /tierforge
+без award lineage conflict. Откат — по backup; vk-links.json и players/social.yml
+восстанавливать парой. Живой Purpur, RCON, NBT и MSPT агент не проверял:
+Java/JUnit/Gradle и игровой smoke выполняются CI и владельцем на staging.
+
+CHRDK_Queue и снятые JAR убрать вручную из plugins/, plugins/update/, staging.
+Подробности, границы и SHA-256: docs/releases/1.5.2-rc.11.md. Памятка rc.10 и
+её install-guide ниже считаются историей, а не инструкцией для этого RC.
+
+Ниже — предыдущие изменения (история).
+
 Комплект 1.5.2-rc.10 — ПРЕРЕЛИЗ, не стабильное обновление
 ---------------------------------------------------------
 22 JAR одной версии + памятка; chrdk-vk-1.5.2-rc.10.jar и
@@ -70,7 +131,6 @@ CHRDK_Queue и снятые JAR убрать вручную из plugins/, plugi
 Уже выданные предметы Mine Treasure, PDC и scoreboard mt.* не мигрируются;
 откат датапака делается по матрице совместимости.
 
-Ниже — предыдущие изменения (история).
 
 Комплект 1.5.2 — KARAS UPDATE, СТАБИЛЬНЫЙ выпуск
 -------------------------------------------------

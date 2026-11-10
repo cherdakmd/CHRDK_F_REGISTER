@@ -43,10 +43,13 @@ public final class SocialCommandHandler implements CommandExecutor, TabCompleter
             plugin.messages().send(player, "social.gate-disabled");
             return true;
         }
-        if (service.store().isLinked(player.getName())) {
+        if (service.isLinked(player.getName())) {
             var binding = service.store().binding(player.getName());
-            String provider = binding.map(value -> SocialService.providerLabel(value.provider())).orElse("мессенджеру");
-            String externalId = binding.map(value -> Long.toString(value.externalId())).orElse("—");
+            var legacy = service.legacyVkBinding(player.getName());
+            String provider = binding.map(value -> SocialService.providerLabel(value.provider()))
+                    .orElseGet(() -> legacy.isPresent() ? SocialService.providerLabel("vk") : "мессенджеру");
+            String externalId = binding.map(value -> Long.toString(value.externalId()))
+                    .orElseGet(() -> legacy.map(value -> Long.toString(value.vkUserId()) + " (legacy)").orElse("—"));
             plugin.messages().send(player, "social.link-done",
                     "provider", provider, "vk_id", externalId);
             return true;

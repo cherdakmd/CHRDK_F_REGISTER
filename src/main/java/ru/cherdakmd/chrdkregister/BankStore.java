@@ -762,6 +762,10 @@ public final class BankStore {
     public synchronized boolean incomeSourceAvailable(String source, UUID lineage) {
         return available && validIncomeSource(source) && lineage != null && lineage.equals(entitlementSources.get(source));
     }
+    /** Уже зарегистрированный lineage источника; null — источник ещё не закреплён или банк недоступен. */
+    public synchronized UUID incomeSourceLineage(String source) {
+        return available && validIncomeSource(source) ? entitlementSources.get(source) : null;
+    }
     public synchronized boolean registerIncomeSource(String source, UUID lineage) {
         if (!available || !validIncomeSource(source) || lineage == null) return false;
         var existing = entitlementSources.get(source);
