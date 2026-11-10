@@ -297,7 +297,7 @@ public final class BackupArchive {
         java.io.ByteArrayOutputStream output = new java.io.ByteArrayOutputStream();
         byte[] buffer = new byte[8192];
         long remaining = limit;
-        while (true) {
+        while (remaining > 0) {
             int read = input.read(buffer, 0, (int) Math.min(buffer.length, remaining));
             if (read < 0) break;
             output.write(buffer, 0, read);
