@@ -16,6 +16,7 @@ public enum SkillAbility {
     ENCHANTING(SkillType.ENCHANTING, 25, 5, 45, "ENCHANTING_TABLE");
 
     public static final int UNLOCK_PRESTIGE = 1;
+    public static final int MASTER_PRESTIGE = 10;
     public static final int MAX_ENERGY = 100;
     public static final int REGEN_PER_SECOND = 2;
     private final SkillType skill;
@@ -29,6 +30,15 @@ public enum SkillAbility {
     public int cost() { return cost; }
     public int seconds() { return seconds; }
     public int cooldown() { return cooldown; }
+    private static int rank(int prestige) { return Math.clamp(prestige, UNLOCK_PRESTIGE, MASTER_PRESTIGE); }
+    /** Каждая ступень ощутимо улучшает приём; X делает его бесплатным по выносливости. */
+    public int cost(int prestige) { return prestige >= MASTER_PRESTIGE ? 0 : Math.max(10, cost - rank(prestige) + 1); }
+    public int seconds(int prestige) { return seconds + rank(prestige) - 1; }
+    public int cooldown(int prestige) { return Math.max(15, cooldown - 2 * (rank(prestige) - 1)); }
+    public int gatherLimit(int prestige) { return 64 + 16 * (rank(prestige) - 1); }
+    public int effectTicks(int baseTicks, int prestige) { return baseTicks + 20 * (rank(prestige) - 1); }
+    public int durabilitySave(int prestige) { return rank(prestige); }
+    public boolean master(int prestige) { return prestige >= MASTER_PRESTIGE; }
     public boolean gathering() { return skill.category() == SkillType.Category.GATHER; }
     public String nameKey() { return "ability." + id() + ".name"; }
     public String descKey() { return "ability." + id() + ".desc"; }

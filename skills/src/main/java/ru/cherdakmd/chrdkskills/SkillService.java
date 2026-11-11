@@ -242,6 +242,7 @@ public final class SkillService {
                 continue;
             }
             store.setXp(key(player), skill, 0L);
+            announceAbilityUpgrade(player, skill, store.prestige(key(player), skill));
             steps++;
         }
         if (steps == 0) {
@@ -251,6 +252,23 @@ public final class SkillService {
                 plugin.config().prestigeDiamondsPerStep()) * steps);
         grantTierRewards(player);
         return PrestigeResult.DONE;
+    }
+
+    private void announceAbilityUpgrade(Player player, SkillType skill, int prestige) {
+        SkillAbility ability = SkillAbility.of(skill);
+        if (ability == null) return;
+        var name = Messages.trusted(plugin.messages().raw("skill." + skill.id() + ".name"));
+        plugin.messages().send(player, "prestige-ability-upgraded", "skill", name,
+                "level", prestige, "cost", ability.cost(prestige), "seconds", ability.seconds(prestige),
+                "cooldown", ability.cooldown(prestige), "limit", ability.gatherLimit(prestige));
+        if (!ability.master(prestige)) return;
+        Bukkit.broadcast(plugin.messages().get("prestige-ability-master", "player", player.getName(), "skill", name));
+        player.showTitle(net.kyori.adventure.title.Title.title(
+                plugin.messages().get("prestige-master-title"),
+                plugin.messages().get("prestige-master-subtitle", "skill", name)));
+        var location = player.getLocation().add(0, 1, 0);
+        player.getWorld().spawnParticle(org.bukkit.Particle.TOTEM_OF_UNDYING, location, 160, 1.0, 1.2, 1.0, 0.18);
+        player.getWorld().playSound(location, org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.5f);
     }
 
     /**
