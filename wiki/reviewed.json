@@ -56,8 +56,8 @@
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "disasters": {
-      "reason": "Исправлены ключи Messages после CI: одиночная disasters-секция разворачивается ядром",
-      "sources": "f253afb8fa17070f2543088b79e821f54df8cd94b5c40dabe0ad8bcf820d3b37",
+      "reason": "Исправлена компиляция earthquake: восстановлена World world для координат разлома",
+      "sources": "256c93e94bbe6ad0eff06f39910e734b97a4fc5ddc49c413176cdda3c90c73c3",
       "text": "f21774e4746616681468d2d267b20c87b67a374e86c1572abde089335c780602"
     },
     "economy": {

@@ -189,6 +189,7 @@ public final class DisasterEffects {
     }
 
     private void earthquake(Location center, int radius, int level, int step) {
+        World world = center.getWorld();
         int waves = Math.min(3, 1 + level / 2);
         for (int wave = 0; wave < waves; wave++) {
             double distance = ((step * 2.4 + wave * radius / waves) % Math.max(4, radius));
