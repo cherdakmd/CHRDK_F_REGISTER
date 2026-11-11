@@ -76,7 +76,7 @@ final class ForgeShopGui implements Listener {
             lore.add(messages.get("forge.shop.details-hint"));
             lore.addAll(messages.getList("forge.shop.item-lore",
                     "sku", offer.sku(), "name", ForgeShopText.name(messages, offer.sku()),
-                    "price", offer.price()));
+                    "price", ru.cherdakmd.chrdkregister.api.DiamondMoney.format(offer.price())));
             if (offer.seed()) lore.add(messages.get("forge.shop.max-one"));
             meta.lore(lore);
             icon.setItemMeta(meta);
@@ -89,7 +89,7 @@ final class ForgeShopGui implements Listener {
         ItemMeta meta = icon.getItemMeta();
         if (meta != null) {
             meta.displayName(plugin.messages().get("trading.gui.balance-name",
-                    "balance", plugin.shopService().balance(player)));
+                    "balance", plugin.shopService().balanceText(player)));
             meta.lore(List.of(plugin.messages().get("trading.gui.balance-lore",
                     "turnover", PriceEngine.round(plugin.shopService().store().turnover()),
                     "physical", plugin.shopService().physical(player))));

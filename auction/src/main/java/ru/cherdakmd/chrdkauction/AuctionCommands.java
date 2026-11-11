@@ -42,7 +42,7 @@ final class AuctionCommands implements CommandExecutor,TabCompleter {
                 case "mine" -> gui.open(p,AuctionGui.Mode.MINE,0);
                 case "mail" -> gui.open(p,AuctionGui.Mode.MAIL,0);
                 case "money" -> service.money(p);
-                case "sell" -> { if(args.length==2) service.sell(p,Integer.parseInt(args[1]));else service.tell(p,"auction.usage"); }
+                case "sell" -> { if(args.length==2) service.sellMinor(p,parseMinor(args[1]));else service.tell(p,"auction.usage"); }
                 case "buy" -> { if(args.length==3 && args[2].equalsIgnoreCase("confirm")) service.buy(p,Long.parseLong(args[1]));else service.tell(p,"auction.usage"); }
                 case "cancel" -> { if(args.length==2) service.cancel(p,Long.parseLong(args[1]));else service.tell(p,"auction.usage"); }
                 case "claim" -> { if(args.length==2) service.claim(p,Long.parseLong(args[1]));else service.tell(p,"auction.usage"); }
@@ -62,5 +62,12 @@ final class AuctionCommands implements CommandExecutor,TabCompleter {
         }
         if (!admin && args.length==3 && args[0].equalsIgnoreCase("buy") && "confirm".startsWith(args[2].toLowerCase(Locale.ROOT))) return List.of("confirm");
         return List.of();
+    }
+
+    private static long parseMinor(String raw) {
+        try {
+            if(raw==null||!raw.matches("[0-9]+(?:[.,][0-9]{1,2})?")) return -1;
+            return new java.math.BigDecimal(raw.replace(',','.')).movePointRight(2).longValueExact();
+        } catch(RuntimeException error) { return -1; }
     }
 }

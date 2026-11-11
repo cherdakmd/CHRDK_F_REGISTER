@@ -54,7 +54,7 @@ class ProfileRegistryTest {
         ProfileRegistry registry = new ProfileRegistry(LOGGER);
         assertFalse(registry.register("", provider(1, sectionOf("A", Material.BONE, "x"))));
         assertFalse(registry.register(null, provider(1, sectionOf("A", Material.BONE, "x"))));
-        assertFalse(registry.register("hunt", null));
+        assertFalse(registry.register("classes", null));
         assertEquals(0, registry.size());
     }
 
@@ -62,7 +62,7 @@ class ProfileRegistryTest {
     void sectionsAreSortedByOrderThenId() {
         ProfileRegistry registry = new ProfileRegistry(LOGGER);
         registry.register("orders", provider(20, sectionOf("Заказы", Material.PAPER, "1")));
-        registry.register("hunt", provider(10, sectionOf("Охота", Material.BONE, "2")));
+        registry.register("classes", provider(10, sectionOf("Охота", Material.BONE, "2")));
         registry.register("achievements", provider(20, sectionOf("Достижения", Material.BOOK, "3")));
 
         List<ChrdkRegisterApi.ProfileSection> sections = registry.sections(CONTEXT);
@@ -70,7 +70,7 @@ class ProfileRegistryTest {
         assertEquals("Охота", sections.get(0).title());
         assertEquals("Достижения", sections.get(1).title(), "при равенстве order — по id");
         assertEquals("Заказы", sections.get(2).title());
-        assertEquals(List.of("hunt", "achievements", "orders"), registry.ids(),
+        assertEquals(List.of("classes", "achievements", "orders"), registry.ids(),
                 "порядок разделов: order(), затем id");
     }
 
@@ -93,7 +93,7 @@ class ProfileRegistryTest {
         registry.register("broken", context -> {
             throw new IllegalStateException("нет данных");
         });
-        registry.register("hunt", provider(10, sectionOf("Охота", Material.BONE, "строка")));
+        registry.register("classes", provider(10, sectionOf("Охота", Material.BONE, "строка")));
 
         List<ChrdkRegisterApi.ProfileSection> sections = registry.sections(CONTEXT);
         assertEquals(1, sections.size());
@@ -103,8 +103,8 @@ class ProfileRegistryTest {
     @Test
     void sameIdReplacesTheProvider() {
         ProfileRegistry registry = new ProfileRegistry(LOGGER);
-        registry.register("hunt", provider(10, sectionOf("Старая", Material.BONE, "1")));
-        registry.register("hunt", provider(10, sectionOf("Новая", Material.BONE, "2")));
+        registry.register("classes", provider(10, sectionOf("Старая", Material.BONE, "1")));
+        registry.register("classes", provider(10, sectionOf("Новая", Material.BONE, "2")));
 
         assertEquals(1, registry.size());
         assertEquals("Новая", registry.sections(CONTEXT).get(0).title());
@@ -113,9 +113,9 @@ class ProfileRegistryTest {
     @Test
     void unregisterRemovesTheSection() {
         ProfileRegistry registry = new ProfileRegistry(LOGGER);
-        registry.register("hunt", provider(10, sectionOf("Охота", Material.BONE, "1")));
-        assertTrue(registry.unregister("hunt"));
-        assertFalse(registry.unregister("hunt"));
+        registry.register("classes", provider(10, sectionOf("Охота", Material.BONE, "1")));
+        assertTrue(registry.unregister("classes"));
+        assertFalse(registry.unregister("classes"));
         assertFalse(registry.unregister(null));
         assertTrue(registry.sections(CONTEXT).isEmpty());
     }

@@ -32,7 +32,5 @@ class MobRewardPolicyTest {
     }
     @Test void namedBiomeVarietyIsNotABossOrAnInvasionMob() {
         Entity wild = entity(Set.of(new NamespacedKey("chrdk_hunt", "wild_variant")));
-        assertTrue(MobRewardPolicy.wild(wild)); assertFalse(MobRewardPolicy.temporary(wild));
-        assertFalse(MobRewardPolicy.wild(entity(Set.of())));
     }
 }

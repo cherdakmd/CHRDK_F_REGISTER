@@ -15,9 +15,9 @@ class ForgeMarketContractTest {
         return Files.readString(Path.of(path));
     }
 
-    @Test void api42ExposesCatalogGrantAndSoftSource() throws Exception {
+    @Test void api44KeepsCatalogGrantAndSoftSource() throws Exception {
         String api = read("src/main/java/ru/cherdakmd/chrdkregister/api/ChrdkRegisterApi.java");
-        assertTrue(api.contains("int API_VERSION = 42;"));
+        assertTrue(api.contains("int API_VERSION = 44;"));
         assertTrue(api.contains("ForgeMaterialSource forgeMaterialSource()"));
         String impl = read("src/main/java/ru/cherdakmd/chrdkregister/ChrdkRegisterApiImpl.java");
         assertTrue(impl.contains("public ru.cherdakmd.chrdkregister.api.ForgeMaterialSource forgeMaterialSource()"));
@@ -33,10 +33,10 @@ class ForgeMarketContractTest {
         while (matcher.find()) count++;
         assertEquals(8, count);
         for (String row : new String[]{
-                "new Sku(\"ascend\", \"ECHO_SHARD\", 128, false, true)",
-                "new Sku(\"temper\", \"NAUTILUS_SHELL\", 96, false, true)",
-                "new Sku(\"reforge\", \"PAPER\", 160, false, true)",
-                "new Sku(\"seed\", \"NETHER_STAR\", 64, true, true)",
+                "new Sku(\"ascend\", \"ECHO_SHARD\", 128, false, false)",
+                "new Sku(\"temper\", \"NAUTILUS_SHELL\", 96, false, false)",
+                "new Sku(\"reforge\", \"PAPER\", 160, false, false)",
+                "new Sku(\"seed\", \"NETHER_STAR\", 64, true, false)",
                 "new Sku(\"repair\", \"IRON_INGOT\", 24, false, false)",
                 "new Sku(\"inscribe\", \"GOLD_NUGGET\", 192, false, false)",
                 "new Sku(\"remove\", \"GUNPOWDER\", 32, false, false)",
@@ -53,7 +53,7 @@ class ForgeMarketContractTest {
 
     @Test void shopExchangeKeepsLegacyConstructorsAndNullableGrant() throws Exception {
         String code = read("src/main/java/ru/cherdakmd/chrdkregister/api/ShopExchange.java");
-        assertEquals(2, count(code, "public ShopExchange(UUID t,UUID m,long s,UUID o,boolean buy"));
+        assertEquals(4, count(code, "public ShopExchange(UUID t,UUID m,long s,UUID o,boolean buy"));
         assertTrue(code.contains("String grant)"));
         assertTrue(code.contains("public boolean carriesGrant() { return grant != null; }"));
         assertTrue(code.contains("ForgeMarketCatalog.validTradeGrant(grant,material,units)"));
@@ -78,7 +78,7 @@ class ForgeMarketContractTest {
         assertFalse(code.contains("addItem("));
         assertFalse(code.contains("dispatchCommand"));
         assertTrue(code.contains("WholeTrades.take(amounts, values, needed)"));
-        assertTrue(code.contains("WholeTrades.payment(money, wallet, spent)"));
+        assertTrue(code.contains("WholeTrades.payment(money, wallet, Math.multiplyExact(spent,physicalMinor))"));
         assertTrue(code.contains("ShopInventory.insertExact(after, offer.prototype(), units)"));
         assertTrue(code.contains("service.recoverPending()"));
         assertTrue(code.contains("prepareForge(trade, now"));
@@ -98,10 +98,9 @@ class ForgeMarketContractTest {
 
     @Test void tierForgeKeepsSeedEligibilityAndMigrationOnlyLore() throws Exception {
         String materials = read("tier-forge/src/main/java/ru/cherdakmd/chrdktierforge/ForgeMaterials.java");
-        assertTrue(materials.contains("QualifiedHuntKillEvent"));
+        assertFalse(materials.contains("QualifiedHuntKillEvent"));
         assertFalse(materials.contains("import org.bukkit.event.entity.EntityDeathEvent"));
         assertFalse(materials.contains("EntityDeathEvent event"));
-        assertTrue(materials.contains("ForgeMaterial.HUNT_DROPS"));
         // 7 ноября 2026: искра отклоняет вещь С тиром отдельным ключом, а не общим
         // forge-input (тот текст ошибочно требовал тир-вещь как раз у искры).
         assertTrue(materials.contains("if (tierId != null) { fail(ForgeInputDiagnostics.SEED_TIERED); return null; }"));

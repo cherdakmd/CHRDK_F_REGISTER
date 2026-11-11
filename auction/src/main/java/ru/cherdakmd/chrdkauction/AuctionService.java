@@ -28,6 +28,7 @@ public final class AuctionService implements Listener {
                 && plugin.api().auctionBankAvailable();
     }
     long bankBalance(Player p) { return plugin.api().auctionBankBalance(p.getUniqueId()); }
+    long bankBalanceMinor(Player p) { return plugin.api().auctionBankBalanceMinor(p.getUniqueId()); }
     private boolean importOwner(UUID owner) {
         return store.bankMode() && plugin.api().importLegacyAuction(store.market(), owner, store.balance(owner));
     }
@@ -35,7 +36,7 @@ public final class AuctionService implements Listener {
         var pending = store.pending();
         if (pending != null && pending.payment() != null && pending.payment().cash() == 0) recoverBankOnly();
         if (store.pending() != null) return;
-        store.enableBank();
+        store.enableMarket();
         if (migrationStarted) return;
         migrationStarted = true;
         var rows = store.legacyMoney().entrySet().iterator();
@@ -77,10 +78,13 @@ public final class AuctionService implements Listener {
             return false;
         }
     }
-    void sell(Player p, int price) {
+    void sell(Player p, int price) { sellMinor(p,Math.multiplyExact(price,100L)); }
+    void sellMinor(Player p,long minorPrice) {
+        if(minorPrice<2||minorPrice>100_000_000L)return;
+        int price=Math.toIntExact(minorPrice);
         if (!ready(p)) return;
         AuctionConfig c = plugin.config();
-        if (price < c.minPrice() || price > c.maxPrice()) { tell(p, "auction.price", "min", c.minPrice(), "max", c.maxPrice()); return; }
+        if (minorPrice < c.minPrice()*100L || minorPrice > c.maxPrice()*100L) { tell(p,"auction.price","min",c.minPrice(),"max",c.maxPrice()); return; }
         ItemStack item = p.getInventory().getItemInMainHand();
         if (item.getType().isAir()) { tell(p, "auction.empty"); return; }
         if (c.blocked().contains(item.getType()) || item.getAmount() > item.getMaxStackSize()) { tell(p, "auction.blocked"); return; }
@@ -96,8 +100,9 @@ public final class AuctionService implements Listener {
         long now = System.currentTimeMillis(); long[] id = new long[1];
         if (transfer(p, before, after, (a,b) -> id[0] = store.prepareListing(p.getUniqueId(), p.getName(), payload,
                 price, c.feePercent(), now + c.hours() * 3600000L, now, lotsLimit, c.maxLots(), a,b)))
-            tell(p, "auction.listed", "id", id[0], "price", price, "fee", AuctionStore.fee(price,c.feePercent()),
-                    "net", price - AuctionStore.fee(price,c.feePercent()));
+            tell(p,"auction.listed","id",id[0],"price",ru.cherdakmd.chrdkregister.api.DiamondMoney.format(price),
+                    "fee",ru.cherdakmd.chrdkregister.api.DiamondMoney.format(AuctionStore.fee(price,c.feePercent())),
+                    "net",ru.cherdakmd.chrdkregister.api.DiamondMoney.format(price-AuctionStore.fee(price,c.feePercent())));
     }
     void buy(Player p, long id) {
         if (!ready(p)) return;
@@ -107,12 +112,13 @@ public final class AuctionService implements Listener {
         }
         if (!importOwner(lot.seller())) { tell(p, "auction.seller-unavailable"); return; }
         var before = ItemCodec.copy(p.getInventory().getStorageContents());
-        var plan = AuctionWallet.plan(before, lot.price(), bankBalance(p));
+        var quote=plugin.api().diamondRate();
+        var plan = AuctionWallet.planMinor(before, lot.price(), bankBalanceMinor(p),quote.rateBps());
         if (plan == null) { tell(p, "auction.bank-no-diamonds", "price", lot.price()); return; }
         try {
             String a = ItemCodec.inventory(before), b = ItemCodec.inventory(plan.after());
             var payment = new AuctionPayment(UUID.randomUUID(), store.market(), store.nextBankSequence(), lot.id(), p.getUniqueId(), lot.seller(),
-                    lot.price(), lot.fee(), plan.debit(), plan.cash(), plan.change(), AuctionPayment.hash(a,b));
+                    lot.price(), lot.fee(), plan.debit(), plan.cash(), plan.change(), AuctionPayment.hash(a,b),true,quote.rateBps());
             store.prepareBankBuy(payment, System.currentTimeMillis(), a, b);
             plugin.api().commitAuctionPayment(p, payment, before);
             var status = plugin.api().auctionPaymentStatus(payment);
@@ -125,9 +131,9 @@ public final class AuctionService implements Listener {
             var applied=AuctionTransfers.bank(store,status,plan.cash()==0?null:inventory(p,"auction-cash"));
             if(applied!=AuctionRecovery.Decision.COMPLETE&&applied!=AuctionRecovery.Decision.APPLY_AFTER)
                 throw new IOException("Предметная доплата не подтверждена native witness");
-            tell(p, "auction.bank-bought", "id", id, "change", plan.change());
+            tell(p, "auction.bank-bought", "id", id, "change", ru.cherdakmd.chrdkregister.api.DiamondMoney.format(plan.change()));
             var seller = Bukkit.getPlayer(lot.seller());
-            if (seller != null && plugin.api().isAuthenticated(seller)) tell(seller, "auction.sold", "id", id, "money", lot.price() - lot.fee());
+            if (seller != null && plugin.api().isAuthenticated(seller)) tell(seller, "auction.sold", "id", id, "money", ru.cherdakmd.chrdkregister.api.DiamondMoney.format(lot.price()-lot.fee()));
         } catch (Exception error) {
             failed(p, error);
             if (!store.healthy() || store.pending() != null && store.pending().payment() != null && store.pending().payment().cash() > 0) lockPlayer(p);
@@ -150,7 +156,7 @@ public final class AuctionService implements Listener {
     }
     /** Совместимость команды: отдельного расходуемого кошелька больше нет. */
     void money(Player p) {
-        if (ready(p)) tell(p, "auction.bank-balance", "balance", bankBalance(p));
+        if (ready(p)) tell(p, "auction.bank-balance", "balance", plugin.api().personalDiamondsText(p));
     }
     private void lockPlayer(Player p) {
         try { p.kick(plugin.messages().get("auction.bank-recovery-kick")); }

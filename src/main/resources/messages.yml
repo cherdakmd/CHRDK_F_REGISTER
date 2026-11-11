@@ -71,6 +71,9 @@ messages:
     "unknown": "<white>неизвестно</white>"
     "yes": "<green>да</green>"
 
+  moderation:
+    nickname-blocked: "<red>Этот никнейм запрещён правилами сервера. Измените имя и подключитесь снова.</red>"
+
   # ---------------------------------------------------------------
   # error — Стандартные ошибки
   # ---------------------------------------------------------------
@@ -997,6 +1000,10 @@ messages:
     "duplicate": "<red>Это сообщение вы уже недавно отправляли!</red>"
     "filter-admin-note": "<yellow>[CHRDK] Сообщение игрока %player% заблокировано фильтром чата.</yellow>"
     "filter-blocked": "<red>Сообщение содержит запрещённые слова или ссылки и не было отправлено.</red>"
+    "swear-blocked": "<red>Сообщение содержит ненормативную лексику и не было отправлено.</red>"
+    "anti-spam-cooldown": "<red>Не отправляйте сообщения так часто. Немного подождите.</red>"
+    "anti-spam-duplicate": "<red>Не повторяйте одно и то же сообщение.</red>"
+    "anti-spam-flood": "<red>Слишком много сообщений за короткое время. Сделайте паузу.</red>"
     "help-broadcast": "<yellow>/%label% broadcast <текст></yellow>"
     "help-broadcast-desc": "<gray> — объявление от лица сервера</gray>"
     "help-clear": "<yellow>/%label% clear [ник]</yellow>"
@@ -1182,6 +1189,7 @@ messages:
     need-auth: '<red>Сначала авторизуйтесь: /login.</red>'
     confirm-busy: '<yellow>Сейчас нельзя сохранить подтверждение. Подождите 30 секунд и запросите условия ещё раз. Операция не выполнена.</yellow>'
     personal-debt: '<yellow>Под штрафной долг зарезервировано: %reserved% алм.; доступно для расходов: %available% алм. Подробности: /clan mode status.</yellow>'
+    rate: '<gold>Курс: 1 алмаз = %rate% на счёте.</gold><newline><gray>Факторы (bps): спрос %demand%, денежная масса %inflation%, эмиссия %emission%, активность %activity%, оборот %turnover%.</gray>'
     personal-stats: '<gold>Личный банк: %balance% алм.</gold><newline><gray>Внесено: %deposited%; снято: %withdrawn%; отправлено: %sent%; получено: %received%. Исторические счётчики банка неполные: это не все доходы/расходы и не прибыль.</gray>'
     health: '<gold>Банк: доступен %healthy%, счетов %accounts%, на счетах %total% алм.</gold><newline><gray>Доля топ-10: %share%%; ожидают обмена: %pending%, квитанций: %receipts%. Без физических алмазов и коллективных казён; это не полный аудит экономики и не показатель эмиссии.</gray>'
     pay-preview: '<gold>Перевод %player%: списание %amount%, комиссия %tax%, получателю %net% алм.</gold><newline><yellow>В течение 30 секунд: /pay %player% %raw% confirm</yellow><newline><gray>Это не резерв: при подтверждении банк повторно проверит доступность, лимиты и паузу.</gray>'
@@ -1197,7 +1205,7 @@ messages:
     "balance-other": "<gold>Баланс игрока <white>%player%</white>: <white>%balance%</white> алмазов</gold>"
     "balance-hint": "<dark_gray>Депозит: /bal deposit · снятие: /bal withdraw · перевод: /pay ник сумма</dark_gray>"
     "unknown-player": "<red>Игрок %player% не найден: он не заходил после установки банка.</red>"
-    "invalid-amount": "<red>Сумма должна быть целым числом алмазов: 100, 1 000, 1k, 1.5k.</red>"
+    "invalid-amount": "<red>Укажите положительную сумму алмазов, при необходимости с сотыми: 100, 1,25, 1 000, 1k.</red>"
     "usage-deposit": "<yellow>/bal deposit [all|hand|сумма]</yellow>"
     "usage-withdraw": "<yellow>/bal withdraw <сумма> [confirm]</yellow>"
     "usage-pay": "<yellow>/pay <ник> <сумма> [preview|confirm]</yellow>"
@@ -1338,8 +1346,8 @@ messages:
     "menu-title": "<dark_gray>Привилегии гильдии</dark_gray>"
     "card-name": "%badge% %rank%"
     "card-price": "<gray>30 дней — <gold>%month% ₽</gold> · год — <gold>%year% ₽</gold></gray>"
-    "ability-1": "<gray>· Знак ✦ и серый ник</gray>\n<gray>· 4 дома · 28 чанков · 12 лотов</gray>\n<gray>· Скидка на телепорты 10 %</gray>\n<green>· +10 % опыта профессий</green>"
-    "ability-2": "<gray>· Три шлейфа на выбор</gray>\n<gray>· Зелёный ник ❖</gray>\n<gray>· 6 домов · 34 чанка · 15 лотов</gray>\n<gray>· Скидка на телепорты 20 %</gray>\n<green>· +20 % опыта профессий</green>"
+    "ability-1": "<gray>· Знак ✦ и серый ник</gray>\n<gray>· 4 дома · 28 чанков · 12 лотов</gray>\n<gray>· Скидка на телепорты 10 %</gray>\n<green>· +10 % опыта навыков</green>"
+    "ability-2": "<gray>· Три шлейфа на выбор</gray>\n<gray>· Зелёный ник ❖</gray>\n<gray>· 6 домов · 34 чанка · 15 лотов</gray>\n<gray>· Скидка на телепорты 20 %</gray>\n<green>· +20 % опыта навыков</green>"
     "ability-3": "<gray>· Строка входа в чате</gray>\n<gray>· Бирюзовый ник ✧</gray>\n<gray>· 8 домов · 40 чанков · 18 лотов</gray>\n<gray>· Скидка на телепорты 30 %</gray>\n<green>· +30 % опыта · +15 % добычи</green>"
     "ability-4": "<gray>· Премиум-трек батлпасса</gray>\n<gray>· Золотой градиент ★ и «Золотая пыль»</gray>\n<gray>· 10 домов · 44 чанка · 24 лота</gray>\n<gray>· Скидка на телепорты 40 %</gray>\n<green>· +40 % опыта · +20 % добычи</green>"
     "ability-5": "<gray>· /hat — блок на голову</gray>\n<gray>· Свой градиент, знак ⚜ и строка входа</gray>\n<gray>· 12 домов · 48 чанков · 30 лотов</gray>\n<gray>· Скидка на телепорты 50 %</gray>\n<gray>· Имя в списке покровителей</gray>\n<green>· +50 % опыта · +25 % добычи · порог ремесленных прибавок +10</green>"
@@ -1393,9 +1401,9 @@ messages:
 
   "reward-boost":
     "title": "<gold>Игровой буст</gold>"
-    "granted": "<green>✦ Буст +10% XP Minecraft, профессий и навыков: добавлено %minutes% мин., запас %left% мин. Только авторизованное онлайн-время; ранги и покупки не меняются.</green>"
+    "granted": "<green>✦ Буст +10% XP Minecraft и навыков: добавлено %minutes% мин., запас %left% мин. Только авторизованное онлайн-время; ранги и покупки не меняются.</green>"
     "full": "<yellow>Запас буста заполнен: %left% мин. Процент не складывается, ранги и покупки не продлеваются.</yellow>"
-    "profile": "<gray>+10% XP Minecraft, профессий и навыков; осталось <aqua>%left% мин.</aqua> Только онлайн, без платных прав. Общий XP-бонус — не выше +50%.</gray>"
+    "profile": "<gray>+10% XP Minecraft и навыков; осталось <aqua>%left% мин.</aqua> Только онлайн, без платных прав. Общий XP-бонус — не выше +50%.</gray>"
   "paid-only":
     "blocked": "<yellow>Бесплатная выдача платных прав отключена. Магазин доставляет покупки через RCON без номера заказа; ручное подтверждение из локальной консоли требует payment=номер_реальной_оплаты. За достижения — отдельный буст.</yellow>"
     "required": "<red>Без номера заказа — только настоящий RCON при trademc.enabled: true. Из локальной консоли нужна реальная квитанция: payment=provider:12345. Игроки и игровые команды платные покупки не выдают.</red>"
@@ -1497,8 +1505,8 @@ messages:
     world-end: "Энд"
     world-other: "Другой мир"
     tip-0: "/bp — задания, деньги и XP-буст"
-    tip-1: "/profession — развитие своей профессии"
-    tip-2: "/hunt — дикие существа и полнолуние"
+    tip-1: "/skills — развитие своих навыков"
+    tip-2: "/tiers — снаряжение и редкости"
     tip-3: "/clan gui — кланы и условия вступления"
     tip-4: "/labels — метки; клановая анимация не занимает место"
     tip-5: "/profile — достижения и защита аккаунта"

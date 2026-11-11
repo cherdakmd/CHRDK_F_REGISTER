@@ -52,18 +52,19 @@ class ForgeMarketContractTest(unittest.TestCase):
         end = self.items.index("public void bumpUpgrade(", start)
         return self.items[start:end]
 
-    def test_version_and_core_api_are_current_stable_release(self):
+    def test_version_and_core_api_are_current_release_candidate(self):
         props = read(ROOT / "gradle.properties")
         version = re.search(r"^plugin_version=(.+)$", props, re.M)
         self.assertIsNotNone(version, "plugin_version обязателен")
         current = version.group(1).strip()
-        self.assertEqual("1.5.4", current)
-        self.assertRegex(current, r"^1\.5\.\d+(?:-fix)?$", "следующий выпуск остаётся стабильным")
+        self.assertEqual("1.5.5-rc.1", current)
+        self.assertRegex(current, r"^1\.5\.\d+(?:-fix|-rc\.[1-9]\d*)?$", "версия соответствует стабильному/fix/RC формату")
         self.assertTrue((ROOT / "docs/releases" / (current + ".md")).is_file(),
-                        "для текущего стабильного fix нужны полные заметки в архиве")
-        self.assertTrue((ROOT / "docs/social/releases" / (current + ".json")).is_file(),
-                        "для стабильного анонса нужна краткая заметка игрокам")
-        self.assertIn("int API_VERSION = 42;", self.api)
+                        "для текущего выпуска нужны полные заметки в архиве")
+        if "-rc." not in current:
+            self.assertTrue((ROOT / "docs/social/releases" / (current + ".json")).is_file(),
+                            "для стабильного анонса нужна краткая заметка игрокам")
+        self.assertIn("int API_VERSION = 44;", self.api)
         self.assertIn("ForgeMaterialSource forgeMaterialSource()", self.api)
         self.assertIn("ForgeMarketCatalog", self.exchange)
         self.assertIn("42", read(FORGE / "TierForgePlugin.java"))
@@ -96,18 +97,14 @@ class ForgeMarketContractTest(unittest.TestCase):
         self.assertIn("forge-shop.enabled", read(SHOP / "ForgeShopPrices.java"))
         self.assertIn("no-buyback", read(ROOT / "diamond-shop/src/main/resources/messages.yml"))
 
-    def test_hunt_only_seed_rates_and_no_unbounded_entity_death_drop(self):
-        rates = self.forge_config["forge-materials"]["drop-percent"]
-        self.assertEqual(0.5, rates["seed"])
-        self.assertEqual(1.0, rates["ascend"])
-        self.assertEqual(0.7, rates["temper"])
-        self.assertEqual(0.35, rates["reforge"])
-        self.assertIn("HUNT_DROPS", self.materials)
-        self.assertIn("QualifiedHuntKillEvent", self.materials)
+    def test_all_materials_are_shop_only_after_hunt_removal(self):
+        self.assertNotIn("drop-percent", self.forge_config["forge-materials"])
+        self.assertNotIn("QualifiedHuntKillEvent", self.materials)
         self.assertNotIn("import org.bukkit.event.entity.EntityDeathEvent", self.materials)
         self.assertNotIn("EntityDeathEvent event", self.materials)
         self.assertIn("SHOP_ONLY", self.forge_material)
-        self.assertIn("SEED_BASE_DROP_PERCENT = 0.5", self.forge_material)
+        self.assertIn("public boolean shopOnly() { return true; }", self.forge_material)
+        self.assertIn("public boolean huntDrop() { return false; }", self.forge_material)
 
     def test_xp_is_levels_with_exact_full_prices(self):
         for key, value in (("SEED_XP", 8), ("REPAIR_XP", 6),
@@ -152,7 +149,7 @@ class ForgeMarketContractTest(unittest.TestCase):
         self.assertIn("String grant)", self.exchange)
         self.assertIn("public boolean carriesGrant()", self.exchange)
         self.assertIn("ForgeMarketCatalog.validTradeGrant(grant,material,units)", self.exchange)
-        self.assertEqual(2, self.exchange.count("public ShopExchange(UUID t,UUID m,long s,UUID o,boolean buy"))
+        self.assertEqual(4, self.exchange.count("public ShopExchange(UUID t,UUID m,long s,UUID o,boolean buy"))
         self.assertIn("items[0] = copy", self.catalog)
         self.assertIn("new ItemStack[36]", self.catalog)
         self.assertIn("ChargeInventory.encode(items)", self.catalog)
@@ -179,7 +176,8 @@ class ForgeMarketContractTest(unittest.TestCase):
         self.assertNotIn("addItem(", self.service)
         self.assertNotIn("dispatchCommand", self.service)
         self.assertIn("WholeTrades.take(amounts, values, needed)", self.service)
-        self.assertIn("WholeTrades.payment(money, wallet, spent)", self.service)
+        self.assertIn("WholeTrades.payment(money, wallet, Math.multiplyExact(spent,physicalMinor))", self.service)
+        self.assertIn("ShopExchange.fractional(trade,marketQuote.rateBps())", self.service)
         self.assertIn("service.balance(player)", self.service)
 
     def test_migration_only_lore_and_single_final_append(self):

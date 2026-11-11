@@ -36,7 +36,7 @@ class ShopNativeBankTest {
     @Test void finishBeforeRenameFailureRetainsReservationAndDoesNotRepeatNativeGrant() throws Exception { var b=funded(100); var t=trade(true,10,0,0,1); b.prepareShop(t,"Steve"); Files.createDirectory(dir.resolve("bank.json.tmp")); var bag=bag(); assertEquals(InventoryTransfer.Decision.WAIT,BankCash.recover(b,owner,bag)); assertEquals(ShopExchange.Status.PREPARED,load().shopStatus(t)); Files.delete(dir.resolve("bank.json.tmp")); BankCash.recover(load(),owner,bag); assertEquals(1,bag.applies); assertEquals(90,load().balance(owner)); }
     @Test void importReceiptIsDurableBeforePreparingTheSourceJournal() { var b=load(); assertTrue(b.importLegacyShop(owner,13)); assertTrue(load().legacyShopImported(owner)); assertEquals(13,load().balance(owner)); assertTrue(load().importLegacyShop(owner,1)); assertEquals(13,load().balance(owner)); }
     @Test void ambiguousImportDoesNotLoseItsReceiptOrImportTwice() { var b=new BankStore(dir,log,()->{throw new IOException("import uncertain");}); assertFalse(b.importLegacyShop(owner,13)); assertFalse(b.available()); b.flush(); assertTrue(load().legacyShopImported(owner)); assertTrue(load().importLegacyShop(owner,13)); assertEquals(13,load().balance(owner)); }
-    @Test void schemaFiveMigratesButCannotHideNewMarketReceipts() throws Exception { var b=funded(100); var json=JsonParser.parseString(Files.readString(b.file())).getAsJsonObject(); json.addProperty("schema",5); json.remove("shopSettlements"); json.remove("claimSettlements"); Files.writeString(b.file(),json.toString()); assertTrue(load().available()); assertTrue(load().prepareShop(trade(true,10,0,0,1),"Steve")); json=JsonParser.parseString(Files.readString(b.file())).getAsJsonObject(); json.addProperty("schema",5); String bad=json.toString(); Files.writeString(b.file(),bad); b=load(); assertFalse(b.available()); b.flush(); assertEquals(bad,Files.readString(b.file())); }
+    @Test void schemaFiveMigratesButCannotHideNewMarketReceipts() throws Exception { var b=funded(100); var json=JsonParser.parseString(Files.readString(b.file())).getAsJsonObject(); json.addProperty("schema",5);json.remove("marketSnapshot");json.remove("marketRateBps"); json.remove("shopSettlements"); json.remove("claimSettlements"); Files.writeString(b.file(),json.toString()); assertTrue(load().available()); assertTrue(load().prepareShop(trade(true,10,0,0,1),"Steve")); json=JsonParser.parseString(Files.readString(b.file())).getAsJsonObject(); json.addProperty("schema",5);json.remove("marketSnapshot");json.remove("marketRateBps"); String bad=json.toString(); Files.writeString(b.file(),bad); b=load(); assertFalse(b.available()); b.flush(); assertEquals(bad,Files.readString(b.file())); }
     @Test void malformedTypedShopCountersAreNotCoerced() throws Exception { var b=funded(100); b.prepareShop(trade(true,10,0,0,1),"Steve"); String original=Files.readString(b.file()); for(String bad:List.of("\"1\"","1.5","9223372036854775808")) { var json=JsonParser.parseString(original).getAsJsonObject(); json.getAsJsonObject("cashPending").getAsJsonObject(owner.toString()).getAsJsonObject("shop").add("money",JsonParser.parseString(bad)); Files.writeString(b.file(),json.toString()); var loaded=load(); assertFalse(loaded.available()); loaded.flush(); assertEquals(json.toString(),Files.readString(b.file())); } }
     @Test void ratesRemainImmutableAndCustomWholeCurrencyIsFrozen() { var rates=new HashMap<String,Integer>(); rates.put("DIAMOND_BLOCK",100); var t=new ShopExchange(UUID.randomUUID(),market,1,owner,true,"STONE",64,10,0,90,100,rates,"before","after"); rates.clear(); assertTrue(t.valid()); assertThrows(UnsupportedOperationException.class,()->t.rates().clear()); assertEquals(100,t.rates().get("DIAMOND_BLOCK")); }
     @Test void invalidArithmeticAndSnapshotsAreRefusedBeforePrepare() { assertFalse(trade(true,10,1,0,1).valid()); assertFalse(trade(false,1,10,0,1).valid()); assertFalse(trade(true,0,0,0,1).valid()); assertFalse(trade(true,10,0,0,0).valid()); }
@@ -64,6 +64,37 @@ class ShopNativeBankTest {
         assertEquals(ShopExchange.Status.CONFLICT,b.shopStatus(stale)); assertFalse(b.prepareShop(stale,"Steve"));
         assertEquals("0/1",b.shopSaleRemainder(UUID.randomUUID()));
         var bad=new ShopExchange(UUID.randomUUID(),market,2,owner,false,"STONE",63,0,0,0,0,Map.of("DIAMOND",1),"before","after",64,1,"1/64","0/1"); assertFalse(bad.valid());
+    }
+    ShopExchange minorTrade(boolean buy,long money,long debit,long credit,long physical,long sequence) {
+        return ShopExchange.fractional(new ShopExchange(UUID.randomUUID(),market,sequence,owner,buy,"STONE",1,money,debit,credit,physical,Map.of("DIAMOND",1),"before","after"));
+    }
+    @Test void fractionalSaleCreditsOneHundredthExactlyOnceAcrossRestart() throws Exception {
+        var b=funded(10); assertEquals(1000,b.balanceMinor(owner));
+        var t=minorTrade(false,1,0,1,0,1); assertTrue(t.valid()); assertTrue(b.prepareShop(t,"Steve"));
+        var bag=bag(); BankCash.recover(b,owner,bag); BankCash.recover(load(),owner,bag);
+        var loaded=load(); assertEquals(10,loaded.balance(owner)); assertEquals(1001,loaded.balanceMinor(owner));
+        assertEquals("10,01",loaded.balanceText(owner)); assertEquals(1,bag.applies);
+        assertEquals(10,JsonParser.parseString(Files.readString(loaded.file())).getAsJsonObject().get("schema").getAsInt());
+    }
+    @Test void fractionalBuyAndPhysicalChangeBalanceExactly() throws Exception {
+        var b=funded(0); var t=minorTrade(true,37,0,63,1,1); assertTrue(t.valid()); assertTrue(b.prepareShop(t,"Steve"));
+        BankCash.recover(b,owner,bag()); var loaded=load(); assertEquals(0,loaded.balance(owner)); assertEquals(63,loaded.balanceMinor(owner));
+        var second=minorTrade(true,37,37,0,0,2); assertTrue(loaded.prepareShop(second,"Steve"));
+        var nextBag=bag(); nextBag.token=loaded.cashReceipt(owner).transaction().toString(); BankCash.recover(loaded,owner,nextBag);
+        assertEquals(26,load().balanceMinor(owner));
+    }
+    @Test void legacyWholeExchangeAndFractionalArithmeticRemainDistinct() {
+        assertTrue(trade(true,10,0,0,1).valid());
+        assertFalse(minorTrade(true,37,37,0,1,1).valid());
+        assertEquals(1,minorTrade(false,1,0,1,0,1).turnoverWhole());
+        assertEquals(2,minorTrade(false,101,0,101,0,1).turnoverWhole());
+    }
+
+    @Test void marketScaledCarryRemainsFractionalAndKeepsExactSubMinorRemainder() {
+        var quote=ShopSaleRemainder.quote("0/1",64,150,1);
+        var t=new ShopExchange(UUID.randomUUID(),market,1,owner,false,"STONE",1,quote.money(),0,quote.money(),0,
+                Map.of("DIAMOND",1),"before","after",64,150,"0/1",quote.remainder(),null,null,true,15_000);
+        assertTrue(t.valid());assertTrue(t.fractional());assertTrue(t.carriesRemainder());assertEquals(2,t.money());assertEquals("11/32",t.remainderAfter());
     }
     @Test void remainderSchemaCannotBeDowngradedOrSilentlyLoseCarry() throws Exception {
         var b=funded(0); var t=fraction(b,1,1); b.prepareShop(t,"Steve"); BankCash.recover(b,owner,bag());

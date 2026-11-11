@@ -35,7 +35,7 @@ class PveAwardLedgerTest {
     void duplicateReceiptForSameRecipientIsRejected() {
         PveAwardLedger ledger = new PveAwardLedger();
         UUID death = UUID.randomUUID();
-        PveReceipt receipt = receipt(death, PveRecipient.HUNT_COINS, DAY);
+        PveReceipt receipt = receipt(death, PveRecipient.COMMON_GOALS, DAY);
         assertTrue(ledger.register(PLAYER, receipt));
         assertFalse(ledger.register(PLAYER, receipt));
         assertEquals(1, ledger.receipts(PLAYER));
@@ -49,8 +49,8 @@ class PveAwardLedgerTest {
         for (PveRecipient recipient : PveRecipient.values()) {
             assertTrue(ledger.register(PLAYER, receipt(death, recipient, DAY)), recipient.name());
         }
-        assertEquals(6, ledger.receipts(PLAYER));
-        assertEquals(6, ledger.spent(PLAYER));
+        assertEquals(5, ledger.receipts(PLAYER));
+        assertEquals(5, ledger.spent(PLAYER));
     }
 
     @Test
@@ -102,7 +102,7 @@ class PveAwardLedgerTest {
         assertEquals(8_192, ledger.players());
         // Освежаем keep: теперь он самый недавно использованный.
         assertTrue(ledger.register(keep,
-                receipt(UUID.randomUUID(), PveRecipient.HUNT_COINS, DAY)));
+                receipt(UUID.randomUUID(), PveRecipient.COMMON_GOALS, DAY)));
         // 8193-й игрок вытесняет давно не активного, а не случайный ключ HashMap.
         assertTrue(ledger.register(UUID.randomUUID(),
                 receipt(UUID.randomUUID(), PveRecipient.CLASS_XP, DAY)));

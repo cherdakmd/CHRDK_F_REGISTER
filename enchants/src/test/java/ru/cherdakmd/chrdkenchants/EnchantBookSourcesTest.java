@@ -39,19 +39,6 @@ class EnchantBookSourcesTest {
         assertTrue(source.contains("inventory.setItem(0, result)"));
         assertFalse(source.contains("addItem(")); assertFalse(source.contains("dropItem("));
     }
-    @Test void booksFromMobsUseNaturalProvenanceOneClaimAndAnActualPlayerFinisher() throws Exception {
-        String source = source("MobBookListener");
-        assertTrue(source.contains("data.has(claimed)"));
-        assertTrue(source.indexOf("claims.begin(id, event)") < source.indexOf("nextDouble()"));
-        assertTrue(source.contains("if (claims.finish(id, event)) data.set(claimed"));
-        assertTrue(source.contains("!killer.equals(attacker)"));
-        assertTrue(source.contains("getEntitySpawnReason()"));
-        assertTrue(source.contains("MobProgressionKeys.NATURAL.equals"));
-        assertTrue(source.contains("getOrDefault(active"));
-        assertTrue(source.contains("EnchantDef.Polarity.LIGHT"));
-        assertTrue(source.contains("event.getDrops().add(book)"));
-        assertFalse(source.contains("addItem(")); assertFalse(source.contains("setDroppedExp("));
-    }
     @Test void anvilRetainsVanillaResultAndBlocksInvalidCustomTransfer() throws Exception {
         String source = source("AnvilApplyListener");
         assertTrue(source.contains("vanilla == null ? left.clone() : vanilla.clone()"));
@@ -67,9 +54,7 @@ class EnchantBookSourcesTest {
             assertDoesNotThrow(() -> net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(text));
         }
         var config = yaml("config.yml");
-        assertTrue(config.getBoolean("sources.mobs.enabled"));
-        assertEquals(.35, config.getDouble("sources.mobs.regular-chance-percent"));
-        assertEquals(8, config.getDouble("sources.mobs.elite-chance-percent"));
+        assertFalse(config.contains("sources.mobs"));
     }
     private String source(String name) throws Exception {
         return Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkenchants/" + name + ".java"));

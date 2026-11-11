@@ -184,7 +184,7 @@ jobs:
         run: |
           python3 -m pip install -r tools/wiki/requirements.txt
           npm ci --prefix tools/wiki
-          cd tools/wiki && npx playwright install --with-deps chromium
+          cd tools/wiki && npx playwright install chromium
       - name: Check wiki freshness, data and links
         run: |
           python3 tools/wiki/build.py --check

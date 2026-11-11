@@ -96,23 +96,12 @@ class BookProgressionTest {
     @Test void everyNewBookSourceIsStampedAtItsOwnCommitBoundary() throws Exception {
         assertTrue(source("TableListener").contains("stampBook(result, ru.cherdakmd.chrdkregister.api.EnchantBookSource.TABLE)"));
         assertTrue(source("VillagerListener").contains("EnchantBookSource.VILLAGER"));
-        assertTrue(source("MobBookListener").contains("EnchantBookSource.MOB"));
         assertTrue(source("EnchantCommandHandler").contains("EnchantBookSource.ADMIN"));
         assertTrue(source("EnchantsApiBridge").contains("EnchantBookSource.API"));
         Path root=Path.of("..");
         String api=Files.readString(root.resolve("src/main/java/ru/cherdakmd/chrdkregister/api/ChrdkEnchantsApi.java"));
         assertTrue(api.contains("default ItemStack book(String id, int level, EnchantBookSource source)"));
         assertTrue(api.contains("return book(id, level);"));
-    }
-    @Test void mobClaimIsScheduledBeforeRollButCommittedOnlyAfterFinalCancellation() throws Exception {
-        String source=source("MobBookListener");
-        assertTrue(source.contains("DeathBookClaims<>(EntityDeathEvent::isCancelled)"));
-        assertTrue(source.contains("if (!claims.begin(id, event)) return"));
-        assertTrue(source.indexOf("pending.submit(id, event")<source.indexOf("nextDouble()"));
-        assertTrue(source.contains("if (claims.finish(id, event)) data.set(claimed"));
-        assertTrue(source.contains("pending.cancel(id)")); assertTrue(source.contains("claims.discard(id, event)"));
-        assertTrue(source.contains("event.getDrops().add(book)"));
-        for (String forbidden:List.of("dropItem(","addItem(","setDroppedExp(","setHealth(")) assertFalse(source.contains(forbidden));
     }
     @Test void libraryRoundTripsTheEntireCatalogWithoutIncreasingLevelsOrInventingIds() {
         Map<String,Integer> all=new TreeMap<>(); EnchantRegistry.all().forEach(def->all.put(def.id(),def.maxLevel()));
@@ -164,7 +153,7 @@ class BookProgressionTest {
         String show=source.substring(source.indexOf("void show("),source.indexOf("@EventHandler(priority"));
         assertFalse(show.contains("scan(")); assertFalse(show.contains(".set(")); assertFalse(show.contains("queue("));
         String plugin=source("EnchantsPlugin");
-        assertEquals(2,plugin.split("if \\(mobBooks != null\\) mobBooks.clear\\(\\);",-1).length-1);
+        assertFalse(plugin.contains("mobBooks"));
         assertEquals(2,plugin.split("if \\(library != null\\) library.clear\\(\\);",-1).length-1);
         assertTrue(source("EnchantCommandHandler").contains("case \"library\""));
     }

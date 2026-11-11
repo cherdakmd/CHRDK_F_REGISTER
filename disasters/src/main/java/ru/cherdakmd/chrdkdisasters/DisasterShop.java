@@ -128,8 +128,8 @@ public final class DisasterShop implements Listener {
         if (!(core instanceof RegisterPlugin register)) {
             return false;
         }
-        return register.bankStore().deposit(
-                player.getUniqueId(), player.getName(), amount) >= 0L;
+        long award=register.bankStore().diamondRate().scaleMinor(amount*100L);
+        return register.bankStore().depositMinor(player.getUniqueId(),player.getName(),award,true)>=0;
     }
 
     private boolean supplies(Player player, int diamonds) {

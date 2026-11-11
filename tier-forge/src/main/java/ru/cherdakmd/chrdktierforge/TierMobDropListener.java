@@ -39,7 +39,7 @@ public final class TierMobDropListener implements Listener {
         // именной моб остаётся «мини-боссом» как и раньше.
         boolean boss = multiplier > 1.0
                 && (entity instanceof Boss
-                || (!ru.cherdakmd.chrdkregister.api.MobRewardPolicy.wild(entity) && entity.getCustomName() != null && !entity.getCustomName().isBlank()));
+                || (entity.getCustomName() != null && !entity.getCustomName().isBlank()));
         boolean identify = plugin.config().identifyUnidentified();
         for (ItemStack drop : event.getDrops()) {
             if (drop == null) continue;

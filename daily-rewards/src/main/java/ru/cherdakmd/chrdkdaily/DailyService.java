@@ -14,8 +14,9 @@ public final class DailyService {
         public boolean registered(UUID l){return plugin.coreApi().incomeSourceAvailable(DailyStore.SOURCE,l);}
         public boolean register(UUID l){return plugin.coreApi().registerIncomeSource(DailyStore.SOURCE,l);}
         public boolean known(UUID id){return plugin.coreApi().canReceiveBankIncome(id);}
+        public boolean receiptCompatible(long credited,long totalBase){return credited>=0;}
         public long credited(UUID l,UUID id){return plugin.coreApi().creditedEntitlement(DailyStore.SOURCE,l,id.toString(),id);}
-        public boolean credit(UUID l,UUID id,long total){return plugin.coreApi().creditEntitlement(DailyStore.SOURCE,l,id.toString(),id,total);}
+        public boolean credit(UUID l,UUID id,long total){return plugin.coreApi().creditMarketEntitlement(DailyStore.SOURCE,l,id.toString(),id,total);}
     };
     public DailyService(DailyRewardsPlugin plugin,DailyStore store){this.plugin=plugin;this.store=store;}
     public DailyStore store(){return store;}

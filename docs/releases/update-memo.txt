@@ -1,6 +1,36 @@
 CHRDK — обновление плагинов
 ===========================
 
+Комплект 1.5.5-rc.1 — динамический алмазный рынок и модерация
+-------------------------------------------------------------
+ПРЕРЕЛИЗ для staging, не stable. Общий ZIP: 20 JAR одной версии + памятка;
+chrdk-vk-1.5.5-rc.1.jar и chrdk-disasters-1.5.5-rc.1.jar отдельно.
+Core API44, bank schema10, PaidActions schema2, Auction schema3.
+
+100 minor = 1 алмаз. Физические предметы: items × rateBps / 100;
+при 10000 bps один алмаз = 100 minor. Курс 0,50–2,00, шаг <=2,5%.
+Хранимые minor задним числом не переоцениваются; WAL хранит frozen rateBps.
+Старые schema9 fractional receipts мигрируются один раз через credited ×100.
+
+/shop, Forge, аукцион, Claims и Guilds используют minor ledger. Дневной
+лимит /shop удалён; покупка ресурсов ×2, книг ×1. Старые накопления сохранены.
+Новые nicknames.yml, anti-swear.yml и anti-spam.yml применяются /pass reload.
+По умолчанию ники с 228, klauncher, admin, moderator запрещены.
+
+Hunt и Professions сняты: удалить их старые JAR, данные сохранить как архив.
+CHRDK_Queue и все снятые JAR убрать вручную из plugins/ и plugins/update/.
+Остановить сервер, сделать согласованный backup миров, playerdata, всех
+CHRDK_*, financial JSON/WAL и конфигов. Совместно заменить весь комплект,
+полный restart. Не откатывать старые JAR поверх schema10 после новых операций.
+
+Обязательный staging smoke: schema9→10 и повторный restart, баланс, курс
+0,50/1,00/2,00, /pay, /shop банком и предметами со сдачей, sellall, Forge,
+аукцион, Claims/Guilds, recovery без пересчёта курса, отсутствие daily-cap
+и арбитража, фильтры ников/мата/спама, отсутствие Hunt/Professions.
+Production и живые балансы при разработке не менялись.
+Полные заметки: docs/releases/1.5.5-rc.1.md.
+
+
 Комплект 1.5.4 — встроенная группа модератора
 ---------------------------------------------
 22 JAR одной версии + памятка; chrdk-vk-1.5.4.jar и

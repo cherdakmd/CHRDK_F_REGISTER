@@ -49,7 +49,7 @@ public final class ShopInventory {
             if(t.isBook()) return validBook(t,items)?items:null;
             material=Material.matchMaterial(t.material()); if(material==null||!material.isItem()) return null;
             if(t.buy()) {
-                long left=t.money()-t.debit(),paid=0; var order=new ArrayList<Integer>();
+                long left=physicalLeft(t),paid=0; var order=new ArrayList<Integer>();
                 for(int i=0;i<36;i++) if(plain(items[i])&&t.rates().containsKey(items[i].getType().name())) order.add(i);
                 order.sort(Comparator.comparingInt(i->t.rates().get(items[i].getType().name())));
                 for(int slot:order) {
@@ -96,7 +96,7 @@ public final class ShopInventory {
         if(!t.material().equals(t.book())||ShopBookKey.fromKey(t.book())==null) return false;
         long units=t.units();
         if(units>36) return false;
-        long left=t.money()-t.debit(),paid=0;
+        long left=physicalLeft(t),paid=0;
         if(t.buy()) {
             var order=new ArrayList<Integer>();
             for(int i=0;i<36;i++) if(plain(working[i])&&t.rates().containsKey(working[i].getType().name())) order.add(i);
@@ -120,6 +120,11 @@ public final class ShopInventory {
             working[i]=after[i]; changed++;
         }
         return changed==units&&ChargeInventory.matches(working,t.after());
+    }
+    private static long physicalLeft(ShopExchange t) {
+        long bankMinor = t.fractional() ? t.debit() : Math.multiplyExact(t.debit(), DiamondMoney.SCALE);
+        long leftMinor = Math.multiplyExact(t.money(), t.fractional() ? 1 : DiamondMoney.SCALE) - bankMinor;
+        long unit=t.fractional()?t.rateBps()/DiamondMoney.SCALE:DiamondMoney.SCALE;return (leftMinor+unit-1)/unit;
     }
     private ShopInventory() { }
 }

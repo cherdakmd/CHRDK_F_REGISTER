@@ -29,7 +29,7 @@ import java.util.UUID;
  *
  * <p>Ядро показывает своё: проходку, аккаунт, 2FA, банк и покупки каталога.
  * Остальное присылают аддоны через {@link ChrdkRegisterApi#registerProfile(String,
- * ChrdkRegisterApi.ProfileProvider)}: охота — монеты и звание, заказы —
+ * ChrdkRegisterApi.ProfileProvider)}: заказы —
  * репутацию, достижения — коллекцию и так далее. Нет аддона — нет раздела:
  * карточка остаётся рабочей.</p>
  *

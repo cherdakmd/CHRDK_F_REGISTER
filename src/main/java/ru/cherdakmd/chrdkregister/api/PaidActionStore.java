@@ -16,7 +16,7 @@ public final class PaidActionStore implements ChargeInventory.Source {
     public record Resolution(UUID action, UUID payer, int price, boolean success, String operator, long at) { }
     private static final Gson JSON = new GsonBuilder().setPrettyPrinting().create();
     private static final class Data {
-        int schema = 1;
+        int schema = 2;
         UUID lineage = UUID.randomUUID();
         boolean registered, valuesInitialized;
         Map<String,String> values = new LinkedHashMap<>();
@@ -42,7 +42,7 @@ public final class PaidActionStore implements ChargeInventory.Source {
         } catch (RuntimeException error) { healthy=false; throw new IOException("Повреждён paid-actions.json; источник не сбрасывается",error); }
     }
     private static void validate(Data d) {
-        if (d == null || d.schema != 1 || d.lineage == null || d.values == null || d.actions == null || d.refunds == null || d.resolutions == null || d.resolutions.size()>100)
+        if (d == null || (d.schema != 1&&d.schema!=2) || d.lineage == null || d.values == null || d.actions == null || d.refunds == null || d.resolutions == null || d.resolutions.size()>100)
             throw new IllegalArgumentException("action source");
         if (!d.registered && (!d.actions.isEmpty() || !d.refunds.isEmpty() || !d.resolutions.isEmpty()))
             throw new IllegalArgumentException("financial source lost registration marker");
@@ -50,13 +50,21 @@ public final class PaidActionStore implements ChargeInventory.Source {
             throw new IllegalArgumentException("source value");
         for (var row:d.actions.entrySet()) {
             var a=row.getValue();
-            if (a==null || !Objects.equals(a.id(),row.getKey()) || a.payer()==null || a.actor()==null || a.price()<1 || a.price()>1_000_000
+            if (a==null || !Objects.equals(a.id(),row.getKey()) || a.payer()==null || a.actor()==null || a.price()<1 || a.price()>(d.schema==2?100_000_000:1_000_000)
                     || a.phase()==null || a.kind()==null || !a.kind().matches("[a-z-]{1,32}") || a.payload()==null || a.payload().length()>16_384)
                 throw new IllegalArgumentException("reservation");
         }
         for (var row:d.refunds.entrySet()) if (row.getKey()==null || row.getValue()==null || row.getValue()<1) throw new IllegalArgumentException("refund");
         for (var r:d.resolutions) if (r==null || r.action()==null || r.payer()==null || r.price()<1 || r.operator()==null || r.operator().isBlank() || r.at()<1)
             throw new IllegalArgumentException("resolution");
+    }
+    public synchronized boolean minor() { return data.schema==2; }
+    public synchronized void enableMinor() throws IOException {
+        writable();if(data.schema==2)return;var n=copy();n.schema=2;
+        n.actions.replaceAll((id,a)->new Action(a.id(),a.payer(),a.actor(),Math.toIntExact(a.price()*100L),a.kind(),a.payload(),a.phase()));
+        n.refunds.replaceAll((owner,amount)->Math.multiplyExact(amount,100L));
+        n.resolutions.replaceAll(r->new Resolution(r.action(),r.payer(),Math.toIntExact(r.price()*100L),r.success(),r.operator(),r.at()));
+        write(n);
     }
     public synchronized UUID lineage() { return data.lineage; }
     public synchronized boolean healthy() { return healthy; }

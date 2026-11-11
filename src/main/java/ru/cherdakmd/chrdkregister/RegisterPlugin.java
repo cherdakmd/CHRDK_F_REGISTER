@@ -24,6 +24,7 @@ public final class RegisterPlugin extends JavaPlugin {
     private RewardBoostService rewardBoosts;
     RewardBoostService rewardBoosts() { return rewardBoosts; }
     private ChatService chatService;
+    ChatModerationService chatModeration;
     private PassMenuService passMenuService;
     private DonateMenuService donateMenuService;
     private ServerMenuService serverMenuService;
@@ -104,6 +105,8 @@ public final class RegisterPlugin extends JavaPlugin {
         this.externalHooks = new ExternalHooks(this);
         this.accessManager = new AccessManager(this, config, store, donatePayClient, messages, getLogger());
         this.chatService = new ChatService(this, accessManager, config.chat(), messages, getLogger());
+        this.chatModeration = new ChatModerationService(this, this::messages,
+                player -> accessManager.getStage(player) == AccessManager.PlayerStage.AUTHENTICATED);
         this.passMenuService = new PassMenuService(accessManager, messages);
         this.donateMenuService = new DonateMenuService(accessManager, messages);
         this.serverMenuService = new ServerMenuService(this, accessManager, messages);
@@ -228,6 +231,7 @@ public final class RegisterPlugin extends JavaPlugin {
         getServer().getScheduler().runTaskTimer(this, () -> serverGuard.pulse(getServer().getOnlinePlayers()), 20L, 20L);
         PluginCommand guardCommand = getCommand("guard");
         if (guardCommand != null) guardCommand.setExecutor((sender, command, label, args) -> serverGuard.status(sender));
+        getServer().getPluginManager().registerEvents(chatModeration, this);
         getServer().getPluginManager().registerEvents(chatService, this);
         // HIGHEST этого слушателя должен пройти до HIGHEST AnvilCostListener,
         // иначе котировка цены запомнит результат до слияния атрибутов.
@@ -483,6 +487,7 @@ public final class RegisterPlugin extends JavaPlugin {
         if (chatService != null) {
             chatService.reload(updated.chat());
         }
+        if (chatModeration != null) chatModeration.reload();
         if (tabListService != null) {
             tabListService.reload();
         }

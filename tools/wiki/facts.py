@@ -38,9 +38,6 @@ FIELDS = {
     "orders_daily": ("orders", "limits.max-per-day"),
     "orders_slots": ("orders", "board.size"),
     "orders_hours": ("orders", "board.order-hours"),
-    "profession_daily": ("professions", "general.daily-xp-cap"),
-    "profession_xp_per_diamond": ("professions", "income.xp-per-diamond"),
-    "profession_income_cap": ("professions", "income.daily-cap"),
     "skills_max": ("skills", "leveling.max-level"),
     "class_change": ("classes", "general.change-cooldown-days"),
     "class_respec": ("classes", "general.respec-cooldown-hours"),
@@ -48,9 +45,6 @@ FIELDS = {
     "guild_create": ("guilds", "general.creation-cost"),
     "pet_level": ("pets", "levels.max-level"),
     "pet_radius": ("pets", "general.owner-radius"),
-    "hunt_exchange": ("hunt", "limits.coins-per-diamond"),
-    "hunt_daily": ("hunt", "limits.exchange-per-day"),
-    "hunt_coins_daily": ("hunt", "limits.coins-per-day"),
     "daily_rank": ("daily-rewards", "vip.min-rank"),
     "vk_link_boost": ("vk", "rewards.link-boost-hours"),
     "vk_member_boost": ("vk", "rewards.member-boost-hours"),
@@ -230,7 +224,6 @@ class FactBook:
                 aliases = data.get("aliases", [])
                 if isinstance(aliases, str):
                     aliases = [aliases]
-                # /prof занят основной командой профессий, а не стабильным алиасом профиля.
                 if m == "core" and command == "profile":
                     aliases = [a for a in aliases if a != "prof"]
                 rows.append(
@@ -483,7 +476,7 @@ class FactBook:
                 return table(
                     ["SKU", "Материал", "Цена за штуку, алм.", "Полная цена операции", "Источник"],
                     [(id, material, int(price), cost[id],
-                      "Hunt + /shop forge" if hunt == "true" else "/shop forge")
+                      "/shop forge")
                      for id, material, price, _seed, hunt in records],
                 )
             cards = []
@@ -509,11 +502,6 @@ class FactBook:
             if len(tiers) != 7 or set(tiers) != set(c["tier-forge"]["tiers"]): raise ValueError("Изменена лестница тиров")
             messages = yaml.safe_load((self.root / "tier-forge/src/main/resources/messages.yml").read_text(encoding="utf-8"))["tiers"]
             return table(["Целевой тир", "Кристаллов", "Уровней XP"], [(messages["tier"][tier]["name"], values[0][i], values[1][i]) for i, tier in enumerate(tiers[1:])])
-        if name == "forge_drops":
-            rates = c["tier-forge"]["forge-materials"]["drop-percent"]
-            return table(["Расходник", "Уровень 1", "Уровень 30", "Элитный уровня 30"],
-                         [(id, f"{rates[id]:g}%", f"{rates[id] * 2:g}%", f"{rates[id] * 6:g}%")
-                          for id in ("ascend", "temper", "reforge", "seed")])
         if name == "tiers":
             return table(
                 ["ID редкости", "Вес розыгрыша", "Базовый модификатор, %"],
@@ -565,8 +553,6 @@ class FactBook:
                 [
                     ("Стол: дополнительная чара", s["table"]["chance-percent"]),
                     ("Стол: доля проклятий среди успешных доп. бросков", s["table"]["curse-chance-percent"]),
-                    ("Обычный моб", s["mobs"]["regular-chance-percent"]),
-                    ("Элитный моб", s["mobs"]["elite-chance-percent"]),
                     (
                         "Замена предложения библиотекаря",
                         s["villager"]["convert-chance-percent"],

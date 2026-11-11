@@ -35,7 +35,7 @@ import java.util.UUID;
 public interface ChrdkRegisterApi {
 
     /** Версия контракта API. API42: восемь PDC-расходников Кузни, ForgeMarketCatalog, nullable frozen grant в ShopExchange и ForgeMaterialSource; API41: уведомление AnvilPaidResultEvent после ручной полной оплаты; API40: AnvilCosts/AnvilUse — полная цена без клиентского запрета 40; API39: денежная награда BP once и накопление буста без игрового потолка; API38: MobRewardPolicy временных мобов; API37: общие helpers ExplorationCatalog/ExplorationStore/ExplorationAtlas; API 33: мосты внешних интеграций (слушатели безопасности, уведомлений и глобального чата с фильтром получателей, бонус длительности покупок, заморозка входа и сброс сессий без смены пароля); API 32: общий владелец непрерывных пассивных зелий PassivePotions; API 30: общий helper одноразового согласия с котировкой; API 29: точный остаток выручки магазина; API 28: индекс членства кланов; API 27: снят источник оформления удалённого аддона; API 26: сняты контракты удалённых аддонов; API 25: durable checkpoint игровых наград; API 24 — Claims domain settlement. */
-    int API_VERSION = 42;
+    int API_VERSION = 44;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -276,6 +276,25 @@ public interface ChrdkRegisterApi {
     default boolean commitGuildBankCharge(BankCharge payment, boolean collectingDebt) { return false; }
     /** Доступный расходуемый остаток, без зарезервированного штрафного долга. */
     default long spendableBankBalance(UUID owner) { return -1; }
+    /** Сотые алмаза на личном счёте; -1 — банк недоступен. */
+    default long personalDiamondsMinor(Player player) { return -1; }
+    default String personalDiamondsText(Player player) { return null; }
+
+    /** API44: live bounded quotation of one physical diamond in exact hundredths. */
+    default int diamondRateBps() { return DiamondExchangePolicy.BASE_BPS; }
+    default DiamondExchangePolicy.Quote diamondRate() {
+        return new DiamondExchangePolicy.Quote(DiamondExchangePolicy.BASE_BPS, 0, 0, 0, 0, 0);
+    }
+    default long bankBalanceMinor(String playerName) { return -1L; }
+    default boolean fundClaimPaymentMinor(Player payer,long costMinor) { return false; }
+    default long auctionBankBalanceMinor(UUID owner) { return -1L; }
+    default long spendableBankBalanceMinor(UUID owner) { return -1L; }
+    /** API44: additive minor-unit reward; legacy whole-diamond grant remains unchanged. */
+    default MoneyGrant grantBattlePassMoneyMinorOnce(UUID player, String name, long minor, String receipt) {
+        return MoneyGrant.FAILED;
+    }
+    /** API44: atomic deltas in hundredths, after the caller's durable source checkpoint. */
+    default boolean exchangeAccountsMinor(java.util.Map<UUID, Long> deltas, Runnable commit) { return false; }
 
     default boolean personalBankAvailable() { return false; }
     default boolean registerIncomeSource(String source, UUID lineage) { return false; }
@@ -288,6 +307,11 @@ public interface ChrdkRegisterApi {
     default long creditedEntitlement(String source, UUID lineage, String key, UUID owner) { return -1L; }
     /** true — total зачислен полностью. false: выплата могла быть частичной/неизвестной; нельзя откатывать source total. */
     default boolean creditEntitlement(String source, UUID lineage, String key, UUID owner, long total) { return false; }
+    /** API44: the same cumulative receipt protocol with exact hundredths. */
+    /** Cumulative base reward; each new delta is converted once at the current diamond quote. */
+    default boolean creditMarketEntitlement(String source,UUID lineage,String key,UUID owner,long totalBase) { return false; }
+    default long creditedEntitlementBase(String source,UUID lineage,String key,UUID owner) { return -1L; }
+    default boolean creditEntitlementMinor(String source,UUID lineage,String key,UUID owner,long totalMinor) { return false; }
 
     /** API v15: -1 при недоступном банке; UUID из достоверного ledger аукциона. */
     default boolean auctionBankAvailable() { return false; }
@@ -408,7 +432,7 @@ public interface ChrdkRegisterApi {
      * <p>По умолчанию ничего не делает: сторонние реализации API остаются
      * совместимыми.</p>
      *
-     * @param id       уникальный id аддона, например {@code hunt}
+     * @param id       уникальный id аддона, например {@code guilds}
      * @param provider сборка раздела; {@code null} игнорируется
      */
     default void registerProfile(String id, ProfileProvider provider) {

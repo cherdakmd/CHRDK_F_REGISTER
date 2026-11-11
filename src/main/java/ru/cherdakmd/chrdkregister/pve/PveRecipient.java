@@ -13,8 +13,6 @@ public enum PveRecipient {
 
     /** Собственный XP класса ({@code classes}). */
     CLASS_XP,
-    /** Монеты охоты ({@code hunt}). */
-    HUNT_COINS,
     /** Опыт боевых навыков ({@code skills}). */
     SKILL_XP,
     /** Общие цели ({@code common-goals}). */

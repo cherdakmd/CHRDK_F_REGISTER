@@ -12,7 +12,7 @@ import java.util.logging.Logger;
 /** Single-threaded ledger with a durable write-ahead inventory transfer. No Bukkit dependency. */
 public final class AuctionStore {
     private static final Gson JSON = new GsonBuilder().setPrettyPrinting().create();
-    public static final int MAX_PRICE = 1_000_000;
+    public static final int MAX_PRICE = 100_000_000;
     public static final int MAX_PAYLOAD = 90_000;
     public static final int MAX_ENTRIES = 5000;
     private static final int MAX_STATE_BYTES = 24 * 1024 * 1024;
@@ -42,7 +42,7 @@ public final class AuctionStore {
     private Envelope data = new Envelope();
     private boolean healthy = true;
     public boolean healthy() { return healthy; }
-    public boolean bankMode() { return data.schema == 2; }
+    public boolean bankMode() { return data.schema >= 2; }
     public UUID market() { return data.market; }
     public long nextBankSequence() { return data.state.bankSequence + 1; }
     public Map<UUID, Long> legacyMoney() { return Map.copyOf(data.state.money); }
@@ -58,7 +58,7 @@ public final class AuctionStore {
             if (obj.has("pending") && !obj.get("pending").isJsonNull())
                 requireStateFields(obj.getAsJsonObject("pending").getAsJsonObject("next"));
             Envelope loaded = JSON.fromJson(obj, Envelope.class);
-            if (loaded.schema != 1 && loaded.schema != 2) throw new IllegalArgumentException("schema");
+            if (loaded.schema != 1 && loaded.schema != 2 && loaded.schema != 3) throw new IllegalArgumentException("schema");
             if (loaded.schema == 2) {
                 if (loaded.market == null || !obj.getAsJsonObject("state").has("bankSequence")) throw new IllegalArgumentException("missing market/counter");
                 if (loaded.pending != null && !obj.getAsJsonObject("pending").getAsJsonObject("next").has("bankSequence")) throw new IllegalArgumentException("missing next counter");
@@ -82,7 +82,7 @@ public final class AuctionStore {
                 } else validateBankPending(loaded, p);
                 validate(p.next);
                 if (loaded.schema == 1 && p.next.bankSequence != 0) throw new IllegalArgumentException("downgraded pending counter");
-                if (loaded.schema == 2 && p.payment == null && (p.operation.startsWith("BUY") || p.operation.startsWith("WITHDRAW") || p.operation.startsWith("BANK_BUY")))
+                if (loaded.schema >= 2 && p.payment == null && (p.operation.startsWith("BUY") || p.operation.startsWith("WITHDRAW") || p.operation.startsWith("BANK_BUY")))
                     throw new IllegalArgumentException("missing bank payment");
             }
             data = loaded;
@@ -150,7 +150,15 @@ public final class AuctionStore {
     private void available() { if (!healthy || data.pending != null) throw new IllegalStateException("recovery required"); }
     public void enableBank() throws IOException {
         available(); if (bankMode()) return;
-        var next = envelope(copy(), null); next.schema = 2; next.market = UUID.randomUUID(); write(next);
+        var next=envelope(copy(),null);next.schema=2;next.market=UUID.randomUUID();write(next);
+    }
+    /** One-way schema3 migration: prices and fees become exact hundredths, never balances. */
+    public void enableMarket() throws IOException {
+        available(); if(data.schema==3)return;
+        var state=copy();var next=envelope(state,null);
+        if(data.schema==2) state.lots.replaceAll((id,lot)->new Lot(lot.id(),lot.seller(),lot.name(),lot.item(),Math.toIntExact(lot.price()*100L),Math.toIntExact(lot.fee()*100L),lot.expires()));
+        else next.market=UUID.randomUUID();
+        next.schema=3;write(next);
     }
     private void prepare(UUID player, String op, String before, String after, State next) throws IOException {
         available(); validate(next);
@@ -160,7 +168,7 @@ public final class AuctionStore {
     }
     private static void validateBankPending(Envelope env, Pending pending) {
         var p = pending.payment;
-        if (env.schema != 2 || p == null || !p.valid() || pending.transferId!=null&&!pending.transferId.equals(p.transaction()) || !p.market().equals(env.market) || !p.buyer().equals(pending.player)
+        if (env.schema < 2 || p == null || !p.valid() || pending.transferId!=null&&!pending.transferId.equals(p.transaction()) || !p.market().equals(env.market) || !p.buyer().equals(pending.player)
                 || p.sequence() != env.state.bankSequence + 1 || pending.next.bankSequence != p.sequence()
                 || !pending.operation.equals("BANK_BUY #" + p.lot())
                 || !p.inventoryHash().equals(AuctionPayment.hash(pending.before, pending.after))) throw new IllegalArgumentException("bank intent");

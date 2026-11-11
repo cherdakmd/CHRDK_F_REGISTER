@@ -42,14 +42,17 @@ public final class PaidActions {
         var core=api.get(); return p!=null && p.isOnline() && !p.isDead() && !p.hasMetadata("NPC") && core!=null && core.isAuthenticated(p)
                 && (p.getGameMode()==GameMode.SURVIVAL || p.getGameMode()==GameMode.ADVENTURE);
     }
-    private boolean pay(Player payer,int price,Supplier<String> preview) throws IOException {
+    private boolean pay(Player payer,long price,Supplier<String> preview) throws IOException {
         if (!eligible(payer)) { say(payer,"mode"); return false; }
         if (!ready()) { say(payer,"wait"); return false; }
         var before=ChargeInventory.copy(payer.getInventory().getStorageContents());
-        var plan=ChargeInventory.plan(before,price,api.get().spendableBankBalance(payer.getUniqueId()));
-        if (plan==null) { say(payer,"insufficient","cost",price); return false; }
+        var quote=api.get().diamondRate();
+        var plan=store.minor()?ChargeInventory.planMinor(before,price,api.get().spendableBankBalanceMinor(payer.getUniqueId()),quote.rateBps())
+                :ChargeInventory.plan(before,price,api.get().spendableBankBalance(payer.getUniqueId()));
+        if (plan==null) { say(payer,"insufficient","cost",store.minor()?DiamondMoney.format(price):price); return false; }
         String afterState=preview.get();
-        var payment=journal.prepare(payer.getUniqueId(),price,plan.debit(),plan.cash(),plan.change(),ChargeInventory.encode(before),ChargeInventory.encode(plan.after()),store.snapshot(),afterState);
+        var payment=store.minor()?journal.prepareMinor(payer.getUniqueId(),price,plan.debit(),plan.cash(),plan.change(),quote.rateBps(),ChargeInventory.encode(before),ChargeInventory.encode(plan.after()),store.snapshot(),afterState)
+                :journal.prepare(payer.getUniqueId(),price,plan.debit(),plan.cash(),plan.change(),ChargeInventory.encode(before),ChargeInventory.encode(plan.after()),store.snapshot(),afterState);
         api.get().commitBankCharge(payer,payment,before);
         var decision=ChargeInventory.recover(journal,api.get(),payer,store);
         if (decision==ChargeRecovery.Decision.ROLLBACK) { say(payer,"refused"); return false; }
@@ -63,11 +66,12 @@ public final class PaidActions {
         if (!eligible(payer) || !eligible(actor)) { if (payer!=null) say(payer,"mode"); return false; }
         if (occupied(payer.getUniqueId()) || occupied(actor.getUniqueId())) { say(payer,"wait"); return false; }
         if (price<1 || price>1_000_000) { say(payer,"refused"); return false; }
-        var a=new PaidActionStore.Action(UUID.randomUUID(),payer.getUniqueId(),actor.getUniqueId(),price,kind,payload,PaidActionStore.Phase.READY);
+        int charged=store.minor()?Math.toIntExact(api.get().diamondRate().scaleMinor(price*100L)):price;
+        var a=new PaidActionStore.Action(UUID.randomUUID(),payer.getUniqueId(),actor.getUniqueId(),charged,kind,payload,PaidActionStore.Phase.READY);
         try {
-            if (!pay(payer,price,()->store.preview(a))) return false;
+            if (!pay(payer,charged,()->store.preview(a))) return false;
             boolean success=execute(store,a.id(),operation);
-            if (!success) { flushRefunds(); say(payer,"refunding","cost",price); }
+            if (!success) { flushRefunds(); say(payer,"refunding","cost",store.minor()?DiamondMoney.format(charged):price); }
             return success;
         } catch (Exception error) { failure(payer,error); return false; }
     }
@@ -88,7 +92,8 @@ public final class PaidActions {
         try {
             if (occupied(payer.getUniqueId())) { say(payer,"wait"); return false; }
             if (price==0) { store.putValue(key,value); return true; }
-            return pay(payer,price,()->store.previewValue(key,value));
+            long charged=store.minor()?api.get().diamondRate().scaleMinor(price*100L):price;
+            return pay(payer,charged,()->store.previewValue(key,value));
         } catch (Exception error) { failure(payer,error); return false; }
     }
     /** API 31: ежедневная оплата/взыскание с offline UUID, без чтения playerdata и без предметной доплаты. */
@@ -96,7 +101,9 @@ public final class PaidActions {
         try {
             if (!source.equals("guilds") || payer == null || price < 1 || price > 1_000_000 || occupied(payer) || !ready()) return false;
             String empty = ChargeInventory.encode(new org.bukkit.inventory.ItemStack[36]);
-            var payment = journal.prepare(payer, price, price, 0, 0, empty, empty, store.snapshot(), store.previewValue(key, value));
+            long charged=store.minor()?api.get().diamondRate().scaleMinor(price*100L):price;
+            var payment=store.minor()?journal.prepareMinor(payer,charged,charged,0,0,api.get().diamondRate().rateBps(),empty,empty,store.snapshot(),store.previewValue(key,value))
+                    :journal.prepare(payer,price,price,0,0,empty,empty,store.snapshot(),store.previewValue(key,value));
             api.get().commitGuildBankCharge(payment, collectingDebt);
             var decision = ChargeInventory.recover(journal, api.get(), null, store);
             return decision == ChargeRecovery.Decision.COMPLETE;
@@ -126,7 +133,7 @@ public final class PaidActions {
             if (paused()) return false;
             // READY доказывает: native-вызов ещё не начинался. После restart услуга уже не нужна — полный refund.
             for (var a:store.actions()) if (a.phase()==PaidActionStore.Phase.READY) store.refundReady(a.id());
-            flushRefunds(); return true;
+            flushRefunds(); if(journal.pending()==null)store.enableMinor(); return true;
         } catch (Exception error) { failure(player,error); return false; }
     }
     public void tick() { if (store.healthy() && journal.healthy()) recover(null); }
@@ -135,7 +142,8 @@ public final class PaidActions {
         var rows=new ArrayList<>(store.refunds().entrySet()); if (rows.isEmpty()) return;
         for (int i=0;i<Math.min(16,rows.size());i++) {
             var row=rows.get(Math.floorMod(refundCursor++,rows.size()));
-            api.get().creditEntitlement(source,store.lineage(),row.getKey().toString(),row.getKey(),row.getValue());
+            if(store.minor()) api.get().creditEntitlementMinor(source,store.lineage(),row.getKey().toString(),row.getKey(),row.getValue());
+            else api.get().creditEntitlement(source,store.lineage(),row.getKey().toString(),row.getKey(),row.getValue());
         }
     }
     public boolean admin(CommandSender sender,String[] args) {

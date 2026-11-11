@@ -16,6 +16,7 @@ final class ClaimFinance {
         Map<UUID,Long> resolve(Map<String,Long> deltas,String payer);
         ClaimExchange.Status status(ClaimExchange t);
         ClaimExchange.Status commit(ClaimExchange t);
+        default boolean minor() { return false; }
         default long spendable(String name) { return balance(name); }
     }
     private final ClaimStore store;
@@ -53,7 +54,7 @@ final class ClaimFinance {
                 if(!plan.valid) return refused;
                 String after=shadow.domainJson();
                 var deltas=bank.resolve(plan.deltas,plan.payer); if(deltas==null||store.financeRevision()!=revision||!before.equals(store.domainJson())) return refused;
-                var t=new ClaimExchange(UUID.randomUUID(),store.financialLineage(),store.financialSequence()+1,kind,deltas,ClaimExchange.hash(after));
+                var t=new ClaimExchange(UUID.randomUUID(),store.financialLineage(),store.financialSequence()+1,kind,deltas,ClaimExchange.hash(after),bank.minor());
                 if(!store.prepareFinance(new Pending(t,ClaimExchange.hash(before),after))) return refused;
                 return recover()?result:refused;
             } catch(RuntimeException e) {

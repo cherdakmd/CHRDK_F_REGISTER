@@ -151,13 +151,13 @@ public final class GoalsService {
         catch (java.io.IOException error) { plugin.getLogger().log(java.util.logging.Level.SEVERE, "Источник доходов целей не сохранён", error); return; }
         for (var row : plugin.store().entitlements().entrySet()) {
             var owner = plugin.coreApi().knownBankPlayer(row.getKey());
-            if (owner != null) plugin.coreApi().creditEntitlement("common-goals", plugin.store().incomeId(), row.getKey(), owner, row.getValue());
+            if (owner != null) plugin.coreApi().creditMarketEntitlement("common-goals", plugin.store().incomeId(), row.getKey(), owner, row.getValue());
         }
     }
     public long awaiting(Player player) {
         if (!ensureIncome()) return -1;
         long total = plugin.store().entitlementOf(player.getName());
-        long credited = plugin.coreApi().creditedEntitlement("common-goals", plugin.store().incomeId(), player.getName().toLowerCase(java.util.Locale.ROOT), player.getUniqueId());
+        long credited = plugin.coreApi().creditedEntitlementBase("common-goals", plugin.store().incomeId(), player.getName().toLowerCase(java.util.Locale.ROOT), player.getUniqueId());
         return credited < 0 || credited > total ? -1 : total - credited;
     }
     public void claimRewards(Player player) {
@@ -169,10 +169,10 @@ public final class GoalsService {
             plugin.store().saveStrict();
             String name = player.getName().toLowerCase(java.util.Locale.ROOT);
             // UUID авторизованного владельца, не вычисленный offline UUID по нику.
-            if (!plugin.coreApi().creditEntitlement("common-goals", plugin.store().incomeId(), name, player.getUniqueId(), total)) {
+            if (!plugin.coreApi().creditMarketEntitlement("common-goals", plugin.store().incomeId(), name, player.getUniqueId(), total)) {
                 plugin.messages().send(player, "bank-wait"); return;
             }
-            plugin.messages().send(player, "bank-paid", "balance", plugin.coreApi().auctionBankBalance(player.getUniqueId()));
+            plugin.messages().send(player, "bank-paid", "balance", ru.cherdakmd.chrdkregister.api.DiamondMoney.format(plugin.coreApi().auctionBankBalance(player.getUniqueId())));
         } catch (java.io.IOException error) { plugin.getLogger().log(java.util.logging.Level.SEVERE, "Не сохранён источник награды", error); plugin.messages().send(player, "bank-wait"); }
     }
 

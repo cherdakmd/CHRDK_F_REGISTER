@@ -1,198 +1,188 @@
 {
   "pages": {
     "about": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "741396dbec264886ea9666daa1887a08122e6d0a1c4f04c699d8c8b2f96ba78a",
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "9b7c12ec2db6469e44e10350a4354d1f68fa818707c493ad2d28d109de1a5fcc",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "570d31cd4a1e3a2782aa21ebd453b8a704423af504f0105e1dfb5fb90d6ab713",
-      "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "c8d0902f04f3aa372f9ed23c7b660cc4649890bffdde6bb8d423d78a0cb9b975",
+      "text": "bd128e475ee8efae55c3d2d6c9616d5278600f2a8ff1aad7af5e6df3e0b3f5c3"
     },
     "artifacts": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "ea620f8617a1fcf241f56e68e7c447c15aca82a23bf605ca14c1a9ba53686be8",
-      "text": "fcdffb1098428fac2bd42d1c4acb73bb9a024d1823d5398b8845bb2f415a506f"
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "43ace52690c72213b7cfb1067fa8992870d2cda6eaef02bcaf0d2a21a30a8d22",
+      "text": "51e3ef379d9a8f7e2ccfc6fd41cc0c0823f91f30d7c9a8326ec7962c182d98e4"
     },
     "auction": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "47fe4931018e43d809478899b6eea3793f25b4b0aff5aee596e2fe7053911534",
-      "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "4a252a658369edbc09669ebd941aa9303329343e63e3075885165291c814d8c6",
+      "text": "89f444940889c75cea3b77900f9b41ed8500cdb039d2b2cd1aebd82dcf710d25"
     },
     "battlepass": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "1ab45689a6b3fdb4cf13e0254a85eab18cc405025f7ee99bfcae757c70843510",
-      "text": "f368077b5f1961a1982957afe3b8523b60c8330f3dfd1891003d01ea1c4fd6db"
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "be30aab61eb63be4931c7131f593b82764bdd2ed03103aa5f32df9da1a83cb40",
+      "text": "997df6e0a9311ea115c4fd3c192b2729034b10c68a4f41c57261ef4b704c5add"
     },
     "chat": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "741396dbec264886ea9666daa1887a08122e6d0a1c4f04c699d8c8b2f96ba78a",
-      "text": "ca6c93fc33fca52eecc7d38744bc86f619ea0b6a7bcc2314b84ca6c5399d8a1c"
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "9b7c12ec2db6469e44e10350a4354d1f68fa818707c493ad2d28d109de1a5fcc",
+      "text": "a51c51d20cfe94c553e80893422b000a579b87285b00cbceb452f29eb0773023"
     },
     "claims": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "987ff4ba9249598f08b41f6137a95b5a0ca3a30fea2f8250d0005081aa35577b",
-      "text": "3144ca61235b895be5cb61e6d120d5dc6d6d0d7c26f87819431b4756659e8e12"
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "b94626c2b3c4091a3f8dc89da49f87b88c8305c8d9795efd1474f7556688e638",
+      "text": "3126e85c74cf79658fdcde5a03722da3d31459d702228865edec9eb15e142aa4"
     },
     "classes": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "4cb34d56a024fa08d24295d3776a5035bcd68043f0f159aa56f49e4121f02c0d",
-      "text": "fdebe780b6e7964249b5c4bc4752908cbdd67722e4d4bb0a4b1f64d94cd15ea1"
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "c74a5c0e9c4aedb66e18fc2be6bd6cdbfc867aba58d69f98ba53ab15524fd1a4",
+      "text": "503edef62357862f67d17df249b393023697d6dca6342cbe792b0d4dc78cb8cc"
     },
     "commands": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "0ad2842e14a4fa8434b6970926e1ef574acfadddeb61bb54c0e0e9667dfdeb40",
-      "text": "3296406152bceb2efa2ebf39a602f5956e570cbe1416b120c5e02f4c6cbe4212"
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "ed9026209eee742cd0e5ebd720a51d8c7e64986334521578fa05093055880478",
+      "text": "b16f06b84b440533e5bba0a45540bf517f3ae650cb390ddd6b9f43d47c5eabdd"
     },
     "cosmetics": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "8a86e423b0df1ffd4e82f9ccdcc3eef5f6425ab2410b3b642cf9557b1a03d7b3",
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "3b526a95e5b13a6fa8755afd3ec55cb9d75721b3d6ff6251e93fbbab88ed007c",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "4b1205382a2b95dd67061ba3ebac3c43f5e6cf099ea7bdb43e2d1e2400c8f526",
-      "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "9e2daf7dfe4bd3c2ad229fb559316925acbded51073074c60e07f86b280eec2d",
+      "text": "4d7683f5677c50dfe0488961891915b5c2dd6533191a213ee8fdb077ea817eb5"
     },
     "disasters": {
-      "reason": "Исправлена Java-компиляция смерча: целый радиус randomAround после округления",
-      "sources": "151da1b4a71200add7b7941b8615502a830fcb816687953d536f8dee816fa39f",
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "3cb65d3b636ee14dfa9f1e690fdc28020bb6b963051ed727ca1c30242b5ba2c3",
       "text": "121b1cc28a075ced29b6de8abec7dbc20bbb531a01441ddd5fdb836d066d0202"
     },
     "economy": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "ff8da5635b8ea9ab674f28305081c039fc04d2355b5868bfceee2b57ec06105e",
-      "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "10d026d6cb39db247569bf5ff39996b9ad2d6257450610b56e49ff2fe1b06975",
+      "text": "051da7af63816f9e7b42dc7185973c88adf8862f10ad9d1e21f5d789cdbdc4fe"
     },
     "enchants": {
-      "reason": "Сверены смешанные книги на тир-кирках: совместимость, атомарность, конфликты и Too Expensive",
-      "sources": "347ca52f17c9ad0a5ba3fa51fa838c07520ce53027f78c9b2115279cc69fe8c2",
-      "text": "c0e9924c0a5bc5d50f03118ec18f0ef57c43b79734e75205e096759a4cd05b59"
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "5346e642d524014cb5c24c95de19aaf5b1bb4ca9e21fa6af1fb9bf281e42e82a",
+      "text": "7e90321ef8a100bae11c53592c62328fa44a958be657b66a86d51ea8c1906a7d"
     },
     "faq": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "7b72817bea90fc1d4085318952793a0734346a8f865a116bcf717e0d7370251f",
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "43fdf86d7d505bc2aa67b8884b9dea2c103a4eff0532251d0aec989ee81a8f90",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "e7b95207e9eb58ff080ee60da399361a664d8f61a09a1afa5494b847779190ff",
-      "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "8a44d7964a725f5bd8016db9a8fbc22d3da22dc8735f4470f2702f575a91bd6e",
+      "text": "615d89bba0ac116c220d571f530fcdab7d5ff46162ca7a7ecf24de441a7fb191"
     },
     "guilds": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "987ff4ba9249598f08b41f6137a95b5a0ca3a30fea2f8250d0005081aa35577b",
-      "text": "e166f2671aabcdf55ecf59d1465ddb19a36343f6d07983eb8b8821b3a63cce34"
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "b94626c2b3c4091a3f8dc89da49f87b88c8305c8d9795efd1474f7556688e638",
+      "text": "bb7d4121d6c42762b2f09d8eb57df986a942df35c77fd2cf899a5e7a38193216"
     },
     "honors": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "741396dbec264886ea9666daa1887a08122e6d0a1c4f04c699d8c8b2f96ba78a",
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "9b7c12ec2db6469e44e10350a4354d1f68fa818707c493ad2d28d109de1a5fcc",
       "text": "6bc29d5a2d7783845f8b3d9b085e85982faec5b3029d841092386f36b1d4c4b0"
     },
-    "hunt": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "adc0365cd6f5dd34be0f2099390cdee0db01c250e06b6f2c7211955fdbab8e59",
-      "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
-    },
     "index": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "de6333814d75e894c978d252787b73869ee2e64c8bebbe66f9b7751dafb414e3",
-      "text": "6a3b9fedc0d15e6ef23ae50e7bf41cdf79f9efcc79299101944c041b5c2d9222"
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "3ccd3b12655e7544ab34c9568162196addca82742fb58183592989f79d2a4018",
+      "text": "13b0089b89035cd13598d177608718282608bc671993a3c370012b297c779cd7"
     },
     "menu": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "ccda2b08a5bbc036789545866bcfe73df09882aec45dd8d8ea3901388ce7a79a",
-      "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "43fdf86d7d505bc2aa67b8884b9dea2c103a4eff0532251d0aec989ee81a8f90",
+      "text": "c646997519fcb5c1c0428e5e3686361e2fea3b508e86f0ac0d24d84f84229f8b"
     },
     "moderation": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "741396dbec264886ea9666daa1887a08122e6d0a1c4f04c699d8c8b2f96ba78a",
-      "text": "6d8005e0c6401cbdbac9595256c43dde07633b522a765a7a6c080da0ca212b5e"
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "9b7c12ec2db6469e44e10350a4354d1f68fa818707c493ad2d28d109de1a5fcc",
+      "text": "79580a49c09219f65539abace395b5f2469f91fc2f0ac9b3ecae109c4fa1ecb4"
     },
     "orders": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "6559bfa6a76bc1b629a225dd996f8fc27facbbaca3c11842eec77a8414b1dee6",
-      "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "7cd90e218217bc24a8c04ec689ca4c29f0d501b8471476e9971c57e073626133",
+      "text": "8f1bddfa65aabb38fab8ebdad77656a627e340e765229de34ab3a24dd96fef2e"
     },
     "perktree": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "4cb34d56a024fa08d24295d3776a5035bcd68043f0f159aa56f49e4121f02c0d",
-      "text": "148006c785c6f0e5adf6725d87605f5e508b957636fdac87ea64939e7bd63b79"
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "c74a5c0e9c4aedb66e18fc2be6bd6cdbfc867aba58d69f98ba53ab15524fd1a4",
+      "text": "3e1a2fe232bb8c384a682ac98f8133ab0560de790bab9a2a2d9542ea0b673666"
     },
     "pets": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "68b328784891dc92dce8a120e19fd449acf6b09acfd1456a670a6b8edee9774f",
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "3612e9867f60c1a4ce62a70a6e8163ebe0b65358408f9ae3014f5fcf8fd78f63",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
-    "professions": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "fa975e5990a0447622e7eb7a1a941d0ded0c7e0344c29407b3c3128286c86b78",
-      "text": "13e6d38670572890ab2567279a5ca76f8e353eab6ade09a877eee2e884c6e272"
-    },
     "profile": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "a8011d9d34dfc801528fc40db5863b8725603b3c374eb757595863b5369d6367",
-      "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "54a6fab4e8ce506cfbe3a2c7a295ed1c5b7fec2e666a9e063757e338c4b35c3f",
+      "text": "f2a1fafaef6d54a60b0dd2e9545374a59a83ad49a5de3ace0069e441c187d309"
     },
     "quests": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "da4502b5bee863a7b83b12a6f41794b404e61101f1cba6c14a9976fefa61e0d3",
-      "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "88c797aa56aa73a6dbc84c135aa415d01ecd92a1919aeabc6c3abacf1ad754de",
+      "text": "a42f11010fddbf13238133ac1e2dca525dea95245f5286a88a57738af30fbf13"
     },
     "ranks": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "34ceda26a07a677bda504da1b21f3b92f22f2d30622e3c276b52fbee0fd5a873",
-      "text": "b551d73e8dcc85c81ff7c908f7c89e1ebfb441b46d082a6a714124d77bfbb2c2"
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "0daaede3cada967d750d108982ab966361670b3919acf319d6a77b9166ed336e",
+      "text": "664b466e4b44741175d9c2cdb4da728a0603a04aaaefada8396dd6517d5dca2d"
     },
     "shop": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "de6333814d75e894c978d252787b73869ee2e64c8bebbe66f9b7751dafb414e3",
-      "text": "ea26b94a87ea9b7287d9afad8fe96c8633ed8cc92e9fb091369ebd814b3a86a6"
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "3ccd3b12655e7544ab34c9568162196addca82742fb58183592989f79d2a4018",
+      "text": "6b4ec3842f6bca2ac8ba266ed5236562fc8f4d9e064252b19f79aa9ba977941d"
     },
     "skills": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "e007ee0f1c9d361981dd58c248eb1caa262e801b4a412113033ffe35a483e65a",
-      "text": "2cbe0faac3c272b71b3eb81fb78f5051b9eaa58e4ff682276af2c6bbdf74a98b"
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "d7c1577b6e2ebd843e6eb8090a6a959092e23c85411fac44e22de35f1e8bb6c5",
+      "text": "43797b2c64a23ab2e591eb8a75bacb7d064827f86c80f62665d08170fab33e00"
     },
     "social-link": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "3b66bdfd45109a8b68a09ea1bbb7e23b943b0e91c84b3e954c2f161ae5368209",
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "f7372773ef7c727ed6a44217013440c01391a23889027a10a931b98f0baea567",
       "text": "1f6cf95d9c8c2180dbf871aa9b19a7bfcde5405cf77b75954b7575920d2aef14"
     },
     "start": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "7e02506044220e2120815ae973dd60bfadb27ce1e1b097bb20dcf9ddcd46eb9a",
-      "text": "c2835fdf2d1945079115e6a252d472ce72ad9ad79f4ed47ad58e269b467d595f"
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "b4c64c591de6dfce553df33271d206044bfbe0df287ec4a9138dce8b3dc24362",
+      "text": "953b107bba1128be43994bee9edf9ab7766c7ecfab70620808f8d404fef8d3cb"
     },
     "starter-kit": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "ea620f8617a1fcf241f56e68e7c447c15aca82a23bf605ca14c1a9ba53686be8",
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "43ace52690c72213b7cfb1067fa8992870d2cda6eaef02bcaf0d2a21a30a8d22",
       "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
     },
     "teleports": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "318f8733ee4a8952ee97fd3506526f2550eae66e1f6fda479324a5582d14a8ab",
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "ffc0b76ff4e6bf68294920da2113ca6582f880ad300ac8e1dc0289a562c82351",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "Сверены смешанные книги на тир-кирках: совместимость, атомарность, конфликты и Too Expensive",
-      "sources": "347ca52f17c9ad0a5ba3fa51fa838c07520ce53027f78c9b2115279cc69fe8c2",
-      "text": "cce495a2fd54e1ca454c6ccb464c61feb08fac15cfa1147700e0fe5c5614d972"
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "5346e642d524014cb5c24c95de19aaf5b1bb4ca9e21fa6af1fb9bf281e42e82a",
+      "text": "9fac8f515b8905c25378000b55e6f5faaa87a8b5a3a3173676cb4563894d98f7"
     },
     "titles": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "51b7c0ed574ee98ccf030a230e11487c136d8a0e2f9605413df8b8268eac70bd",
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "b62e952b5c511d2bbe323f6198f59fa016a6087c3d6192034fc625f77ebe4ce2",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "de6333814d75e894c978d252787b73869ee2e64c8bebbe66f9b7751dafb414e3",
-      "text": "6c7fc3d3759106a8b639ec5922295e4d2affe1a524fc3086f98cb43fa024dee7"
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "3ccd3b12655e7544ab34c9568162196addca82742fb58183592989f79d2a4018",
+      "text": "fe78de02733ba22885207267d189ed5a4e48eb1463aa6e57e8d7b5d2be3b346e"
     },
     "vk": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "3b66bdfd45109a8b68a09ea1bbb7e23b943b0e91c84b3e954c2f161ae5368209",
+      "reason": "Подготовлены и сверены заметки 1.5.5-rc.1, API44/schema10 и модерация",
+      "sources": "f7372773ef7c727ed6a44217013440c01391a23889027a10a931b98f0baea567",
       "text": "b592e465a73dd13186763622b51190400cffd40960e233f58c63379b88a9bba9"
     }
   },

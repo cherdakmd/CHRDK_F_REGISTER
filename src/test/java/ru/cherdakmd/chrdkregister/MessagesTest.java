@@ -62,6 +62,9 @@ class MessagesTest {
             "two-factor.optional-login-complete", // 1.4.211: completeAuthentication при reload
             // 1.4.106: передаётся переменной messageKey в SpawnService#teleport.
             "spawn.teleported",
+            // ChatModerationPolicy возвращает ключ в Decision; ChatModerationService/ChatService читают его переменной.
+            "moderation.nickname-blocked", "chat.swear-blocked",
+            "chat.anti-spam-cooldown", "chat.anti-spam-duplicate", "chat.anti-spam-flood",
             // 1.4.156: кнопки меню /profile — ключи передаются в ProfileService#button.
             "finance.award-status", // общий API-адаптер читает Messages вызывающего модуля
             "profile.to-chat", "profile.to-chat-lore", "profile.refresh",

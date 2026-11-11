@@ -1,6 +1,5 @@
 package ru.cherdakmd.chrdktierforge;
 
-import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.CommandSender;
@@ -17,14 +16,13 @@ import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import ru.cherdakmd.chrdkregister.api.ForgeMarketCatalog;
-import ru.cherdakmd.chrdkregister.api.events.QualifiedHuntKillEvent;
 
 import java.util.*;
 import java.util.function.Consumer;
 
 /** Главный поток: read-only предпросмотр → одноразовое подтверждение неизменных входов.
  * Предметы/XP принадлежат обычному playerdata; это не финансовый ledger и не crash-atomic БД.
- * RC16: восемь операций, дроп только по qualified Hunt-событию, искра даёт первый тир. */
+ * Восемь операций; расходники доступны через /shop forge, искра даёт первый тир. */
 final class ForgeMaterials implements Listener {
     private final TierForgePlugin plugin;
     private final NamespacedKey token;
@@ -32,7 +30,6 @@ final class ForgeMaterials implements Listener {
     private final NamespacedKey uid;
     private final NamespacedKey seedUuid;
     private final NamespacedKey seedStack;
-    private final Random random = new Random();
     private final List<ru.cherdakmd.chrdkregister.Messages> legacy;
 
     ForgeMaterials(TierForgePlugin plugin) {
@@ -127,30 +124,6 @@ final class ForgeMaterials implements Listener {
                 return;
             } catch (ReflectiveOperationException | RuntimeException ignored) { }
         }
-    }
-
-    /** Только qualified Hunt-событие, только четыре whitelist-расходника, без EntityDeathEvent. */
-    @EventHandler public void reward(QualifiedHuntKillEvent event) {
-        Player player = event.getPlayer();
-        if (!enabled() || !player.isOnline() || player.getGameMode() != GameMode.SURVIVAL
-                || !player.hasPermission("chrdktierforge.use") || plugin.coreApi() == null || !plugin.coreApi().isAuthenticated(player)) return;
-        for (var kind : ForgeMaterial.HUNT_DROPS) {
-            if (!operationEnabled(kind)) continue;
-            double base = plugin.getConfig().getDouble("forge-materials.drop-percent." + kind.id, defaultDrop(kind));
-            if (random.nextDouble(100) >= ForgeMaterial.chance(base, event.level(), event.elite())) continue;
-            player.getInventory().addItem(item(kind, 1)).values().forEach(left -> player.getWorld().dropItemNaturally(player.getLocation(), left));
-            plugin.messages().send(player, "forge-found", "name", plugin.messages().mini("forge." + kind.id + ".name"));
-        }
-    }
-
-    private static double defaultDrop(ForgeMaterial kind) {
-        return switch (kind) {
-            case ASCEND -> ForgeMaterial.ASCEND_BASE_DROP_PERCENT;
-            case TEMPER -> ForgeMaterial.TEMPER_BASE_DROP_PERCENT;
-            case REFORGE -> ForgeMaterial.REFORGE_BASE_DROP_PERCENT;
-            case SEED -> ForgeMaterial.SEED_BASE_DROP_PERCENT;
-            default -> 0.0;
-        };
     }
 
     record Plan(ItemStack left, ItemStack right, ItemStack result, int units, int xp, TierForgeConfig settings) { }

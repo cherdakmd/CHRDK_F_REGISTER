@@ -27,7 +27,7 @@ messages:
   prestige-balance-bar: "<gold>%skill% ×%factor% · алмазы идут как обычно</gold>"
   prestige-balance-bar-stop: "<red>%skill%: опыт остановлен · алмазы идут как обычно</red>"
   prestige-balance-state: "<yellow>%skill%: опыт ×%factor% (отрыв %lead% ст., разрешено +%allowance%). Докачайте отстающие навыки до 100, затем /skills prestige all.</yellow>"
-  prestige-balance-state-stop: "<yellow>%skill%: опыт остановлен (отрыв %lead% ст., стоп с %hard_cap%). Докачайте отстающие навыки до 100, затем /skills prestige all. Алмазы, перки и профессия идут как обычно.</yellow>"
+  prestige-balance-state-stop: "<yellow>%skill%: опыт остановлен (отрыв %lead% ст., стоп с %hard_cap%). Докачайте отстающие навыки до 100, затем /skills prestige all. Алмазы и перки идут как обычно.</yellow>"
 
   # ------------------------- /skills balance -------------------------
   balance-header: "<gold>Баланс престижа · разрешено +%allowance% ст. (база %base% + ранг +%rank_bonus%, L%rank%), стоп с %hard_cap%</gold>"
@@ -35,7 +35,7 @@ messages:
   balance-line-full: "<gray>%name%</gray> <dark_gray>·</dark_gray> ст. %step% <dark_gray>·</dark_gray> ур. %level% <dark_gray>·</dark_gray> <green>полный опыт</green>"
   balance-line-stop: "<gray>%name%</gray> <dark_gray>·</dark_gray> ст. %step% <dark_gray>·</dark_gray> ур. %level% <dark_gray>·</dark_gray> отрыв %lead% <dark_gray>·</dark_gray> <red>ОПЫТ ОСТАНОВЛЕН</red>"
   balance-line-off: "<dark_gray>%name% — выключен в конфиге, в расчёте не участвует</dark_gray>"
-  balance-footer: "<gray>Минимум по включённым навыкам: %minimum%. Докачайте отстающие до 100, затем <yellow>/skills prestige all</yellow>. Алмазы, перки и профессия идут как обычно.</gray>"
+  balance-footer: "<gray>Минимум по включённым навыкам: %minimum%. Докачайте отстающие до 100, затем <yellow>/skills prestige all</yellow>. Алмазы и перки идут как обычно.</gray>"
   extra-catch: "<aqua>Рыбалка: лишний улов!</aqua>"
   arrow-kept: "<gray>Стрельба: стрела сохранена.</gray>"
   extra-potion: "<light_purple>Алхимия: вторая порция ингредиента.</light_purple>"

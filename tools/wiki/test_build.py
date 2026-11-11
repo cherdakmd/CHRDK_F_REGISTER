@@ -44,19 +44,13 @@ class WikiBuildTest(unittest.TestCase):
         self.assertNotIn("/tiers forge confirm", cards)
         self.assertEqual(8, cards.count("ЛКМ с пустым курсором"))
         self.assertIn("Легендарный | 16 | 24", book.render_table("forge_costs"))
-        drops = book.render_table("forge_drops")
-        self.assertIn("4.2%", drops)
-        self.assertIn("seed | 0.5%", drops)
-        self.assertIn("1%", drops)
-        self.assertIn("3%", drops)
-        self.assertNotIn("999999", drops)
         shop = book.render_table("forge_shop")
         for row in ("ascend | ECHO_SHARD | 128", "temper | NAUTILUS_SHELL | 96",
                     "reforge | PAPER | 160", "seed | NETHER_STAR | 64",
                     "repair | IRON_INGOT | 24", "inscribe | GOLD_NUGGET | 192",
                     "remove | GUNPOWDER | 32", "name | INK_SAC | 16"):
             self.assertIn(row, shop)
-        self.assertEqual(8, shop.count("Hunt + /shop forge") + shop.count("| /shop forge |"))
+        self.assertEqual(8, shop.count("| /shop forge |"))
 
     def test_forge_missing_item_instruction_fails_closed(self):
         book = FactBook()
@@ -259,7 +253,8 @@ class WikiBuildTest(unittest.TestCase):
         self.assertNotIn("socialspy", {r[1] for r in rows})
         self.assertTrue(all("admin" not in r[1] for r in rows))
         self.assertIn("shop", {r[1] for r in rows})
-        self.assertIn("prof", {r[1] for r in rows})
+        self.assertNotIn("prof", {r[1] for r in rows})
+        self.assertNotIn("hunt", {r[1] for r in rows})
 
     def test_tokens_and_local_assets_are_valid_on_every_page(self):
         for path in (self.root / "site").glob("*.html"):

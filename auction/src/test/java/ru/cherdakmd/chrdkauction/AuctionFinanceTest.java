@@ -116,7 +116,7 @@ class AuctionFinanceTest {
         assertFalse(buy.contains("saveData()"));
         assertTrue(buy.contains("plan.cash()==0?null:inventory(p,\"auction-cash\")")); assertFalse(buy.contains("prepareBuy("));
         String money=src.substring(src.indexOf("void money("),src.indexOf("private void lockPlayer"));
-        assertFalse(money.contains("prepareMoneyClaim")); assertFalse(money.contains("setStorageContents")); assertTrue(money.contains("bankBalance"));
+        assertFalse(money.contains("prepareMoneyClaim")); assertFalse(money.contains("setStorageContents")); assertTrue(money.contains("personalDiamondsText"));
     }
     @Test void marketExceptionAfterRenameCannotPublishStaleInMemoryState() throws Exception {
         var s=market(); long id=list(s); s.enableBank(); var p=intent(s,id,false); s.prepareBankBuy(p,1500,"same","same");

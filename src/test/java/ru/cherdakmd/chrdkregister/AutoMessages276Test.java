@@ -21,14 +21,22 @@ class AutoMessages276Test {
         var before = old.getMapList("auto-messages.messages");
         var after = fresh.getMapList("auto-messages.messages");
         assertEquals(41, before.size(), "сток 275 остаётся эталоном");
-        assertEquals(43, after.size(), "1.4.282 добавила Plasmo Voice, CHRDK_Disasters — подсказку о /disasters");
-        for (int i = 0; i < before.size(); i++) {
-            var a = new LinkedHashMap<>(before.get(i));
-            var b = new LinkedHashMap<>(after.get(i));
+        assertEquals(40, after.size(), "1.4.282 добавила Plasmo Voice, CHRDK_Disasters — подсказку о /disasters");
+        var removedAudience = java.util.Set.of("CHRDK_Hunt", "CHRDK_Professions");
+        var retained = before.stream().filter(item -> !removedAudience.contains(String.valueOf(item.get("plugin")))
+                && !RetiredAddons.announcement(String.valueOf(item.get("text")))).toList();
+        var retainedFresh=after.stream().filter(item->{
+            String text=String.valueOf(item.get("text"));return !text.contains("Plasmo Voice")&&!text.contains("/disasters");
+        }).toList();
+        assertEquals(retained.size()+2,after.size());
+        assertEquals(retained.size(), retainedFresh.size());
+        for (int i = 0; i < retained.size(); i++) {
+            var a = new LinkedHashMap<>(retained.get(i));
+            var b = new LinkedHashMap<>(retainedFresh.get(i));
             assertNotEquals(a.remove("text"), b.remove("text"), "Текст №" + (i + 1));
             assertEquals(a, b, "Фильтры аудитории №" + (i + 1));
         }
-        var voice = after.get(41);
+        var voice = after.get(after.size()-2);
         assertTrue(String.valueOf(voice.get("text")).contains("Plasmo Voice"));
         assertEquals(Set.of("text"), voice.keySet(), "внешняя интеграция не требует фильтра аддона");
         old.set("auto-messages.enabled", false);

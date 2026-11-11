@@ -3,12 +3,13 @@ package ru.cherdakmd.chrdkregister.api;
 import java.util.*;
 
 /** Frozen Claims domain transition. Native tender is durably funded into /bal BEFORE this request. */
-public record ClaimExchange(UUID transaction,UUID lineage,long sequence,String kind,Map<UUID,Long> deltas,String effectHash) {
+public record ClaimExchange(UUID transaction,UUID lineage,long sequence,String kind,Map<UUID,Long> deltas,String effectHash,boolean minor) {
+    public ClaimExchange(UUID transaction,UUID lineage,long sequence,String kind,Map<UUID,Long> deltas,String effectHash) { this(transaction,lineage,sequence,kind,deltas,effectHash,false); }
     public enum Status { UNAVAILABLE,MISSING,COMMITTED,CONFLICT }
     public ClaimExchange { if(deltas!=null) deltas=Map.copyOf(deltas); }
     public boolean valid() {
         if(transaction==null||lineage==null||sequence<1||sequence>=Long.MAX_VALUE||kind==null||!kind.matches("[a-z][a-z-]{0,47}")||deltas==null||deltas.size()>8||effectHash==null||!effectHash.matches("[0-9a-f]{64}")) return false;
-        for(var e:deltas.entrySet()) if(e.getKey()==null||e.getValue()==null||e.getValue() < -1_000_000_000L||e.getValue()>1_000_000_000L) return false;
+        for(var e:deltas.entrySet()) if(e.getKey()==null||e.getValue()==null||e.getValue() < -(minor?100_000_000_000L:1_000_000_000L)||e.getValue()>(minor?100_000_000_000L:1_000_000_000L)) return false;
         return true;
     }
     public static void requireJson(com.google.gson.JsonObject row) {

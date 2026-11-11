@@ -31,8 +31,8 @@ permission-нод не добавлено. Живой сервер, `/pl`, LuckP
    `/rankadmin`, `/honoradmin` (+ `honorsadmin`), `/socialspy` (+ `spy`) и все
    22 админ-команды аддонов с алиасами: `/shopadmin`, `/tiersadmin`,
    `/disastersadmin`, `/vkadmin`, `/guildadmin` (+ `ga`), `/bpadmin`,
-   `/tpadmin`, `/profadmin`, `/achadmin`, `/claimadmin`, `/classadmin`,
-   `/goalsadmin`, `/dailyadmin`, `/enchantsadmin`, `/huntadmin`, `/ordersadmin`,
+   `/tpadmin`, `/achadmin`, `/claimadmin`, `/classadmin`,
+   `/goalsadmin`, `/dailyadmin`, `/enchantsadmin`, `/ordersadmin`,
    `/petsadmin`, `/questsadmin`, `/ranksadmin`, `/skillsadmin`,
    `/auctionadmin`, `/artifactsadmin` и их синонимы.
 

@@ -31,8 +31,8 @@ record GuardSettings(boolean enabled, int ipBurst, int ipRefillSeconds, int glob
             "achadmin", "artifactsadmin", "auctionadmin", "ahadmin", "bpadmin", "claimadmin",
             "classadmin", "classesadmin", "clsadmin", "goalsadmin", "dailyadmin", "dlyadmin",
             "shopadmin", "dshopadmin", "marketadmin", "disastersadmin", "enchantsadmin",
-            "guildadmin", "guildsadmin", "clanadmin", "clansadmin", "ga", "huntadmin", "ordersadmin",
-            "petsadmin", "profadmin", "professionsadmin", "profsadmin", "questsadmin", "ranksadmin",
+            "guildadmin", "guildsadmin", "clanadmin", "clansadmin", "ga", "ordersadmin",
+            "petsadmin", "questsadmin", "ranksadmin",
             "skillsadmin", "tpadmin", "tiersadmin", "vkadmin");
 
     GuardSettings {

@@ -35,7 +35,7 @@ final class GameplayRewardTexts {
         if (text == null) return "";
         String lower = text.toLowerCase(Locale.ROOT);
         if (lower.contains("приветственный ранг")) {
-            return "<gray>За достижения выдаётся отдельный буст +10% опыта Minecraft, профессий и навыков. Время только онлайн; запас — /profile. Платные ранги и товары не продлеваются.</gray>";
+            return "<gray>За достижения выдаётся отдельный буст +10% опыта Minecraft и навыков. Время только онлайн; запас — /profile. Платные ранги и товары не продлеваются.</gray>";
         }
         if (lower.contains("коллекц") || lower.contains("достижен") || lower.contains("наград")) return reward(text);
         return text;

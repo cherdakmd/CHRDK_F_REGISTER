@@ -66,11 +66,12 @@ final class BattlePassClaims {
                         long money = mission.diamonds(tracks[t]);
                         if (money > 0 && !plugin.store().isClaimed(uuid,mission.id(),tracks[t]+"_MONEY")) {
                             if (!plugin.moneyReady()) { failed=true; break; }
-                            var result=plugin.coreApi().grantBattlePassMoneyOnce(uuid,player.getName(),money,key);
+                            long awardMinor=plugin.coreApi().diamondRate().scaleMinor(money*100L);
+                            var result=plugin.coreApi().grantBattlePassMoneyMinorOnce(uuid,player.getName(),awardMinor,key);
                             if(result==ChrdkRegisterApi.MoneyGrant.FULL){full++;continue;}
                             if(result!=ChrdkRegisterApi.MoneyGrant.ADDED&&result!=ChrdkRegisterApi.MoneyGrant.ALREADY){failed=true;break;}
                             plugin.store().markClaimed(uuid,mission.id(),tracks[t]+"_MONEY");
-                            if(result==ChrdkRegisterApi.MoneyGrant.ADDED)diamonds+=money;
+                            if(result==ChrdkRegisterApi.MoneyGrant.ADDED)diamonds+=awardMinor;
                         }
                         rewards++;
                     } catch(RuntimeException | LinkageError error) {
@@ -83,8 +84,8 @@ final class BattlePassClaims {
         }
         // Если локальная запись не удалась, Core receipt всё равно запрещает повторное пополнение.
         plugin.store().saveIfDirty();
-        if(rewards>0||hours>0){plugin.messages().send(player,"claim-all-summary","count",rewards,"hours",hours,"diamonds",diamonds);plugin.fx().claimed(player,hours);}
-        if(diamonds>0)plugin.messages().send(player,"money-granted","diamonds",diamonds);
+        if(rewards>0||hours>0){plugin.messages().send(player,"claim-all-summary","count",rewards,"hours",hours,"diamonds",ru.cherdakmd.chrdkregister.api.DiamondMoney.format(diamonds));plugin.fx().claimed(player,hours);}
+        if(diamonds>0)plugin.messages().send(player,"money-granted","diamonds",ru.cherdakmd.chrdkregister.api.DiamondMoney.format(diamonds));
         if(full>0)plugin.messages().send(player,"reward-bank-full","count",full);
         if(failed)plugin.messages().send(player,"reward-retry");
         if(rewards==0&&full==0&&!failed) {

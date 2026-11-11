@@ -61,8 +61,8 @@ public final class ShopCommandHandler implements TabExecutor {
         String sub = args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
             case "balance", "bal" -> {
-                plugin.messages().send(player, "trading.balance", "balance", plugin.shopService().balance(player), "physical", plugin.shopService().physical(player));
-                plugin.messages().send(player, "quantity.sale-remainder", "remainder", plugin.shopService().saleRemainder(player));
+                plugin.messages().send(player, "trading.balance", "balance", plugin.shopService().balanceText(player), "physical", plugin.shopService().physical(player));
+                plugin.messages().send(player, "quantity.sale-remainder", "remainder", "0,00");
             }
             case "deposit", "dep", "withdraw", "draw" -> plugin.messages().send(player, "trading.bank-commands");
             case "price" -> handlePrice(player, args);
@@ -89,8 +89,8 @@ public final class ShopCommandHandler implements TabExecutor {
         plugin.messages().send(player, item.sellEnabled()?"trading.price-info":"quantity.price-buy-only",
                 "material", item.material().toLowerCase(Locale.ROOT),
                 "price", service.priceOf(item),
-                "bid", service.bidPrice(item),
-                "ask", service.askPrice(item), "batch", service.batchSize(item),
+                "bid", ShopMoney.text(service.bidPrice(item)),
+                "ask", ShopMoney.text(service.askPrice(item)), "batch", service.batchSize(item),
                 "stock", stock, "ref", item.refStock());
         if (item.sellEnabled()) plugin.messages().send(player,service.bidPrice(item)>0?"quantity.price-units":"quantity.no-bid",
                 "minimum",TradeAmounts.minimumSale(service.batchSize(item),service.bidPrice(item)));
@@ -114,7 +114,7 @@ public final class ShopCommandHandler implements TabExecutor {
         long value=service.quantityQuote(item,units,buy);
         if(value<0) {plugin.messages().send(player,"tools.quote-unavailable");return;}
         plugin.messages().send(player,"tools.quote","action",buy?"Покупка":"Продажа","material",item.material(),"units",units,
-                "price",value,"batch",service.batchSize(item));
+                "price",ShopMoney.text(value),"batch",service.batchSize(item));
     }
 
     /** Поиск товара по фрагменту имени материала: до 10 совпадений с ценами. */
@@ -143,14 +143,14 @@ public final class ShopCommandHandler implements TabExecutor {
                                 ? "trading.find-line-book" : "quantity.find-buy-only-book",
                         "name", name,
                         "material", item.material().toLowerCase(Locale.ROOT),
-                        "ask", service.askPrice(item), "batch", service.batchSize(item),
-                        "bid", PriceEngine.round(service.bidPrice(item)),
+                        "ask", ShopMoney.text(service.askPrice(item)), "batch", service.batchSize(item),
+                        "bid", ShopMoney.text(service.bidPrice(item)),
                         "category", plugin.messages().mini(category.messageKey()));
             } else {
                 plugin.messages().send(player, item.sellEnabled()?"trading.find-line":"quantity.find-buy-only",
                         "material", item.material().toLowerCase(Locale.ROOT),
-                        "ask", service.askPrice(item), "batch", service.batchSize(item),
-                        "bid", PriceEngine.round(service.bidPrice(item)),
+                        "ask", ShopMoney.text(service.askPrice(item)), "batch", service.batchSize(item),
+                        "bid", ShopMoney.text(service.bidPrice(item)),
                         "category", plugin.messages().mini(category.messageKey()));
             }
         }
@@ -173,12 +173,12 @@ public final class ShopCommandHandler implements TabExecutor {
             plugin.messages().send(player, "trading.payment-detail", "account", result.bankPaid(), "physical", result.physicalPaid(), "change", result.change());
             plugin.messages().send(player, "trading.buy-done",
                     "material", item.material().toLowerCase(Locale.ROOT), "units", result.units(),
-                    "cost", result.money(),
-                    "balance", plugin.shopService().balance(player), "physical", plugin.shopService().physical(player));
+                    "cost", ShopMoney.text(result.money()),
+                    "balance", plugin.shopService().balanceText(player), "physical", plugin.shopService().physical(player));
         } else {
             plugin.messages().send(player, result.errorKey(),
-                    "cost", result.money(), "limit", plugin.shopService().dailyLimit(player),
-                    "balance", plugin.shopService().balance(player),
+                    "cost", ShopMoney.text(result.money()), "limit", plugin.shopService().dailyLimit(player),
+                    "balance", plugin.shopService().balanceText(player),
                     "material", item.material().toLowerCase(Locale.ROOT), "units", units, "value", args[2]);
         }
     }
@@ -201,15 +201,15 @@ public final class ShopCommandHandler implements TabExecutor {
         if (result.success()) {
             plugin.messages().send(player, "trading.sell-done",
                     "material", item.material().toLowerCase(Locale.ROOT), "units", result.units(),
-                    "income", result.money(),
-                    "balance", plugin.shopService().balance(player), "physical", plugin.shopService().physical(player));
+                    "income", ShopMoney.text(result.money()),
+                    "balance", plugin.shopService().balanceText(player), "physical", plugin.shopService().physical(player));
             if (result.bonus() > 0) {
-                plugin.messages().send(player, "trading.promo-bonus-paid", "bonus", result.bonus());
+                plugin.messages().send(player, "trading.promo-bonus-paid", "bonus", ShopMoney.text(result.bonus()));
             }
         } else {
             plugin.messages().send(player, result.errorKey() == null ? "trading.invalid-number" : result.errorKey(),
-                    "cost", result.money(), "limit", plugin.shopService().dailyLimit(player),
-                    "balance", plugin.shopService().balance(player),
+                    "cost", ShopMoney.text(result.money()), "limit", plugin.shopService().dailyLimit(player),
+                    "balance", plugin.shopService().balanceText(player),
                     "material", item.material().toLowerCase(Locale.ROOT), "units", units,
                     "value", args.length >= 3 ? args[2] : "1");
         }
@@ -223,10 +223,10 @@ public final class ShopCommandHandler implements TabExecutor {
         }
         plugin.messages().send(player, "quantity.sellall-carry-done",
                 "kinds", result.kinds(), "units", result.units(),
-                "income", result.income(), "remainder", plugin.shopService().saleRemainder(player),
-                "balance", plugin.shopService().balance(player), "physical", plugin.shopService().physical(player));
+                "income", ShopMoney.text(result.income()), "remainder", "0,00",
+                "balance", plugin.shopService().balanceText(player), "physical", plugin.shopService().physical(player));
         if (result.bonus() > 0) {
-            plugin.messages().send(player, "trading.promo-bonus-paid", "bonus", result.bonus());
+            plugin.messages().send(player, "trading.promo-bonus-paid", "bonus", ShopMoney.text(result.bonus()));
         }
     }
 

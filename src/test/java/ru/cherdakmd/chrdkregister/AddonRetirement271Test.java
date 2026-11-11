@@ -30,7 +30,7 @@ class AddonRetirement271Test {
         }
         for(String plugin:List.of("CHRDK_Events","CHRDK_Lottery","CHRDK_Party","CHRDK_Referrals"))
             assertFalse(PluginUpdateService.MODULES.containsKey(plugin));
-        assertEquals(22,PluginUpdateService.MODULES.size());assertNull(BankCharge.permission("lottery"));
+        assertEquals(20,PluginUpdateService.MODULES.size());assertNull(BankCharge.permission("lottery"));
     }
     @Test void everyOldCommandAliasIsFilteredIncludingNamespacesAndExtraSlashes() {
         for(String alias:List.of("lottery","lot","loto","lotteryadmin","lotadmin","party","pt","group","gruppa",
@@ -107,8 +107,8 @@ class AddonRetirement271Test {
         }
         assertEquals(300, ((Number) fresh.getMapList("shop.products").stream()
                 .filter(p -> "rank-wanderer".equals(p.get("id"))).findFirst().orElseThrow().get("price")).intValue());
-        assertEquals(49,fresh.getMapList("server-menu.items").size());
-        assertEquals(43,fresh.getMapList("auto-messages.messages").size());
+        assertEquals(47,fresh.getMapList("server-menu.items").size());
+        assertEquals(40,fresh.getMapList("auto-messages.messages").size());
         for(String key:changes)old.set(key,fresh.get(key));
         assertTrue(PresentationMigration.replacements(old,List.of(yaml("presentation-legacy-1.4.270.yml")),fresh).isEmpty());
         assertEquals(777,old.getInt("auto-messages.interval-seconds"));assertEquals(List.of("Admin"),old.getStringList("tablist.pinned-names"));
@@ -147,7 +147,7 @@ class AddonRetirement271Test {
         assertNull(BankCharge.permission("lottery"));
     }
     @Test void sharedCoreBukkitAndBankContractsStillExist() {
-        assertEquals(42,ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
+        assertEquals(44,ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
         assertTrue(org.bukkit.event.Event.class.isAssignableFrom(ru.cherdakmd.chrdkregister.api.events.PassGrantedEvent.class));
         assertNotNull(ru.cherdakmd.chrdkregister.api.ChargeRecovery.class);
         assertNotNull(ru.cherdakmd.chrdkregister.api.MilestoneAwards.class);

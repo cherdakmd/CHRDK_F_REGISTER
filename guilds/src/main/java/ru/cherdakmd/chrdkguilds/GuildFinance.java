@@ -83,12 +83,13 @@ final class GuildFinance {
             if(bankOnly){
                 long spendable=plugin.coreApi().spendableBankBalance(player.getUniqueId());
                 if(spendable<0)return GuildResult.fail("finance-paused");
-                if(spendable<preview.debit())return GuildResult.fail("dues-bank","cost",preview.debit());
+                long minorCost=plugin.coreApi().diamondRate().scaleMinor(preview.debit()*100L);
+                if(spendable<minorCost)return GuildResult.fail("dues-bank","cost",ru.cherdakmd.chrdkregister.api.DiamondMoney.format(minorCost));
                 return payments.putGuildBankValue(player.getUniqueId(),Math.toIntExact(preview.debit()),GuildStore.FINANCE_KEY,preview.domain(),false)
                         ?preview.result():GuildResult.fail("finance-paused");
             }
             boolean confirmed = preview.credit() > 0
-                    ? payments.creditValue(player,GuildStore.FINANCE_KEY,preview.domain(),preview.credit())
+                    ? payments.creditValue(player,GuildStore.FINANCE_KEY,preview.domain(),plugin.coreApi().diamondRate().scaleMinor(preview.credit()*100L))
                     : payments.putValue(player,(int)preview.debit(),GuildStore.FINANCE_KEY,preview.domain());
             return confirmed ? preview.result() : GuildResult.fail("finance-paused");
         } catch (RuntimeException error) {
@@ -99,8 +100,8 @@ final class GuildFinance {
 
     long available(Player player) {
         if (!plugin.authenticated(player) || payments.paused()) return 0;
-        long bank = Math.clamp(plugin.coreApi().auctionBankBalance(player.getUniqueId()),0L,Guild.MAX_TREASURY);
-        for (var item : player.getInventory().getStorageContents()) bank += ChargeInventory.cashValue(item);
-        return Math.min(bank,Guild.MAX_TREASURY);
+        long minor = Math.clamp(plugin.coreApi().auctionBankBalance(player.getUniqueId()),0L,Guild.MAX_TREASURY*100L);
+        for (var item : player.getInventory().getStorageContents()) minor=Math.addExact(minor,plugin.coreApi().diamondRate().creditMinor(ChargeInventory.cashValue(item)));
+        return Math.min(minor/100,Guild.MAX_TREASURY);
     }
 }

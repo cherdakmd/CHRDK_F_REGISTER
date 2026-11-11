@@ -50,7 +50,7 @@ final class ShopPromoService {
         if (!enabled()) {
             return 0;
         }
-        return Math.max(0, settings.maxBonusPerPlayerPerDay()
+        return Math.max(0, settings.maxBonusPerPlayerPerDay()*100L
                 - store.snapshot(player, nowMillis).bonus());
     }
 
@@ -72,7 +72,7 @@ final class ShopPromoService {
             return Bonus.none();
         }
         ShopPromoStore.Snapshot progress = store.snapshot(player, nowMillis);
-        long dailyLeft = Math.max(0, settings.maxBonusPerPlayerPerDay() - progress.bonus());
+        long dailyLeft = Math.max(0, settings.maxBonusPerPlayerPerDay()*100L - progress.bonus());
         if (dailyLeft == 0) {
             return Bonus.none();
         }
@@ -93,7 +93,7 @@ final class ShopPromoService {
                 if (progress.soldOf(material) + units < settings.contractUnits()) {
                     return Bonus.none();
                 }
-                desired = settings.contractReward();
+                desired = settings.contractReward()*100L;
                 contractPaid = true;
             }
             case SERIES -> {
@@ -104,13 +104,13 @@ final class ShopPromoService {
                 if (distinct < settings.seriesKinds()) {
                     return Bonus.none();
                 }
-                desired = settings.seriesReward();
+                desired = settings.seriesReward()*100L;
                 seriesPaid = true;
             }
             default -> { return Bonus.none(); }
         }
         long noArbitrage = Math.max(0, askTotal - baseMoney);
-        long amount = ShopPromoMath.cap(desired, noArbitrage, settings.maxBonusPerTrade(),
+        long amount = ShopPromoMath.cap(desired, noArbitrage, settings.maxBonusPerTrade()*100L,
                 dailyLeft, turnoverHeadroom);
         if (amount <= 0) {
             return Bonus.none();

@@ -17,7 +17,7 @@ class RetiredAddonsGuardTest(unittest.TestCase):
         path.write_text(text, encoding="utf-8")
 
     def test_social_catalogs_cannot_restore_removed_player_features(self):
-        for path in ("tools/social/topics.json", "docs/social/releases/1.4.999.json"):
+        for path in ("tools/social/topics.json", "docs/social/current.json"):
             with self.subTest(path=path):
                 self.write(path, '{"text": "/party create"}')
                 self.assertTrue(check(self.root))
@@ -37,13 +37,13 @@ class RetiredAddonsGuardTest(unittest.TestCase):
                        "chrdk-bosses-1.4.238.jar", "ChrdkTreasureBookInfo", "CHRDK_Streams",
                        "chrdk-streams-1.4.240.jar", "ru.cherdakmd.chrdkstreams", "CHRDK_Events", "chrdk-events-1.4.241.jar",
                        "ru.cherdakmd.chrdkevents", "CHRDK_Queue", "chrdk-queue-1.4.247.jar", "ru.cherdakmd.chrdkqueue", "CHRDK_Lottery", "CHRDK_Party", "CHRDK_Referrals",
-                       "ru.cherdakmd.chrdkparty", "chrdk-lottery-1.4.270.jar", "chrdk-referrals-1.4.270.jar"):
+                       "ru.cherdakmd.chrdkparty", "chrdk-lottery-1.4.270.jar", "chrdk-referrals-1.4.270.jar", "CHRDK_Hunt", "chrdk-hunt-1.5.5.jar", "CHRDK_Professions", "chrdk-professions-1.5.5.jar"):
             with self.subTest(symbol=symbol):
                 self.write("enchants/src/main/java/Source.java", f"import {symbol};")
                 self.assertTrue(check(self.root))
 
     def test_retired_pages_are_rejected_even_without_commands(self):
-        for page in ("bosses", "treasures", "streams", "events", "queue", "lottery", "party", "referrals"):
+        for page in ("bosses", "treasures", "streams", "events", "queue", "lottery", "party", "referrals", "hunt", "professions"):
             with self.subTest(page=page):
                 self.write("tools/wiki/assets/app.js", f'const href = "{page}.html";')
                 self.assertTrue(check(self.root))
@@ -61,7 +61,7 @@ class RetiredAddonsGuardTest(unittest.TestCase):
         (self.root / "settings.gradle").unlink()
         for name in ("bosses/build.gradle", "treasures/build/libs/old.jar", "wiki/bosses.md",
                      "wiki/treasures.md", "docs/TREASURES_ARSENAL.md", "streams/build.gradle", "wiki/streams.md", "events/build.gradle", "wiki/events.md", "queue/build.gradle", "wiki/queue.md", "lottery/build.gradle", "party/build.gradle",
-                     "referrals/build.gradle", "wiki/lottery.md", "wiki/party.md", "wiki/referrals.md"):
+                     "referrals/build.gradle", "wiki/lottery.md", "wiki/party.md", "wiki/referrals.md", "hunt/build.gradle", "professions/build.gradle", "wiki/hunt.md", "wiki/professions.md"):
             with self.subTest(name=name):
                 with tempfile.TemporaryDirectory() as directory:
                     root = Path(directory)
@@ -89,8 +89,8 @@ class RetiredAddonsGuardTest(unittest.TestCase):
         self.assertTrue(check(self.root))
 
     def test_vanilla_bosses_fishing_and_read_only_provenance_are_not_addons(self):
-        self.write("wiki/hunt.md", "Ванильные боссы, сокровища рыбалки и /minecraft:bossbar list")
-        self.write("hunt/src/main/resources/config.yml", 'command: "bossbar list"')
+        self.write("wiki/gameplay.md", "Ванильные боссы, сокровища рыбалки и /minecraft:bossbar list")
+        self.write("gameplay/src/main/resources/config.yml", 'command: "bossbar list"')
         self.write("src/main/java/Legacy.java", 'Set.of("bosses", "treasures"); TREASURE; SHARDS;')
         self.write("artifacts/src/main/java/Loot.java", 'BOSSES_KILLED; fish_treasure; treasure_hunter;')
         self.assertEqual([], check(self.root))

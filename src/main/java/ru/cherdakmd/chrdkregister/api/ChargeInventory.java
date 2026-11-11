@@ -71,9 +71,21 @@ public final class ChargeInventory {
         }
         return new Plan(after, tender.debit(), tender.cash(), tender.change());
     }
+    public static Plan planMinor(ItemStack[] before,long price,long balanceMinor,int rateBps) {
+        if(before==null||before.length!=36||price<0||balanceMinor<0||rateBps<5000||rateBps>20000)return null;
+        long debit=Math.min(price,balanceMinor),remaining=price-debit,cash=0;var after=copy(before);
+        for(int pass=0;pass<2&&remaining>0;pass++)for(int i=0;i<36&&remaining>0;i++) {
+            var item=after[i];if(item==null||item.hasItemMeta())continue;
+            int units=switch(item.getType()){case DIAMOND->pass==0?1:0;case DIAMOND_BLOCK->pass==1?9:0;default->0;};
+            while(units>0&&item.getAmount()>0&&remaining>0){long value=Math.multiplyExact(units,(long)rateBps)/DiamondMoney.SCALE;cash+=value;remaining-=value;item.setAmount(item.getAmount()-1);}
+            if(item.getAmount()==0)after[i]=null;
+        }
+        return remaining>0?null:new Plan(after,debit,cash,-remaining);
+    }
     public static boolean valid(ChargeJournal.Pending pending) {
         if (pending == null || pending.payment() == null || !pending.payment().valid()) return false;
-        var c = pending.payment(); var plan = plan(decode(pending.beforeInventory()), c.price(), c.debit());
+        var c = pending.payment(); var plan = c.minor()?planMinor(decode(pending.beforeInventory()),c.price(),c.debit(),c.rateBps())
+                :plan(decode(pending.beforeInventory()), c.price(), c.debit());
         return plan != null && plan.debit == c.debit() && plan.cash == c.cash() && plan.change == c.change()
                 && matches(plan.after, pending.afterInventory())
                 && c.inventoryHash().equals(AuctionPayment.hash(pending.beforeInventory(), pending.afterInventory()))

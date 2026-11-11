@@ -25,9 +25,9 @@ commands:
   profile:
     description: "Карточка игрока: ранг, банк и разделы аддонов одной страницей"
     usage: /<command> [chat] [ник]
-    aliases: [prof]
+    aliases: []
   menu:
-    description: "Главное меню сервера (GUI): ранг и аккаунт, прогресс, экономика, мир, снаряжение, охота и общество"
+    description: "Главное меню сервера (GUI): ранг и аккаунт, прогресс, экономика, мир, снаряжение и общество"
     usage: /<command>
   rank:
     description: "Витрина донатных рангов: карточки, мой ранг, покровители, правила"
@@ -163,6 +163,12 @@ permissions:
     default: op
   chrdkregister.chat.bypass:
     description: Обход ограничений чата — задержки, лимита длины, анти-капса и защиты от повторов
+    default: op
+  chrdkregister.moderation.swear.bypass:
+    description: Обход отдельного фильтра антимата из anti-swear.yml
+    default: op
+  chrdkregister.moderation.spam.bypass:
+    description: Обход отдельного антиспама из anti-spam.yml
     default: op
   chrdkregister.chat.socialspy:
     description: Просмотр личных сообщений игроков командой /socialspy

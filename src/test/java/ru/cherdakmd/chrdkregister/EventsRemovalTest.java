@@ -30,17 +30,16 @@ class EventsRemovalTest {
     @Test void removedModuleIsAbsentFromDistributionAndStockMenu() throws Exception {
         assertFalse(Files.exists(Path.of("events")));
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_Events"));
-        assertEquals(22, PluginUpdateService.MODULES.size());
+        assertEquals(20, PluginUpdateService.MODULES.size());
         var stock = yaml("config.yml"); var items = stock.getMapList("server-menu.items");
-        assertEquals(49, items.size());
+        assertEquals(47, items.size());
         assertFalse(items.stream().anyMatch(item -> RetiredAddons.plugin(String.valueOf(item.get("plugin")))
                 || RetiredAddons.command(String.valueOf(item.get("command")))));
-        assertEquals(1, items.stream().filter(item -> "adventure".equals(item.get("category"))).count());
-        assertTrue(items.stream().anyMatch(item -> "hunt".equals(item.get("command"))));
+        assertEquals(0, items.stream().filter(item -> "adventure".equals(item.get("category"))).count());
+        assertFalse(items.stream().anyMatch(item -> "hunt".equals(item.get("command"))));
         assertEquals(2, items.stream().filter(item -> "donate".equals(item.get("command"))).count());
-        var category = stock.getMapList("server-menu.categories").stream()
-                .filter(item -> "adventure".equals(item.get("id"))).findFirst().orElseThrow();
-        assertEquals("<gold><bold>Охота</bold></gold>", category.get("name"));
+        assertTrue(stock.getMapList("server-menu.categories").stream()
+                .noneMatch(item -> "adventure".equals(item.get("id"))));
         assertEquals(stock.getList("auto-messages.messages").size(), ChatConfig.fromBukkitConfig(stock).autoMessageEntries().size());
     }
     @Test void oldCommandsAndPluginReferencesCannotReappearInCustomMenus() {
@@ -52,7 +51,7 @@ class EventsRemovalTest {
         }
         var entry = new ServerMenuSettings.Entry(-1, Material.PAPER, "Custom", "", "custom", "CHRDK_Events", "");
         assertFalse(entry.available(plugin -> true, permission -> true));
-        for (String command : List.of("hunt", "event_other", "minecraft:time query daytime"))
+        for (String command : List.of("guilds", "event_other", "minecraft:time query daytime"))
             assertFalse(RetiredAddons.command(command), command);
     }
     @Test void onlyRemovedWorldEventAdvertisementsAreFiltered() {
@@ -74,9 +73,9 @@ class EventsRemovalTest {
         assertFalse(profiles.register(" EVENTS ", context -> null));
         names.register("events", (player, base) -> "removed");
         assertEquals(0, profiles.size()); assertEquals("Steve", names.decorate("Steve", "Steve"));
-        assertTrue(profiles.register("hunt", context -> null));
-        var wiki = WikiSettings.of(true, WikiSettings.DEFAULT_URL, List.of("events", "hunt", "profile"));
-        assertEquals(List.of("hunt", "profile"), wiki.pages());
+        assertTrue(profiles.register("guilds", context -> null));
+        var wiki = WikiSettings.of(true, WikiSettings.DEFAULT_URL, List.of("events", "guilds", "profile"));
+        assertEquals(List.of("guilds", "profile"), wiki.pages());
         assertEquals(wiki.pageUrl(""), wiki.pageUrl("events"));
     }
     @Test void stock241MigratesOnceWithoutChangingCustomListsOrSchedules() throws Exception {
@@ -88,7 +87,7 @@ class EventsRemovalTest {
         var changes = PresentationMigration.replacements(live, List.of(legacy), stock);
         assertTrue(changes.containsAll(List.of("server-menu.items", "server-menu.categories")));
         assertTrue(changes.contains("auto-messages.messages"), "1.4.245 обновляет подсказку общего /bal у магазина; реклама снятого модуля не возвращается");
-        assertEquals(1, legacy.getMapList("server-menu.items").size() - stock.getMapList("server-menu.items").size(), "два просмотра экономики, CHRDK_VK и катастрофы компенсируют снятые пункты");
+        assertEquals(3, legacy.getMapList("server-menu.items").size() - stock.getMapList("server-menu.items").size(), "два просмотра экономики, CHRDK_VK и катастрофы компенсируют снятые пункты");
         for (String key : changes) live.set(key, stock.get(key));
         assertFalse(live.getBoolean("auto-messages.enabled")); assertEquals(777, live.getInt("auto-messages.interval-seconds"));
         assertEquals(List.of("Admin"), live.getStringList("tablist.pinned-names"));
@@ -99,7 +98,7 @@ class EventsRemovalTest {
         assertFalse(changes.contains("server-menu.items")); assertFalse(changes.contains("auto-messages.messages"));
     }
     @Test void coreEventContractsAndSharedMonetaryInfrastructureAreStillPresent() {
-        assertEquals(42, ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
+        assertEquals(44,ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
         assertTrue(org.bukkit.event.Event.class.isAssignableFrom(
                 ru.cherdakmd.chrdkregister.api.events.PassGrantedEvent.class));
         assertTrue(org.bukkit.event.Event.class.isAssignableFrom(

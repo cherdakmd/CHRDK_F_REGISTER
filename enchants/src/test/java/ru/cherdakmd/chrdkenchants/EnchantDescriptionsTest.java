@@ -53,7 +53,6 @@ class EnchantDescriptionsTest {
         assertTrue(plain(m, "en.gluttony.lore").contains("0,05/0,0875/0,125"));
         assertTrue(plain(m, "en.thunderstrike.lore").contains("не гарантированный поджог"));
         assertTrue(plain(m, "sources-table").contains("не ограничивает его I/II/III"));
-        assertTrue(plain(m, "sources-mobs").contains("5/20/40% на шаг"));
     }
     @Test void bookAndInfoMetadataHaveNoUnfilledPlaceholders() throws Exception {
         var m = messages();

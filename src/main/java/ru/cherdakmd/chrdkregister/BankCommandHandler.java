@@ -24,7 +24,7 @@ import java.util.Locale;
  */
 public final class BankCommandHandler implements CommandExecutor, TabCompleter {
 
-    private static final List<String> BAL_SUBCOMMANDS = List.of("deposit", "withdraw", "help", "recovery", "stats", "health");
+    private static final List<String> BAL_SUBCOMMANDS = List.of("deposit", "withdraw", "help", "recovery", "stats", "health", "rate", "курс");
 
     private final RegisterPlugin plugin;
     private final BankService bank;
@@ -80,10 +80,14 @@ public final class BankCommandHandler implements CommandExecutor, TabCompleter {
                 messages.send(sender, "common.player-only");
                 return true;
             }
+            if(first.equals("rate")||first.equals("курс")) {
+                var q=bank.marketQuote();
+                messages.send(player,"economy.rate","rate",q.text(),"demand",q.demandBps(),"inflation",q.inflationBps(),"emission",q.emissionBps(),"activity",q.activityBps(),"turnover",q.turnoverBps());return true;
+            }
             if(first.equals("stats")) {
                 if(!player.hasPermission("chrdkregister.bal")) {messages.send(player,"common.no-permission");return true;}
                 var s=bank.store().personalStats(player.getUniqueId());
-                messages.send(player,"economy.personal-stats","balance",BankService.format(s.balance()),"deposited",BankService.format(s.deposited()),
+                messages.send(player,"economy.personal-stats","balance",bank.store().balanceText(player.getUniqueId()),"deposited",BankService.format(s.deposited()),
                         "withdrawn",BankService.format(s.withdrawn()),"sent",BankService.format(s.sent()),"received",BankService.format(s.received()));return true;
             }
             switch (first) {
@@ -113,12 +117,12 @@ public final class BankCommandHandler implements CommandExecutor, TabCompleter {
             messages.send(sender, "common.player-only");
             return true;
         }
-        long balance = bank.balance(player);
-        long inInventory = diamondsInInventory(player);
+        long balance = bank.store().balanceMinor(player.getUniqueId());
+        long inInventory = bank.marketQuote().creditMinor(diamondsInInventory(player));
         messages.send(sender, "economy.balance",
-                "balance", BankService.format(balance),
-                "inventory", BankService.format(inInventory),
-                "total", BankService.format(balance + inInventory));
+                "balance", BankService.formatMinor(balance),
+                "inventory", BankService.formatMinor(inInventory),
+                "total", BankService.formatMinor(balance + inInventory));
         long reserved=bank.store().reservedDebt(player.getUniqueId());
         if(reserved>0)messages.send(player,"economy.personal-debt","reserved",BankService.format(reserved),"available",BankService.format(bank.store().spendableBalance(player.getUniqueId())));
         messages.send(sender, "economy.balance-hint");
@@ -134,48 +138,29 @@ public final class BankCommandHandler implements CommandExecutor, TabCompleter {
         if (online != null) {
             bank.balance(online); // открывает счёт при первом обращении
         }
-        long balance = online != null ? bank.balanceOf(online.getName()) : bank.balanceOf(targetName);
+        long balance = online != null ? bank.store().balanceMinor(online.getUniqueId()) : bank.store().balanceMinor(bank.store().idByName(targetName));
         if (balance <= 0L && !bank.known(targetName)) {
             messages.send(sender, "economy.unknown-player", "player", targetName);
             return;
         }
         messages.send(sender, "economy.balance-other",
                 "player", online != null ? online.getName() : targetName,
-                "balance", BankService.format(balance));
+                "balance", BankService.formatMinor(balance));
     }
 
     private void deposit(Player player, String[] args) {
-        if (!player.hasPermission("chrdkregister.bal")) {
-            messages.send(player, "common.no-permission");
-            return;
+        if (!player.hasPermission("chrdkregister.bal")) { messages.send(player, "common.no-permission"); return; }
+        String mode=args.length>=2?args[1].toLowerCase(Locale.ROOT):"all";
+        boolean hand=mode.equals("hand")||mode.equals("рука");
+        long requested=-1;
+        if(!hand&&!mode.equals("all")&&!mode.equals("все")&&!mode.equals("всё")) {
+            requested=BankService.parseAmount(mode);
+            if(requested<=0) { messages.send(player,"economy.usage-deposit"); return; }
         }
-        String mode = args.length >= 2 ? args[1].toLowerCase(Locale.ROOT) : "all";
-        long credited;
-        if (mode.equals("hand") || mode.equals("рука")) {
-            credited = bank.deposit(player, true);
-        } else if (mode.equals("all") || mode.equals("все") || mode.equals("всё")) {
-            credited = bank.deposit(player, false);
-        } else {
-            long amount = BankService.parseAmount(mode);
-            if (amount <= 0L) {
-                messages.send(player, "economy.usage-deposit");
-                return;
-            }
-            credited = bank.depositAmount(player, amount);
-            if (credited < 0L) { messages.send(player,"economy.cash-unavailable"); return; }
-            if (credited <= 0L) {
-                messages.send(player, "economy.not-enough-items", "amount", BankService.format(amount));
-                return;
-            }
-        }
-        if (credited < 0L) { messages.send(player,"economy.cash-unavailable"); return; }
-        if (credited <= 0L) {
-            messages.send(player, "economy.nothing-to-deposit");
-            return;
-        }
-        messages.send(player, "economy.deposit-done",
-                "amount", BankService.format(credited),
-                "balance", BankService.format(bank.balance(player)));
+        long credited=bank.depositMinor(player,hand,requested);
+        if(credited<0) { messages.send(player,"economy.cash-unavailable"); return; }
+        if(credited==0) { messages.send(player,requested>0?"economy.not-enough-items":"economy.nothing-to-deposit","amount",requested); return; }
+        messages.send(player,"economy.deposit-done","amount",BankService.formatMinor(credited),"balance",bank.store().balanceText(player.getUniqueId()));
     }
 
     private void withdraw(Player player, String[] args) {
@@ -203,15 +188,15 @@ public final class BankCommandHandler implements CommandExecutor, TabCompleter {
                 messages.send(player,"economy.withdraw-preview","amount",BankService.format(amount),"raw",amount);return;
             }
         }
-        BankService.WithdrawResult result = bank.withdraw(player, amount);
+        BankService.MarketWithdrawResult result = bank.withdrawMarket(player, amount);
         switch (result.status()) {
             case OK -> messages.send(player, "economy.withdraw-done",
-                    "amount", BankService.format(result.amount()),
-                    "balance", BankService.format(result.balance()));
+                    "amount", BankService.format(result.items()),
+                    "balance", BankService.formatMinor(result.balanceMinor()));
             case NO_SPACE -> messages.send(player, "economy.no-space");
             case UNAVAILABLE -> messages.send(player,"economy.cash-unavailable");
             default -> messages.send(player, "economy.not-enough-balance",
-                    "balance", BankService.format(result.balance()),
+                    "balance", BankService.formatMinor(result.balanceMinor()),
                     "amount", BankService.format(amount));
         }
     }
@@ -235,22 +220,22 @@ public final class BankCommandHandler implements CommandExecutor, TabCompleter {
             messages.send(sender, "economy.usage-pay");
             return true;
         }
-        long amount = BankService.parseAmount(args[1]);
+        long amount = BankService.parseMinor(args[1]);
         if (amount <= 0L) {
             messages.send(sender, "economy.invalid-amount");
             return true;
         }
         EconomySettings config = bank.settings();
-        if (amount < config.minPay() || amount > config.maxPay()) {
+        if (amount < config.minPay()*100L || amount > config.maxPay()*100L) {
             messages.send(player, "economy.pay-limits",
-                    "min", BankService.format(config.minPay()),
-                    "max", BankService.format(config.maxPay()));
+                    "min", BankService.formatMinor(config.minPay()*100L),
+                    "max", BankService.formatMinor(config.maxPay()*100L));
             return true;
         }
         if(args.length>3 || (args.length==3&&!args[2].equalsIgnoreCase("confirm")&&!args[2].equalsIgnoreCase("preview"))) {
             messages.send(player,"economy.usage-pay");return true;
         }
-        var quote=bank.previewPay(player,args[0],amount);
+        var quote=bank.previewPayMinor(player,args[0],amount);
         if(quote.status()!=BankStore.Status.OK) {
             messages.send(player,"economy.pay-preview-refused","reason",quote.status());return true;
         }
@@ -260,25 +245,25 @@ public final class BankCommandHandler implements CommandExecutor, TabCompleter {
         }
         if(!confirmRequested) {
             if(!confirmations.offer(player.getUniqueId(),player,quote,System.nanoTime())) {messages.send(player,"economy.confirm-busy");return true;}
-            messages.send(player,"economy.pay-preview","player",quote.name(),"amount",BankService.format(amount),"tax",BankService.format(quote.tax()),
-                    "net",BankService.format(quote.net()),"raw",amount);return true;
+            messages.send(player,"economy.pay-preview","player",quote.name(),"amount",BankService.formatMinor(amount),"tax",BankService.formatMinor(quote.tax()),
+                    "net",BankService.formatMinor(quote.net()),"raw",BankService.formatMinor(amount));return true;
         }
-        BankService.PayResult result = bank.pay(player, args[0], amount);
+        BankService.PayResult result = bank.payMinor(player, args[0], amount);
         switch (result.status()) {
             case OK -> {
                 messages.send(player, "economy.pay-sent",
                         "player", result.targetName(),
-                        "amount", BankService.format(result.amount()),
-                        "credited", BankService.format(result.credited()),
-                        "balance", BankService.format(result.fromBalance()));
+                        "amount", BankService.formatMinor(result.amount()),
+                        "credited", BankService.formatMinor(result.credited()),
+                        "balance", BankService.formatMinor(result.fromBalance()));
                 if (result.tax() > 0L) {
-                    messages.send(player, "economy.pay-tax", "tax", BankService.format(result.tax()));
+                    messages.send(player, "economy.pay-tax", "tax", BankService.formatMinor(result.tax()));
                 }
                 Player target = Bukkit.getPlayerExact(result.targetName());
                 if (target != null) {
                     messages.send(target, "economy.pay-received",
                             "player", player.getName(),
-                            "amount", BankService.format(result.credited()));
+                            "amount", BankService.formatMinor(result.credited()));
                 }
             }
             case UNAVAILABLE -> messages.send(player, "economy.disabled");
@@ -287,7 +272,7 @@ public final class BankCommandHandler implements CommandExecutor, TabCompleter {
             case SELF_TRANSFER -> messages.send(player, "economy.pay-self");
             case NOT_ENOUGH -> messages.send(player, "economy.not-enough-balance",
                     "balance", BankService.format(bank.balanceOf(player.getName())),
-                    "amount", BankService.format(result.amount()));
+                    "amount", BankService.formatMinor(result.amount()));
             case LIMIT_EXCEEDED -> messages.send(player, "economy.pay-limit-target");
             case COOLDOWN -> messages.send(player, "economy.pay-cooldown",
                     "seconds", String.valueOf(result.cooldownSeconds()));
@@ -333,7 +318,7 @@ public final class BankCommandHandler implements CommandExecutor, TabCompleter {
             messages.send(sender, "economy.baltop-line",
                     "place", String.valueOf(index + 1),
                     "player", entry.name(),
-                    "balance", BankService.format(entry.balance()));
+                    "balance", BankService.formatMinor(bank.store().balanceMinor(entry.id())));
         }
         if (pages > 1) {
             messages.send(sender, "economy.baltop-footer",

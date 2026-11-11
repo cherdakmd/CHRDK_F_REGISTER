@@ -79,6 +79,11 @@ final class RecipeEconomy {
         var total=withSpread(cost,spread).multiply(batch);
         return total.numerator().divide(total.denominator()).min(BigInteger.valueOf(WholeTrades.MAX)).longValueExact();
     }
+    static long minorCap(Cost cost,int batch,double spread) {
+        var total=withSpread(cost,spread).multiply(batch);
+        return total.numerator().multiply(BigInteger.valueOf(100)).divide(total.denominator())
+                .min(BigInteger.valueOf(WholeTrades.MAX)).longValueExact();
+    }
     static int batch(Cost minimumBid) {
         if (minimumBid.numerator().signum()==0) return 0;
         var units=minimumBid.denominator().add(minimumBid.numerator()).subtract(BigInteger.ONE).divide(minimumBid.numerator());
