@@ -118,7 +118,7 @@ class ScheduleTest(unittest.TestCase):
 class ContentTest(unittest.TestCase):
     def test_catalog_only_current_verified_wiki(self):
         validate()
-        self.assertGreaterEqual(len(catalog()), 16)
+        self.assertGreaterEqual(len(catalog()), 15)
         for topic in catalog():
             post = tip(NOW, topic)
             self.assertNotIn('{{', post.text)

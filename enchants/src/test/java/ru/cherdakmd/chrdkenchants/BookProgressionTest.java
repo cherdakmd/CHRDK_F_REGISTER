@@ -153,7 +153,7 @@ class BookProgressionTest {
         String show=source.substring(source.indexOf("void show("),source.indexOf("@EventHandler(priority"));
         assertFalse(show.contains("scan(")); assertFalse(show.contains(".set(")); assertFalse(show.contains("queue("));
         String plugin=source("EnchantsPlugin");
-        assertEquals(2,plugin.split("if \\(mobBooks != null\\) mobBooks.clear\\(\\);",-1).length-1);
+        assertFalse(plugin.contains("mobBooks"));
         assertEquals(2,plugin.split("if \\(library != null\\) library.clear\\(\\);",-1).length-1);
         assertTrue(source("EnchantCommandHandler").contains("case \"library\""));
     }

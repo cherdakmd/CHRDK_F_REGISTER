@@ -165,7 +165,7 @@ final class PrestigeXpServiceTest {
         }
         assertTrue(messages.template("prestige-balance-bar").contains("алмазы идут как обычно"));
         assertTrue(messages.template("prestige-balance-bar-stop").contains("алмазы идут как обычно"));
-        assertTrue(messages.template("balance-footer").contains("Алмазы, перки и профессия"));
+        assertTrue(messages.template("balance-footer").contains("Алмазы и перки"));
         assertTrue(messages.template("balance-footer").contains("/skills prestige all"));
     }
 
@@ -189,7 +189,7 @@ final class PrestigeXpServiceTest {
         String wiki = read("../wiki/skills.md");
         assertTrue(wiki.contains("/skills balance"));
         assertTrue(wiki.contains("hard-cap"));
-        assertTrue(wiki.contains("алмазы, перки, профессия"));
+        assertTrue(wiki.contains("алмазы и перки"));
         String design = read("../docs/design/PRESTIGE.md");
         assertTrue(design.contains("### 7.1 Баланс прокачки ступеней (мягкая зона)"));
         assertTrue(design.contains("| L5 | 5 |"));

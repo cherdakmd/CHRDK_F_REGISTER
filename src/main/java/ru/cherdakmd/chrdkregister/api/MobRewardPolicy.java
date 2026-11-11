@@ -13,5 +13,9 @@ public final class MobRewardPolicy {
         return entity != null && entity.getPersistentDataContainer().has(TEMPORARY);
     }
     /** Биомная разновидность — не босс, даже если у неё есть читаемое имя. */
+    /** Provenance Classes — не уровень/статы. Остальные чужие PDC не принимаем за vanilla-моба. */
+    public static boolean onlyNaturalProvenance(Entity entity) {
+        return entity.getPersistentDataContainer().getKeys().stream().allMatch(PROVENANCE::equals);
+    }
     private MobRewardPolicy() { }
 }
