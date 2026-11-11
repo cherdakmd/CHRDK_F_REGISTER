@@ -269,7 +269,7 @@ public final class DisasterEffects {
                         plugin.settings().terrainDepth(1 + level), Material.AIR, 0);
             }
             for (int i = 0; i < 16 + level * 10 && !budgetExhausted(); i++) {
-                Block top = surface(randomAround(eye, radius * 0.7));
+                Block top = surface(randomAround(eye, Math.max(1, (int) Math.round(radius * 0.7))));
                 if (top != null && isTerrain(top.getType())) {
                     org.bukkit.block.data.BlockData debris = top.getBlockData().clone();
                     excavateColumn(top, plugin.settings().terrainDepth(1 + level / 2), Material.AIR, 0);

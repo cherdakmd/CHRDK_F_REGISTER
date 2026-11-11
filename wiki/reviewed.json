@@ -56,8 +56,8 @@
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "disasters": {
-      "reason": "Сверены terrain v5: глубокие кратеры/разломы, природный ландшафт, расширенная Claims-защита и лимиты",
-      "sources": "dea2e188e988e7712b37ecadccdc72d433026ad66b1134b8a81666db8bc77009",
+      "reason": "Исправлена Java-компиляция смерча: целый радиус randomAround после округления",
+      "sources": "151da1b4a71200add7b7941b8615502a830fcb816687953d536f8dee816fa39f",
       "text": "121b1cc28a075ced29b6de8abec7dbc20bbb531a01441ddd5fdb836d066d0202"
     },
     "economy": {
