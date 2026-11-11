@@ -64,11 +64,14 @@ public final class GoalsService {
         var goal = plugin.store().goal("donate-diamonds").filter(g -> !g.done).orElse(null);
         if (goal == null) { plugin.messages().send(p, "donate-no-goal"); return; }
         var before = ChargeInventory.copy(p.getInventory().getStorageContents());
-        var plan = ChargeInventory.plan(before, amount, plugin.coreApi().auctionBankBalance(p.getUniqueId()));
+        var quote = plugin.coreApi().diamondRate();
+        long charged = quote.scaleMinor(Math.multiplyExact(amount,100L));
+        var plan = ChargeInventory.planMinor(before, charged,
+                plugin.coreApi().auctionBankBalanceMinor(p.getUniqueId()), quote.rateBps());
         if (plan == null) { plugin.messages().send(p, "bank-not-enough", "amount", amount); return; }
         try {
             String afterState = plugin.store().previewDonation(p.getName().toLowerCase(java.util.Locale.ROOT), amount, plugin.config().rewardBonusPercent());
-            var payment = charges.prepare(p.getUniqueId(), amount, plan.debit(), plan.cash(), plan.change(),
+            var payment = charges.prepareMinor(p.getUniqueId(), charged, plan.debit(), plan.cash(), plan.change(), quote.rateBps(),
                     ChargeInventory.encode(before), ChargeInventory.encode(plan.after()), plugin.store().snapshot(), afterState);
             plugin.coreApi().commitBankCharge(p, payment, before);
             var decision = ChargeInventory.recover(charges, plugin.coreApi(), p, plugin.store());
@@ -76,7 +79,8 @@ public final class GoalsService {
             if (decision == ChargeRecovery.Decision.WAIT || decision == ChargeRecovery.Decision.CONFLICT) {
                 if (plan.cash() > 0) lock(p); plugin.messages().send(p, "bank-recovery"); return;
             }
-            plugin.messages().send(p, "bank-donated", "amount", amount, "change", plan.change());
+            plugin.messages().send(p, "bank-donated", "amount", amount,
+                    "change", ru.cherdakmd.chrdkregister.api.DiamondMoney.format(plan.change()));
             var completed = plugin.store().goal("donate-diamonds").orElseThrow();
             if (completed.done) onGoalCompleted(completed);
             settleRewards();
@@ -172,7 +176,7 @@ public final class GoalsService {
             if (!plugin.coreApi().creditMarketEntitlement("common-goals", plugin.store().incomeId(), name, player.getUniqueId(), total)) {
                 plugin.messages().send(player, "bank-wait"); return;
             }
-            plugin.messages().send(player, "bank-paid", "balance", ru.cherdakmd.chrdkregister.api.DiamondMoney.format(plugin.coreApi().auctionBankBalance(player.getUniqueId())));
+            plugin.messages().send(player, "bank-paid", "balance", ru.cherdakmd.chrdkregister.api.DiamondMoney.format(plugin.coreApi().auctionBankBalanceMinor(player.getUniqueId())));
         } catch (java.io.IOException error) { plugin.getLogger().log(java.util.logging.Level.SEVERE, "Не сохранён источник награды", error); plugin.messages().send(player, "bank-wait"); }
     }
 

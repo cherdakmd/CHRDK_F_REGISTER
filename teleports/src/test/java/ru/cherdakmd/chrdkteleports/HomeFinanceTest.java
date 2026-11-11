@@ -42,5 +42,8 @@ class HomeFinanceTest {
     @Test void productionCommandsUseOutcomeProtocolInsteadOfPhysicalWallet() throws Exception {
         String code=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkteleports/TeleportCommandHandler.java"));
         assertFalse(code.contains("DiamondWallet")); assertTrue(code.contains("payments().perform")); assertTrue(code.contains("payments().putValue")); assertTrue(code.contains("PaidActions.teleport(mover,target)"));
+        String tpa=code.substring(code.indexOf("private void executeTpa"),code.indexOf("private boolean handleDeny"));
+        assertTrue(tpa.contains("paidTeleport(payer, mover, request.quotedCost(), \"tpa\""));
+        assertFalse(tpa.contains("scaleMinor"),"TPA base price is scaled once by PaidActions with the payment rate");
     }
 }

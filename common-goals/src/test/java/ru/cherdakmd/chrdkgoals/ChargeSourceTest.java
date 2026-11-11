@@ -62,7 +62,10 @@ class ChargeSourceTest {
     @Test void productionUsesDurableBankProtocolAndNeverPhysicalRefunds() throws Exception {
         String code=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkgoals/GoalsService.java"));
         String payment=code.substring(code.indexOf("public void donate"),code.indexOf("/** Засчитывает прогресс"));
-        assertTrue(payment.indexOf("charges.prepare") < payment.indexOf("commitBankCharge")); assertTrue(payment.indexOf("commitBankCharge") < payment.indexOf("ChargeInventory.recover"));
+        assertTrue(payment.indexOf("charges.prepareMinor") < payment.indexOf("commitBankCharge")); assertTrue(payment.indexOf("commitBankCharge") < payment.indexOf("ChargeInventory.recover"));
+        assertTrue(payment.contains("ChargeInventory.planMinor"));
+        assertTrue(payment.contains("auctionBankBalanceMinor"));
+        assertTrue(payment.contains("quote.scaleMinor(Math.multiplyExact(amount,100L))"));
         assertFalse(payment.contains("DiamondWallet")); assertFalse(payment.contains("setStorageContents")); assertFalse(payment.contains("dropItem"));
     }
 }

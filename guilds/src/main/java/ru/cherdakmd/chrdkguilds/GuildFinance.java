@@ -27,6 +27,12 @@ final class GuildFinance {
 
     record Preview(GuildResult result, String domain, long debit, long credit) { }
 
+    /** Доменные тарифы выражены в базовых алмазах, банк и frozen WAL — в minor. */
+    static long baseAffordable(long minor, int rateBps) {
+        if (minor < 0 || rateBps < 5_000 || rateBps > 20_000) return -1;
+        return Math.min(Guild.MAX_TREASURY, minor / rateBps);
+    }
+
     /** Свободный остаток пополняется военными возвратами при withdraw: учитываем оба коллективных обязательства. */
     static long treasurySpent(Guild before, Guild after) {
         return Math.subtractExact(Math.addExact(Math.addExact(before.treasury(),before.warReturns()),before.duesReserve()),
@@ -81,10 +87,11 @@ final class GuildFinance {
             Preview preview = preview(plugin.store(),plugin.config(),operation);
             if (!preview.result().ok()) return preview.result();
             if(bankOnly){
-                long spendable=plugin.coreApi().spendableBankBalance(player.getUniqueId());
+                long spendable=baseAffordable(plugin.coreApi().spendableBankBalanceMinor(player.getUniqueId()),
+                        plugin.coreApi().diamondRate().rateBps());
                 if(spendable<0)return GuildResult.fail("finance-paused");
                 long minorCost=plugin.coreApi().diamondRate().scaleMinor(preview.debit()*100L);
-                if(spendable<minorCost)return GuildResult.fail("dues-bank","cost",ru.cherdakmd.chrdkregister.api.DiamondMoney.format(minorCost));
+                if(spendable<preview.debit())return GuildResult.fail("dues-bank","cost",ru.cherdakmd.chrdkregister.api.DiamondMoney.format(minorCost));
                 return payments.putGuildBankValue(player.getUniqueId(),Math.toIntExact(preview.debit()),GuildStore.FINANCE_KEY,preview.domain(),false)
                         ?preview.result():GuildResult.fail("finance-paused");
             }
@@ -100,8 +107,8 @@ final class GuildFinance {
 
     long available(Player player) {
         if (!plugin.authenticated(player) || payments.paused()) return 0;
-        long minor = Math.clamp(plugin.coreApi().auctionBankBalance(player.getUniqueId()),0L,Guild.MAX_TREASURY*100L);
+        long minor = Math.clamp(plugin.coreApi().auctionBankBalanceMinor(player.getUniqueId()),0L,Guild.MAX_TREASURY*20_000L);
         for (var item : player.getInventory().getStorageContents()) minor=Math.addExact(minor,plugin.coreApi().diamondRate().creditMinor(ChargeInventory.cashValue(item)));
-        return Math.min(minor/100,Guild.MAX_TREASURY);
+        return baseAffordable(minor,plugin.coreApi().diamondRate().rateBps());
     }
 }

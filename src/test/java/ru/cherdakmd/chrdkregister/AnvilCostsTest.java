@@ -61,6 +61,15 @@ class AnvilCostsTest {
         int high=source.indexOf("@EventHandler(priority=EventPriority.HIGHEST)",low);
         assertTrue(source.substring(low,high).contains("AnvilCosts.capRename(event.getView(),event.getResult())"));
     }
+    @Test void currencyPaymentUsesExactMinorBalanceMarketRateAndDurableRefund() throws Exception {
+        var source=java.nio.file.Files.readString(java.nio.file.Path.of("src/main/java/ru/cherdakmd/chrdkregister/AnvilCostListener.java"));
+        assertTrue(source.contains("bank.store().balanceMinor(player.getUniqueId())"));
+        assertTrue(source.contains("bank.store().withdrawMinor(player.getUniqueId(),diamonds,true)"));
+        assertTrue(source.contains("bank.store().depositMinor(player.getUniqueId(),player.getName(),diamonds,true)"));
+        assertTrue(source.contains("bank.marketQuote().scaleMinor(Math.multiplyExact(base,100L))"));
+        assertFalse(source.contains("bank.store().withdraw(player.getUniqueId(),diamonds)"));
+        assertTrue(source.contains("quote.result(),0,baseDiamonds)"),"Public event retains base-diamond units");
+    }
     @Test void fullPriceDiscountMultiplicationCannotOverflowIntoNegativeCost() {
         var f=new Frame();f.price=Integer.MAX_VALUE-1;AnvilCosts.discount(f.view,null,10);
         assertEquals(1_932_735_281,AnvilCosts.actual(f.view));
