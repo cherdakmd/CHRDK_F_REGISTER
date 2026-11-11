@@ -30,7 +30,8 @@ final class GuildFinance {
     /** Доменные тарифы выражены в базовых алмазах, банк и frozen WAL — в minor. */
     static long baseAffordable(long minor, int rateBps) {
         if (minor < 0 || rateBps < 5_000 || rateBps > 20_000) return -1;
-        return Math.min(Guild.MAX_TREASURY, minor / rateBps);
+        if (minor >= Guild.MAX_TREASURY * (long) rateBps) return Guild.MAX_TREASURY;
+        return minor * 100L / rateBps;
     }
 
     /** Свободный остаток пополняется военными возвратами при withdraw: учитываем оба коллективных обязательства. */

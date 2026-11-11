@@ -26,7 +26,7 @@ class TradeAmountsTest {
         String s=Files.readString(Path.of("src/main/java/ru/cherdakmd/diamondshop/ShopQuantityGui.java"));
         assertTrue(s.contains("plugin.coreApi().diamondRate().scaleMinor(plugin.forgeShop().prices().price(h.forge.sku()))==h.price"));
         assertFalse(s.contains("&&plugin.forgeShop().prices().price(h.forge.sku())==h.price"));
-        var quote=new ru.cherdakmd.chrdkregister.api.DiamondExchangePolicy.Quote(12345,10000,0,0,0);
+        var quote=new ru.cherdakmd.chrdkregister.api.DiamondExchangePolicy.Quote(12345,10000,0,0,0,0);
         assertEquals(75,quote.scaleMinor(61));
         assertNotEquals(61,quote.scaleMinor(61),"Regression must use a non-base market rate");
     }
