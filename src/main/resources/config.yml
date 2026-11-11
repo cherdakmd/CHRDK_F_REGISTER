@@ -1282,8 +1282,8 @@ anti-multialt:
   # Отслеживать, когда с одного IP входят несколько аккаунтов с активными рангами
   enabled: true
   # notify = предупредить администрацию и записать в аудит, deny = запретить вход
-  mode: notify
-  max-accounts-per-ip: 3
+  mode: deny
+  max-accounts-per-ip: 2
   window-minutes: 240
 
 guide:
