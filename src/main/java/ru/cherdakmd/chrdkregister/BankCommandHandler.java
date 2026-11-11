@@ -159,7 +159,7 @@ public final class BankCommandHandler implements CommandExecutor, TabCompleter {
         }
         long credited=bank.depositMinor(player,hand,requested);
         if(credited<0) { messages.send(player,"economy.cash-unavailable"); return; }
-        if(credited==0) { messages.send(player,"economy.nothing-to-deposit"); return; }
+        if(credited==0) { messages.send(player,requested>0?"economy.not-enough-items":"economy.nothing-to-deposit","amount",requested); return; }
         messages.send(player,"economy.deposit-done","amount",BankService.formatMinor(credited),"balance",bank.store().balanceText(player.getUniqueId()));
     }
 

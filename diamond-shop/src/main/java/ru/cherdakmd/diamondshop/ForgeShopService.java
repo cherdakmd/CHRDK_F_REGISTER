@@ -104,7 +104,7 @@ final class ForgeShopService {
         var config = service.config();
         var before = copy(player.getInventory().getStorageContents());
         var after = copy(before);
-        long wallet = service.balance(player), neededMinor = Math.max(0, money - wallet),needed=(neededMinor+marketQuote.rateBps()-1)/marketQuote.rateBps();
+        long wallet = service.balance(player), neededMinor = Math.max(0, money - wallet),physicalMinor=marketQuote.creditMinor(1),needed=(neededMinor+physicalMinor-1)/physicalMinor;
         int[] amounts = new int[36], values = new int[36];
         for (int slot = 0; slot < after.length; slot++) if (plain(after[slot])) {
             amounts[slot] = after[slot].getAmount();

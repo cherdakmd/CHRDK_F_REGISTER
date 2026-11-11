@@ -13,7 +13,7 @@ class DiamondExchangePolicyTest {
     @Test void neutralMarketKeepsOneDiamondAtOneAndQuotesExactHundredths() {
         var q=DiamondExchangePolicy.quote(neutral(),10_000);
         assertEquals(10_000,q.rateBps()); assertEquals(100,q.creditMinor(1));
-        assertEquals(12_345,q.creditMinor(123)); assertEquals("1",q.text());
+        assertEquals(12_300,q.creditMinor(123)); assertEquals("1",q.text());
         assertEquals(12,DiamondExchangePolicy.quote(neutral(),10_000).scaleMinor(25));
     }
     @Test void demandMoneySupplyEmissionAndActivityMoveRateWithoutRandomness() {

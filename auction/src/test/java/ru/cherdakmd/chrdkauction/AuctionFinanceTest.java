@@ -109,7 +109,7 @@ class AuctionFinanceTest {
     }
     @Test void productionPurchaseOrderingAndNoSecondSpendableWallet() throws Exception {
         String src=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkauction/AuctionService.java"));
-        String buy=src.substring(src.indexOf("void buyMinor("),src.indexOf("void cancel("));
+        String buy=src.substring(src.indexOf("void buy("),src.indexOf("void cancel("));
         assertTrue(buy.indexOf("prepareBankBuy")<buy.indexOf("commitAuctionPayment"));
         assertTrue(buy.indexOf("commitAuctionPayment")<buy.indexOf("AuctionTransfers.bank"));
         assertFalse(buy.contains("setStorageContents"));
