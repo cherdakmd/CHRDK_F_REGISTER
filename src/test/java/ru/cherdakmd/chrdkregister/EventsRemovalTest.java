@@ -52,7 +52,7 @@ class EventsRemovalTest {
         }
         var entry = new ServerMenuSettings.Entry(-1, Material.PAPER, "Custom", "", "custom", "CHRDK_Events", "");
         assertFalse(entry.available(plugin -> true, permission -> true));
-        for (String command : List.of("hunt", "event_other", "minecraft:time query daytime"))
+        for (String command : List.of("guilds", "event_other", "minecraft:time query daytime"))
             assertFalse(RetiredAddons.command(command), command);
     }
     @Test void onlyRemovedWorldEventAdvertisementsAreFiltered() {
@@ -74,9 +74,9 @@ class EventsRemovalTest {
         assertFalse(profiles.register(" EVENTS ", context -> null));
         names.register("events", (player, base) -> "removed");
         assertEquals(0, profiles.size()); assertEquals("Steve", names.decorate("Steve", "Steve"));
-        assertTrue(profiles.register("hunt", context -> null));
-        var wiki = WikiSettings.of(true, WikiSettings.DEFAULT_URL, List.of("events", "hunt", "profile"));
-        assertEquals(List.of("hunt", "profile"), wiki.pages());
+        assertTrue(profiles.register("guilds", context -> null));
+        var wiki = WikiSettings.of(true, WikiSettings.DEFAULT_URL, List.of("events", "guilds", "profile"));
+        assertEquals(List.of("guilds", "profile"), wiki.pages());
         assertEquals(wiki.pageUrl(""), wiki.pageUrl("events"));
     }
     @Test void stock241MigratesOnceWithoutChangingCustomListsOrSchedules() throws Exception {

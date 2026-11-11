@@ -98,10 +98,9 @@ class ForgeMarketContractTest {
 
     @Test void tierForgeKeepsSeedEligibilityAndMigrationOnlyLore() throws Exception {
         String materials = read("tier-forge/src/main/java/ru/cherdakmd/chrdktierforge/ForgeMaterials.java");
-        assertTrue(materials.contains("QualifiedHuntKillEvent"));
+        assertFalse(materials.contains("QualifiedHuntKillEvent"));
         assertFalse(materials.contains("import org.bukkit.event.entity.EntityDeathEvent"));
         assertFalse(materials.contains("EntityDeathEvent event"));
-        assertTrue(materials.contains("ForgeMaterial.HUNT_DROPS"));
         // 7 ноября 2026: искра отклоняет вещь С тиром отдельным ключом, а не общим
         // forge-input (тот текст ошибочно требовал тир-вещь как раз у искры).
         assertTrue(materials.contains("if (tierId != null) { fail(ForgeInputDiagnostics.SEED_TIERED); return null; }"));

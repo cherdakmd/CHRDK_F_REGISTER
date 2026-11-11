@@ -120,7 +120,6 @@ class AutoMessagesUpdateTest {
         assertTrue(text.contains("2FA подключается по желанию"));
         assertTrue(text.contains("/wiki"));
         assertTrue(text.contains("Plasmo Voice"), "в рассылке явно назван голосовой чат сервера");
-        assertFalse(text.contains("только активная"), "выбор профессии отменён в 1.4.282");
         assertTrue(text.contains("Все 8 ремёсел активны сразу"));
         assertEquals(1, entries.stream().filter(e -> e.condition().equals("paid")).count());
         assertEquals(1, entries.stream().filter(e -> e.condition().equals("unsecured")).count());

@@ -546,7 +546,7 @@ public final class AdminPanelGui implements Listener {
         rows.add(row(messages.plain("admin.field-ip-ban"),
                 ipBan.isEmpty() ? messages.plain("admin.value-no") : ipBan));
 
-        // Разделы аддонов (клан, дома, приваты, профессии) приходят через ProfileProvider API.
+        // Разделы аддонов (клан, дома и приваты) приходят через ProfileProvider API.
         UUID id;
         try {
             id = UUID.fromString(uuid);

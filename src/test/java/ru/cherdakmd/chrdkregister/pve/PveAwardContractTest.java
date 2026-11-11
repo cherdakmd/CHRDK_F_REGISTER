@@ -93,7 +93,7 @@ class PveAwardContractTest {
     void dailyBudgetIsSharedAcrossAllRecipients() {
         List<PveReceipt> today = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
-            today.add(PveAwardContract.receipt(UUID.randomUUID(), PveRecipient.HUNT_COINS, DAY));
+            today.add(PveAwardContract.receipt(UUID.randomUUID(), PveRecipient.COMMON_GOALS, DAY));
         }
         assertTrue(PveAwardContract.canAward(today,
                 PveAwardContract.receipt(UUID.randomUUID(), PveRecipient.PERK_POWDER, DAY), 6));

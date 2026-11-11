@@ -411,7 +411,7 @@ public interface ChrdkRegisterApi {
      * <p>По умолчанию ничего не делает: сторонние реализации API остаются
      * совместимыми.</p>
      *
-     * @param id       уникальный id аддона, например {@code hunt}
+     * @param id       уникальный id аддона, например {@code guilds}
      * @param provider сборка раздела; {@code null} игнорируется
      */
     default void registerProfile(String id, ProfileProvider provider) {

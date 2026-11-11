@@ -37,10 +37,10 @@ public final class ForgeMarketCatalog {
 
     /** Ровно восемь настоящих PDC-расходников. Порядок — порядок витрины. */
     public static final List<Sku> SKUS = List.of(
-            new Sku("ascend", "ECHO_SHARD", 128, false, true),
-            new Sku("temper", "NAUTILUS_SHELL", 96, false, true),
-            new Sku("reforge", "PAPER", 160, false, true),
-            new Sku("seed", "NETHER_STAR", 64, true, true),
+            new Sku("ascend", "ECHO_SHARD", 128, false, false),
+            new Sku("temper", "NAUTILUS_SHELL", 96, false, false),
+            new Sku("reforge", "PAPER", 160, false, false),
+            new Sku("seed", "NETHER_STAR", 64, true, false),
             new Sku("repair", "IRON_INGOT", 24, false, false),
             new Sku("inscribe", "GOLD_NUGGET", 192, false, false),
             new Sku("remove", "GUNPOWDER", 32, false, false),

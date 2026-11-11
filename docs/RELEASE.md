@@ -47,7 +47,7 @@ sha256sum -c chrdk-1.5.2-SHA256SUMS.txt
 unzip -t chrdk-plugins-1.5.2.zip
 ```
 
-Архив должен содержать ровно 22 JAR одной версии и `ОБНОВЛЕНИЕ.txt`.
+Архив должен содержать ровно 20 JAR одной версии и `ОБНОВЛЕНИЕ.txt`.
 `chrdk-vk-<версия>.jar`, `chrdk-disasters-<версия>.jar` и
 `mine-treasure-1.6.5-ru.zip` остаются отдельными файлами.
 

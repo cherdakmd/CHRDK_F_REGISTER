@@ -5,12 +5,14 @@ import java.util.Set;
 
 /** Только совместимость сохранённых настроек после удаления аддонов в 1.4.239–1.4.271. */
 final class RetiredAddons {
-    private static final Set<String> SOURCES = Set.of("bosses", "treasures", "streams", "events", "queue", "lottery", "party", "referrals");
+    private static final Set<String> SOURCES = Set.of("bosses", "treasures", "streams", "events", "queue", "lottery", "party", "referrals", "hunt", "professions");
     private static final Set<String> COMMANDS = Set.of("boss", "bosses", "bossy", "bosss", "bossadmin",
             "bossesadmin", "treasures", "treasuresadmin", "stream", "streams", "strimer", "events", "event", "sobytiya", "eventsadmin", "queue", "qjoin", "ochered",
             "lottery", "lot", "loto", "lotteryadmin", "lotadmin",
             "party", "pt", "group", "gruppa", "pc", "pchat", "partychat", "partyadmin",
-            "ref", "referral", "invite", "refadmin", "referraladmin");
+            "ref", "referral", "invite", "refadmin", "referraladmin",
+            "hunt", "huntadmin", "ohota", "hunter", "prof", "profession", "professions", "profs",
+            "profadmin", "professionadmin", "professionsadmin", "profsadmin");
     private static final java.util.regex.Pattern ANNOUNCEMENT = java.util.regex.Pattern.compile(
             "(?i)(?:^|[^a-z0-9_])/+(?:[a-z0-9_.-]+:)?(?:" + String.join("|", COMMANDS) + ")(?![a-z0-9_/-])");
     // Только реклама снятой программы, а не общий совет о безопасном входе при записи экрана.

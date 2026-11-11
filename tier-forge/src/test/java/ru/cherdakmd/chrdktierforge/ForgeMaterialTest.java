@@ -15,15 +15,6 @@ class ForgeMaterialTest {
         assertEquals(7, TierDef.LADDER.size());
     }
     @Test void dropRatesAreBoundedAndInvalidProgressionCannotProduceMaterials() {
-        assertEquals(1, ForgeMaterial.chance(1,1,0));
-        assertEquals(2, ForgeMaterial.chance(1,30,0));
-        assertEquals(6, ForgeMaterial.chance(1,30,1));
-        assertEquals(100, ForgeMaterial.chance(200,30,1));
-        assertEquals(0, ForgeMaterial.chance(Double.NaN,1,0));
-        assertEquals(0, ForgeMaterial.chance(-1,1,0));
-        assertEquals(0, ForgeMaterial.chance(1,0,0));
-        assertEquals(0, ForgeMaterial.chance(1,31,0));
-        assertEquals(0, ForgeMaterial.chance(1,10,99));
     }
     @Test void anvilQuoteBindsFullInputsWindowSettingsAndRename() {
         Object settings=new Object(),view=new Object();
@@ -123,16 +114,10 @@ class ForgeMaterialTest {
         assertEquals(4, ForgeMaterial.REMOVE_XP);
         assertEquals(2, ForgeMaterial.NAME_XP);
         assertEquals(7, TierDef.LADDER.size());
-        assertEquals(4, ForgeMaterial.HUNT_DROPS.size());
-        assertEquals(4, ForgeMaterial.SHOP_ONLY.size());
+        assertEquals(8, ForgeMaterial.SHOP_ONLY.size());
         assertTrue(ForgeMaterial.SEED.seed());
         assertTrue(ForgeMaterial.REPAIR.shopOnly());
-        assertFalse(ForgeMaterial.SEED.shopOnly());
-    }
-    @Test void seedDropChanceIsHalfOneAndThreePercent() {
-        assertEquals(0.5, ForgeMaterial.chance(ForgeMaterial.SEED_BASE_DROP_PERCENT,1,0), 0.0);
-        assertEquals(1.0, ForgeMaterial.chance(ForgeMaterial.SEED_BASE_DROP_PERCENT,30,0), 0.0);
-        assertEquals(3.0, ForgeMaterial.chance(ForgeMaterial.SEED_BASE_DROP_PERCENT,30,1), 0.0);
+        assertTrue(ForgeMaterial.SEED.shopOnly());
     }
     @Test void seedUidIsValid12HexAndNeverAcceptsRawUuid() {
         String canonical = "6f1c2a94-6e5b-4d3a-9c7e-1b0d5f8a2c33";

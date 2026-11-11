@@ -1,7 +1,7 @@
 ---
 title: "Алмазы и баланс"
 description: "Единый личный счёт, физические предметы и отдельные казны."
-review: [core, diamond-shop, auction, guilds, hunt, claims, teleports]
+review: [core, diamond-shop, auction, guilds, claims, teleports]
 ---
 
 ## Что хранит /bal
@@ -62,7 +62,7 @@ review: [core, diamond-shop, auction, guilds, hunt, claims, teleports]
 
 - Казна и военные резервы [гильдии](guilds.html).
 - Общие призовые фонды и коллективные резервы.
-- Монеты, осколки и ключи [охоты](hunt.html); предметные рецепты.
+- Предметные рецепты и расходники.
 
 Это не дополнительные личные алмазные кошельки. Их правила расходования
 описаны отдельно. Алмазы нельзя автоматически приравнивать к рублям,

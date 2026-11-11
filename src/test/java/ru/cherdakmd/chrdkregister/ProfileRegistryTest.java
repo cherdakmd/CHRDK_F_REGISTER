@@ -70,7 +70,7 @@ class ProfileRegistryTest {
         assertEquals("Охота", sections.get(0).title());
         assertEquals("Достижения", sections.get(1).title(), "при равенстве order — по id");
         assertEquals("Заказы", sections.get(2).title());
-        assertEquals(List.of("hunt", "achievements", "orders"), registry.ids(),
+        assertEquals(List.of("guilds", "achievements", "orders"), registry.ids(),
                 "порядок разделов: order(), затем id");
     }
 

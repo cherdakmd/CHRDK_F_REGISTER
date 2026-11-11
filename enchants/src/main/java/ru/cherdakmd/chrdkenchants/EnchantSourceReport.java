@@ -1,6 +1,5 @@
 package ru.cherdakmd.chrdkenchants;
 
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import java.util.Locale;
 
@@ -21,10 +20,6 @@ final class EnchantSourceReport {
                 "one", percent(cfg.tableChancePercent() / 3.0), "two", percent(cfg.tableChancePercent() * 2 / 3.0), "three", percent(cfg.tableChancePercent()),
                 "curse", cfg.cursesEnabled() ? cfg.tableCurseChancePercent() : 0);
         plugin.messages().send(player, "sources-villager", "state", state(cfg.villagerEnabled() && light > 0), "chance", cfg.villagerConvertChancePercent());
-        plugin.messages().send(player, "sources-mobs", "state", state(plugin.getConfig().getBoolean("sources.mobs.enabled", true)
-                        && Bukkit.getPluginManager().isPluginEnabled("CHRDK_Hunt") && light > 0),
-                "normal", percent(chance(plugin.getConfig().getDouble("sources.mobs.regular-chance-percent", .35), .35, 1)),
-                "elite", percent(chance(plugin.getConfig().getDouble("sources.mobs.elite-chance-percent", 8), 8, 25)));
         plugin.messages().send(player, "sources-footer");
     }
 }

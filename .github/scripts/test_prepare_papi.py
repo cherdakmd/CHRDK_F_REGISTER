@@ -65,7 +65,7 @@ class PapiBuildInputTest(unittest.TestCase):
 
     def test_every_papi_consumer_uses_pinned_compile_only_property(self):
         root=Path(__file__).resolve().parents[2]
-        consumers=[root/"build.gradle",*(root/name/"build.gradle" for name in ["tier-forge","professions","quests","orders","hunt","guilds","classes"])]
+        consumers=[root/"build.gradle",*(root/name/"build.gradle" for name in ["tier-forge","quests","orders","guilds","classes"])]
         for path in consumers:
             text=path.read_text()
             self.assertIn("compileOnly(rootProject.findProperty('chrdk.papiJar')",text,str(path))

@@ -38,7 +38,6 @@ groups:
   title: Развитие
   description: Ремесло, навыки, таланты и награды за игру.
   pages:
-  - professions
   - skills
   - classes
   - perktree
@@ -49,10 +48,9 @@ groups:
   - goals
   - titles
 - id: gear
-  title: Охота и снаряжение
-  description: Опасность мира, свойства находок и мастерская.
+  title: Снаряжение
+  description: Свойства находок и мастерская.
   pages:
-  - hunt
   - enchants
   - tierforge
   - artifacts

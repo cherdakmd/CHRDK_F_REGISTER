@@ -22,13 +22,13 @@ class RetiredAddonsTest {
         preferences.load(); return preferences;
     }
     @Test void exactIdentifiersDoNotDisableVanillaMechanics() {
-        for (String id : List.of("bosses", "Treasures", " treasures ")) assertTrue(RetiredAddons.source(id));
-        for (String id : List.of("CHRDK_Bosses", " chrdk_treasures ")) assertTrue(RetiredAddons.plugin(id));
+        for (String id : List.of("bosses", "Treasures", " treasures ", "hunt", "professions")) assertTrue(RetiredAddons.source(id));
+        for (String id : List.of("CHRDK_Bosses", " chrdk_treasures ", "CHRDK_Hunt", " chrdk_professions ")) assertTrue(RetiredAddons.plugin(id));
         assertFalse(RetiredAddons.source(null)); assertFalse(RetiredAddons.plugin("bosses"));
-        for (String id : List.of("hunt", "bossbar", "fishing-treasure")) assertFalse(RetiredAddons.source(id));
-        for (String command : List.of("boss menu", "/bosses", "bossy", "bosss", "bossesadmin stop", "bossadmin", "treasuresadmin reload", "/chrdk_treasures:treasures"))
+        for (String id : List.of("bossbar", "fishing-treasure")) assertFalse(RetiredAddons.source(id));
+        for (String command : List.of("boss menu", "/bosses", "bossy", "bosss", "bossesadmin stop", "bossadmin", "hunt", "profession", "profadmin", "treasuresadmin reload", "/chrdk_treasures:treasures"))
             assertTrue(RetiredAddons.command(command), command);
-        for (String command : List.of("minecraft:bossbar list", "hunt", "treasures_other", "", "shop buy boss"))
+        for (String command : List.of("minecraft:bossbar list", "hunt_other", "treasures_other", "", "shop buy boss"))
             assertFalse(RetiredAddons.command(command), command);
     }
     @Test void customizedMenuHidesRetiredEntriesEvenWhenOldPluginAndPermissionsArePresent() {
@@ -60,8 +60,8 @@ class RetiredAddonsTest {
         assertEquals(old, GameplayRewardTexts.message("OtherPlugin", "labels.usage", old));
     }
     @Test void wikiHasNeitherRetiredSuggestionsNorBrokenExplicitLinks() {
-        var wiki = WikiSettings.of(true, WikiSettings.DEFAULT_URL, List.of("treasures", "hunt", "bosses", "faq"));
-        assertEquals(List.of("hunt", "faq"), wiki.pages());
+        var wiki = WikiSettings.of(true, WikiSettings.DEFAULT_URL, List.of("treasures", "hunt", "professions", "bosses", "faq"));
+        assertEquals(List.of("faq"), wiki.pages());
         assertEquals(wiki.pageUrl(""), wiki.pageUrl("TREASURES"));
         assertEquals(wiki.pageUrl(""), wiki.pageUrl("bosses"));
         assertFalse(WikiSettings.DEFAULT_PAGES.contains("treasures"));
@@ -126,7 +126,9 @@ class RetiredAddonsTest {
             tags.register(id, (player, base) -> "removed");
         }
         assertEquals(0, profiles.size()); assertEquals("Steve", tags.decorate("Steve", "Steve"));
-        assertTrue(profiles.register("hunt", context -> null));
+        assertFalse(profiles.register("hunt", context -> null));
+        assertFalse(profiles.register("professions", context -> null));
+        assertTrue(profiles.register("guilds", context -> null));
         tags.register("guilds", (player, base) -> "guild " + base);
         assertEquals("guild Steve", tags.decorate("Steve", "Steve"));
     }

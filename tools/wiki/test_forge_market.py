@@ -96,18 +96,14 @@ class ForgeMarketContractTest(unittest.TestCase):
         self.assertIn("forge-shop.enabled", read(SHOP / "ForgeShopPrices.java"))
         self.assertIn("no-buyback", read(ROOT / "diamond-shop/src/main/resources/messages.yml"))
 
-    def test_hunt_only_seed_rates_and_no_unbounded_entity_death_drop(self):
-        rates = self.forge_config["forge-materials"]["drop-percent"]
-        self.assertEqual(0.5, rates["seed"])
-        self.assertEqual(1.0, rates["ascend"])
-        self.assertEqual(0.7, rates["temper"])
-        self.assertEqual(0.35, rates["reforge"])
-        self.assertIn("HUNT_DROPS", self.materials)
-        self.assertIn("QualifiedHuntKillEvent", self.materials)
+    def test_all_materials_are_shop_only_after_hunt_removal(self):
+        self.assertNotIn("drop-percent", self.forge_config["forge-materials"])
+        self.assertNotIn("QualifiedHuntKillEvent", self.materials)
         self.assertNotIn("import org.bukkit.event.entity.EntityDeathEvent", self.materials)
         self.assertNotIn("EntityDeathEvent event", self.materials)
         self.assertIn("SHOP_ONLY", self.forge_material)
-        self.assertIn("SEED_BASE_DROP_PERCENT = 0.5", self.forge_material)
+        self.assertIn("public boolean shopOnly() { return true; }", self.forge_material)
+        self.assertIn("public boolean huntDrop() { return false; }", self.forge_material)
 
     def test_xp_is_levels_with_exact_full_prices(self):
         for key, value in (("SEED_XP", 8), ("REPAIR_XP", 6),

@@ -8,8 +8,7 @@ import java.util.Random;
 
 /**
  * Действия Кузни и их расходники. RC16: восемь whitelist-SKU; прежние три
- * расходника и «Искра» падают только с {@code QualifiedHuntKillEvent},
- * четыре новых расходника по умолчанию доступны только в магазине.
+ * расходника и остальные материалы доступны в магазине.
  *
  * <p>Чистая логика без Bukkit: проверяется юнит-тестами и вики-фактами.</p>
  */
@@ -38,18 +37,8 @@ public enum ForgeMaterial {
     public String nameKey() { return nameKey; }
     public String detailsKey() { return "forge." + id + ".details"; }
 
-    /** Прежние расходники и искра: дроп только по qualified Hunt-событию. */
-    public static final List<ForgeMaterial> HUNT_DROPS =
-            List.of(ASCEND, TEMPER, REFORGE, SEED);
-    /** Четыре новых расходника по умолчанию не дропаются вообще. */
-    public static final List<ForgeMaterial> SHOP_ONLY =
-            List.of(REPAIR, INSCRIBE, REMOVE, NAME);
-
-    /** 0.5% на ур.1, 1% на ур.30, 3% на элитном ур.30 — база искры. */
-    public static final double SEED_BASE_DROP_PERCENT = 0.5;
-    public static final double ASCEND_BASE_DROP_PERCENT = 1.0;
-    public static final double TEMPER_BASE_DROP_PERCENT = 0.7;
-    public static final double REFORGE_BASE_DROP_PERCENT = 0.35;
+    /** Все восемь расходников доступны только через магазин. */
+    public static final List<ForgeMaterial> SHOP_ONLY = List.of(values());
 
     /** XP измеряется уровнями, не очками опыта. */
     public static final int SEED_XP = 8;
@@ -60,8 +49,9 @@ public enum ForgeMaterial {
 
     /** Только искра расширяет eligibility до вещи без тира. */
     public boolean seed() { return this == SEED; }
-    public boolean shopOnly() { return SHOP_ONLY.contains(this); }
-    public boolean huntDrop() { return HUNT_DROPS.contains(this); }
+    public boolean shopOnly() { return true; }
+    /** Совместимость поля каталога: после снятия внешнего источника дропа всегда false. */
+    public boolean huntDrop() { return false; }
 
     static final int[] ASCEND_COSTS = {1, 1, 2, 4, 8, 16};
     static final int[] ASCEND_XP = {9, 12, 15, 18, 21, 24};
@@ -94,13 +84,6 @@ public enum ForgeMaterial {
         String key = raw.toLowerCase(Locale.ROOT);
         for (ForgeMaterial value : values()) if (value.id.equals(key)) return value;
         return null;
-    }
-
-    /** Шанс дропа: ур.1 x1, ур.30 x2, элитный ур.30 x3 (x6 от базы x2). */
-    public static double chance(double base, int level, int elite) {
-        if (!Double.isFinite(base) || level < 1 || level > 30
-                || elite < 0 || elite > ru.cherdakmd.chrdkregister.api.MobProgressionKeys.MAX_ELITE) return 0;
-        return Math.max(0, Math.min(100, base * (1 + (level - 1) / 29.0) * (elite > 0 ? 3 : 1)));
     }
 
     public static long nextSequence(long current) {

@@ -192,12 +192,8 @@ security:
     - clanadmin
     - clansadmin
     - ga
-    - huntadmin
     - ordersadmin
     - petsadmin
-    - profadmin
-    - professionsadmin
-    - profsadmin
     - questsadmin
     - ranksadmin
     - skillsadmin
@@ -425,8 +421,8 @@ ranks:
     min-level: 5
   # Бонусы ступени (1.4.167): то, ради чего берут старший ранг.
   # Индекс — уровень: [без ранга, I, II, III, IV, V]. Здесь не сила, а темп:
-  # опыт профессий, количество добычи, дополнительные
-  # исторический порог прибавок профессии сверх 25 (не шкалу развития 1–100). Потолки контракта в RankBonus:
+  # опыт навыков, количество добычи, дополнительные
+  # исторический порог прибавок навыков сверх 25 (не шкалу развития 1–100). Потолки контракта в RankBonus:
   # 50 % опыта, 25 % добычи, +10 уровней навыка — выше конфиг не действует.
   bonuses:
     xp-percent: [0, 10, 20, 30, 40, 50]
@@ -1130,7 +1126,6 @@ server-menu:
     - {"category": "progress", "icon": "PAPER", "name": "<gold><bold>Задания</bold></gold>", "lore": "<gray>Фракции, персонажи и награды</gray>\n<dark_gray>Награды — без валюты, только опыт и расходники</dark_gray>", "command": "quests menu", "plugin": "CHRDK_Quests", "permission": "chrdkquests.use"}
     - {"category": "progress", "icon": "AMETHYST_CLUSTER", "name": "<gold><bold>Навыки</bold></gold>", "lore": "<gray>10 навыков, 60 перков и уровни</gray>", "command": "skills", "plugin": "CHRDK_Skills", "permission": "chrdkskills.use"}
     - {"category": "progress", "icon": "IRON_SWORD", "name": "<gold><bold>Класс и таланты</bold></gold>", "lore": "<gray>Выбор класса и дерево талантов</gray>", "command": "class menu", "plugin": "CHRDK_Classes", "permission": "chrdkclasses.use"}
-    - {"category": "progress", "icon": "IRON_PICKAXE", "name": "<gold><bold>Профессии</bold></gold>", "lore": "<gray>Ремесло, опыт и прибавки</gray>", "command": "prof menu", "plugin": "CHRDK_Professions", "permission": "chrdkprofessions.use"}
     - {"category": "progress", "icon": "BEACON", "name": "<gold><bold>Общие цели</bold></gold>", "lore": "<gray>Вклад в цели всего сообщества</gray>", "command": "goals", "plugin": "CHRDK_CommonGoals", "permission": "chrdkgoals.use"}
     # ------------------------------ экономика ------------------------------
     - {"category": "economy", "icon": "GOLD_INGOT", "name": "<gold><bold>Мой баланс</bold></gold>", "lore": "<gray>Счёт банка и алмазы в инвентаре</gray>\n<dark_gray>/bal stats · /pay ник сумма → confirm</dark_gray>", "command": "bal", "permission": "chrdkregister.bal"}
@@ -1159,7 +1154,6 @@ server-menu:
     - {"category": "gear", "icon": "FIREWORK_ROCKET", "name": "<gold><bold>Косметика</bold></gold>", "lore": "<gray>Эффекты, шлейфы и оформление</gray>", "command": "cosmetics list", "plugin": "CHRDK_Cosmetics", "permission": "chrdkcosmetics.use"}
     - {"category": "gear", "icon": "BONE", "name": "<gold><bold>Питомцы</bold></gold>", "lore": "<gray>Кошки и волки: уровни и трюки</gray>", "command": "pet list", "plugin": "CHRDK_Pets", "permission": "chrdkpets.use"}
     # ------------------------------ охота ------------------------------
-    - {"category": "adventure", "icon": "BOW", "name": "<gold><bold>Охота</bold></gold>", "lore": "<gray>Пять семейств, трофеи и моб-ключи</gray>", "command": "hunt", "plugin": "CHRDK_Hunt", "permission": "chrdkhunt.use"}
     # ------------------------------ общество ------------------------------
     - {"category": "social", "icon": "FEATHER", "name": "<gold><bold>Чат</bold></gold>", "lore": "<gray>Клик — переключить канал</gray>\n<dark_gray>Локальный слышат рядом, глобальный — все</dark_gray>", "command": "chat"}
     - {"category": "social", "icon": "WHITE_BANNER", "name": "<gold><bold>Гильдия</bold></gold>", "lore": "<gray>Казна, ранги и войны</gray>", "command": "guild menu", "plugin": "CHRDK_Guilds", "permission": "chrdkguilds.use"}
@@ -1542,8 +1536,7 @@ auto-messages:
     - {"text": "<gray>Играть можно без покупки ранга. Личные удобства и условия рангов — <white>/rank shop</white>, действующие права — <white>/rank my</white>. Пароль для входа обязателен.</gray>"}
     - {"text": "<gray>Ваш ранг действует ещё <white>%pass_left%</white>. Срок и возможности — <white>/rank my</white>. Ранг не заменяет пароль и подключённую 2FA.</gray>", "condition": "paid"}
     - {"text": "<gray>Сделайте ник своим: <white>/labels</white> управляет метками и их местами. Ник всегда первый; премиальные цвета покупаются отдельно, в том числе при V ранге.</gray>", "permission": "chrdkregister.labels"}
-    - {"text": "<gray>Награда за игру — не платный ранг: отдельный XP-буст усиливает опыт Minecraft, профессий и навыков. Запас смотрите в <white>/profile</white>; время расходуется онлайн после входа. Платный ранг не продлевается.</gray>", "permission": "chrdkregister.profile"}
-    - {"text": "<gray>Все 8 ремёсел активны сразу: <white>/profession menu</white> показывает уровни и прибавки без выбора. За рабочий XP начисляются алмазы на <white>/bal</white>; развитие — <white>/profession mastery</white>.</gray>", "plugin": "CHRDK_Professions", "permission": "chrdkprofessions.use"}
+    - {"text": "<gray>Награда за игру — не платный ранг: отдельный XP-буст усиливает опыт Minecraft и навыков. Запас смотрите в <white>/profile</white>; время расходуется онлайн после входа. Платный ранг не продлевается.</gray>", "permission": "chrdkregister.profile"}
     - {"text": "<gray>Каждое дело оставляет опыт: <white>/skills</white> показывает навыки CHRDK. Читайте требования и откаты в карточках; повторная установка блока не гарантирует новый XP.</gray>", "plugin": "CHRDK_Skills", "permission": "chrdkskills.use"}
     - {"text": "<gray>Воин, стрелок, маг или жрец? Выбор — <white>/class menu</white>, развитие — <white>/class talents</white>. Умения работают в PvE; класс и профессия — разные пути.</gray>", "plugin": "CHRDK_Classes", "permission": "chrdkclasses.use"}
     - {"text": "<gray>Нужна цель для путешествия? <white>/quests menu</white> — задания и фракции. Условия: <white>/quests info id</white>, сдача: <white>/quests claim id</white>. Награды — опыт, предметы и репутация, не алмазы.</gray>", "plugin": "CHRDK_Quests", "permission": "chrdkquests.use"}
@@ -1563,8 +1556,6 @@ auto-messages:
     - {"text": "<gray>Сильная чара начинается с подходящей книги: <white>/enchants sources</white> — источники, <white>/enchants info id</white> — условия. Книга не отменяет конфликты и ограничения наковальни.</gray>", "plugin": "CHRDK_Enchants", "permission": "chrdkenchants.use"}
     - {"text": "<gray>Смотрите не только на цвет вещи: <white>/tiers info</white> раскрывает свойства, <white>/tiers collection</white> — коллекцию. Высокий тир не отменяет отрицательные аффиксы.</gray>", "plugin": "CHRDK_TierForge", "permission": "chrdktierforge.use"}
     - {"text": "<gray>У каждой находки две стороны: <white>/artifacts collection</white>. Полезный эффект может требовать опыт, иметь перезарядку или сочетаться с недостатком — читайте всю карточку.</gray>", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
-    - {"text": "<gray>Собираетесь на охоту? <white>/hunt danger</white> — опасность мира, <white>/hunt inspect</white> — разбор цели. Сложность зависит не только от экипировки; подготовка важнее спешки.</gray>", "plugin": "CHRDK_Hunt", "permission": "chrdkhunt.use"}
-    - {"text": "<gray>Добыча охоты живёт по своим правилам: <white>/hunt stats</white> — прогресс, <white>/hunt exchange</white> — обмен и дневной лимит. Монеты, осколки и ключи не становятся балансом <white>/bal</white>.</gray>", "plugin": "CHRDK_Hunt", "permission": "chrdkhunt.use"}
     - {"text": "<gray>Спутники растут рядом с вами: <white>/pet list</white> показывает приручённых ванильных кошек и волков. Опыт зависит от действий и близости владельца; уровень не даёт бессмертия.</gray>", "plugin": "CHRDK_Pets", "permission": "chrdkpets.use"}
     - {"text": "<gray>Мирный или боевой клан? <white>/clan gui</white>. Казна отдельна от <white>/bal</white>; ежедневный взнос — не меньше 10 алмазов с участника. У мирного клана есть дополнительная плата; условия читайте до вступления.</gray>", "plugin": "CHRDK_Guilds", "permission": "chrdkguilds.use"}
     - {"text": "<gray>Последний штрих к образу: <white>/cosmetics trails</white> — доступные шлейфы, <white>/cosmetics off</white> — отключение. Открытый каталог не означает владение; у права может быть срок.</gray>", "plugin": "CHRDK_Cosmetics", "permission": "chrdkcosmetics.use"}
@@ -1756,7 +1747,7 @@ labels:
 
 # ================================================================
 # Отдельные игровые награды. Не продлевают ранги/проходку, не дают товары и LP-права.
-# Процент фиксирован: +10% XP Minecraft, профессий и навыков; сумма XP-бонусов до +50%.
+# Процент фиксирован: +10% XP Minecraft и навыков; сумма XP-бонусов до +50%.
 # Повторная награда продлевает только время, процент не складывается.
 # Офлайн и выключенный сервер время не расходуют; остаток хранится в data.json.
 reward-boost:

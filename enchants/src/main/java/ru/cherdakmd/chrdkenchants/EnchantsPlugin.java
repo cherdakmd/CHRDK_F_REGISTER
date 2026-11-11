@@ -40,7 +40,6 @@ public final class EnchantsPlugin extends JavaPlugin {
     private EnchantWorkshop workshop;
     EnchantWorkshop workshop() { return workshop; }
     AnvilApplyListener anvil() { return anvil; }
-    private MobBookListener mobBooks;
     private EnchantLibraryListener library;
     EnchantLibraryListener library() { return library; }
     private EnchantCommandHandler commandHandler;
@@ -76,8 +75,6 @@ public final class EnchantsPlugin extends JavaPlugin {
 
         this.table = new TableListener(this);
         Bukkit.getPluginManager().registerEvents(table, this);
-        this.mobBooks = new MobBookListener(this);
-        Bukkit.getPluginManager().registerEvents(mobBooks, this);
         this.library = new EnchantLibraryListener(this);
         Bukkit.getPluginManager().registerEvents(library, this);
         for (var player : Bukkit.getOnlinePlayers()) library.queue(player);
@@ -130,7 +127,6 @@ public final class EnchantsPlugin extends JavaPlugin {
         if (table != null) table.clear();
         if (anvil != null) anvil.clear();
         if (workshop != null) workshop.clear();
-        if (mobBooks != null) mobBooks.clear();
         if (library != null) library.clear();
         if (tools != null) tools.clear();
         if (miningUtility != null) miningUtility.clear();
@@ -181,7 +177,6 @@ public final class EnchantsPlugin extends JavaPlugin {
                 () -> { if (table != null) table.clear(); },
                 () -> { if (anvil != null) anvil.clear(); },
                 () -> { if (workshop != null) workshop.clear(); },
-                () -> { if (mobBooks != null) mobBooks.clear(); },
                 () -> { if (library != null) library.clear(); },
                 () -> { if (tools != null) tools.clear(); },
                 () -> { if (miningUtility != null) miningUtility.clear(); },

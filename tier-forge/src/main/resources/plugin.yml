@@ -5,10 +5,10 @@ api-version: '26.3'
 description: "Тир-предметы в духе Terraria: случайная редкость крафта брони, оружия, инструментов и утилиты"
 author: cherdakmd
 depend: [CHRDK_Core]
-softdepend: [CHRDK_Professions, CHRDK_Enchants, PlaceholderAPI]
+softdepend: [CHRDK_Enchants, PlaceholderAPI]
 commands:
   tiers:
-    description: Тиры, info снаряжения и расходники охоты в обычной наковальне
+    description: Тиры, info снаряжения и расходники кузни в обычной наковальне
   tiersadmin:
     description: Управление тир-предметами
     permission: chrdktierforge.admin

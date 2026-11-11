@@ -56,7 +56,7 @@ class WikiBuildTest(unittest.TestCase):
                     "repair | IRON_INGOT | 24", "inscribe | GOLD_NUGGET | 192",
                     "remove | GUNPOWDER | 32", "name | INK_SAC | 16"):
             self.assertIn(row, shop)
-        self.assertEqual(8, shop.count("Hunt + /shop forge") + shop.count("| /shop forge |"))
+        self.assertEqual(8, shop.count("| /shop forge |"))
 
     def test_forge_missing_item_instruction_fails_closed(self):
         book = FactBook()
