@@ -47,22 +47,32 @@ final class ForgeShopService {
     }
 
     /** Живой производитель нужен только для НОВОЙ покупки, не для recovery. */
-    private ForgeMaterialSource source() {
+    private ForgeMaterialSource source(String sku) {
+        for (var registration : Bukkit.getServicesManager().getRegistrations(ForgeMaterialSource.class)) {
+            ForgeMaterialSource candidate = registration.getProvider();
+            try {
+                if (candidate != null && candidate.available(sku)) return candidate;
+            } catch (RuntimeException | LinkageError ignored) {
+                // Повреждённый производитель закрывает только свой SKU.
+            }
+        }
         var api = plugin.coreApi();
-        ForgeMaterialSource source = api == null ? null : api.forgeMaterialSource();
-        if (source == null) source = Bukkit.getServicesManager().load(ForgeMaterialSource.class);
-        return source;
+        ForgeMaterialSource fallback = api == null ? null : api.forgeMaterialSource();
+        try {
+            return fallback != null && fallback.available(sku) ? fallback : null;
+        } catch (RuntimeException | LinkageError error) {
+            return null;
+        }
     }
 
     /** 8 SKU; закрытая цена, отключённая операция или отсутствующий производитель — не продаём. */
     List<Offer> offers(Player player) {
         List<Offer> offers = new ArrayList<>();
         if (!prices.enabled()) return offers;
-        var source = source();
-        if (source == null) return offers;
         for (var sku : ForgeMarketCatalog.SKUS) {
+            var source = source(sku.id());
             long price = plugin.coreApi().diamondRate().scaleMinor(prices.price(sku.id()));
-            if (price < 1 || !source.available(sku.id())) continue;
+            if (source == null || price < 1 || !source.available(sku.id())) continue;
             ItemStack prototype = source.prototype(sku.id());
             if (prototype == null) continue;
             String grant;
@@ -91,7 +101,7 @@ final class ForgeShopService {
             return fail("trading.invalid-number", 0);
         }
         if (money < 1 || money > WholeTrades.MAX) return fail("trading.invalid-number", money);
-        var source = source();
+        var source = source(offer.sku());
         if (source == null || !source.available(offer.sku())) return fail("forge.shop.closed", money);
         // Повторно проверяем прототип на момент подтверждения, без слепой веры в GUI.
         ItemStack fresh = source.prototype(offer.sku());

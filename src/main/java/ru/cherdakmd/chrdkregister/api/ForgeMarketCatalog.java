@@ -44,7 +44,17 @@ public final class ForgeMarketCatalog {
             new Sku("repair", "IRON_INGOT", 24, false, false),
             new Sku("inscribe", "GOLD_NUGGET", 192, false, false),
             new Sku("remove", "GUNPOWDER", 32, false, false),
-            new Sku("name", "INK_SAC", 16, false, false)
+            new Sku("name", "INK_SAC", 16, false, false),
+            new Sku("skill_xp_mining", "POTION", 96, false, false),
+            new Sku("skill_xp_woodcutting", "POTION", 96, false, false),
+            new Sku("skill_xp_digging", "POTION", 96, false, false),
+            new Sku("skill_xp_farming", "POTION", 96, false, false),
+            new Sku("skill_xp_fishing", "POTION", 96, false, false),
+            new Sku("skill_xp_combat", "POTION", 96, false, false),
+            new Sku("skill_xp_archery", "POTION", 96, false, false),
+            new Sku("skill_xp_defense", "POTION", 96, false, false),
+            new Sku("skill_xp_alchemy", "POTION", 96, false, false),
+            new Sku("skill_xp_enchanting", "POTION", 96, false, false)
     );
 
     public static Optional<Sku> sku(String id) {
@@ -111,6 +121,11 @@ public final class ForgeMarketCatalog {
             ItemMeta meta = first.getItemMeta();
             if (meta == null) return false;
             String id = meta.getPersistentDataContainer().get(tokenKey(), PersistentDataType.STRING);
+            if (id == null) {
+                var skillKey = NamespacedKey.fromString("chrdkskills:skill_xp_v1");
+                id = skillKey == null ? null : meta.getPersistentDataContainer().get(skillKey, PersistentDataType.STRING);
+                if (id != null) id = "skill_xp_" + id;
+            }
             Optional<Sku> found = sku(id);
             if (found.isEmpty() || !first.getType().name().equals(found.get().material())) return false;
             if (found.get().seed()) {

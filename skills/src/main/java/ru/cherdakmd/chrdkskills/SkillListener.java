@@ -117,6 +117,7 @@ public final class SkillListener implements Listener {
         doubleDrop(player, block, skill);
         diamondDrop(player, skill, block.getLocation().add(0.5, 0.5, 0.5), type, false);
         if (skill == SkillType.FARMING) {
+            if (plugin.abilities().activeFor(player, skill)) service.award(player, skill, 1L);
             replayCrop(player, event);
         }
     }
@@ -185,6 +186,7 @@ public final class SkillListener implements Listener {
             return;
         }
         diamondDrop(killer, SkillType.COMBAT, entity.getLocation(), null, true);
+        plugin.xpItems().rollDrop(killer, entity);
     }
 
     /** Шанс второй порции добычи из того же блока. */
@@ -223,12 +225,14 @@ public final class SkillListener implements Listener {
      * вместе с ним.</p>
      */
     private void replayCrop(Player player, BlockBreakEvent event) {
-        if (!service.perksFor(player, SkillType.FARMING).flag(SkillPerk.Kind.AUTO_REPLANT)) return;
+        if (!service.perksFor(player, SkillType.FARMING).flag(SkillPerk.Kind.AUTO_REPLANT)
+                && !plugin.abilities().activeFor(player, SkillType.FARMING)) return;
         ru.cherdakmd.chrdkregister.api.CropReplanting.request(plugin, event, () ->
                 plugin.config().enabled() && player.getGameMode() == GameMode.SURVIVAL
                 && player.hasPermission("chrdkskills.use") && plugin.coreApi() != null
                 && plugin.coreApi().isAuthenticated(player)
-                && service.perksFor(player, SkillType.FARMING).flag(SkillPerk.Kind.AUTO_REPLANT));
+                && (service.perksFor(player, SkillType.FARMING).flag(SkillPerk.Kind.AUTO_REPLANT)
+                || plugin.abilities().activeFor(player, SkillType.FARMING)));
     }
 
     /** Запоминаем поставленные блоки — смена игрока не возвращает XP и двойной дроп. */
@@ -367,6 +371,7 @@ public final class SkillListener implements Listener {
             return;
         }
         service.award(player, SkillType.FISHING, 1L);
+        if (plugin.abilities().activeFor(player, SkillType.FISHING)) service.award(player, SkillType.FISHING, 1L);
         SkillPerks.Active perks = service.perksFor(player, SkillType.FISHING);
         // Два независимых шанса: «лишняя рыба» и «клад» на 100-м уровне. Оба
         // дают копию пойманного предмета, но бросаются отдельно — иначе
@@ -410,6 +415,7 @@ public final class SkillListener implements Listener {
             return;
         }
         service.award(player, SkillType.ALCHEMY, 1L);
+        if (plugin.abilities().activeFor(player, SkillType.ALCHEMY)) service.award(player, SkillType.ALCHEMY, 1L);
         double chance = service.perksFor(player, SkillType.ALCHEMY)
                 .value(SkillPerk.Kind.EXTRA_POTION);
         ItemStack ingredient = event.getContents().getIngredient();
@@ -461,6 +467,7 @@ public final class SkillListener implements Listener {
         }
         SkillPerks.Active perks = service.perksFor(player, SkillType.ENCHANTING);
         service.award(player, SkillType.ENCHANTING, 1L);
+        if (plugin.abilities().activeFor(player, SkillType.ENCHANTING)) service.award(player, SkillType.ENCHANTING, 1L);
         double bonusChance = perks.value(SkillPerk.Kind.ENCHANT_BONUS);
         if (bonusChance > 0.0 && random.nextDouble() < bonusChance
                 && !event.getEnchantsToAdd().isEmpty()) {

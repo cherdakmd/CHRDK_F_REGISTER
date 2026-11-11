@@ -69,17 +69,20 @@ class ForgeMarketContractTest(unittest.TestCase):
         self.assertIn("ForgeMarketCatalog", self.exchange)
         self.assertIn("42", read(FORGE / "TierForgePlugin.java"))
 
-    def test_exactly_eight_whitelist_skus_with_exact_prices(self):
+    def test_exactly_eight_forge_and_ten_skill_whitelist_skus_with_exact_prices(self):
         records = re.findall(
-            r'new Sku\("([a-z]+)", "([A-Z_]+)", (\d+), (true|false), (true|false)\)',
+            r'new Sku\("([a-z_]+)", "([A-Z_]+)", (\d+), (true|false), (true|false)\)',
             self.catalog,
         )
-        self.assertEqual(8, len(records))
+        self.assertEqual(18, len(records))
         expected = {
             "ascend": ("ECHO_SHARD", 128), "temper": ("NAUTILUS_SHELL", 96),
             "reforge": ("PAPER", 160), "seed": ("NETHER_STAR", 64),
             "repair": ("IRON_INGOT", 24), "inscribe": ("GOLD_NUGGET", 192),
             "remove": ("GUNPOWDER", 32), "name": ("INK_SAC", 16),
+            **{f"skill_xp_{skill}": ("POTION", 96) for skill in (
+                "mining", "woodcutting", "digging", "farming", "fishing",
+                "combat", "archery", "defense", "alchemy", "enchanting")},
         }
         self.assertEqual(set(expected), {r[0] for r in records})
         for sku, material, price, seed, hunt in records:

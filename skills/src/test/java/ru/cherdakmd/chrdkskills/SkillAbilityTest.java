@@ -20,10 +20,10 @@ class SkillAbilityTest {
     private static final Logger LOG = Logger.getLogger("SkillAbilityTest");
     private SkillAbilityStore store() { return new SkillAbilityStore(folder, LOG); }
 
-    @Test void catalogHasSixNonPaidAbilitiesAndStrictToolMatching() {
-        assertEquals(6, SkillAbility.values().length);
-        assertEquals(10, SkillAbility.UNLOCK_LEVEL);
-        assertNull(SkillAbility.of(SkillType.ALCHEMY));
+    @Test void catalogHasTenPrestigeAbilitiesAndStrictToolMatching() {
+        assertEquals(10, SkillAbility.values().length);
+        assertEquals(1, SkillAbility.UNLOCK_PRESTIGE);
+        assertNotNull(SkillAbility.of(SkillType.ALCHEMY));
         assertNull(SkillAbility.of(null));
         assertTrue(SkillAbility.WOODCUTTING.acceptsTool("DIAMOND_AXE"));
         assertFalse(SkillAbility.WOODCUTTING.acceptsTool("DIAMOND_PICKAXE"));

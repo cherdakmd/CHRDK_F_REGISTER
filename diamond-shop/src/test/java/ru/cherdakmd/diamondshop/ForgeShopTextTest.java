@@ -85,7 +85,7 @@ class ForgeShopTextTest {
     @Test
     void everyForgeSkuHasRussianName() throws Exception {
         Map<String, String> names = names();
-        assertEquals(8, ForgeMarketCatalog.SKUS.size(), "каталог Кузни — ровно восемь SKU");
+        assertEquals(18, ForgeMarketCatalog.SKUS.size(), "восемь расходников Кузни и десять зелий навыков");
         for (var sku : ForgeMarketCatalog.SKUS) {
             assertTrue(names.containsKey(sku.id()), "нет русского имени у SKU " + sku.id());
             String name = names.get(sku.id());
@@ -108,9 +108,10 @@ class ForgeShopTextTest {
                 assertTrue(CYRILLIC.matcher(line).find(),
                         "строка назначения SKU " + sku.id() + " не по-русски");
             }
+            String expectedUse = sku.id().startsWith("skill_xp_") ? "выпейте" : "наковальн";
             assertTrue(description.stream().anyMatch(
-                    line -> line.toLowerCase(Locale.ROOT).contains("наковальн")),
-                    "у SKU " + sku.id() + " не сказано, где применять расходник");
+                    line -> line.toLowerCase(Locale.ROOT).contains(expectedUse)),
+                    "у SKU " + sku.id() + " не сказано, как применять расходник");
         }
         assertTrue(purposes.get("repair").stream().anyMatch(line -> line.contains("ремонт")),
                 "«Кузнечный лом» со скриншота обязан объяснять ремонт");

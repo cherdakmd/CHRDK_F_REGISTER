@@ -13,7 +13,12 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerItemDamageEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.block.Action;
+import org.bukkit.block.Block;
+import org.bukkit.Tag;
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import ru.cherdakmd.chrdkregister.Messages;
 import org.bukkit.potion.PotionEffect;
@@ -22,6 +27,10 @@ import org.bukkit.potion.PotionEffectType;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 
 /** Активные окна эфемерны, цена и таймеры — в отдельном устойчивом хранилище. */
 final class SkillAbilities implements Listener {
@@ -31,6 +40,7 @@ final class SkillAbilities implements Listener {
     private final Map<UUID, Armed> armed = new HashMap<>();
     private final Map<UUID, Wear> wear = new HashMap<>();
     private final Map<UUID, Shot> arrows = new HashMap<>();
+    private final Set<UUID> gathering = new HashSet<>();
     private record Armed(SkillAbility ability, long until, UUID token, UUID world) { }
     private record Wear(BlockBreakEvent event, ItemStack tool, int tick) { }
     private record Shot(UUID owner, UUID token, long until, EntityShootBowEvent source) { }
@@ -48,10 +58,14 @@ final class SkillAbilities implements Listener {
         if (value == null) return null;
         if (value.until <= System.currentTimeMillis() || !eligible(player)
                 || !value.world.equals(player.getWorld().getUID()) || !plugin.config().skill(value.ability.skill()).enabled()
-                || plugin.skills().level(player, value.ability.skill()) < SkillAbility.UNLOCK_LEVEL) {
+                || plugin.skills().prestigeLevel(player, value.ability.skill()) < SkillAbility.UNLOCK_PRESTIGE) {
             forget(player.getUniqueId()); return null;
         }
         return value;
+    }
+    boolean activeFor(Player player, SkillType skill) {
+        Armed value = active(player);
+        return value != null && value.ability.skill() == skill;
     }
     int energy(UUID id) { return store.energy(id); }
     long cooldown(UUID id, SkillAbility ability) { return store.cooldownLeft(id, ability, System.currentTimeMillis()); }
@@ -64,8 +78,8 @@ final class SkillAbilities implements Listener {
         if (!eligible(player)) { plugin.messages().send(player, "ability-unavailable"); return; }
         if (ability == null) { plugin.messages().send(player, "ability-no-skill"); return; }
         if (!plugin.config().skill(ability.skill()).enabled()
-                || plugin.skills().level(player, ability.skill()) < SkillAbility.UNLOCK_LEVEL) {
-            plugin.messages().send(player, "ability-locked", "level", SkillAbility.UNLOCK_LEVEL); return;
+                || plugin.skills().prestigeLevel(player, ability.skill()) < SkillAbility.UNLOCK_PRESTIGE) {
+            plugin.messages().send(player, "ability-locked", "level", SkillAbility.UNLOCK_PRESTIGE); return;
         }
         if (active(player) != null) { plugin.messages().send(player, "ability-already-active"); return; }
         if (!holds(player, ability)) { plugin.messages().send(player, "ability-tool"); return; }
@@ -112,14 +126,63 @@ final class SkillAbilities implements Listener {
         armed.remove(id); wear.remove(id); arrows.entrySet().removeIf(e -> e.getValue().owner.equals(id));
     }
 
+    /** ПКМ подходящим инструментом; до престижа обычное использование предмета не перехватывается. */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onInteract(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        Player player = event.getPlayer();
+        String held = player.getInventory().getItemInMainHand().getType().name();
+        for (SkillAbility ability : SkillAbility.values()) {
+            if (ability.acceptsTool(held) && plugin.skills().prestigeLevel(player, ability.skill()) >= SkillAbility.UNLOCK_PRESTIGE) {
+                activate(player, ability);
+                return;
+            }
+        }
+    }
+
     /** Вызывается только после штатной проверки поставленных блоков и материала. */
     void noteBreak(BlockBreakEvent event, SkillType skill) {
         Armed value = active(event.getPlayer());
+        if (value != null && value.ability.gathering() && value.ability.skill() == skill
+                && skill != SkillType.FARMING && gathering.add(event.getPlayer().getUniqueId())) {
+            Block origin = event.getBlock();
+            Material original = origin.getType();
+            Bukkit.getScheduler().runTask(plugin, () -> harvestConnected(event.getPlayer(), origin, original, value));
+        }
         if (value == null || !value.ability.gathering() || value.ability.skill() != skill
                 || !holds(event.getPlayer(), value.ability)) return;
         wear.put(event.getPlayer().getUniqueId(), new Wear(event,
                 event.getPlayer().getInventory().getItemInMainHand().clone(), Bukkit.getCurrentTick()));
     }
+    /** До 64 связанных блоков; каждый проходит обычный BlockBreakEvent и защиты приватов. */
+    private void harvestConnected(Player player, Block origin, Material original, Armed expected) {
+        try {
+            Armed current = active(player);
+            if (current == null || !current.token.equals(expected.token) || !holds(player, current.ability)) return;
+            ArrayDeque<Block> queue = new ArrayDeque<>();
+            Set<Block> visited = new HashSet<>();
+            ArrayList<Block> targets = new ArrayList<>();
+            queue.add(origin);
+            while (!queue.isEmpty() && targets.size() < 64) {
+                Block block = queue.poll();
+                if (!visited.add(block) || block.getLocation().distanceSquared(origin.getLocation()) > 32 * 32) continue;
+                boolean matches = block.equals(origin) || (current.ability == SkillAbility.WOODCUTTING
+                        ? Tag.LOGS.isTagged(block.getType()) : block.getType() == original);
+                if (!matches) continue;
+                if (!block.equals(origin)) targets.add(block);
+                for (int x = -1; x <= 1; x++) for (int y = -1; y <= 1; y++) for (int z = -1; z <= 1; z++) {
+                    if (x != 0 || y != 0 || z != 0) queue.add(block.getRelative(x, y, z));
+                }
+            }
+            for (Block block : targets) {
+                if (active(player) == null || !holds(player, current.ability)) break;
+                player.breakBlock(block);
+            }
+        } finally {
+            gathering.remove(player.getUniqueId());
+        }
+    }
+
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onWear(PlayerItemDamageEvent event) {
         Wear context = wear.remove(event.getPlayer().getUniqueId());

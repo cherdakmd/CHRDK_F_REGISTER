@@ -37,17 +37,17 @@ class SkillsMenuTextTest {
     void abilityNameIsRenderedAsMarkupNotComponentToString() {
         Messages messages = messages();
         Messages.Trusted name = SkillAbilities.abilityName(messages, SkillAbility.MINING);
-        assertEquals("<gold>Бережная кирка</gold>", name.text());
+        assertEquals("<gold>Рудная жила</gold>", name.text());
 
         String activated = messages.raw("ability-activated",
                 "name", name, "seconds", 8, "energy", 75);
-        assertTrue(activated.contains("Бережная кирка"), activated);
+        assertTrue(activated.contains("Рудная жила"), activated);
         assertFalse(activated.contains("TextComponentImpl"), activated);
         assertFalse(activated.contains("content="), activated);
 
         String hud = messages.raw("ability-hud",
                 "energy", 75, "name", name, "seconds", 8);
-        assertTrue(hud.contains("Бережная кирка"), hud);
+        assertTrue(hud.contains("Рудная жила"), hud);
         assertFalse(hud.contains("TextComponentImpl"), hud);
     }
 
