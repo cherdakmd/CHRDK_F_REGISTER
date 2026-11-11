@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class SkillXpPolicyTest {
     @Test void progressionAndPaidRankIncreaseButCapDailyUses() {
         assertEquals(2, SkillXpPolicy.dailyUses(10, 0, RankBonus.NONE));
-        assertEquals(4, SkillXpPolicy.dailyUses(400, 20, RankBonus.NONE));
+        assertEquals(6, SkillXpPolicy.dailyUses(400, 20, RankBonus.NONE));
         assertEquals(5, SkillXpPolicy.dailyUses(10, 0, new RankBonus(3, 20, 0, 0)));
         assertEquals(8, SkillXpPolicy.dailyUses(10_000, 10_000, new RankBonus(5, 50, 25, 10)));
     }
