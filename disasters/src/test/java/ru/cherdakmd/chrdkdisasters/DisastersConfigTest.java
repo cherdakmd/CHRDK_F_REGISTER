@@ -24,7 +24,7 @@ final class DisastersConfigTest {
         assertEquals(600, config.announceCooldownSeconds());
         assertEquals(600, config.restoreAfterSeconds());
         assertEquals(12, config.radius());
-        assertEquals(256, config.maxBlocks());
+        assertEquals(2048, config.maxBlocks());
         assertEquals(8, config.maxConcurrent());
         assertFalse(config.cataclysm().enabled());
         assertTrue(config.cataclysm().titles());
@@ -33,6 +33,14 @@ final class DisastersConfigTest {
         assertEquals(4, config.cataclysm().maxFireSeconds());
         assertEquals(24, config.cataclysm().maxAffectedPlayers());
         assertEquals(6.0, config.cataclysm().maxDamagePerPulse());
+        assertTrue(config.terrain().enabled());
+        assertEquals(4, config.terrain().radiusBonus());
+        assertEquals(2, config.terrain().depthMultiplier());
+        assertEquals(384, config.terrain().maxBlocksPerPulse());
+        assertTrue(config.terrain().collapses());
+        assertTrue(config.terrain().wildfire());
+        assertEquals(12, config.effectRadius(), "без cataclysm радиус не расширяется");
+        assertEquals(192, config.blockBudget());
         assertTrue(config.respectClaims());
         assertTrue(config.worlds().isEmpty());
         assertEquals(List.of(DisasterKind.DUST_STORM, DisasterKind.METEOR_SHOWER,
@@ -80,6 +88,10 @@ final class DisastersConfigTest {
         yaml.set("disasters.cataclysm.max-fire-seconds", 9999);
         yaml.set("disasters.cataclysm.max-affected-players", -10);
         yaml.set("disasters.cataclysm.max-damage-per-pulse", 9999);
+        yaml.set("disasters.cataclysm.enabled", true);
+        yaml.set("disasters.cataclysm.terrain.radius-bonus", 9999);
+        yaml.set("disasters.cataclysm.terrain.depth-multiplier", 9999);
+        yaml.set("disasters.cataclysm.terrain.max-blocks-per-pulse", 9999);
         yaml.set("disasters.spawn-protection-radius", -10);
         yaml.set("disasters.restore-after-seconds", -1);
         yaml.set("disasters.worlds", List.of("world", "world_nether"));
@@ -102,6 +114,12 @@ final class DisastersConfigTest {
         assertEquals(30, config.cataclysm().maxFireSeconds());
         assertEquals(1, config.cataclysm().maxAffectedPlayers());
         assertEquals(20.0, config.cataclysm().maxDamagePerPulse());
+        assertEquals(16, config.terrain().radiusBonus());
+        assertEquals(4, config.terrain().depthMultiplier());
+        assertEquals(1024, config.terrain().maxBlocksPerPulse());
+        assertEquals(64, config.effectRadius());
+        assertEquals(1024, config.blockBudget());
+        assertEquals(24, config.terrainDepth(10), "глубина ограничена 24 блоками");
         assertEquals(0, config.spawnProtectionRadius());
         assertEquals(0, config.restoreAfterSeconds(), "0 — разрешённый отказ от отката");
         assertTrue(config.worldAllowed("world"));
@@ -118,6 +136,23 @@ final class DisastersConfigTest {
         assertEquals(50, config.progression().maxLevel());
         assertEquals(10_000, config.shop().diamondsPrice());
         assertEquals("defense", config.integrations().skillId());
+    }
+
+    @Test
+    void terrainExpansionRequiresBothSwitches() {
+        YamlConfiguration yaml = new YamlConfiguration();
+        yaml.set("disasters.cataclysm.enabled", true);
+        yaml.set("disasters.cataclysm.terrain.enabled", false);
+        DisastersConfig config = DisastersConfig.parse(yaml);
+        assertEquals(12, config.effectRadius());
+        assertEquals(192, config.blockBudget());
+        assertEquals(3, config.terrainDepth(3));
+
+        yaml.set("disasters.cataclysm.terrain.enabled", true);
+        config = DisastersConfig.parse(yaml);
+        assertEquals(16, config.effectRadius());
+        assertEquals(384, config.blockBudget());
+        assertEquals(6, config.terrainDepth(3));
     }
 
     @Test

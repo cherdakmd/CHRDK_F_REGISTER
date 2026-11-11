@@ -56,9 +56,9 @@
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "disasters": {
-      "reason": "Исправлена компиляция earthquake: восстановлена World world для координат разлома",
-      "sources": "256c93e94bbe6ad0eff06f39910e734b97a4fc5ddc49c413176cdda3c90c73c3",
-      "text": "f21774e4746616681468d2d267b20c87b67a374e86c1572abde089335c780602"
+      "reason": "Исправлена Java-компиляция смерча: целый радиус randomAround после округления",
+      "sources": "151da1b4a71200add7b7941b8615502a830fcb816687953d536f8dee816fa39f",
+      "text": "121b1cc28a075ced29b6de8abec7dbc20bbb531a01441ddd5fdb836d066d0202"
     },
     "economy": {
       "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",

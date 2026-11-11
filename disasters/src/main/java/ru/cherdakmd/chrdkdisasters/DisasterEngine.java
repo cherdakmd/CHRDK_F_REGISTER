@@ -106,12 +106,12 @@ public final class DisasterEngine {
             Location at = player.getLocation();
             // Площадная проверка приватов: если в радиусе есть чужой чанк —
             // катастрофа не начинается вовсе, а игроку выдаётся новая пауза.
-            if (plugin.protection().areaBlocked(at, config.radius())) {
+            if (plugin.protection().areaBlocked(at, config.effectRadius())) {
                 plugin.scheduler().reset(event.player(), now);
                 continue;
             }
             int nearby = 0;
-            double radiusSquared = (double) config.radius() * config.radius();
+            double radiusSquared = (double) config.effectRadius() * config.effectRadius();
             for (Player other : Bukkit.getOnlinePlayers()) {
                 if (other.getWorld() == player.getWorld()
                         && !other.hasPermission("chrdkdisasters.bypass")
@@ -204,7 +204,7 @@ public final class DisasterEngine {
     /** @return id запуска или 0, если старт отменён приватом/спавном. */
     public int runNow(DisasterKind kind, int level, Location at, Player target) {
         DisastersConfig config = plugin.settings();
-        if (plugin.protection().areaBlocked(at, config.radius())) {
+        if (plugin.protection().areaBlocked(at, config.effectRadius())) {
             return 0;
         }
         return begin(kind, level, at, target.getName(), true);
