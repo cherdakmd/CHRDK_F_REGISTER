@@ -48,7 +48,7 @@ public final class ShopQuantityGui implements Listener {
         if(h.forge!=null){
             return h.owner.equals(player.getUniqueId())&&player.getGameMode()==GameMode.SURVIVAL&&h.service==s
                 &&s.ready(player)&&plugin.forgeShop().prices().enabled()
-                &&plugin.forgeShop().prices().price(h.forge.sku())==h.price
+                &&plugin.coreApi().diamondRate().scaleMinor(plugin.forgeShop().prices().price(h.forge.sku()))==h.price
                 &&plugin.forgeShop().offers(player).stream()
                     .anyMatch(o->o.sku().equals(h.forge.sku())&&o.price()==h.price&&o.seed()==h.forge.seed());
         }

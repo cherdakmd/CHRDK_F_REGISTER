@@ -27,7 +27,7 @@ public final class AuctionService implements Listener {
         return plugin.api() != null && store.healthy()
                 && plugin.api().auctionBankAvailable();
     }
-    long bankBalance(Player p) { return plugin.api().auctionBankBalance(p.getUniqueId()); }
+    long bankBalance(Player p) { return plugin.api().auctionBankBalanceMinor(p.getUniqueId()); }
     long bankBalanceMinor(Player p) { return plugin.api().auctionBankBalanceMinor(p.getUniqueId()); }
     private boolean importOwner(UUID owner) {
         return store.bankMode() && plugin.api().importLegacyAuction(store.market(), owner, store.balance(owner));
@@ -190,7 +190,8 @@ public final class AuctionService implements Listener {
         try { start(); } catch (Exception error) { failed(p, error); return; }
         if (!financeAvailable() || !importOwner(p.getUniqueId())) { tell(p, "auction.finance-unavailable"); return; }
         int count = store.mail(p.getUniqueId()).size();
-        if (count > 0 || store.balance(p.getUniqueId()) > 0) tell(p, "auction.bank-pending-mail", "count", count, "balance", bankBalance(p));
+        if (count > 0 || store.balance(p.getUniqueId()) > 0) tell(p, "auction.bank-pending-mail", "count", count,
+                "balance", ru.cherdakmd.chrdkregister.api.DiamondMoney.format(bankBalance(p)));
     }
     boolean recover(Player p) {
         var pending = store.pending();

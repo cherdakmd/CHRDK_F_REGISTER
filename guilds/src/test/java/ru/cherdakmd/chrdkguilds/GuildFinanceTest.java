@@ -37,6 +37,22 @@ class GuildFinanceTest {
     GuildStore bind(PaidActionStore source) throws Exception { var s=store(); s.bind(source); return s; }
     GuildService service(GuildStore store) { return new GuildService(config,store); }
 
+    @Test void minorBankAndMarketRateProduceExactWholeDomainBudget() throws Exception {
+        assertEquals(20,GuildFinance.baseAffordable(3_000,15_000));
+        assertEquals(20,GuildFinance.baseAffordable(3_099,15_000));
+        assertEquals(19,GuildFinance.baseAffordable(2_999,15_000));
+        assertEquals(10,GuildFinance.baseAffordable(2_000,20_000));
+        assertEquals(-1,GuildFinance.baseAffordable(-1,10_000));
+        String finance=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkguilds/GuildFinance.java"));
+        String peace=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkguilds/GuildPeaceController.java"));
+        assertTrue(finance.contains("baseAffordable(plugin.coreApi().spendableBankBalanceMinor"));
+        assertTrue(finance.contains("plugin.coreApi().auctionBankBalanceMinor"));
+        assertTrue(finance.contains("if(spendable<preview.debit())"));
+        assertFalse(finance.contains("spendableBankBalance(player.getUniqueId())"));
+        assertEquals(3,peace.split("spendableBankBalanceMinor|auctionBankBalanceMinor",-1).length-1);
+        assertFalse(peace.contains("spendableBankBalance(owner)"));
+        assertFalse(peace.contains("auctionBankBalance(owner)"));
+    }
     @Test void importOnceKeepsTreasuryMembersAndIgnoresLaterLegacyCorruption() throws Exception {
         legacy(100); var source=source(); var live=bind(source);
         assertEquals(100,live.of(leader).treasury()); assertEquals(leader,live.of(member).leader());

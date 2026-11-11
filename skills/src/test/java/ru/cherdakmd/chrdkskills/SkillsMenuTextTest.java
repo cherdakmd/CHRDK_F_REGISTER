@@ -42,6 +42,11 @@ class SkillsMenuTextTest {
         String activated = messages.raw("ability-activated",
                 "name", name, "seconds", 8, "energy", 75);
         assertTrue(activated.contains("Рудная жила"), activated);
+        assertTrue(messages.has("ability-card-master"));
+        assertTrue(messages.has("ability-master-activated"));
+        assertTrue(messages.has("prestige-ability-upgraded"));
+        assertTrue(messages.has("prestige-ability-master"));
+        assertTrue(messages.has("prestige-master-title"));
         assertFalse(activated.contains("TextComponentImpl"), activated);
         assertFalse(activated.contains("content="), activated);
 

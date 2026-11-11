@@ -72,7 +72,8 @@ final class GuildPeaceController {
             if(guild==null)continue;
             if(guild.duesTerm(owner).dueAt()<=now){
                 List<UUID> members=guild.memberIds();
-                long spendable=plugin.coreApi().spendableBankBalance(owner);
+                long spendable=GuildFinance.baseAffordable(plugin.coreApi().spendableBankBalanceMinor(owner),
+                        plugin.coreApi().diamondRate().rateBps());
                 GuildResult dues=publish(copy->new GuildDuesService(copy,plugin.config()).daily(owner,now,spendable));
                 if(dues!=null&&dues.ok()){
                     if(dues.key().equals("dues-auto-disband"))for(UUID id:members)deliverNotices(id);
@@ -84,7 +85,8 @@ final class GuildPeaceController {
             }
             if(guild==null || !guild.peaceful() || guild.peaceTerm(owner).paidUntil()>now)continue;
             List<UUID> recipients=guild.memberIds();
-            long balance=plugin.coreApi().spendableBankBalance(owner);
+            long balance=GuildFinance.baseAffordable(plugin.coreApi().spendableBankBalanceMinor(owner),
+                    plugin.coreApi().diamondRate().rateBps());
             GuildResult result=publish(copy->new GuildPeaceService(copy).daily(owner,now,balance));
             if(result!=null&&result.ok()) {
                 if(result.key().equals("peace-auto-disband"))for(UUID id:recipients)deliverNotices(id);
@@ -96,7 +98,8 @@ final class GuildPeaceController {
     }
     private void collect(UUID owner) {
         if(plugin.payments().paused() || plugin.coreApi()==null || !plugin.coreApi().personalBankAvailable())return;
-        long available=plugin.coreApi().auctionBankBalance(owner);
+        long available=GuildFinance.baseAffordable(plugin.coreApi().auctionBankBalanceMinor(owner),
+                plugin.coreApi().diamondRate().rateBps());
         GuildResult result=publish(copy->new GuildPeaceService(copy).collect(owner,available));
         if(result!=null&&result.ok())tell(owner,result);
     }

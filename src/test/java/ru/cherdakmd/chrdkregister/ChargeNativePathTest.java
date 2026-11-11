@@ -10,6 +10,14 @@ class ChargeNativePathTest {
             assertTrue(commit.indexOf(guard)>=0 && commit.indexOf(guard)<commit.indexOf("bank.settleCharge"),guard);
         assertFalse(commit.contains("setStorageContents")); assertFalse(commit.contains("dropItem"));
     }
+    @Test void minorPaidActionsAreVerifiedWithTheSameMinorTenderAndFrozenRate() throws Exception {
+        String code=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkregister/ChrdkRegisterApiImpl.java"));
+        String commit=code.substring(code.indexOf("public boolean commitBankCharge"),code.indexOf("public boolean personalBankAvailable"));
+        assertTrue(commit.contains("payment.minor()"));
+        assertTrue(commit.contains("ChargeInventory.planMinor(expected, payment.price()"));
+        assertTrue(commit.contains("bank.spendableBalanceMinor(payer.getUniqueId()), payment.rateBps()"));
+        assertTrue(commit.indexOf("planMinor")<commit.indexOf("bank.settleCharge"));
+    }
     @Test void recoverySavesPlayerdataBeforeSourceAndNeverAutomaticallyRefundsOrDrops() throws Exception {
         String code=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkregister/api/ChargeInventory.java"));
         String apply=code.substring(code.indexOf("public void apply("),code.indexOf("public void checkpoint()"));

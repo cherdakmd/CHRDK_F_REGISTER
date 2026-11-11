@@ -138,7 +138,7 @@ public final class RegisterPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(profileService, this);
         // Автосообщения показывают баланс банка: подстановка %balance%.
         this.chatService.setPlaceholderProvider((player, values) ->
-                values.put("balance", BankService.format(bankStore.balance(player.getUniqueId()))));
+                values.put("balance", BankService.formatMinor(bankStore.balanceMinor(player.getUniqueId()))));
         this.adminDonationsGui = new AdminDonationsGuiService(accessManager, messages, this);
         this.donateMenuService.setAdminJournalOpener(player -> adminDonationsGui.openMenu(player));
         this.passwordKeypad = new PasswordKeypadService(this, accessManager, messages);

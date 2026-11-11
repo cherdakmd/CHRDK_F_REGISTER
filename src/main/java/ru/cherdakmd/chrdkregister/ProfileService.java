@@ -344,7 +344,7 @@ public final class ProfileService implements Listener {
         }
         if (target.self()) {
             lore.add(plugin.messages().get("profile.head-lore-bank",
-                    "amount", BankService.format(bank.balance(target.id()))));
+                    "amount", BankService.formatMinor(bank.balanceMinor(target.id()))));
         }
         if (sectionCount > SECTION_SLOTS.length) {
             lore.add(plugin.messages().get("profile.head-lore-more",

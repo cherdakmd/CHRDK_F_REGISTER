@@ -41,7 +41,7 @@ final class SkillAbilities implements Listener {
     private final Map<UUID, Wear> wear = new HashMap<>();
     private final Map<UUID, Shot> arrows = new HashMap<>();
     private final Set<UUID> gathering = new HashSet<>();
-    private record Armed(SkillAbility ability, long until, UUID token, UUID world) { }
+    private record Armed(SkillAbility ability, int prestige, long until, UUID token, UUID world) { }
     private record Wear(BlockBreakEvent event, ItemStack tool, int tick) { }
     private record Shot(UUID owner, UUID token, long until, EntityShootBowEvent source) { }
 
@@ -83,15 +83,18 @@ final class SkillAbilities implements Listener {
         }
         if (active(player) != null) { plugin.messages().send(player, "ability-already-active"); return; }
         if (!holds(player, ability)) { plugin.messages().send(player, "ability-tool"); return; }
+        int prestige = plugin.skills().prestigeLevel(player, ability.skill());
+        int cost = ability.cost(prestige), seconds = ability.seconds(prestige);
         long now = System.currentTimeMillis();
-        String error = store.activate(player.getUniqueId(), ability, now);
+        String error = store.activate(player.getUniqueId(), ability, cost, ability.cooldown(prestige), now);
         if (!error.isEmpty()) {
-            plugin.messages().send(player, error, "time", cooldown(player.getUniqueId(), ability), "cost", ability.cost()); return;
+            plugin.messages().send(player, error, "time", cooldown(player.getUniqueId(), ability), "cost", cost); return;
         }
-        armed.put(player.getUniqueId(), new Armed(ability, now + ability.seconds() * 1000L, UUID.randomUUID(), player.getWorld().getUID()));
-        plugin.messages().send(player, "ability-activated",
+        armed.put(player.getUniqueId(), new Armed(ability, prestige, now + seconds * 1000L, UUID.randomUUID(), player.getWorld().getUID()));
+        plugin.messages().send(player, ability.master(prestige) ? "ability-master-activated" : "ability-activated",
                 "name", abilityName(plugin.messages(), ability),
-                "seconds", ability.seconds(), "energy", energy(player.getUniqueId()));
+                "seconds", seconds, "energy", energy(player.getUniqueId()), "level", prestige);
+        if (ability.master(prestige)) celebrate(player);
     }
     /**
      * Название приёма как доверенная разметка, а не {@code Component}.
@@ -103,6 +106,12 @@ final class SkillAbilities implements Listener {
      */
     static Messages.Trusted abilityName(Messages messages, SkillAbility ability) {
         return ability == null ? Messages.trusted("") : messages.mini(ability.nameKey());
+    }
+
+    private void celebrate(Player player) {
+        var location = player.getLocation().add(0, 1, 0);
+        player.getWorld().spawnParticle(org.bukkit.Particle.TOTEM_OF_UNDYING, location, 64, 0.6, 0.8, 0.6, 0.12);
+        player.getWorld().playSound(location, org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.9f, 1.5f);
     }
 
     void status(Player player) {
@@ -163,7 +172,7 @@ final class SkillAbilities implements Listener {
             Set<Block> visited = new HashSet<>();
             ArrayList<Block> targets = new ArrayList<>();
             queue.add(origin);
-            while (!queue.isEmpty() && targets.size() < 64) {
+            while (!queue.isEmpty() && targets.size() < current.ability.gatherLimit(current.prestige)) {
                 Block block = queue.poll();
                 if (!visited.add(block) || block.getLocation().distanceSquared(origin.getLocation()) > 32 * 32) continue;
                 boolean matches = block.equals(origin) || (current.ability == SkillAbility.WOODCUTTING
@@ -189,8 +198,8 @@ final class SkillAbilities implements Listener {
         Armed value = active(event.getPlayer());
         if (context == null || value == null || !value.ability.gathering() || context.event.isCancelled()
                 || context.tick != Bukkit.getCurrentTick() || !context.tool.isSimilar(event.getItem())) return;
-        // Не ремонт и не бесплатный опыт: не расходуем одну единицу обычного износа этого блока.
-        event.setDamage(Math.max(0, event.getDamage() - 1));
+        // Не ремонт и не бесплатный опыт: престиж бережёт больше единиц обычного износа.
+        event.setDamage(Math.max(0, event.getDamage() - value.ability.durabilitySave(value.prestige)));
     }
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onShoot(EntityShootBowEvent event) {
@@ -227,7 +236,8 @@ final class SkillAbilities implements Listener {
             if (current == null || !current.token.equals(expected.token) || event.isCancelled() || event.getFinalDamage() <= 0
                     || !target.isValid() || target.isDead() || !hostile(target)
                     || !target.getWorld().getUID().equals(expected.world) || target.hasPotionEffect(type)) return;
-            if (target.addPotionEffect(new PotionEffect(type, ticks, 0, false, true, true))) forget(owner.getUniqueId());
+            int scaledTicks = current.ability.effectTicks(ticks, current.prestige);
+            if (target.addPotionEffect(new PotionEffect(type, scaledTicks, 0, false, true, true))) forget(owner.getUniqueId());
         });
     }
     static boolean hostile(LivingEntity entity) {

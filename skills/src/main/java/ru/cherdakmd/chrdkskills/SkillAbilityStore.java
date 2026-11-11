@@ -41,14 +41,18 @@ final class SkillAbilityStore {
     }
     /** Атомарное списание. Неуспешный запрос не создаёт запись и не меняет таймер. */
     synchronized String activate(UUID id, SkillAbility ability, long now) {
-        if (!available || id == null || ability == null || now < 0 || now > Long.MAX_VALUE - 600_000)
+        return activate(id, ability, ability == null ? 0 : ability.cost(), ability == null ? 0 : ability.cooldown(), now);
+    }
+    synchronized String activate(UUID id, SkillAbility ability, int cost, int cooldownSeconds, long now) {
+        if (!available || id == null || ability == null || cost < 0 || cost > SkillAbility.MAX_ENERGY
+                || cooldownSeconds < 1 || cooldownSeconds > 600 || now < 0 || now > Long.MAX_VALUE - 600_000)
             return "ability-unavailable";
         if (!players.containsKey(id) && players.size() >= MAX_PLAYERS) return "ability-unavailable";
         if (cooldownLeft(id, ability, now) > 0) return "ability-cooldown";
-        if (energy(id) < ability.cost()) return "ability-energy-low";
+        if (energy(id) < cost) return "ability-energy-low";
         State state = players.computeIfAbsent(id, ignored -> new State());
-        state.energy -= ability.cost();
-        state.cooldowns.put(ability.id(), now + ability.cooldown() * 1000L);
+        state.energy -= cost;
+        state.cooldowns.put(ability.id(), now + cooldownSeconds * 1000L);
         dirty = true;
         return "";
     }

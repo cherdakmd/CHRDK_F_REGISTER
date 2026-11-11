@@ -37,6 +37,39 @@ class SkillAbilityTest {
         }
     }
 
+    @Test void everyPrestigeImprovesAbilityAndMasteryRemovesEnergyCost() {
+        for (var ability : SkillAbility.values()) {
+            for (int prestige = 2; prestige <= 9; prestige++) {
+                assertTrue(ability.cost(prestige) < ability.cost(prestige - 1), ability + " cost");
+                assertTrue(ability.seconds(prestige) > ability.seconds(prestige - 1), ability + " window");
+                assertTrue(ability.cooldown(prestige) <= ability.cooldown(prestige - 1), ability + " cooldown");
+                assertEquals(64 + 16 * (prestige - 1), ability.gatherLimit(prestige));
+            }
+            assertEquals(0, ability.cost(10));
+            assertEquals(14, ability.seconds(10));
+            assertEquals(208, ability.gatherLimit(10));
+            assertEquals(10, ability.durabilitySave(10));
+            assertEquals(240, ability.effectTicks(60, 10));
+            assertTrue(ability.master(10));
+            assertFalse(ability.master(9));
+        }
+        assertEquals(25, SkillAbility.MINING.cost(1));
+        assertEquals(24, SkillAbility.MINING.cost(2));
+        assertEquals(45, SkillAbility.MINING.cooldown(1));
+        assertEquals(27, SkillAbility.MINING.cooldown(10));
+    }
+
+    @Test void masteredActivationKeepsEnergyAndUsesScaledCooldown() {
+        var store = store();
+        assertEquals("", store.activate(PLAYER, SkillAbility.MINING, 0, 27, NOW));
+        assertEquals(100, store.energy(PLAYER));
+        assertEquals(27, store.cooldownLeft(PLAYER, SkillAbility.MINING, NOW));
+        store.flush();
+        var loaded = store(); loaded.load();
+        assertEquals(100, loaded.energy(PLAYER));
+        assertEquals(27, loaded.cooldownLeft(PLAYER, SkillAbility.MINING, NOW));
+    }
+
     @Test void costAndCooldownAreAtomicAndPerAbilityButEnergyIsShared() {
         var store = store();
         assertEquals(100, store.energy(PLAYER));

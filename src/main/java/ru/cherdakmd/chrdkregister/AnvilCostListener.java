@@ -15,6 +15,7 @@ import ru.cherdakmd.chrdkregister.api.events.AnvilPaidResultEvent;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.function.ToLongFunction;
@@ -39,6 +40,8 @@ final class AnvilCostListener implements Listener {
     private final BiPredicate<Player,Long> charge;
     /** Возврат списания, если выдача результата провалилась после него. */
     private final BiConsumer<Player,Long> refund;
+    private final ToLongFunction<Long> marketPrice;
+    private final Function<Long,String> moneyText;
 
     AnvilCostListener(RegisterPlugin plugin) {
         this(plugin::messages, player -> {
@@ -53,16 +56,21 @@ final class AnvilCostListener implements Listener {
                 },
                 player -> {
                     var bank=plugin.bank();
-                    return bank==null || !bank.enabled() ? 0L : bank.balance(player);
+                    return bank==null || !bank.enabled() ? 0L : bank.store().balanceMinor(player.getUniqueId());
                 },
                 (player,diamonds) -> {
                     var bank=plugin.bank();
-                    return bank!=null && bank.enabled() && bank.store().withdraw(player.getUniqueId(),diamonds);
+                    return bank!=null && bank.enabled() && bank.store().withdrawMinor(player.getUniqueId(),diamonds,true);
                 },
                 (player,diamonds) -> {
                     var bank=plugin.bank();
-                    if (bank!=null) bank.store().deposit(player.getUniqueId(),player.getName(),diamonds);
-                });
+                    if (bank!=null) bank.store().depositMinor(player.getUniqueId(),player.getName(),diamonds,true);
+                },
+                base -> {
+                    var bank=plugin.bank();
+                    return bank==null ? base : bank.marketQuote().scaleMinor(Math.multiplyExact(base,100L));
+                },
+                ru.cherdakmd.chrdkregister.api.DiamondMoney::format);
     }
 
     /** Адаптеры платформы отделены от самого обработчика для проверки реального take/rollback без сервера. */
@@ -83,9 +91,22 @@ final class AnvilCostListener implements Listener {
                       Consumer<AnvilPaidResultEvent> paid,
                       Supplier<AnvilSettings> settings, ToLongFunction<Player> balance,
                       BiPredicate<Player,Long> charge, BiConsumer<Player,Long> refund) {
+        this(texts,authenticated,accessible,finish,failureLog,paid,settings,balance,charge,refund,
+                base -> base,String::valueOf);
+    }
+
+    AnvilCostListener(Supplier<Messages> texts, Predicate<Player> authenticated,
+                      BiPredicate<AnvilView,Player> accessible,
+                      BiConsumer<AnvilView,Player> finish,
+                      Consumer<RuntimeException> failureLog,
+                      Consumer<AnvilPaidResultEvent> paid,
+                      Supplier<AnvilSettings> settings, ToLongFunction<Player> balance,
+                      BiPredicate<Player,Long> charge, BiConsumer<Player,Long> refund,
+                      ToLongFunction<Long> marketPrice, Function<Long,String> moneyText) {
         this.texts=texts; this.authenticated=authenticated; this.accessible=accessible;
         this.finish=finish; this.failureLog=failureLog; this.paid=paid;
         this.settings=settings; this.balance=balance; this.charge=charge; this.refund=refund;
+        this.marketPrice=marketPrice; this.moneyText=moneyText;
     }
 
     private Messages messages() { return texts.get(); }
@@ -116,8 +137,9 @@ final class AnvilCostListener implements Listener {
         // remember() возвращает true только при смене котировки: предупреждение не спамит на каждый репрепайр.
         if (AnvilCosts.remember(view,event.getResult()) && view.getPlayer() instanceof Player player) {
             if ("anvil.currency-price".equals(notice))
-                messages().send(player,"anvil.currency-price","xp",full,"diamonds",current.diamonds(full),
-                        "limit",current.maxLevelPrice(),"balance",balance.applyAsLong(player));
+                messages().send(player,"anvil.currency-price","xp",full,
+                        "diamonds",moneyText.apply(marketPrice.applyAsLong(current.diamonds(full))),
+                        "limit",current.maxLevelPrice(),"balance",moneyText.apply(balance.applyAsLong(player)));
             else if ("anvil.full-price".equals(notice))
                 messages().send(player,"anvil.full-price","xp",AnvilCosts.actual(view));
         }
@@ -137,7 +159,8 @@ final class AnvilCostListener implements Listener {
         if (quote == null || quote.price()<40 || player.getGameMode()==GameMode.CREATIVE) return;
         event.setCancelled(true);
         AnvilSettings current = settings.get();
-        long diamonds = current.diamonds(quote.price());
+        long baseDiamonds = current.diamonds(quote.price());
+        long diamonds = marketPrice.applyAsLong(baseDiamonds);
         boolean currency = diamonds>0L;
         // Никакого бесплатного дорогого результата, даже если клиент видит только 39.
         if (quote.left()==null || quote.left().isEmpty() || quote.result()==null || !quote.matches(view) || !accessible.test(view,player) || !AnvilUse.usesLevels(player.getGameMode())
@@ -182,15 +205,16 @@ final class AnvilCostListener implements Listener {
         }
         player.updateInventory();
         paid.accept(currency
-                ? new AnvilPaidResultEvent(player,view,quote.left(),quote.right(),quote.result(),0,diamonds)
+                ? new AnvilPaidResultEvent(player,view,quote.left(),quote.right(),quote.result(),0,baseDiamonds)
                 : new AnvilPaidResultEvent(player,view,quote.left(),quote.right(),quote.result(),quote.price()));
         finish.accept(view,player);
-        if (currency) messages().send(player,"anvil.currency-paid","diamonds",diamonds,"xp",quote.price());
+        if (currency) messages().send(player,"anvil.currency-paid","diamonds",moneyText.apply(diamonds),"xp",quote.price());
     }
 
     private void help(Player player,int price,long diamonds) {
         if (diamonds>0L)
-            messages().send(player,"anvil.currency-help","diamonds",diamonds,"balance",balance.applyAsLong(player),"xp",price);
+            messages().send(player,"anvil.currency-help","diamonds",moneyText.apply(diamonds),
+                    "balance",moneyText.apply(balance.applyAsLong(player)),"xp",price);
         else messages().send(player,"anvil.take-help","xp",price);
     }
 }
