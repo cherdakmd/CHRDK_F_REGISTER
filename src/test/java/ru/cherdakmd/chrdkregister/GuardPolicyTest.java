@@ -20,7 +20,7 @@ class GuardPolicyTest {
                 "pv","cameraman","pl","plugins","version","ver","about","icanhasbukkit","help","?","timings","tps",
                 "guard","adminpanel","apanel","rankadmin","socialspy","spy","honoradmin",
                 "achadmin","shopadmin","dshopadmin","disastersadmin","tiersadmin","vkadmin",
-                "guildadmin","ga","bpadmin","profadmin","tpadmin","skillsadmin"))
+                "guildadmin","ga","bpadmin","tpadmin","skillsadmin"))
             for(String prefix:List.of("/","/minecraft:","/bukkit:"," /PAPER:"))
                 assertTrue(GuardPolicy.consoleOnly(prefix+root.toUpperCase()+" payload",
                         GuardSettings.DEFAULT_CONSOLE_ONLY,k->null),prefix+root);

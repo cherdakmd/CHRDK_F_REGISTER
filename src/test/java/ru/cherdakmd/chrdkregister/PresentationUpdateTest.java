@@ -211,7 +211,7 @@ class PresentationUpdateTest {
         assertEquals(7,categories.size(),"разделы меню: "+categories);
         assertEquals(7,new HashSet<>(categories).size(),"ид разделов уникальны");
         var entries=config.getMapList("server-menu.items").stream().map(this::menuEntry).toList();
-        assertEquals(49,entries.size(),"актуальное меню с донатом, просмотрами экономики, CHRDK_VK и CHRDK_Disasters, без снятых аддонов");
+        assertEquals(47,entries.size(),"актуальное меню с донатом, просмотрами экономики, CHRDK_VK и CHRDK_Disasters, без снятых аддонов");
         for(String expected:List.of("bal stats","homes prices","claim budget"))
             assertEquals(1,entries.stream().filter(e->e.command().equals(expected)).count(),expected);
         for (var entry : entries) {

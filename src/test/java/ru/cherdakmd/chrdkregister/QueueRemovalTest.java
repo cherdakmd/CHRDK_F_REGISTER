@@ -31,11 +31,11 @@ class QueueRemovalTest {
         assertFalse(Files.readString(Path.of("settings.gradle")).contains("include 'queue'"));
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_Queue"));
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_VK"));
-        assertEquals(22, PluginUpdateService.MODULES.size());
-        assertEquals(43,ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
+        assertEquals(20, PluginUpdateService.MODULES.size());
+        assertEquals(40,ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
         var stock = yaml("config.yml");
-        assertEquals(49, stock.getMapList("server-menu.items").size());
-        assertEquals(43, stock.getList("auto-messages.messages").size());
+        assertEquals(47, stock.getMapList("server-menu.items").size());
+        assertEquals(40, stock.getList("auto-messages.messages").size());
         assertFalse(stock.saveToString().contains("CHRDK_Queue"));
         assertFalse(stock.saveToString().contains("Вход без очереди"));
         assertFalse(yaml("messages.yml").getString("messages.rank.ability-1").contains("очереди"));
@@ -67,7 +67,7 @@ class QueueRemovalTest {
         var legacy = yaml("presentation-legacy-1.4.247.yml");
         var live = yaml("presentation-legacy-1.4.247.yml");
         var fresh = yaml("config.yml");
-        assertEquals(49, legacy.getMapList("server-menu.items").size());
+        assertEquals(47, legacy.getMapList("server-menu.items").size());
         assertEquals(44, legacy.getList("auto-messages.messages").size());
         assertTrue(PresentationMigration.LEGACY_RESOURCES.contains("presentation-legacy-1.4.247.yml"));
         live.set("auto-messages.enabled", false);

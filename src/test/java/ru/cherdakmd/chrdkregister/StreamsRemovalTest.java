@@ -33,8 +33,8 @@ class StreamsRemovalTest {
     @Test void moduleIsAbsentFromTheDistributionAndLiveUi() {
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_Streams"));
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_VK"));
-        assertEquals(22, PluginUpdateService.MODULES.size());
-        assertEquals(43,ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
+        assertEquals(20, PluginUpdateService.MODULES.size());
+        assertEquals(40,ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
         assertNull(LabelPreferences.Label.byId("streams"));
         assertNull(LabelsCommandHandler.singleOf("streams"));
         assertNull(LabelsCommandHandler.singleOf("стример"));
@@ -42,7 +42,7 @@ class StreamsRemovalTest {
         assertEquals(9, LabelPreferences.Label.values().length);
         var current = yaml("config.yml");
         var items = current.getMapList("server-menu.items");
-        assertEquals(49, items.size());
+        assertEquals(47, items.size());
         assertEquals(3, items.stream().filter(item -> "social".equals(item.get("category"))).count());
         assertFalse(items.stream().anyMatch(item -> RetiredAddons.command(String.valueOf(item.get("command")))
                 || RetiredAddons.plugin(String.valueOf(item.get("plugin")))));

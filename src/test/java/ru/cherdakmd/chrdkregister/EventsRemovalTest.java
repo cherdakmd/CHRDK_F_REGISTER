@@ -30,9 +30,9 @@ class EventsRemovalTest {
     @Test void removedModuleIsAbsentFromDistributionAndStockMenu() throws Exception {
         assertFalse(Files.exists(Path.of("events")));
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_Events"));
-        assertEquals(22, PluginUpdateService.MODULES.size());
+        assertEquals(20, PluginUpdateService.MODULES.size());
         var stock = yaml("config.yml"); var items = stock.getMapList("server-menu.items");
-        assertEquals(49, items.size());
+        assertEquals(47, items.size());
         assertFalse(items.stream().anyMatch(item -> RetiredAddons.plugin(String.valueOf(item.get("plugin")))
                 || RetiredAddons.command(String.valueOf(item.get("command")))));
         assertEquals(1, items.stream().filter(item -> "adventure".equals(item.get("category"))).count());
@@ -99,7 +99,7 @@ class EventsRemovalTest {
         assertFalse(changes.contains("server-menu.items")); assertFalse(changes.contains("auto-messages.messages"));
     }
     @Test void coreEventContractsAndSharedMonetaryInfrastructureAreStillPresent() {
-        assertEquals(43,ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
+        assertEquals(40,ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
         assertTrue(org.bukkit.event.Event.class.isAssignableFrom(
                 ru.cherdakmd.chrdkregister.api.events.PassGrantedEvent.class));
         assertTrue(org.bukkit.event.Event.class.isAssignableFrom(

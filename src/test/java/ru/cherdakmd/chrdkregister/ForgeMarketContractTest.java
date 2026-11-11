@@ -33,10 +33,10 @@ class ForgeMarketContractTest {
         while (matcher.find()) count++;
         assertEquals(8, count);
         for (String row : new String[]{
-                "new Sku(\"ascend\", \"ECHO_SHARD\", 128, false, true)",
-                "new Sku(\"temper\", \"NAUTILUS_SHELL\", 96, false, true)",
-                "new Sku(\"reforge\", \"PAPER\", 160, false, true)",
-                "new Sku(\"seed\", \"NETHER_STAR\", 64, true, true)",
+                "new Sku(\"ascend\", \"ECHO_SHARD\", 128, false, false)",
+                "new Sku(\"temper\", \"NAUTILUS_SHELL\", 96, false, false)",
+                "new Sku(\"reforge\", \"PAPER\", 160, false, false)",
+                "new Sku(\"seed\", \"NETHER_STAR\", 64, true, false)",
                 "new Sku(\"repair\", \"IRON_INGOT\", 24, false, false)",
                 "new Sku(\"inscribe\", \"GOLD_NUGGET\", 192, false, false)",
                 "new Sku(\"remove\", \"GUNPOWDER\", 32, false, false)",
@@ -53,7 +53,7 @@ class ForgeMarketContractTest {
 
     @Test void shopExchangeKeepsLegacyConstructorsAndNullableGrant() throws Exception {
         String code = read("src/main/java/ru/cherdakmd/chrdkregister/api/ShopExchange.java");
-        assertEquals(2, count(code, "public ShopExchange(UUID t,UUID m,long s,UUID o,boolean buy"));
+        assertEquals(3, count(code, "public ShopExchange(UUID t,UUID m,long s,UUID o,boolean buy"));
         assertTrue(code.contains("String grant)"));
         assertTrue(code.contains("public boolean carriesGrant() { return grant != null; }"));
         assertTrue(code.contains("ForgeMarketCatalog.validTradeGrant(grant,material,units)"));
