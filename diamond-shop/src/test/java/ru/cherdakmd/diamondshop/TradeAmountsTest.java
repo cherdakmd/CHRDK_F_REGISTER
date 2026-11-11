@@ -5,7 +5,7 @@ import java.nio.file.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TradeAmountsTest {
-    @Test void hundredthsQuoteSmallTradesWithoutWholeDiamondRounding(){assertEquals(1,TradeAmounts.quote(64,100,1,true));assertEquals(50,TradeAmounts.quote(64,100,32,true));assertEquals(50,TradeAmounts.quote(64,100,32,false));assertEquals("0,01",ShopMoney.text(1));assertEquals("1,23",ShopMoney.text(123));}
+    @Test void hundredthsQuoteSmallTradesWithoutWholeDiamondRounding(){assertEquals(2,TradeAmounts.quote(64,100,1,true));assertEquals(50,TradeAmounts.quote(64,100,32,true));assertEquals(50,TradeAmounts.quote(64,100,32,false));assertEquals("0,01",ShopMoney.text(1));assertEquals("1,23",ShopMoney.text(123));}
     @Test void exactMinorPriceDoesNotRoundTheBatchToWholeDiamonds(){assertEquals(124,WholeTrades.minorPrice(1.237,1,true,1));assertEquals(123,WholeTrades.minorPrice(1.237,1,false,1));}
     @Test void canBuyOneItemEvenWhenReferenceLotIsAStack(){assertEquals(1,TradeAmounts.quote(64,3,1,true));assertEquals(2,TradeAmounts.quote(64,3,32,true));}
     @Test void sellingBelowOneDiamondIsAPreviewOnly(){assertEquals(0,TradeAmounts.quote(64,3,21,false));assertEquals(1,TradeAmounts.quote(64,3,22,false));assertEquals(22,TradeAmounts.minimumSale(64,3));}

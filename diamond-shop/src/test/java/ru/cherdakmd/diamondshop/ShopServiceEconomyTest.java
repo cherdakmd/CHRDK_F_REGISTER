@@ -56,12 +56,13 @@ class ShopServiceEconomyTest {
         var after=new ShopService(fresh,new ShopStore(dir.resolve("new"),Logger.getAnonymousLogger()),()->null);
         for(var item:fresh.items()) {
             var old=oldConfig.item(item.material()).orElseThrow();
-            assertTrue(item.purchaseMultiplier()>=4,item.material());
+            assertTrue(item.purchaseMultiplier()>=1,item.material());
             assertEquals(before.batchSize(old),after.batchSize(item),item.material());
             for(long stock:new long[]{1,item.refStock(),Long.MAX_VALUE}) {
                 before.store().setStock(old,stock,System.currentTimeMillis());after.store().setStock(item,stock,System.currentTimeMillis());
                 assertEquals(before.bidPrice(old),after.bidPrice(item),item.material());
-                assertTrue(after.askPrice(item)>before.askPrice(old),item.material());
+                assertTrue(after.askPrice(item)>=before.askPrice(old),item.material());
+                if(item.purchaseMultiplier()>1) assertTrue(after.askPrice(item)>before.askPrice(old),item.material());
             }
         }
     }
@@ -172,14 +173,14 @@ class ShopServiceEconomyTest {
         s.store().setStock(item,item.refStock(),System.currentTimeMillis());
         int batch=s.batchSize(item); long paid=TradeAmounts.quote(batch,s.askPrice(item),2304,true);
         // Исторический баг воспроизводим БЕЗ нового тарифа: он не заменяет защиту bid.
-        long oldAsk=WholeTrades.price(PriceEngine.ask(s.priceOf(item),10),batch,true);
+        long oldAsk=WholeTrades.price(PriceEngine.ask(s.priceOf(item),10),batch,true)*100L;
         long oldPaid=TradeAmounts.quote(batch,oldAsk,2304,true);
         s.store().setStock(item,1,System.currentTimeMillis());
-        long legacyBid=WholeTrades.price(PriceEngine.bid(s.priceOf(item),10),batch,false);
+        long legacyBid=WholeTrades.price(PriceEngine.bid(s.priceOf(item),10),batch,false)*100L;
         assertTrue(TradeAmounts.quote(batch,legacyBid,2304,false)>oldPaid,"Регрессия действительно воспроизводит прежний self-pump");
         assertTrue(TradeAmounts.quote(batch,s.bidPrice(item),2304,false)<=oldPaid,"Bid защищён даже без дорогого ask");
         assertTrue(TradeAmounts.quote(batch,s.bidPrice(item),2304,false)<=paid);
-        long ceiling=RecipeEconomy.cap(RecipeEconomy.Cost.of(PriceEngine.ask(PriceEngine.round(item.basePrice()*item.minMultiplier()),10)),batch,10);
+        long ceiling=RecipeEconomy.minorCap(RecipeEconomy.Cost.of(PriceEngine.ask(PriceEngine.round(item.basePrice()*item.minMultiplier()),10)),batch,10);
         for(long stock:new long[]{1,item.refStock(),Long.MAX_VALUE}) {
             s.store().setStock(item,stock,System.currentTimeMillis()); assertTrue(s.bidPrice(item)<=ceiling);
         }

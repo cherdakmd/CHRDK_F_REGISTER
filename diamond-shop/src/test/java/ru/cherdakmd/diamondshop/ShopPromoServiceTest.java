@@ -64,16 +64,16 @@ class ShopPromoServiceTest {
         ShopPromoService promos = service(settings());
         long now = nowFor(ShopPromoMath.Type.HOT_BUYBACK);
         ShopConfig.ShopItem featured = item(promos.plan(now).featured().get(0), true);
-        assertEquals(128, promos.remaining(STEVE, now));
+        assertEquals(12800, promos.remaining(STEVE, now));
 
         // 25 % от 200 = 50, но потолок на сделку режет до 32.
-        var first = promos.quote(STEVE, featured, 200, 1000, 64, 1000, now);
-        assertEquals(32, first.amount(), "срабатывает потолок на сделку");
+        var first = promos.quote(STEVE, featured, 20000, 100000, 64, 100000, now);
+        assertEquals(3200, first.amount(), "срабатывает потолок на сделку");
         promos.record(STEVE, featured.material(), 64, first, now);
-        assertEquals(96, promos.remaining(STEVE, now));
+        assertEquals(9600, promos.remaining(STEVE, now));
 
         // Исчерпываем суточный лимит бонуса и убеждаемся, что дальше акция молчит.
-        promos.record(STEVE, featured.material(), 1, new ShopPromoService.Bonus(96, false, false), now);
+        promos.record(STEVE, featured.material(), 1, new ShopPromoService.Bonus(9600, false, false), now);
         assertEquals(0, promos.remaining(STEVE, now));
         assertEquals(0, promos.quote(STEVE, featured, 100, 1000, 64, 1000, now).amount());
     }
@@ -87,11 +87,11 @@ class ShopPromoServiceTest {
 
         assertEquals(0, promos.quote(STEVE, target, 100, 1000, 1, 1000, now).amount());
         assertEquals(0, promos.quote(STEVE, item(featured.get(1), true), 100, 1000, 64, 1000, now).amount());
-        var bonus = promos.quote(STEVE, target, 100, 1000, 64, 1000, now);
-        assertEquals(12, bonus.amount());
+        var bonus = promos.quote(STEVE, target, 100, 2000, 64, 2000, now);
+        assertEquals(1200, bonus.amount());
         assertTrue(bonus.contractPaid());
         promos.record(STEVE, target.material(), 64, bonus, now);
-        assertEquals(0, promos.quote(STEVE, target, 100, 1000, 64, 1000, now).amount(),
+        assertEquals(0, promos.quote(STEVE, target, 100, 2000, 64, 2000, now).amount(),
                 "разовая награда за заказ не повторяется");
     }
 
@@ -105,8 +105,8 @@ class ShopPromoServiceTest {
         // Две разные сдачи того же дня фиксируются без бонуса.
         promos.record(STEVE, featured.get(0), 16, ShopPromoService.Bonus.none(), now);
         promos.record(STEVE, featured.get(1), 16, ShopPromoService.Bonus.none(), now);
-        var bonus = promos.quote(STEVE, item(featured.get(2), true), 100, 1000, 16, 1000, now);
-        assertEquals(16, bonus.amount());
+        var bonus = promos.quote(STEVE, item(featured.get(2), true), 100, 2000, 16, 2000, now);
+        assertEquals(1600, bonus.amount());
         assertTrue(bonus.seriesPaid());
         promos.record(STEVE, featured.get(2), 16, bonus, now);
         assertEquals(0, promos.quote(STEVE, item(featured.get(0), true), 100, 1000, 16, 1000, now).amount());

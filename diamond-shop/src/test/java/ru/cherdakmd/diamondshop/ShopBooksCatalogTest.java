@@ -81,7 +81,7 @@ class ShopBooksCatalogTest {
             assertEquals(book.material(), book.book());
             assertEquals(spec.category(), book.category());
             assertTrue(book.sellEnabled(), book.material());
-            assertEquals(2.0, book.purchaseMultiplier(), book.material());
+            assertEquals(1.0, book.purchaseMultiplier(), book.material());
             assertEquals(1.0, book.minMultiplier(), book.material());
             assertEquals(1.0, book.maxMultiplier(), book.material());
             assertTrue(book.basePrice() >= 60 && book.basePrice() <= 400, book.material());

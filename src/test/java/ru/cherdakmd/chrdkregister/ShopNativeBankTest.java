@@ -84,7 +84,7 @@ class ShopNativeBankTest {
         assertEquals(26,load().balanceMinor(owner));
     }
     @Test void legacyWholeExchangeAndFractionalArithmeticRemainDistinct() {
-        assertTrue(trade(true,10,10,0,0,1).valid());
+        assertTrue(trade(true,10,0,0,1).valid());
         assertFalse(minorTrade(true,37,37,0,1,1).valid());
         assertEquals(1,minorTrade(false,1,0,1,0,1).turnoverWhole());
         assertEquals(2,minorTrade(false,101,0,101,0,1).turnoverWhole());

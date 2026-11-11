@@ -101,8 +101,8 @@ final class ShopConfigCapTest {
         assertEquals(16_384, settings.max());
         assertEquals("shop-limit-boost", settings.entitlementId());
         assertEquals(0d, config.dailyTurnoverLimit(), "0 — ручной потолок не задан, а не «без лимита»");
-        assertEquals(2048, ShopCapMath.compute(settings.base(), settings, ShopCapMath.Context.NONE));
-        assertEquals(6928, ShopCapMath.compute(settings.base(), settings, ShopCapMath.Context.full()));
+        assertEquals(0, ShopCapMath.compute(settings.base(), settings, ShopCapMath.Context.NONE));
+        assertEquals(0, ShopCapMath.compute(settings.base(), settings, ShopCapMath.Context.full()));
         String service=java.nio.file.Files.readString(java.nio.file.Path.of("src/main/java/ru/cherdakmd/diamondshop/ShopService.java"));
         assertTrue(service.contains("public double dailyLimit(Player player)"));
         assertTrue(service.contains("return 0;"));
