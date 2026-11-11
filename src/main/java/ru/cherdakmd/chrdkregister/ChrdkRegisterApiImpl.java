@@ -154,7 +154,11 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi, IncomeSourceLineag
         String permission = ru.cherdakmd.chrdkregister.api.BankCharge.permission(payment.source());
         if (permission == null || !payer.hasPermission(permission)) return false;
         if (bank.bankChargeStatus(payment) == ru.cherdakmd.chrdkregister.api.BankCharge.Status.COMMITTED) return true;
-        var plan = ru.cherdakmd.chrdkregister.api.ChargeInventory.plan(expected, payment.price(), bank.spendableBalance(payer.getUniqueId()));
+        var plan = payment.minor()
+                ? ru.cherdakmd.chrdkregister.api.ChargeInventory.planMinor(expected, payment.price(),
+                        bank.spendableBalanceMinor(payer.getUniqueId()), payment.rateBps())
+                : ru.cherdakmd.chrdkregister.api.ChargeInventory.plan(expected, payment.price(),
+                        bank.spendableBalance(payer.getUniqueId()));
         if (plan == null || plan.debit() != payment.debit() || plan.cash() != payment.cash() || plan.change() != payment.change()
                 || !payment.inventoryHash().equals(ru.cherdakmd.chrdkregister.api.AuctionPayment.hash(
                     ru.cherdakmd.chrdkregister.api.ChargeInventory.encode(expected), ru.cherdakmd.chrdkregister.api.ChargeInventory.encode(plan.after())))) return false;
