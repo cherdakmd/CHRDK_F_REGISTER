@@ -164,6 +164,12 @@ permissions:
   chrdkregister.chat.bypass:
     description: Обход ограничений чата — задержки, лимита длины, анти-капса и защиты от повторов
     default: op
+  chrdkregister.moderation.swear.bypass:
+    description: Обход отдельного фильтра антимата из anti-swear.yml
+    default: op
+  chrdkregister.moderation.spam.bypass:
+    description: Обход отдельного антиспама из anti-spam.yml
+    default: op
   chrdkregister.chat.socialspy:
     description: Просмотр личных сообщений игроков командой /socialspy
     default: op

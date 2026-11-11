@@ -14,7 +14,7 @@ class DiamondExchangePolicyTest {
         var q=DiamondExchangePolicy.quote(neutral(),10_000);
         assertEquals(10_000,q.rateBps()); assertEquals(100,q.creditMinor(1));
         assertEquals(12_300,q.creditMinor(123)); assertEquals("1",q.text());
-        assertEquals(12,DiamondExchangePolicy.quote(neutral(),10_000).scaleMinor(25));
+        assertEquals(25,DiamondExchangePolicy.quote(neutral(),10_000).scaleMinor(25));
     }
     @Test void demandMoneySupplyEmissionAndActivityMoveRateWithoutRandomness() {
         var busy=new DiamondExchangePolicy.Snapshot(2_000_000,200_000,10_000,300_000,100_000,40,10,1_000_000,20);

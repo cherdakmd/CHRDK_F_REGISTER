@@ -1,188 +1,188 @@
 {
   "pages": {
     "about": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "c2e51af61e2daab3cf1d3c3728368ebc7d206f4f0e8dd7083e27547acc35de99",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "a7288a2dc1e4cc7f9b370b5274de5d3797a1e14c7cd2b4a1a40f578dc26cddef",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "71be7c350baa6ec8b06ea74306e30c713b3ee2bb1233fefa8e068fff5ff2078a",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "207aacdfb85f0038722fa0672cc39df3ec9f46e764c5b43c98e9700e29358e37",
       "text": "bd128e475ee8efae55c3d2d6c9616d5278600f2a8ff1aad7af5e6df3e0b3f5c3"
     },
     "artifacts": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "c88bfdace1f948867152c0e485bab1ba2e78f5acc2d138674cc7d9aea250a2e6",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "a7d72bfff01eea94d916ab6d01782c4b847a30448f2607f7c3cd8959ef0fcd48",
       "text": "51e3ef379d9a8f7e2ccfc6fd41cc0c0823f91f30d7c9a8326ec7962c182d98e4"
     },
     "auction": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "cf88762ce62d00fb500b6d218c123859221fb174b1c66fe8a57295e42ffff05e",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "be2342be96899e694e3016afa48e9078a355154b2dff92ffcca7505164d175d2",
       "text": "89f444940889c75cea3b77900f9b41ed8500cdb039d2b2cd1aebd82dcf710d25"
     },
     "battlepass": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "e52083be30c56a061524bc911b130517334f2b684e5aedda8a76b280eaeccb5f",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "1c8a4875c4a8ab73450e551e11f1e33671a90e76970fccd4d4d126cabf4a2bac",
       "text": "997df6e0a9311ea115c4fd3c192b2729034b10c68a4f41c57261ef4b704c5add"
     },
     "chat": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "c2e51af61e2daab3cf1d3c3728368ebc7d206f4f0e8dd7083e27547acc35de99",
-      "text": "ca6c93fc33fca52eecc7d38744bc86f619ea0b6a7bcc2314b84ca6c5399d8a1c"
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "a7288a2dc1e4cc7f9b370b5274de5d3797a1e14c7cd2b4a1a40f578dc26cddef",
+      "text": "a51c51d20cfe94c553e80893422b000a579b87285b00cbceb452f29eb0773023"
     },
     "claims": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "250bafe00cb1050678ff24f5b4e0374a859766c3086f086d54eb061ef0a77039",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "8901d6c86ebeacb99dc99d4982941eb94a315eb2abe7d03257fe24ede2eb5881",
       "text": "3126e85c74cf79658fdcde5a03722da3d31459d702228865edec9eb15e142aa4"
     },
     "classes": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "42ec51bb86917f4e4f9e6a037e65d169eb0a4471dbdc0b0376cc05295e0f113c",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "bb96e46f8badcd6aacf8539f80daa1843a67af94ebef415076a760099cee37d5",
       "text": "503edef62357862f67d17df249b393023697d6dca6342cbe792b0d4dc78cb8cc"
     },
     "commands": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "97a55b35e039fd5fd0f0e956bcb2b7c75f24cedbb90ade840763b0af7833a67c",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "3a60670b049da0d0d74cd41ec5c3e405232ee680240cfb18c47ba6ab260535ed",
       "text": "b16f06b84b440533e5bba0a45540bf517f3ae650cb390ddd6b9f43d47c5eabdd"
     },
     "cosmetics": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "5f129f165d61e9a69c41929d2b782551930c391eb204128000dc730867cab6e7",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "4b34de9471e77b7e3bbd6e95454f180a338ca903c581a2effa8e641cca9f7fba",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "4e564c4cdf24830031da48be7deb595792c14849070ee7e93e22aba950816129",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "0e71f5681c32f43311424b0b785b7b463fe1fd2c0735240aa9461502a1a31a87",
       "text": "4d7683f5677c50dfe0488961891915b5c2dd6533191a213ee8fdb077ea817eb5"
     },
     "disasters": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "80ba13b98a59343c0eaaf6425227e462976f1e3e368b7e3730124b169b93952e",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "58f48d44518f2a6d17f885e3b0335bb6cb65045589792d9e425a2b699266dc43",
       "text": "121b1cc28a075ced29b6de8abec7dbc20bbb531a01441ddd5fdb836d066d0202"
     },
     "economy": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "f05ec25ed1eeb3ae18bd6cf60f482ec53782c503d62c39ad440763783e338167",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "7bb82842b2e686509967e4b62e9505f608d7c0272c89d454121bbcaf7698e261",
       "text": "051da7af63816f9e7b42dc7185973c88adf8862f10ad9d1e21f5d789cdbdc4fe"
     },
     "enchants": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "49466affafa3d28b84bdf8f56f3043e9594ec1188acf2c2888936b7d2c528569",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "20829d04bf7e5f6b9e3b2eb7642e80c1872bc107dd5ef88a4e42133e492d3070",
       "text": "7e90321ef8a100bae11c53592c62328fa44a958be657b66a86d51ea8c1906a7d"
     },
     "faq": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "3052e16f1b94b5d08b5b21ac05d70149985bd7c47cde209f69cc04f2001a6d03",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "5cd7b095f210bd44a52f6eeab70e7ca3483347f3d94765b2ab4cbe10e99189e2",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "d0ce748a452d32bff89da9dbd1e40bf0c91b91c7952ad645a10bacf40b841a09",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "19885f585ebf0ac09de54b1a9532acd4d717c9038d3860a8a23f786f95a5f47a",
       "text": "615d89bba0ac116c220d571f530fcdab7d5ff46162ca7a7ecf24de441a7fb191"
     },
     "guilds": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "250bafe00cb1050678ff24f5b4e0374a859766c3086f086d54eb061ef0a77039",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "8901d6c86ebeacb99dc99d4982941eb94a315eb2abe7d03257fe24ede2eb5881",
       "text": "bb7d4121d6c42762b2f09d8eb57df986a942df35c77fd2cf899a5e7a38193216"
     },
     "honors": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "c2e51af61e2daab3cf1d3c3728368ebc7d206f4f0e8dd7083e27547acc35de99",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "a7288a2dc1e4cc7f9b370b5274de5d3797a1e14c7cd2b4a1a40f578dc26cddef",
       "text": "6bc29d5a2d7783845f8b3d9b085e85982faec5b3029d841092386f36b1d4c4b0"
     },
     "index": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "7c8e17aba15bf3f0a6d7459c4d1b93e9d2911c9477d647f0e3032ed5d0adbceb",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "71d4d336b9227f98b3bc4c3c5e0a7646a8d12e1d228e403e0224bfb84e1b9ef1",
       "text": "13b0089b89035cd13598d177608718282608bc671993a3c370012b297c779cd7"
     },
     "menu": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "3052e16f1b94b5d08b5b21ac05d70149985bd7c47cde209f69cc04f2001a6d03",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "5cd7b095f210bd44a52f6eeab70e7ca3483347f3d94765b2ab4cbe10e99189e2",
       "text": "c646997519fcb5c1c0428e5e3686361e2fea3b508e86f0ac0d24d84f84229f8b"
     },
     "moderation": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "c2e51af61e2daab3cf1d3c3728368ebc7d206f4f0e8dd7083e27547acc35de99",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "a7288a2dc1e4cc7f9b370b5274de5d3797a1e14c7cd2b4a1a40f578dc26cddef",
       "text": "79580a49c09219f65539abace395b5f2469f91fc2f0ac9b3ecae109c4fa1ecb4"
     },
     "orders": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "7f83a05f7497ccb04a5e8be671621b0ff3056847a27dd28e20d8f314cbabf86e",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "504733c9fcac69bc7a52eac99b7d5f78b6928728ae2e415d90d2160c500edab0",
       "text": "8f1bddfa65aabb38fab8ebdad77656a627e340e765229de34ab3a24dd96fef2e"
     },
     "perktree": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "42ec51bb86917f4e4f9e6a037e65d169eb0a4471dbdc0b0376cc05295e0f113c",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "bb96e46f8badcd6aacf8539f80daa1843a67af94ebef415076a760099cee37d5",
       "text": "3e1a2fe232bb8c384a682ac98f8133ab0560de790bab9a2a2d9542ea0b673666"
     },
     "pets": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "5a017d7e044e29c603c0d46d14fe8666a45a667b6d380c9b6ff5593a5546d7f2",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "98b6adbdce8a6e37a4e320825a79bb8666bb25c56fa9eed79e7590f28345c198",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "profile": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "d4b640c4e4180c1a5995f0efda07e305c6937cfac24a434172b5f3598e065ea2",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "d61d9ad29a646aaffb4e7376b486956d6752c79b19a4b519243b4a99e1b6cd38",
       "text": "f2a1fafaef6d54a60b0dd2e9545374a59a83ad49a5de3ace0069e441c187d309"
     },
     "quests": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "54ca7bc83b6fc4b08c7141fc500dacef09216bc244e861388f6c129930112735",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "8977519098e8f0ab2a50933cb102705df481b56659a2e07b95411239b09cab43",
       "text": "a42f11010fddbf13238133ac1e2dca525dea95245f5286a88a57738af30fbf13"
     },
     "ranks": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "006df1cff30bd1ab14c914890e0dbc7abbadc13360f176919573386f739709ac",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "fb00ccc30b64ae777cac41a728e16177932cfba121a3eea495c7676830a17be6",
       "text": "664b466e4b44741175d9c2cdb4da728a0603a04aaaefada8396dd6517d5dca2d"
     },
     "shop": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "7c8e17aba15bf3f0a6d7459c4d1b93e9d2911c9477d647f0e3032ed5d0adbceb",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "71d4d336b9227f98b3bc4c3c5e0a7646a8d12e1d228e403e0224bfb84e1b9ef1",
       "text": "6b4ec3842f6bca2ac8ba266ed5236562fc8f4d9e064252b19f79aa9ba977941d"
     },
     "skills": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "3c7bf1521a69fd36d53eddcd82693142ad3248742a1d9d1a97400b3c7ff995b5",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "d15578830f67de0a949d4a60f1828a4fd580e9efb58c8007907ddd4fcb7ead94",
       "text": "43797b2c64a23ab2e591eb8a75bacb7d064827f86c80f62665d08170fab33e00"
     },
     "social-link": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "ff956e281ecabd84fa16423442b538c224daf49426275ff23accaf077b1ae5b3",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "de488d2296e6facefce295bf71da5c56400b594cdcce20bf971b58caf05699fb",
       "text": "1f6cf95d9c8c2180dbf871aa9b19a7bfcde5405cf77b75954b7575920d2aef14"
     },
     "start": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "170d618becfbd5751c9e413c5bafe331141f252efcacc17008bf7ffeb28e0898",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "82c83387de2173a78dfaaeda6f7fdbd05742f19d92bc4192d625a9086427c448",
       "text": "953b107bba1128be43994bee9edf9ab7766c7ecfab70620808f8d404fef8d3cb"
     },
     "starter-kit": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "c88bfdace1f948867152c0e485bab1ba2e78f5acc2d138674cc7d9aea250a2e6",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "a7d72bfff01eea94d916ab6d01782c4b847a30448f2607f7c3cd8959ef0fcd48",
       "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
     },
     "teleports": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "81dec7753a9a99b222e4b320cb9b5553964f0c6d5c5a8053a6993e3af0ee1066",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "8073d323f7e07388bb4c42344bcc83ff1e6db969fcc01c52abbf9d190db9fba8",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "49466affafa3d28b84bdf8f56f3043e9594ec1188acf2c2888936b7d2c528569",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "20829d04bf7e5f6b9e3b2eb7642e80c1872bc107dd5ef88a4e42133e492d3070",
       "text": "9fac8f515b8905c25378000b55e6f5faaa87a8b5a3a3173676cb4563894d98f7"
     },
     "titles": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "6466565b239b6bad842b8df5cb2829d97d7c96b6a16121995466b8ddbcc7a808",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "413db9d868a1a45fd4771e2a9be455d5790a345bcf9046c0ef387732123c3ccd",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "7c8e17aba15bf3f0a6d7459c4d1b93e9d2911c9477d647f0e3032ed5d0adbceb",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "71d4d336b9227f98b3bc4c3c5e0a7646a8d12e1d228e403e0224bfb84e1b9ef1",
       "text": "ac7d8429ff72a6e0ac03131f1cd12827180560883cb4c3348ea853c7223a11bc"
     },
     "vk": {
-      "reason": "Проверены compile fixes, physicalMinor scope, versioned deposit messages и auction purchase ordering",
-      "sources": "ff956e281ecabd84fa16423442b538c224daf49426275ff23accaf077b1ae5b3",
+      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
+      "sources": "de488d2296e6facefce295bf71da5c56400b594cdcce20bf971b58caf05699fb",
       "text": "b592e465a73dd13186763622b51190400cffd40960e233f58c63379b88a9bba9"
     }
   },

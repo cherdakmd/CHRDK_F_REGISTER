@@ -1516,6 +1516,15 @@ public final class ChatService implements Listener {
                     "max_message_length", cfg.maxMessageLength() * 2);
             return true;
         }
+        if (sender instanceof Player senderPlayer) {
+            var decision = plugin.chatModeration.moderate(senderPlayer, message,
+                    ChatModerationPolicy.Channel.PRIVATE, System.currentTimeMillis());
+            if (decision.status() == ChatModerationPolicy.Status.BLOCK) {
+                messages.send(senderPlayer, decision.messageKey());
+                return true;
+            }
+            message = decision.text();
+        }
 
         String senderName = sender instanceof Player senderPlayer ? senderPlayer.getName() : "Сервер";
         if (cfg.chatLogEnabled() && cfg.chatLogIncludePrivate()) {

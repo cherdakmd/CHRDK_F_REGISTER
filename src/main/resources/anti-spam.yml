@@ -1,0 +1,13 @@
+# Независимый антиспам. Отклонённые сообщения не продлевают cooldown игрока.
+enabled: true
+apply-to-chat: true
+apply-to-private: true
+# Минимальная пауза между принятыми сообщениями; 0 отключает это правило.
+cooldown-ms: 1000
+# Повтор текста без учёта регистра, пробелов и знаков препинания; 0 отключает правило.
+duplicate-window-ms: 15000
+burst:
+  # Не больше max-messages за скользящее window-ms; 0 отключает ограничение серии.
+  max-messages: 6
+  window-ms: 10000
+bypass-permission: "chrdkregister.moderation.spam.bypass"
