@@ -66,9 +66,9 @@
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "ac2dca3d2285933cfbf24855ed7bb8c1d118db99593ecbeb7f116ec4980addf2",
-      "text": "c9b27cd4a4970ad227e240e742adc52dca1533312ec7b590663add3b164ba1a2"
+      "reason": "Сверены смешанные книги на тир-кирках: совместимость, атомарность, конфликты и Too Expensive",
+      "sources": "347ca52f17c9ad0a5ba3fa51fa838c07520ce53027f78c9b2115279cc69fe8c2",
+      "text": "c0e9924c0a5bc5d50f03118ec18f0ef57c43b79734e75205e096759a4cd05b59"
     },
     "faq": {
       "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
@@ -176,9 +176,9 @@
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "ac2dca3d2285933cfbf24855ed7bb8c1d118db99593ecbeb7f116ec4980addf2",
-      "text": "8bfa7eee45f251d4f571e67782e4e245c8a0c9faf55062068f625f72771dc03c"
+      "reason": "Сверены смешанные книги на тир-кирках: совместимость, атомарность, конфликты и Too Expensive",
+      "sources": "347ca52f17c9ad0a5ba3fa51fa838c07520ce53027f78c9b2115279cc69fe8c2",
+      "text": "cce495a2fd54e1ca454c6ccb464c61feb08fac15cfa1147700e0fe5c5614d972"
     },
     "titles": {
       "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
