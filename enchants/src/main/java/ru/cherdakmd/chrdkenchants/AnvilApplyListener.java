@@ -67,19 +67,32 @@ public final class AnvilApplyListener implements Listener {
         }
         ItemStack vanilla = event.getResult();
         int vanillaCost = ru.cherdakmd.chrdkregister.api.AnvilCosts.actual(view,event.getResult());
-        boolean pureBook = right.getItemMeta() instanceof EnchantmentStorageMeta storage && !storage.hasStoredEnchants();
-        // Null смешанной книги может означать конфликт vanilla, недопустимый предмет или Too Expensive.
-        if (!AnvilPrice.nativeCompatible(pureBook, vanilla != null, vanillaCost)) {
+        EnchantmentStorageMeta bookMeta = right.getItemMeta() instanceof EnchantmentStorageMeta storage
+                ? storage : null;
+        boolean pureBook = bookMeta != null && !bookMeta.hasStoredEnchants();
+        VanillaBookMerge.Result manualVanilla = null;
+        // Не оживляем native Too Expensive (40+). При обычном null проверяем
+        // vanilla-перенос сами: кастомный тир-предмет не должен мешать книге.
+        if (vanilla == null && !pureBook && vanillaCost < 40) {
+            manualVanilla = VanillaBookMerge.merge(left, bookMeta);
+            if (manualVanilla == null) {
+                reject(event, viewer);
+                return;
+            }
+        }
+        if (manualVanilla == null && !AnvilPrice.nativeCompatible(pureBook, vanilla != null, vanillaCost)) {
             reject(event, viewer);
             return;
         }
-        ItemStack result = vanilla == null ? left.clone() : vanilla.clone();
+        ItemStack result = manualVanilla != null ? manualVanilla.item()
+                : vanilla == null ? left.clone() : vanilla.clone();
         if (result.getType() != left.getType() || result.getAmount() != 1
                 || plugin.service().canApplyFromBook(result, right) != null) {
             reject(event, viewer);
             return;
         }
-        int renameCost = pureBook && vanilla == null ? renamePlain(result, view.getRenameText())
+        int renameCost = (pureBook || manualVanilla != null) && vanilla == null
+                ? renamePlain(result, view.getRenameText())
                 : Objects.equals(left.getItemMeta().displayName(), result.getItemMeta().displayName()) ? 0 : 1;
         Map<String, Integer> before = plugin.items().read(left);
         plugin.service().applyFromBook(result, right);
@@ -103,7 +116,9 @@ public final class AnvilApplyListener implements Listener {
             reject(event, viewer);
             return;
         }
-        int cost = AnvilPrice.total(AnvilPrice.base(vanillaCost, leftWork, bookWork, renameCost, pureBook), surcharge);
+        int nativeBase = manualVanilla == null ? vanillaCost : manualVanilla.nativeCost();
+        int cost = AnvilPrice.total(AnvilPrice.base(nativeBase, leftWork, bookWork, renameCost,
+                pureBook || manualVanilla != null), surcharge);
         if (surcharge > 0) {
             ItemMeta meta = result.getItemMeta();
             if (!(meta instanceof Repairable repairable)) {
