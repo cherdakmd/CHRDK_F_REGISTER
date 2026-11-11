@@ -70,7 +70,7 @@ final class StarterKitContractTest {
     @Test
     void publicApiVersionIsNotBumpedByTheNewFeature() throws IOException {
         assertTrue(read("src/main/java/ru/cherdakmd/chrdkregister/api/ChrdkRegisterApi.java")
-                .contains("int API_VERSION = 42;"));
+                .contains("int API_VERSION = 43;"));
         String settings = read("src/main/java/ru/cherdakmd/chrdkregister/StarterKitSettings.java");
         assertTrue(settings.contains("defaults()"),
                 "отсутствие секции в чужом config.yml не выключает функцию");
