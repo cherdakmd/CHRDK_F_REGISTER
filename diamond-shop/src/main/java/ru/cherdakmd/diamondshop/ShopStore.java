@@ -375,13 +375,13 @@ public final class ShopStore {
         return Double.isFinite(after)&&java.math.BigDecimal.valueOf(after).subtract(java.math.BigDecimal.valueOf(before)).compareTo(java.math.BigDecimal.valueOf(money))==0;
     }
     synchronized boolean prepare(ru.cherdakmd.chrdkregister.api.ShopExchange t,ShopConfig.ShopItem item,long now,double recovery,double limit,int points,long interval,double price) {
-        if(!legacyAvailable||!registered||pending!=null||!market.equals(t.market())||t.sequence()!=sequence+1||!t.valid()||!item.material().equals(t.material())||!(t.money()==0 && t.carriesRemainder() ? legacyAvailable && Double.isFinite(limit) && limit>=0 && (limit==0 || usedToday(t.owner(),now)<=limit) : canRecordTurnover(t.owner(),t.money(),limit,now))) return false;
+        if(!legacyAvailable||!registered||pending!=null||!market.equals(t.market())||t.sequence()!=sequence+1||!t.valid()||!item.material().equals(t.material())||!(t.money()==0 && t.carriesRemainder() ? legacyAvailable && Double.isFinite(limit) && limit>=0 && (limit==0 || usedToday(t.owner(),now)<=limit) : canRecordTurnover(t.owner(),t.turnoverWhole(),limit,now))) return false;
         try {
             stockOf(item,now,recovery); var state=items.get(item.material());
             var p=new ShopJournal.Pending(t,Math.max(1,Math.addExact(state.stock,t.buy()?-t.units():t.units())),
                 Math.addExact(state.soldByPlayers,t.buy()?0:t.units()),Math.addExact(state.boughtByPlayers,t.buy()?t.units():0),now,
-                now-Math.floorMod(now,86400000L),limit==0?-1:PriceEngine.round(usedToday(t.owner(),now)+t.money()),PriceEngine.round(turnover+t.money()),price,points,interval);
-            if(!p.valid()||!exactIncrease(turnover,p.turnover(),t.money())||p.used()!=-1&&!exactIncrease(usedToday(t.owner(),now),p.used(),t.money())) return false;
+                now-Math.floorMod(now,86400000L),limit==0?-1:PriceEngine.round(usedToday(t.owner(),now)+t.turnoverWhole()),PriceEngine.round(turnover+t.turnoverWhole()),price,points,interval);
+            if(!p.valid()||!exactIncrease(turnover,p.turnover(),t.turnoverWhole())||p.used()!=-1&&!exactIncrease(usedToday(t.owner(),now),p.used(),t.turnoverWhole())) return false;
             var json=com.google.gson.JsonParser.parseString(snapshotJson()).getAsJsonObject(); json.add("pending",GSON.toJsonTree(p));
             if(!writeJson(GSON.toJson(json))) return false;
             pending=p; dirty=false; return true;

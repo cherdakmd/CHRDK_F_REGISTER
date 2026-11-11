@@ -65,6 +65,31 @@ class ShopNativeBankTest {
         assertEquals("0/1",b.shopSaleRemainder(UUID.randomUUID()));
         var bad=new ShopExchange(UUID.randomUUID(),market,2,owner,false,"STONE",63,0,0,0,0,Map.of("DIAMOND",1),"before","after",64,1,"1/64","0/1"); assertFalse(bad.valid());
     }
+    ShopExchange minorTrade(boolean buy,long money,long debit,long credit,long physical,long sequence) {
+        return ShopExchange.fractional(new ShopExchange(UUID.randomUUID(),market,sequence,owner,buy,"STONE",1,money,debit,credit,physical,Map.of("DIAMOND",1),"before","after"));
+    }
+    @Test void fractionalSaleCreditsOneHundredthExactlyOnceAcrossRestart() throws Exception {
+        var b=funded(10); assertEquals(1000,b.balanceMinor(owner));
+        var t=minorTrade(false,1,0,1,0,1); assertTrue(t.valid()); assertTrue(b.prepareShop(t,"Steve"));
+        var bag=bag(); BankCash.recover(b,owner,bag); BankCash.recover(load(),owner,bag);
+        var loaded=load(); assertEquals(10,loaded.balance(owner)); assertEquals(1001,loaded.balanceMinor(owner));
+        assertEquals("10,01",loaded.balanceText(owner)); assertEquals(1,bag.applies);
+        assertEquals(9,JsonParser.parseString(Files.readString(loaded.file())).getAsJsonObject().get("schema").getAsInt());
+    }
+    @Test void fractionalBuyAndPhysicalChangeBalanceExactly() throws Exception {
+        var b=funded(0); var t=minorTrade(true,37,0,63,1,1); assertTrue(t.valid()); assertTrue(b.prepareShop(t,"Steve"));
+        BankCash.recover(b,owner,bag()); var loaded=load(); assertEquals(0,loaded.balance(owner)); assertEquals(63,loaded.balanceMinor(owner));
+        var second=minorTrade(true,37,37,0,0,2); assertTrue(loaded.prepareShop(second,"Steve"));
+        var nextBag=bag(); nextBag.token=loaded.cashReceipt(owner).transaction().toString(); BankCash.recover(loaded,owner,nextBag);
+        assertEquals(26,load().balanceMinor(owner));
+    }
+    @Test void legacyWholeExchangeAndFractionalArithmeticRemainDistinct() {
+        assertTrue(trade(true,10,10,0,0,1).valid());
+        assertFalse(minorTrade(true,37,37,0,1,1).valid());
+        assertEquals(1,minorTrade(false,1,0,1,0,1).turnoverWhole());
+        assertEquals(2,minorTrade(false,101,0,101,0,1).turnoverWhole());
+    }
+
     @Test void remainderSchemaCannotBeDowngradedOrSilentlyLoseCarry() throws Exception {
         var b=funded(0); var t=fraction(b,1,1); b.prepareShop(t,"Steve"); BankCash.recover(b,owner,bag());
         String original=Files.readString(b.file()); var json=JsonParser.parseString(original).getAsJsonObject(); json.addProperty("schema",7);

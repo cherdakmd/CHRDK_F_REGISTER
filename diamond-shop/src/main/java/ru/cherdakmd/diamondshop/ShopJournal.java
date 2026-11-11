@@ -13,19 +13,19 @@ final class ShopJournal {
         }
         boolean valid() {
             return trade!=null&&trade.valid()&&stock>=1&&sold>=0&&bought>=0&&time>=0&&day==time-Math.floorMod(time,86400000L)
-                    &&(used==-1||Double.isFinite(used)&&used>=trade.money())&&Double.isFinite(turnover)&&turnover>=trade.money()
+                    &&(used==-1||Double.isFinite(used)&&used>=trade.turnoverWhole())&&Double.isFinite(turnover)&&turnover>=trade.turnoverWhole()
                     &&Double.isFinite(price)&&price>0&&historyPoints>=4&&historyPoints<=168&&historyInterval>=0
                     &&(!forge||(trade.carriesGrant()&&stock==1&&sold==0&&bought==0));
         }
         boolean matches(ShopStore.ItemState state,double oldUsed,double oldTurnover) {
             try {
-                if(forge) return valid()&&turnover==PriceEngine.round(oldTurnover+trade.money())
-                        &&(used==-1||used==PriceEngine.round(oldUsed+trade.money()));
+                if(forge) return valid()&&turnover==PriceEngine.round(oldTurnover+trade.turnoverWhole())
+                        &&(used==-1||used==PriceEngine.round(oldUsed+trade.turnoverWhole()));
                 return valid()&&state!=null&&stock==Math.max(1,Math.addExact(state.stock,trade.buy()?-trade.units():trade.units()))
                     &&sold==Math.addExact(state.soldByPlayers,trade.buy()?0:trade.units())
                     &&bought==Math.addExact(state.boughtByPlayers,trade.buy()?trade.units():0)
-                    &&turnover==PriceEngine.round(oldTurnover+trade.money())
-                    &&(used==-1||used==PriceEngine.round(oldUsed+trade.money()));
+                    &&turnover==PriceEngine.round(oldTurnover+trade.turnoverWhole())
+                    &&(used==-1||used==PriceEngine.round(oldUsed+trade.turnoverWhole()));
             } catch(ArithmeticException e) { return false; }
         }
     }

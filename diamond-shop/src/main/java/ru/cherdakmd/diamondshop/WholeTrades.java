@@ -23,6 +23,13 @@ final class WholeTrades {
                 .setScale(0, buy ? RoundingMode.CEILING : RoundingMode.FLOOR);
         return value.signum() <= 0 || value.compareTo(BigDecimal.valueOf(MAX)) > 0 ? -1 : value.longValueExact();
     }
+    /** Точная партия в сотых алмаза; округление только до 0,01, не до целого. */
+    static long minorPrice(double unitPrice,int batch,boolean buy,double tariff) {
+        if(!Double.isFinite(unitPrice)||unitPrice<=0||batch<=0||!Double.isFinite(tariff)||tariff<1||tariff>100)return -1;
+        var value=BigDecimal.valueOf(unitPrice).multiply(BigDecimal.valueOf(batch)).multiply(BigDecimal.valueOf(tariff))
+                .movePointRight(2).setScale(0,buy?RoundingMode.CEILING:RoundingMode.FLOOR);
+        return value.signum()<=0||value.compareTo(BigDecimal.valueOf(MAX))>0?-1:value.longValueExact();
+    }
     static long legacy(double amount) {
         if (!Double.isFinite(amount) || amount < 0 || amount > MAX) return -1;
         return BigDecimal.valueOf(amount).setScale(0, RoundingMode.CEILING).longValueExact();

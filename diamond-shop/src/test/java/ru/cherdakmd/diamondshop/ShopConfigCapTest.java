@@ -91,10 +91,10 @@ final class ShopConfigCapTest {
     }
 
     @Test
-    void dailyCapIsEnabledWithDocumentedDefaults() throws Exception {
+    void dailyCapIsRetiredWithDocumentedDefaults() throws Exception {
         ShopConfig.ShopConfigData config = parseKeysOnly();
         ShopCapMath.Settings settings = config.dailyCap();
-        assertTrue(settings.enabled());
+        assertFalse(settings.enabled());
         assertEquals(2048, settings.base());
         assertEquals(256, settings.perRankLevel());
         assertEquals(16, settings.perPrestige());
@@ -103,6 +103,9 @@ final class ShopConfigCapTest {
         assertEquals(0d, config.dailyTurnoverLimit(), "0 — ручной потолок не задан, а не «без лимита»");
         assertEquals(2048, ShopCapMath.compute(settings.base(), settings, ShopCapMath.Context.NONE));
         assertEquals(6928, ShopCapMath.compute(settings.base(), settings, ShopCapMath.Context.full()));
+        String service=java.nio.file.Files.readString(java.nio.file.Path.of("src/main/java/ru/cherdakmd/diamondshop/ShopService.java"));
+        assertTrue(service.contains("public double dailyLimit(Player player)"));
+        assertTrue(service.contains("return 0;"));
     }
 
     @Test

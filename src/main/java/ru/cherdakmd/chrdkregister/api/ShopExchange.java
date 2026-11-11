@@ -6,15 +6,24 @@ import java.util.*;
  * API42: nullable frozen grant — native-снимок одного PDC-прототипа Кузни; nullable book — ключ книги чар магазина.
  * Прежние конструкторы и receipts без grant/book сохранены. Одна сделка не может нести и книгу, и грант. */
 public record ShopExchange(UUID transaction,UUID market,long sequence,UUID owner,boolean buy,String material,
-        long units,long money,long debit,long credit,long physical,Map<String,Integer> rates,String before,String after, int saleBatch,long salePrice,String remainderBefore,String remainderAfter,String book,String grant) {
+        long units,long money,long debit,long credit,long physical,Map<String,Integer> rates,String before,String after, int saleBatch,long salePrice,String remainderBefore,String remainderAfter,String book,String grant,boolean fractional) {
     /** Старые сделки сохраняют прежнюю проверку: нулевая выручка без точного остатка запрещена. */
     public ShopExchange(UUID t,UUID m,long s,UUID o,boolean buy,String material,long units,long money,long debit,long credit,long physical,Map<String,Integer> rates,String before,String after) {
-        this(t,m,s,o,buy,material,units,money,debit,credit,physical,rates,before,after,0,0,null,null,null,null);
+        this(t,m,s,o,buy,material,units,money,debit,credit,physical,rates,before,after,0,0,null,null,null,null,false);
     }
     /** Сделки с обычными предметами: полная форма без книги и без гранта. */
     public ShopExchange(UUID t,UUID m,long s,UUID o,boolean buy,String material,long units,long money,long debit,long credit,long physical,Map<String,Integer> rates,String before,String after,int saleBatch,long salePrice,String remainderBefore,String remainderAfter) {
-        this(t,m,s,o,buy,material,units,money,debit,credit,physical,rates,before,after,saleBatch,salePrice,remainderBefore,remainderAfter,null,null);
+        this(t,m,s,o,buy,material,units,money,debit,credit,physical,rates,before,after,saleBatch,salePrice,remainderBefore,remainderAfter,null,null,false);
     }
+    /** Прежний полный контракт API42: целые алмазы. */
+    public ShopExchange(UUID t,UUID m,long s,UUID o,boolean buy,String material,long units,long money,long debit,long credit,long physical,Map<String,Integer> rates,String before,String after,int saleBatch,long salePrice,String remainderBefore,String remainderAfter,String book,String grant) {
+        this(t,m,s,o,buy,material,units,money,debit,credit,physical,rates,before,after,saleBatch,salePrice,remainderBefore,remainderAfter,book,grant,false);
+    }
+    /** Новая сделка: money/debit/credit — сотые алмаза, physical — целые алмазы. */
+    public static ShopExchange fractional(ShopExchange t) {
+        return new ShopExchange(t.transaction,t.market,t.sequence,t.owner,t.buy,t.material,t.units,t.money,t.debit,t.credit,t.physical,t.rates,t.before,t.after,0,0,null,null,t.book,t.grant,true);
+    }
+    public long turnoverWhole() { return fractional ? DiamondMoney.ceilWhole(money) : money; }
     /** Ключ книги каталога или {@code null} для обычного предмета. */
     public boolean isBook() { return book != null; }
     public boolean carriesRemainder() { return saleBatch != 0 || salePrice != 0 || remainderBefore != null || remainderAfter != null; }
@@ -38,7 +47,9 @@ public record ShopExchange(UUID transaction,UUID market,long sequence,UUID owner
                 ||rates==null||rates.size()>4096||before==null||after==null||before.equals(after)||before.length()>4*1024*1024||after.length()>4*1024*1024) return false;
         for(var r:rates.entrySet()) if(!r.getKey().matches("[A-Z][A-Z0-9_]{0,127}")||r.getValue()==null||r.getValue()<1) return false;
         if(!validRemainder()) return false;
-        if(!(buy?debit+physical-credit==money:debit==0&&physical==0&&credit==money)) return false;
+        long physicalMoney = fractional ? Math.multiplyExact(physical, DiamondMoney.SCALE) : physical;
+        if(!(buy?debit+physicalMoney-credit==money:debit==0&&physical==0&&credit==money)) return false;
+        if(fractional && (carriesRemainder() || carriesGrant())) return false;
         if(carriesGrant()) {
             // Только покупка, без остатка от распродажи; искра дополнительно ограничена в GUI/сервисе.
             if(!buy||carriesRemainder()||!ForgeMarketCatalog.validTradeGrant(grant,material,units)) return false;
@@ -70,6 +81,7 @@ public record ShopExchange(UUID transaction,UUID market,long sequence,UUID owner
         }
         for(String key:List.of("transaction","market","owner")) MilestoneMigration.uuid(row.get(key).getAsString());
         var buy=row.get("buy"); if(buy==null||!buy.isJsonPrimitive()||!buy.getAsJsonPrimitive().isBoolean()) throw new IllegalArgumentException("shop buy");
+        if(row.has("fractional") && (!row.get("fractional").isJsonPrimitive() || !row.get("fractional").getAsJsonPrimitive().isBoolean())) throw new IllegalArgumentException("shop fractional");
         if(!row.has("rates")||!row.get("rates").isJsonObject()) throw new IllegalArgumentException("shop rates");
         row.getAsJsonObject("rates").entrySet().forEach(e->number(e.getValue()).intValueExact());
     }

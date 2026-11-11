@@ -162,6 +162,8 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi, IncomeSourceLineag
         return bank.settleCharge(payment);
     }
     @Override public long spendableBankBalance(java.util.UUID owner) { return auctionBankReady() && owner != null ? bank.spendableBalance(owner) : -1; }
+    @Override public long personalDiamondsMinor(org.bukkit.entity.Player player) { return auctionBankReady()&&player!=null ? bank.balanceMinor(player.getUniqueId()) : -1; }
+    @Override public String personalDiamondsText(org.bukkit.entity.Player player) { return auctionBankReady()&&player!=null ? bank.balanceText(player.getUniqueId()) : null; }
     @Override public boolean commitGuildBankCharge(ru.cherdakmd.chrdkregister.api.BankCharge payment, boolean collectingDebt) {
         if (!auctionBankReady() || payment == null || !payment.valid() || !payment.source().equals("guilds")
                 || payment.cash()!=0 || payment.change()!=0 || payment.price()!=payment.debit() || !bank.knows(payment.payer())) return false;

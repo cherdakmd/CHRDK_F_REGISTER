@@ -6,6 +6,7 @@ import ru.cherdakmd.chrdkregister.api.AuctionPayment;
 import ru.cherdakmd.chrdkregister.api.BankCharge;
 import ru.cherdakmd.chrdkregister.api.ShopExchange;
 import ru.cherdakmd.chrdkregister.api.ClaimExchange;
+import ru.cherdakmd.chrdkregister.api.DiamondMoney;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -45,7 +46,7 @@ import java.util.logging.Logger;
 public final class BankStore {
 
     /** Версия формата файла. */
-    public static final int SCHEMA_VERSION = 8;
+    public static final int SCHEMA_VERSION = 9;
     /** Верхняя граница счёта: защита от переполнения и «бесконечных» начислений. */
     public static final long MAX_BALANCE = 1_000_000_000L;
 
@@ -53,6 +54,8 @@ public final class BankStore {
     public static final class Account {
         public String name = "";
         public long balance;
+        /** 0..99 сотых алмаза; legacy balance и все старые API остаются целыми. */
+        public int minor;
         public long deposited;
         public long withdrawn;
         public long sent;
@@ -65,6 +68,7 @@ public final class BankStore {
             Account copy = new Account();
             copy.name = name;
             copy.balance = balance;
+            copy.minor = minor;
             copy.deposited = deposited;
             copy.withdrawn = withdrawn;
             copy.sent = sent;
@@ -138,6 +142,17 @@ public final class BankStore {
         catch (RuntimeException | LinkageError error) { return MAX_BALANCE; }
     }
     public synchronized long spendableBalance(UUID owner) { return Math.max(0, balance(owner) - reservedDebt(owner)); }
+    public synchronized long balanceMinor(UUID owner) {
+        var account=accounts.get(owner); if(!available||owner==null) return -1;
+        if(account==null) return 0;
+        return Math.addExact(Math.multiplyExact(balance(owner),100L),account.minor);
+    }
+    public synchronized long spendableBalanceMinor(UUID owner) {
+        return Math.max(0,balanceMinor(owner)-Math.multiplyExact(reservedDebt(owner),100L));
+    }
+    public synchronized String balanceText(UUID owner) {
+        long value=balanceMinor(owner); return value<0?"—":ru.cherdakmd.chrdkregister.api.DiamondMoney.format(value);
+    }
     public synchronized boolean cashLocked(UUID id) { return cashPending.containsKey(id); }
     synchronized void quarantineCash() { available=false; }
     synchronized BankCash.Intent prepareCash(UUID owner,String name,BankCash.Kind kind,long amount,int blockWorth,int selected,long request,String before,String after) {
@@ -162,7 +177,8 @@ public final class BankStore {
             if(ru.cherdakmd.chrdkregister.api.ShopSaleRemainder.ZERO.equals(intent.shop().remainderAfter())) next.shopSaleRemainders.remove(intent.owner());
             else next.shopSaleRemainders.put(intent.owner(),intent.shop().remainderAfter());
         }
-        if(intent.shop()!=null) { adjust(account,-intent.shop().debit()); adjust(account,intent.shop().credit()); }
+        if(intent.shop()!=null && intent.shop().fractional()) adjustMinor(account,intent.shop().credit()-intent.shop().debit());
+        else if(intent.shop()!=null) { adjust(account,-intent.shop().debit()); adjust(account,intent.shop().credit()); }
         else adjust(account,intent.afterBalance()-intent.beforeBalance());
         next.cashPending.remove(intent.owner()); next.cashReceipts.put(intent.owner(),new BankCash.Receipt(intent.sequence(),intent.transaction(),intent.kind(),intent.amount()));
         if(intent.shop()!=null) next.shopSettlements.put(intent.shop().market(),intent.shop());
@@ -179,7 +195,11 @@ public final class BankStore {
         return cashLocked(t.owner())?ShopExchange.Status.UNAVAILABLE:ShopExchange.Status.MISSING;
     }
     synchronized boolean prepareShop(ShopExchange t,String name) {
-        if(shopStatus(t)!=ShopExchange.Status.MISSING||!t.fits(balance(t.owner()))||spendableBalance(t.owner())<t.debit()) return false;
+        if(shopStatus(t)!=ShopExchange.Status.MISSING) return false;
+        if(t.fractional()) {
+            long balance=balanceMinor(t.owner());
+            if(balance<t.debit()||balance-t.debit()>MAX_BALANCE*100L-t.credit()||spendableBalanceMinor(t.owner())<t.debit()) return false;
+        } else if(!t.fits(balance(t.owner()))||spendableBalance(t.owner())<t.debit()) return false;
         var receipt=cashReceipts.get(t.owner());
         var intent=new BankCash.Intent(t.transaction(),t.owner(),receipt==null?1:receipt.sequence()+1,BankCash.Kind.SHOP,t.money(),balance(t.owner()),1,-1,t.money(),t.before(),t.after(),t);
         if(!intent.valid()) return false;
@@ -252,7 +272,7 @@ public final class BankStore {
             var object = document.getAsJsonObject();
             if(object.has("schema")&&(!object.get("schema").isJsonPrimitive()||!object.get("schema").getAsJsonPrimitive().isNumber())) throw new IllegalArgumentException("bank schema type");
             int schema = object.has("schema") ? object.get("schema").getAsBigDecimal().intValueExact() : 1;
-            if (schema != 1 && schema != 2 && schema != 3 && schema != 4 && schema != 5 && schema != 6 && schema != 7 && schema != SCHEMA_VERSION) throw new IllegalArgumentException("Неизвестная схема банка");
+            if (schema != 1 && schema != 2 && schema != 3 && schema != 4 && schema != 5 && schema != 6 && schema != 7 && schema != 8 && schema != SCHEMA_VERSION) throw new IllegalArgumentException("Неизвестная схема банка");
             if (schema >= 2) for (String key : java.util.List.of("claimsImports", "auctionImports", "auctionSettlements"))
                 if (!object.has(key) || !object.get(key).isJsonObject()) throw new IllegalArgumentException("Нет таблицы " + key);
             if (schema >= 3) for (String key : java.util.List.of("entitlementSources", "entitlementCredits"))
@@ -298,6 +318,10 @@ public final class BankStore {
                     var v=e.getValue(); if(!v.isJsonPrimitive() || !v.getAsJsonPrimitive().isString() || !ru.cherdakmd.chrdkregister.api.ShopSaleRemainder.valid(v.getAsString()) || "0/1".equals(v.getAsString())) throw new IllegalArgumentException("shop sale remainder");
                 }
             } else if(object.has("shopSaleRemainders") && !object.getAsJsonObject("shopSaleRemainders").isEmpty()) throw new IllegalArgumentException("downgraded sale remainder schema");
+            if(schema<9) {
+                if(object.has("shopSettlements")) for(var e:object.getAsJsonObject("shopSettlements").entrySet()) if(e.getValue().getAsJsonObject().has("fractional")) throw new IllegalArgumentException("downgraded fractional shop");
+                for(var e:object.getAsJsonObject("accounts").entrySet()) if(e.getValue().getAsJsonObject().has("minor")&&e.getValue().getAsJsonObject().get("minor").getAsInt()!=0) throw new IllegalArgumentException("downgraded minor balance");
+            }
             Envelope envelope = GSON.fromJson(document, Envelope.class);
             entitlementSources.clear(); entitlementCredits.clear();
             if (envelope.entitlementSources != null) for (var row : envelope.entitlementSources.entrySet()) {
@@ -345,7 +369,7 @@ public final class BankStore {
                 Account account = raw.getValue();
                 if (id == null || account == null) throw new IllegalArgumentException("Неверный банковский UUID/счёт");
                 account.name = sanitize(account.name);
-                if (account.balance < 0 || account.balance > MAX_BALANCE) throw new IllegalArgumentException("Неверный банковский баланс");
+                if (account.balance < 0 || account.balance > MAX_BALANCE || account.minor < 0 || account.minor > 99) throw new IllegalArgumentException("Неверный банковский баланс");
                 account.deposited = Math.max(0L, account.deposited);
                 account.withdrawn = Math.max(0L, account.withdrawn);
                 account.sent = Math.max(0L, account.sent);
@@ -867,6 +891,13 @@ public final class BankStore {
     }
 
     private static long counter(long current, long add) { return current > Long.MAX_VALUE - add ? Long.MAX_VALUE : current + add; }
+    private static void adjustMinor(Account account,long delta) {
+        long total=Math.addExact(Math.multiplyExact(account.balance,100L),Math.addExact(account.minor,delta));
+        account.balance=Math.floorDiv(total,100L); account.minor=(int)Math.floorMod(total,100L);
+        if(delta>=0) account.deposited=counter(account.deposited,DiamondMoney.ceilWhole(delta));
+        else account.withdrawn=counter(account.withdrawn,DiamondMoney.ceilWhole(-delta));
+        account.updated=System.currentTimeMillis();
+    }
     private static void adjust(Account account, long delta) {
         account.balance += delta;
         if (delta >= 0) account.deposited = counter(account.deposited, delta); else account.withdrawn = counter(account.withdrawn, -delta);

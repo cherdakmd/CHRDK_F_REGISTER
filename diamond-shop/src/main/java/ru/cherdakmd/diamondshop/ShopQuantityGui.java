@@ -90,12 +90,12 @@ public final class ShopQuantityGui implements Listener {
         if(!h.buy)inv.setItem(33,named(Material.GOLD_NUGGET,"quantity.minimum","minimum",minimum));
         long money=h.forge==null?TradeAmounts.quote(h.batch,h.price,h.units,h.buy)
                 :Math.multiplyExact(h.price,(long)h.units);
-        var quote=named(Material.PAPER,"quantity.total","amount",h.units,"money",money<0?"—":money);
+        var quote=named(Material.PAPER,"quantity.total","amount",h.units,"money",money<0?"—":h.forge==null?ShopMoney.text(money):money);
         ItemMeta meta=quote.getItemMeta();
         if(meta!=null){
             var lines=h.forge==null
-                ?plugin.messages().getList(h.buy?"quantity.buy-details":"quantity.details","batch",h.batch,"price",h.price,"minimum",minimum,"have",have(player,h,material),"balance",h.service.balance(player),"physical",h.service.physical(player))
-                :plugin.messages().getList("forge.shop.quantity-details","sku",h.forge.sku(),"name",ForgeShopText.name(plugin.messages(),h.forge.sku()),"price",h.price,"units",h.units,"maximum",cap(h),"balance",h.service.balance(player),"physical",h.service.physical(player));
+                ?plugin.messages().getList(h.buy?"quantity.buy-details":"quantity.details","batch",h.batch,"price",ShopMoney.text(h.price),"minimum",minimum,"have",have(player,h,material),"balance",h.service.balanceText(player),"physical",h.service.physical(player))
+                :plugin.messages().getList("forge.shop.quantity-details","sku",h.forge.sku(),"name",ForgeShopText.name(plugin.messages(),h.forge.sku()),"price",h.price,"units",h.units,"maximum",cap(h),"balance",h.service.balanceText(player),"physical",h.service.physical(player));
             if(h.forge!=null){
                 var withPurpose=new ArrayList<>(ForgeShopText.purpose(plugin.messages(),h.forge.sku()));
                 withPurpose.addAll(lines);
@@ -134,16 +134,16 @@ public final class ShopQuantityGui implements Listener {
                 var result=plugin.forgeShop().purchase(player,h.forge,units);
                 if(result.success()){
                     plugin.messages().send(player,"trading.payment-detail","account",result.bankPaid(),"physical",result.physicalPaid(),"change",result.change());
-                    plugin.messages().send(player,"forge.shop.done","sku",h.forge.sku(),"name",ForgeShopText.name(plugin.messages(),h.forge.sku()),"units",result.units(),"cost",result.money(),"balance",h.service.balance(player),"physical",h.service.physical(player));
-                }else plugin.messages().send(player,result.errorKey(),"sku",h.forge.sku(),"cost",result.money(),"value",units,"units",units,"balance",h.service.balance(player),"limit",h.service.dailyLimit(player));
+                    plugin.messages().send(player,"forge.shop.done","sku",h.forge.sku(),"name",ForgeShopText.name(plugin.messages(),h.forge.sku()),"units",result.units(),"cost",result.money(),"balance",h.service.balanceText(player),"physical",h.service.physical(player));
+                }else plugin.messages().send(player,result.errorKey(),"sku",h.forge.sku(),"cost",result.money(),"value",units,"units",units,"balance",h.service.balanceText(player),"limit",h.service.dailyLimit(player));
                 if(active(player,h))plugin.forgeShopGui().open(player);
                 return;
             }
             var result=h.service.quoted(player,h.item,units,h.buy,h.batch,h.price);
             if(result.success()){
                 if(h.buy)plugin.messages().send(player,"trading.payment-detail","account",result.bankPaid(),"physical",result.physicalPaid(),"change",result.change());
-                plugin.messages().send(player,h.buy?"trading.buy-done":"trading.sell-done","material",h.item.material().toLowerCase(Locale.ROOT),"units",result.units(),"cost",result.money(),"income",result.money(),"balance",h.service.balance(player),"physical",h.service.physical(player));
-            }else plugin.messages().send(player,result.errorKey(),"material",h.item.material().toLowerCase(Locale.ROOT),"cost",result.money(),"value",units,"units",units,"balance",h.service.balance(player),"limit",h.service.dailyLimit(player));
+                plugin.messages().send(player,h.buy?"trading.buy-done":"trading.sell-done","material",h.item.material().toLowerCase(Locale.ROOT),"units",result.units(),"cost",ShopMoney.text(result.money()),"income",ShopMoney.text(result.money()),"balance",h.service.balanceText(player),"physical",h.service.physical(player));
+            }else plugin.messages().send(player,result.errorKey(),"material",h.item.material().toLowerCase(Locale.ROOT),"cost",ShopMoney.text(result.money()),"value",units,"units",units,"balance",h.service.balanceText(player),"limit",h.service.dailyLimit(player));
             if(active(player,h))plugin.gui().open(player,h.category,h.page);
         });
     }

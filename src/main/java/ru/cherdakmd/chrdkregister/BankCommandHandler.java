@@ -83,7 +83,7 @@ public final class BankCommandHandler implements CommandExecutor, TabCompleter {
             if(first.equals("stats")) {
                 if(!player.hasPermission("chrdkregister.bal")) {messages.send(player,"common.no-permission");return true;}
                 var s=bank.store().personalStats(player.getUniqueId());
-                messages.send(player,"economy.personal-stats","balance",BankService.format(s.balance()),"deposited",BankService.format(s.deposited()),
+                messages.send(player,"economy.personal-stats","balance",bank.store().balanceText(player.getUniqueId()),"deposited",BankService.format(s.deposited()),
                         "withdrawn",BankService.format(s.withdrawn()),"sent",BankService.format(s.sent()),"received",BankService.format(s.received()));return true;
             }
             switch (first) {
@@ -175,7 +175,7 @@ public final class BankCommandHandler implements CommandExecutor, TabCompleter {
         }
         messages.send(player, "economy.deposit-done",
                 "amount", BankService.format(credited),
-                "balance", BankService.format(bank.balance(player)));
+                "balance", bank.store().balanceText(player.getUniqueId()));
     }
 
     private void withdraw(Player player, String[] args) {

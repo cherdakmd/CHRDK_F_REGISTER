@@ -1,198 +1,198 @@
 {
   "pages": {
     "about": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "741396dbec264886ea9666daa1887a08122e6d0a1c4f04c699d8c8b2f96ba78a",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "6d2103052701f1ef22f36957547a1b80f43172232b8b7bb35987e08244ea8e03",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "570d31cd4a1e3a2782aa21ebd453b8a704423af504f0105e1dfb5fb90d6ab713",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "4c0b8e9ad31da1645718ec4c30ed1b8b19c4aaf7c654b4b70f734efbd986e572",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "ea620f8617a1fcf241f56e68e7c447c15aca82a23bf605ca14c1a9ba53686be8",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "3bb389be3737a7751220749aba78345ac70ad68b7f15bbb80cd09e402bd14d49",
       "text": "fcdffb1098428fac2bd42d1c4acb73bb9a024d1823d5398b8845bb2f415a506f"
     },
     "auction": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "47fe4931018e43d809478899b6eea3793f25b4b0aff5aee596e2fe7053911534",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "16249b71c084247238006586bcc1bea291886fb313195d0ff7ead4b5daa19d73",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "1ab45689a6b3fdb4cf13e0254a85eab18cc405025f7ee99bfcae757c70843510",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "c1c661cda630652ce196f92cbe718fdacc455a549e4a6469328e2f9364d5b46d",
       "text": "f368077b5f1961a1982957afe3b8523b60c8330f3dfd1891003d01ea1c4fd6db"
     },
     "chat": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "741396dbec264886ea9666daa1887a08122e6d0a1c4f04c699d8c8b2f96ba78a",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "6d2103052701f1ef22f36957547a1b80f43172232b8b7bb35987e08244ea8e03",
       "text": "ca6c93fc33fca52eecc7d38744bc86f619ea0b6a7bcc2314b84ca6c5399d8a1c"
     },
     "claims": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "987ff4ba9249598f08b41f6137a95b5a0ca3a30fea2f8250d0005081aa35577b",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "e2e21acc94e0ec929203a5fccfcd6162fcc8c321be933fe333228598bf740350",
       "text": "3144ca61235b895be5cb61e6d120d5dc6d6d0d7c26f87819431b4756659e8e12"
     },
     "classes": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "4cb34d56a024fa08d24295d3776a5035bcd68043f0f159aa56f49e4121f02c0d",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "60d056701edfba72658cde69cd5e3c26d8a69fac51c17031f871337267cb4592",
       "text": "fdebe780b6e7964249b5c4bc4752908cbdd67722e4d4bb0a4b1f64d94cd15ea1"
     },
     "commands": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "0ad2842e14a4fa8434b6970926e1ef574acfadddeb61bb54c0e0e9667dfdeb40",
+      "reason": "Сверены 1.5.5, API43, снятие лимита и дробные цены; игровые команды других модулей не изменены",
+      "sources": "5f2199c8f27cec42f97c76e570afbb8732eb753384e1193003dbd383f74d3674",
       "text": "3296406152bceb2efa2ebf39a602f5956e570cbe1416b120c5e02f4c6cbe4212"
     },
     "cosmetics": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "8a86e423b0df1ffd4e82f9ccdcc3eef5f6425ab2410b3b642cf9557b1a03d7b3",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "235f679205426595917ca49c85f4cb6cf79edb769f0edfa13b560d46cc98f7fa",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "4b1205382a2b95dd67061ba3ebac3c43f5e6cf099ea7bdb43e2d1e2400c8f526",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "da036b7e256734acbccf45697d0479c91445dbea2d37a447a2a5d5c92b0ded9b",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "disasters": {
-      "reason": "Исправлена Java-компиляция смерча: целый радиус randomAround после округления",
-      "sources": "151da1b4a71200add7b7941b8615502a830fcb816687953d536f8dee816fa39f",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "8afb50951e449d5a9b4f8a29434be41d0ed260975c50a4b25828cf1a9fff69e4",
       "text": "121b1cc28a075ced29b6de8abec7dbc20bbb531a01441ddd5fdb836d066d0202"
     },
     "economy": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "ff8da5635b8ea9ab674f28305081c039fc04d2355b5868bfceee2b57ec06105e",
-      "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
+      "reason": "Сверены 1.5.5, API43, снятие лимита и дробные цены; игровые команды других модулей не изменены",
+      "sources": "5611b6f85dca643ef293dfb0b98a7b65825a2f9af8e7d7d523fd5f8beec10012",
+      "text": "8bf0ed7b7eda4474aac3343dd1c6f72f988cb0791147e38a9fd465d0a5544957"
     },
     "enchants": {
-      "reason": "Сверены смешанные книги на тир-кирках: совместимость, атомарность, конфликты и Too Expensive",
-      "sources": "347ca52f17c9ad0a5ba3fa51fa838c07520ce53027f78c9b2115279cc69fe8c2",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "98f988723a3680c912d811053b9a2228d2701894097ec88e15647023694ac41e",
       "text": "c0e9924c0a5bc5d50f03118ec18f0ef57c43b79734e75205e096759a4cd05b59"
     },
     "faq": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "7b72817bea90fc1d4085318952793a0734346a8f865a116bcf717e0d7370251f",
+      "reason": "Сверены 1.5.5, API43, снятие лимита и дробные цены; игровые команды других модулей не изменены",
+      "sources": "8e9498263b63c4ce0146c24589dbced9a46ef6cc9efeb7e7ceb07d6adce8892b",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "e7b95207e9eb58ff080ee60da399361a664d8f61a09a1afa5494b847779190ff",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "200b015b3e674f119a93b4dfbc4a7317e7b9de65d2dc613983a7b44ce5ce20d4",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "987ff4ba9249598f08b41f6137a95b5a0ca3a30fea2f8250d0005081aa35577b",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "e2e21acc94e0ec929203a5fccfcd6162fcc8c321be933fe333228598bf740350",
       "text": "e166f2671aabcdf55ecf59d1465ddb19a36343f6d07983eb8b8821b3a63cce34"
     },
     "honors": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "741396dbec264886ea9666daa1887a08122e6d0a1c4f04c699d8c8b2f96ba78a",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "6d2103052701f1ef22f36957547a1b80f43172232b8b7bb35987e08244ea8e03",
       "text": "6bc29d5a2d7783845f8b3d9b085e85982faec5b3029d841092386f36b1d4c4b0"
     },
     "hunt": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "adc0365cd6f5dd34be0f2099390cdee0db01c250e06b6f2c7211955fdbab8e59",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "f453713eae73147a9c41cf36f541bd312c467345429ab3b362be0377ffb9188c",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "de6333814d75e894c978d252787b73869ee2e64c8bebbe66f9b7751dafb414e3",
+      "reason": "Сверены 1.5.5, API43, снятие лимита и дробные цены; игровые команды других модулей не изменены",
+      "sources": "4f216d795895b7c3cc63ef0eae3d6a94966089d32877ddc557c359e4f8a0c53e",
       "text": "6a3b9fedc0d15e6ef23ae50e7bf41cdf79f9efcc79299101944c041b5c2d9222"
     },
     "menu": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "ccda2b08a5bbc036789545866bcfe73df09882aec45dd8d8ea3901388ce7a79a",
+      "reason": "Сверены 1.5.5, API43, снятие лимита и дробные цены; игровые команды других модулей не изменены",
+      "sources": "931af832d0c63a0ba14352cfcc3be61316b677fd7c16b223789ddf7837334d02",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "moderation": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "741396dbec264886ea9666daa1887a08122e6d0a1c4f04c699d8c8b2f96ba78a",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "6d2103052701f1ef22f36957547a1b80f43172232b8b7bb35987e08244ea8e03",
       "text": "6d8005e0c6401cbdbac9595256c43dde07633b522a765a7a6c080da0ca212b5e"
     },
     "orders": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "6559bfa6a76bc1b629a225dd996f8fc27facbbaca3c11842eec77a8414b1dee6",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "a1b3d6cc64d59769be55390c1332a1dc576b78e800f249cfa8e89acd71bee406",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "perktree": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "4cb34d56a024fa08d24295d3776a5035bcd68043f0f159aa56f49e4121f02c0d",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "60d056701edfba72658cde69cd5e3c26d8a69fac51c17031f871337267cb4592",
       "text": "148006c785c6f0e5adf6725d87605f5e508b957636fdac87ea64939e7bd63b79"
     },
     "pets": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "68b328784891dc92dce8a120e19fd449acf6b09acfd1456a670a6b8edee9774f",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "8ffd9ca861b4805b6d23740bd91477a390ee9eefe7e87ca29748d324476590d2",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "fa975e5990a0447622e7eb7a1a941d0ded0c7e0344c29407b3c3128286c86b78",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "feed95804b4fcc62ae5fece62e09d92d89b5077a2466531354c4d134f0e83700",
       "text": "13e6d38670572890ab2567279a5ca76f8e353eab6ade09a877eee2e884c6e272"
     },
     "profile": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "a8011d9d34dfc801528fc40db5863b8725603b3c374eb757595863b5369d6367",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "8106cac4aa10187d359f5692c5869a5677e3ef3703a5e57a2f53e972dffe025d",
       "text": "6885b696d7ee4cd8bfefcca8d541dc8e26997f0da3619aa751ae1d31c71a2946"
     },
     "quests": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "da4502b5bee863a7b83b12a6f41794b404e61101f1cba6c14a9976fefa61e0d3",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "472ba75963feb0d0ab31979f3d7a382bb951ad62b7ff29c68ec88f853dc73e87",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "34ceda26a07a677bda504da1b21f3b92f22f2d30622e3c276b52fbee0fd5a873",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "72288889395ea3bea5ca30d51fcf3a5619e8cfcc1b263446129594ea268dd63e",
       "text": "b551d73e8dcc85c81ff7c908f7c89e1ebfb441b46d082a6a714124d77bfbb2c2"
     },
     "shop": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "de6333814d75e894c978d252787b73869ee2e64c8bebbe66f9b7751dafb414e3",
-      "text": "ea26b94a87ea9b7287d9afad8fe96c8633ed8cc92e9fb091369ebd814b3a86a6"
+      "reason": "Сверены 1.5.5, API43, снятие лимита и дробные цены; игровые команды других модулей не изменены",
+      "sources": "4f216d795895b7c3cc63ef0eae3d6a94966089d32877ddc557c359e4f8a0c53e",
+      "text": "9f9f49b31dec17a1b78ed766e521f9b939dc742d693f7b685b90b279a8b4535a"
     },
     "skills": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "e007ee0f1c9d361981dd58c248eb1caa262e801b4a412113033ffe35a483e65a",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "46aa0efa54f7dd07f97e351e08d4667a1a3bd937f2f7285a4a46eab74159b3c7",
       "text": "2cbe0faac3c272b71b3eb81fb78f5051b9eaa58e4ff682276af2c6bbdf74a98b"
     },
     "social-link": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "3b66bdfd45109a8b68a09ea1bbb7e23b943b0e91c84b3e954c2f161ae5368209",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "94028dceafb6a4e3ef5e26d78386316350a57cac4d4a1e42aada9ab9d2786981",
       "text": "1f6cf95d9c8c2180dbf871aa9b19a7bfcde5405cf77b75954b7575920d2aef14"
     },
     "start": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "7e02506044220e2120815ae973dd60bfadb27ce1e1b097bb20dcf9ddcd46eb9a",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "4650403c14dfea391760c38ab180f6b6f192590b67dc7ae13c8eefbc8dcc881f",
       "text": "c2835fdf2d1945079115e6a252d472ce72ad9ad79f4ed47ad58e269b467d595f"
     },
     "starter-kit": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "ea620f8617a1fcf241f56e68e7c447c15aca82a23bf605ca14c1a9ba53686be8",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "3bb389be3737a7751220749aba78345ac70ad68b7f15bbb80cd09e402bd14d49",
       "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
     },
     "teleports": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "318f8733ee4a8952ee97fd3506526f2550eae66e1f6fda479324a5582d14a8ab",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "064afa6e5b031b5d4af9db14875e20c6b650e629953e2e6d49e526508c4a3492",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "Сверены смешанные книги на тир-кирках: совместимость, атомарность, конфликты и Too Expensive",
-      "sources": "347ca52f17c9ad0a5ba3fa51fa838c07520ce53027f78c9b2115279cc69fe8c2",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "98f988723a3680c912d811053b9a2228d2701894097ec88e15647023694ac41e",
       "text": "cce495a2fd54e1ca454c6ccb464c61feb08fac15cfa1147700e0fe5c5614d972"
     },
     "titles": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "51b7c0ed574ee98ccf030a230e11487c136d8a0e2f9605413df8b8268eac70bd",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "99fd5877043fb99b97baf932563862678d2e16a1ce5b881263b57666c578afdb",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "de6333814d75e894c978d252787b73869ee2e64c8bebbe66f9b7751dafb414e3",
+      "reason": "Сверены 1.5.5, API43, снятие лимита и дробные цены; игровые команды других модулей не изменены",
+      "sources": "4f216d795895b7c3cc63ef0eae3d6a94966089d32877ddc557c359e4f8a0c53e",
       "text": "6c7fc3d3759106a8b639ec5922295e4d2affe1a524fc3086f98cb43fa024dee7"
     },
     "vk": {
-      "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
-      "sources": "3b66bdfd45109a8b68a09ea1bbb7e23b943b0e91c84b3e954c2f161ae5368209",
+      "reason": "Сверена API43: дробные только банк и shop; поведение остальных модулей не менялось, снят лимит оборота",
+      "sources": "94028dceafb6a4e3ef5e26d78386316350a57cac4d4a1e42aada9ab9d2786981",
       "text": "b592e465a73dd13186763622b51190400cffd40960e233f58c63379b88a9bba9"
     }
   },

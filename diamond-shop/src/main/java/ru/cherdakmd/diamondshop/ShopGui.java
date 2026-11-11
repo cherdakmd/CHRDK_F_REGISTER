@@ -147,8 +147,8 @@ public final class ShopGui implements Listener {
             double[] history = service.historyOf(item);
             List<Component> lore = new ArrayList<>(plugin.messages().getList(item.sellEnabled()?"quantity.item-lore":"quantity.buy-only-lore",
                     "price", PriceEngine.round(price),
-                    "bid", offer.bid(),
-                    "ask", offer.ask(), "batch", offer.batch(),
+                    "bid", ShopMoney.text(offer.bid()),
+                    "ask", ShopMoney.text(offer.ask()), "batch", offer.batch(),
                     "trend", PriceEngine.trend(history),
                     "history", PriceEngine.sparkline(history),
                     "stock", stock,
@@ -178,7 +178,7 @@ public final class ShopGui implements Listener {
         if (meta != null) {
             ShopService service = plugin.shopService();
             meta.displayName(plugin.messages().get("trading.gui.balance-name",
-                    "balance", service.balance(player)));
+                    "balance", service.balanceText(player)));
             List<Component> lore = new ArrayList<>();
             lore.add(plugin.messages().get("trading.gui.balance-lore",
                     "turnover", PriceEngine.round(service.store().turnover()), "physical", service.physical(player)));
@@ -188,7 +188,7 @@ public final class ShopGui implements Listener {
                 lore.add(plugin.messages().get("trading.gui.promo-line",
                         "type", promos.typeLabel(now),
                         "items", promos.featuredLabel(now),
-                        "left", promos.remaining(player.getUniqueId(), now)));
+                        "left", ShopMoney.text(promos.remaining(player.getUniqueId(), now))));
             }
             meta.lore(lore);
             icon.setItemMeta(meta);

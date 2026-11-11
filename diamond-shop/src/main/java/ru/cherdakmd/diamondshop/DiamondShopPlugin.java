@@ -52,7 +52,7 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
 
     @Override
     public void onEnable() {
-        try { if(ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<29) throw new IllegalStateException("Нужен Core API 29+"); }
+        try { if(ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<43) throw new IllegalStateException("Нужен Core API 43+"); }
         catch(Exception e) { getLogger().severe("Магазин выключен: нужен актуальный CHRDK_Core API 29+"); Bukkit.getPluginManager().disablePlugin(this); return; }
         saveDefaultConfig();
         ConfigUpgrader.apply(this);
