@@ -123,8 +123,8 @@ public final class StarterKitService implements Listener {
         }
         StarterKitPlan plan = StarterKitPlan.roll(config, random, artifactIds(config));
         if (plan.bankDiamonds() > 0) {
-            long balance = plugin.bankStore().deposit(
-                    player.getUniqueId(), player.getName(), plan.bankDiamonds());
+            long award=plugin.bankStore().diamondRate().scaleMinor(plan.bankDiamonds()*100L);
+            long balance = plugin.bankStore().depositMinor(player.getUniqueId(),player.getName(),award,true);
             if (balance < 0) {
                 logger().warning("[starter-kit] банк недоступен или счёт переполнен: "
                         + player.getName() + " не получил " + plan.bankDiamonds() + " на /bal");

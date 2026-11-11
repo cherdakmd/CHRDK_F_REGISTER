@@ -35,7 +35,7 @@ import java.util.UUID;
 public interface ChrdkRegisterApi {
 
     /** Версия контракта API. API42: восемь PDC-расходников Кузни, ForgeMarketCatalog, nullable frozen grant в ShopExchange и ForgeMaterialSource; API41: уведомление AnvilPaidResultEvent после ручной полной оплаты; API40: AnvilCosts/AnvilUse — полная цена без клиентского запрета 40; API39: денежная награда BP once и накопление буста без игрового потолка; API38: MobRewardPolicy временных мобов; API37: общие helpers ExplorationCatalog/ExplorationStore/ExplorationAtlas; API 33: мосты внешних интеграций (слушатели безопасности, уведомлений и глобального чата с фильтром получателей, бонус длительности покупок, заморозка входа и сброс сессий без смены пароля); API 32: общий владелец непрерывных пассивных зелий PassivePotions; API 30: общий helper одноразового согласия с котировкой; API 29: точный остаток выручки магазина; API 28: индекс членства кланов; API 27: снят источник оформления удалённого аддона; API 26: сняты контракты удалённых аддонов; API 25: durable checkpoint игровых наград; API 24 — Claims domain settlement. */
-    int API_VERSION = 43;
+    int API_VERSION = 44;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -279,6 +279,21 @@ public interface ChrdkRegisterApi {
     /** Сотые алмаза на личном счёте; -1 — банк недоступен. */
     default long personalDiamondsMinor(Player player) { return -1; }
     default String personalDiamondsText(Player player) { return null; }
+
+    /** API44: live bounded quotation of one physical diamond in exact hundredths. */
+    default int diamondRateBps() { return DiamondExchangePolicy.BASE_BPS; }
+    default DiamondExchangePolicy.Quote diamondRate() {
+        return new DiamondExchangePolicy.Quote(DiamondExchangePolicy.BASE_BPS, 0, 0, 0, 0, 0);
+    }
+    default long bankBalanceMinor(String playerName) { return -1L; }
+    default long auctionBankBalanceMinor(UUID owner) { return -1L; }
+    default long spendableBankBalanceMinor(UUID owner) { return -1L; }
+    /** API44: additive minor-unit reward; legacy whole-diamond grant remains unchanged. */
+    default MoneyGrant grantBattlePassMoneyMinorOnce(UUID player, String name, long minor, String receipt) {
+        return MoneyGrant.FAILED;
+    }
+    /** API44: atomic deltas in hundredths, after the caller's durable source checkpoint. */
+    default boolean exchangeAccountsMinor(java.util.Map<UUID, Long> deltas, Runnable commit) { return false; }
 
     default boolean personalBankAvailable() { return false; }
     default boolean registerIncomeSource(String source, UUID lineage) { return false; }

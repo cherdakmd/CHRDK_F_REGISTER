@@ -99,6 +99,10 @@ public final class BankService implements org.bukkit.event.Listener {
     }
 
     /** Счёт существует и имя известно банку. */
+    public ru.cherdakmd.chrdkregister.api.DiamondExchangePolicy.Quote marketQuote() {
+        return store.revalueMarket(Bukkit.getOnlinePlayers().size(),System.currentTimeMillis());
+    }
+
     public boolean known(String name) {
         return store.idByName(name) != null;
     }
@@ -204,6 +208,25 @@ public final class BankService implements org.bukkit.event.Listener {
         if(plan==null) return 0;
         return exchangeCash(player,BankCash.Kind.DEPOSIT,plan,before,worth,selected,amount)?plan.amount():-1;
     }
+    /** Returns exact bank credit for the selected physical items at one frozen quote. */
+    public long depositMinor(Player player,boolean handOnly,long requestedItems) {
+        if(!cashReady(player)) return -1;
+        var before=ru.cherdakmd.chrdkregister.api.ChargeInventory.copy(player.getInventory().getStorageContents());
+        int selected=handOnly?player.getInventory().getHeldItemSlot():-1;
+        var plan=BankCashInventory.deposit(before,selected,requestedItems,settings().blockWorth(),store.balance(player.getUniqueId()));
+        if(plan==null) return 0;
+        long credit=marketQuote().creditMinor(plan.amount());
+        return exchangeMarketCash(player,BankCash.Kind.DEPOSIT,plan,before,settings().blockWorth(),selected,requestedItems,credit)?credit:-1;
+    }
+    private boolean exchangeMarketCash(Player player,BankCash.Kind kind,BankCashInventory.Plan plan,ItemStack[] before,int worth,int selected,long request,long delta) {
+        try {
+            var intent=store.prepareMarketCash(player.getUniqueId(),player.getName(),kind,plan.amount(),delta,worth,selected,request,
+                    ru.cherdakmd.chrdkregister.api.ChargeInventory.encode(before),ru.cherdakmd.chrdkregister.api.ChargeInventory.encode(plan.after()));
+            if(intent==null) { if(!store.available()||store.cashLocked(player.getUniqueId())) lockCash(player); return false; }
+            return recoverCash(player)==ru.cherdakmd.chrdkregister.api.InventoryTransfer.Decision.APPLIED;
+        } catch(Exception error) { plugin.getLogger().log(java.util.logging.Level.SEVERE,"Рыночный обмен ожидает сверки",error); lockCash(player); return false; }
+    }
+
     private boolean exchangeCash(Player player,BankCash.Kind kind,BankCashInventory.Plan plan,ItemStack[] before,int worth,int selected,long request) {
         try {
             var intent=store.prepareCash(player.getUniqueId(),player.getName(),kind,plan.amount(),worth,selected,request,
@@ -229,6 +252,19 @@ public final class BankService implements org.bukkit.event.Listener {
         if(plan==null) return new WithdrawResult(WithdrawStatus.NO_SPACE,amount,balance);
         boolean done=exchangeCash(player,BankCash.Kind.WITHDRAW,plan,before,1,-1,amount);
         return new WithdrawResult(done?WithdrawStatus.OK:WithdrawStatus.UNAVAILABLE,amount,store.balance(player.getUniqueId()));
+    }
+
+    public record MarketWithdrawResult(WithdrawStatus status,long items,long debit,long balanceMinor) { }
+    public MarketWithdrawResult withdrawMarket(Player player,long items) {
+        if(player==null||items<=0) return new MarketWithdrawResult(WithdrawStatus.NOT_ENOUGH,Math.max(0,items),0,0);
+        if(!cashReady(player)) return new MarketWithdrawResult(WithdrawStatus.UNAVAILABLE,items,0,store.balanceMinor(player.getUniqueId()));
+        long debit=marketQuote().creditMinor(items);
+        if(store.spendableBalanceMinor(player.getUniqueId())<debit) return new MarketWithdrawResult(WithdrawStatus.NOT_ENOUGH,items,debit,store.balanceMinor(player.getUniqueId()));
+        var before=ru.cherdakmd.chrdkregister.api.ChargeInventory.copy(player.getInventory().getStorageContents());
+        var plan=BankCashInventory.withdraw(before,items);
+        if(plan==null) return new MarketWithdrawResult(WithdrawStatus.NO_SPACE,items,debit,store.balanceMinor(player.getUniqueId()));
+        boolean done=exchangeMarketCash(player,BankCash.Kind.WITHDRAW,plan,before,1,-1,items,-debit);
+        return new MarketWithdrawResult(done?WithdrawStatus.OK:WithdrawStatus.UNAVAILABLE,items,debit,store.balanceMinor(player.getUniqueId()));
     }
 
     /** Сколько алмазов влезает в инвентарь с учётом неполных стаков обычных алмазов. */
@@ -310,6 +346,21 @@ public final class BankService implements org.bukkit.event.Listener {
                 result.credited(), result.fromBalance(), 0L);
     }
 
+    public PayResult payMinor(Player source,String targetName,long amount) {
+        EconomySettings config=settings();
+        if(!enabled()||!authenticated(source)||!source.hasPermission("chrdkregister.pay")) return new PayResult(BankStore.Status.UNAVAILABLE,targetName,amount,0,0,0,0);
+        String name=targetName==null?"":targetName.trim();
+        if(name.isEmpty()) return new PayResult(BankStore.Status.UNKNOWN_PLAYER,name,amount,0,0,0,0);
+        long cooldown=cooldownLeft(source); if(cooldown>0) return new PayResult(BankStore.Status.COOLDOWN,name,amount,0,0,0,cooldown);
+        if(amount<config.minPay()*100L||amount>config.maxPay()*100L) return new PayResult(BankStore.Status.INVALID_AMOUNT,name,amount,0,0,0,0);
+        Player online=Bukkit.getPlayerExact(name); UUID target=online!=null?online.getUniqueId():(config.allowOfflinePay()?store.idByName(name):null);
+        if(target==null) return new PayResult(BankStore.Status.UNKNOWN_PLAYER,name,amount,0,0,0,0);
+        String display=online==null?name:online.getName();
+        var result=store.transferMinor(source.getUniqueId(),source.getName(),target,display,amount,config.payTaxPercent());
+        if(result.ok()) lastPay.put(source.getUniqueId(),System.currentTimeMillis());
+        return new PayResult(result.status(),display,amount,result.tax(),result.credited(),result.fromBalance(),0);
+    }
+
     public record PayQuote(BankStore.Status status, UUID recipient, String name, long amount,
                            long tax, long net, int percent) { }
     public PayQuote previewPay(Player player, String name, long amount) {
@@ -324,6 +375,19 @@ public final class BankService implements org.bukkit.event.Listener {
         return new PayQuote(q.status(),id,display,amount,q.tax(),q.credited(),c.payTaxPercent());
     }
 
+    public PayQuote previewPayMinor(Player player,String name,long amount) {
+        var c=settings();
+        if(!enabled()||!authenticated(player)||!player.hasPermission("chrdkregister.pay")) return new PayQuote(BankStore.Status.UNAVAILABLE,null,name,amount,0,0,c.payTaxPercent());
+        Player online=Bukkit.getPlayerExact(name); UUID id=online!=null?online.getUniqueId():(c.allowOfflinePay()?store.idByName(name):null);
+        String display=online==null?name:online.getName();
+        if(amount<c.minPay()*100L||amount>c.maxPay()*100L) return new PayQuote(BankStore.Status.INVALID_AMOUNT,id,display,amount,0,0,c.payTaxPercent());
+        if(id==null) return new PayQuote(BankStore.Status.UNKNOWN_PLAYER,null,display,amount,0,0,c.payTaxPercent());
+        if(id.equals(player.getUniqueId())) return new PayQuote(BankStore.Status.SELF_TRANSFER,id,display,amount,0,0,c.payTaxPercent());
+        if(store.spendableBalanceMinor(player.getUniqueId())<amount) return new PayQuote(BankStore.Status.NOT_ENOUGH,id,display,amount,0,0,c.payTaxPercent());
+        long tax=java.math.BigDecimal.valueOf(amount).multiply(java.math.BigDecimal.valueOf(c.payTaxPercent())).divide(java.math.BigDecimal.valueOf(100),0,java.math.RoundingMode.HALF_UP).longValue();
+        return new PayQuote(BankStore.Status.OK,id,display,amount,tax,amount-tax,c.payTaxPercent());
+    }
+
     /* ---------------------------------- топ ----------------------------------- */
 
     public List<BankStore.Entry> baltop() {
@@ -331,6 +395,25 @@ public final class BankService implements org.bukkit.event.Listener {
     }
 
     /* -------------------------------- утилиты --------------------------------- */
+
+    /** Exact user input in diamonds, with at most two fractional digits and k/m suffixes. */
+    public static long parseMinor(String raw) {
+        if(raw==null) return -1;
+        String value=raw.trim().toLowerCase(Locale.ROOT).replace(" ","").replace("_","").replace(',','.');
+        long multiplier=100L;
+        if(value.endsWith("k")||value.endsWith("к")) { multiplier=100_000L; value=value.substring(0,value.length()-1); }
+        else if(value.endsWith("m")||value.endsWith("м")) { multiplier=100_000_000L; value=value.substring(0,value.length()-1); }
+        try {
+            if(value.length()>64||!value.matches("[0-9]+(?:\\.[0-9]{1,2})?")) return -1;
+            long amount=new java.math.BigDecimal(value).movePointRight(2).multiply(java.math.BigDecimal.valueOf(multiplier/100L)).longValueExact();
+            return amount<1||amount>BankStore.MAX_BALANCE*100L?-1:amount;
+        } catch(NumberFormatException|ArithmeticException error) { return -1; }
+    }
+    public static String formatMinor(long minor) {
+        if(minor<0) return "—";
+        String sign=minor<0?"-":""; long whole=Math.floorDiv(minor,100); int fraction=(int)Math.floorMod(minor,100);
+        return format(whole)+(fraction==0?"":String.format(Locale.ROOT,",%02d",fraction));
+    }
 
     /** Разбор суммы: {@code 1 000}, {@code 1k}, {@code 1.5k}, {@code all}. */
     public static long parseAmount(String raw) {

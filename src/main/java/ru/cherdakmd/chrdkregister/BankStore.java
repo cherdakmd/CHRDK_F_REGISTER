@@ -7,6 +7,7 @@ import ru.cherdakmd.chrdkregister.api.BankCharge;
 import ru.cherdakmd.chrdkregister.api.ShopExchange;
 import ru.cherdakmd.chrdkregister.api.ClaimExchange;
 import ru.cherdakmd.chrdkregister.api.DiamondMoney;
+import ru.cherdakmd.chrdkregister.api.DiamondExchangePolicy;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -46,7 +47,7 @@ import java.util.logging.Logger;
 public final class BankStore {
 
     /** Версия формата файла. */
-    public static final int SCHEMA_VERSION = 9;
+    public static final int SCHEMA_VERSION = 10;
     /** Верхняя граница счёта: защита от переполнения и «бесконечных» начислений. */
     public static final long MAX_BALANCE = 1_000_000_000L;
 
@@ -122,6 +123,9 @@ public final class BankStore {
         Map<String, Entitlement> entitlementCredits = new LinkedHashMap<>();
         Map<UUID, AuctionImport> auctionImports = new LinkedHashMap<>();
         Map<UUID, AuctionPayment> auctionSettlements = new LinkedHashMap<>();
+        DiamondExchangePolicy.Snapshot marketSnapshot = new DiamondExchangePolicy.Snapshot(0,0,0,0,0,0,0,1_000_000,20);
+        int marketRateBps = DiamondExchangePolicy.BASE_BPS;
+        long marketUpdated;
     }
 
     private final Map<UUID,BankCash.Intent> cashPending=new LinkedHashMap<>();
@@ -171,19 +175,37 @@ public final class BankStore {
         var receipt=cashReceipts.get(intent.owner());
         if(receipt!=null&&receipt.matches(intent)&&!cashLocked(intent.owner())) return true;
         if(!intent.equals(cashPending.get(intent.owner()))||balance(intent.owner())!=intent.beforeBalance()) return false;
+        if(intent.minorDelta()!=0&&balanceMinor(intent.owner())!=intent.beforeBalanceMinor()) return false;
         if(intent.shop()!=null && intent.shop().carriesRemainder() && !intent.shop().remainderBefore().equals(shopSaleRemainder(intent.owner()))) return false;
         var next=envelope(); var account=next.accounts.get(intent.owner().toString());
         if(intent.shop()!=null && intent.shop().carriesRemainder()) {
             if(ru.cherdakmd.chrdkregister.api.ShopSaleRemainder.ZERO.equals(intent.shop().remainderAfter())) next.shopSaleRemainders.remove(intent.owner());
             else next.shopSaleRemainders.put(intent.owner(),intent.shop().remainderAfter());
         }
-        if(intent.shop()!=null && intent.shop().fractional()) adjustMinor(account,intent.shop().credit()-intent.shop().debit());
+        if(intent.minorDelta()!=0) adjustMinor(account,intent.minorDelta());
+        else if(intent.shop()!=null && intent.shop().fractional()) adjustMinor(account,intent.shop().credit()-intent.shop().debit());
         else if(intent.shop()!=null) { adjust(account,-intent.shop().debit()); adjust(account,intent.shop().credit()); }
         else adjust(account,intent.afterBalance()-intent.beforeBalance());
         next.cashPending.remove(intent.owner()); next.cashReceipts.put(intent.owner(),new BankCash.Receipt(intent.sequence(),intent.transaction(),intent.kind(),intent.amount()));
         if(intent.shop()!=null) next.shopSettlements.put(intent.shop().market(),intent.shop());
         return publishAuction(next);
     }
+    synchronized BankCash.Intent prepareMarketCash(UUID owner,String name,BankCash.Kind kind,long items,long minorDelta,int blockWorth,int selected,long request,String before,String after) {
+        if(!available||owner==null||cashLocked(owner)||(kind!=BankCash.Kind.DEPOSIT&&kind!=BankCash.Kind.WITHDRAW)) return null;
+        long beforeMinor=balanceMinor(owner);
+        if(beforeMinor<0||minorDelta==0||kind==BankCash.Kind.DEPOSIT&&(minorDelta<0||beforeMinor>MAX_BALANCE*100L-minorDelta)
+                ||kind==BankCash.Kind.WITHDRAW&&(minorDelta>=0||spendableBalanceMinor(owner)<-minorDelta)) return null;
+        var old=cashReceipts.get(owner);long sequence=old==null?1:old.sequence()+1;
+        var intent=new BankCash.Intent(UUID.randomUUID(),owner,sequence,kind,items,balance(owner),blockWorth,selected,request,before,after,null,beforeMinor,minorDelta);
+        if(!intent.valid()) return null;
+        var next=envelope();var account=next.accounts.computeIfAbsent(owner.toString(),id->new Account());String clean=sanitize(name);if(!clean.isBlank())account.name=clean;
+        next.cashPending.put(owner,intent);
+        next.marketSnapshot=new DiamondExchangePolicy.Snapshot(marketSnapshot.circulation(),marketSnapshot.minted()+(minorDelta>0?minorDelta:0),
+                marketSnapshot.burned()+(minorDelta<0?-minorDelta:0),marketSnapshot.shopTurnover(),marketSnapshot.auctionTurnover(),
+                marketSnapshot.activeAccounts(),marketSnapshot.onlinePlayers(),marketSnapshot.targetCirculation(),marketSnapshot.targetActiveAccounts());
+        return publishAuction(next)?intent:null;
+    }
+
     public synchronized boolean registerShop(UUID market) { return registerIncomeSource("diamond-shop",market); }
     public synchronized ShopExchange.Status shopStatus(ShopExchange t) {
         if(!available||t==null||!t.valid()||!t.market().equals(entitlementSources.get("diamond-shop"))) return ShopExchange.Status.UNAVAILABLE;
@@ -233,6 +255,31 @@ public final class BankStore {
     public record AuctionImport(UUID market, long amount) { }
     private final Map<UUID, AuctionImport> auctionImports = new LinkedHashMap<>();
     private final Map<UUID, AuctionPayment> auctionSettlements = new LinkedHashMap<>();
+    private DiamondExchangePolicy.Snapshot marketSnapshot = new DiamondExchangePolicy.Snapshot(0,0,0,0,0,0,0,1_000_000,20);
+    private int marketRateBps = DiamondExchangePolicy.BASE_BPS;
+    private long marketUpdated;
+    public synchronized int diamondRateBps() { return marketRateBps; }
+    public synchronized DiamondExchangePolicy.Quote diamondRate() {
+        var calculated=DiamondExchangePolicy.quote(marketSnapshot,marketRateBps);
+        return new DiamondExchangePolicy.Quote(marketRateBps,calculated.demandBps(),calculated.inflationBps(),
+                calculated.emissionBps(),calculated.activityBps(),calculated.turnoverBps());
+    }
+    public synchronized DiamondExchangePolicy.Quote revalueMarket(long onlinePlayers,long now) {
+        if(!available) return diamondRate();
+        if(now-marketUpdated<300_000L) return diamondRate();
+        long circulation=0,active=0;
+        for(var account:accounts.values()) { circulation=Math.addExact(circulation,Math.multiplyExact(account.balance,100L)+account.minor); if(now-account.updated<7*86_400_000L) active++; }
+        marketSnapshot=new DiamondExchangePolicy.Snapshot(circulation,marketSnapshot.minted(),marketSnapshot.burned(),
+                marketSnapshot.shopTurnover(),marketSnapshot.auctionTurnover(),active,Math.max(0,onlinePlayers),1_000_000,20);
+        marketRateBps=DiamondExchangePolicy.quote(marketSnapshot,marketRateBps).rateBps(); marketUpdated=now; dirty=true;
+        return diamondRate();
+    }
+    private synchronized void marketFlow(long minted,long burned,long shop,long auction) {
+        marketSnapshot=new DiamondExchangePolicy.Snapshot(marketSnapshot.circulation(),marketSnapshot.minted()+Math.max(0,minted),
+                marketSnapshot.burned()+Math.max(0,burned),marketSnapshot.shopTurnover()+Math.max(0,shop),
+                marketSnapshot.auctionTurnover()+Math.max(0,auction),marketSnapshot.activeAccounts(),marketSnapshot.onlinePlayers(),
+                marketSnapshot.targetCirculation(),marketSnapshot.targetActiveAccounts()); dirty=true;
+    }
     public record ClaimsImport(UUID player, long amount) { }
     private final Map<String, ClaimsImport> claimsImports = new LinkedHashMap<>();
 
@@ -318,11 +365,15 @@ public final class BankStore {
                     var v=e.getValue(); if(!v.isJsonPrimitive() || !v.getAsJsonPrimitive().isString() || !ru.cherdakmd.chrdkregister.api.ShopSaleRemainder.valid(v.getAsString()) || "0/1".equals(v.getAsString())) throw new IllegalArgumentException("shop sale remainder");
                 }
             } else if(object.has("shopSaleRemainders") && !object.getAsJsonObject("shopSaleRemainders").isEmpty()) throw new IllegalArgumentException("downgraded sale remainder schema");
+            if(schema<10 && (object.has("marketSnapshot") || object.has("marketRateBps"))) throw new IllegalArgumentException("downgraded market");
             if(schema<9) {
                 if(object.has("shopSettlements")) for(var e:object.getAsJsonObject("shopSettlements").entrySet()) if(e.getValue().getAsJsonObject().has("fractional")) throw new IllegalArgumentException("downgraded fractional shop");
                 for(var e:object.getAsJsonObject("accounts").entrySet()) if(e.getValue().getAsJsonObject().has("minor")&&e.getValue().getAsJsonObject().get("minor").getAsInt()!=0) throw new IllegalArgumentException("downgraded minor balance");
             }
             Envelope envelope = GSON.fromJson(document, Envelope.class);
+            if(envelope.marketSnapshot!=null) marketSnapshot=envelope.marketSnapshot;
+            marketRateBps=Math.clamp(envelope.marketRateBps,DiamondExchangePolicy.MIN_BPS,DiamondExchangePolicy.MAX_BPS);
+            marketUpdated=Math.max(0,envelope.marketUpdated);
             entitlementSources.clear(); entitlementCredits.clear();
             if (envelope.entitlementSources != null) for (var row : envelope.entitlementSources.entrySet()) {
                 if (!validIncomeSource(row.getKey()) || row.getValue() == null) throw new IllegalArgumentException("Неверный источник доходов");
@@ -577,6 +628,57 @@ public final class BankStore {
      *
      * @return новый баланс или {@code -1}, если счёт переполнился
      */
+    /** Exact minor credit used by market-priced income. Returns the full minor balance or -1. */
+    public synchronized long depositMinor(UUID id,String name,long amount,boolean marketPriced) {
+        if(!available||id==null||amount<=0||cashLocked(id)||balanceMinor(id)>MAX_BALANCE*100L-amount) return -1L;
+        var next=envelope(); var account=next.accounts.computeIfAbsent(id.toString(),key->new Account());
+        String clean=sanitize(name); if(!clean.isBlank()) account.name=clean;
+        adjustMinor(account,amount); next.marketSnapshot=new DiamondExchangePolicy.Snapshot(marketSnapshot.circulation(),
+                marketSnapshot.minted()+(marketPriced?amount:0),marketSnapshot.burned(),marketSnapshot.shopTurnover(),
+                marketSnapshot.auctionTurnover(),marketSnapshot.activeAccounts(),marketSnapshot.onlinePlayers(),
+                marketSnapshot.targetCirculation(),marketSnapshot.targetActiveAccounts());
+        return publishAuction(next)?balanceMinor(id):-1L;
+    }
+    public synchronized boolean withdrawMinor(UUID id,long amount,boolean burned) {
+        if(!available||id==null||amount<=0||cashLocked(id)||spendableBalanceMinor(id)<amount) return false;
+        var next=envelope(); adjustMinor(next.accounts.get(id.toString()),-amount);
+        next.marketSnapshot=new DiamondExchangePolicy.Snapshot(marketSnapshot.circulation(),marketSnapshot.minted(),
+                marketSnapshot.burned()+(burned?amount:0),marketSnapshot.shopTurnover(),marketSnapshot.auctionTurnover(),
+                marketSnapshot.activeAccounts(),marketSnapshot.onlinePlayers(),marketSnapshot.targetCirculation(),marketSnapshot.targetActiveAccounts());
+        return publishAuction(next);
+    }
+    public synchronized TransferResult transferMinor(UUID from,String fromName,UUID to,String toName,long amount,int taxPercent) {
+        if(!available||from==null||to==null||cashLocked(from)||cashLocked(to)) return TransferResult.failed(Status.UNAVAILABLE,amount);
+        if(from.equals(to)) return TransferResult.failed(Status.SELF_TRANSFER,amount);
+        if(amount<=0||taxPercent<0||taxPercent>50) return TransferResult.failed(Status.INVALID_AMOUNT,amount);
+        if(!accounts.containsKey(to)) return TransferResult.failed(Status.UNKNOWN_PLAYER,amount);
+        long tax=java.math.BigDecimal.valueOf(amount).multiply(java.math.BigDecimal.valueOf(taxPercent))
+                .divide(java.math.BigDecimal.valueOf(100),0,java.math.RoundingMode.HALF_UP).longValue();
+        long credited=amount-tax;
+        if(credited<=0||spendableBalanceMinor(from)<amount) return TransferResult.failed(Status.NOT_ENOUGH,amount);
+        if(balanceMinor(to)>MAX_BALANCE*100L-credited) return TransferResult.failed(Status.LIMIT_EXCEEDED,amount);
+        var next=envelope(); var source=next.accounts.get(from.toString()); var target=next.accounts.get(to.toString());
+        String clean=sanitize(fromName);if(!clean.isBlank())source.name=clean;
+        adjustMinor(source,-amount); adjustMinor(target,credited);
+        next.marketSnapshot=new DiamondExchangePolicy.Snapshot(marketSnapshot.circulation(),marketSnapshot.minted(),marketSnapshot.burned()+tax,
+                marketSnapshot.shopTurnover(),marketSnapshot.auctionTurnover(),marketSnapshot.activeAccounts(),marketSnapshot.onlinePlayers(),
+                marketSnapshot.targetCirculation(),marketSnapshot.targetActiveAccounts());
+        if(!publishAuction(next)) return TransferResult.failed(Status.UNAVAILABLE,amount);
+        return new TransferResult(Status.OK,amount,tax,credited,balanceMinor(from),balanceMinor(to));
+    }
+    /** Atomic minor deltas for guild/claim treasuries and other server-side markets. */
+    public synchronized boolean exchangeAccountsMinor(Map<UUID,Long> deltas,Runnable commit) {
+        if(!available||deltas==null||deltas.isEmpty()||deltas.size()>8||commit==null) return false;
+        for(var e:deltas.entrySet()) {
+            if(e.getKey()==null||e.getValue()==null||cashLocked(e.getKey())) return false;
+            long next=balanceMinor(e.getKey())+e.getValue();
+            if(next<0||next>MAX_BALANCE*100L||e.getValue()<0&&spendableBalanceMinor(e.getKey()) < -e.getValue()) return false;
+        }
+        commit.run(); var next=envelope();
+        deltas.forEach((id,delta)->adjustMinor(next.accounts.computeIfAbsent(id.toString(),key->new Account()),delta));
+        return publishAuction(next);
+    }
+
     public synchronized long deposit(UUID id, String name, long amount) {
         if (!available || cashLocked(id)) return -1L;
         if (id == null || amount <= 0L) {
@@ -827,6 +929,26 @@ public final class BankStore {
         return publishAuction(next) ? ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.MoneyGrant.ADDED : failed;
     }
 
+    public synchronized ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.MoneyGrant grantBattlePassMoneyMinorOnce(
+            UUID owner,long minor,String receipt) {
+        var failed=ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.MoneyGrant.FAILED;
+        if(!available||owner==null||minor<=0||minor>MAX_BALANCE*100L||receipt==null||!receipt.matches("bp:[a-f0-9]{64}")) return failed;
+        String source="battlepass-rewards",key=source+":"+receipt.replace(':','_');
+        UUID lineage=UUID.nameUUIDFromBytes("CHRDK:BattlePass:money:v1".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        if(!lineage.equals(entitlementSources.get(source))) return failed;
+        Entitlement previous=entitlementCredits.get(key);
+        if(previous!=null) return previous.owner().equals(owner)&&previous.credited()==minor
+                ?ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.MoneyGrant.ALREADY:failed;
+        if(cashLocked(owner)) return failed;
+        if(balanceMinor(owner)>MAX_BALANCE*100L-minor) return ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.MoneyGrant.FULL;
+        var next=envelope(); adjustMinor(next.accounts.computeIfAbsent(owner.toString(),ignored->new Account()),minor);
+        next.entitlementSources.put(source,lineage); next.entitlementCredits.put(key,new Entitlement(owner,minor));
+        next.marketSnapshot=new DiamondExchangePolicy.Snapshot(marketSnapshot.circulation(),marketSnapshot.minted()+minor,marketSnapshot.burned(),
+                marketSnapshot.shopTurnover(),marketSnapshot.auctionTurnover(),marketSnapshot.activeAccounts(),marketSnapshot.onlinePlayers(),
+                marketSnapshot.targetCirculation(),marketSnapshot.targetActiveAccounts());
+        return publishAuction(next)?ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.MoneyGrant.ADDED:failed;
+    }
+
     /** Источник — долговечный монотонный total, не расходуемый кошелёк. Кредитуется только delta. */
     public synchronized boolean creditEntitlement(String source, UUID lineage, String key, UUID owner, long total) {
         long credited = creditedEntitlement(source, lineage, key, owner);
@@ -921,6 +1043,7 @@ public final class BankStore {
         entitlementCredits.clear(); entitlementCredits.putAll(next.entitlementCredits);
         auctionImports.clear(); auctionImports.putAll(next.auctionImports);
         auctionSettlements.clear(); auctionSettlements.putAll(next.auctionSettlements);
+        marketSnapshot=next.marketSnapshot; marketRateBps=next.marketRateBps; marketUpdated=next.marketUpdated;
         byName.clear(); accounts.forEach((id,account)->{if(!account.name.isBlank()) byName.put(normalize(account.name),id);});
         dirty = false; return true;
     }
@@ -947,6 +1070,7 @@ public final class BankStore {
         envelope.chargeWitnesses.putAll(chargeWitnesses);
         envelope.entitlementSources.putAll(entitlementSources); envelope.entitlementCredits.putAll(entitlementCredits);
         envelope.auctionImports.putAll(auctionImports); envelope.auctionSettlements.putAll(auctionSettlements);
+        envelope.marketSnapshot=marketSnapshot; envelope.marketRateBps=marketRateBps; envelope.marketUpdated=marketUpdated;
         return envelope;
     }
     private void writeStrict(Envelope envelope) throws IOException {

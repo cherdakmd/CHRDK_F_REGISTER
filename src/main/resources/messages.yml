@@ -1182,6 +1182,7 @@ messages:
     need-auth: '<red>Сначала авторизуйтесь: /login.</red>'
     confirm-busy: '<yellow>Сейчас нельзя сохранить подтверждение. Подождите 30 секунд и запросите условия ещё раз. Операция не выполнена.</yellow>'
     personal-debt: '<yellow>Под штрафной долг зарезервировано: %reserved% алм.; доступно для расходов: %available% алм. Подробности: /clan mode status.</yellow>'
+    rate: '<gold>Курс: 1 алмаз = %rate% на счёте.</gold><newline><gray>Факторы (bps): спрос %demand%, денежная масса %inflation%, эмиссия %emission%, активность %activity%, оборот %turnover%.</gray>'
     personal-stats: '<gold>Личный банк: %balance% алм.</gold><newline><gray>Внесено: %deposited%; снято: %withdrawn%; отправлено: %sent%; получено: %received%. Исторические счётчики банка неполные: это не все доходы/расходы и не прибыль.</gray>'
     health: '<gold>Банк: доступен %healthy%, счетов %accounts%, на счетах %total% алм.</gold><newline><gray>Доля топ-10: %share%%; ожидают обмена: %pending%, квитанций: %receipts%. Без физических алмазов и коллективных казён; это не полный аудит экономики и не показатель эмиссии.</gray>'
     pay-preview: '<gold>Перевод %player%: списание %amount%, комиссия %tax%, получателю %net% алм.</gold><newline><yellow>В течение 30 секунд: /pay %player% %raw% confirm</yellow><newline><gray>Это не резерв: при подтверждении банк повторно проверит доступность, лимиты и паузу.</gray>'

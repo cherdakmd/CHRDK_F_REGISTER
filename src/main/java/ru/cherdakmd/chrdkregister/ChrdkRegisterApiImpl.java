@@ -164,6 +164,17 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi, IncomeSourceLineag
     @Override public long spendableBankBalance(java.util.UUID owner) { return auctionBankReady() && owner != null ? bank.spendableBalance(owner) : -1; }
     @Override public long personalDiamondsMinor(org.bukkit.entity.Player player) { return auctionBankReady()&&player!=null ? bank.balanceMinor(player.getUniqueId()) : -1; }
     @Override public String personalDiamondsText(org.bukkit.entity.Player player) { return auctionBankReady()&&player!=null ? bank.balanceText(player.getUniqueId()) : null; }
+    @Override public int diamondRateBps() { return bank.diamondRateBps(); }
+    @Override public ru.cherdakmd.chrdkregister.api.DiamondExchangePolicy.Quote diamondRate() { return bank.diamondRate(); }
+    @Override public long bankBalanceMinor(String playerName) { var id=bank.idByName(playerName); return id==null?-1:bank.balanceMinor(id); }
+    @Override public long auctionBankBalanceMinor(java.util.UUID owner) { return auctionBankReady()&&owner!=null?bank.balanceMinor(owner):-1; }
+    @Override public long spendableBankBalanceMinor(java.util.UUID owner) { return auctionBankReady()&&owner!=null?bank.spendableBalanceMinor(owner):-1; }
+    @Override public boolean exchangeAccountsMinor(java.util.Map<java.util.UUID,Long> deltas,Runnable commit) {
+        return auctionBankReady()&&bank.exchangeAccountsMinor(deltas,commit);
+    }
+    @Override public MoneyGrant grantBattlePassMoneyMinorOnce(java.util.UUID player,String name,long minor,String receipt) {
+        return bank.grantBattlePassMoneyMinorOnce(player,minor,receipt);
+    }
     @Override public boolean commitGuildBankCharge(ru.cherdakmd.chrdkregister.api.BankCharge payment, boolean collectingDebt) {
         if (!auctionBankReady() || payment == null || !payment.valid() || !payment.source().equals("guilds")
                 || payment.cash()!=0 || payment.change()!=0 || payment.price()!=payment.debit() || !bank.knows(payment.payer())) return false;

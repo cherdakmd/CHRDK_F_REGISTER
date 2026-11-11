@@ -74,7 +74,7 @@ class ShopNativeBankTest {
         var bag=bag(); BankCash.recover(b,owner,bag); BankCash.recover(load(),owner,bag);
         var loaded=load(); assertEquals(10,loaded.balance(owner)); assertEquals(1001,loaded.balanceMinor(owner));
         assertEquals("10,01",loaded.balanceText(owner)); assertEquals(1,bag.applies);
-        assertEquals(9,JsonParser.parseString(Files.readString(loaded.file())).getAsJsonObject().get("schema").getAsInt());
+        assertEquals(10,JsonParser.parseString(Files.readString(loaded.file())).getAsJsonObject().get("schema").getAsInt());
     }
     @Test void fractionalBuyAndPhysicalChangeBalanceExactly() throws Exception {
         var b=funded(0); var t=minorTrade(true,37,0,63,1,1); assertTrue(t.valid()); assertTrue(b.prepareShop(t,"Steve"));
