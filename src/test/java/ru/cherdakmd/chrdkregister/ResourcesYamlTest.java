@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -82,6 +83,14 @@ class ResourcesYamlTest {
                 fail("В config.yml секции spawn нет ключа " + key);
             }
         }
+    }
+
+    @Test
+    void antiMultiAltDefaultsAllowTwoAccountsPerIp() throws Exception {
+        YamlConfiguration config = YamlConfiguration.loadConfiguration(
+                new StringReader(Files.readString(Path.of("src/main/resources/config.yml"))));
+        assertEquals("deny", config.getString("anti-multialt.mode"));
+        assertEquals(2, config.getInt("anti-multialt.max-accounts-per-ip"));
     }
 
     @Test
