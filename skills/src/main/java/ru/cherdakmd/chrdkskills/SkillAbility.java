@@ -4,14 +4,18 @@ import java.util.Arrays;
 
 /** Первая волна: бережная добыча и контроль мобов, без новых процентов урона/дропа. */
 public enum SkillAbility {
-    MINING(SkillType.MINING, 25, 8, 45, "_PICKAXE"),
-    WOODCUTTING(SkillType.WOODCUTTING, 25, 8, 45, "_AXE"),
-    DIGGING(SkillType.DIGGING, 25, 8, 45, "_SHOVEL"),
-    COMBAT(SkillType.COMBAT, 30, 10, 40, "_SWORD"),
-    ARCHERY(SkillType.ARCHERY, 25, 10, 35, "BOW"),
-    DEFENSE(SkillType.DEFENSE, 30, 10, 40, "SHIELD");
+    MINING(SkillType.MINING, 25, 5, 45, "_PICKAXE"),
+    WOODCUTTING(SkillType.WOODCUTTING, 25, 5, 45, "_AXE"),
+    DIGGING(SkillType.DIGGING, 25, 5, 45, "_SHOVEL"),
+    FARMING(SkillType.FARMING, 25, 5, 45, "_HOE"),
+    FISHING(SkillType.FISHING, 25, 5, 45, "FISHING_ROD"),
+    COMBAT(SkillType.COMBAT, 30, 5, 40, "_SWORD"),
+    ARCHERY(SkillType.ARCHERY, 25, 5, 35, "BOW"),
+    DEFENSE(SkillType.DEFENSE, 30, 5, 40, "SHIELD"),
+    ALCHEMY(SkillType.ALCHEMY, 25, 5, 45, "BREWING_STAND"),
+    ENCHANTING(SkillType.ENCHANTING, 25, 5, 45, "ENCHANTING_TABLE");
 
-    public static final int UNLOCK_LEVEL = 10;
+    public static final int UNLOCK_PRESTIGE = 1;
     public static final int MAX_ENERGY = 100;
     public static final int REGEN_PER_SECOND = 2;
     private final SkillType skill;
@@ -32,7 +36,7 @@ public enum SkillAbility {
         if (material == null) return false;
         return switch (this) {
             case ARCHERY -> material.equals("BOW") || material.equals("CROSSBOW");
-            case COMBAT -> material.endsWith("_SWORD") || (material.endsWith("_AXE") && !material.endsWith("_PICKAXE"));
+            case COMBAT -> material.endsWith("_SWORD");
             case DEFENSE -> material.equals("SHIELD");
             default -> material.endsWith(tool);
         };

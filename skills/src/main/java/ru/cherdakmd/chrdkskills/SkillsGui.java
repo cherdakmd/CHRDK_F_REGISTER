@@ -516,7 +516,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         ItemMeta meta = item.getItemMeta();
         meta.displayName(plugin.messages().get(ability.nameKey()));
         meta.lore(List.of(plugin.messages().get(ability.descKey()),
-                plugin.messages().get("ability-card", "level", SkillAbility.UNLOCK_LEVEL, "cost", ability.cost(),
+                plugin.messages().get("ability-card", "level", SkillAbility.UNLOCK_PRESTIGE, "cost", ability.cost(),
                         "seconds", ability.seconds(), "cooldown", ability.cooldown()),
                 plugin.messages().get("ability-energy", "energy", plugin.abilities().energy(player.getUniqueId()), "max", SkillAbility.MAX_ENERGY),
                 plugin.messages().get("ability-card-ready", "time", plugin.abilities().cooldown(player.getUniqueId(), ability)),

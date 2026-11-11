@@ -38,6 +38,8 @@ public final class SkillsPlugin extends JavaPlugin {
     private SkillsGui gui;
     private SkillAbilityStore abilityStore;
     private SkillAbilities abilities;
+    private SkillXpStore xpStore;
+    private SkillXpItems xpItems;
     private BukkitTask abilityTask;
     private BukkitTask saveTask;
     private BukkitTask effectTask;
@@ -65,12 +67,16 @@ public final class SkillsPlugin extends JavaPlugin {
         this.abilityStore = new SkillAbilityStore(getDataFolder().toPath(), getLogger());
         abilityStore.load();
         this.abilities = new SkillAbilities(this, abilityStore);
+        this.xpStore = new SkillXpStore(getDataFolder().toPath(), getLogger());
+        xpStore.load();
+        this.xpItems = new SkillXpItems(this, xpStore);
         this.effects = new SkillEffects(this);
         this.listener = new SkillListener(this, service);
         this.gui = new SkillsGui(this, service);
 
         Bukkit.getPluginManager().registerEvents(listener, this);
         Bukkit.getPluginManager().registerEvents(abilities, this);
+        Bukkit.getPluginManager().registerEvents(xpItems, this);
         Bukkit.getPluginManager().registerEvents(gui, this);
 
         SkillCommandHandler commands = new SkillCommandHandler(this, service, gui);
@@ -118,6 +124,8 @@ public final class SkillsPlugin extends JavaPlugin {
             Bukkit.getServicesManager().unregister(SkillsMenuApi.class, gui);
         }
         if (awards != null) awards.close();
+        if (xpItems != null) Bukkit.getServicesManager().unregister(ru.cherdakmd.chrdkregister.api.ForgeMaterialSource.class, xpItems);
+        if (xpStore != null) xpStore.saveNow();
         ru.cherdakmd.chrdkregister.api.CropReplanting.cancel(this);
         if (abilityTask != null) abilityTask.cancel();
         if (abilities != null) abilities.clear();
@@ -185,6 +193,7 @@ public final class SkillsPlugin extends JavaPlugin {
     private void saveState() {
         try {
             if (abilityStore != null) abilityStore.saveNow();
+            if (xpStore != null) xpStore.saveNow();
             if (store.isDirty()) {
                 store.saveNow();
             }
@@ -200,6 +209,8 @@ public final class SkillsPlugin extends JavaPlugin {
         // Единое меню: /perktree из CHRDK_Classes открывает тот же инвентарь.
         Bukkit.getServicesManager().register(SkillsMenuApi.class, gui,
                 this, ServicePriority.Normal);
+        Bukkit.getServicesManager().register(ru.cherdakmd.chrdkregister.api.ForgeMaterialSource.class,
+                xpItems, this, ServicePriority.Normal);
     }
 
     public Messages messages() {
@@ -223,6 +234,7 @@ public final class SkillsPlugin extends JavaPlugin {
     }
 
     SkillAbilities abilities() { return abilities; }
+    SkillXpItems xpItems() { return xpItems; }
 
     public SkillEffects effects() {
         return effects;
