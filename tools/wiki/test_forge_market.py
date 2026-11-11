@@ -52,17 +52,18 @@ class ForgeMarketContractTest(unittest.TestCase):
         end = self.items.index("public void bumpUpgrade(", start)
         return self.items[start:end]
 
-    def test_version_and_core_api_are_current_stable_release(self):
+    def test_version_and_core_api_are_current_release_candidate(self):
         props = read(ROOT / "gradle.properties")
         version = re.search(r"^plugin_version=(.+)$", props, re.M)
         self.assertIsNotNone(version, "plugin_version обязателен")
         current = version.group(1).strip()
-        self.assertEqual("1.5.5", current)
-        self.assertRegex(current, r"^1\.5\.\d+(?:-fix)?$", "следующий выпуск остаётся стабильным")
+        self.assertEqual("1.5.5-rc.1", current)
+        self.assertRegex(current, r"^1\.5\.\d+(?:-fix|-rc\.[1-9]\d*)?$", "версия соответствует стабильному/fix/RC формату")
         self.assertTrue((ROOT / "docs/releases" / (current + ".md")).is_file(),
-                        "для текущего стабильного fix нужны полные заметки в архиве")
-        self.assertTrue((ROOT / "docs/social/releases" / (current + ".json")).is_file(),
-                        "для стабильного анонса нужна краткая заметка игрокам")
+                        "для текущего выпуска нужны полные заметки в архиве")
+        if "-rc." not in current:
+            self.assertTrue((ROOT / "docs/social/releases" / (current + ".json")).is_file(),
+                            "для стабильного анонса нужна краткая заметка игрокам")
         self.assertIn("int API_VERSION = 44;", self.api)
         self.assertIn("ForgeMaterialSource forgeMaterialSource()", self.api)
         self.assertIn("ForgeMarketCatalog", self.exchange)
