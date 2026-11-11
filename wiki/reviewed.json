@@ -41,8 +41,8 @@
       "text": "503edef62357862f67d17df249b393023697d6dca6342cbe792b0d4dc78cb8cc"
     },
     "commands": {
-      "reason": "Сверена новая главная /shop 1.5.7, minor-цены, быстрый sellall и неизменный WAL",
-      "sources": "e44970db864aa18e85f8f94e1f499bbeaf8dfae3b1e64fc436f711c36ce2e288",
+      "reason": "Финально сверен новый ShopMarketGui и исправленная привязка ForgeShopGui",
+      "sources": "22853a7e4ee807101756c9d29c001de10bd76907b35f4a6ae6fa14e2b7735527",
       "text": "b16f06b84b440533e5bba0a45540bf517f3ae650cb390ddd6b9f43d47c5eabdd"
     },
     "cosmetics": {
@@ -61,8 +61,8 @@
       "text": "121b1cc28a075ced29b6de8abec7dbc20bbb531a01441ddd5fdb836d066d0202"
     },
     "economy": {
-      "reason": "Сверена новая главная /shop 1.5.7, minor-цены, быстрый sellall и неизменный WAL",
-      "sources": "58905f960f86a750b3d1753693cefcc4c0264646f96e497d00e89964fb4a0a4e",
+      "reason": "Финально сверен новый ShopMarketGui и исправленная привязка ForgeShopGui",
+      "sources": "c347a0193e63b6daecd8213e356bd6ef2154225e7ac6d214464cc2c11260ac48",
       "text": "051da7af63816f9e7b42dc7185973c88adf8862f10ad9d1e21f5d789cdbdc4fe"
     },
     "enchants": {
@@ -71,8 +71,8 @@
       "text": "7e90321ef8a100bae11c53592c62328fa44a958be657b66a86d51ea8c1906a7d"
     },
     "faq": {
-      "reason": "Сверена новая главная /shop 1.5.7, minor-цены, быстрый sellall и неизменный WAL",
-      "sources": "a80f6be52154a1ec1927a42859fc0cc3c0117fe55a15d0dfe4168588665dfb62",
+      "reason": "Финально сверен новый ShopMarketGui и исправленная привязка ForgeShopGui",
+      "sources": "ed571bbdaf12aa8e1544b743f3d32b9892ecc5af359dfe5d9611b46220d6f746",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
@@ -91,13 +91,13 @@
       "text": "6bc29d5a2d7783845f8b3d9b085e85982faec5b3029d841092386f36b1d4c4b0"
     },
     "index": {
-      "reason": "Сверена новая главная /shop 1.5.7, minor-цены, быстрый sellall и неизменный WAL",
-      "sources": "bae03a34322aec4013f4053f2e7ec7f78211fef1f345a003d21ec82bc75e9094",
+      "reason": "Финально сверен новый ShopMarketGui и исправленная привязка ForgeShopGui",
+      "sources": "29c324a666cb127a7a512ab9387248ee9ab8a63fbc0e5af92122895811d6cd12",
       "text": "13b0089b89035cd13598d177608718282608bc671993a3c370012b297c779cd7"
     },
     "menu": {
-      "reason": "Сверена новая главная /shop 1.5.7, minor-цены, быстрый sellall и неизменный WAL",
-      "sources": "a80f6be52154a1ec1927a42859fc0cc3c0117fe55a15d0dfe4168588665dfb62",
+      "reason": "Финально сверен новый ShopMarketGui и исправленная привязка ForgeShopGui",
+      "sources": "ed571bbdaf12aa8e1544b743f3d32b9892ecc5af359dfe5d9611b46220d6f746",
       "text": "c646997519fcb5c1c0428e5e3686361e2fea3b508e86f0ac0d24d84f84229f8b"
     },
     "moderation": {
@@ -136,8 +136,8 @@
       "text": "664b466e4b44741175d9c2cdb4da728a0603a04aaaefada8396dd6517d5dca2d"
     },
     "shop": {
-      "reason": "Сверена новая главная /shop 1.5.7, minor-цены, быстрый sellall и неизменный WAL",
-      "sources": "bae03a34322aec4013f4053f2e7ec7f78211fef1f345a003d21ec82bc75e9094",
+      "reason": "Финально сверен новый ShopMarketGui и исправленная привязка ForgeShopGui",
+      "sources": "29c324a666cb127a7a512ab9387248ee9ab8a63fbc0e5af92122895811d6cd12",
       "text": "9033ecdd2956c6d4c3dadf6bf8a16183afb092b0bf909f220c5ec235a9d620ee"
     },
     "skills": {
@@ -176,8 +176,8 @@
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Сверена новая главная /shop 1.5.7, minor-цены, быстрый sellall и неизменный WAL",
-      "sources": "bae03a34322aec4013f4053f2e7ec7f78211fef1f345a003d21ec82bc75e9094",
+      "reason": "Финально сверен новый ShopMarketGui и исправленная привязка ForgeShopGui",
+      "sources": "29c324a666cb127a7a512ab9387248ee9ab8a63fbc0e5af92122895811d6cd12",
       "text": "e1193c2a97944c45963ef7199176a66bec062ca295eea1156ec03f8835a2cf50"
     },
     "vk": {
