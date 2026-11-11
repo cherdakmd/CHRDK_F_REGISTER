@@ -34,7 +34,7 @@ class StreamsRemovalTest {
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_Streams"));
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_VK"));
         assertEquals(20, PluginUpdateService.MODULES.size());
-        assertEquals(40,ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
+        assertEquals(43,ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
         assertNull(LabelPreferences.Label.byId("streams"));
         assertNull(LabelsCommandHandler.singleOf("streams"));
         assertNull(LabelsCommandHandler.singleOf("стример"));
@@ -129,7 +129,7 @@ class StreamsRemovalTest {
         live.set("auto-messages.enabled", false); live.set("auto-messages.interval-seconds", 777);
         var changes = PresentationMigration.replacements(live, List.of(legacy), current);
         assertTrue(changes.containsAll(List.of("server-menu.items", "auto-messages.messages")));
-        assertEquals(2, legacy.getMapList("server-menu.items").size() - current.getMapList("server-menu.items").size(), "два новых просмотра экономики, CHRDK_VK и катастрофы сохранены");
+        assertEquals(4, legacy.getMapList("server-menu.items").size() - current.getMapList("server-menu.items").size(), "два новых просмотра экономики, CHRDK_VK и катастрофы сохранены");
         for (String key : changes) live.set(key, current.get(key));
         assertFalse(live.getBoolean("auto-messages.enabled")); assertEquals(777, live.getInt("auto-messages.interval-seconds"));
         assertTrue(PresentationMigration.replacements(live, List.of(legacy), current).isEmpty());

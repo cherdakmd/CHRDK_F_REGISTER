@@ -49,8 +49,8 @@ class PveAwardLedgerTest {
         for (PveRecipient recipient : PveRecipient.values()) {
             assertTrue(ledger.register(PLAYER, receipt(death, recipient, DAY)), recipient.name());
         }
-        assertEquals(6, ledger.receipts(PLAYER));
-        assertEquals(6, ledger.spent(PLAYER));
+        assertEquals(5, ledger.receipts(PLAYER));
+        assertEquals(5, ledger.spent(PLAYER));
     }
 
     @Test

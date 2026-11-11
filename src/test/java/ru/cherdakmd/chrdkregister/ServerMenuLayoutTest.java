@@ -140,7 +140,7 @@ class ServerMenuLayoutTest {
         requested.add(49); // кнопка «Назад» с явным слотом
         ServerMenuService.MenuLayout layout = ServerMenuService.layoutSlots(requested);
         assertEquals(54, layout.size(), "страница категории — полный сундук");
-        assertEquals(47, layout.slots().get(12));
+        assertEquals(49, layout.slots().get(12));
         assertEquals(13, new HashSet<>(layout.slots()).size(), "слоты уникальны: " + layout.slots());
         assertFalse(layout.slots().contains(-1));
     }

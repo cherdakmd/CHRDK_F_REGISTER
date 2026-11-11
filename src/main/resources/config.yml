@@ -1098,7 +1098,6 @@ server-menu:
     - {"id": "economy", "slot": 12, "icon": "DIAMOND", "name": "<gold><bold>Экономика</bold></gold>", "lore": "<gray>Банк, магазин, аукцион и заказы</gray>"}
     - {"id": "world", "slot": 13, "icon": "GRASS_BLOCK", "name": "<gold><bold>Мир и территории</bold></gold>", "lore": "<gray>Приваты, дома и телепорты</gray>"}
     - {"id": "gear", "slot": 14, "icon": "ANVIL", "name": "<gold><bold>Снаряжение и питомцы</bold></gold>", "lore": "<gray>Чары, тиры, артефакты, косметика и питомцы</gray>"}
-    - {"id": "adventure", "slot": 15, "icon": "IRON_SWORD", "name": "<gold><bold>Охота</bold></gold>", "lore": "<gray>Охота, бестиарий и трофеи</gray>"}
     - {"id": "social", "slot": 16, "icon": "BELL", "name": "<gold><bold>Общество</bold></gold>", "lore": "<gray>Чат, гильдия, оформление</gray>"}
   # Пункты. category — id раздела; без category пункт живёт на главной странице.
   # Без command — подсказка (клик игнорируется).

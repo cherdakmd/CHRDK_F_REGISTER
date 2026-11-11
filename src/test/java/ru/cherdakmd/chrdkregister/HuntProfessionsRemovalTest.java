@@ -43,7 +43,7 @@ class HuntProfessionsRemovalTest {
         assertFalse(profiles.register("professions", context -> null));
         var wiki = WikiSettings.of(true, WikiSettings.DEFAULT_URL, List.of("hunt", "professions", "faq"));
         assertEquals(List.of("faq"), wiki.pages());
-        assertEquals(wiki.pageUrl(""), wiki.pageUrl("hunt"));
-        assertEquals(wiki.pageUrl(""), wiki.pageUrl("professions"));
+        assertEquals(wiki.url(), wiki.pageUrl("hunt"));
+        assertEquals(wiki.url(), wiki.pageUrl("professions"));
     }
 }

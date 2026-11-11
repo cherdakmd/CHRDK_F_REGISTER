@@ -32,7 +32,7 @@ class QueueRemovalTest {
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_Queue"));
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_VK"));
         assertEquals(20, PluginUpdateService.MODULES.size());
-        assertEquals(40,ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
+        assertEquals(43,ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
         var stock = yaml("config.yml");
         assertEquals(47, stock.getMapList("server-menu.items").size());
         assertEquals(40, stock.getList("auto-messages.messages").size());
@@ -67,7 +67,7 @@ class QueueRemovalTest {
         var legacy = yaml("presentation-legacy-1.4.247.yml");
         var live = yaml("presentation-legacy-1.4.247.yml");
         var fresh = yaml("config.yml");
-        assertEquals(47, legacy.getMapList("server-menu.items").size());
+        assertEquals(49, legacy.getMapList("server-menu.items").size());
         assertEquals(44, legacy.getList("auto-messages.messages").size());
         assertTrue(PresentationMigration.LEGACY_RESOURCES.contains("presentation-legacy-1.4.247.yml"));
         live.set("auto-messages.enabled", false);

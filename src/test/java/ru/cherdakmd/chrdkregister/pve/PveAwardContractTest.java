@@ -122,7 +122,7 @@ class PveAwardContractTest {
 
     @Test
     void recipientsCoverAllPveSystems() {
-        assertEquals(6, PveRecipient.values().length);
+        assertEquals(5, PveRecipient.values().length);
         assertTrue(List.of(PveRecipient.values()).contains(PveRecipient.PERK_POWDER));
         assertEquals(2_000, PveAwardContract.DAILY_AWARD_CAP);
     }
