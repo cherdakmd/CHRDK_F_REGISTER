@@ -30,6 +30,11 @@ public final class DisasterSettings {
                             int maxAffectedPlayers, double maxDamagePerPulse) {
     }
 
+    /** Усиление природного ландшафта; Claims/spawn проверяются независимо на каждый блок. */
+    public record Terrain(boolean enabled, int radiusBonus, int depthMultiplier,
+                          int maxBlocksPerPulse, boolean collapses, boolean wildfire) {
+    }
+
     /** Три товара /disasters shop: алмазы на счёт, припасы и пропуск катастроф. */
     public record Shop(int diamondsPrice, int diamondsAmount,
                        int suppliesPrice, int suppliesDiamonds,

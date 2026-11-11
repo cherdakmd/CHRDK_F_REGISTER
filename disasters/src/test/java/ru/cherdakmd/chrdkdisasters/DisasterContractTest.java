@@ -41,7 +41,7 @@ final class DisasterContractTest {
         assertTrue(read("../settings.gradle").contains("include 'disasters'"));
         assertTrue(read("../wiki/config.yml").contains("- disasters"));
         String schema = read("src/main/resources/config-schema.yml");
-        assertTrue(schema.contains("config-version: 4"));
+        assertTrue(schema.contains("config-version: 5"));
         assertTrue(schema.contains("messages-version: 4"));
     }
 
@@ -112,6 +112,21 @@ final class DisasterContractTest {
                 "хранилища игроков не трогаем");
         assertTrue(sources.contains("removePotionEffect"),
                 "эффекты состояния снимаются при затухании");
+    }
+
+    @Test
+    void expandedTerrainCannotBypassClaimsOrRunUnbounded() throws IOException {
+        String effects = read("src/main/java/ru/cherdakmd/chrdkdisasters/DisasterEffects.java");
+        String engine = read("src/main/java/ru/cherdakmd/chrdkdisasters/DisasterEngine.java");
+        assertTrue(effects.contains("plugin.protection().blocked(block.getLocation())"),
+                "каждый блок проверяется после старта тоже");
+        assertTrue(engine.contains("areaBlocked(at, config.effectRadius())"),
+                "приваты проверяются по расширенному радиусу");
+        assertTrue(effects.contains("isTerrain(block.getType())"),
+                "выемка ограничена природным ландшафтом");
+        assertTrue(effects.contains("budgetExhausted()"));
+        assertTrue(effects.contains("instanceof Container"));
+        assertFalse(effects.contains("createExplosion("));
     }
 
     @Test

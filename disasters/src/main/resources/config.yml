@@ -31,8 +31,8 @@ disasters:
   max-level: 5
   # Радиус площади в блоках. Проверка приватов идёт по ВСЕМ чанкам радиуса.
   radius: 12
-  # Максимум блоков в снимке отката: защита памяти и мира.
-  max-blocks: 256
+  # Максимум блоков в общем снимке отката: защита памяти и мира.
+  max-blocks: 2048
   # Общий лимит одновременно идущих WARNING/ACTIVE/FADING на сервере.
   max-concurrent: 8
   # Не трогать площадь вокруг спавна мира (0 = не проверять).
@@ -80,6 +80,16 @@ disasters:
     max-fire-seconds: 4
     max-affected-players: 24
     max-damage-per-pulse: 6.0
+    # Пятая итерация: глубокое разрушение только природного ландшафта.
+    # Расширенный радиус целиком входит в площадную проверку CHRDK_Claims.
+    # Каждый блок дополнительно проверяется непосредственно перед setType.
+    terrain:
+      enabled: true
+      radius-bonus: 4
+      depth-multiplier: 2
+      max-blocks-per-pulse: 384
+      collapses: true
+      wildfire: true
 
   # Третья итерация: осколки катастроф за участие.
   # base-shards + per-level-shards * (уровень катастрофы - 1), затем бонус

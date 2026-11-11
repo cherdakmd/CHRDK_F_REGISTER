@@ -26,7 +26,6 @@ import java.util.concurrent.ThreadLocalRandom;
 public final class DisasterEffects {
 
     private static final String BYPASS = "chrdkdisasters.bypass";
-    private static final int HARD_TICK_BLOCK_BUDGET = 192;
     private static final int HARD_PARTICLE_BUDGET = 1800;
     private static final Set<Material> DESTRUCTIBLE = EnumSet.of(
             Material.GRASS_BLOCK, Material.DIRT, Material.DIRT_PATH,
@@ -35,8 +34,12 @@ public final class DisasterEffects {
             Material.SNOW, Material.SNOW_BLOCK, Material.POWDER_SNOW,
             Material.ICE, Material.PACKED_ICE, Material.STONE,
             Material.COBBLESTONE, Material.ANDESITE, Material.DIORITE,
-            Material.GRANITE, Material.TUFF, Material.SANDSTONE,
-            Material.RED_SANDSTONE, Material.TERRACOTTA,
+            Material.GRANITE, Material.TUFF, Material.DEEPSLATE,
+            Material.CALCITE, Material.DRIPSTONE_BLOCK, Material.POINTED_DRIPSTONE,
+            Material.MOSS_BLOCK, Material.PODZOL, Material.MYCELIUM,
+            Material.NETHERRACK, Material.SOUL_SAND, Material.SOUL_SOIL,
+            Material.BASALT, Material.BLACKSTONE, Material.END_STONE,
+            Material.SANDSTONE, Material.RED_SANDSTONE, Material.TERRACOTTA,
             Material.SHORT_GRASS, Material.TALL_GRASS, Material.FERN,
             Material.LARGE_FERN, Material.DEAD_BUSH, Material.FIRE,
             Material.WATER, Material.LAVA);
@@ -56,7 +59,7 @@ public final class DisasterEffects {
         String title = plugin.messages().plain(run.kind().titleKey());
         String subtitle = plugin.messages().plain("cataclysm-warning",
                 "seconds", run.secondsLeft(), "level", run.level());
-        forNearby(center, plugin.settings().radius(), player ->
+        forNearby(center, plugin.settings().effectRadius(), player ->
                 player.sendTitle("§c⚠ " + title, "§e" + subtitle, 10, 50, 15));
     }
 
@@ -70,11 +73,11 @@ public final class DisasterEffects {
         if (step == 0) {
             warn(run, center);
         }
-        ring(center, plugin.settings().radius(), 80, Particle.END_ROD, 0.25, 0.0);
+        ring(center, plugin.settings().effectRadius(), 80, Particle.END_ROD, 0.25, 0.0);
         if (plugin.settings().cataclysm().titles()) {
             String text = plugin.messages().plain("cataclysm-countdown",
                     "seconds", run.secondsLeft());
-            forNearby(center, plugin.settings().radius(), player ->
+            forNearby(center, plugin.settings().effectRadius(), player ->
                     player.sendActionBar(net.kyori.adventure.text.Component.text("§e⚠ " + text)));
         }
     }
@@ -98,7 +101,7 @@ public final class DisasterEffects {
         }
         Location center = new Location(world, run.x(), run.y(), run.z());
         particles(center.clone().add(0, 2, 0), Particle.CLOUD, 80,
-                plugin.settings().radius() * 0.45, 0.01);
+                plugin.settings().effectRadius() * 0.45, 0.01);
     }
 
     /** Один активный шаг. Метод вызывается строго на главном потоке. */
@@ -109,7 +112,7 @@ public final class DisasterEffects {
             return;
         }
         DisastersConfig config = plugin.settings();
-        int radius = Math.max(2, config.radius());
+        int radius = Math.max(2, config.effectRadius());
         int level = run.level();
         int step = run.activeStep();
         if (config.playerEffectsEnabled()) {
@@ -130,6 +133,9 @@ public final class DisasterEffects {
             case FLOOD -> flood(center, radius, level, step);
             case BLIZZARD -> blizzard(center, radius, level, step);
         }
+        if (terrainEnabled() && config.terrain().collapses() && run.kind() != DisasterKind.EARTHQUAKE) {
+            collapseNear(center, Math.min(6, 1 + level));
+        }
         impactPlayers(run, center, radius);
     }
 
@@ -139,7 +145,7 @@ public final class DisasterEffects {
             return;
         }
         Location center = new Location(world, run.x(), run.y(), run.z());
-        DisasterFx.clear(world, center, plugin.settings().radius(), run.kind().effect());
+        DisasterFx.clear(world, center, plugin.settings().effectRadius(), run.kind().effect());
     }
 
     private void dustStorm(Location center, int radius, int level, int step) {
@@ -155,11 +161,18 @@ public final class DisasterEffects {
             particles(at.add(0, 1.5, 0), Particle.DUST, 24, 1.2, 1.0,
                     new Particle.DustOptions(Color.fromRGB(194, 154, 86), 1.8f));
         }
-        if (plugin.settings().cataclysm().enabled()) {
-            for (int i = 0; i < level * 2; i++) {
-                Location at = randomSurface(center, radius);
-                if (at != null && random().nextDouble() < 0.25) {
-                    set(at.getBlock(), Material.SAND);
+        if (terrainEnabled()) {
+            // Буря снимает почву и растительность, а обнажённые слои заносит песком.
+            int columns = 8 + level * 7;
+            for (int i = 0; i < columns && !budgetExhausted(); i++) {
+                Block top = surface(randomAround(center, radius));
+                if (top == null || !isTerrain(top.getType())) {
+                    continue;
+                }
+                int depth = plugin.settings().terrainDepth(1 + level / 2);
+                excavateColumn(top, depth, Material.SAND, 0.42);
+                if (i % 5 == 0 && top.getRelative(0, 1, 0).getType().isAir()) {
+                    set(top.getRelative(0, 1, 0), Material.SAND);
                 }
             }
         }
@@ -181,9 +194,11 @@ public final class DisasterEffects {
             particles(impact, Particle.FLAME, 45 + level * 8, 2.0, 0.08);
             particles(impact, Particle.LAVA, 12 + level * 3, 1.2, 0.0);
             impactSound(impact, Sound.ENTITY_GENERIC_EXPLODE, 1.4f, 0.65f);
-            if (plugin.settings().cataclysm().enabled()) {
-                crater(ground.getLocation(), Math.min(5, 1 + level / 2));
-                igniteAround(impact, level);
+            if (terrainEnabled()) {
+                crater(ground.getLocation(), Math.min(8, 2 + level));
+                if (plugin.settings().terrain().wildfire()) {
+                    igniteAround(impact, level);
+                }
             }
         }
     }
@@ -196,29 +211,36 @@ public final class DisasterEffects {
             seismicRing(center, distance, level);
         }
         impactSound(center, Sound.ENTITY_WARDEN_SONIC_BOOM, 1.2f, 0.55f);
-        if (!plugin.settings().cataclysm().enabled()) {
+        if (!terrainEnabled()) {
             return;
         }
-        // Разлом — зигзаг, а не случайное удаление всей поверхности.
-        int length = Math.min(radius, 5 + level * 3);
-        for (int i = -length; i <= length; i++) {
-            int x = center.getBlockX() + i;
-            int z = center.getBlockZ() + (int) Math.round(Math.sin(i * 0.65 + step * 0.12) * 2.2);
-            Block top = surface(new Location(world, x, center.getY(), z));
-            if (top == null) {
-                continue;
-            }
-            int depth = 1 + Math.min(4, level) - Math.abs(i) / Math.max(2, length);
-            for (int y = 0; y < Math.max(1, depth); y++) {
-                Block block = world.getBlockAt(x, top.getY() - y, z);
-                if (DESTRUCTIBLE.contains(block.getType())) {
-                    set(block, Material.AIR);
-                }
-            }
-            if (level >= 3 && i % 4 == 0) {
-                Block lower = world.getBlockAt(x, top.getY() - depth - 1, z);
-                if (!lower.getType().isAir() && DESTRUCTIBLE.contains(lower.getType())) {
-                    set(lower, level >= 5 && i % 8 == 0 ? Material.MAGMA_BLOCK : Material.LAVA);
+        int faults = Math.min(3, 1 + level / 2);
+        int length = Math.min(radius, 6 + level * 4);
+        int width = Math.min(3, 1 + level / 2);
+        for (int fault = 0; fault < faults && !budgetExhausted(); fault++) {
+            double angle = step * 0.11 + fault * Math.PI / faults;
+            double dx = Math.cos(angle);
+            double dz = Math.sin(angle);
+            for (int i = -length; i <= length && !budgetExhausted(); i++) {
+                int bend = (int) Math.round(Math.sin(i * 0.55 + step * 0.17 + fault) * 2.5);
+                for (int side = -width; side <= width && !budgetExhausted(); side++) {
+                    int x = center.getBlockX() + (int) Math.round(dx * i - dz * (bend + side));
+                    int z = center.getBlockZ() + (int) Math.round(dz * i + dx * (bend + side));
+                    Block top = surface(new Location(world, x, center.getY(), z));
+                    if (top == null || !isTerrain(top.getType())) {
+                        continue;
+                    }
+                    int edgeFade = Math.abs(i) / Math.max(2, length);
+                    int depth = plugin.settings().terrainDepth(
+                            Math.max(1, 2 + level - Math.abs(side) - edgeFade));
+                    excavateColumn(top, depth, Material.AIR, 0);
+                    Block lower = world.getBlockAt(x, top.getY() - depth - 1, z);
+                    if (level >= 2 && (i + side + fault) % 5 == 0 && isTerrain(lower.getType())) {
+                        set(lower, level >= 4 && i % 3 == 0 ? Material.LAVA : Material.MAGMA_BLOCK);
+                    }
+                    if (plugin.settings().terrain().collapses() && (i + side) % 4 == 0) {
+                        collapseNear(top.getLocation(), 1 + level / 2);
+                    }
                 }
             }
         }
@@ -240,42 +262,62 @@ public final class DisasterEffects {
             }
         }
         ring(eye, radius, 90 + level * 20, Particle.SWEEP_ATTACK, 0.2, 0.0);
-        if (plugin.settings().cataclysm().enabled()) {
-            for (int i = 0; i < level * 3; i++) {
-                Block top = surface(randomAround(eye, radius));
-                if (top != null && DESTRUCTIBLE.contains(top.getType())) {
-                    set(top, Material.AIR);
+        if (terrainEnabled()) {
+            Block eyeSurface = surface(eye);
+            if (eyeSurface != null) {
+                excavateDisc(eyeSurface.getLocation(), Math.min(4, 1 + level / 2),
+                        plugin.settings().terrainDepth(1 + level), Material.AIR, 0);
+            }
+            for (int i = 0; i < 16 + level * 10 && !budgetExhausted(); i++) {
+                Block top = surface(randomAround(eye, radius * 0.7));
+                if (top != null && isTerrain(top.getType())) {
+                    org.bukkit.block.data.BlockData debris = top.getBlockData().clone();
+                    excavateColumn(top, plugin.settings().terrainDepth(1 + level / 2), Material.AIR, 0);
                     particles(top.getLocation().add(0.5, 0.5, 0.5),
-                            Particle.BLOCK, 8, 0.35, 0.1, top.getBlockData());
+                            Particle.BLOCK, 12, 0.65, 0.16, debris);
                 }
             }
         }
     }
 
     private void flood(Location center, int radius, int level, int step) {
-        World world = center.getWorld();
         particles(center.clone().add(0, 5, 0), Particle.RAIN,
                 300 + level * 60, radius * 0.65, 0.15);
         ring(center, Math.min(radius, step * 1.8), 130 + level * 20,
                 Particle.SPLASH, 0.35, 0.0);
-        if (!plugin.settings().cataclysm().enabled()) {
+        if (!terrainEnabled()) {
             return;
         }
-        // Нарастающий круговой фронт вместо мгновенного заполнения всего куба.
-        int front = Math.min(radius, 2 + step * (1 + level / 3));
-        int samples = Math.min(96, 16 + level * 12);
-        for (int i = 0; i < samples; i++) {
+        int front = Math.min(radius, 2 + step * (1 + level / 2));
+        int samples = Math.min(160, 32 + level * 20);
+        for (int i = 0; i < samples && !budgetExhausted(); i++) {
             Location at = radial(center, front, i * Math.PI * 2 / samples + step * 0.08);
             Block top = surface(at);
-            if (top == null) {
+            if (top == null || !isTerrain(top.getType())) {
                 continue;
             }
+            set(top, i % 3 == 0 ? Material.CLAY : Material.SAND);
             Block water = top.getRelative(0, 1, 0);
-            if (water.getType().isAir()) {
-                set(water, Material.WATER);
-                if (level >= 4 && i % 7 == 0) {
-                    set(water.getRelative(0, 1, 0), Material.WATER);
+            int depth = 1 + (level >= 3 ? 1 : 0) + (level >= 5 ? 1 : 0);
+            for (int y = 0; y < depth; y++) {
+                if (water.getRelative(0, y, 0).getType().isAir()) {
+                    set(water.getRelative(0, y, 0), Material.WATER);
                 }
+            }
+        }
+        // Поток промывает новые русла, а не только ставит воду на ровную поверхность.
+        for (int channel = 0; channel < 4 + level * 2 && !budgetExhausted(); channel++) {
+            Block top = surface(randomAround(center, Math.max(2, front)));
+            if (top == null || !isTerrain(top.getType())) {
+                continue;
+            }
+            int depth = plugin.settings().terrainDepth(1 + level / 2);
+            excavateColumn(top, depth, Material.WATER, 1.0);
+            if (isTerrain(top.getRelative(1, 0, 0).getType())) {
+                set(top.getRelative(1, 0, 0), Material.CLAY);
+            }
+            if (isTerrain(top.getRelative(-1, 0, 0).getType())) {
+                set(top.getRelative(-1, 0, 0), Material.SAND);
             }
         }
     }
@@ -289,19 +331,40 @@ public final class DisasterEffects {
             particles(at, Particle.ITEM_SNOWBALL, 22, 1.2, 0.08);
         }
         ring(center, radius * 0.8, 90, Particle.END_ROD, 0.15, 0.0);
-        if (!plugin.settings().cataclysm().enabled()) {
+        if (!terrainEnabled()) {
             return;
         }
-        for (int i = 0; i < 10 + level * 5; i++) {
+        for (int i = 0; i < 18 + level * 9 && !budgetExhausted(); i++) {
             Block top = surface(randomAround(center, radius));
-            if (top == null) {
+            if (top == null || !isTerrain(top.getType())) {
                 continue;
             }
-            Block above = top.getRelative(0, 1, 0);
-            if (above.getType().isAir()) {
-                set(above, level >= 4 && i % 6 == 0 ? Material.POWDER_SNOW : Material.SNOW);
-            } else if (above.getType() == Material.WATER) {
-                set(above, Material.ICE);
+            if (i % 7 == 0) {
+                // Морозобойные трещины и промёрзшая порода меняют сам рельеф.
+                excavateColumn(top, plugin.settings().terrainDepth(1 + level / 3),
+                        Material.PACKED_ICE, 0.35);
+                set(top.getRelative(0, -1, 0), Material.PACKED_ICE);
+                continue;
+            }
+            if (i % 5 == 0) {
+                set(top, i % 10 == 0 ? Material.PACKED_ICE : Material.ICE);
+            }
+            int snowDepth = Math.min(4, 1 + level / 2);
+            for (int y = 1; y <= snowDepth; y++) {
+                Block above = top.getRelative(0, y, 0);
+                if (above.getType().isAir()) {
+                    set(above, level >= 3 && (i + y) % 6 == 0 ? Material.POWDER_SNOW : Material.SNOW_BLOCK);
+                } else if (above.getType() == Material.WATER) {
+                    set(above, level >= 4 ? Material.PACKED_ICE : Material.ICE);
+                }
+            }
+            if (level >= 2 && i % 11 == 0) {
+                int spike = Math.min(9, 2 + level);
+                for (int y = 1; y <= spike; y++) {
+                    if (top.getRelative(0, y, 0).getType().isAir()) {
+                        set(top.getRelative(0, y, 0), Material.PACKED_ICE);
+                    }
+                }
             }
         }
     }
@@ -385,43 +448,119 @@ public final class DisasterEffects {
         }
     }
 
-    private void crater(Location at, int radius) {
+    private boolean terrainEnabled() {
+        DisastersConfig config = plugin.settings();
+        return config.cataclysm().enabled() && config.terrain().enabled();
+    }
+
+    private boolean budgetExhausted() {
+        return tickBlockChanges >= plugin.settings().blockBudget() || !plugin.restore().canRemember();
+    }
+
+    private static boolean isTerrain(Material type) {
+        if (DESTRUCTIBLE.contains(type)) {
+            return true;
+        }
+        String name = type.name();
+        return name.endsWith("_ORE") || name.endsWith("_LOG") || name.endsWith("_WOOD")
+                || name.endsWith("_LEAVES") || name.endsWith("_SAPLING")
+                || name.endsWith("_FLOWER") || name.endsWith("_MUSHROOM");
+    }
+
+    /** Выемка только природных блоков; set(...) повторно проверяет Claims/spawn. */
+    private void excavateColumn(Block top, int depth, Material replacement, double replacementChance) {
+        if (top == null) {
+            return;
+        }
+        int cappedDepth = Math.min(24, Math.max(1, depth));
+        for (int y = 0; y < cappedDepth && !budgetExhausted(); y++) {
+            Block block = top.getRelative(0, -y, 0);
+            if (isTerrain(block.getType())) {
+                set(block, Material.AIR);
+            }
+        }
+        if (replacement != Material.AIR && random().nextDouble() < replacementChance) {
+            Block bottom = top.getRelative(0, -cappedDepth, 0);
+            if (isTerrain(bottom.getType())) {
+                set(bottom, replacement);
+            }
+        }
+    }
+
+    private void excavateDisc(Location at, int radius, int maxDepth,
+                              Material replacement, double replacementChance) {
         for (int x = -radius; x <= radius; x++) {
             for (int z = -radius; z <= radius; z++) {
+                if (budgetExhausted()) {
+                    return;
+                }
                 double distance = Math.sqrt(x * x + z * z);
                 if (distance > radius) {
                     continue;
                 }
                 Block top = surface(at.clone().add(x, 0, z));
-                if (top == null) {
+                if (top == null || !isTerrain(top.getType())) {
                     continue;
                 }
-                int depth = Math.max(1, (int) Math.ceil(radius - distance));
-                for (int y = 0; y < depth; y++) {
-                    Block block = top.getRelative(0, -y, 0);
-                    if (DESTRUCTIBLE.contains(block.getType())) {
-                        set(block, Material.AIR);
-                    }
+                int depth = Math.max(1, (int) Math.ceil(maxDepth * (1 - distance / (radius + 1.0))));
+                excavateColumn(top, depth, replacement, replacementChance);
+            }
+        }
+    }
+
+    /** Обвал нависающего грунта без FallingBlock и физического дропа. */
+    private void collapseNear(Location center, int radius) {
+        for (int i = 0; i < 3 + radius * 2 && !budgetExhausted(); i++) {
+            Block top = surface(randomAround(center, Math.max(1, radius)));
+            if (top == null || !isTerrain(top.getType())
+                    || !top.getRelative(0, -1, 0).getType().isAir()) {
+                continue;
+            }
+            org.bukkit.block.data.BlockData debris = top.getBlockData().clone();
+            excavateColumn(top, 1 + radius, Material.AIR, 0);
+            particles(top.getLocation().add(0.5, 0.5, 0.5), Particle.BLOCK,
+                    10, 0.5, 0.12, debris);
+        }
+    }
+
+    private void crater(Location at, int radius) {
+        for (int x = -radius; x <= radius; x++) {
+            for (int z = -radius; z <= radius; z++) {
+                if (budgetExhausted()) {
+                    return;
                 }
+                double distance = Math.sqrt(x * x + z * z);
+                if (distance > radius) {
+                    continue;
+                }
+                Block top = surface(at.clone().add(x, 0, z));
+                if (top == null || !isTerrain(top.getType())) {
+                    continue;
+                }
+                int depth = plugin.settings().terrainDepth(
+                        Math.max(1, (int) Math.ceil(radius - distance)));
+                excavateColumn(top, depth, Material.AIR, 0);
                 Block rim = top.getRelative(0, -depth, 0);
-                if (!rim.getType().isAir() && random().nextDouble() < 0.24
-                        && DESTRUCTIBLE.contains(rim.getType())) {
-                    set(rim, Material.MAGMA_BLOCK);
+                if (isTerrain(rim.getType()) && random().nextDouble() < 0.38) {
+                    set(rim, random().nextDouble() < 0.3 ? Material.MAGMA_BLOCK : Material.BLACKSTONE);
                 }
             }
         }
     }
 
     private void igniteAround(Location impact, int level) {
-        int fires = Math.min(12, level * 2);
-        for (int i = 0; i < fires; i++) {
-            Block top = surface(randomAround(impact, 3 + level));
-            if (top == null || top.getType().isAir()) {
+        int fires = Math.min(32, level * 5);
+        for (int i = 0; i < fires && !budgetExhausted(); i++) {
+            Block top = surface(randomAround(impact, 4 + level * 2));
+            if (top == null || !isTerrain(top.getType())) {
                 continue;
             }
             Block above = top.getRelative(0, 1, 0);
             if (above.getType().isAir()) {
                 set(above, Material.FIRE);
+            }
+            if (i % 4 == 0) {
+                set(top, Material.BLACKSTONE);
             }
         }
     }
@@ -507,7 +646,7 @@ public final class DisasterEffects {
     }
 
     private void set(Block block, Material material) {
-        if (block == null || block.getType() == material || tickBlockChanges >= HARD_TICK_BLOCK_BUDGET
+        if (block == null || block.getType() == material || tickBlockChanges >= plugin.settings().blockBudget()
                 || !plugin.restore().canRemember() || plugin.protection().blocked(block.getLocation())) {
             return;
         }

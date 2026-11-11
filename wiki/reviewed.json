@@ -56,9 +56,9 @@
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "disasters": {
-      "reason": "Исправлена компиляция earthquake: восстановлена World world для координат разлома",
-      "sources": "256c93e94bbe6ad0eff06f39910e734b97a4fc5ddc49c413176cdda3c90c73c3",
-      "text": "f21774e4746616681468d2d267b20c87b67a374e86c1572abde089335c780602"
+      "reason": "Сверены terrain v5: глубокие кратеры/разломы, природный ландшафт, расширенная Claims-защита и лимиты",
+      "sources": "dea2e188e988e7712b37ecadccdc72d433026ad66b1134b8a81666db8bc77009",
+      "text": "121b1cc28a075ced29b6de8abec7dbc20bbb531a01441ddd5fdb836d066d0202"
     },
     "economy": {
       "reason": "Финальная схема 1.5.4: moderator и явные admin panel/moderators/audit; страницы сверены после последней правки",
