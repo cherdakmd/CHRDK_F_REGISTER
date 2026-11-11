@@ -63,7 +63,7 @@ class ForgeMarketContractTest(unittest.TestCase):
                         "для текущего стабильного fix нужны полные заметки в архиве")
         self.assertTrue((ROOT / "docs/social/releases" / (current + ".json")).is_file(),
                         "для стабильного анонса нужна краткая заметка игрокам")
-        self.assertIn("int API_VERSION = 43;", self.api)
+        self.assertIn("int API_VERSION = 44;", self.api)
         self.assertIn("ForgeMaterialSource forgeMaterialSource()", self.api)
         self.assertIn("ForgeMarketCatalog", self.exchange)
         self.assertIn("42", read(FORGE / "TierForgePlugin.java"))
@@ -148,7 +148,7 @@ class ForgeMarketContractTest(unittest.TestCase):
         self.assertIn("String grant)", self.exchange)
         self.assertIn("public boolean carriesGrant()", self.exchange)
         self.assertIn("ForgeMarketCatalog.validTradeGrant(grant,material,units)", self.exchange)
-        self.assertEqual(3, self.exchange.count("public ShopExchange(UUID t,UUID m,long s,UUID o,boolean buy"))
+        self.assertEqual(4, self.exchange.count("public ShopExchange(UUID t,UUID m,long s,UUID o,boolean buy"))
         self.assertIn("items[0] = copy", self.catalog)
         self.assertIn("new ItemStack[36]", self.catalog)
         self.assertIn("ChargeInventory.encode(items)", self.catalog)
@@ -175,7 +175,8 @@ class ForgeMarketContractTest(unittest.TestCase):
         self.assertNotIn("addItem(", self.service)
         self.assertNotIn("dispatchCommand", self.service)
         self.assertIn("WholeTrades.take(amounts, values, needed)", self.service)
-        self.assertIn("WholeTrades.payment(money, wallet, spent)", self.service)
+        self.assertIn("WholeTrades.payment(money, wallet, Math.multiplyExact(spent,(long)marketQuote.rateBps()))", self.service)
+        self.assertIn("ShopExchange.fractional(trade,marketQuote.rateBps())", self.service)
         self.assertIn("service.balance(player)", self.service)
 
     def test_migration_only_lore_and_single_final_append(self):

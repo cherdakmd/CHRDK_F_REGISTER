@@ -1,188 +1,188 @@
 {
   "pages": {
     "about": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "d640690dbab56ebdfb6be3f3cbefd5afbd6ab713b645173da12cc78d4a33f4fc",
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "2ac16cbbb429fd11cf5f2085eab6e52cb093cfd41d2023d9ed58de034b42118c",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "9f504335c37ff07efefa01d52021e2ac5f5919c1be5f686fd084cd02ca3c077d",
-      "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "c188c28516400009478508158b2105b48ab62d6ec8cab2a6449a75a38ded2843",
+      "text": "bd128e475ee8efae55c3d2d6c9616d5278600f2a8ff1aad7af5e6df3e0b3f5c3"
     },
     "artifacts": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "c17854ee6d7e51d7c0abf3c0e8285dd80fcfa9ca44b7f811fcebfb555a6607ae",
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "0cb5179afbfe3223f62ebc4bf73caa360ea952169da06c90e4c661a151e496dd",
       "text": "51e3ef379d9a8f7e2ccfc6fd41cc0c0823f91f30d7c9a8326ec7962c182d98e4"
     },
     "auction": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "fd0937a8b0df92833e03a5459cbfe6f41eb16e684fbc936a43d7ae7dc02e74ba",
-      "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "e8554494c0285ff9c8c0a89035e7492666d50d659846ece450921ed80b1ba3ac",
+      "text": "89f444940889c75cea3b77900f9b41ed8500cdb039d2b2cd1aebd82dcf710d25"
     },
     "battlepass": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "ec661230c727f0b2a87e5ba5e714fa527ce73a5f9f52bd079a503c9710bbb679",
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "fdb53aad5d5e5e33a271342c71daadb5d4f7066e89f0e5d63b385946a0c6614f",
       "text": "997df6e0a9311ea115c4fd3c192b2729034b10c68a4f41c57261ef4b704c5add"
     },
     "chat": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "d640690dbab56ebdfb6be3f3cbefd5afbd6ab713b645173da12cc78d4a33f4fc",
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "2ac16cbbb429fd11cf5f2085eab6e52cb093cfd41d2023d9ed58de034b42118c",
       "text": "ca6c93fc33fca52eecc7d38744bc86f619ea0b6a7bcc2314b84ca6c5399d8a1c"
     },
     "claims": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "228edaf38274d8b5985ad172e310d95bf1a09d5b15ed6edc3042506b6516f506",
-      "text": "3144ca61235b895be5cb61e6d120d5dc6d6d0d7c26f87819431b4756659e8e12"
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "3434ec4217a4c7471cd8652d11983348c4faefc485e5a22b8cc690d45df4f5aa",
+      "text": "3126e85c74cf79658fdcde5a03722da3d31459d702228865edec9eb15e142aa4"
     },
     "classes": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "9168c1f63d7cc16ed8a5e215c272ef8023a74a0672bee732c3a982e1204f77e5",
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "a348d21db85e636f20411caaeca1e69ef575bc7010e1e927e5e3016be266c0fd",
       "text": "503edef62357862f67d17df249b393023697d6dca6342cbe792b0d4dc78cb8cc"
     },
     "commands": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "0d06fc7b322da78a2086d07f0acbf3167d4809874d7b8ab19f3880141df62bb9",
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "e9da9d02cd759afc97a2a6cec93d95d899316110c932d6fe9dac8256c65f5668",
       "text": "b16f06b84b440533e5bba0a45540bf517f3ae650cb390ddd6b9f43d47c5eabdd"
     },
     "cosmetics": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "4d72b67fd8438d6656a791464b33148abad4681f5b15a44e09e960097a6b9c78",
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "62f4b27c2c93a50b4c57e27c9efbbd186afbe2cdf2e052709b6cf4ab4c755cf5",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "8e1a0c7bff7f45df91f91069b5573b2cfde62d8a32cb129567acd154266aba52",
-      "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "88e172089f510cbd8637b2bc429d5043f824dd3238de184ec9b5243377eda239",
+      "text": "4d7683f5677c50dfe0488961891915b5c2dd6533191a213ee8fdb077ea817eb5"
     },
     "disasters": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "66fde009742f200fd7345464b72c697a43cbba94e1fb59dc5ffee13bac240037",
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "4db031e01853b4f962769c06d81d1840c5f19a4bac5fc2ad88e9c26b6afa7c8a",
       "text": "121b1cc28a075ced29b6de8abec7dbc20bbb531a01441ddd5fdb836d066d0202"
     },
     "economy": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "e9aed2728d727ab66664d64f7374a365168570bdcacc31ad977dbbfc04de21f6",
-      "text": "7e91d235b63143c1421690fb440c6c4176b21bf3a98c173c7784b0cbf7b0b5fd"
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "d58a1517f4aab3663d0d5e988757bdac45b012aa558a6a71e67ad5ae3b766f63",
+      "text": "051da7af63816f9e7b42dc7185973c88adf8862f10ad9d1e21f5d789cdbdc4fe"
     },
     "enchants": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "1fafa50163b24e4fcd941a4446c3c62d8c2d291bd0a58528a0abae8abf1242f7",
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "d6f060e48a9768b2179c654703acf6a1d271fa7310673dcf08e36f47ea0c9bac",
       "text": "7e90321ef8a100bae11c53592c62328fa44a958be657b66a86d51ea8c1906a7d"
     },
     "faq": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "aaf66058a2dc38b98ea95016526f29412568c6e6db06ecd59ee777e11d81d560",
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "4c7099216b81df7e1718ad8ab6d5298f7b910c46c29c5c3479dc9a7ace25f058",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "91c7e51e4639b9e930e621eb4bf382ab7097def1067161aac93f089966fd0ea4",
-      "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "a965553f372ff9e5d64ee71b98d21c1b1b1fbb388125b2efd7de2fbf03f069a6",
+      "text": "615d89bba0ac116c220d571f530fcdab7d5ff46162ca7a7ecf24de441a7fb191"
     },
     "guilds": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "228edaf38274d8b5985ad172e310d95bf1a09d5b15ed6edc3042506b6516f506",
-      "text": "e166f2671aabcdf55ecf59d1465ddb19a36343f6d07983eb8b8821b3a63cce34"
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "3434ec4217a4c7471cd8652d11983348c4faefc485e5a22b8cc690d45df4f5aa",
+      "text": "bb7d4121d6c42762b2f09d8eb57df986a942df35c77fd2cf899a5e7a38193216"
     },
     "honors": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "d640690dbab56ebdfb6be3f3cbefd5afbd6ab713b645173da12cc78d4a33f4fc",
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "2ac16cbbb429fd11cf5f2085eab6e52cb093cfd41d2023d9ed58de034b42118c",
       "text": "6bc29d5a2d7783845f8b3d9b085e85982faec5b3029d841092386f36b1d4c4b0"
     },
     "index": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "a3efc4ab1b608118db7eb46a8765602de70f2be888197dd1dc9ff6194e8a83a1",
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "142006640abbd8d5041786088953511eb09a2ab1aa71f906aae23bb7ba9fcd67",
       "text": "13b0089b89035cd13598d177608718282608bc671993a3c370012b297c779cd7"
     },
     "menu": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "aaf66058a2dc38b98ea95016526f29412568c6e6db06ecd59ee777e11d81d560",
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "4c7099216b81df7e1718ad8ab6d5298f7b910c46c29c5c3479dc9a7ace25f058",
       "text": "c646997519fcb5c1c0428e5e3686361e2fea3b508e86f0ac0d24d84f84229f8b"
     },
     "moderation": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "d640690dbab56ebdfb6be3f3cbefd5afbd6ab713b645173da12cc78d4a33f4fc",
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "2ac16cbbb429fd11cf5f2085eab6e52cb093cfd41d2023d9ed58de034b42118c",
       "text": "79580a49c09219f65539abace395b5f2469f91fc2f0ac9b3ecae109c4fa1ecb4"
     },
     "orders": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "eb9a67374d9da7dbf7083cfe22c08667e6f03a64f9bd7ab3dd66030ec1ce67b5",
-      "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "25ad1fae61d8b776e7262bd5eefc98a81b84489d3c96b69d0952dc805b28e003",
+      "text": "8f1bddfa65aabb38fab8ebdad77656a627e340e765229de34ab3a24dd96fef2e"
     },
     "perktree": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "9168c1f63d7cc16ed8a5e215c272ef8023a74a0672bee732c3a982e1204f77e5",
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "a348d21db85e636f20411caaeca1e69ef575bc7010e1e927e5e3016be266c0fd",
       "text": "3e1a2fe232bb8c384a682ac98f8133ab0560de790bab9a2a2d9542ea0b673666"
     },
     "pets": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "cbbdad233a9e39973c24b79fe152ddd8efd51e41453216e79f7adfd58bcfc6b1",
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "a738decb32315446122fb4fb5953ddd5cad0ffa972f7f75f2b1bd3f31c1e7eac",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "profile": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "431de89c134f1615025fdaf7a4594bc015bc24cfe92341fe89a48bccd70ebc91",
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "c920ae6a381e82d596228c12fcbceb1d75ab1915b3623cb83a1439b116f96398",
       "text": "f2a1fafaef6d54a60b0dd2e9545374a59a83ad49a5de3ace0069e441c187d309"
     },
     "quests": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "44188a502b6140452490efc87dad014d33c6cc51ea174454d41bdebd5e6e86f5",
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "9da0272a6b1eb1560d233f01870fe3fd037ea85971e723e23c9f55f4d02fa591",
       "text": "a42f11010fddbf13238133ac1e2dca525dea95245f5286a88a57738af30fbf13"
     },
     "ranks": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "43c716150b77ca14d2b10fd900bc79268d0bac3ab6e7b34576b22d8307a538db",
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "3fa45b53640444085ca0cba015fccd8c294ff44cff61e74cde76d304f43d1c9d",
       "text": "664b466e4b44741175d9c2cdb4da728a0603a04aaaefada8396dd6517d5dca2d"
     },
     "shop": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "a3efc4ab1b608118db7eb46a8765602de70f2be888197dd1dc9ff6194e8a83a1",
-      "text": "9f9f49b31dec17a1b78ed766e521f9b939dc742d693f7b685b90b279a8b4535a"
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "142006640abbd8d5041786088953511eb09a2ab1aa71f906aae23bb7ba9fcd67",
+      "text": "6b4ec3842f6bca2ac8ba266ed5236562fc8f4d9e064252b19f79aa9ba977941d"
     },
     "skills": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "c8f028be5e161ef743c93c998f792ec250c9520e801612cd03a835a386ee8021",
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "0697ca5d7b4b52975c72baeb1b43931e2b2d080ebc0aa012d09f04c526233265",
       "text": "43797b2c64a23ab2e591eb8a75bacb7d064827f86c80f62665d08170fab33e00"
     },
     "social-link": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "3690c1f0e72b6a2e5427112b351c6303a55b949b63ccb13a819be1f20a073243",
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "10179f36fe3d43c05064016a15b144543aed83bfa9c0961940ede200308a430d",
       "text": "1f6cf95d9c8c2180dbf871aa9b19a7bfcde5405cf77b75954b7575920d2aef14"
     },
     "start": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "c726d0df334e60209136d32f31b3c11435550bccc01dc9a9ee53b366a3d6c6c6",
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "8435251f8ec4fd8c7188165b8dcdfb6a471295e5c77a17637428256660369b10",
       "text": "953b107bba1128be43994bee9edf9ab7766c7ecfab70620808f8d404fef8d3cb"
     },
     "starter-kit": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "c17854ee6d7e51d7c0abf3c0e8285dd80fcfa9ca44b7f811fcebfb555a6607ae",
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "0cb5179afbfe3223f62ebc4bf73caa360ea952169da06c90e4c661a151e496dd",
       "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
     },
     "teleports": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "128905e78a36b83b72a005a17c5ba8344a4a801ffe08d2ca4be3dab00ece10b4",
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "4c84f6c0a5d692993b2fe72b5f9d88557ed3feff0df2eae2fc1d353d2771ab66",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "1fafa50163b24e4fcd941a4446c3c62d8c2d291bd0a58528a0abae8abf1242f7",
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "d6f060e48a9768b2179c654703acf6a1d271fa7310673dcf08e36f47ea0c9bac",
       "text": "9fac8f515b8905c25378000b55e6f5faaa87a8b5a3a3173676cb4563894d98f7"
     },
     "titles": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "87643d90e28dc26d1006d9fa92391ecf16c152a975b8ea32da33fe78b9e05965",
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "a4c8b790ddc1352ef82aa1562869c71e883d7be488c1fc874abb5e6be4fcd475",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "a3efc4ab1b608118db7eb46a8765602de70f2be888197dd1dc9ff6194e8a83a1",
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "142006640abbd8d5041786088953511eb09a2ab1aa71f906aae23bb7ba9fcd67",
       "text": "ac7d8429ff72a6e0ac03131f1cd12827180560883cb4c3348ea853c7223a11bc"
     },
     "vk": {
-      "reason": "Итоговая сверка 20 модулей, PvE и пустого раздела меню",
-      "sources": "3690c1f0e72b6a2e5427112b351c6303a55b949b63ccb13a819be1f20a073243",
+      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
+      "sources": "10179f36fe3d43c05064016a15b144543aed83bfa9c0961940ede200308a430d",
       "text": "b592e465a73dd13186763622b51190400cffd40960e233f58c63379b88a9bba9"
     }
   },

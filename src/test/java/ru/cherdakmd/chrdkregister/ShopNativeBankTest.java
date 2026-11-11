@@ -90,6 +90,12 @@ class ShopNativeBankTest {
         assertEquals(2,minorTrade(false,101,0,101,0,1).turnoverWhole());
     }
 
+    @Test void marketScaledCarryRemainsFractionalAndKeepsExactSubMinorRemainder() {
+        var quote=ShopSaleRemainder.quote("0/1",64,150,1);
+        var t=new ShopExchange(UUID.randomUUID(),market,1,owner,false,"STONE",1,quote.money(),0,quote.money(),0,
+                Map.of("DIAMOND",1),"before","after",64,150,"0/1",quote.remainder(),null,null,true,15_000);
+        assertTrue(t.valid());assertTrue(t.fractional());assertTrue(t.carriesRemainder());assertEquals(2,t.money());assertEquals("14/64",t.remainderAfter());
+    }
     @Test void remainderSchemaCannotBeDowngradedOrSilentlyLoseCarry() throws Exception {
         var b=funded(0); var t=fraction(b,1,1); b.prepareShop(t,"Steve"); BankCash.recover(b,owner,bag());
         String original=Files.readString(b.file()); var json=JsonParser.parseString(original).getAsJsonObject(); json.addProperty("schema",7);

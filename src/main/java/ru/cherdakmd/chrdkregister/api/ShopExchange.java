@@ -55,7 +55,6 @@ public record ShopExchange(UUID transaction,UUID market,long sequence,UUID owner
         if(!validRemainder()||fractional&&(rateBps<DiamondExchangePolicy.MIN_BPS||rateBps>DiamondExchangePolicy.MAX_BPS)) return false;
         long physicalMoney = fractional ? Math.multiplyExact(physical, (long)rateBps) : physical;
         if(!(buy?debit+physicalMoney-credit==money:debit==0&&physical==0&&credit==money)) return false;
-        if(fractional && carriesRemainder()) return false;
         if(carriesGrant()) {
             // Только покупка, без остатка от распродажи; искра дополнительно ограничена в GUI/сервисе.
             if(!buy||carriesRemainder()||!ForgeMarketCatalog.validTradeGrant(grant,material,units)) return false;

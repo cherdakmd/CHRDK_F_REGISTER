@@ -191,7 +191,7 @@ public final class BankCommandHandler implements CommandExecutor, TabCompleter {
         BankService.MarketWithdrawResult result = bank.withdrawMarket(player, amount);
         switch (result.status()) {
             case OK -> messages.send(player, "economy.withdraw-done",
-                    "amount", BankService.format(result.amount()),
+                    "amount", BankService.format(result.items()),
                     "balance", BankService.formatMinor(result.balanceMinor()));
             case NO_SPACE -> messages.send(player, "economy.no-space");
             case UNAVAILABLE -> messages.send(player,"economy.cash-unavailable");
