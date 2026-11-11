@@ -25,8 +25,9 @@ public final class OrdersFinance implements AutoCloseable {
         public boolean registered(String s,UUID l) { return plugin.coreApi().incomeSourceAvailable(s,l); }
         public boolean register(String s,UUID l) { return plugin.coreApi().registerIncomeSource(s,l); }
         public boolean known(UUID owner) { return plugin.coreApi().canReceiveBankIncome(owner); }
+        public boolean receiptCompatible(long credited,long totalBase) { return credited>=0; }
         public long credited(String s,UUID l,UUID owner) { return plugin.coreApi().creditedEntitlement(s,l,owner.toString(),owner); }
-        public boolean credit(String s,UUID l,UUID owner,long total) { return plugin.coreApi().creditEntitlement(s,l,owner.toString(),owner,total); }
+        public boolean credit(String s,UUID l,UUID owner,long total) { return plugin.coreApi().creditMarketEntitlement(s,l,owner.toString(),owner,total); }
     };
     public OrdersFinance(OrdersPlugin plugin) throws IOException {
         this.plugin=plugin; store=plugin.store();
@@ -42,7 +43,7 @@ public final class OrdersFinance implements AutoCloseable {
         if(owner==null||!bank.known(owner)) return false;
         if(!Objects.equals(store.incomes().get(owner),total)) throw new IllegalArgumentException("unbacked orders income");
         long credited=bank.credited(source,store.lineage(),owner);
-        if(credited<0||credited>total) throw new IllegalStateException("orders source older than bank");
+        if(!bank.receiptCompatible(credited,total)) throw new IllegalStateException("orders source older than bank");
         return total>0&&bank.credit(source,store.lineage(),owner,total);
     }
     public boolean paused() { return conflict||!store.idle(); }

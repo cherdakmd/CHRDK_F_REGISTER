@@ -79,6 +79,13 @@ public final class ChargeJournal {
                 AuctionPayment.hash(beforeInventory, afterInventory), AuctionPayment.hash(beforeState, afterState));
         var next = copy(); next.pending = new Pending(c, beforeInventory, afterInventory, beforeState, afterState); write(next); return c;
     }
+    public synchronized BankCharge prepareMinor(UUID payer,long price,long debit,long cash,long change,int rateBps,
+            String beforeInventory,String afterInventory,String beforeState,String afterState)throws IOException {
+        writable();if(data.pending!=null)throw new IllegalStateException("unfinished charge");
+        var c=new BankCharge(data.source,data.lineage,nextSequence(),UUID.randomUUID(),payer,price,debit,cash,change,
+                AuctionPayment.hash(beforeInventory,afterInventory),AuctionPayment.hash(beforeState,afterState),true,rateBps);
+        var next=copy();next.pending=new Pending(c,beforeInventory,afterInventory,beforeState,afterState);write(next);return c;
+    }
     private Data copy() { return JSON.fromJson(JSON.toJson(data), Data.class); }
     public synchronized void complete(BankCharge verifiedCommitted) throws IOException {
         writable(); requirePending(verifiedCommitted); var next = copy(); next.sequence = verifiedCommitted.sequence(); next.pending = null; write(next);

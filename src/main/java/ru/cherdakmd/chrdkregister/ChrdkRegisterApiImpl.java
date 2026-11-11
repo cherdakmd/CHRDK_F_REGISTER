@@ -167,6 +167,7 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi, IncomeSourceLineag
     @Override public int diamondRateBps() { return bank.diamondRateBps(); }
     @Override public ru.cherdakmd.chrdkregister.api.DiamondExchangePolicy.Quote diamondRate() { return bank.diamondRate(); }
     @Override public long bankBalanceMinor(String playerName) { var id=bank.idByName(playerName); return id==null?-1:bank.balanceMinor(id); }
+    @Override public boolean fundClaimPaymentMinor(org.bukkit.entity.Player payer,long costMinor) { return plugin.bank()!=null&&plugin.bank().fundClaimPaymentMinor(payer,costMinor); }
     @Override public long auctionBankBalanceMinor(java.util.UUID owner) { return auctionBankReady()&&owner!=null?bank.balanceMinor(owner):-1; }
     @Override public long spendableBankBalanceMinor(java.util.UUID owner) { return auctionBankReady()&&owner!=null?bank.spendableBalanceMinor(owner):-1; }
     @Override public boolean exchangeAccountsMinor(java.util.Map<java.util.UUID,Long> deltas,Runnable commit) {
@@ -197,6 +198,15 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi, IncomeSourceLineag
         if (bank.knows(owner)) return true;
         var player = org.bukkit.Bukkit.getPlayer(owner);
         return player != null && isAuthenticated(player) || org.bukkit.Bukkit.getOfflinePlayer(owner).hasPlayedBefore();
+    }
+    @Override public boolean creditMarketEntitlement(String source,java.util.UUID lineage,String key,java.util.UUID owner,long totalBase) {
+        return auctionBankReady()&&canReceiveBankIncome(owner)&&bank.creditMarketEntitlement(source,lineage,key,owner,totalBase);
+    }
+    @Override public long creditedEntitlementBase(String source,java.util.UUID lineage,String key,java.util.UUID owner) {
+        return auctionBankReady()?bank.creditedEntitlementBase(source,lineage,key,owner):-1L;
+    }
+    @Override public boolean creditEntitlementMinor(String source,java.util.UUID lineage,String key,java.util.UUID owner,long total) {
+        return auctionBankReady()&&canReceiveBankIncome(owner)&&bank.creditEntitlementMinor(source,lineage,key,owner,total);
     }
     @Override public boolean creditEntitlement(String source, java.util.UUID lineage, String key, java.util.UUID owner, long total) {
         return auctionBankReady() && canReceiveBankIncome(owner) && bank.creditEntitlement(source, lineage, key, owner, total);

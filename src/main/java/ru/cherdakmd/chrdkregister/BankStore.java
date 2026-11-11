@@ -191,9 +191,9 @@ public final class BankStore {
         return publishAuction(next);
     }
     synchronized BankCash.Intent prepareMarketCash(UUID owner,String name,BankCash.Kind kind,long items,long minorDelta,int blockWorth,int selected,long request,String before,String after) {
-        if(!available||owner==null||cashLocked(owner)||(kind!=BankCash.Kind.DEPOSIT&&kind!=BankCash.Kind.WITHDRAW)) return null;
+        if(!available||owner==null||cashLocked(owner)||(kind!=BankCash.Kind.DEPOSIT&&kind!=BankCash.Kind.WITHDRAW&&kind!=BankCash.Kind.CLAIM_FUND)) return null;
         long beforeMinor=balanceMinor(owner);
-        if(beforeMinor<0||minorDelta==0||kind==BankCash.Kind.DEPOSIT&&(minorDelta<0||beforeMinor>MAX_BALANCE*100L-minorDelta)
+        if(beforeMinor<0||minorDelta==0||(kind==BankCash.Kind.DEPOSIT||kind==BankCash.Kind.CLAIM_FUND)&&(minorDelta<0||beforeMinor>MAX_BALANCE*100L-minorDelta)
                 ||kind==BankCash.Kind.WITHDRAW&&(minorDelta>=0||spendableBalanceMinor(owner)<-minorDelta)) return null;
         var old=cashReceipts.get(owner);long sequence=old==null?1:old.sequence()+1;
         var intent=new BankCash.Intent(UUID.randomUUID(),owner,sequence,kind,items,balance(owner),blockWorth,selected,request,before,after,null,beforeMinor,minorDelta);
@@ -242,14 +242,20 @@ public final class BankStore {
     }
     public synchronized ClaimExchange.Status commitClaim(ClaimExchange t) {
         var status=claimStatus(t); if(status!=ClaimExchange.Status.MISSING) return status;
-        for(var e:t.deltas().entrySet()) { long balance=balance(e.getKey()); if(balance+e.getValue()<0||balance+e.getValue()>MAX_BALANCE || e.getValue()<0 && spendableBalance(e.getKey()) < -e.getValue()) return ClaimExchange.Status.MISSING; }
-        var next=envelope(); t.deltas().forEach((id,delta)->adjust(next.accounts.get(id.toString()),delta));
+        for(var e:t.deltas().entrySet()) {
+            long balance=t.minor()?balanceMinor(e.getKey()):balance(e.getKey());long limit=t.minor()?MAX_BALANCE*100L:MAX_BALANCE;
+            long available=t.minor()?spendableBalanceMinor(e.getKey()):spendableBalance(e.getKey());
+            if(balance+e.getValue()<0||balance+e.getValue()>limit||e.getValue()<0&&available < -e.getValue()) return ClaimExchange.Status.MISSING;
+        }
+        var next=envelope(); t.deltas().forEach((id,delta)->{if(t.minor())adjustMinor(next.accounts.get(id.toString()),delta);else adjust(next.accounts.get(id.toString()),delta);});
         next.claimSettlements.put(t.lineage(),t); return publishAuction(next)?ClaimExchange.Status.COMMITTED:ClaimExchange.Status.UNAVAILABLE;
     }
 
     private final Map<String, BankCharge> chargeSettlements = new LinkedHashMap<>();
     private final Map<String, UUID> chargeWitnesses = new LinkedHashMap<>();
-    public record Entitlement(UUID owner, long credited) { }
+    public record Entitlement(UUID owner, long credited, long base) {
+        public Entitlement(UUID owner,long credited) { this(owner,credited,-1); }
+    }
     private final Map<String, UUID> entitlementSources = new LinkedHashMap<>();
     private final Map<String, Entitlement> entitlementCredits = new LinkedHashMap<>();
     public record AuctionImport(UUID market, long amount) { }
@@ -319,7 +325,7 @@ public final class BankStore {
             var object = document.getAsJsonObject();
             if(object.has("schema")&&(!object.get("schema").isJsonPrimitive()||!object.get("schema").getAsJsonPrimitive().isNumber())) throw new IllegalArgumentException("bank schema type");
             int schema = object.has("schema") ? object.get("schema").getAsBigDecimal().intValueExact() : 1;
-            if (schema != 1 && schema != 2 && schema != 3 && schema != 4 && schema != 5 && schema != 6 && schema != 7 && schema != 8 && schema != SCHEMA_VERSION) throw new IllegalArgumentException("Неизвестная схема банка");
+            if (schema != 1 && schema != 2 && schema != 3 && schema != 4 && schema != 5 && schema != 6 && schema != 7 && schema != 8 && schema != 9 && schema != SCHEMA_VERSION) throw new IllegalArgumentException("Неизвестная схема банка");
             if (schema >= 2) for (String key : java.util.List.of("claimsImports", "auctionImports", "auctionSettlements"))
                 if (!object.has(key) || !object.get(key).isJsonObject()) throw new IllegalArgumentException("Нет таблицы " + key);
             if (schema >= 3) for (String key : java.util.List.of("entitlementSources", "entitlementCredits"))
@@ -370,6 +376,16 @@ public final class BankStore {
                 if(object.has("shopSettlements")) for(var e:object.getAsJsonObject("shopSettlements").entrySet()) if(e.getValue().getAsJsonObject().has("fractional")) throw new IllegalArgumentException("downgraded fractional shop");
                 for(var e:object.getAsJsonObject("accounts").entrySet()) if(e.getValue().getAsJsonObject().has("minor")&&e.getValue().getAsJsonObject().get("minor").getAsInt()!=0) throw new IllegalArgumentException("downgraded minor balance");
             }
+            // API43 fractional receipts predate frozen rateBps; their historical quote was exactly 1.00.
+            if(schema==9) {
+                if(object.has("shopSettlements")) for(var row:object.getAsJsonObject("shopSettlements").entrySet()) {
+                    var shop=row.getValue().getAsJsonObject();if(shop.has("fractional")&&shop.get("fractional").getAsBoolean()&&!shop.has("rateBps"))shop.addProperty("rateBps",DiamondExchangePolicy.BASE_BPS);
+                }
+                for(var row:object.getAsJsonObject("cashPending").entrySet()) {
+                    var pending=row.getValue().getAsJsonObject();if(!pending.has("shop")||pending.get("shop").isJsonNull())continue;
+                    var shop=pending.getAsJsonObject("shop");if(shop.has("fractional")&&shop.get("fractional").getAsBoolean()&&!shop.has("rateBps"))shop.addProperty("rateBps",DiamondExchangePolicy.BASE_BPS);
+                }
+            }
             Envelope envelope = GSON.fromJson(document, Envelope.class);
             if(envelope.marketSnapshot!=null) marketSnapshot=envelope.marketSnapshot;
             marketRateBps=Math.clamp(envelope.marketRateBps,DiamondExchangePolicy.MIN_BPS,DiamondExchangePolicy.MAX_BPS);
@@ -384,6 +400,8 @@ public final class BankStore {
                 if (separator <= 0 || !entitlementSources.containsKey(key.substring(0, separator))
                         || !validIncomeKey(key.substring(separator + 1)) || receipt == null || receipt.owner() == null || receipt.credited() < 0)
                     throw new IllegalArgumentException("Неверная квитанция дохода");
+                if(schema<10) receipt=new Entitlement(receipt.owner(),Math.multiplyExact(receipt.credited(),100L),receipt.credited());
+                if(receipt.base()<-1||receipt.base()>MAX_BALANCE) throw new IllegalArgumentException("Неверный базовый счётчик дохода");
                 entitlementCredits.put(key, receipt);
             }
             chargeSettlements.clear();
@@ -873,6 +891,15 @@ public final class BankStore {
         if (status == BankCharge.Status.COMMITTED) return true;
         if (status != BankCharge.Status.MISSING) return false;
         if(cashLocked(payment.payer())) return false;
+        if(payment.minor()) {
+            long after=balanceMinor(payment.payer())-payment.debit()+payment.change();
+            if(!collectingDebt&&spendableBalanceMinor(payment.payer())<payment.debit()||balanceMinor(payment.payer())<payment.debit()||after<0||after>MAX_BALANCE*100L)return false;
+            var next=envelope();adjustMinor(next.accounts.computeIfAbsent(payment.payer().toString(),ignored->new Account()),-payment.debit()+payment.change());
+            next.chargeSettlements.put(payment.source(),payment);if(payment.cash()>0)next.chargeWitnesses.put(payment.source()+":"+payment.payer(),payment.transaction());
+            next.marketSnapshot=new DiamondExchangePolicy.Snapshot(marketSnapshot.circulation(),marketSnapshot.minted(),marketSnapshot.burned()+payment.price()-payment.change(),
+                    marketSnapshot.shopTurnover(),marketSnapshot.auctionTurnover(),marketSnapshot.activeAccounts(),marketSnapshot.onlinePlayers(),marketSnapshot.targetCirculation(),marketSnapshot.targetActiveAccounts());
+            return publishAuction(next);
+        }
         long balance = balance(payment.payer());
         if (balance < payment.debit() || !collectingDebt && spendableBalance(payment.payer()) < payment.debit()
                 || balance - payment.debit() + payment.change() > MAX_BALANCE) return false;
@@ -966,6 +993,35 @@ public final class BankStore {
         return publishAuction(next) && accepted == delta;
     }
 
+    public synchronized boolean creditEntitlementMinor(String source,UUID lineage,String key,UUID owner,long total) {
+        long credited=creditedEntitlement(source,lineage,key,owner);if(credited<0||total<credited||total<0||cashLocked(owner))return false;
+        long delta=total-credited;if(delta==0&&entitlementCredits.containsKey(source+":"+key))return true;
+        if(balanceMinor(owner)>MAX_BALANCE*100L-delta)return false;
+        var next=envelope();adjustMinor(next.accounts.computeIfAbsent(owner.toString(),ignored->new Account()),delta);
+        next.entitlementSources.put(source,lineage);next.entitlementCredits.put(source+":"+key,new Entitlement(owner,total));
+        return publishAuction(next);
+    }
+
+    /** New base-unit delta is converted once at the current quote; credited history is never revalued. */
+    public synchronized boolean creditMarketEntitlement(String source,UUID lineage,String key,UUID owner,long total) {
+        if(total<0||total>MAX_BALANCE||creditedEntitlement(source,lineage,key,owner)<0||cashLocked(owner))return false;
+        String id=source+":"+key;var previous=entitlementCredits.get(id);long base=previous==null?0:previous.base();
+        if(base<0||base>total)return false;
+        long deltaBase=total-base;if(deltaBase==0&&previous!=null)return true;
+        long delta=diamondRate().scaleMinor(Math.multiplyExact(deltaBase,100L));
+        long credited=previous==null?0:previous.credited();
+        if(delta<0||credited>MAX_BALANCE*100L-delta||balanceMinor(owner)>MAX_BALANCE*100L-delta)return false;
+        var next=envelope();adjustMinor(next.accounts.computeIfAbsent(owner.toString(),ignored->new Account()),delta);
+        next.entitlementSources.put(source,lineage);next.entitlementCredits.put(id,new Entitlement(owner,Math.addExact(credited,delta),total));
+        next.marketSnapshot=new DiamondExchangePolicy.Snapshot(marketSnapshot.circulation(),marketSnapshot.minted()+delta,marketSnapshot.burned(),
+                marketSnapshot.shopTurnover(),marketSnapshot.auctionTurnover(),marketSnapshot.activeAccounts(),marketSnapshot.onlinePlayers(),marketSnapshot.targetCirculation(),marketSnapshot.targetActiveAccounts());
+        return publishAuction(next);
+    }
+    public synchronized long creditedEntitlementBase(String source,UUID lineage,String key,UUID owner) {
+        if(creditedEntitlement(source,lineage,key,owner)<0)return -1;var receipt=entitlementCredits.get(source+":"+key);
+        return receipt==null?0:receipt.base();
+    }
+
     /** Синхронный once-import. Источник заморожен в одном конкретном рынке. */
     public synchronized boolean importLegacyAuction(UUID market, UUID owner, long amount) {
         if (!available || cashLocked(owner) || market == null || owner == null || amount < 0 || amount > MAX_BALANCE) return false;
@@ -1002,6 +1058,18 @@ public final class BankStore {
                 || !auctionImports.get(payment.buyer()).market().equals(payment.market())
                 || !auctionImports.get(payment.seller()).market().equals(payment.market())) return false;
         if(cashLocked(payment.buyer())||cashLocked(payment.seller())) return false;
+        if(payment.minor()) {
+            long after=balanceMinor(payment.buyer())-payment.debit()+payment.change();
+            if(spendableBalanceMinor(payment.buyer())<payment.debit()||after>MAX_BALANCE*100L
+                    ||balanceMinor(payment.seller())>MAX_BALANCE*100L-(payment.price()-payment.fee())) return false;
+            var next=envelope();adjustMinor(next.accounts.get(payment.buyer().toString()),-payment.debit()+payment.change());
+            adjustMinor(next.accounts.get(payment.seller().toString()),payment.price()-payment.fee());
+            next.auctionSettlements.put(payment.market(),payment);
+            next.marketSnapshot=new DiamondExchangePolicy.Snapshot(marketSnapshot.circulation(),marketSnapshot.minted(),marketSnapshot.burned()+payment.fee(),
+                    marketSnapshot.shopTurnover(),marketSnapshot.auctionTurnover()+payment.price(),marketSnapshot.activeAccounts(),marketSnapshot.onlinePlayers(),
+                    marketSnapshot.targetCirculation(),marketSnapshot.targetActiveAccounts());
+            return publishAuction(next);
+        }
         long buyerAfter = balance(payment.buyer()) - payment.debit() + payment.change();
         if (spendableBalance(payment.buyer()) < payment.debit() || buyerAfter > MAX_BALANCE
                 || balance(payment.seller()) > MAX_BALANCE - (payment.price() - payment.fee())) return false;

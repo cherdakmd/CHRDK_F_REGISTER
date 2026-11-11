@@ -286,6 +286,7 @@ public interface ChrdkRegisterApi {
         return new DiamondExchangePolicy.Quote(DiamondExchangePolicy.BASE_BPS, 0, 0, 0, 0, 0);
     }
     default long bankBalanceMinor(String playerName) { return -1L; }
+    default boolean fundClaimPaymentMinor(Player payer,long costMinor) { return false; }
     default long auctionBankBalanceMinor(UUID owner) { return -1L; }
     default long spendableBankBalanceMinor(UUID owner) { return -1L; }
     /** API44: additive minor-unit reward; legacy whole-diamond grant remains unchanged. */
@@ -306,6 +307,11 @@ public interface ChrdkRegisterApi {
     default long creditedEntitlement(String source, UUID lineage, String key, UUID owner) { return -1L; }
     /** true — total зачислен полностью. false: выплата могла быть частичной/неизвестной; нельзя откатывать source total. */
     default boolean creditEntitlement(String source, UUID lineage, String key, UUID owner, long total) { return false; }
+    /** API44: the same cumulative receipt protocol with exact hundredths. */
+    /** Cumulative base reward; each new delta is converted once at the current diamond quote. */
+    default boolean creditMarketEntitlement(String source,UUID lineage,String key,UUID owner,long totalBase) { return false; }
+    default long creditedEntitlementBase(String source,UUID lineage,String key,UUID owner) { return -1L; }
+    default boolean creditEntitlementMinor(String source,UUID lineage,String key,UUID owner,long totalMinor) { return false; }
 
     /** API v15: -1 при недоступном банке; UUID из достоверного ledger аукциона. */
     default boolean auctionBankAvailable() { return false; }

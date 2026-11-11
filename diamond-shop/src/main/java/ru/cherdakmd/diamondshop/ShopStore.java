@@ -390,7 +390,7 @@ public final class ShopStore {
     /** RC16: тот же WAL, но без виртуального склада/истории цены — грант заморожен в сделке. */
     synchronized boolean prepareForge(ru.cherdakmd.chrdkregister.api.ShopExchange t,long now,double limit) {
         if(!legacyAvailable||!registered||pending!=null||!market.equals(t.market())||t.sequence()!=sequence+1
-                ||!t.valid()||!t.buy()||!t.carriesGrant()||!canRecordTurnover(t.owner(),t.money(),limit,now)) return false;
+                ||!t.valid()||!t.buy()||!t.carriesGrant()||!canRecordTurnover(t.owner(),t.turnoverWhole(),limit,now)) return false;
         var p=new ShopJournal.Pending(t,1,0,0,now,now-Math.floorMod(now,86400000L),
                 limit==0?-1:PriceEngine.round(usedToday(t.owner(),now)+t.money()),
                 PriceEngine.round(turnover+t.money()),1.0,4,0L,true);

@@ -78,7 +78,7 @@ public final class DailyCommandHandler implements TabExecutor {
     /** Объявляет содержимое выданной награды (используется командой и GUI). */
     public void announceClaim(Player player, DailyService.ClaimResult result) {
         plugin.messages().send(player, "daily.claim-header", "day", result.cycleDay());
-        if(result.money()>0)plugin.messages().send(player,"finance.daily-money","amount",result.money());
+        if(result.money()>0)plugin.messages().send(player,"finance.daily-money","amount",ru.cherdakmd.chrdkregister.api.DiamondMoney.format(plugin.coreApi().diamondRate().scaleMinor(result.money()*100L)));
         if (!result.items().isEmpty()) {
             plugin.messages().send(player, "daily.claim-items",
                     "items", DailyService.itemsText(result.items()));

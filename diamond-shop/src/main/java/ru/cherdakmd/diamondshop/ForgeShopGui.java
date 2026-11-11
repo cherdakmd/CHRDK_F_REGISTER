@@ -76,7 +76,7 @@ final class ForgeShopGui implements Listener {
             lore.add(messages.get("forge.shop.details-hint"));
             lore.addAll(messages.getList("forge.shop.item-lore",
                     "sku", offer.sku(), "name", ForgeShopText.name(messages, offer.sku()),
-                    "price", offer.price()));
+                    "price", ru.cherdakmd.chrdkregister.api.DiamondMoney.format(offer.price())));
             if (offer.seed()) lore.add(messages.get("forge.shop.max-one"));
             meta.lore(lore);
             icon.setItemMeta(meta);

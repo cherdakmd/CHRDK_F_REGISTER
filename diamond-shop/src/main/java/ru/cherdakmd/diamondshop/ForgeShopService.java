@@ -60,7 +60,7 @@ final class ForgeShopService {
         var source = source();
         if (source == null) return offers;
         for (var sku : ForgeMarketCatalog.SKUS) {
-            long price = prices.price(sku.id());
+            long price = plugin.api().diamondRate().scaleMinor(prices.price(sku.id()));
             if (price < 1 || !source.available(sku.id())) continue;
             ItemStack prototype = source.prototype(sku.id());
             if (prototype == null) continue;
@@ -80,7 +80,8 @@ final class ForgeShopService {
     Result purchase(Player player, Offer offer, int units) {
         var service = plugin.shopService();
         if (!service.ready(player) || player.getGameMode() != GameMode.SURVIVAL) return fail("trading.unavailable", 0);
-        if (!prices.enabled() || prices.price(offer.sku()) != offer.price()) return fail("forge.shop.closed", 0);
+        var marketQuote=plugin.api().diamondRate();
+        if (!prices.enabled() || marketQuote.scaleMinor(prices.price(offer.sku())) != offer.price()) return fail("forge.shop.closed", 0);
         if (units < 1 || units > 64 || (offer.seed() && units != 1)) return fail("forge.shop.quantity", 0);
         long money;
         try {
@@ -102,7 +103,7 @@ final class ForgeShopService {
         var config = service.config();
         var before = copy(player.getInventory().getStorageContents());
         var after = copy(before);
-        long wallet = service.balance(player), needed = Math.max(0, money - wallet);
+        long wallet = service.balance(player), neededMinor = Math.max(0, money - wallet),needed=(neededMinor+marketQuote.rateBps()-1)/marketQuote.rateBps();
         int[] amounts = new int[36], values = new int[36];
         for (int slot = 0; slot < after.length; slot++) if (plain(after[slot])) {
             amounts[slot] = after[slot].getAmount();
@@ -115,7 +116,7 @@ final class ForgeShopService {
             if (removal.after()[slot] == 0) after[slot] = null;
             else after[slot].setAmount(removal.after()[slot]);
         }
-        var payment = WholeTrades.payment(money, wallet, spent);
+        var payment = WholeTrades.payment(money, wallet, Math.multiplyExact(spent,(long)marketQuote.rateBps()));
         if (payment == null) return fail("trading.not-enough-balance", money);
         long debit = payment.account(), credit = payment.change();
         // exact isSimilar clone insertion; для искры max-stack-size=1 → отдельный слот.
@@ -128,7 +129,7 @@ final class ForgeShopService {
         });
         long now = System.currentTimeMillis();
         double limit = service.dailyLimit(player);
-        if (!service.store().canRecordTurnover(player.getUniqueId(), money, limit, now)) {
+        if (!service.store().canRecordTurnover(player.getUniqueId(), DiamondMoney.ceilWhole(money), limit, now)) {
             return fail("trading.daily-limit", money);
         }
         var trade = new ShopExchange(UUID.randomUUID(), service.store().market(),
@@ -136,6 +137,7 @@ final class ForgeShopService {
                 units, money, debit, credit, spent, frozenRates,
                 ChargeInventory.encode(before), ChargeInventory.encode(after),
                 0, 0, null, null, null, offer.grant());
+        trade=ShopExchange.fractional(trade,marketQuote.rateBps());
         if (!ShopInventory.valid(trade)) return fail("trading.unavailable", money);
         if (!service.store().prepareForge(trade, now, limit)) {
             return fail("trading.unavailable", money);

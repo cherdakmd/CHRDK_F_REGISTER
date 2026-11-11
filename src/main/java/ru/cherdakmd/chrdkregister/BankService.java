@@ -165,6 +165,18 @@ public final class BankService implements org.bukkit.event.Listener {
         if(tender==null||tender.cash()>BankStore.MAX_BALANCE-balance) return false;
         return exchangeCash(player,BankCash.Kind.CLAIM_FUND,new BankCashInventory.Plan(tender.after(),tender.cash()),before,9,-1,cost);
     }
+    public boolean fundClaimPaymentMinor(Player player,long costMinor) {
+        if(!enabled()||!authenticated(player)||player.isDead()||player.getGameMode()!=org.bukkit.GameMode.SURVIVAL||!player.hasPermission("chrdkclaims.use")||costMinor<0||costMinor>BankStore.MAX_BALANCE*100L||store.cashLocked(player.getUniqueId())||!new BankChargeGuard(plugin,store).check(player))return false;
+        if(recoverCash(player)!=ru.cherdakmd.chrdkregister.api.InventoryTransfer.Decision.APPLIED)return false;
+        long balance=store.balanceMinor(player.getUniqueId());if(balance>=costMinor)return true;
+        var before=ru.cherdakmd.chrdkregister.api.ChargeInventory.copy(player.getInventory().getStorageContents());
+        var quote=marketQuote();var plan=ru.cherdakmd.chrdkregister.api.ChargeInventory.planMinor(before,costMinor,balance,quote.rateBps());
+        if(plan==null)return false;
+        // CLAIM_FUND credits the exact physical tender; domain debit is a separate WAL.
+        long cash=plan.cash()-plan.change();
+        var afterPlan=new BankCashInventory.Plan(plan.after(),plan.cash());
+        return exchangeMarketCash(player,BankCash.Kind.CLAIM_FUND,afterPlan,before,9,-1,costMinor,cash);
+    }
     public boolean shopReady(Player player) {
         return enabled()&&authenticated(player)&&!player.isDead()&&player.getGameMode()==org.bukkit.GameMode.SURVIVAL&&player.hasPermission("chrdkshop.use")
             &&!store.cashLocked(player.getUniqueId())&&new BankChargeGuard(plugin,store).check(player)

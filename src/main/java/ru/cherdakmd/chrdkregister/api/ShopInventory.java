@@ -124,7 +124,7 @@ public final class ShopInventory {
     private static long physicalLeft(ShopExchange t) {
         long bankMinor = t.fractional() ? t.debit() : Math.multiplyExact(t.debit(), DiamondMoney.SCALE);
         long leftMinor = Math.multiplyExact(t.money(), t.fractional() ? 1 : DiamondMoney.SCALE) - bankMinor;
-        return (leftMinor + DiamondMoney.SCALE - 1) / DiamondMoney.SCALE;
+        long unit=t.fractional()?t.rateBps():DiamondMoney.SCALE;return (leftMinor+unit-1)/unit;
     }
     private ShopInventory() { }
 }

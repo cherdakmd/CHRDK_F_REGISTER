@@ -28,9 +28,27 @@ final class AuctionWallet {
         }
         return new Plan(after, tender.debit(), tender.cash(), tender.change());
     }
+    static Plan planMinor(ItemStack[] before,long price,long balanceMinor,int rateBps) {
+        if(before==null||before.length!=36||price<0||balanceMinor<0||rateBps<5000||rateBps>20000) return null;
+        long debit=Math.min(price,balanceMinor),remaining=price-debit,cash=0;
+        var after=ItemCodec.copy(before);
+        // Whole diamonds first, then blocks; no resource or equipment can be consumed.
+        for(int pass=0;pass<2&&remaining>0;pass++) for(int i=0;i<36&&remaining>0;i++) {
+            var item=after[i];if(item==null||item.hasItemMeta()||item.getAmount()<=0)continue;
+            int units=switch(item.getType()) { case DIAMOND -> pass==0?1:0;case DIAMOND_BLOCK -> pass==1?9:0;default -> 0; };
+            if(units==0)continue;
+            while(item.getAmount()>0&&remaining>0) {
+                long value=Math.multiplyExact(units,(long)rateBps);cash=Math.addExact(cash,value);remaining-=value;item.setAmount(item.getAmount()-1);
+            }
+            if(item.getAmount()==0)after[i]=null;
+        }
+        if(remaining>0)return null;
+        return new Plan(after,debit,cash,-remaining);
+    }
     static boolean valid(AuctionStore.Pending pending) {
         var payment = pending.payment(); if (payment == null || !payment.valid()) return false;
-        var plan = plan(ItemCodec.inventory(pending.before()), payment.price(), payment.debit());
+        var plan = payment.minor()?planMinor(ItemCodec.inventory(pending.before()),payment.price(),payment.debit(),payment.rateBps())
+                :plan(ItemCodec.inventory(pending.before()), payment.price(), payment.debit());
         return plan != null && plan.debit == payment.debit() && plan.cash == payment.cash() && plan.change == payment.change()
                 && ItemCodec.matches(plan.after, pending.after());
     }

@@ -20,6 +20,8 @@ public final class MilestoneAwards {
         boolean known(UUID owner);
         long credited(String source,UUID lineage,UUID owner);
         boolean credit(String source,UUID lineage,UUID owner,long total);
+        /** Production receipts contain minor credits, so generic code must not compare them with base totals. */
+        default boolean receiptCompatible(long credited,long totalBase) { return credited>=0&&credited<=totalBase; }
     }
     /** Чистый production-исполнитель, проверяемый настоящим BankStore без Bukkit. */
     public static boolean deliver(MilestoneStore store,Bank bank,String source,UUID owner,long total) throws IOException {
@@ -30,7 +32,7 @@ public final class MilestoneAwards {
         if(owner==null||total<=0||!bank.known(owner)) return false;
         if(!Objects.equals(store.totals().get(owner),total)) throw new IllegalArgumentException("unbacked award total");
         long credited=bank.credited(source,store.lineage(),owner);
-        if(credited<0||credited>total) throw new IllegalStateException("award source older than bank receipt");
+        if(!bank.receiptCompatible(credited,total)) throw new IllegalStateException("award source older than bank receipt");
         return bank.credit(source,store.lineage(),owner,total);
     }
     private final JavaPlugin plugin;
@@ -53,8 +55,9 @@ public final class MilestoneAwards {
                     ? provider.incomeSourceLineage(s) : null;
         }
         public boolean known(UUID owner) { return api.get().canReceiveBankIncome(owner); }
+        public boolean receiptCompatible(long credited,long totalBase) { return credited>=0; }
         public long credited(String s,UUID l,UUID owner) { return api.get().creditedEntitlement(s,l,owner.toString(),owner); }
-        public boolean credit(String s,UUID l,UUID owner,long total) { return api.get().creditEntitlement(s,l,owner.toString(),owner,total); }
+        public boolean credit(String s,UUID l,UUID owner,long total) { return api.get().creditMarketEntitlement(s,l,owner.toString(),owner,total); }
     };
     public MilestoneAwards(JavaPlugin plugin,Supplier<ChrdkRegisterApi> api,Supplier<ru.cherdakmd.chrdkregister.Messages> messages,String source,Map<UUID,Set<String>> legacy) throws Exception {
         if(!source.matches("[a-z][a-z0-9-]{0,47}")||api.get()==null||ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<20) throw new IllegalStateException("Нужен Core API 20+");

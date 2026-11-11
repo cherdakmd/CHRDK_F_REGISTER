@@ -8,6 +8,7 @@ final class DailyDelivery {
     interface Bank {
         boolean available(); boolean registered(UUID lineage); boolean register(UUID lineage);
         boolean known(UUID owner); long credited(UUID lineage,UUID owner); boolean credit(UUID lineage,UUID owner,long total);
+        default boolean receiptCompatible(long credited,long totalBase){return credited>=0&&credited<=totalBase;}
     }
     interface Native { void item(DailyConfig.ItemReward item) throws Exception; void boost(int hours) throws Exception; }
     static boolean bind(DailyStore store,Bank bank) throws IOException {
@@ -19,7 +20,7 @@ final class DailyDelivery {
         if(!bind(store,bank))return;
         for(var e:store.totals().entrySet()) {
             if(e.getValue()==0||!bank.known(e.getKey()))continue;
-            long credited=bank.credited(store.lineage(),e.getKey());if(credited<0||credited>e.getValue())throw new IOException("daily source/receipt conflict");
+            long credited=bank.credited(store.lineage(),e.getKey());if(!bank.receiptCompatible(credited,e.getValue()))throw new IOException("daily source/receipt conflict");
             bank.credit(store.lineage(),e.getKey(),e.getValue());
         }
     }

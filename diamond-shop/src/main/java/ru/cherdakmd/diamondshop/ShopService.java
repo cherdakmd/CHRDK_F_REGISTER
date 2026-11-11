@@ -286,6 +286,12 @@ public final class ShopService {
                 if (money > WholeTrades.MAX) return fail("trading.invalid-number", money);
             }
         }
+        var marketQuote=api.get().diamondRate();
+        if(carry) {
+            price=marketQuote.scaleMinor(price);
+            try { exact=ShopSaleRemainder.quote(remainderBefore,batch,price,units); money=exact.money(); }
+            catch(RuntimeException error) { return fail("trading.unavailable",money); }
+        } else money=marketQuote.scaleMinor(money);
         var spec = item.spec();
         Material material = spec == null ? Material.matchMaterial(item.material()) : null;
         if (spec == null && (material == null || !material.isItem())) return fail("trading.unknown-item", 0);
@@ -293,7 +299,7 @@ public final class ShopService {
         long debit = 0, credit = buy ? 0 : money, spent = 0, change = 0;
         if (buy) {
             long wallet = balanceMinor(player), neededMinor = Math.max(0, money - wallet);
-            long needed = DiamondMoney.ceilWhole(neededMinor);
+            long needed=(neededMinor+marketQuote.rateBps()-1)/marketQuote.rateBps();
             int[] amounts = new int[36], values = new int[36];
             for (int slot=0; slot<after.length; slot++) if (plain(after[slot])) {
                 amounts[slot] = after[slot].getAmount(); values[slot] = config.currencyRates().getOrDefault(after[slot].getType().name(), 0);
@@ -305,7 +311,7 @@ public final class ShopService {
                 if (removal.after()[slot] == 0) after[slot] = null; else after[slot].setAmount(removal.after()[slot]);
             }
             debit=Math.min(wallet,money);
-            long paidMinor=Math.addExact(debit,Math.multiplyExact(spent,DiamondMoney.SCALE));
+            long paidMinor=Math.addExact(debit,Math.multiplyExact(spent,(long)marketQuote.rateBps()));
             if(paidMinor<money)return fail("trading.not-enough-balance",money);
             credit=paidMinor-money; change=credit;
             if(wallet-debit>WholeTrades.MAX-credit)return fail("trading.invalid-number",money);
@@ -327,7 +333,7 @@ public final class ShopService {
                 ? new ShopExchange(UUID.randomUUID(),store.market(),store.sequence()+1,player.getUniqueId(),buy,item.material(),units,money,debit,credit,spent,frozenRates,beforeSnapshot,afterSnapshot)
                 : new ShopExchange(UUID.randomUUID(),store.market(),store.sequence()+1,player.getUniqueId(),buy,item.material(),units,money,debit,credit,spent,frozenRates,beforeSnapshot,afterSnapshot,0,0,null,null,spec.key(),null);
         if(carry) t=new ShopExchange(t.transaction(),t.market(),t.sequence(),t.owner(),false,t.material(),t.units(),t.money(),0,t.credit(),0,t.rates(),t.before(),t.after(),batch,price,remainderBefore,exact.remainder(),t.book(),null);
-        else t=ShopExchange.fractional(t);
+        else t=ShopExchange.fractional(t,marketQuote.rateBps());
         if(!ShopInventory.valid(t)) return fail("trading.unavailable",money);
         long stock=store.stockOf(item,now,config.stockRecoveryPerHour());
         long afterStock; try { afterStock=Math.max(1,Math.addExact(stock,buy?-units:units)); } catch(ArithmeticException e) { return fail("trading.unavailable",money); }

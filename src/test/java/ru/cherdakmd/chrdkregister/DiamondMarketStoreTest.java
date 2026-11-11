@@ -44,6 +44,17 @@ class DiamondMarketStoreTest {
         assertEquals(ChrdkRegisterApi.MoneyGrant.FAILED,s.grantBattlePassMoneyMinorOnce(a,38,receipt));
         assertEquals(912,s.balanceMinor(a));
     }
+    @Test void cumulativeRewardsConvertOnlyNewDeltaAndNeverRevaluePaidHistory(){
+        var s=load();UUID lineage=UUID.randomUUID();assertTrue(s.registerIncomeSource("daily-rewards",lineage));
+        assertTrue(s.creditMarketEntitlement("daily-rewards",lineage,"a",a,10));assertEquals(1000,s.balanceMinor(a));
+        var up=s.revalueMarket(1000,1_000_000);assertTrue(up.rateBps()>10_000);
+        assertTrue(s.creditMarketEntitlement("daily-rewards",lineage,"a",a,20));
+        assertEquals(1000+up.scaleMinor(1000),s.balanceMinor(a));s.flush();
+        var loaded=load();var down=loaded.revalueMarket(0,2_000_000);assertTrue(down.rateBps()<up.rateBps());
+        long before=loaded.balanceMinor(a);assertTrue(loaded.creditMarketEntitlement("daily-rewards",lineage,"a",a,30));
+        assertEquals(before+down.scaleMinor(1000),loaded.balanceMinor(a));
+        assertTrue(loaded.creditMarketEntitlement("daily-rewards",lineage,"a",a,30));assertEquals(30,loaded.creditedEntitlementBase("daily-rewards",lineage,"a",a));
+    }
     @Test void marketCashCarriesExactBeforeAndDelta(){
         var s=load();s.depositMinor(a,"A",125,true);
         var intent=s.prepareMarketCash(a,"A",BankCash.Kind.DEPOSIT,1,75,1,-1,-1,"before","after");

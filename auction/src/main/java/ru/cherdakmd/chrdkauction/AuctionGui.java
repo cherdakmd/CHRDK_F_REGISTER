@@ -42,7 +42,7 @@ final class AuctionGui implements Listener {
         if (page>0) h.inventory.setItem(45,button(Material.ARROW,"auction.prev"));
         h.inventory.setItem(46,button(Material.CHEST,"auction.mine"));
         h.inventory.setItem(47,button(Material.ENDER_CHEST,"auction.mail"));
-        h.inventory.setItem(48,button(Material.DIAMOND,"auction.bank-money","balance",service.bankBalance(p)));
+        h.inventory.setItem(48,button(Material.DIAMOND,"auction.bank-money","balance",plugin.api().personalDiamondsText(p)));
         h.inventory.setItem(49,button(Material.PAPER,"auction.help"));
         h.inventory.setItem(50,button(Material.BOOK,"auction.back"));
         if (from+45<size) h.inventory.setItem(53,button(Material.ARROW,"auction.next"));
@@ -52,7 +52,7 @@ final class AuctionGui implements Listener {
         ItemStack item=ItemCodec.decode(lot.item());
         long hours=Math.max(0,(lot.expires()-System.currentTimeMillis()+3599999)/3600000);
         append(item,plugin.messages().get("auction.lot-lore","id",lot.id(),"seller",lot.name(),
-                "price",lot.price(),"fee",lot.fee(),"hours",hours)); return item;
+                "price",ru.cherdakmd.chrdkregister.api.DiamondMoney.format(lot.price()),"fee",ru.cherdakmd.chrdkregister.api.DiamondMoney.format(lot.fee()),"hours",hours)); return item;
     }
     private void confirm(Player p,long id) {
         if (!service.ready(p)) return;
@@ -61,7 +61,7 @@ final class AuctionGui implements Listener {
         Holder h=new Holder(p.getUniqueId(),Mode.CONFIRM,0);h.ids[0]=id;
         h.inventory=Bukkit.createInventory(h,27,plugin.messages().get("auction.confirm-title"));
         h.inventory.setItem(13,lotIcon(lot));
-        h.inventory.setItem(11,button(Material.LIME_CONCRETE,"auction.confirm","price",lot.price()));
+        h.inventory.setItem(11,button(Material.LIME_CONCRETE,"auction.confirm","price",ru.cherdakmd.chrdkregister.api.DiamondMoney.format(lot.price())));
         h.inventory.setItem(15,button(Material.RED_CONCRETE,"auction.back"));p.openInventory(h.inventory);
     }
     private ItemStack button(Material material,String key,Object...params) {
