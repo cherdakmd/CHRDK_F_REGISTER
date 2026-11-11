@@ -56,8 +56,8 @@
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "disasters": {
-      "reason": "Финально сверены opt-in поджог/урон, sounds.enabled, лимиты, cataclysm и точный откат",
-      "sources": "3f2ac470e534122ec9f2a6914d64f766edbe7e71bb4b04a2b4d6970a83930cee",
+      "reason": "Исправлены ключи Messages после CI: одиночная disasters-секция разворачивается ядром",
+      "sources": "f253afb8fa17070f2543088b79e821f54df8cd94b5c40dabe0ad8bcf820d3b37",
       "text": "f21774e4746616681468d2d267b20c87b67a374e86c1572abde089335c780602"
     },
     "economy": {

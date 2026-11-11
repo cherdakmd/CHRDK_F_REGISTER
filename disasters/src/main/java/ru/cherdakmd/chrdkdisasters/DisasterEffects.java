@@ -53,8 +53,8 @@ public final class DisasterEffects {
         if (center == null || !plugin.settings().cataclysm().titles()) {
             return;
         }
-        String title = plugin.messages().plain("disasters.kind-" + run.kind().id());
-        String subtitle = plugin.messages().plain("disasters.cataclysm-warning",
+        String title = plugin.messages().plain(run.kind().titleKey());
+        String subtitle = plugin.messages().plain("cataclysm-warning",
                 "seconds", run.secondsLeft(), "level", run.level());
         forNearby(center, plugin.settings().radius(), player ->
                 player.sendTitle("§c⚠ " + title, "§e" + subtitle, 10, 50, 15));
@@ -72,7 +72,7 @@ public final class DisasterEffects {
         }
         ring(center, plugin.settings().radius(), 80, Particle.END_ROD, 0.25, 0.0);
         if (plugin.settings().cataclysm().titles()) {
-            String text = plugin.messages().plain("disasters.cataclysm-countdown",
+            String text = plugin.messages().plain("cataclysm-countdown",
                     "seconds", run.secondsLeft());
             forNearby(center, plugin.settings().radius(), player ->
                     player.sendActionBar(net.kyori.adventure.text.Component.text("§e⚠ " + text)));
@@ -313,7 +313,7 @@ public final class DisasterEffects {
         }
         forNearby(center, radius, player -> {
             if (cataclysm.titles() && run.activeStep() % 3 == 0) {
-                String action = plugin.messages().plain("disasters.cataclysm-action-" + run.kind().id());
+                String action = plugin.messages().plain("cataclysm-action-" + run.kind().id());
                 player.sendActionBar(net.kyori.adventure.text.Component.text("§c⚠ " + action));
             }
             double distance = Math.sqrt(player.getLocation().distanceSquared(center));
