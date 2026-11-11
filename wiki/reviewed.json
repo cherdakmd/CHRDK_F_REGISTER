@@ -1,188 +1,188 @@
 {
   "pages": {
     "about": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "a7288a2dc1e4cc7f9b370b5274de5d3797a1e14c7cd2b4a1a40f578dc26cddef",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "3c9016cc598df546480d8c00a77db8c7441bd76b428ea1fc416a645057bc503d",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "207aacdfb85f0038722fa0672cc39df3ec9f46e764c5b43c98e9700e29358e37",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "50013b352034cd8df019de987910a2987d53a3b8e361b4ee992a39a0baf8696f",
       "text": "bd128e475ee8efae55c3d2d6c9616d5278600f2a8ff1aad7af5e6df3e0b3f5c3"
     },
     "artifacts": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "a7d72bfff01eea94d916ab6d01782c4b847a30448f2607f7c3cd8959ef0fcd48",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "d14817ac6fc7d42db227010b1f77d763a02dc7db12d26316b857c1ac3142bc93",
       "text": "51e3ef379d9a8f7e2ccfc6fd41cc0c0823f91f30d7c9a8326ec7962c182d98e4"
     },
     "auction": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "be2342be96899e694e3016afa48e9078a355154b2dff92ffcca7505164d175d2",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "3449a3b3bec19378adcb30648d0353723f7bfa8f2ef965de648680daa4fbe960",
       "text": "89f444940889c75cea3b77900f9b41ed8500cdb039d2b2cd1aebd82dcf710d25"
     },
     "battlepass": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "1c8a4875c4a8ab73450e551e11f1e33671a90e76970fccd4d4d126cabf4a2bac",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "abe9e3028056a64a13b26faade8793813c0ef267990cde144ea403845cbe7977",
       "text": "997df6e0a9311ea115c4fd3c192b2729034b10c68a4f41c57261ef4b704c5add"
     },
     "chat": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "a7288a2dc1e4cc7f9b370b5274de5d3797a1e14c7cd2b4a1a40f578dc26cddef",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "3c9016cc598df546480d8c00a77db8c7441bd76b428ea1fc416a645057bc503d",
       "text": "a51c51d20cfe94c553e80893422b000a579b87285b00cbceb452f29eb0773023"
     },
     "claims": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "8901d6c86ebeacb99dc99d4982941eb94a315eb2abe7d03257fe24ede2eb5881",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "ba88ab3dc52ceb9386b70400d465b5ba9f341f7e7e3ebcb1426b64151853416f",
       "text": "3126e85c74cf79658fdcde5a03722da3d31459d702228865edec9eb15e142aa4"
     },
     "classes": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "bb96e46f8badcd6aacf8539f80daa1843a67af94ebef415076a760099cee37d5",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "0f3a38a5e2c67a510cb9da3000e2895a1dfafd7470b3595f04973c006697feab",
       "text": "503edef62357862f67d17df249b393023697d6dca6342cbe792b0d4dc78cb8cc"
     },
     "commands": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "3a60670b049da0d0d74cd41ec5c3e405232ee680240cfb18c47ba6ab260535ed",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "cbba46cdca57176ef90f8978cfc82334e42ec898eaab63b3b9f53ae188fbbc3b",
       "text": "b16f06b84b440533e5bba0a45540bf517f3ae650cb390ddd6b9f43d47c5eabdd"
     },
     "cosmetics": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "4b34de9471e77b7e3bbd6e95454f180a338ca903c581a2effa8e641cca9f7fba",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "c8e7c5ed2e9126f07bc7a4d6f82c14319ef46a2ac53274fd36f038cd01ad4432",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "0e71f5681c32f43311424b0b785b7b463fe1fd2c0735240aa9461502a1a31a87",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "7cd4dc57567eeed3493ee2eb94a705bfa0cf83a0502c80b37eda6e534e83be95",
       "text": "4d7683f5677c50dfe0488961891915b5c2dd6533191a213ee8fdb077ea817eb5"
     },
     "disasters": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "58f48d44518f2a6d17f885e3b0335bb6cb65045589792d9e425a2b699266dc43",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "dca7ae687cb912c74a900f817e068612c44a88b3e603f5752027e39abffc9741",
       "text": "121b1cc28a075ced29b6de8abec7dbc20bbb531a01441ddd5fdb836d066d0202"
     },
     "economy": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "7bb82842b2e686509967e4b62e9505f608d7c0272c89d454121bbcaf7698e261",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "286bf2ef8d44a50d95d3def300ed1c2894b892cac9fc20a60543bcfbc84b3e9b",
       "text": "051da7af63816f9e7b42dc7185973c88adf8862f10ad9d1e21f5d789cdbdc4fe"
     },
     "enchants": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "20829d04bf7e5f6b9e3b2eb7642e80c1872bc107dd5ef88a4e42133e492d3070",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "14d02c049191e2b6e80486b3feb1033df3af375a1ce48533f4264b155bf5dcf9",
       "text": "7e90321ef8a100bae11c53592c62328fa44a958be657b66a86d51ea8c1906a7d"
     },
     "faq": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "5cd7b095f210bd44a52f6eeab70e7ca3483347f3d94765b2ab4cbe10e99189e2",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "1b0448479114a1628af3a51ae1326df28efd1a33e7bf8b67c4b0db9864332c97",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "19885f585ebf0ac09de54b1a9532acd4d717c9038d3860a8a23f786f95a5f47a",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "b92a6f15ce82429a24cac622bd6656e892976a77c611c0c8d20fe40056fc76a3",
       "text": "615d89bba0ac116c220d571f530fcdab7d5ff46162ca7a7ecf24de441a7fb191"
     },
     "guilds": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "8901d6c86ebeacb99dc99d4982941eb94a315eb2abe7d03257fe24ede2eb5881",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "ba88ab3dc52ceb9386b70400d465b5ba9f341f7e7e3ebcb1426b64151853416f",
       "text": "bb7d4121d6c42762b2f09d8eb57df986a942df35c77fd2cf899a5e7a38193216"
     },
     "honors": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "a7288a2dc1e4cc7f9b370b5274de5d3797a1e14c7cd2b4a1a40f578dc26cddef",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "3c9016cc598df546480d8c00a77db8c7441bd76b428ea1fc416a645057bc503d",
       "text": "6bc29d5a2d7783845f8b3d9b085e85982faec5b3029d841092386f36b1d4c4b0"
     },
     "index": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "71d4d336b9227f98b3bc4c3c5e0a7646a8d12e1d228e403e0224bfb84e1b9ef1",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "86193494bdbdc69680f995f8c87d37e77b49a056e95a0cfc1cf5489be465f7b1",
       "text": "13b0089b89035cd13598d177608718282608bc671993a3c370012b297c779cd7"
     },
     "menu": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "5cd7b095f210bd44a52f6eeab70e7ca3483347f3d94765b2ab4cbe10e99189e2",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "1b0448479114a1628af3a51ae1326df28efd1a33e7bf8b67c4b0db9864332c97",
       "text": "c646997519fcb5c1c0428e5e3686361e2fea3b508e86f0ac0d24d84f84229f8b"
     },
     "moderation": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "a7288a2dc1e4cc7f9b370b5274de5d3797a1e14c7cd2b4a1a40f578dc26cddef",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "3c9016cc598df546480d8c00a77db8c7441bd76b428ea1fc416a645057bc503d",
       "text": "79580a49c09219f65539abace395b5f2469f91fc2f0ac9b3ecae109c4fa1ecb4"
     },
     "orders": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "504733c9fcac69bc7a52eac99b7d5f78b6928728ae2e415d90d2160c500edab0",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "ee95efec548953a5a83400db2b80652ab8bd29fb84a41ceac2c715e5e2d6c8d6",
       "text": "8f1bddfa65aabb38fab8ebdad77656a627e340e765229de34ab3a24dd96fef2e"
     },
     "perktree": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "bb96e46f8badcd6aacf8539f80daa1843a67af94ebef415076a760099cee37d5",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "0f3a38a5e2c67a510cb9da3000e2895a1dfafd7470b3595f04973c006697feab",
       "text": "3e1a2fe232bb8c384a682ac98f8133ab0560de790bab9a2a2d9542ea0b673666"
     },
     "pets": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "98b6adbdce8a6e37a4e320825a79bb8666bb25c56fa9eed79e7590f28345c198",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "9b4900a2b4523e6052cda401773529304b5531a8acf247e85f88aa087fa5f9f8",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "profile": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "d61d9ad29a646aaffb4e7376b486956d6752c79b19a4b519243b4a99e1b6cd38",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "e18ce4e57d4269a73e8047604d477c6383ad71ced6f4c28965e4fcf1a26d4c20",
       "text": "f2a1fafaef6d54a60b0dd2e9545374a59a83ad49a5de3ace0069e441c187d309"
     },
     "quests": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "8977519098e8f0ab2a50933cb102705df481b56659a2e07b95411239b09cab43",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "7ffba68d7a92651d0e8d5cdfc01b5dcd016a2745a682374d25207dce42330a82",
       "text": "a42f11010fddbf13238133ac1e2dca525dea95245f5286a88a57738af30fbf13"
     },
     "ranks": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "fb00ccc30b64ae777cac41a728e16177932cfba121a3eea495c7676830a17be6",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "ec1192e1f00edb83abfa37f3fe149349a133df937f80192e2220f2882839daaf",
       "text": "664b466e4b44741175d9c2cdb4da728a0603a04aaaefada8396dd6517d5dca2d"
     },
     "shop": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "71d4d336b9227f98b3bc4c3c5e0a7646a8d12e1d228e403e0224bfb84e1b9ef1",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "86193494bdbdc69680f995f8c87d37e77b49a056e95a0cfc1cf5489be465f7b1",
       "text": "6b4ec3842f6bca2ac8ba266ed5236562fc8f4d9e064252b19f79aa9ba977941d"
     },
     "skills": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "d15578830f67de0a949d4a60f1828a4fd580e9efb58c8007907ddd4fcb7ead94",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "154171d9a11990b83c089869a75f920d661668481bfd410e9a5dbc2e644ffcd5",
       "text": "43797b2c64a23ab2e591eb8a75bacb7d064827f86c80f62665d08170fab33e00"
     },
     "social-link": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "de488d2296e6facefce295bf71da5c56400b594cdcce20bf971b58caf05699fb",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "4f7a4cb08cc756513395ae10b53f71d9f7e6076be65771e0ccb693a55a6524c8",
       "text": "1f6cf95d9c8c2180dbf871aa9b19a7bfcde5405cf77b75954b7575920d2aef14"
     },
     "start": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "82c83387de2173a78dfaaeda6f7fdbd05742f19d92bc4192d625a9086427c448",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "e371e62e017ac738414b2ea67658f2e67ca101ae19a8371aacd084b2f8b74208",
       "text": "953b107bba1128be43994bee9edf9ab7766c7ecfab70620808f8d404fef8d3cb"
     },
     "starter-kit": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "a7d72bfff01eea94d916ab6d01782c4b847a30448f2607f7c3cd8959ef0fcd48",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "d14817ac6fc7d42db227010b1f77d763a02dc7db12d26316b857c1ac3142bc93",
       "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
     },
     "teleports": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "8073d323f7e07388bb4c42344bcc83ff1e6db969fcc01c52abbf9d190db9fba8",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "ebc0c44d07b9ceb223ced4df4040dba97524f89efc62f0ca8388aaa679a87a87",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "20829d04bf7e5f6b9e3b2eb7642e80c1872bc107dd5ef88a4e42133e492d3070",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "14d02c049191e2b6e80486b3feb1033df3af375a1ce48533f4264b155bf5dcf9",
       "text": "9fac8f515b8905c25378000b55e6f5faaa87a8b5a3a3173676cb4563894d98f7"
     },
     "titles": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "413db9d868a1a45fd4771e2a9be455d5790a345bcf9046c0ef387732123c3ccd",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "cf1aaa2d74e0bb9439d2e582d6de94a887a9d80a5092aeec2f998b05a96cc4cb",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "71d4d336b9227f98b3bc4c3c5e0a7646a8d12e1d228e403e0224bfb84e1b9ef1",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "86193494bdbdc69680f995f8c87d37e77b49a056e95a0cfc1cf5489be465f7b1",
       "text": "ac7d8429ff72a6e0ac03131f1cd12827180560883cb4c3348ea853c7223a11bc"
     },
     "vk": {
-      "reason": "Сверены minor-конверсия рынка и новые независимые фильтры никнеймов, мата и спама",
-      "sources": "de488d2296e6facefce295bf71da5c56400b594cdcce20bf971b58caf05699fb",
+      "reason": "Проверена типизированная связка ChatService с независимым модулем модерации",
+      "sources": "4f7a4cb08cc756513395ae10b53f71d9f7e6076be65771e0ccb693a55a6524c8",
       "text": "b592e465a73dd13186763622b51190400cffd40960e233f58c63379b88a9bba9"
     }
   },

@@ -1517,7 +1517,7 @@ public final class ChatService implements Listener {
             return true;
         }
         if (sender instanceof Player senderPlayer) {
-            var decision = plugin.chatModeration.moderate(senderPlayer, message,
+            var decision = ((RegisterPlugin) plugin).chatModeration.moderate(senderPlayer, message,
                     ChatModerationPolicy.Channel.PRIVATE, System.currentTimeMillis());
             if (decision.status() == ChatModerationPolicy.Status.BLOCK) {
                 messages.send(senderPlayer, decision.messageKey());
