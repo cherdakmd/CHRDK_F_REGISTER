@@ -23,7 +23,8 @@ class AutoMessages276Test {
         assertEquals(41, before.size(), "сток 275 остаётся эталоном");
         assertEquals(40, after.size(), "1.4.282 добавила Plasmo Voice, CHRDK_Disasters — подсказку о /disasters");
         var removedAudience = java.util.Set.of("CHRDK_Hunt", "CHRDK_Professions");
-        var retained = before.stream().filter(item -> !removedAudience.contains(String.valueOf(item.get("plugin")))).toList();
+        var retained = before.stream().filter(item -> !removedAudience.contains(String.valueOf(item.get("plugin")))
+                && !RetiredAddons.announcement(String.valueOf(item.get("text")))).toList();
         assertEquals(retained.size(), after.size());
         for (int i = 0; i < retained.size(); i++) {
             var a = new LinkedHashMap<>(retained.get(i));

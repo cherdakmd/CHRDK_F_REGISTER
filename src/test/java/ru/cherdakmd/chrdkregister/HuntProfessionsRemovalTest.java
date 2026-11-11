@@ -36,7 +36,7 @@ class HuntProfessionsRemovalTest {
         for (String command : List.of("hunt", "huntadmin", "ohota", "hunter", "prof", "profession",
                 "professions", "professii", "profadmin", "professionsadmin", "profsadmin")) {
             assertTrue(RetiredAddons.command(command), command);
-            assertFalse(RetiredAddons.announcement('/' + command + " menu"));
+            assertFalse(RetiredAddons.announcement('/' + command + " menu"), command);
         }
         var profiles = new ProfileRegistry(java.util.logging.Logger.getAnonymousLogger());
         assertFalse(profiles.register("hunt", context -> null));
