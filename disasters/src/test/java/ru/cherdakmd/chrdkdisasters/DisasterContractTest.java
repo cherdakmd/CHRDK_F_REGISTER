@@ -41,8 +41,8 @@ final class DisasterContractTest {
         assertTrue(read("../settings.gradle").contains("include 'disasters'"));
         assertTrue(read("../wiki/config.yml").contains("- disasters"));
         String schema = read("src/main/resources/config-schema.yml");
-        assertTrue(schema.contains("config-version: 3"));
-        assertTrue(schema.contains("messages-version: 3"));
+        assertTrue(schema.contains("config-version: 4"));
+        assertTrue(schema.contains("messages-version: 4"));
     }
 
     @Test
@@ -73,6 +73,10 @@ final class DisasterContractTest {
                 "no-permission", "player-only",
                 "hint-dust-storm", "hint-meteor-shower", "hint-earthquake",
                 "hint-tornado", "hint-flood", "hint-blizzard",
+                "cataclysm-warning", "cataclysm-countdown",
+                "cataclysm-action-dust-storm", "cataclysm-action-meteor-shower",
+                "cataclysm-action-earthquake", "cataclysm-action-tornado",
+                "cataclysm-action-flood", "cataclysm-action-blizzard",
                 "kind-dust-storm", "kind-meteor-shower", "kind-earthquake",
                 "kind-tornado", "kind-flood", "kind-blizzard",
                 "reward", "shop-title", "shop-close", "shop-balance-title",
@@ -93,13 +97,18 @@ final class DisasterContractTest {
         assertFalse(sources.contains("callEvent("), "катастрофа не порождает Bukkit-события");
         assertFalse(sources.contains("breakNaturally("), "нет добычи ради катастрофы");
         assertFalse(sources.contains("createExplosion("), "взрывы Bukkit не нужны");
-        assertFalse(sources.contains("damage("), "урон игрокам запрещён");
-        assertFalse(sources.contains("setHealth("), "здоровье игрока не трогаем");
-        assertTrue(sources.contains("setType(Material.AIR, false)"),
-                "единственная точка изменения мира с отключённой физикой");
+        assertFalse(sources.contains("setHealth("), "здоровье игрока не трогаем напрямую");
+        String effects = read("src/main/java/ru/cherdakmd/chrdkdisasters/DisasterEffects.java");
+        assertTrue(effects.contains("cataclysm.enabled()"), "разрушения и урон строго opt-in");
+        assertTrue(effects.contains("cataclysm.damage()"), "урон отключается отдельно");
+        assertTrue(effects.contains("maxDamagePerPulse"), "урон за импульс ограничен");
+        assertTrue(effects.contains("GameMode.CREATIVE") && effects.contains("GameMode.SPECTATOR"));
+        assertTrue(effects.contains("maxAffectedPlayers"), "есть лимит затронутых игроков");
+        assertTrue(sources.contains("set(block, Material.AIR)"),
+                "удаление блоков идёт через общую защищённую точку");
         assertTrue(sources.contains("setType(material, false)"),
                 "временная вода ставится той же точкой без физики");
-        assertTrue(sources.contains("instanceof InventoryHolder"),
+        assertTrue(sources.contains("instanceof Container"),
                 "хранилища игроков не трогаем");
         assertTrue(sources.contains("removePotionEffect"),
                 "эффекты состояния снимаются при затухании");
@@ -112,7 +121,7 @@ final class DisasterContractTest {
         assertTrue(sources.contains("DisasterRun"), "реестр активных запусков");
         assertTrue(sources.contains("stopOne"), "остановка по id");
         assertTrue(sources.contains("Particle.SNOWFLAKE"), "метель");
-        assertTrue(sources.contains("Particle.BUBBLE"), "наводнение");
+        assertTrue(sources.contains("Particle.SPLASH"), "наводнение");
         assertTrue(sources.contains("Particle.BLOCK"), "смерч поднимает блоки визуально");
         assertTrue(sources.contains("Sound.BLOCK_SNOW_BREAK"), "звуки из проверенного набора");
         assertTrue(sources.contains("PotionEffectType.SLOWNESS"), "мягкие эффекты без урона");

@@ -44,6 +44,12 @@ public final class DisasterProgressMath {
         return Math.max(0L, Math.round(raw * bonus));
     }
 
+    /** Локальное событие усиливается для группы, но бонус и потолок строго ограничены. */
+    public static int scaledLevel(int baseLevel, int nearbyPlayers, int maxLevel) {
+        int bonus = nearbyPlayers >= 6 ? 2 : nearbyPlayers >= 3 ? 1 : 0;
+        return Math.min(Math.max(1, maxLevel), Math.max(1, baseLevel) + bonus);
+    }
+
     /** Сколько осколков ещё можно получить сегодня. */
     public static long dailyLeft(long dailyEarned, int dailyCap) {
         return Math.max(0L, dailyCap - Math.max(0L, dailyEarned));

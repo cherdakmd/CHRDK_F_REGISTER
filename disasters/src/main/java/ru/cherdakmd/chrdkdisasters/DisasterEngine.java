@@ -110,11 +110,23 @@ public final class DisasterEngine {
                 plugin.scheduler().reset(event.player(), now);
                 continue;
             }
-            int id = begin(event.kind(), event.level(), at, player.getName(), false);
+            int nearby = 0;
+            double radiusSquared = (double) config.radius() * config.radius();
+            for (Player other : Bukkit.getOnlinePlayers()) {
+                if (other.getWorld() == player.getWorld()
+                        && !other.hasPermission("chrdkdisasters.bypass")
+                        && other.getLocation().distanceSquared(at) <= radiusSquared) {
+                    nearby++;
+                }
+            }
+            int scaledLevel = DisasterProgressMath.scaledLevel(
+                    event.level(), nearby, config.maxLevel());
+            int id = begin(event.kind(), scaledLevel, at, player.getName(), false);
             plugin.getLogger().info("[CHRDK_Disasters] "
                     + TIME.format(Instant.ofEpochMilli(now).atZone(MOSCOW))
                     + " МСК · #" + id + " " + event.kind().id() + " у " + player.getName()
-                    + " · уровень " + event.level() + " · фаз " + config.phases().totalTicks());
+                    + " · уровень " + scaledLevel + " · игроков рядом " + nearby
+                    + " · фаз " + config.phases().totalTicks());
         }
     }
 
@@ -156,6 +168,9 @@ public final class DisasterEngine {
 
     private int begin(DisasterKind kind, int level, Location at, String player, boolean force) {
         DisastersConfig config = plugin.settings();
+        if (active.size() >= config.maxConcurrent()) {
+            return 0;
+        }
         int id = nextId.getAndIncrement();
         DisasterRun run = new DisasterRun(id, kind, level, player,
                 at.getWorld().getName(), at.getX(), at.getY(), at.getZ(), config.phases());

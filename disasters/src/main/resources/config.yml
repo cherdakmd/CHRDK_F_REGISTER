@@ -33,6 +33,8 @@ disasters:
   radius: 12
   # Максимум блоков в снимке отката: защита памяти и мира.
   max-blocks: 256
+  # Общий лимит одновременно идущих WARNING/ACTIVE/FADING на сервере.
+  max-concurrent: 8
   # Не трогать площадь вокруг спавна мира (0 = не проверять).
   spawn-protection-radius: 64
   # Учитывать приваты CHRDK_Claims. Отключать только на тестовом мире.
@@ -65,6 +67,19 @@ disasters:
   # ослабляет amplifier и длительность эффекта.
   player-effects:
     enabled: true
+
+  # Четвёртая итерация: зрелищные кратеры, разломы, огонь, снежные заносы,
+  # подброс и урон. По умолчанию опасный режим ВЫКЛЮЧЕН, визуальные волны
+  # остаются доступны без него. Нативные взрывы и спавн сущностей не используются.
+  # Перед включением оставьте respect-claims/spawn-protection и restore > 0.
+  cataclysm:
+    enabled: false
+    titles: true
+    damage: true
+    knockback: true
+    max-fire-seconds: 4
+    max-affected-players: 24
+    max-damage-per-pulse: 6.0
 
   # Третья итерация: осколки катастроф за участие.
   # base-shards + per-level-shards * (уровень катастрофы - 1), затем бонус
@@ -107,8 +122,9 @@ disasters:
       price: 30
       minutes: 30
 
-  # Разрешённые катастрофы. dust-storm и blizzard не меняют блоки вообще;
-  # meteor-shower, earthquake, tornado и flood требуют снимка для отката.
+  # Разрешённые катастрофы. При cataclysm.enabled: false блоки не меняются;
+  # при true все виды используют общий снимок и лимит отката. Площадные виды
+  # дополнительно требуют явного разрешения здесь.
   kinds:
     dust-storm: true
     meteor-shower: true

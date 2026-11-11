@@ -41,6 +41,15 @@ final class DisasterProgressMathTest {
     }
 
     @Test
+    void crowdScalingIsBoundedAndRespectsConfiguredLevelCap() {
+        assertEquals(1, DisasterProgressMath.scaledLevel(1, 1, 5));
+        assertEquals(2, DisasterProgressMath.scaledLevel(1, 3, 5));
+        assertEquals(3, DisasterProgressMath.scaledLevel(1, 6, 5));
+        assertEquals(5, DisasterProgressMath.scaledLevel(4, 20, 5));
+        assertEquals(1, DisasterProgressMath.scaledLevel(1, 20, 1));
+    }
+
+    @Test
     void dailyCapPerksAndMoscowDayBoundary() {
         assertEquals(120, DisasterProgressMath.dailyLeft(0, 120));
         assertEquals(110, DisasterProgressMath.dailyLeft(10, 120));
