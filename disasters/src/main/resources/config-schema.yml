@@ -3,7 +3,9 @@
 #     обновлённые тексты messages.yml (warn/end/hint-*/list/stop <id>).
 # v3: осколки rewards.*, прокачка progression.*, мягкие integrations.*,
 #     магазин shop.* и новые тексты /disasters shop|buy.
+# v4: зрелищные cataclysm-сценарии, opt-in разрушения/урон, max-concurrent,
+#     точный откат воды/огня/снега и экранные предупреждения.
 # Переименований и удалений нет: миграция чисто аддитивная, владельческие
 # значения и комментарии сохраняются, перед записью создаётся backup.
-config-version: 3
-messages-version: 3
+config-version: 4
+messages-version: 4

@@ -31,6 +31,7 @@ public record DisastersConfig(
         int maxLevel,
         int radius,
         int maxBlocks,
+        int maxConcurrent,
         int spawnProtectionRadius,
         boolean respectClaims,
         Set<String> worlds,
@@ -41,6 +42,7 @@ public record DisastersConfig(
         float soundVolume,
         float soundPitch,
         Map<DisasterKind, String> sounds,
+        DisasterSettings.Cataclysm cataclysm,
         DisasterSettings.Rewards rewards,
         DisasterSettings.Progression progression,
         DisasterSettings.Integrations integrations,
@@ -61,6 +63,7 @@ public record DisastersConfig(
         int maxLevel = clamp(cfg.getInt("disasters.max-level", 5), 1, 5);
         int radius = clamp(cfg.getInt("disasters.radius", 12), 2, 48);
         int maxBlocks = clamp(cfg.getInt("disasters.max-blocks", 256), 1, 4096);
+        int maxConcurrent = clamp(cfg.getInt("disasters.max-concurrent", 8), 1, 64);
         int spawnRadius = clamp(cfg.getInt("disasters.spawn-protection-radius", 64), 0, 512);
         boolean claims = cfg.getBoolean("disasters.respect-claims", true);
 
@@ -75,6 +78,14 @@ public record DisastersConfig(
         float volume = (float) cfg.getDouble("disasters.sounds.volume", 0.7);
         float pitch = (float) cfg.getDouble("disasters.sounds.pitch", 1.0);
 
+        DisasterSettings.Cataclysm cataclysm = new DisasterSettings.Cataclysm(
+                cfg.getBoolean("disasters.cataclysm.enabled", false),
+                cfg.getBoolean("disasters.cataclysm.titles", true),
+                cfg.getBoolean("disasters.cataclysm.damage", true),
+                cfg.getBoolean("disasters.cataclysm.knockback", true),
+                clamp(cfg.getInt("disasters.cataclysm.max-fire-seconds", 4), 0, 30),
+                clamp(cfg.getInt("disasters.cataclysm.max-affected-players", 24), 1, 128),
+                clampDouble(cfg.getDouble("disasters.cataclysm.max-damage-per-pulse", 6.0), 0.0, 20.0));
         DisasterSettings.Rewards rewards = new DisasterSettings.Rewards(
                 cfg.getBoolean("disasters.rewards.enabled", true),
                 clamp(cfg.getInt("disasters.rewards.base-shards", 5), 0, 1000),
@@ -116,9 +127,9 @@ public record DisastersConfig(
 
         return new DisastersConfig(enabled, locale.isEmpty() ? "ru" : locale,
                 tick, min, max, announce, restore, maxLevel, radius, maxBlocks,
-                spawnRadius, claims, Set.copyOf(worlds), Map.copyOf(kinds), phases,
+                maxConcurrent, spawnRadius, claims, Set.copyOf(worlds), Map.copyOf(kinds), phases,
                 soundsEnabled, effectsEnabled, volume, pitch, Map.copyOf(soundNames),
-                rewards, progression, integrations, shop);
+                cataclysm, rewards, progression, integrations, shop);
     }
 
     /** Пустой список worlds означает все миры; пустое enabled-множество — тишина. */

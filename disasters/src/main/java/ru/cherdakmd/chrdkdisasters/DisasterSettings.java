@@ -24,6 +24,12 @@ public final class DisasterSettings {
                                String skillId, long units) {
     }
 
+    /** Opt-in разрушительный режим: визуальный размах не требует включать урон. */
+    public record Cataclysm(boolean enabled, boolean titles, boolean damage,
+                            boolean knockback, int maxFireSeconds,
+                            int maxAffectedPlayers, double maxDamagePerPulse) {
+    }
+
     /** Три товара /disasters shop: алмазы на счёт, припасы и пропуск катастроф. */
     public record Shop(int diamondsPrice, int diamondsAmount,
                        int suppliesPrice, int suppliesDiamonds,

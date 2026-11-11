@@ -25,6 +25,14 @@ final class DisastersConfigTest {
         assertEquals(600, config.restoreAfterSeconds());
         assertEquals(12, config.radius());
         assertEquals(256, config.maxBlocks());
+        assertEquals(8, config.maxConcurrent());
+        assertFalse(config.cataclysm().enabled());
+        assertTrue(config.cataclysm().titles());
+        assertTrue(config.cataclysm().damage());
+        assertTrue(config.cataclysm().knockback());
+        assertEquals(4, config.cataclysm().maxFireSeconds());
+        assertEquals(24, config.cataclysm().maxAffectedPlayers());
+        assertEquals(6.0, config.cataclysm().maxDamagePerPulse());
         assertTrue(config.respectClaims());
         assertTrue(config.worlds().isEmpty());
         assertEquals(List.of(DisasterKind.DUST_STORM, DisasterKind.METEOR_SHOWER,
@@ -68,6 +76,10 @@ final class DisastersConfigTest {
         yaml.set("disasters.max-level", 99);
         yaml.set("disasters.radius", 9999);
         yaml.set("disasters.max-blocks", -3);
+        yaml.set("disasters.max-concurrent", 9999);
+        yaml.set("disasters.cataclysm.max-fire-seconds", 9999);
+        yaml.set("disasters.cataclysm.max-affected-players", -10);
+        yaml.set("disasters.cataclysm.max-damage-per-pulse", 9999);
         yaml.set("disasters.spawn-protection-radius", -10);
         yaml.set("disasters.restore-after-seconds", -1);
         yaml.set("disasters.worlds", List.of("world", "world_nether"));
@@ -86,6 +98,10 @@ final class DisastersConfigTest {
         assertEquals(5, config.maxLevel());
         assertEquals(48, config.radius());
         assertEquals(1, config.maxBlocks());
+        assertEquals(64, config.maxConcurrent());
+        assertEquals(30, config.cataclysm().maxFireSeconds());
+        assertEquals(1, config.cataclysm().maxAffectedPlayers());
+        assertEquals(20.0, config.cataclysm().maxDamagePerPulse());
         assertEquals(0, config.spawnProtectionRadius());
         assertEquals(0, config.restoreAfterSeconds(), "0 — разрешённый отказ от отката");
         assertTrue(config.worldAllowed("world"));

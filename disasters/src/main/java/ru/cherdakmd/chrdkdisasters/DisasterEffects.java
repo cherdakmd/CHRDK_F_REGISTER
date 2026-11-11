@@ -1,312 +1,528 @@
 package ru.cherdakmd.chrdkdisasters;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Color;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
+import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.Container;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import org.bukkit.util.Vector;
 
-import java.util.List;
+import java.util.EnumSet;
+import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Шесть катастроф второй итерации. Блоки меняются ТОЛЬКО через
- * {@code setType(..., false)} без физики и без Bukkit-событий, поэтому
- * CHRDK_Skills не начислит опыт и не выпадут алмазы за «добычу» катастрофой,
- * а CHRDK_Claims не увидит ложного разрушения. Защита приватов лежит не на
- * событиях, а на явной проверке в {@link DisasterProtection}.
- *
- * <p>Активная фаза больше не меняет всё сразу: {@link DisasterPhasePlan#budget}
- * раскладывает лимит блоков по тикам, а геометрия берётся из
- * {@link DisasterGeometry}. Предупреждение и затухание меняют только частицы,
- * подсказки и эффекты состояния — мир в эти фазы нетронут.</p>
+ * Порционные эффекты катастроф. Все изменения блоков проходят через {@link #set}
+ * и снимок {@link DisasterRestore}; нативные взрывы, entity rain и физический
+ * дроп намеренно не используются. Один тик ограничен и по блокам, и по игрокам.
  */
 public final class DisasterEffects {
 
-    private static final Particle.DustOptions DUST =
-            new Particle.DustOptions(Color.fromRGB(0xC2, 0xA3, 0x6B), 1.3f);
-    private static final Particle.DustOptions ASH =
-            new Particle.DustOptions(Color.fromRGB(0x6B, 0x62, 0x58), 1.1f);
-    private static final Particle.DustOptions SNOW =
-            new Particle.DustOptions(Color.fromRGB(0xE8, 0xF3, 0xFF), 1.0f);
-    private static final Particle.DustOptions WATER =
-            new Particle.DustOptions(Color.fromRGB(0x4C, 0x8F, 0xD8), 1.0f);
-    private static final Particle.DustOptions FLAME_DUST =
-            new Particle.DustOptions(Color.fromRGB(0xD9, 0x74, 0x3A), 1.2f);
+    private static final String BYPASS = "chrdkdisasters.bypass";
+    private static final int HARD_TICK_BLOCK_BUDGET = 192;
+    private static final int HARD_PARTICLE_BUDGET = 1800;
+    private static final Set<Material> DESTRUCTIBLE = EnumSet.of(
+            Material.GRASS_BLOCK, Material.DIRT, Material.DIRT_PATH,
+            Material.COARSE_DIRT, Material.ROOTED_DIRT, Material.SAND,
+            Material.RED_SAND, Material.GRAVEL, Material.CLAY, Material.MUD,
+            Material.SNOW, Material.SNOW_BLOCK, Material.POWDER_SNOW,
+            Material.ICE, Material.PACKED_ICE, Material.STONE,
+            Material.COBBLESTONE, Material.ANDESITE, Material.DIORITE,
+            Material.GRANITE, Material.TUFF, Material.SANDSTONE,
+            Material.RED_SANDSTONE, Material.TERRACOTTA,
+            Material.SHORT_GRASS, Material.TALL_GRASS, Material.FERN,
+            Material.LARGE_FERN, Material.DEAD_BUSH, Material.FIRE,
+            Material.WATER, Material.LAVA);
 
     private final DisastersPlugin plugin;
+    private int tickBlockChanges;
 
     public DisasterEffects(DisastersPlugin plugin) {
         this.plugin = plugin;
     }
 
-    /** Фаза предупреждения: кольцо частиц и обратный отсчёт, блоки не тронуты. */
-    public int warning(DisasterRun run, int step) {
-        Location center = center(run);
-        if (center == null) {
-            return 0;
+    /** Экранное предупреждение только для находящихся рядом, не глобальный title. */
+    public void warn(DisasterRun run, Location center) {
+        if (center == null || !plugin.settings().cataclysm().titles()) {
+            return;
         }
-        DisastersConfig config = plugin.settings();
-        World world = center.getWorld();
-        List<int[]> ring = DisasterGeometry.ring(config.radius(), 10 + run.level() * 3, step);
-        for (int[] offset : ring) {
-            world.spawnParticle(Particle.DUST, center.clone().add(offset[0], 1.0, offset[1]),
-                    3, 0.2, 0.3, 0.2, 0.0, dustFor(run.kind()));
+        String title = plugin.messages().plain(run.kind().titleKey());
+        String subtitle = plugin.messages().plain("cataclysm-warning",
+                "seconds", run.secondsLeft(), "level", run.level());
+        forNearby(center, plugin.settings().radius(), player ->
+                player.sendTitle("§c⚠ " + title, "§e" + subtitle, 10, 50, 15));
+    }
+
+    /** Предупреждение и обратный отсчёт не меняют блоки и не наносят урон. */
+    public void warning(DisasterRun run, int step) {
+        World world = org.bukkit.Bukkit.getWorld(run.world());
+        if (world == null) {
+            return;
         }
+        Location center = new Location(world, run.x(), run.y(), run.z());
         if (step == 0) {
-            sound(run, center, 0.7f);
+            warn(run, center);
         }
-        hint(run, center, "warn", config.radius());
-        return 0;
+        ring(center, plugin.settings().radius(), 80, Particle.END_ROD, 0.25, 0.0);
+        if (plugin.settings().cataclysm().titles()) {
+            String text = plugin.messages().plain("cataclysm-countdown",
+                    "seconds", run.secondsLeft());
+            forNearby(center, plugin.settings().radius(), player ->
+                    player.sendActionBar(net.kyori.adventure.text.Component.text("§e⚠ " + text)));
+        }
     }
 
-    /** Один тик активной фазы: порция блоков + частицы + мягкий эффект. */
+    /** @return число новых позиций в снимке, изменённых этим шагом. */
     public int active(DisasterRun run) {
-        Location center = center(run);
-        if (center == null) {
+        World world = org.bukkit.Bukkit.getWorld(run.world());
+        if (world == null) {
             return 0;
         }
+        int before = plugin.restore().size();
+        tickActive(run, new Location(world, run.x(), run.y(), run.z()));
+        return plugin.restore().size() - before;
+    }
+
+    /** Видимое затухание: никаких новых разрушений и урона. */
+    public void fading(DisasterRun run) {
+        World world = org.bukkit.Bukkit.getWorld(run.world());
+        if (world == null) {
+            return;
+        }
+        Location center = new Location(world, run.x(), run.y(), run.z());
+        particles(center.clone().add(0, 2, 0), Particle.CLOUD, 80,
+                plugin.settings().radius() * 0.45, 0.01);
+    }
+
+    /** Один активный шаг. Метод вызывается строго на главном потоке. */
+    private void tickActive(DisasterRun run, Location center) {
+        tickBlockChanges = 0;
+        World world = center.getWorld();
+        if (world == null) {
+            return;
+        }
         DisastersConfig config = plugin.settings();
-        int changed = switch (run.kind()) {
-            case DUST_STORM -> dustStorm(run, center, config);
-            case METEOR_SHOWER -> meteorShower(run, center, config);
-            case EARTHQUAKE -> earthquake(run, center, config);
-            case TORNADO -> tornado(run, center, config);
-            case FLOOD -> flood(run, center, config);
-            case BLIZZARD -> blizzard(run, center, config);
-        };
+        int radius = Math.max(2, config.radius());
+        int level = run.level();
+        int step = run.activeStep();
         if (config.playerEffectsEnabled()) {
-            // Перк стойкости: чем выше уровень игрока, тем слабее эффект.
-            int steadiness = plugin.rewards().levelOf(run.player());
-            double scale = DisasterProgressMath.effectScale(steadiness);
-            int amplifier = steadiness >= 4 ? 0 : run.kind().amplifier();
-            int ticks = (int) Math.max(20L,
-                    Math.round((config.phases().tickSeconds() * 20L + 20L) * scale));
-            DisasterFx.apply(center.getWorld(), center, config.radius(),
-                    run.kind().effect(), amplifier, ticks);
+            DisasterFx.apply(world, center, radius, run.kind().effect(),
+                    Math.min(4, level - 1),
+                    Math.max(40, run.plan().tickSeconds() * 25));
         }
-        if (run.activeStep() % 3 == 0) {
-            sound(run, center, config.soundVolume());
+        if (config.soundsEnabled()) {
+            DisasterFx.play(world, center, config.soundFor(run.kind()),
+                    config.soundVolume(), config.soundPitch());
         }
-        hint(run, center, run.kind().hintKey(), config.radius());
-        return changed;
+
+        switch (run.kind()) {
+            case DUST_STORM -> dustStorm(center, radius, level, step);
+            case METEOR_SHOWER -> meteorShower(center, radius, level, step);
+            case EARTHQUAKE -> earthquake(center, radius, level, step);
+            case TORNADO -> tornado(center, radius, level, step);
+            case FLOOD -> flood(center, radius, level, step);
+            case BLIZZARD -> blizzard(center, radius, level, step);
+        }
+        impactPlayers(run, center, radius);
     }
 
-    /** Затухание: частицы реже, эффекты состояния снимаются, мир не меняется. */
-    public int fading(DisasterRun run) {
-        Location center = center(run);
-        if (center == null) {
-            return 0;
-        }
-        DisastersConfig config = plugin.settings();
-        int count = DisasterGeometry.particles(run.level(), true);
-        center.getWorld().spawnParticle(Particle.DUST,
-                center.clone().add(0, 2, 0), count,
-                config.radius() / 2.0, 1.0, config.radius() / 2.0, 0.0,
-                dustFor(run.kind()));
-        hint(run, center, "end", config.radius());
-        return 0;
-    }
-
-    /** Полная очистка эффектов при завершении или досрочной остановке. */
     public void clearEffects(DisasterRun run) {
-        Location center = center(run);
-        if (center != null) {
-            DisasterFx.clear(center.getWorld(), center,
-                    plugin.settings().radius(), run.kind().effect());
+        World world = org.bukkit.Bukkit.getWorld(run.world());
+        if (world == null) {
+            return;
+        }
+        Location center = new Location(world, run.x(), run.y(), run.z());
+        DisasterFx.clear(world, center, plugin.settings().radius(), run.kind().effect());
+    }
+
+    private void dustStorm(Location center, int radius, int level, int step) {
+        ring(center, radius, Math.min(HARD_PARTICLE_BUDGET, 180 + level * 45),
+                Particle.CLOUD, 1.4, 0.05);
+        particles(center.clone().add(0, 2, 0), Particle.CAMPFIRE_COSY_SMOKE,
+                55 + level * 15, radius * 0.55, 2.5, 0.04);
+        // Видимые песчаные струи движутся по тангенсу, без создания entity.
+        double angle = step * 0.42;
+        for (int arm = 0; arm < 5; arm++) {
+            double a = angle + arm * Math.PI * 2 / 5;
+            Location at = radial(center, radius * 0.7, a);
+            particles(at.add(0, 1.5, 0), Particle.DUST, 24, 1.2, 1.0,
+                    new Particle.DustOptions(Color.fromRGB(194, 154, 86), 1.8f));
+        }
+        if (plugin.settings().cataclysm().enabled()) {
+            for (int i = 0; i < level * 2; i++) {
+                Location at = randomSurface(center, radius);
+                if (at != null && random().nextDouble() < 0.25) {
+                    set(at.getBlock(), Material.SAND);
+                }
+            }
         }
     }
 
-    // ------------------------------------------------------------------
-    // Шесть видов
-    // ------------------------------------------------------------------
-
-    /** Чисто визуальная: частицы и подсказка, мир не меняется вообще. */
-    private int dustStorm(DisasterRun run, Location center, DisastersConfig config) {
-        int count = DisasterGeometry.particles(run.level(), false);
-        center.getWorld().spawnParticle(Particle.DUST, center.clone().add(0, 2, 0),
-                count, config.radius() / 2.0, 2.0, config.radius() / 2.0, 0.0, DUST);
-        return 0;
-    }
-
-    /** Точечные кратеры по поверхности, порциями по тикам активной фазы. */
-    private int meteorShower(DisasterRun run, Location center, DisastersConfig config) {
-        int total = Math.min(config.maxBlocks(), run.level() * 3 + 2);
-        int shots = config.phases().budget(total, run.activeStep());
-        List<int[]> points = DisasterGeometry.scatter(config.radius(), shots, seed(run));
-        int changed = 0;
-        for (int[] offset : points) {
-            int x = center.getBlockX() + offset[0];
-            int z = center.getBlockZ() + offset[1];
-            if (!center.getWorld().isChunkLoaded(x >> 4, z >> 4)) {
+    private void meteorShower(Location center, int radius, int level, int step) {
+        World world = center.getWorld();
+        int meteors = Math.min(5, 1 + level / 2);
+        for (int i = 0; i < meteors; i++) {
+            double angle = step * 0.71 + i * 2.17;
+            Location impact = radial(center, radius * (0.25 + 0.55 * random().nextDouble()), angle);
+            Block ground = surface(impact);
+            if (ground == null) {
                 continue;
             }
-            Block target = center.getWorld().getHighestBlockAt(x, z);
-            Location spot = target.getLocation().add(0.5, 1.0, 0.5);
-            center.getWorld().spawnParticle(Particle.FLAME, spot, 12, 0.4, 0.4, 0.4, 0.02);
-            if (changeBlock(target)) {
-                changed++;
+            impact = ground.getLocation().add(0.5, 1, 0.5);
+            trail(impact.clone().add(radius * 0.35, 12 + level * 2, -radius * 0.25), impact);
+            world.spawnParticle(Particle.EXPLOSION_EMITTER, impact, 1);
+            particles(impact, Particle.FLAME, 45 + level * 8, 2.0, 0.08);
+            particles(impact, Particle.LAVA, 12 + level * 3, 1.2, 0.0);
+            impactSound(impact, Sound.ENTITY_GENERIC_EXPLODE, 1.4f, 0.65f);
+            if (plugin.settings().cataclysm().enabled()) {
+                crater(ground.getLocation(), Math.min(5, 1 + level / 2));
+                igniteAround(impact, level);
             }
         }
-        return changed;
     }
 
-    /** Площадное изменение случайных верхних блоков, тоже порциями. */
-    private int earthquake(DisasterRun run, Location center, DisastersConfig config) {
-        int total = Math.min(config.maxBlocks(), run.level() * 12 + 8);
-        int attempts = config.phases().budget(total, run.activeStep());
-        center.getWorld().spawnParticle(Particle.DUST, center.clone().add(0, 1, 0),
-                30, config.radius() / 2.0, 1.0, config.radius() / 2.0, 0.0, ASH);
-        List<int[]> points = DisasterGeometry.scatter(config.radius(), attempts, seed(run));
-        int changed = 0;
-        for (int[] offset : points) {
-            int x = center.getBlockX() + offset[0];
-            int z = center.getBlockZ() + offset[1];
-            if (!center.getWorld().isChunkLoaded(x >> 4, z >> 4)) {
+    private void earthquake(Location center, int radius, int level, int step) {
+        World world = center.getWorld();
+        int waves = Math.min(3, 1 + level / 2);
+        for (int wave = 0; wave < waves; wave++) {
+            double distance = ((step * 2.4 + wave * radius / waves) % Math.max(4, radius));
+            seismicRing(center, distance, level);
+        }
+        impactSound(center, Sound.ENTITY_WARDEN_SONIC_BOOM, 1.2f, 0.55f);
+        if (!plugin.settings().cataclysm().enabled()) {
+            return;
+        }
+        // Разлом — зигзаг, а не случайное удаление всей поверхности.
+        int length = Math.min(radius, 5 + level * 3);
+        for (int i = -length; i <= length; i++) {
+            int x = center.getBlockX() + i;
+            int z = center.getBlockZ() + (int) Math.round(Math.sin(i * 0.65 + step * 0.12) * 2.2);
+            Block top = surface(new Location(world, x, center.getY(), z));
+            if (top == null) {
                 continue;
             }
-            if (changeBlock(center.getWorld().getHighestBlockAt(x, z))) {
-                changed++;
+            int depth = 1 + Math.min(4, level) - Math.abs(i) / Math.max(2, length);
+            for (int y = 0; y < Math.max(1, depth); y++) {
+                Block block = world.getBlockAt(x, top.getY() - y, z);
+                if (DESTRUCTIBLE.contains(block.getType())) {
+                    set(block, Material.AIR);
+                }
+            }
+            if (level >= 3 && i % 4 == 0) {
+                Block lower = world.getBlockAt(x, top.getY() - depth - 1, z);
+                if (!lower.getType().isAir() && DESTRUCTIBLE.contains(lower.getType())) {
+                    set(lower, level >= 5 && i % 8 == 0 ? Material.MAGMA_BLOCK : Material.LAVA);
+                }
             }
         }
-        return changed;
     }
 
-    /** Смерч: вращающаяся спираль, поднятые блоки видны частицами материала. */
-    private int tornado(DisasterRun run, Location center, DisastersConfig config) {
-        List<int[]> spiral = DisasterGeometry.spiral(config.radius(),
-                6 + run.level() * 3, run.activeStep());
-        int changed = 0;
-        for (int[] offset : spiral) {
-            int x = center.getBlockX() + offset[0];
-            int z = center.getBlockZ() + offset[1];
-            if (!center.getWorld().isChunkLoaded(x >> 4, z >> 4)) {
-                continue;
-            }
-            Block target = center.getWorld().getHighestBlockAt(x, z);
-            Location spot = target.getLocation().add(0.5, 1.5, 0.5);
-            center.getWorld().spawnParticle(Particle.CLOUD, spot, 8, 0.3, 0.8, 0.3, 0.02);
-            center.getWorld().spawnParticle(Particle.BLOCK, spot, 6,
-                    0.3, 0.9, 0.3, 0.02, Material.DIRT.createBlockData());
-            if (changeBlock(target)) {
-                changed++;
+    private void tornado(Location center, int radius, int level, int step) {
+        int height = Math.min(32, 12 + level * 4);
+        double travel = step * 0.23;
+        Location eye = radial(center, radius * 0.45, travel * 0.16);
+        int particleCount = 0;
+        for (int y = 0; y < height && particleCount < HARD_PARTICLE_BUDGET; y++) {
+            double spiralRadius = 1.2 + y * 0.12 + level * 0.2;
+            for (int arm = 0; arm < 6 && particleCount < HARD_PARTICLE_BUDGET; arm++) {
+                double a = step * 0.52 + y * 0.38 + arm * Math.PI / 3;
+                Location at = eye.clone().add(Math.cos(a) * spiralRadius, y, Math.sin(a) * spiralRadius);
+                eye.getWorld().spawnParticle(y % 4 == 0 ? Particle.CLOUD : Particle.CAMPFIRE_COSY_SMOKE,
+                        at, 1, 0, 0, 0, 0);
+                particleCount++;
             }
         }
-        return changed;
-    }
-
-    /** Наводнение: временная вода над поверхностью, снимок вернёт воздух. */
-    private int flood(DisasterRun run, Location center, DisastersConfig config) {
-        int total = Math.min(config.maxBlocks(), run.level() * 8 + 6);
-        int columns = config.phases().budget(total, run.activeStep());
-        List<int[]> points = DisasterGeometry.scatter(config.radius(), columns, seed(run));
-        int changed = 0;
-        for (int[] offset : points) {
-            int x = center.getBlockX() + offset[0];
-            int z = center.getBlockZ() + offset[1];
-            if (!center.getWorld().isChunkLoaded(x >> 4, z >> 4)) {
-                continue;
-            }
-            Block surface = center.getWorld().getHighestBlockAt(x, z);
-            Block water = center.getWorld().getBlockAt(x, surface.getY() + 1, z);
-            if (!water.isEmpty() && !water.getType().isAir()) {
-                continue;
-            }
-            center.getWorld().spawnParticle(Particle.BUBBLE,
-                    water.getLocation().add(0.5, 0.5, 0.5), 6, 0.3, 0.2, 0.3, 0.01);
-            if (changeBlock(water, Material.WATER)) {
-                changed++;
+        ring(eye, radius, 90 + level * 20, Particle.SWEEP_ATTACK, 0.2, 0.0);
+        if (plugin.settings().cataclysm().enabled()) {
+            for (int i = 0; i < level * 3; i++) {
+                Block top = surface(randomAround(eye, radius));
+                if (top != null && DESTRUCTIBLE.contains(top.getType())) {
+                    set(top, Material.AIR);
+                    particles(top.getLocation().add(0.5, 0.5, 0.5),
+                            Particle.BLOCK, 8, 0.35, 0.1, top.getBlockData());
+                }
             }
         }
-        return changed;
     }
 
-    /** Метель: снег и холодный эффект состояния, блоки не меняются. */
-    private int blizzard(DisasterRun run, Location center, DisastersConfig config) {
-        int count = DisasterGeometry.particles(run.level(), false);
-        center.getWorld().spawnParticle(Particle.SNOWFLAKE, center.clone().add(0, 3, 0),
-                count, config.radius() / 2.0, 3.0, config.radius() / 2.0, 0.02);
-        center.getWorld().spawnParticle(Particle.DUST, center.clone().add(0, 1, 0),
-                count / 2, config.radius() / 2.0, 1.0, config.radius() / 2.0, 0.0, SNOW);
-        return 0;
+    private void flood(Location center, int radius, int level, int step) {
+        World world = center.getWorld();
+        particles(center.clone().add(0, 5, 0), Particle.RAIN,
+                300 + level * 60, radius * 0.65, 0.15);
+        ring(center, Math.min(radius, step * 1.8), 130 + level * 20,
+                Particle.SPLASH, 0.35, 0.0);
+        if (!plugin.settings().cataclysm().enabled()) {
+            return;
+        }
+        // Нарастающий круговой фронт вместо мгновенного заполнения всего куба.
+        int front = Math.min(radius, 2 + step * (1 + level / 3));
+        int samples = Math.min(96, 16 + level * 12);
+        for (int i = 0; i < samples; i++) {
+            Location at = radial(center, front, i * Math.PI * 2 / samples + step * 0.08);
+            Block top = surface(at);
+            if (top == null) {
+                continue;
+            }
+            Block water = top.getRelative(0, 1, 0);
+            if (water.getType().isAir()) {
+                set(water, Material.WATER);
+                if (level >= 4 && i % 7 == 0) {
+                    set(water.getRelative(0, 1, 0), Material.WATER);
+                }
+            }
+        }
     }
 
-    // ------------------------------------------------------------------
-    // Общие помощники
-    // ------------------------------------------------------------------
-
-    private long seed(DisasterRun run) {
-        return run.id() * 131L + run.activeStep() * 7919L + run.level() * 17L;
+    private void blizzard(Location center, int radius, int level, int step) {
+        particles(center.clone().add(0, 8, 0), Particle.SNOWFLAKE,
+                350 + level * 75, radius * 0.65, 0.12);
+        for (int arm = 0; arm < 4; arm++) {
+            double a = step * 0.3 + arm * Math.PI / 2;
+            Location at = radial(center, radius * 0.65, a).add(0, 1, 0);
+            particles(at, Particle.ITEM_SNOWBALL, 22, 1.2, 0.08);
+        }
+        ring(center, radius * 0.8, 90, Particle.END_ROD, 0.15, 0.0);
+        if (!plugin.settings().cataclysm().enabled()) {
+            return;
+        }
+        for (int i = 0; i < 10 + level * 5; i++) {
+            Block top = surface(randomAround(center, radius));
+            if (top == null) {
+                continue;
+            }
+            Block above = top.getRelative(0, 1, 0);
+            if (above.getType().isAir()) {
+                set(above, level >= 4 && i % 6 == 0 ? Material.POWDER_SNOW : Material.SNOW);
+            } else if (above.getType() == Material.WATER) {
+                set(above, Material.ICE);
+            }
+        }
     }
 
-    private Particle.DustOptions dustFor(DisasterKind kind) {
-        return switch (kind) {
-            case DUST_STORM, TORNADO -> DUST;
-            case METEOR_SHOWER -> FLAME_DUST;
-            case EARTHQUAKE -> ASH;
-            case FLOOD -> WATER;
-            case BLIZZARD -> SNOW;
-        };
+    /** Урон/подброс отделены от визуализации и полностью opt-in. */
+    private void impactPlayers(DisasterRun run, Location center, int radius) {
+        DisasterSettings.Cataclysm cataclysm = plugin.settings().cataclysm();
+        if (!cataclysm.enabled()) {
+            return;
+        }
+        forNearby(center, radius, player -> {
+            if (cataclysm.titles() && run.activeStep() % 3 == 0) {
+                String action = plugin.messages().plain("cataclysm-action-" + run.kind().id());
+                player.sendActionBar(net.kyori.adventure.text.Component.text("§c⚠ " + action));
+            }
+            double distance = Math.sqrt(player.getLocation().distanceSquared(center));
+            double proximity = Math.max(0.2, 1.0 - distance / Math.max(1.0, radius * 1.5));
+            if (cataclysm.knockback()) {
+                Vector direction = player.getLocation().toVector().subtract(center.toVector());
+                direction.setY(0);
+                if (direction.lengthSquared() < 0.001) {
+                    direction = new Vector(1, 0, 0);
+                }
+                direction.normalize();
+                if (run.kind() == DisasterKind.TORNADO) {
+                    direction = new Vector(-direction.getZ(), 0, direction.getX());
+                } else if (run.kind() == DisasterKind.EARTHQUAKE) {
+                    direction.multiply(0.25);
+                }
+                double strength = Math.min(1.8, (0.18 + run.level() * 0.1) * proximity);
+                player.setVelocity(player.getVelocity().add(direction.multiply(strength))
+                        .add(new Vector(0, Math.min(0.9, 0.12 + run.level() * 0.08), 0)));
+            }
+            if (cataclysm.damage() && run.activeStep() % 2 == 0) {
+                double base = switch (run.kind()) {
+                    case DUST_STORM -> 0.5;
+                    case METEOR_SHOWER, EARTHQUAKE -> 1.4;
+                    case TORNADO, FLOOD -> 1.0;
+                    case BLIZZARD -> 0.8;
+                };
+                player.damage(Math.min(cataclysm.maxDamagePerPulse(), base * run.level() * proximity));
+            }
+            if (run.kind() == DisasterKind.METEOR_SHOWER && cataclysm.damage()
+                    && cataclysm.maxFireSeconds() > 0) {
+                player.setFireTicks(Math.max(player.getFireTicks(), cataclysm.maxFireSeconds() * 20));
+            }
+            if (run.kind() == DisasterKind.BLIZZARD) {
+                player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS,
+                        60, Math.min(3, run.level() / 2), false, false, false));
+            }
+        });
     }
 
-    private void sound(DisasterRun run, Location center, float volume) {
-        DisastersConfig config = plugin.settings();
-        DisasterFx.play(center.getWorld(), center, config.soundFor(run.kind()),
-                volume, config.soundPitch());
-    }
-
-    private void hint(DisasterRun run, Location center, String key, int radius) {
-        double limit = (double) radius * radius;
+    private void forNearby(Location center, int radius, java.util.function.Consumer<Player> action) {
+        if (center.getWorld() == null) {
+            return;
+        }
+        int affected = 0;
+        int limit = plugin.settings().cataclysm().maxAffectedPlayers();
+        double radiusSquared = (double) radius * radius;
         for (Player player : center.getWorld().getPlayers()) {
-            if (player.hasPermission("chrdkdisasters.bypass")
-                    || player.getWorld() != center.getWorld()
-                    || player.getLocation().distanceSquared(center) > limit) {
+            if (affected >= limit) {
+                break;
+            }
+            if (!player.isOnline() || player.hasPermission(BYPASS)
+                    || player.getGameMode() == GameMode.CREATIVE
+                    || player.getGameMode() == GameMode.SPECTATOR
+                    || player.isInvulnerable()
+                    || player.getLocation().distanceSquared(center) > radiusSquared) {
                 continue;
             }
-            player.sendActionBar(plugin.messages().get(key,
-                    "kind", plugin.messages().raw(run.kind().titleKey()),
-                    "level", run.level(), "seconds", run.secondsLeft()));
+            action.accept(player);
+            affected++;
         }
     }
 
-    private Location center(DisasterRun run) {
-        World world = Bukkit.getWorld(run.world());
-        return world == null ? null : new Location(world, run.x(), run.y(), run.z());
+    private void impactSound(Location at, Sound sound, float volume, float pitch) {
+        if (at.getWorld() != null && plugin.settings().soundsEnabled()) {
+            at.getWorld().playSound(at, sound,
+                    volume * plugin.settings().soundVolume(), pitch * plugin.settings().soundPitch());
+        }
     }
 
-    /** Единственная точка изменения мира во всём модуле. */
-    private boolean changeBlock(Block block) {
-        return changeBlock(block, Material.AIR);
+    private void crater(Location at, int radius) {
+        for (int x = -radius; x <= radius; x++) {
+            for (int z = -radius; z <= radius; z++) {
+                double distance = Math.sqrt(x * x + z * z);
+                if (distance > radius) {
+                    continue;
+                }
+                Block top = surface(at.clone().add(x, 0, z));
+                if (top == null) {
+                    continue;
+                }
+                int depth = Math.max(1, (int) Math.ceil(radius - distance));
+                for (int y = 0; y < depth; y++) {
+                    Block block = top.getRelative(0, -y, 0);
+                    if (DESTRUCTIBLE.contains(block.getType())) {
+                        set(block, Material.AIR);
+                    }
+                }
+                Block rim = top.getRelative(0, -depth, 0);
+                if (!rim.getType().isAir() && random().nextDouble() < 0.24
+                        && DESTRUCTIBLE.contains(rim.getType())) {
+                    set(rim, Material.MAGMA_BLOCK);
+                }
+            }
+        }
     }
 
-    private boolean changeBlock(Block block, Material material) {
-        if (block == null) {
-            return false;
+    private void igniteAround(Location impact, int level) {
+        int fires = Math.min(12, level * 2);
+        for (int i = 0; i < fires; i++) {
+            Block top = surface(randomAround(impact, 3 + level));
+            if (top == null || top.getType().isAir()) {
+                continue;
+            }
+            Block above = top.getRelative(0, 1, 0);
+            if (above.getType().isAir()) {
+                set(above, Material.FIRE);
+            }
         }
-        boolean air = block.isEmpty() || block.getType().isAir();
-        if (material == Material.AIR ? air : !air) {
-            return false;
+    }
+
+    private void seismicRing(Location center, double distance, int level) {
+        int samples = Math.min(160, Math.max(16, (int) (distance * 8)));
+        for (int i = 0; i < samples; i++) {
+            Location at = radial(center, distance, i * Math.PI * 2 / samples);
+            Block top = surface(at);
+            if (top == null) {
+                continue;
+            }
+            Location particleAt = top.getLocation().add(0.5, 1, 0.5);
+            top.getWorld().spawnParticle(Particle.BLOCK, particleAt,
+                    1, 0.1, 0.1, 0.1, 0, top.getBlockData());
+            if (i % 12 == 0) {
+                top.getWorld().spawnParticle(Particle.CRIT, particleAt, 2 + level);
+            }
         }
-        if (plugin.protection().blocked(block.getLocation())) {
-            return false;
+    }
+
+    private void trail(Location from, Location to) {
+        int samples = 22;
+        for (int i = 0; i <= samples; i++) {
+            Location at = from.clone().add(to.clone().subtract(from).toVector().multiply(i / (double) samples));
+            from.getWorld().spawnParticle(i % 3 == 0 ? Particle.FLAME : Particle.CAMPFIRE_COSY_SMOKE,
+                    at, 2, 0.08, 0.08, 0.08, 0);
         }
-        if (!plugin.restore().canRemember()) {
-            return false;
+    }
+
+    private void ring(Location center, double radius, int count, Particle particle,
+                      double height, double extra) {
+        int capped = Math.min(HARD_PARTICLE_BUDGET, count);
+        for (int i = 0; i < capped; i++) {
+            Location at = radial(center, radius * (0.75 + random().nextDouble() * 0.25),
+                    i * Math.PI * 2 / capped);
+            at.add(0, random().nextDouble() * height, 0);
+            center.getWorld().spawnParticle(particle, at, 1, 0, 0, 0, extra);
         }
-        // Хранилища игроков не трогаем даже вне привата: потеря сундука —
-        // худший вид «веселья» для выживания.
-        if (block.getState() instanceof InventoryHolder) {
-            return false;
+    }
+
+    private void particles(Location at, Particle particle, int count, double spread, double extra) {
+        at.getWorld().spawnParticle(particle, at, Math.min(HARD_PARTICLE_BUDGET, count),
+                spread, Math.max(0.2, spread * 0.45), spread, extra);
+    }
+
+    private void particles(Location at, Particle particle, int count, double spread,
+                           double extra, Object data) {
+        at.getWorld().spawnParticle(particle, at, Math.min(HARD_PARTICLE_BUDGET, count),
+                spread, Math.max(0.2, spread * 0.45), spread, extra, data);
+    }
+
+    private Location randomSurface(Location center, int radius) {
+        Block top = surface(randomAround(center, radius));
+        return top == null ? null : top.getLocation();
+    }
+
+    private Location randomAround(Location center, int radius) {
+        double angle = random().nextDouble(Math.PI * 2);
+        return radial(center, Math.sqrt(random().nextDouble()) * radius, angle);
+    }
+
+    private static Location radial(Location center, double radius, double angle) {
+        return center.clone().add(Math.cos(angle) * radius, 0, Math.sin(angle) * radius);
+    }
+
+    /** Находит ближайшую непустую поверхность, не пробегая всю высоту мира. */
+    private Block surface(Location at) {
+        if (at == null || at.getWorld() == null) {
+            return null;
+        }
+        World world = at.getWorld();
+        int start = Math.min(world.getMaxHeight() - 2, at.getBlockY() + 12);
+        int end = Math.max(world.getMinHeight() + 1, start - 40);
+        for (int y = start; y >= end; y--) {
+            Block block = world.getBlockAt(at.getBlockX(), y, at.getBlockZ());
+            if (!block.getType().isAir() && block.getType() != Material.FIRE
+                    && block.getType() != Material.WATER && block.getType() != Material.LAVA) {
+                return block;
+            }
+        }
+        return null;
+    }
+
+    private void set(Block block, Material material) {
+        if (block == null || block.getType() == material || tickBlockChanges >= HARD_TICK_BLOCK_BUDGET
+                || !plugin.restore().canRemember() || plugin.protection().blocked(block.getLocation())) {
+            return;
+        }
+        Material type = block.getType();
+        // Хранилища и коренная порода не трогаем даже при opt-in разрушениях.
+        if (type == Material.BEDROCK || block.getState() instanceof Container) {
+            return;
         }
         plugin.restore().remember(block);
-        if (material == Material.AIR) {
-            block.setType(Material.AIR, false);
-        } else {
-            block.setType(material, false);
-        }
-        return true;
+        block.setType(material, false);
+        plugin.restore().markChanged(block);
+        tickBlockChanges++;
+    }
+
+    private static ThreadLocalRandom random() {
+        return ThreadLocalRandom.current();
     }
 }
