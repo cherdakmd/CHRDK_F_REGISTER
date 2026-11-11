@@ -24,7 +24,7 @@ public final class RegisterPlugin extends JavaPlugin {
     private RewardBoostService rewardBoosts;
     RewardBoostService rewardBoosts() { return rewardBoosts; }
     private ChatService chatService;
-    private ChatModerationService chatModeration;
+    ChatModerationService chatModeration;
     private PassMenuService passMenuService;
     private DonateMenuService donateMenuService;
     private ServerMenuService serverMenuService;
