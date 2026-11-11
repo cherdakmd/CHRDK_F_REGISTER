@@ -32,12 +32,12 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
     private ShopPromoStore promoStore;
     private ForgeShopPrices forgePrices;
     private ForgeShopService forgeShop;
-    private ForgeShopMarketGui forgeShopMarketGui;
+    private ForgeShopGui forgeShopGui;
     public ShopQuantityGui quantities(){return quantities;}
     public ShopAdminGui shopAdminGui(){return adminGui;}
     public ShopOverrides overrides(){return overrides;}
     public ForgeShopService forgeShop(){return forgeShop;}
-    public ForgeShopMarketGui forgeShopMarketGui(){return forgeShopMarketGui;}
+    public ForgeShopGui forgeShopGui(){return forgeShopGui;}
     /** Принять черновик GUI: записать shop-overrides.json и перечитать каталог. */
     public void applyOverrides(ShopOverrides draft) {
         overrides.replaceWith(draft);
@@ -67,7 +67,7 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
         getServer().getPluginManager().registerEvents(quantities,this);
         Bukkit.getPluginManager().registerEvents(gui, this);
         Bukkit.getPluginManager().registerEvents(adminGui, this);
-        Bukkit.getPluginManager().registerEvents(forgeShopMarketGui, this);
+        Bukkit.getPluginManager().registerEvents(forgeShopGui, this);
 
         ShopCommandHandler commands = new ShopCommandHandler(this);
         for (String name : List.of("shop", "shopadmin")) {
@@ -153,7 +153,7 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
         ShopPromoService promos = new ShopPromoService(promoSettings, promoStore);
         this.shopService = new ShopService(data, store, this::coreApi, this::skillsApi, promos);
         this.forgePrices = ForgeShopPrices.parse(getConfig(), getLogger());
-        if (this.forgeShopMarketGui == null) this.forgeShopMarketGui = new ForgeShopMarketGui(this);
+        if (this.forgeShopGui == null) this.forgeShopGui = new ForgeShopGui(this);
         this.forgeShop = new ForgeShopService(this, forgePrices);
     }
 
