@@ -53,7 +53,7 @@ class ForgeMarketContractTest {
 
     @Test void shopExchangeKeepsLegacyConstructorsAndNullableGrant() throws Exception {
         String code = read("src/main/java/ru/cherdakmd/chrdkregister/api/ShopExchange.java");
-        assertEquals(3, count(code, "public ShopExchange(UUID t,UUID m,long s,UUID o,boolean buy"));
+        assertEquals(4, count(code, "public ShopExchange(UUID t,UUID m,long s,UUID o,boolean buy"));
         assertTrue(code.contains("String grant)"));
         assertTrue(code.contains("public boolean carriesGrant() { return grant != null; }"));
         assertTrue(code.contains("ForgeMarketCatalog.validTradeGrant(grant,material,units)"));
@@ -78,7 +78,7 @@ class ForgeMarketContractTest {
         assertFalse(code.contains("addItem("));
         assertFalse(code.contains("dispatchCommand"));
         assertTrue(code.contains("WholeTrades.take(amounts, values, needed)"));
-        assertTrue(code.contains("WholeTrades.payment(money, wallet, spent)"));
+        assertTrue(code.contains("WholeTrades.payment(money, wallet, Math.multiplyExact(spent,physicalMinor))"));
         assertTrue(code.contains("ShopInventory.insertExact(after, offer.prototype(), units)"));
         assertTrue(code.contains("service.recoverPending()"));
         assertTrue(code.contains("prepareForge(trade, now"));

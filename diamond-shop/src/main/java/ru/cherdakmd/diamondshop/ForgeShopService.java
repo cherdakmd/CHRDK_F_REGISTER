@@ -6,6 +6,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import ru.cherdakmd.chrdkregister.api.ChargeInventory;
+import ru.cherdakmd.chrdkregister.api.DiamondMoney;
 import ru.cherdakmd.chrdkregister.api.ForgeMarketCatalog;
 import ru.cherdakmd.chrdkregister.api.ForgeMaterialSource;
 import ru.cherdakmd.chrdkregister.api.ShopExchange;
@@ -60,7 +61,7 @@ final class ForgeShopService {
         var source = source();
         if (source == null) return offers;
         for (var sku : ForgeMarketCatalog.SKUS) {
-            long price = plugin.api().diamondRate().scaleMinor(prices.price(sku.id()));
+            long price = plugin.coreApi().diamondRate().scaleMinor(prices.price(sku.id()));
             if (price < 1 || !source.available(sku.id())) continue;
             ItemStack prototype = source.prototype(sku.id());
             if (prototype == null) continue;
@@ -80,7 +81,7 @@ final class ForgeShopService {
     Result purchase(Player player, Offer offer, int units) {
         var service = plugin.shopService();
         if (!service.ready(player) || player.getGameMode() != GameMode.SURVIVAL) return fail("trading.unavailable", 0);
-        var marketQuote=plugin.api().diamondRate();
+        var marketQuote=plugin.coreApi().diamondRate();
         if (!prices.enabled() || marketQuote.scaleMinor(prices.price(offer.sku())) != offer.price()) return fail("forge.shop.closed", 0);
         if (units < 1 || units > 64 || (offer.seed() && units != 1)) return fail("forge.shop.quantity", 0);
         long money;
@@ -116,7 +117,7 @@ final class ForgeShopService {
             if (removal.after()[slot] == 0) after[slot] = null;
             else after[slot].setAmount(removal.after()[slot]);
         }
-        var payment = WholeTrades.payment(money, wallet, Math.multiplyExact(spent,(long)marketQuote.rateBps()));
+        var payment = WholeTrades.payment(money, wallet, Math.multiplyExact(spent,physicalMinor));
         if (payment == null) return fail("trading.not-enough-balance", money);
         long debit = payment.account(), credit = payment.change();
         // exact isSimilar clone insertion; для искры max-stack-size=1 → отдельный слот.

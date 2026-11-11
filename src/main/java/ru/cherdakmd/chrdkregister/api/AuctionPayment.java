@@ -21,8 +21,8 @@ public record AuctionPayment(UUID transaction, UUID market, long sequence, long 
                 && transaction != null && market != null && sequence > 0 && sequence < Long.MAX_VALUE && lot > 0
                 && buyer != null && seller != null && !buyer.equals(seller)
                 && price >= 2 && price <= (minor?100_000_000L:1_000_000L) && fee >= 0 && fee < price
-                && debit >= 0 && debit <= price && cash >= 0 && cash <= (minor?36L*64*9*20_000L:36L*64*9)
-                && change >= 0 && change <= (minor?9L*DiamondExchangePolicy.MAX_BPS:8) && change <= cash && debit + cash - change == price
+                && debit >= 0 && debit <= price && cash >= 0 && cash <= (minor?36L*64*9*DiamondExchangePolicy.MAX_BPS/DiamondMoney.SCALE:36L*64*9)
+                && change >= 0 && change <= (minor?9L*DiamondExchangePolicy.MAX_BPS/DiamondMoney.SCALE:8) && change <= cash && debit + cash - change == price
                 && inventoryHash != null && inventoryHash.matches("[0-9a-f]{64}");
     }
     public static String hash(String before, String after) {

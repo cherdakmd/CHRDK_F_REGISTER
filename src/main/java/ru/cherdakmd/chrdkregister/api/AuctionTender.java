@@ -22,5 +22,18 @@ public final class AuctionTender {
         }
         return needed > 0 ? null : new Plan(after, debit, cash, -needed);
     }
+    /** Exact minor bank-first tender; one physical unit is rateBps/100 hundredths. */
+    public static Plan planMinor(long price,long balanceMinor,int rateBps,int[] amounts,int[] values) {
+        if(price<1||price>100_000_000L||balanceMinor<0||balanceMinor>100_000_000_000L||rateBps<5_000||rateBps>20_000
+                ||amounts==null||values==null||amounts.length!=36||values.length!=36)return null;
+        int[] after=amounts.clone();var slots=new ArrayList<Integer>();
+        for(int i=0;i<36;i++) {if(after[i]<0||after[i]>64||values[i]!=0&&values[i]!=1&&values[i]!=9)return null;if(values[i]!=0)slots.add(i);}
+        slots.sort(Comparator.comparingInt(i->values[i]));long debit=Math.min(price,balanceMinor),needed=price-debit,cash=0;
+        for(int slot:slots) {
+            if(needed<=0)break;long unit=Math.multiplyExact(values[slot],(long)rateBps)/DiamondMoney.SCALE;
+            int take=(int)Math.min(after[slot],(needed+unit-1)/unit);after[slot]-=take;long paid=Math.multiplyExact(take,unit);cash=Math.addExact(cash,paid);needed-=paid;
+        }
+        return needed>0?null:new Plan(after,debit,cash,-needed);
+    }
     private AuctionTender() { }
 }

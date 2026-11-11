@@ -87,7 +87,7 @@ class ClaimAccountsTest {
         assertTrue(plugin.indexOf("store.accounts(bank)")<plugin.indexOf("service.processUpkeep"));
         assertTrue(plugin.contains("new ClaimFinance(store,bank)"));
         assertFalse(bridge.contains("exchangeClaimAccounts("));
-        assertTrue(bridge.contains("fundClaimPayment(player,cost)"));
+        assertTrue(bridge.contains("fundClaimPaymentMinor(player,plugin.coreApi().diamondRate().scaleMinor(cost*100L))"));
         assertTrue(bridge.contains("commitClaimExchange(t)"));
         assertTrue(bridge.contains("financialPending()==null"));
         assertTrue(service.contains("ClaimUpkeep.day")); assertTrue(service.contains("finance.bank-commands"));

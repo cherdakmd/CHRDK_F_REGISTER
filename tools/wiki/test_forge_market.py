@@ -175,7 +175,7 @@ class ForgeMarketContractTest(unittest.TestCase):
         self.assertNotIn("addItem(", self.service)
         self.assertNotIn("dispatchCommand", self.service)
         self.assertIn("WholeTrades.take(amounts, values, needed)", self.service)
-        self.assertIn("WholeTrades.payment(money, wallet, Math.multiplyExact(spent,(long)marketQuote.rateBps()))", self.service)
+        self.assertIn("WholeTrades.payment(money, wallet, Math.multiplyExact(spent,physicalMinor))", self.service)
         self.assertIn("ShopExchange.fractional(trade,marketQuote.rateBps())", self.service)
         self.assertIn("service.balance(player)", self.service)
 

@@ -25,10 +25,14 @@ class AutoMessages276Test {
         var removedAudience = java.util.Set.of("CHRDK_Hunt", "CHRDK_Professions");
         var retained = before.stream().filter(item -> !removedAudience.contains(String.valueOf(item.get("plugin")))
                 && !RetiredAddons.announcement(String.valueOf(item.get("text")))).toList();
-        assertEquals(retained.size(), after.size());
+        var retainedFresh=after.stream().filter(item->{
+            String text=String.valueOf(item.get("text"));return !text.contains("Plasmo Voice")&&!text.contains("/disasters");
+        }).toList();
+        assertEquals(retained.size()+2,after.size());
+        assertEquals(retained.size(), retainedFresh.size());
         for (int i = 0; i < retained.size(); i++) {
             var a = new LinkedHashMap<>(retained.get(i));
-            var b = new LinkedHashMap<>(after.get(i));
+            var b = new LinkedHashMap<>(retainedFresh.get(i));
             assertNotEquals(a.remove("text"), b.remove("text"), "Текст №" + (i + 1));
             assertEquals(a, b, "Фильтры аудитории №" + (i + 1));
         }

@@ -116,7 +116,7 @@ class PresentationUpdateTest {
         var changes=PresentationMigration.replacements(live,List.of(legacy),fresh);
         assertTrue(changes.contains("server-menu.items"));
         assertTrue(changes.contains("auto-messages.messages"));
-        assertEquals(live.getMapList("server-menu.items").size()-3, fresh.getMapList("server-menu.items").size());
+        assertEquals(live.getMapList("server-menu.items").size()-5, fresh.getMapList("server-menu.items").size());
         for (var entry:fresh.getMapList("server-menu.items")) {
             assertFalse(RetiredAddons.plugin(String.valueOf(entry.get("plugin"))));
             assertFalse(RetiredAddons.command(String.valueOf(entry.get("command"))));

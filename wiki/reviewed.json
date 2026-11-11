@@ -1,188 +1,188 @@
 {
   "pages": {
     "about": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "2ac16cbbb429fd11cf5f2085eab6e52cb093cfd41d2023d9ed58de034b42118c",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "2d0ed91aacb4c56840ef4d9c78bfae3db02635a7011b896413741cbb77f5501a",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "c188c28516400009478508158b2105b48ab62d6ec8cab2a6449a75a38ded2843",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "1ad31270786da03ec8afd815a2f7140e4b7b68f068ce4951b94798c7e88a73a8",
       "text": "bd128e475ee8efae55c3d2d6c9616d5278600f2a8ff1aad7af5e6df3e0b3f5c3"
     },
     "artifacts": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "0cb5179afbfe3223f62ebc4bf73caa360ea952169da06c90e4c661a151e496dd",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "97631e7237f7204c8be2f40e2111d2e882068b97170bebe0b40b0f2aabc57df6",
       "text": "51e3ef379d9a8f7e2ccfc6fd41cc0c0823f91f30d7c9a8326ec7962c182d98e4"
     },
     "auction": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "e8554494c0285ff9c8c0a89035e7492666d50d659846ece450921ed80b1ba3ac",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "4d34becb6e4d7157fd0da0b566b2a3f113a4ef70ff2ed16dea40b95658201b59",
       "text": "89f444940889c75cea3b77900f9b41ed8500cdb039d2b2cd1aebd82dcf710d25"
     },
     "battlepass": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "fdb53aad5d5e5e33a271342c71daadb5d4f7066e89f0e5d63b385946a0c6614f",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "4728ec2d993708b180471e357d16f6b4836750100f3c47c27302d7197c162b27",
       "text": "997df6e0a9311ea115c4fd3c192b2729034b10c68a4f41c57261ef4b704c5add"
     },
     "chat": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "2ac16cbbb429fd11cf5f2085eab6e52cb093cfd41d2023d9ed58de034b42118c",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "2d0ed91aacb4c56840ef4d9c78bfae3db02635a7011b896413741cbb77f5501a",
       "text": "ca6c93fc33fca52eecc7d38744bc86f619ea0b6a7bcc2314b84ca6c5399d8a1c"
     },
     "claims": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "3434ec4217a4c7471cd8652d11983348c4faefc485e5a22b8cc690d45df4f5aa",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "4324318211c0d3b5d2b34f711fd6785917e3674d2f1d2d7fd14a28443bd47355",
       "text": "3126e85c74cf79658fdcde5a03722da3d31459d702228865edec9eb15e142aa4"
     },
     "classes": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "a348d21db85e636f20411caaeca1e69ef575bc7010e1e927e5e3016be266c0fd",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "64fbb478181d6485467bde1f931edd8e77220ad57a85d7fcec1aa0da5921b766",
       "text": "503edef62357862f67d17df249b393023697d6dca6342cbe792b0d4dc78cb8cc"
     },
     "commands": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "e9da9d02cd759afc97a2a6cec93d95d899316110c932d6fe9dac8256c65f5668",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "5be2195d8b6855a109f75bfa9c472fdcbdbef87dcaa3988acd38d26bb7bdf4d8",
       "text": "b16f06b84b440533e5bba0a45540bf517f3ae650cb390ddd6b9f43d47c5eabdd"
     },
     "cosmetics": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "62f4b27c2c93a50b4c57e27c9efbbd186afbe2cdf2e052709b6cf4ab4c755cf5",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "97d8ab9d3810415ac0c822f29612e689a37b51fbba310bf8d202c97d0f23fd7b",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "88e172089f510cbd8637b2bc429d5043f824dd3238de184ec9b5243377eda239",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "5c09b223f9b1e2efb50543a3dbca5ed33516cacf14c50d557ddbd467789cdaab",
       "text": "4d7683f5677c50dfe0488961891915b5c2dd6533191a213ee8fdb077ea817eb5"
     },
     "disasters": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "4db031e01853b4f962769c06d81d1840c5f19a4bac5fc2ad88e9c26b6afa7c8a",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "dd03294e70d7f8081e3626bb3b66f288a514d6053a218261cb27190b59ed6cd3",
       "text": "121b1cc28a075ced29b6de8abec7dbc20bbb531a01441ddd5fdb836d066d0202"
     },
     "economy": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "d58a1517f4aab3663d0d5e988757bdac45b012aa558a6a71e67ad5ae3b766f63",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "f3f0feeb7295f418dd8fc4371baac6243bb6cca1b9fe3878fab08d9f39991323",
       "text": "051da7af63816f9e7b42dc7185973c88adf8862f10ad9d1e21f5d789cdbdc4fe"
     },
     "enchants": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "d6f060e48a9768b2179c654703acf6a1d271fa7310673dcf08e36f47ea0c9bac",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "42e6ab5d707f441d444e2418689cbd2dfa85e2189ba2c330566ee8bf795ed502",
       "text": "7e90321ef8a100bae11c53592c62328fa44a958be657b66a86d51ea8c1906a7d"
     },
     "faq": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "4c7099216b81df7e1718ad8ab6d5298f7b910c46c29c5c3479dc9a7ace25f058",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "5bdf6169118ec5b8901c20ceff95bd88dcfb8f74f6b33a6d6b8e25b49c01afd5",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "a965553f372ff9e5d64ee71b98d21c1b1b1fbb388125b2efd7de2fbf03f069a6",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "4b104165fe4fc1e6ce3d116be98748f5b31793274c86931cc062a369b7788e33",
       "text": "615d89bba0ac116c220d571f530fcdab7d5ff46162ca7a7ecf24de441a7fb191"
     },
     "guilds": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "3434ec4217a4c7471cd8652d11983348c4faefc485e5a22b8cc690d45df4f5aa",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "4324318211c0d3b5d2b34f711fd6785917e3674d2f1d2d7fd14a28443bd47355",
       "text": "bb7d4121d6c42762b2f09d8eb57df986a942df35c77fd2cf899a5e7a38193216"
     },
     "honors": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "2ac16cbbb429fd11cf5f2085eab6e52cb093cfd41d2023d9ed58de034b42118c",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "2d0ed91aacb4c56840ef4d9c78bfae3db02635a7011b896413741cbb77f5501a",
       "text": "6bc29d5a2d7783845f8b3d9b085e85982faec5b3029d841092386f36b1d4c4b0"
     },
     "index": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "142006640abbd8d5041786088953511eb09a2ab1aa71f906aae23bb7ba9fcd67",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "839c6e26dfdea363ce97f21883bdf38a390c7e792d3b2032db750d8b5e792007",
       "text": "13b0089b89035cd13598d177608718282608bc671993a3c370012b297c779cd7"
     },
     "menu": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "4c7099216b81df7e1718ad8ab6d5298f7b910c46c29c5c3479dc9a7ace25f058",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "5bdf6169118ec5b8901c20ceff95bd88dcfb8f74f6b33a6d6b8e25b49c01afd5",
       "text": "c646997519fcb5c1c0428e5e3686361e2fea3b508e86f0ac0d24d84f84229f8b"
     },
     "moderation": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "2ac16cbbb429fd11cf5f2085eab6e52cb093cfd41d2023d9ed58de034b42118c",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "2d0ed91aacb4c56840ef4d9c78bfae3db02635a7011b896413741cbb77f5501a",
       "text": "79580a49c09219f65539abace395b5f2469f91fc2f0ac9b3ecae109c4fa1ecb4"
     },
     "orders": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "25ad1fae61d8b776e7262bd5eefc98a81b84489d3c96b69d0952dc805b28e003",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "20cbbde77d3dd4894b36768d1f49b78386aa75cdcd09caaf816905446b13adbd",
       "text": "8f1bddfa65aabb38fab8ebdad77656a627e340e765229de34ab3a24dd96fef2e"
     },
     "perktree": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "a348d21db85e636f20411caaeca1e69ef575bc7010e1e927e5e3016be266c0fd",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "64fbb478181d6485467bde1f931edd8e77220ad57a85d7fcec1aa0da5921b766",
       "text": "3e1a2fe232bb8c384a682ac98f8133ab0560de790bab9a2a2d9542ea0b673666"
     },
     "pets": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "a738decb32315446122fb4fb5953ddd5cad0ffa972f7f75f2b1bd3f31c1e7eac",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "405400b33fa1994dfc5c2b699d198ba052b395854c39872ab661d3dbbe2a045d",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "profile": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "c920ae6a381e82d596228c12fcbceb1d75ab1915b3623cb83a1439b116f96398",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "87a6098201917fa16a7731087d31bd7bc3dbacdc1177aad8fed895d68d8591e8",
       "text": "f2a1fafaef6d54a60b0dd2e9545374a59a83ad49a5de3ace0069e441c187d309"
     },
     "quests": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "9da0272a6b1eb1560d233f01870fe3fd037ea85971e723e23c9f55f4d02fa591",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "8bcf6e46ba225c560a69e8ffa8dd07c8373da432bad351dc6f80ead50332209f",
       "text": "a42f11010fddbf13238133ac1e2dca525dea95245f5286a88a57738af30fbf13"
     },
     "ranks": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "3fa45b53640444085ca0cba015fccd8c294ff44cff61e74cde76d304f43d1c9d",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "23d6c3276a19042e066cbd8773a25a8ca614b96275bf8d427feb1c1a2d5ca4c6",
       "text": "664b466e4b44741175d9c2cdb4da728a0603a04aaaefada8396dd6517d5dca2d"
     },
     "shop": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "142006640abbd8d5041786088953511eb09a2ab1aa71f906aae23bb7ba9fcd67",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "839c6e26dfdea363ce97f21883bdf38a390c7e792d3b2032db750d8b5e792007",
       "text": "6b4ec3842f6bca2ac8ba266ed5236562fc8f4d9e064252b19f79aa9ba977941d"
     },
     "skills": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "0697ca5d7b4b52975c72baeb1b43931e2b2d080ebc0aa012d09f04c526233265",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "5db1be9cfa5540d323623941395020427fc18c9e7a4bc318d789c7aeecd40e1b",
       "text": "43797b2c64a23ab2e591eb8a75bacb7d064827f86c80f62665d08170fab33e00"
     },
     "social-link": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "10179f36fe3d43c05064016a15b144543aed83bfa9c0961940ede200308a430d",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "ebb1093cd54dbbc75b7155e97b53442f520a4ec39d39b1bef7445a25efc31424",
       "text": "1f6cf95d9c8c2180dbf871aa9b19a7bfcde5405cf77b75954b7575920d2aef14"
     },
     "start": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "8435251f8ec4fd8c7188165b8dcdfb6a471295e5c77a17637428256660369b10",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "8a0c9f7bbd288fb81b8d79b699bafc6c847cfa3f19c0810d502e09b7f2232e66",
       "text": "953b107bba1128be43994bee9edf9ab7766c7ecfab70620808f8d404fef8d3cb"
     },
     "starter-kit": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "0cb5179afbfe3223f62ebc4bf73caa360ea952169da06c90e4c661a151e496dd",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "97631e7237f7204c8be2f40e2111d2e882068b97170bebe0b40b0f2aabc57df6",
       "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
     },
     "teleports": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "4c84f6c0a5d692993b2fe72b5f9d88557ed3feff0df2eae2fc1d353d2771ab66",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "55c2bfb3d95c6ecddfd9421ba46c3eb53c4f6df2b9b999021499cf79e01e63fc",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "d6f060e48a9768b2179c654703acf6a1d271fa7310673dcf08e36f47ea0c9bac",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "42e6ab5d707f441d444e2418689cbd2dfa85e2189ba2c330566ee8bf795ed502",
       "text": "9fac8f515b8905c25378000b55e6f5faaa87a8b5a3a3173676cb4563894d98f7"
     },
     "titles": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "a4c8b790ddc1352ef82aa1562869c71e883d7be488c1fc874abb5e6be4fcd475",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "15e23217e5c4cbbd36d884f1dde3f03ad347a741c9e68dc1e68a63850b8dd524",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "142006640abbd8d5041786088953511eb09a2ab1aa71f906aae23bb7ba9fcd67",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "839c6e26dfdea363ce97f21883bdf38a390c7e792d3b2032db750d8b5e792007",
       "text": "ac7d8429ff72a6e0ac03131f1cd12827180560883cb4c3348ea853c7223a11bc"
     },
     "vk": {
-      "reason": "Сверены minor-операции, рыночный курс, legacy WAL и связанные страницы; исторические updates не переписывались",
-      "sources": "10179f36fe3d43c05064016a15b144543aed83bfa9c0961940ede200308a430d",
+      "reason": "Проверена единая размерность physical rateBps/100, minor WAL, legacy fixtures и API44; updates сохранён",
+      "sources": "ebb1093cd54dbbc75b7155e97b53442f520a4ec39d39b1bef7445a25efc31424",
       "text": "b592e465a73dd13186763622b51190400cffd40960e233f58c63379b88a9bba9"
     }
   },

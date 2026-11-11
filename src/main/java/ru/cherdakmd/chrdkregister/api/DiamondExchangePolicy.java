@@ -32,14 +32,14 @@ public final class DiamondExchangePolicy {
         }
         public long creditMinor(long diamonds) {
             if (diamonds < 0) throw new IllegalArgumentException("negative diamonds");
-            return Math.multiplyExact(diamonds, rateBps);
+            return Math.multiplyExact(diamonds, rateBps) / DiamondMoney.SCALE;
         }
         public long scaleMinor(long baseMinor) {
             if (baseMinor < 0) throw new IllegalArgumentException("negative money");
             return BigDecimal.valueOf(baseMinor).multiply(BigDecimal.valueOf(rateBps))
                     .divide(BigDecimal.valueOf(BASE_BPS), 0, RoundingMode.HALF_UP).longValueExact();
         }
-        public String text() { return DiamondMoney.format(rateBps); }
+        public String text() { return DiamondMoney.format(rateBps / DiamondMoney.SCALE); }
     }
 
     /** previousRateBps makes each observation period bounded; there is no wall-clock or random input. */

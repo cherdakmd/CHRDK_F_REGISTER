@@ -77,7 +77,7 @@ public final class ChargeInventory {
         for(int pass=0;pass<2&&remaining>0;pass++)for(int i=0;i<36&&remaining>0;i++) {
             var item=after[i];if(item==null||item.hasItemMeta())continue;
             int units=switch(item.getType()){case DIAMOND->pass==0?1:0;case DIAMOND_BLOCK->pass==1?9:0;default->0;};
-            while(units>0&&item.getAmount()>0&&remaining>0){long value=Math.multiplyExact(units,(long)rateBps);cash+=value;remaining-=value;item.setAmount(item.getAmount()-1);}
+            while(units>0&&item.getAmount()>0&&remaining>0){long value=Math.multiplyExact(units,(long)rateBps)/DiamondMoney.SCALE;cash+=value;remaining-=value;item.setAmount(item.getAmount()-1);}
             if(item.getAmount()==0)after[i]=null;
         }
         return remaining>0?null:new Plan(after,debit,cash,-remaining);

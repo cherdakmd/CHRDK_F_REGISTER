@@ -53,7 +53,7 @@ public record ShopExchange(UUID transaction,UUID market,long sequence,UUID owner
                 ||rates==null||rates.size()>4096||before==null||after==null||before.equals(after)||before.length()>4*1024*1024||after.length()>4*1024*1024) return false;
         for(var r:rates.entrySet()) if(!r.getKey().matches("[A-Z][A-Z0-9_]{0,127}")||r.getValue()==null||r.getValue()<1) return false;
         if(!validRemainder()||fractional&&(rateBps<DiamondExchangePolicy.MIN_BPS||rateBps>DiamondExchangePolicy.MAX_BPS)) return false;
-        long physicalMoney = fractional ? Math.multiplyExact(physical, (long)rateBps) : physical;
+        long physicalMoney = fractional ? Math.multiplyExact(physical, (long)rateBps) / DiamondMoney.SCALE : physical;
         if(!(buy?debit+physicalMoney-credit==money:debit==0&&physical==0&&credit==money)) return false;
         if(carriesGrant()) {
             // Только покупка, без остатка от распродажи; искра дополнительно ограничена в GUI/сервисе.

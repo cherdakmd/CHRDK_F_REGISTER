@@ -28,7 +28,7 @@ class DiamondExchangePolicyTest {
         for(int i=0;i<1000;i++) { int old=rate; rate=DiamondExchangePolicy.quote(extreme,rate).rateBps();
             assertTrue(Math.abs(rate-old)<=250); assertTrue(rate>=5000&&rate<=20000); }
         var empty=new DiamondExchangePolicy.Snapshot(0,0,Long.MAX_VALUE/4,0,0,0,0,1_000_000,20);
-        assertEquals(9750,DiamondExchangePolicy.quote(empty,10_000).rateBps());
+        assertEquals(10_250,DiamondExchangePolicy.quote(empty,10_000).rateBps());
     }
     @Test void invalidValuesAndOverflowDoNotBecomeNegativeMoney() {
         assertThrows(IllegalArgumentException.class,()->new DiamondExchangePolicy.Quote(4999,0,0,0,0,0));

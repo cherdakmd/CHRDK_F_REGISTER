@@ -299,7 +299,7 @@ public final class ShopService {
         long debit = 0, credit = buy ? 0 : money, spent = 0, change = 0;
         if (buy) {
             long wallet = balanceMinor(player), neededMinor = Math.max(0, money - wallet);
-            long needed=(neededMinor+marketQuote.rateBps()-1)/marketQuote.rateBps();
+            long physicalMinor=marketQuote.creditMinor(1),needed=(neededMinor+physicalMinor-1)/physicalMinor;
             int[] amounts = new int[36], values = new int[36];
             for (int slot=0; slot<after.length; slot++) if (plain(after[slot])) {
                 amounts[slot] = after[slot].getAmount(); values[slot] = config.currencyRates().getOrDefault(after[slot].getType().name(), 0);
@@ -311,7 +311,7 @@ public final class ShopService {
                 if (removal.after()[slot] == 0) after[slot] = null; else after[slot].setAmount(removal.after()[slot]);
             }
             debit=Math.min(wallet,money);
-            long paidMinor=Math.addExact(debit,Math.multiplyExact(spent,(long)marketQuote.rateBps()));
+            long paidMinor=Math.addExact(debit,Math.multiplyExact(spent,physicalMinor));
             if(paidMinor<money)return fail("trading.not-enough-balance",money);
             credit=paidMinor-money; change=credit;
             if(wallet-debit>WholeTrades.MAX-credit)return fail("trading.invalid-number",money);

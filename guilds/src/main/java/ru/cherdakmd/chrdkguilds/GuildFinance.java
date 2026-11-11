@@ -101,7 +101,7 @@ final class GuildFinance {
     long available(Player player) {
         if (!plugin.authenticated(player) || payments.paused()) return 0;
         long minor = Math.clamp(plugin.coreApi().auctionBankBalance(player.getUniqueId()),0L,Guild.MAX_TREASURY*100L);
-        for (var item : player.getInventory().getStorageContents()) minor=Math.addExact(minor,Math.multiplyExact(ChargeInventory.cashValue(item),(long)plugin.coreApi().diamondRate().rateBps()));
+        for (var item : player.getInventory().getStorageContents()) minor=Math.addExact(minor,plugin.coreApi().diamondRate().creditMinor(ChargeInventory.cashValue(item)));
         return Math.min(minor/100,Guild.MAX_TREASURY);
     }
 }
