@@ -149,7 +149,8 @@ public final class GoalsService {
             catch (java.io.IOException error) { plugin.getLogger().log(java.util.logging.Level.SEVERE, "Не записана регистрация доходов целей", error); return false; }
         }
         // Прогресс целей не является банковским обязательством; взносы и награды — являются.
-        if (!GoalRegistration.canRestore(plugin.store(),charges)||!plugin.coreApi().registerIncomeSource("common-goals", plugin.store().incomeId())) return false;
+        if (plugin.store().bankRegistered()&&!GoalRegistration.canRestore(plugin.store(),charges)) return false;
+        if (!plugin.coreApi().registerIncomeSource("common-goals", plugin.store().incomeId())) return false;
         try { plugin.store().markBankRegistered(); return true; }
         catch (java.io.IOException error) { plugin.getLogger().log(java.util.logging.Level.SEVERE, "Не записана регистрация доходов целей", error); return false; }
     }

@@ -29,7 +29,7 @@ public final class MilestoneAwards {
         if(!store.healthy()||!bank.available()) return false;
         if(!bank.registered(source,store.lineage())) {
             // Импортированные claimed с нулевой суммой не являются денежными обязательствами.
-            if(!store.totals().isEmpty()) throw new IllegalStateException("award lineage unavailable");
+            if(store.registered()&&!store.totals().isEmpty()) throw new IllegalStateException("award lineage unavailable");
             if(!bank.register(source,store.lineage())) throw new IllegalStateException("award lineage conflict");
         }
         store.markRegistered();

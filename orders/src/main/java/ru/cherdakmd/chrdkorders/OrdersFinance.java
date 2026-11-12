@@ -39,7 +39,7 @@ public final class OrdersFinance implements AutoCloseable {
         if(!store.healthy()||!bank.available()) return false;
         String source=OrdersStore.SOURCE;
         if(!bank.registered(source,store.lineage())) {
-            if(store.pending()!=null||!store.incomes().isEmpty()) throw new IllegalStateException("orders lineage unavailable");
+            if(store.registered()&&(store.pending()!=null||!store.incomes().isEmpty())) throw new IllegalStateException("orders lineage unavailable");
             if(!bank.register(source,store.lineage())) throw new IllegalStateException("orders lineage conflict");
         }
         store.markRegistered();

@@ -35,7 +35,7 @@ public final class PaidActions {
     }
     /** Ни оплата, ни refund/resolution ещё не существовали: потерян только ACK/lineage. */
     private boolean registrationRecoverable() { return registrationRecoverable(store,journal); }
-    static boolean registrationRecoverable(PaidActionStore store,ChargeJournal journal) {
+    public static boolean registrationRecoverable(PaidActionStore store,ChargeJournal journal) {
         return store.healthy()&&journal.healthy()&&journal.pending()==null&&journal.nextSequence()==1
                 &&store.actions().isEmpty()&&store.refunds().isEmpty()&&store.resolutions().isEmpty();
     }

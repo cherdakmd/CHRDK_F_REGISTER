@@ -70,8 +70,9 @@ class OrdersFinanceTest {
         var empty=new BankStore(dir.resolve("empty-core"),log);empty.load();
         assertFalse(OrdersFinance.deliver(s,new Gateway(empty),null,0));
         assertTrue(empty.incomeSourceAvailable(OrdersStore.SOURCE,lineage));
-        var earned=earned(); var older=new BankStore(dir.resolve("older-core"),log);older.load();
-        assertThrows(IllegalStateException.class,()->OrdersFinance.deliver(earned,new Gateway(older),owner,17));
+        var pending=prepare(s);s.publish(pending);
+        var older=new BankStore(dir.resolve("older-core"),log);older.load();
+        assertThrows(IllegalStateException.class,()->OrdersFinance.deliver(s,new Gateway(older),owner,17));
         assertFalse(older.incomeSourceAvailable(OrdersStore.SOURCE,lineage));
     }
     @Test void lineageConflictDoesNotRegisterReplacementOrPay() throws Exception {
