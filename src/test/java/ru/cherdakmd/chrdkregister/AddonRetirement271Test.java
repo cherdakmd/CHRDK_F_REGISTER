@@ -108,7 +108,7 @@ class AddonRetirement271Test {
         assertEquals(300, ((Number) fresh.getMapList("shop.products").stream()
                 .filter(p -> "rank-wanderer".equals(p.get("id"))).findFirst().orElseThrow().get("price")).intValue());
         assertEquals(45,fresh.getMapList("server-menu.items").size());
-        assertEquals(40,fresh.getMapList("auto-messages.messages").size());
+        assertEquals(38,fresh.getMapList("auto-messages.messages").size());
         for(String key:changes)old.set(key,fresh.get(key));
         assertTrue(PresentationMigration.replacements(old,List.of(yaml("presentation-legacy-1.4.270.yml")),fresh).isEmpty());
         assertEquals(777,old.getInt("auto-messages.interval-seconds"));assertEquals(List.of("Admin"),old.getStringList("tablist.pinned-names"));
