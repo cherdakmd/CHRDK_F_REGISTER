@@ -54,7 +54,7 @@ class ShopPromoMathTest {
     void capNeverBreaksAntiArbitrageOrLimits() {
         assertEquals(25, ShopPromoMath.cap(25, 100, 32, 128, 1000));
         assertEquals(50, ShopPromoMath.cap(200, 50, 1000, 1000, 1000));
-        assertEquals(5000, ShopPromoMath.cap(6000, 1000, 5000, 10000, 10000));
+        assertEquals(5000, ShopPromoMath.cap(6000, 10000, 5000, 10000, 10000));
         assertEquals(128, ShopPromoMath.cap(200, 1000, 1000, 128, 1000));
         assertEquals(7, ShopPromoMath.cap(200, 1000, 1000, 1000, 7));
         assertEquals(0, ShopPromoMath.cap(200, 0, 1000, 1000, 1000));

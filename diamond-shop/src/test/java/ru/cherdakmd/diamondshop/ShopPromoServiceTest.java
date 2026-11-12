@@ -72,7 +72,7 @@ class ShopPromoServiceTest {
         ShopConfig.ShopItem featured = item(promos.plan(now).featured().get(0), true);
         assertEquals(500000, promos.remaining(STEVE, now));
 
-        var first = promos.quote(STEVE, featured, 20000, 100000, 64, 100000, now);
+        var first = promos.quote(STEVE, featured, 2_000_000, 10_000_000, 64, 100_000_000, now);
         assertEquals(100000, first.amount(), "потолок тестовой сделки 1000 ⛁");
         promos.record(STEVE, featured.material(), 64, first, now);
         assertEquals(400000, promos.remaining(STEVE, now));
