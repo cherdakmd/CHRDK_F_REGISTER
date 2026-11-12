@@ -186,14 +186,19 @@ public final class ShopMarketGui implements Listener {
         boolean buy=click.isLeftClick();if(!buy&&!item.sellEnabled()){plugin.messages().send(player,"quantity.buy-only");return;}
         Inventory expected=player.getOpenInventory().getTopInventory();
         plugin.getServer().getScheduler().runTask(plugin,()->{
-            if(plugin.isEnabled()&&player.isOnline()&&player.getOpenInventory().getTopInventory()==expected)
+            if(plugin.isEnabled()&&player.isOnline()&&sameInventory(player,expected))
                 plugin.quantities().open(player,item,buy,holder.category,holder.page,holder.service,offer.batch(),buy?offer.ask():offer.bid());
         });
     }
 
     @EventHandler(ignoreCancelled=true) public void onInventoryDrag(InventoryDragEvent event) {if(event.getInventory().getHolder() instanceof Holder)event.setCancelled(true);}
-    private void reopen(Player player,ShopCategory category,int page) {Inventory expected=player.getOpenInventory().getTopInventory();plugin.getServer().getScheduler().runTask(plugin,()->{if(plugin.isEnabled()&&player.isOnline()&&player.getOpenInventory().getTopInventory()==expected)open(player,category,page);});}
-    private void reopenHome(Player player) {Inventory expected=player.getOpenInventory().getTopInventory();plugin.getServer().getScheduler().runTask(plugin,()->{if(plugin.isEnabled()&&player.isOnline()&&player.getOpenInventory().getTopInventory()==expected)open(player,0);});}
+    /** Purpur может вернуть новый Inventory-wrapper; Holder у нашего GUI остаётся тем же объектом. */
+    private static boolean sameInventory(Player player,Inventory expected) {
+        Inventory current=player.getOpenInventory().getTopInventory();
+        return expected.getHolder()!=null&&current.getHolder()==expected.getHolder();
+    }
+    private void reopen(Player player,ShopCategory category,int page) {Inventory expected=player.getOpenInventory().getTopInventory();plugin.getServer().getScheduler().runTask(plugin,()->{if(plugin.isEnabled()&&player.isOnline()&&sameInventory(player,expected))open(player,category,page);});}
+    private void reopenHome(Player player) {Inventory expected=player.getOpenInventory().getTopInventory();plugin.getServer().getScheduler().runTask(plugin,()->{if(plugin.isEnabled()&&player.isOnline()&&sameInventory(player,expected))open(player,0);});}
     public void closeAll() {for(var player:Bukkit.getOnlinePlayers())if(player.getOpenInventory().getTopInventory().getHolder() instanceof Holder||ShopQuantityGui.owns(player.getOpenInventory().getTopInventory()))player.closeInventory();}
 
     private record Offer(String id,int batch,long ask,long bid) { }
