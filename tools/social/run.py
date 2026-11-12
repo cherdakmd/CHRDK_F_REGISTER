@@ -223,7 +223,7 @@ def github():
 
 
 def preview_news(version):
-    if not re.fullmatch(r'1\.\d+\.\d+(?:-fix)?', version):
+    if not re.fullmatch(r'\d+\.\d+(?:\.\d+)?(?:-fix)?', version):
         raise SafetyError('Неверная версия превью')
     return news({'tag_name': 'v'+version, 'draft': False, 'prerelease': False,
                  'assets': [{'name': f'chrdk-plugins-{version}.zip', 'size': 1, 'state': 'uploaded'}],

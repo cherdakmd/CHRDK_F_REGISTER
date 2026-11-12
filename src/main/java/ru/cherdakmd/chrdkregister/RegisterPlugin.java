@@ -270,8 +270,8 @@ public final class RegisterPlugin extends JavaPlugin {
                 ? getDataFolder().getParentFile().toPath() : getDataFolder().toPath();
         DuplicatePluginJarDetector.warnIfDuplicates(pluginsFolder, getLogger());
         var installedVersions = new java.util.LinkedHashMap<String, String>();
-        for (var loaded : getServer().getPluginManager().getPlugins()) {
-            installedVersions.put(loaded.getName(), loaded.getPluginMeta().getVersion());
+        for (var loadedPlugin : getServer().getPluginManager().getPlugins()) {
+            installedVersions.put(loadedPlugin.getName(), loadedPlugin.getPluginMeta().getVersion());
         }
         var mixedVersions = BundleVersionAudit.find(installedVersions, getPluginMeta().getVersion());
         if (!mixedVersions.isEmpty()) {

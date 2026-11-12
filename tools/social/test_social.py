@@ -116,6 +116,13 @@ class ScheduleTest(unittest.TestCase):
 
 
 class ContentTest(unittest.TestCase):
+    def test_current_two_component_stable_release_preview(self):
+        post = run.preview_news('2.0')
+        self.assertEqual('release:v2.0', post.key)
+        self.assertIn('CHRDK 2.0', post.text)
+        with self.assertRaises(SafetyError):
+            run.preview_news('v2.0')
+
     def test_catalog_only_current_verified_wiki(self):
         validate()
         self.assertGreaterEqual(len(catalog()), 15)

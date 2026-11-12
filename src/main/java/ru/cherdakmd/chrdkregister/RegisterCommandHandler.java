@@ -1098,8 +1098,8 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 "найдены конфликтующие версии (Paper их отключает!): "
                         + DuplicatePluginJarDetector.formatSummary(duplicateJars));
         var installedVersions = new java.util.LinkedHashMap<String, String>();
-        for (var loaded : plugin.getServer().getPluginManager().getPlugins()) {
-            installedVersions.put(loaded.getName(), loaded.getPluginMeta().getVersion());
+        for (var loadedPlugin : plugin.getServer().getPluginManager().getPlugins()) {
+            installedVersions.put(loadedPlugin.getName(), loadedPlugin.getPluginMeta().getVersion());
         }
         var mixedVersions = BundleVersionAudit.find(installedVersions, plugin.getPluginMeta().getVersion());
         check(sender, "Единая версия комплекта CHRDK", mixedVersions.isEmpty(),
