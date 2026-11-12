@@ -21,9 +21,17 @@ public final class PaidActions {
     private int refundCursor;
     public PaidActions(JavaPlugin plugin, Supplier<ChrdkRegisterApi> api, Supplier<Messages> messages, String source) throws IOException {
         this.plugin=plugin; this.api=api; this.messages=messages; this.source=source;
-        store=new PaidActionStore(plugin.getDataFolder().toPath()); journal=new ChargeJournal(plugin.getDataFolder().toPath(),source,store.lineage());
+        store=new PaidActionStore(plugin.getDataFolder().toPath());
+        var initial=new ChargeJournal(plugin.getDataFolder().toPath(),source,store.lineage());
+        if (initial.pending()!=null && !ChargeInventory.valid(initial.pending())) throw new IOException("Неверный предметный план услуги");
+        var core=api.get();
+        UUID external=core==null?null:core.incomeSourceLineage(source);
+        if(external!=null&&!external.equals(store.lineage())&&registrationRecoverable(store,initial)) {
+            store.adoptLineage(external);
+            plugin.getLogger().info("Источник "+source+": принят lineage банка; финансовых обязательств не было, значения сохранены.");
+        }
+        journal=new ChargeJournal(plugin.getDataFolder().toPath(),source,store.lineage());
         store.bind(this::paused);
-        if (journal.pending()!=null && !ChargeInventory.valid(journal.pending())) throw new IOException("Неверный предметный план услуги");
         recover(null);
     }
     public PaidActionStore store() { return store; }
