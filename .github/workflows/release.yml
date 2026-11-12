@@ -126,7 +126,23 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+      - name: Pack DiamondShop-only prerelease
+        if: steps.verify-version.outputs.version == '2.0.2-rc.1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${{ steps.verify-version.outputs.version }}"
+          jar="chrdk-diamond-shop-${version}.jar"
+          cp "diamond-shop/build/libs/${jar}" "${jar}"
+          python3 .github/scripts/verify_release.py --standalone "${jar}" CHRDK_DiamondShop "${version}"
+          checksums="chrdk-diamond-shop-${version}-SHA256SUMS.txt"
+          sha256sum "${jar}" > "${checksums}"
+          sha256sum -c "${checksums}"
+          echo "dshop_jar=${jar}" >> "$GITHUB_ENV"
+          echo "dshop_checksums=${checksums}" >> "$GITHUB_ENV"
+
       - name: Pack general plugin ZIP and prepare standalone JARs
+        if: steps.verify-version.outputs.version != '2.0.2-rc.1'
         shell: bash
         run: |
           set -euo pipefail
@@ -173,8 +189,19 @@ jobs:
           echo "datapack=mine-treasure-1.6.5-ru.zip" >> "$GITHUB_ENV"
           echo "checksums=$checksums" >> "$GITHUB_ENV"
 
+      - name: Upload DiamondShop-only dry-run candidate
+        if: github.event_name == 'workflow_dispatch' && steps.verify-version.outputs.version == '2.0.2-rc.1'
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-candidate-${{ steps.verify-version.outputs.version }}-${{ github.sha }}
+          path: |
+            ${{ env.dshop_jar }}
+            ${{ env.dshop_checksums }}
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Upload dry-run release candidate
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' && steps.verify-version.outputs.version != '2.0.2-rc.1'
         uses: actions/upload-artifact@v4
         with:
           name: release-candidate-${{ steps.verify-version.outputs.version }}-${{ github.sha }}
@@ -191,4 +218,10 @@ jobs:
         if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ env.zip }}" "${{ env.vk_jar }}" "${{ env.disasters_jar }}" "${{ env.datapack }}" "${{ env.checksums }}" --clobber
+        run: |
+          set -euo pipefail
+          if [[ "${{ steps.verify-version.outputs.version }}" == "2.0.2-rc.1" ]]; then
+            gh release upload "${{ github.event.release.tag_name }}" "${{ env.dshop_jar }}" "${{ env.dshop_checksums }}" --clobber
+          else
+            gh release upload "${{ github.event.release.tag_name }}" "${{ env.zip }}" "${{ env.vk_jar }}" "${{ env.disasters_jar }}" "${{ env.datapack }}" "${{ env.checksums }}" --clobber
+          fi

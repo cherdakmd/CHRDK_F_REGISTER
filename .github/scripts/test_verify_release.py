@@ -154,6 +154,16 @@ class ReleaseWorkflowContractTest(unittest.TestCase):
         self.assertNotIn("startsWith(github.event.release.tag_name, 'v1.')", release)
         self.assertIn("tags: ['v*-rc.*']", prerelease)
 
+    def test_diamondshop_rc_release_cannot_attach_full_bundle(self):
+        root = Path(__file__).resolve().parents[2]
+        release = (root / ".github/workflows/release.yml").read_text()
+        self.assertIn("Pack DiamondShop-only prerelease", release)
+        self.assertIn("chrdk-diamond-shop-${version}.jar", release)
+        self.assertIn('if: steps.verify-version.outputs.version != \'2.0.2-rc.1\'', release)
+        attach = release.split("name: Attach verified release assets", 1)[1]
+        self.assertIn('if [[ "${{ steps.verify-version.outputs.version }}" == "2.0.2-rc.1" ]]', attach)
+        self.assertIn('"${{ env.dshop_jar }}" "${{ env.dshop_checksums }}"', attach)
+
     def test_memo_is_external_so_run_step_stays_below_github_limit(self):
         root = Path(__file__).resolve().parents[2]
         source = (root / ".github/workflows/release.yml").read_text()
