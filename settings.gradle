@@ -24,7 +24,6 @@ include 'battlepass'
 
 include 'pets'
 
-include 'auction'
 
 include 'orders'
 

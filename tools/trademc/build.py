@@ -103,11 +103,10 @@ def description(p, cfg, source_version=None):
             return yaml.safe_load((ROOT / module / "src/main/resources/config.yml").read_text(encoding="utf-8"))
         homes = read("teleports")["homes"]["rank-limits"][tier]
         claims = read("claims")["limits"]["rank-chunks"][tier]
-        lots = read("auction")["market"]["rank-lots"][tier]
         discounts = read("teleports")["costs"]["rank-discount-percent"][tier]
         slots = cfg["labels"]["display"]["slots"][tier]
         presets = cfg["labels"]["presets"]["slots"][tier]
-        lines += [f"Лимиты: дома — {homes}; чанки привата — {claims}; лоты аукциона — {lots}.",
+        lines += [f"Лимиты: дома — {homes}; чанки привата — {claims}.",
                   f"Скидка на платные телепорты: {discounts}%; цена не ниже 1 алмаза.",
                   f"Надписи после ника: {slots}; сохранённых пресетов: {presets}. Ник всегда первый и не занимает место.",
                   f"Опыт профессий: +{xp}%; потолок профессии: {25 + extra} (25 + {extra} от ранга).",

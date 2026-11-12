@@ -30,7 +30,7 @@ class EventsRemovalTest {
     @Test void removedModuleIsAbsentFromDistributionAndStockMenu() throws Exception {
         assertFalse(Files.exists(Path.of("events")));
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_Events"));
-        assertEquals(20, PluginUpdateService.MODULES.size());
+        assertEquals(19, PluginUpdateService.MODULES.size());
         var stock = yaml("config.yml"); var items = stock.getMapList("server-menu.items");
         assertEquals(47, items.size());
         assertFalse(items.stream().anyMatch(item -> RetiredAddons.plugin(String.valueOf(item.get("plugin")))

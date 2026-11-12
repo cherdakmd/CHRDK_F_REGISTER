@@ -63,8 +63,8 @@ class LuckPermsBootstrapTest {
             assertFalse(base.permissions().stream().anyMatch(key -> key.startsWith(prefix)));
             assertFalse(admin.permissions().stream().anyMatch(key -> key.startsWith(prefix)));
         }
-        assertTrue(base.permissions().contains("chrdkauction.use"));
-        assertTrue(admin.permissions().contains("chrdkauction.admin"));
+        assertFalse(base.permissions().contains("chrdkauction.use"));
+        assertFalse(admin.permissions().contains("chrdkauction.admin"));
         assertFalse(base.permissions().contains("chrdkauction.admin"));
     }
 

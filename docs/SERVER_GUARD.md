@@ -34,7 +34,7 @@ permission-нод не добавлено. Живой сервер, `/pl`, LuckP
    `/tpadmin`, `/achadmin`, `/claimadmin`, `/classadmin`,
    `/goalsadmin`, `/dailyadmin`, `/enchantsadmin`, `/ordersadmin`,
    `/petsadmin`, `/questsadmin`, `/ranksadmin`, `/skillsadmin`,
-   `/auctionadmin`, `/artifactsadmin` и их синонимы.
+   `/artifactsadmin` и их синонимы.
 
 **Игровые команды не тронуты:** `/shop`, `/rank`, `/tiers`, `/skills`,
 `/profile`, `/menu`, `/guide`, `/pass menu`, `/pass my`, `/msg` (аргументы с

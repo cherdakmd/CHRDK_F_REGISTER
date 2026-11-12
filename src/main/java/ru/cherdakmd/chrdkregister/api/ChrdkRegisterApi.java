@@ -313,13 +313,6 @@ public interface ChrdkRegisterApi {
     default long creditedEntitlementBase(String source,UUID lineage,String key,UUID owner) { return -1L; }
     default boolean creditEntitlementMinor(String source,UUID lineage,String key,UUID owner,long totalMinor) { return false; }
 
-    /** API v15: -1 при недоступном банке; UUID из достоверного ledger аукциона. */
-    default boolean auctionBankAvailable() { return false; }
-    default long auctionBankBalance(UUID player) { return -1L; }
-    default boolean importLegacyAuction(UUID market, UUID player, long amount) { return false; }
-    default AuctionPayment.Status auctionPaymentStatus(AuctionPayment payment) { return AuctionPayment.Status.UNAVAILABLE; }
-    default boolean commitAuctionPayment(Player payer, AuctionPayment payment, org.bukkit.inventory.ItemStack[] expected) { return false; }
-
     /** Сумма всех переводов игрока (API v7). */
     default long bankSent(String playerName) {
         return 0L;

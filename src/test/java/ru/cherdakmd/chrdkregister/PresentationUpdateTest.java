@@ -297,7 +297,7 @@ class PresentationUpdateTest {
     }
 
     @Test void menuAvailabilityRequiresBothAddonAndPermission() {
-        var entry=new ServerMenuSettings.Entry(10,org.bukkit.Material.PAPER,"a","","auction","CHRDK_Auction","chrdkauction.use");
+        var entry=new ServerMenuSettings.Entry(10,org.bukkit.Material.PAPER,"a","","orders","CHRDK_Orders","chrdkorders.use");
         assertFalse(entry.available(p->false,p->true));assertFalse(entry.available(p->true,p->false));
         assertTrue(entry.available(p->true,p->true));
     }
@@ -309,7 +309,7 @@ class PresentationUpdateTest {
         legacy.set("auto-messages.messages",List.of());assertTrue(ChatConfig.fromBukkitConfig(legacy).autoMessageEntries().isEmpty());
         var trial=AutoMessage.parse(Map.of("text","T","condition","trial"));
         assertFalse(trial.eligible(p->true,p->true,false,false));assertTrue(trial.eligible(p->true,p->true,true,false));
-        var addon=AutoMessage.parse(Map.of("text","A","plugin","CHRDK_Auction","permission","chrdkauction.use"));
+        var addon=AutoMessage.parse(Map.of("text","A","plugin","CHRDK_Orders","permission","chrdkorders.use"));
         assertFalse(addon.eligible(p->false,p->true,false,false));assertFalse(addon.eligible(p->true,p->false,false,false));
         assertNull(AutoMessage.parse(Map.of("text","a","condition","typo")));
         var noPass=AutoMessage.parse(Map.of("text","N","condition","no-pass"));

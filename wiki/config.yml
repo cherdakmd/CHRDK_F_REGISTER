@@ -32,7 +32,6 @@ groups:
   pages:
   - economy
   - shop
-  - auction
   - orders
 - id: progress
   title: Развитие

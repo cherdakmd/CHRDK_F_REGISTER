@@ -30,7 +30,7 @@ class AddonRetirement271Test {
         }
         for(String plugin:List.of("CHRDK_Events","CHRDK_Lottery","CHRDK_Party","CHRDK_Referrals"))
             assertFalse(PluginUpdateService.MODULES.containsKey(plugin));
-        assertEquals(20,PluginUpdateService.MODULES.size());assertNull(BankCharge.permission("lottery"));
+        assertEquals(19,PluginUpdateService.MODULES.size());assertNull(BankCharge.permission("lottery"));
     }
     @Test void everyOldCommandAliasIsFilteredIncludingNamespacesAndExtraSlashes() {
         for(String alias:List.of("lottery","lot","loto","lotteryadmin","lotadmin","party","pt","group","gruppa",

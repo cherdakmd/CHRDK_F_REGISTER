@@ -33,7 +33,7 @@ class StreamsRemovalTest {
     @Test void moduleIsAbsentFromTheDistributionAndLiveUi() {
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_Streams"));
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_VK"));
-        assertEquals(20, PluginUpdateService.MODULES.size());
+        assertEquals(19, PluginUpdateService.MODULES.size());
         assertEquals(44,ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
         assertNull(LabelPreferences.Label.byId("streams"));
         assertNull(LabelsCommandHandler.singleOf("streams"));
