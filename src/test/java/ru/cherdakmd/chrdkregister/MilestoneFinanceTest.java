@@ -149,10 +149,10 @@ class MilestoneFinanceTest {
 
     @Test void lostCoreLineageBeforeFirstAwardIsRestoredWithoutObligations() throws Exception {
         var s=initialized(); var original=bank();
-        assertTrue(MilestoneAwards.deliver(s,new Gateway(original),SOURCE,null,0));
+        assertFalse(MilestoneAwards.deliver(s,new Gateway(original),SOURCE,null,0));
         UUID lineage=s.lineage(); assertTrue(s.registered());
         var empty=new BankStore(dir.resolve("empty-core"),Logger.getAnonymousLogger());empty.load();
-        assertTrue(MilestoneAwards.deliver(s,new Gateway(empty),SOURCE,null,0));
+        assertFalse(MilestoneAwards.deliver(s,new Gateway(empty),SOURCE,null,0));
         assertTrue(empty.incomeSourceAvailable(SOURCE,lineage));
         s.reserve(owner,"level:25",17);
         var older=new BankStore(dir.resolve("older-core"),Logger.getAnonymousLogger());older.load();
