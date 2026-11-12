@@ -139,8 +139,10 @@ messages:
       "title": "<dark_aqua>✦</dark_aqua> <aqua>РЫНОК CHERDAK</aqua> <dark_aqua>✦</dark_aqua>"
       "all": "<yellow>▣ Весь каталог</yellow>"
       "all-lore": "<gray>Открыть общий список товаров.</gray>"
-      "forge": "<gold>⚒ Кузня и зелья навыков</gold>"
-      "forge-lore": "<gray>Расходники тиров и зелья опыта навыков.</gray>"
+      "forge": "<gold>⚒ Кузня · расходники</gold>"
+      "forge-lore": "<gray>Материалы для улучшения и перековки предметов.</gray>"
+      "potions": "<light_purple>✦ Зелья опыта навыков</light_purple>"
+      "potions-lore": "<gray>Отдельная витрина: все 10 зелий прокачки.</gray>"
       "sellall": "<green>▸ Продать все ресурсы</green>"
       "sellall-lore": "<gray>Продать подходящие ресурсы из инвентаря.</gray>"
       "guide": "<aqua>ⓘ Как торговать</aqua>"
@@ -288,6 +290,19 @@ messages:
       - '<gold>Только покупка · обратной скупки нет</gold>'
       - '<gray>Запас: %stock% / %ref%   Тренд: %trend% <aqua>%history%</aqua></gray>'
       - '<yellow>ЛКМ — выбрать количество покупки</yellow>'
+
+  "potions.shop":
+    title: '<light_purple>Зелья опыта навыков</light_purple>'
+    open: '<light_purple>✦ Зелья опыта навыков</light_purple>'
+    home: '<yellow>← На главную магазина</yellow>'
+    forge: '<gold>⚒ Расходники Кузни</gold>'
+    empty: '<yellow>Зелья недоступны: проверьте CHRDK_Skills, xp-potions.enabled и skill-consumables.json. Данные не сброшены.</yellow>'
+    closed: '<yellow>Зелье недоступно: изменилась цена или CHRDK_Skills отключён. Ничего не списано.</yellow>'
+    no-buyback: '<yellow>Обратной скупки зелий навыков нет.</yellow>'
+    item-lore:
+      - '<gray>Цена за штуку: <gold>%price% ⛁</gold></gray>'
+      - '<yellow>ЛКМ — выбрать количество покупки</yellow>'
+      - '<dark_gray>Опыт начисляется после употребления; действуют суточный лимит и пауза.</dark_gray>'
 
   # RC16: раздел «Кузня» (/shop forge). Только покупка, обратной скупки нет.
   "forge.shop":

@@ -33,11 +33,13 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
     private ForgeShopPrices forgePrices;
     private ForgeShopService forgeShop;
     private ForgeShopGui forgeShopGui;
+    private SkillPotionShopGui potionShopGui;
     public ShopQuantityGui quantities(){return quantities;}
     public ShopAdminGui shopAdminGui(){return adminGui;}
     public ShopOverrides overrides(){return overrides;}
     public ForgeShopService forgeShop(){return forgeShop;}
     public ForgeShopGui forgeShopGui(){return forgeShopGui;}
+    public SkillPotionShopGui potionShopGui(){return potionShopGui;}
     /** Принять черновик GUI: записать shop-overrides.json и перечитать каталог. */
     public void applyOverrides(ShopOverrides draft) {
         overrides.replaceWith(draft);
@@ -68,6 +70,8 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
         Bukkit.getPluginManager().registerEvents(gui, this);
         Bukkit.getPluginManager().registerEvents(adminGui, this);
         Bukkit.getPluginManager().registerEvents(forgeShopGui, this);
+        if (this.potionShopGui == null) this.potionShopGui = new SkillPotionShopGui(this);
+        Bukkit.getPluginManager().registerEvents(potionShopGui, this);
 
         ShopCommandHandler commands = new ShopCommandHandler(this);
         for (String name : List.of("shop", "shopadmin")) {
