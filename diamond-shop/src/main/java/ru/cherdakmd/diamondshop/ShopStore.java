@@ -59,6 +59,15 @@ public final class ShopStore {
         var json=com.google.gson.JsonParser.parseString(snapshotJson()).getAsJsonObject(); json.addProperty("registered",true);
         if(!writeJson(GSON.toJson(json))) return false; registered=true; dirty=false; return true;
     }
+    /** Принять существующий пустой market Core после восстановления локального JSON из новой копии. */
+    synchronized boolean adoptMarket(UUID external) {
+        if(!legacyAvailable||external==null||sequence!=0||pending!=null) return false;
+        if(external.equals(market)) return markRegistered();
+        var json=com.google.gson.JsonParser.parseString(snapshotJson()).getAsJsonObject();
+        json.addProperty("market",external.toString()); json.addProperty("registered",true);
+        if(!writeJson(GSON.toJson(json))) return false;
+        market=external; registered=true; dirty=false; return true;
+    }
     private ShopJournal.Pending pending;
     synchronized UUID market() { return market; }
     synchronized long sequence() { return sequence; }

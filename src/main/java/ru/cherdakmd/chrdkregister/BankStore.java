@@ -207,6 +207,12 @@ public final class BankStore {
     }
 
     public synchronized boolean registerShop(UUID market) { return registerIncomeSource("diamond-shop",market); }
+    /** Read-only доказательство, что существующий market ещё не имеет банковских операций. */
+    public synchronized long shopSequence(UUID market) {
+        if(!available||market==null||!market.equals(entitlementSources.get("diamond-shop"))) return -1;
+        for(var intent:cashPending.values()) if(intent.shop()!=null&&market.equals(intent.shop().market())) return -1;
+        var old=shopSettlements.get(market); return old==null?0:old.sequence();
+    }
     public synchronized ShopExchange.Status shopStatus(ShopExchange t) {
         if(!available||t==null||!t.valid()||!t.market().equals(entitlementSources.get("diamond-shop"))) return ShopExchange.Status.UNAVAILABLE;
         var old=shopSettlements.get(t.market());

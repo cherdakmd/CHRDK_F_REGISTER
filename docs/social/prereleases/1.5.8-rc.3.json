@@ -1,0 +1,3 @@
+{
+  "summary": "RC3: Shop принимает существующий market Core только при sequence 0 с обеих сторон и без pending; диагностика показывает local/Core UUID, sequence и ACK."
+}

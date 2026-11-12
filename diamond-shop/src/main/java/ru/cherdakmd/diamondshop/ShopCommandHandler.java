@@ -272,9 +272,14 @@ public final class ShopCommandHandler implements TabExecutor {
                 // Повторная регистрация возможна лишь при sequence 0 и без pending.
                 // Существующий WAL здесь не откатывается и не завершается принудительно.
                 plugin.shopService().restoreBinding();
+                java.util.UUID coreMarket=null;long coreSequence=-1;
+                if(plugin.coreApi() instanceof ru.cherdakmd.chrdkregister.api.ShopLineageProvider provider) {
+                    coreMarket=provider.shopLineage();coreSequence=coreMarket==null?-1:provider.shopSequence(coreMarket);
+                }
                 plugin.messages().send(sender,"trading.recovery-status","healthy",store.legacyAvailable(),"binding",plugin.coreApi().shopRegistered(store.market()),"market",store.market(),"sequence",store.sequence(),
                     "pending",pending==null?"нет":pending.trade().transaction(),"owner",pending==null?"—":pending.trade().owner(),
-                    "bank",pending==null?"—":plugin.coreApi().shopExchangeStatus(pending.trade()));
+                    "bank",pending==null?"—":plugin.coreApi().shopExchangeStatus(pending.trade()),"ack",store.registered(),
+                    "bankReady",plugin.coreApi().personalBankAvailable(),"coreMarket",coreMarket==null?"—":coreMarket,"coreSequence",coreSequence);
             }
             case "audit" -> {
                 var a=plugin.shopService().auditQuotes();

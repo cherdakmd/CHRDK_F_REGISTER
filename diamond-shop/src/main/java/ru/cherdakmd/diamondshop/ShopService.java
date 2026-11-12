@@ -172,6 +172,15 @@ public final class ShopService {
         // Core мог потерять/восстановить lineage отдельно от shop-data.json.
         // Повторная регистрация того же UUID безопасна только до первой сделки.
         if(!ShopRegistration.canRestore(store.sequence(),store.pending()!=null)) return false;
+        if(core instanceof ru.cherdakmd.chrdkregister.api.ShopLineageProvider provider) {
+            var external=provider.shopLineage();
+            if(external!=null&&!external.equals(store.market())) {
+                // Новый локальный UUID не заменяет Core. Принимаем существующий UUID
+                // только когда обе стороны доказуемо не имеют сделок/pending.
+                if(!ShopRegistration.canAdopt(store.sequence(),store.pending()!=null,provider.shopSequence(external))) return false;
+                return store.adoptMarket(external);
+            }
+        }
         return core.registerShop(store.market())&&store.markRegistered();
     }
     public boolean migrate(UUID id, double ignoredLegacyPreview) {
