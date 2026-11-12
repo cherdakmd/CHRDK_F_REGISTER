@@ -147,9 +147,10 @@ class ReleaseWorkflowContractTest(unittest.TestCase):
         import re
         notes = re.search(r"1\.4\.\{200,201,\{220\.\.(\d+)\}\}\.md", source)
         self.assertIsNotNone(notes, "Release должен включать подробные инструкции перехода")
-        version = re.search(r"^plugin_version=(\d+)\.(\d+)\.(\d+)(?:-rc\.[1-9]\d*|-fix)?$", (root / "gradle.properties").read_text(), re.M)
+        version = re.search(r"^plugin_version=(\d+)\.(\d+)(?:\.(\d+))?(?:-rc\.[1-9]\d*|-fix)?$", (root / "gradle.properties").read_text(), re.M)
         self.assertIsNotNone(version)
-        major, minor, patch = (int(part) for part in version.groups())
+        major, minor = int(version.group(1)), int(version.group(2))
+        patch = int(version.group(3) or 0)
         if (major, minor) == (1, 4):
             self.assertGreaterEqual(int(notes.group(1)), patch,
                                     "Инструкция текущего релиза должна войти в ZIP")

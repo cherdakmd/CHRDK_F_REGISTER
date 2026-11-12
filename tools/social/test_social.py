@@ -612,7 +612,7 @@ class ConnectionAndPosterTest(unittest.TestCase):
         self.assertEqual(1, vk.posts)
         self.assertEqual(1, vk.uploads)
         key = run.test_post(NOW).key
-        self.assertTrue(key.startswith('test:1.'))
+        self.assertRegex(key, r'^test:\d+\.\d+(?:\.\d+)?$')
         self.assertEqual(key, run.test_post(NOW+timedelta(days=100)).key)
         self.assertEqual('posted', Ledger(gh, 123, PEER).locate(key)[1]['status'])
 

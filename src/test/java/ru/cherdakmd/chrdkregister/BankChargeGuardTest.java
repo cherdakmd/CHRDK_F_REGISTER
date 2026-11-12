@@ -18,6 +18,7 @@ class BankChargeGuardTest {
     @Test void rootGuardRunsAfterAddonAuthRecoveryAndRemainsRegisteredWithoutAddons() throws Exception {
         String guard=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkregister/BankChargeGuard.java"));
         assertTrue(guard.contains("EventPriority.MONITOR")); assertTrue(guard.contains("getPersistentDataContainer()")); assertTrue(guard.contains("p.kick(reason)"));
+        assertTrue(guard.contains("фактические метки: \" + actual")); assertTrue(guard.contains("Не удаляйте bank.json или playerdata"));
         assertFalse(guard.contains("getStorageContents")); assertFalse(guard.contains("setStorageContents")); assertFalse(guard.contains("saveData"));
         String root=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkregister/RegisterPlugin.java"));
         assertTrue(root.contains("registerEvents(chargeGuard, this)")); assertTrue(root.contains("chargeGuard::checkOnline"));

@@ -209,7 +209,11 @@ public final class BankService implements org.bukkit.event.Listener {
     }
     @org.bukkit.event.EventHandler(priority=org.bukkit.event.EventPriority.HIGHEST)
     public void cashAuthenticated(ru.cherdakmd.chrdkregister.api.events.PlayerAuthCompletedEvent event) {
-        if(authenticated(event.getPlayer())) recoverCash(event.getPlayer());
+        if(!authenticated(event.getPlayer())) return;
+        // Сначала более конкретная charge-диагностика: она сообщает источник и UUID метки,
+        // а общий cash-recovery не должен перекрывать её менее информативным kick.
+        if(!new BankChargeGuard(plugin,store).check(event.getPlayer())) return;
+        recoverCash(event.getPlayer());
     }
     private long depositPlanned(Player player,boolean handOnly,long amount) {
         if(!cashReady(player)) return -1;

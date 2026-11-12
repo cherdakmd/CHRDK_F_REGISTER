@@ -8,7 +8,7 @@ import zipfile
 # Отдельные опциональные аддоны публикуются самостоятельными JAR-файлами рядом с общим ZIP,
 # но не включаются внутрь общего архива chrdk-plugins-<version>.zip.
 STANDALONE_MODULES = {"vk", "disasters"}
-VERSION_PATTERN = r"\d+\.\d+\.\d+(?:-rc\.[1-9]\d*|-fix)?"
+VERSION_PATTERN = r"\d+\.\d+(?:\.\d+)?(?:-rc\.[1-9]\d*|-fix)?"
 
 
 def scalar(text: str, key: str) -> str:

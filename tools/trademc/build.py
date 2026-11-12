@@ -39,7 +39,7 @@ def plain(value):
 
 def version(root=ROOT):
     text = (root / "gradle.properties").read_text(encoding="utf-8")
-    return re.search(r"^plugin_version=(\d+\.\d+\.\d+(?:-rc\.[1-9]\d*|-fix)?)$", text, re.M).group(1)
+    return re.search(r"^plugin_version=(\d+\.\d+(?:\.\d+)?(?:-rc\.[1-9]\d*|-fix)?)$", text, re.M).group(1)
 
 
 def catalog(root=ROOT):

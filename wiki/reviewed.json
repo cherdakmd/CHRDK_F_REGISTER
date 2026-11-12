@@ -1,183 +1,183 @@
 {
   "pages": {
     "about": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "5f513210809ada812981c3dc0faa785cbc4fdea08df6d6122a5b45d8865fa0fb",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "dcca3df97d3ecf30c51e49db8edb9bc4a7217826f18fb4c8b9be4441c3486d28",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "22be9ffb0626d2b45b1fcffba79aefbad90f8f5bdc0c5a4d08074afeb03a8839",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "23ff3521d2dc5a242a992b48e4b4f0789de197f0def23f7654f8fd6bd969c31c",
       "text": "bd128e475ee8efae55c3d2d6c9616d5278600f2a8ff1aad7af5e6df3e0b3f5c3"
     },
     "artifacts": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "2340782efa2d1ceeb57647e85005e657d0f7467091091f373cc09e76fb00edc1",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "b23d6203532c28b0b54afdcfcdca5f9ae01e9706d7e7a44c8000408d7080c18d",
       "text": "51e3ef379d9a8f7e2ccfc6fd41cc0c0823f91f30d7c9a8326ec7962c182d98e4"
     },
     "battlepass": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "15c00494504ff119f65b1d9f2bf47f9ffc76de5cd37b6db8b19431587577a11b",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "2b29dc51385db7d974a2d8f6606d3d22176299a39c22e054f5a12aa2eac3ab1f",
       "text": "997df6e0a9311ea115c4fd3c192b2729034b10c68a4f41c57261ef4b704c5add"
     },
     "chat": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "5f513210809ada812981c3dc0faa785cbc4fdea08df6d6122a5b45d8865fa0fb",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "dcca3df97d3ecf30c51e49db8edb9bc4a7217826f18fb4c8b9be4441c3486d28",
       "text": "a51c51d20cfe94c553e80893422b000a579b87285b00cbceb452f29eb0773023"
     },
     "claims": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "decdc2930c4ed8d11758e0e51efc5a6a1a45aefb705c0ebd67ecf18d58bba676",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "937a2f5c6820b2cfe52a3a2bc06420f167debce40d5f36902ad9f232d8e89828",
       "text": "3126e85c74cf79658fdcde5a03722da3d31459d702228865edec9eb15e142aa4"
     },
     "classes": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "8ec333e2c4bea18851a29ef96a75ebcdd76634b82e9192bd04770acff6262c24",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "40cd3bf5afa3b96ff13728fdbddd5670462e298c597f303b7bba16d6fc2b6e1d",
       "text": "503edef62357862f67d17df249b393023697d6dca6342cbe792b0d4dc78cb8cc"
     },
     "commands": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "af35f1a4203e688629b759665998e2089b42b32f3f5e8239a0a16d81c087838f",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "9daf2dbb62fa2770a518d242e538b680b8b792d7f03c79a4d97a35bc47b61557",
       "text": "46017ca1aca3a1d620ff09b3ffd40ff42885e551a850c85baa15f2c73d03b290"
     },
     "cosmetics": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "d262616842df3a64c574f2173fb21ffe28c1b359be72773d8f05f89942400f29",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "a9bab51711a8feb65fb5242b01f0aca71d6bf0052d3e15b303f54e3ff9bd19da",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "b1723d99985d8bd2cda8e1bf1ebb2c3c0dd45ffaf7833b93a77befcf306449bc",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "be8dc956aa71000f64512fb7251d8da97ac5ae127a27f72d74892521ddaacc49",
       "text": "4d7683f5677c50dfe0488961891915b5c2dd6533191a213ee8fdb077ea817eb5"
     },
     "disasters": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "a75c93f376e78480ee3d81b3adc9892dfcc6d3ec5da2aad3b5923e0e8de9b9a4",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "2697a6344c8c58e74a6615129ab99188636b824e1423a5a18b45eae5b426b4c1",
       "text": "121b1cc28a075ced29b6de8abec7dbc20bbb531a01441ddd5fdb836d066d0202"
     },
     "economy": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "f40e44046ddcc4423cf44f3de2fdc46e6e325873b4ef2a630482d2bbdfd90c5b",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "f397709aacd108c30524b43a2412e1ff3fe5e389d0496bdd7e62372dfff5bf30",
       "text": "95603b3cf3e787bf93015bc3b09a7d358ec10a3c9297426003539929db15bd69"
     },
     "enchants": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "cc5d4ec209d72e15e2faf53f8ef9f20427eddb881397e973aa61c6a4f9721ac5",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "9ea7a12f2bdde9754a7ce4c3fa38bdaf8b822176d6d57adf7a3286a20b7b81e5",
       "text": "7e90321ef8a100bae11c53592c62328fa44a958be657b66a86d51ea8c1906a7d"
     },
     "faq": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "c491ad757577102572dee8f7570761c7463ed2eff8172e5192a60abc5bc0c320",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "e6b0d7ff520b4646554dd04091e038a146bd4542dc33443e8b3502b3882da676",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "d3342c6df31d9c275f408a97e3e484ecfc2698e227ba2f83f237a22483ea78e8",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "a85473aa83fd0323579bec076a01838ca9a4c9e8db8fb696a4b898ae53f71747",
       "text": "615d89bba0ac116c220d571f530fcdab7d5ff46162ca7a7ecf24de441a7fb191"
     },
     "guilds": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "decdc2930c4ed8d11758e0e51efc5a6a1a45aefb705c0ebd67ecf18d58bba676",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "937a2f5c6820b2cfe52a3a2bc06420f167debce40d5f36902ad9f232d8e89828",
       "text": "bb7d4121d6c42762b2f09d8eb57df986a942df35c77fd2cf899a5e7a38193216"
     },
     "honors": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "5f513210809ada812981c3dc0faa785cbc4fdea08df6d6122a5b45d8865fa0fb",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "dcca3df97d3ecf30c51e49db8edb9bc4a7217826f18fb4c8b9be4441c3486d28",
       "text": "17c878e1ab52ceb2a7c3361a7bef133c8bd1004a59641898f2c525f7c48fff8f"
     },
     "index": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "adc101f149ecf14627233840002516cd89154f46c63af6028eae1fc5ddf1cb3d",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "3410c5e657e068695d5f14d482d9c9e95697aa773574b1a6d5052486d3104a52",
       "text": "13b0089b89035cd13598d177608718282608bc671993a3c370012b297c779cd7"
     },
     "menu": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "c491ad757577102572dee8f7570761c7463ed2eff8172e5192a60abc5bc0c320",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "e6b0d7ff520b4646554dd04091e038a146bd4542dc33443e8b3502b3882da676",
       "text": "eb6fdaf663b2005735002c5f23bb7f751b31a7447b3fc2cc77d741ff7c4cb2f9"
     },
     "moderation": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "5f513210809ada812981c3dc0faa785cbc4fdea08df6d6122a5b45d8865fa0fb",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "dcca3df97d3ecf30c51e49db8edb9bc4a7217826f18fb4c8b9be4441c3486d28",
       "text": "79580a49c09219f65539abace395b5f2469f91fc2f0ac9b3ecae109c4fa1ecb4"
     },
     "orders": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "5335cba64e3e25eaf5dde4e4696e187cf61d9ca3de0b6bcd88cb4c180a6a0f4e",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "87709bfb21a0e5566679b3b0b9ac8571837afa78d7067485d6752ef98cccf49f",
       "text": "8f1bddfa65aabb38fab8ebdad77656a627e340e765229de34ab3a24dd96fef2e"
     },
     "perktree": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "8ec333e2c4bea18851a29ef96a75ebcdd76634b82e9192bd04770acff6262c24",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "40cd3bf5afa3b96ff13728fdbddd5670462e298c597f303b7bba16d6fc2b6e1d",
       "text": "3e1a2fe232bb8c384a682ac98f8133ab0560de790bab9a2a2d9542ea0b673666"
     },
     "pets": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "70b32931e861415bd5f482c5325152380e0790cc1bcf71efe896cbac4b9e2252",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "36a7dfcffebfa21c9824da541ec4914a49018ea8e08eb3eb9f58d20acefbc80b",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "profile": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "b26c289dae808f9eeffecc9321ce6ee80f5e4f949d9388b88a94798d9390428d",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "f11ee8fea5695f3fa917a0c83f7cc95afd21cb0323cc53cdff333954692d60c2",
       "text": "f2a1fafaef6d54a60b0dd2e9545374a59a83ad49a5de3ace0069e441c187d309"
     },
     "quests": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "f62ecfae55c125b56606b5707e883db957f1f546e65e3bc14c8cadb3cc303326",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "2f59c2233e29698cdbb9c7ff3cb943b6cd4d5394cceee411900a399b79495c25",
       "text": "a42f11010fddbf13238133ac1e2dca525dea95245f5286a88a57738af30fbf13"
     },
     "ranks": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "dfdd7ad205f6f2ce00fd049c6ba7659af5ad52e0c9c7acc109832ada8558dfaa",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "6f13d383a0d4de00812658378b914723ba5833468b11ff0661593640af61ffdd",
       "text": "664b466e4b44741175d9c2cdb4da728a0603a04aaaefada8396dd6517d5dca2d"
     },
     "shop": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "adc101f149ecf14627233840002516cd89154f46c63af6028eae1fc5ddf1cb3d",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "3410c5e657e068695d5f14d482d9c9e95697aa773574b1a6d5052486d3104a52",
       "text": "c28f429d342f4c030938b22adaee5cb0792a5c93c7c5f107416537f2c9300a20"
     },
     "skills": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "258c7eccf93896973b78d549c7787f061fb6290469590febc321c488396d59e1",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "45292ef7fd6be58ab6dcdf9a01bc9e770e15e1051a17847581e2e40c37747396",
       "text": "2e6d03256421759755094a382f0145b72141c123c373f10f2ad120e7d741350b"
     },
     "social-link": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "9f79e3d233b94c39f13b30d7c0fd6e55b8348e6213d904f9e094ca530333ee8a",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "817819b3cc64ac3c48895a70cf63fdc8a1a4d7f872bbcb5d614c55c1658ae3b7",
       "text": "1f6cf95d9c8c2180dbf871aa9b19a7bfcde5405cf77b75954b7575920d2aef14"
     },
     "start": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "43a10e4ba157f83bea384733ea227824527a13a77ce8dfcbd3a74f7a940a7298",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "659523c2f3a36d0f31bd239b10557b07b47b015bf38c934e84f4bd190be21a8d",
       "text": "1c0b307e38e52194bb2a42da0757744e32d93312bc6b83178a4745f9cd07a667"
     },
     "starter-kit": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "2340782efa2d1ceeb57647e85005e657d0f7467091091f373cc09e76fb00edc1",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "b23d6203532c28b0b54afdcfcdca5f9ae01e9706d7e7a44c8000408d7080c18d",
       "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
     },
     "teleports": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "a586dfc9ee622460214db15766523f6a0ec507d54fe0207eb8a1a3454d5323df",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "fd18a30a4704a184d134a15bcf549ea53f750f50d6cbc4fff21754d32562e292",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "cc5d4ec209d72e15e2faf53f8ef9f20427eddb881397e973aa61c6a4f9721ac5",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "9ea7a12f2bdde9754a7ce4c3fa38bdaf8b822176d6d57adf7a3286a20b7b81e5",
       "text": "c84eb8435e1e4b961e73b0ed64386b129e17395923de6d7b8f3d01bde6ddeaa1"
     },
     "titles": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "d3a56802b4e9d28fc26d92612619405c44ff743f598b25a211d350a7ec458259",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "3649717efc46fb9c75394ac42ff53f25db8a164b8223999ac85a466cf782d730",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "adc101f149ecf14627233840002516cd89154f46c63af6028eae1fc5ddf1cb3d",
-      "text": "c4116c47fa64f85ee9afb1b4222237ef247ca51ffa05e322ee89124e86d158fd"
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "3410c5e657e068695d5f14d482d9c9e95697aa773574b1a6d5052486d3104a52",
+      "text": "409f3dcc26f78d34110d737204dd4399ed8cd2b32ccbce2dc24d0dc5c19b251d"
     },
     "vk": {
-      "reason": "RC3: сверка local/Core market, безопасный adoption только 0/0 без pending",
-      "sources": "9f79e3d233b94c39f13b30d7c0fd6e55b8348e6213d904f9e094ca530333ee8a",
+      "reason": "2.0: проверен чистый комплект, stop-gate диагностика Core и инструкция полного вайпа; игровые контракты остальных модулей не изменены",
+      "sources": "817819b3cc64ac3c48895a70cf63fdc8a1a4d7f872bbcb5d614c55c1658ae3b7",
       "text": "b592e465a73dd13186763622b51190400cffd40960e233f58c63379b88a9bba9"
     }
   },

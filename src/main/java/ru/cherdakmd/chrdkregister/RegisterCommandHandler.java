@@ -1097,6 +1097,19 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         check(sender, "Дубликаты JAR в plugins/", duplicateJars.isEmpty(),
                 "найдены конфликтующие версии (Paper их отключает!): "
                         + DuplicatePluginJarDetector.formatSummary(duplicateJars));
+        var installedVersions = new java.util.LinkedHashMap<String, String>();
+        for (var loaded : plugin.getServer().getPluginManager().getPlugins()) {
+            installedVersions.put(loaded.getName(), loaded.getPluginMeta().getVersion());
+        }
+        var mixedVersions = BundleVersionAudit.find(installedVersions, plugin.getPluginMeta().getVersion());
+        check(sender, "Единая версия комплекта CHRDK", mixedVersions.isEmpty(),
+                "остановите сервер и замените весь комплект JAR одной версии: "
+                        + BundleVersionAudit.summary(mixedVersions));
+        var bankHealth = plugin.bankStore().health();
+        check(sender, "Банк и native-обмены", bankHealth.available() && bankHealth.pending() == 0,
+                !bankHealth.available() ? "bank.json в quarantine: не сбрасывайте файл, требуется восстановление"
+                        : "незавершённых native-обменов: " + bankHealth.pending()
+                                + "; не удаляйте pending или playerdata, требуется recovery");
         check(sender, "Vault (экономика и права)", plugin.externalHooks().economy().isPresent()
                         || plugin.externalHooks().permissions().isPresent(),
                 "Vault не установлен — экономика для аддонов недоступна (опционально)");
