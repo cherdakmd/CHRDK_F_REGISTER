@@ -1,188 +1,188 @@
 {
   "pages": {
     "about": {
-      "reason": "Сверены все расходные пути 1.5.5-fix: PaidActions, Shop/Forge, Auction, Claims, Guilds, Goals, Anvil; minor/rate и recovery согласованы",
-      "sources": "73169d6a7219db3f661ac8e2fdbf7db6d58dca291232401475dfda00f2378a5b",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "82d7ee4a67d52228141c84db3d1b64a7a15b864f44c7b001d01371a5a70992ba",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "Сверены все расходные пути 1.5.5-fix: PaidActions, Shop/Forge, Auction, Claims, Guilds, Goals, Anvil; minor/rate и recovery согласованы",
-      "sources": "d071bd111d4d6d372f580c9c8ff88c9e5d873871d8086546ee1999a0d9faaf84",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "490efe1be056b74275d20de65295d323df99b1c07517bd22ef4be081de5957ca",
       "text": "bd128e475ee8efae55c3d2d6c9616d5278600f2a8ff1aad7af5e6df3e0b3f5c3"
     },
     "artifacts": {
-      "reason": "Сверены все расходные пути 1.5.5-fix: PaidActions, Shop/Forge, Auction, Claims, Guilds, Goals, Anvil; minor/rate и recovery согласованы",
-      "sources": "cb703fef429e877c0abfa31d699e56669e09d9ac0f95ff46620a0220689b6864",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "5c2b62c943c8fe725013254234d8b1821f017a5a3019db0e2afad9040e4846c6",
       "text": "51e3ef379d9a8f7e2ccfc6fd41cc0c0823f91f30d7c9a8326ec7962c182d98e4"
     },
     "auction": {
-      "reason": "Сверены все расходные пути 1.5.5-fix: PaidActions, Shop/Forge, Auction, Claims, Guilds, Goals, Anvil; minor/rate и recovery согласованы",
-      "sources": "8f8246b3e482fe7101aaa25f6e37ac2f965a2f92bff844b4ccd0c276be01751c",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "7acbd70a5dc62f961f3c2c36d5ba21b7f44425aa539f296bd7fecd1cdd39e6cb",
       "text": "89f444940889c75cea3b77900f9b41ed8500cdb039d2b2cd1aebd82dcf710d25"
     },
     "battlepass": {
-      "reason": "Сверены все расходные пути 1.5.5-fix: PaidActions, Shop/Forge, Auction, Claims, Guilds, Goals, Anvil; minor/rate и recovery согласованы",
-      "sources": "e339589d1e11dfddc420c3cb1937d7d9959755785f813d1a02193f3ed964ebde",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "03fe8d7e45c39fcf329bb3c3a19a8e4f56aef24900302e5deecb956442b6c447",
       "text": "997df6e0a9311ea115c4fd3c192b2729034b10c68a4f41c57261ef4b704c5add"
     },
     "chat": {
-      "reason": "Сверены все расходные пути 1.5.5-fix: PaidActions, Shop/Forge, Auction, Claims, Guilds, Goals, Anvil; minor/rate и recovery согласованы",
-      "sources": "73169d6a7219db3f661ac8e2fdbf7db6d58dca291232401475dfda00f2378a5b",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "82d7ee4a67d52228141c84db3d1b64a7a15b864f44c7b001d01371a5a70992ba",
       "text": "a51c51d20cfe94c553e80893422b000a579b87285b00cbceb452f29eb0773023"
     },
     "claims": {
-      "reason": "Повторно сверен исправленный minor×100/rateBps пересчёт гильдий после Java CI; остальное без изменений",
-      "sources": "970df195eb1bfffc227c29b879d2c22ab6773f19a85655399692e72864c03ff5",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "c5af7a903c8162ca65b27a8b838b9972c6d0ad7f9898f7e2695bd0ad3e4d1ad1",
       "text": "3126e85c74cf79658fdcde5a03722da3d31459d702228865edec9eb15e142aa4"
     },
     "classes": {
-      "reason": "Сверена 1.5.6: прогрессия приёмов I–X и Совершенная форма; остальные страницы без смысловых изменений",
-      "sources": "9ba282879aa65cbdf48273f08b7d33293edc2c151cb510ed5545a137147db722",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "cf662d6aac9ee7b0bf569c41ba6de20bdb20ff2890ce3733c0e60dc0645c6990",
       "text": "503edef62357862f67d17df249b393023697d6dca6342cbe792b0d4dc78cb8cc"
     },
     "commands": {
-      "reason": "Финально сверен новый ShopMarketGui и исправленная привязка ForgeShopGui",
-      "sources": "22853a7e4ee807101756c9d29c001de10bd76907b35f4a6ae6fa14e2b7735527",
-      "text": "b16f06b84b440533e5bba0a45540bf517f3ae650cb390ddd6b9f43d47c5eabdd"
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "e2d94e3768a47a61f7b065daf2034edeb8bbbc6796cc2a8d8e7aac9b8ceafbb9",
+      "text": "a7125ebc28dd0294e5150e43dd6a764f15ce68cb0750dd60a6ba8650cda92b1a"
     },
     "cosmetics": {
-      "reason": "Сверены все расходные пути 1.5.5-fix: PaidActions, Shop/Forge, Auction, Claims, Guilds, Goals, Anvil; minor/rate и recovery согласованы",
-      "sources": "23e8539679eeaeee3d7939dc82a85439b0e6fca1db0fa1cc96568062919c4173",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "987daa3acd1bede3c4d51ec1e33ac6b4453d6e20b662f1683e8657748bfea0a1",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "Сверены все расходные пути 1.5.5-fix: PaidActions, Shop/Forge, Auction, Claims, Guilds, Goals, Anvil; minor/rate и recovery согласованы",
-      "sources": "f64f20bb6dd798f37048c042d0d8136524a7d67042de80328de4141766a13762",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "60a813331c2ce386b3cf2e8c5a897c5a0df094ab754451dca6b9bd8c54765718",
       "text": "4d7683f5677c50dfe0488961891915b5c2dd6533191a213ee8fdb077ea817eb5"
     },
     "disasters": {
-      "reason": "Сверены все расходные пути 1.5.5-fix: PaidActions, Shop/Forge, Auction, Claims, Guilds, Goals, Anvil; minor/rate и recovery согласованы",
-      "sources": "6c6b901f50b4dd628a8d8bdfdabdcf6214931b0ca092ad90de7e596b673efe19",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "726f1d4869dc1d2a819d811e952a2b566924a4c0075b2e5a06501473ad8413eb",
       "text": "121b1cc28a075ced29b6de8abec7dbc20bbb531a01441ddd5fdb836d066d0202"
     },
     "economy": {
-      "reason": "Финально сверен новый ShopMarketGui и исправленная привязка ForgeShopGui",
-      "sources": "c347a0193e63b6daecd8213e356bd6ef2154225e7ac6d214464cc2c11260ac48",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "981fe97c9dcebea4ab60e7d2499316745aa2acf8e23b90b91be47b0b5f07c0e8",
       "text": "051da7af63816f9e7b42dc7185973c88adf8862f10ad9d1e21f5d789cdbdc4fe"
     },
     "enchants": {
-      "reason": "Сверены все расходные пути 1.5.5-fix: PaidActions, Shop/Forge, Auction, Claims, Guilds, Goals, Anvil; minor/rate и recovery согласованы",
-      "sources": "dadbfba7caba8e1255573166b1946e7874fb082b4073b003d9389b036ab687d0",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "6686a364264372c9ae58827911c0233bbba160cd5ebbc9b9109802d9fb9ec3d0",
       "text": "7e90321ef8a100bae11c53592c62328fa44a958be657b66a86d51ea8c1906a7d"
     },
     "faq": {
-      "reason": "Финально сверен новый ShopMarketGui и исправленная привязка ForgeShopGui",
-      "sources": "ed571bbdaf12aa8e1544b743f3d32b9892ecc5af359dfe5d9611b46220d6f746",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "144df6c5bf3609076853f13efda37c8f26af4aade7063ef280fdada4841cf44d",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "Сверены все расходные пути 1.5.5-fix: PaidActions, Shop/Forge, Auction, Claims, Guilds, Goals, Anvil; minor/rate и recovery согласованы",
-      "sources": "a753e926eb2e56dbc4b74eb503adeca43b03bc7b29381a5f26db6c7fbc2eba31",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "54cef4cc8241358a355b6bf7940d9f3df260708a687c1e86dec4c1ca44b4d77e",
       "text": "615d89bba0ac116c220d571f530fcdab7d5ff46162ca7a7ecf24de441a7fb191"
     },
     "guilds": {
-      "reason": "Повторно сверен исправленный minor×100/rateBps пересчёт гильдий после Java CI; остальное без изменений",
-      "sources": "970df195eb1bfffc227c29b879d2c22ab6773f19a85655399692e72864c03ff5",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "c5af7a903c8162ca65b27a8b838b9972c6d0ad7f9898f7e2695bd0ad3e4d1ad1",
       "text": "bb7d4121d6c42762b2f09d8eb57df986a942df35c77fd2cf899a5e7a38193216"
     },
     "honors": {
-      "reason": "Сверены все расходные пути 1.5.5-fix: PaidActions, Shop/Forge, Auction, Claims, Guilds, Goals, Anvil; minor/rate и recovery согласованы",
-      "sources": "73169d6a7219db3f661ac8e2fdbf7db6d58dca291232401475dfda00f2378a5b",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "82d7ee4a67d52228141c84db3d1b64a7a15b864f44c7b001d01371a5a70992ba",
       "text": "6bc29d5a2d7783845f8b3d9b085e85982faec5b3029d841092386f36b1d4c4b0"
     },
     "index": {
-      "reason": "Финально сверен новый ShopMarketGui и исправленная привязка ForgeShopGui",
-      "sources": "29c324a666cb127a7a512ab9387248ee9ab8a63fbc0e5af92122895811d6cd12",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "5055a0afbc03a7545eef2cd3b68fb6dc7b73318b29e09c83983de06333a61f49",
       "text": "13b0089b89035cd13598d177608718282608bc671993a3c370012b297c779cd7"
     },
     "menu": {
-      "reason": "Финально сверен новый ShopMarketGui и исправленная привязка ForgeShopGui",
-      "sources": "ed571bbdaf12aa8e1544b743f3d32b9892ecc5af359dfe5d9611b46220d6f746",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "144df6c5bf3609076853f13efda37c8f26af4aade7063ef280fdada4841cf44d",
       "text": "c646997519fcb5c1c0428e5e3686361e2fea3b508e86f0ac0d24d84f84229f8b"
     },
     "moderation": {
-      "reason": "Сверены все расходные пути 1.5.5-fix: PaidActions, Shop/Forge, Auction, Claims, Guilds, Goals, Anvil; minor/rate и recovery согласованы",
-      "sources": "73169d6a7219db3f661ac8e2fdbf7db6d58dca291232401475dfda00f2378a5b",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "82d7ee4a67d52228141c84db3d1b64a7a15b864f44c7b001d01371a5a70992ba",
       "text": "79580a49c09219f65539abace395b5f2469f91fc2f0ac9b3ecae109c4fa1ecb4"
     },
     "orders": {
-      "reason": "Сверены все расходные пути 1.5.5-fix: PaidActions, Shop/Forge, Auction, Claims, Guilds, Goals, Anvil; minor/rate и recovery согласованы",
-      "sources": "470ed0314454b61b62a432642359767130f598f3ecfa35524f251f73cc97052c",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "4e39c1d1541192b828eaab3930032200ce292a8a5286d0557aa5fd322377a226",
       "text": "8f1bddfa65aabb38fab8ebdad77656a627e340e765229de34ab3a24dd96fef2e"
     },
     "perktree": {
-      "reason": "Сверена 1.5.6: прогрессия приёмов I–X и Совершенная форма; остальные страницы без смысловых изменений",
-      "sources": "9ba282879aa65cbdf48273f08b7d33293edc2c151cb510ed5545a137147db722",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "cf662d6aac9ee7b0bf569c41ba6de20bdb20ff2890ce3733c0e60dc0645c6990",
       "text": "3e1a2fe232bb8c384a682ac98f8133ab0560de790bab9a2a2d9542ea0b673666"
     },
     "pets": {
-      "reason": "Сверены все расходные пути 1.5.5-fix: PaidActions, Shop/Forge, Auction, Claims, Guilds, Goals, Anvil; minor/rate и recovery согласованы",
-      "sources": "a3dedd59180fb7ac452a94474fd25dfb0f3bbe6b1694704ddd49e1925093a957",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "97a2239163abcd744d4f1b3fb12e2b4f4096c62da10a4bdd99de9f533d5851e6",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "profile": {
-      "reason": "Повторно сверен исправленный minor×100/rateBps пересчёт гильдий после Java CI; остальное без изменений",
-      "sources": "6a7b69c3777d85054a9ad174a20f7c9d684adf9534bc5f41ec563efa9dafd6c7",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "564cab1575ab9423bb985a9f897aa15ac0e78d05fe0b69033bc29947a1f50bc7",
       "text": "f2a1fafaef6d54a60b0dd2e9545374a59a83ad49a5de3ace0069e441c187d309"
     },
     "quests": {
-      "reason": "Сверены все расходные пути 1.5.5-fix: PaidActions, Shop/Forge, Auction, Claims, Guilds, Goals, Anvil; minor/rate и recovery согласованы",
-      "sources": "7729b6cafc4f547dd83de8ee7fb81a7501884743df12fbea341f4f1c29bff380",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "bb411d10b5ece6df3b96d0613be6c6c11655f0f8d190a00ffcf92365b33b4818",
       "text": "a42f11010fddbf13238133ac1e2dca525dea95245f5286a88a57738af30fbf13"
     },
     "ranks": {
-      "reason": "Сверены все расходные пути 1.5.5-fix: PaidActions, Shop/Forge, Auction, Claims, Guilds, Goals, Anvil; minor/rate и recovery согласованы",
-      "sources": "1a4e3a2f8dbf1c428b7738ecd21347153a9aa0b07c095f8f42ba3e1c756864dc",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "14e748511d0ab3fb4bb103bc73eb3f2739c4c3c2c938650a9fd023e9ad4e138c",
       "text": "664b466e4b44741175d9c2cdb4da728a0603a04aaaefada8396dd6517d5dca2d"
     },
     "shop": {
-      "reason": "Финально сверен новый ShopMarketGui и исправленная привязка ForgeShopGui",
-      "sources": "29c324a666cb127a7a512ab9387248ee9ab8a63fbc0e5af92122895811d6cd12",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "5055a0afbc03a7545eef2cd3b68fb6dc7b73318b29e09c83983de06333a61f49",
       "text": "9033ecdd2956c6d4c3dadf6bf8a16183afb092b0bf909f220c5ec235a9d620ee"
     },
     "skills": {
-      "reason": "Сверена 1.5.6: прогрессия приёмов I–X и Совершенная форма; остальные страницы без смысловых изменений",
-      "sources": "f6aa01a103ae138f3546854bd3b4bfc81b3ff78a688568cb24f9b8826d9d08a7",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "6b706023083200636023544ac7e767dd2937005cbd3cad63f504267546a93f8c",
       "text": "2e6d03256421759755094a382f0145b72141c123c373f10f2ad120e7d741350b"
     },
     "social-link": {
-      "reason": "Сверены все расходные пути 1.5.5-fix: PaidActions, Shop/Forge, Auction, Claims, Guilds, Goals, Anvil; minor/rate и recovery согласованы",
-      "sources": "656dff73e7c89375ac4c40ad24b8fd974561b582b8c2c83b662b925192d4118a",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "fe85eb365c9cdeb023232936c10bd920c0a786695b5fdc888f5238473d5fc932",
       "text": "1f6cf95d9c8c2180dbf871aa9b19a7bfcde5405cf77b75954b7575920d2aef14"
     },
     "start": {
-      "reason": "Сверены все расходные пути 1.5.5-fix: PaidActions, Shop/Forge, Auction, Claims, Guilds, Goals, Anvil; minor/rate и recovery согласованы",
-      "sources": "ed2d62888c64834353eafef60de497a93c21461f63b50d6c2924b05d490c49f6",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "00e8c7bf293672686d6b72b37c8e8f226e22fb10f3718c10648782dd220eb346",
       "text": "1c0b307e38e52194bb2a42da0757744e32d93312bc6b83178a4745f9cd07a667"
     },
     "starter-kit": {
-      "reason": "Сверены все расходные пути 1.5.5-fix: PaidActions, Shop/Forge, Auction, Claims, Guilds, Goals, Anvil; minor/rate и recovery согласованы",
-      "sources": "cb703fef429e877c0abfa31d699e56669e09d9ac0f95ff46620a0220689b6864",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "5c2b62c943c8fe725013254234d8b1821f017a5a3019db0e2afad9040e4846c6",
       "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
     },
     "teleports": {
-      "reason": "Сверены все расходные пути 1.5.5-fix: PaidActions, Shop/Forge, Auction, Claims, Guilds, Goals, Anvil; minor/rate и recovery согласованы",
-      "sources": "8d7c93d173d2ce038c9a29877d637daa6aa3af3b19e4253ae3bbd3756daebc8f",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "3901a2dafcf4c89951915d5f91349ea240d47a7a21ac7e7d6044378112aedb2a",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "Сверены все расходные пути 1.5.5-fix: PaidActions, Shop/Forge, Auction, Claims, Guilds, Goals, Anvil; minor/rate и recovery согласованы",
-      "sources": "dadbfba7caba8e1255573166b1946e7874fb082b4073b003d9389b036ab687d0",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "6686a364264372c9ae58827911c0233bbba160cd5ebbc9b9109802d9fb9ec3d0",
       "text": "9fac8f515b8905c25378000b55e6f5faaa87a8b5a3a3173676cb4563894d98f7"
     },
     "titles": {
-      "reason": "Сверены все расходные пути 1.5.5-fix: PaidActions, Shop/Forge, Auction, Claims, Guilds, Goals, Anvil; minor/rate и recovery согласованы",
-      "sources": "ec8cfc570f7e0088d8438a614095649ade2198b2f5270040b4bc8c9fb5e4a1b2",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "b8fc08e9260f41e4f6c4727fff2019e0566714f6ab36c80ce93334123a22d9f5",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Финально сверен новый ShopMarketGui и исправленная привязка ForgeShopGui",
-      "sources": "29c324a666cb127a7a512ab9387248ee9ab8a63fbc0e5af92122895811d6cd12",
-      "text": "e1193c2a97944c45963ef7199176a66bec062ca295eea1156ec03f8835a2cf50"
+      "reason": "Сверен trusted-допуск админов поверх новой витрины 1.5.7",
+      "sources": "5055a0afbc03a7545eef2cd3b68fb6dc7b73318b29e09c83983de06333a61f49",
+      "text": "6e8e183c29d274ec355ae9fee9da2125059442dbb85ae1110619a8b163f21035"
     },
     "vk": {
-      "reason": "Сверены все расходные пути 1.5.5-fix: PaidActions, Shop/Forge, Auction, Claims, Guilds, Goals, Anvil; minor/rate и recovery согласованы",
-      "sources": "656dff73e7c89375ac4c40ad24b8fd974561b582b8c2c83b662b925192d4118a",
+      "reason": "Сверены trusted-допуск админов после авторизации и новый /shop 1.5.7",
+      "sources": "fe85eb365c9cdeb023232936c10bd920c0a786695b5fdc888f5238473d5fc932",
       "text": "b592e465a73dd13186763622b51190400cffd40960e233f58c63379b88a9bba9"
     }
   },

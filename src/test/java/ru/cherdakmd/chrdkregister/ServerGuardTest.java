@@ -26,6 +26,7 @@ class ServerGuardTest {
     private final Messages texts=Messages.from(getClass().getResourceAsStream("/messages.yml"),null,Logger.getAnonymousLogger());
     private final AtomicLong now=new AtomicLong();
     private final Set<UUID> authenticated=new HashSet<>();
+    private final Set<UUID> trusted=new HashSet<>();
     private final List<String> warnings=new ArrayList<>();
     private final Map<String,Command> registry=new HashMap<>();
     private final Map<String,String[]> aliases=new HashMap<>();
@@ -39,7 +40,8 @@ class ServerGuardTest {
             case "getAddress"->new InetSocketAddress(ip,25565);
             case "kick"->{kicks.incrementAndGet();yield null;}
             case "sendMessage"->{if(a.length==1 && a[0] instanceof Component text)sent.add(text);yield null;}
-            case "isOp", "hasPermission"->true;
+            case "isOp"->true;
+            case "hasPermission"->a[0].equals(GuardSettings.TRUSTED_PERMISSION)&&trusted.contains(id);
             case "getName"->"GuardTestPlayer";
             case "toString"->"GuardTestPlayer";
             case "hashCode"->System.identityHashCode(p);
@@ -60,7 +62,7 @@ class ServerGuardTest {
                 getClass().getClassLoader(),new Class<?>[]{com.destroystokyo.paper.profile.PlayerProfile.class},(p,m,a)->m.getName().equals("getId")?id:null);
         return new AsyncPlayerPreLoginEvent("Player",InetAddress.getByName(ip),id,false,profile);
     }
-    @Test void authenticatedOpStillCannotUseAttackCommands() {
+    @Test void authenticatedOpWithoutTrustedGrantStillCannotUseAttackCommands() {
         var attempts=new ArrayList<BlockedCommandAttempt>();var guard=auditedGuard(attempts);
         var client=client("192.0.2.1");authenticated.add(client.player.getUniqueId());
         for(String raw:List.of("/minecraft:fill 0 0 0 1 1 1 air","/execute run op Player","/gamerule random_tick_speed 2147483647","/title @a times 2s 9999d 9999d")) {
@@ -70,6 +72,17 @@ class ServerGuardTest {
         // Все четыре запрещены даже для OP; чат и аудит ограничены квотой burst=3.
         assertEquals(3,client.messages.size());assertEquals(3,attempts.size());
         assertEquals("fill",attempts.getFirst().root());assertEquals("execute",attempts.get(1).root());
+    }
+    @Test void trustedLuckPermsAdminCanUseCommandsOnlyAfterAuthentication() {
+        var attempts=new ArrayList<BlockedCommandAttempt>();var guard=auditedGuard(attempts);
+        var client=client("192.0.2.44");trusted.add(client.player.getUniqueId());
+        var beforeLogin=command(client,"/gamemode creative",false);guard.onCommand(beforeLogin);
+        assertTrue(beforeLogin.isCancelled());assertEquals(1,attempts.size());
+        authenticated.add(client.player.getUniqueId());
+        for(String raw:List.of("/gamemode creative","/lp user Admin permission set luckperms.* true","/shopadmin edit")) {
+            var event=command(client,raw,false);guard.onCommand(event);assertFalse(event.isCancelled(),raw);
+        }
+        assertEquals(1,attempts.size());assertEquals(0,client.kicks.get());
     }
     @Test void cancelledPreAuthCommandsStillConsumeSpamQuota() {
         config.set("security.unauthenticated-command-burst",2);

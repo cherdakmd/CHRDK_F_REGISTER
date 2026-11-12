@@ -201,9 +201,10 @@ final class ServerGuard implements Listener {
             event.setCancelled(true);session.ending=true;spamKicks.incrementAndGet();defense.strike(session.key(),now);
             player.kick(messages().get("security.command-spam"));return;
         }
-        if(GuardPolicy.consoleOnly(event.getMessage(),s.consoleOnly(),this::resolve)) {
+        boolean trusted=authed&&player.hasPermission(GuardSettings.TRUSTED_PERMISSION);
+        if(!trusted&&GuardPolicy.consoleOnly(event.getMessage(),s.consoleOnly(),this::resolve)) {
             blockedCommands.incrementAndGet();
-            // Запрет не зависит от OP, ранга, LuckPerms `*` и факта входа: только игроки.
+            // OP сам по себе не открывает команды: нужен успешный вход и явное trusted-право.
             boolean notify=attemptAllowed(player,now,s);
             if(notify && !event.isCancelled())messages().send(player,"security.console-only");
             event.setCancelled(true);
