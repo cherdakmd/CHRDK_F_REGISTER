@@ -26,6 +26,14 @@ import java.util.UUID;
  * через frozen grant в {@link ShopExchange}, а не через {@code addItem}.
  */
 final class ForgeShopGui implements Listener {
+    private static final int FIRST_OFFER_SLOT = ShopLayout.FIRST_ITEM_SLOT + 9;
+
+    /** Два полных ряда: восемь расходников Кузни и десять зелий навыков. */
+    static int offerIndex(int slot, int offerCount) {
+        int index = slot - FIRST_OFFER_SLOT;
+        int capacity = Math.min(18, ru.cherdakmd.chrdkregister.api.ForgeMarketCatalog.SKUS.size());
+        return index >= 0 && index < Math.min(capacity, offerCount) ? index : -1;
+    }
 
     static final class Holder implements InventoryHolder {
         final UUID owner;
@@ -59,8 +67,10 @@ final class ForgeShopGui implements Listener {
             inventory.setItem(ShopLayout.FIRST_ITEM_SLOT + 13,
                     named(Material.BARRIER, "forge.shop.empty"));
         } else {
-            for (int index = 0; index < offers.size() && index < 8; index++) {
-                inventory.setItem(ShopLayout.FIRST_ITEM_SLOT + 9 + index, iconOf(offers.get(index)));
+            for (int index = 0; index < offers.size(); index++) {
+                int slot = FIRST_OFFER_SLOT + index;
+                if (offerIndex(slot, offers.size()) != index) break;
+                inventory.setItem(slot, iconOf(offers.get(index)));
             }
         }
         player.openInventory(inventory);
@@ -119,8 +129,8 @@ final class ForgeShopGui implements Listener {
         if (slot == ShopLayout.SLOT_CLOSE) { player.closeInventory(); return; }
         if (slot == ShopLayout.SLOT_FORGE) { plugin.gui().open(player, 0); return; }
         if (slot == ShopLayout.SLOT_BALANCE) return;
-        int index = slot - (ShopLayout.FIRST_ITEM_SLOT + 9);
-        if (index < 0 || index >= Math.min(8, holder.offers.size())) return;
+        int index = offerIndex(slot, holder.offers.size());
+        if (index < 0) return;
         var offer = holder.offers.get(index);
         if (event.getClick() == ClickType.RIGHT) {
             plugin.messages().send(player, "forge.shop.no-buyback");
