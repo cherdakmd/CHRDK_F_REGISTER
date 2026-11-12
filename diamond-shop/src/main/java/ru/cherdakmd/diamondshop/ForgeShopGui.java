@@ -53,7 +53,7 @@ final class ForgeShopGui implements Listener {
 
     void open(Player player) {
         if (!plugin.shopService().ready(player)) { plugin.messages().send(player, "trading.unavailable"); return; }
-        var offers = plugin.forgeShop().forgeOffers(player);
+        var offers = plugin.forgeShop().offers(player);
         var holder = new Holder(player.getUniqueId(), offers);
         Inventory inventory = Bukkit.createInventory(holder, ShopLayout.SIZE,
                 plugin.messages().get("forge.shop.title"));
@@ -63,7 +63,6 @@ final class ForgeShopGui implements Listener {
         inventory.setItem(ShopLayout.SLOT_BALANCE, balanceIcon(player));
         inventory.setItem(ShopLayout.SLOT_FORGE,
                 named(Material.ANVIL, "forge.shop.back-name"));
-        inventory.setItem(ShopLayout.SLOT_NEXT, named(Material.POTION, "potions.shop.open"));
         if (offers.isEmpty()) {
             inventory.setItem(ShopLayout.FIRST_ITEM_SLOT + 13,
                     named(Material.BARRIER, "forge.shop.empty"));
@@ -129,7 +128,6 @@ final class ForgeShopGui implements Listener {
         int slot = event.getRawSlot();
         if (slot == ShopLayout.SLOT_CLOSE) { player.closeInventory(); return; }
         if (slot == ShopLayout.SLOT_FORGE) { plugin.gui().open(player, 0); return; }
-        if (slot == ShopLayout.SLOT_NEXT) { plugin.potionShopGui().open(player); return; }
         if (slot == ShopLayout.SLOT_BALANCE) return;
         int index = offerIndex(slot, holder.offers.size());
         if (index < 0) return;

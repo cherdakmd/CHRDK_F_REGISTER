@@ -3,10 +3,8 @@ package ru.cherdakmd.diamondshop;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.persistence.PersistentDataType;
 import ru.cherdakmd.chrdkregister.api.ChargeInventory;
 import ru.cherdakmd.chrdkregister.api.DiamondMoney;
 import ru.cherdakmd.chrdkregister.api.ForgeMarketCatalog;
@@ -71,92 +69,16 @@ final class ForgeShopService {
         return sku != null && sku.startsWith("skill_xp_");
     }
 
-    static boolean matchingSkillToken(String sku, String token) {
-        return isPotionSku(sku) && sku.substring("skill_xp_".length()).equals(token);
-    }
-
-    /**
-     * Skills 2.0.1 пишет chrdk_skills:skill_xp_v1, а Core 2.0.1 проверяет
-     * chrdkskills:skill_xp_v1. Сохраняем исходный ключ для onConsume и добавляем
-     * проверенный alias для native grant/recovery Core. Неизвестный/чужой PDC
-     * по-прежнему закрывает SKU, а не превращается в обычное зелье по материалу.
-     */
-    private static ItemStack compatiblePrototype(String sku, ItemStack prototype) {
-        if (!isPotionSku(sku)) return prototype;
-        if (prototype == null || prototype.getType() != Material.POTION || !prototype.hasItemMeta()) return null;
-        var skillsKey = NamespacedKey.fromString("chrdk_skills:skill_xp_v1");
-        var coreKey = NamespacedKey.fromString("chrdkskills:skill_xp_v1");
-        if (skillsKey == null || coreKey == null) return null;
-        ItemStack compatible = prototype.clone();
-        var meta = compatible.getItemMeta();
-        if (meta == null) return null;
-        var pdc = meta.getPersistentDataContainer();
-        String token = pdc.get(skillsKey, PersistentDataType.STRING);
-        String alias = pdc.get(coreKey, PersistentDataType.STRING);
-        if (!matchingSkillToken(sku, token) || alias != null && !alias.equals(token)) return null;
-        pdc.set(coreKey, PersistentDataType.STRING, token);
-        compatible.setItemMeta(meta);
-        return compatible;
-    }
-
-    List<Offer> forgeOffers(Player player) {
-        return offers(player).stream().filter(offer -> !isPotionSku(offer.sku())).toList();
-    }
-
-    List<Offer> potionOffers(Player player) {
-        var result = offers(player).stream().filter(offer -> isPotionSku(offer.sku())).toList();
-        if (result.isEmpty()) diagnosePotions();
-        return result;
-    }
-
-    /** Безопасная диагностика silent-filter: не создаёт предметы и не меняет сделки. */
-    private void diagnosePotions() {
-        var registrations = Bukkit.getServicesManager().getRegistrations(ForgeMaterialSource.class);
-        plugin.getLogger().warning("[DiamondShop] Зелья не прошли витрину; ForgeMaterialSource providers=" + registrations.size());
-        for (var sku : ForgeMarketCatalog.SKUS) {
-            if (!isPotionSku(sku.id())) continue;
-            long price = prices.price(sku.id());
-            if (registrations.isEmpty()) {
-                plugin.getLogger().warning("[DiamondShop] " + sku.id() + ": производитель не зарегистрирован; price=" + price);
-                continue;
-            }
-            for (var registration : registrations) {
-                var candidate = registration.getProvider();
-                String name;
-                try { name = candidate == null ? "null" : candidate.provider(); }
-                catch (RuntimeException | LinkageError error) { name = candidate.getClass().getName(); }
-                try {
-                    if (candidate == null || !candidate.available(sku.id())) {
-                        plugin.getLogger().warning("[DiamondShop] " + sku.id() + " @ " + name + ": available=false; price=" + price);
-                        continue;
-                    }
-                    var prototype = compatiblePrototype(sku.id(), candidate.prototype(sku.id()));
-                    if (prototype == null) {
-                        plugin.getLogger().warning("[DiamondShop] " + sku.id() + " @ " + name
-                                + ": prototype=null или PDC Skills не соответствует SKU");
-                        continue;
-                    }
-                    String grant = ForgeMarketCatalog.snapshot(prototype);
-                    plugin.getLogger().warning("[DiamondShop] " + sku.id() + " @ " + name
-                            + ": validGrant=" + ForgeMarketCatalog.validTradeGrant(grant, sku.material(), 1)
-                            + "; material=" + prototype.getType() + "; price=" + price);
-                } catch (RuntimeException | LinkageError error) {
-                    plugin.getLogger().log(java.util.logging.Level.WARNING,
-                            "[DiamondShop] " + sku.id() + " @ " + name + ": исключение диагностики", error);
-                }
-            }
-        }
-    }
-
-    /** Полный каталог для проверки котировки/recovery; витрины разделяют его по типу SKU. */
+    /** Только 8 расходников Кузни; зелья навыков полностью выведены из магазина. */
     List<Offer> offers(Player player) {
         List<Offer> offers = new ArrayList<>();
         if (!prices.enabled()) return offers;
         for (var sku : ForgeMarketCatalog.SKUS) {
+            if (isPotionSku(sku.id())) continue;
             var source = source(sku.id());
             long price = plugin.coreApi().diamondRate().scaleMinor(prices.price(sku.id()));
             if (source == null || price < 1 || !source.available(sku.id())) continue;
-            ItemStack prototype = compatiblePrototype(sku.id(), source.prototype(sku.id()));
+            ItemStack prototype = source.prototype(sku.id());
             if (prototype == null) continue;
             String grant;
             try {
@@ -172,6 +94,7 @@ final class ForgeShopService {
 
     /** Штатное подтверждение: ровно одна искра, остальные — до 64 за покупку (по 1 в слоте). */
     Result purchase(Player player, Offer offer, int units) {
+        if (isPotionSku(offer.sku())) return fail("forge.shop.closed", 0);
         var service = plugin.shopService();
         if (!service.ready(player) || player.getGameMode() != GameMode.SURVIVAL) return fail("trading.unavailable", 0);
         var marketQuote=plugin.coreApi().diamondRate();
@@ -187,7 +110,7 @@ final class ForgeShopService {
         var source = source(offer.sku());
         if (source == null || !source.available(offer.sku())) return fail("forge.shop.closed", money);
         // Повторно проверяем прототип на момент подтверждения, без слепой веры в GUI.
-        ItemStack fresh = compatiblePrototype(offer.sku(), source.prototype(offer.sku()));
+        ItemStack fresh = source.prototype(offer.sku());
         if (fresh == null || !ForgeMarketCatalog.validTradeGrant(offer.grant(), offer.material(), 1)) {
             return fail("forge.shop.closed", money);
         }

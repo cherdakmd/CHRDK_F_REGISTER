@@ -71,7 +71,6 @@ public final class ShopCommandHandler implements TabExecutor {
             case "sell" -> handleSell(player, args);
             case "sellall" -> handleSellAll(player);
             case "forge", "kuznya" -> plugin.forgeShopGui().open(player);
-            case "potions", "potion", "xp", "zeliya" -> plugin.potionShopGui().open(player);
             case "stats" -> handleStats(player);
             default -> plugin.messages().send(player, "quantity.usage");
         }
@@ -481,7 +480,7 @@ public final class ShopCommandHandler implements TabExecutor {
         switch (args.length) {
             case 1 -> addMatches(matches, prefix,
                     List.of("balance", "deposit", "withdraw", "price", "find", "buy", "sell",
-                            "sellall", "stats", "quote", "forge", "potions"));
+                            "sellall", "stats", "quote", "forge"));
             case 2 -> {
                 if("quote".equalsIgnoreCase(args[0])) addMatches(matches,prefix,List.of("buy","sell"));
                 if ("price".equalsIgnoreCase(args[0]) || "buy".equalsIgnoreCase(args[0])

@@ -1604,13 +1604,3 @@ forge-shop:
     remove: 32
     name: 16
     # Зелья опыта навыков: дорогая альтернатива редкому дропу, обратной скупки нет.
-    skill_xp_mining: 96
-    skill_xp_woodcutting: 96
-    skill_xp_digging: 96
-    skill_xp_farming: 96
-    skill_xp_fishing: 96
-    skill_xp_combat: 96
-    skill_xp_archery: 96
-    skill_xp_defense: 96
-    skill_xp_alchemy: 96
-    skill_xp_enchanting: 96

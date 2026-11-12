@@ -37,7 +37,7 @@ public final class ShopQuantityGui implements Listener {
     void openForge(Player player,ForgeShopService.Offer offer,ShopCategory category,int page){
         var service=plugin.shopService();
         var h=new Holder(player.getUniqueId(),null,true,category,page,service,1,offer.price(),offer);
-        if(!current(player,h)){plugin.messages().send(player,"forge.shop.closed");navigateForge(player,h.forge);return;}
+        if(!current(player,h)){plugin.messages().send(player,"forge.shop.closed");plugin.forgeShopGui().open(player);return;}
         h.units=1;
         h.inventory=Bukkit.createInventory(h,54,plugin.messages().get("forge.shop.quantity-title"));
         render(player,h);player.openInventory(h.inventory);
@@ -136,7 +136,7 @@ public final class ShopQuantityGui implements Listener {
                     plugin.messages().send(player,"trading.payment-detail","account",result.bankPaid(),"physical",result.physicalPaid(),"change",result.change());
                     plugin.messages().send(player,"forge.shop.done","sku",h.forge.sku(),"name",ForgeShopText.name(plugin.messages(),h.forge.sku()),"units",result.units(),"cost",result.money(),"balance",h.service.balanceText(player),"physical",h.service.physical(player));
                 }else plugin.messages().send(player,result.errorKey(),"sku",h.forge.sku(),"cost",result.money(),"value",units,"units",units,"balance",h.service.balanceText(player),"limit",h.service.dailyLimit(player));
-                if(active(player,h))navigateForge(player,h.forge);
+                if(active(player,h))plugin.forgeShopGui().open(player);
                 return;
             }
             var result=h.service.quoted(player,h.item,units,h.buy,h.batch,h.price);
@@ -150,12 +150,7 @@ public final class ShopQuantityGui implements Listener {
     private void navigateFromTask(Player player,Holder h){plugin.getServer().getScheduler().runTask(plugin,()->{if(active(player,h))navigateTarget(player,h);});}
     private boolean active(Player p,Holder h){return plugin.isEnabled()&&p.isOnline()&&h.session.pending(p.getUniqueId())&&p.getOpenInventory().getTopInventory()==h.inventory;}
     private void navigate(Player p,Holder h){if(!h.session.submit(p.getUniqueId()))return;plugin.getServer().getScheduler().runTask(plugin,()->{if(active(p,h))navigateTarget(p,h);});}
-    private void navigateTarget(Player p,Holder h){if(h.forge!=null)navigateForge(p,h.forge);else plugin.gui().open(p,h.category,h.page);}
-    private void navigateForge(Player player,ForgeShopService.Offer offer){
-        if(offer==null){plugin.gui().open(player,0);return;}
-        if(ForgeShopService.isPotionSku(offer.sku()))plugin.potionShopGui().open(player);
-        else plugin.forgeShopGui().open(player);
-    }
+    private void navigateTarget(Player p,Holder h){if(h.forge!=null)plugin.forgeShopGui().open(p);else plugin.gui().open(p,h.category,h.page);}
     @EventHandler public void close(InventoryCloseEvent e){if(e.getInventory().getHolder() instanceof Holder h)h.session.close();}
     @EventHandler(ignoreCancelled=true)public void drag(InventoryDragEvent e){if(owns(e.getView().getTopInventory()))e.setCancelled(true);}
     private static final class Holder implements InventoryHolder {
