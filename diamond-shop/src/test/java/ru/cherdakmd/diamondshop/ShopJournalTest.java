@@ -69,7 +69,9 @@ class ShopJournalTest {
     }
     @Test void sourceBindingNeverRegistersAgainAfterPriorAcknowledgement() throws Exception {
         String source=Files.readString(Path.of("src/main/java/ru/cherdakmd/diamondshop/ShopService.java"));
-        assertTrue(source.contains("if(store.registered()) return core.shopRegistered(store.market());")); assertTrue(source.contains("if(!binding()) return false;"));
+        assertTrue(source.contains("if(core.shopRegistered(store.market())) return true;"));
+        assertTrue(source.contains("ShopRegistration.canRestore(store.sequence(),store.pending()!=null)"));
+        assertTrue(source.contains("if(!binding()) return false;"));
     }
 
     @Test void partialQuantityAndRoundedWholeSumRecoverWithoutRequoting() {var s=initial();long units=17,money=TradeAmounts.quote(64,3,units,true);var t=new ShopExchange(UUID.randomUUID(),s.market(),1,owner,true,"STONE",units,money,money,0,0,Map.of("DIAMOND",1),"before","after");assertTrue(s.prepare(t,item,time,0,100,24,3600000,1));assertEquals(17,load().pending().trade().units());assertEquals(1,load().pending().trade().money());var bank=new Bank();assertTrue(ShopJournal.recover(load(),bank));assertEquals(983,load().snapshotOf("STONE").stock);assertEquals(17,load().snapshotOf("STONE").boughtByPlayers);assertEquals(1,load().usedToday(owner,time));assertTrue(ShopJournal.recover(load(),bank));assertEquals(1,bank.grants);}
