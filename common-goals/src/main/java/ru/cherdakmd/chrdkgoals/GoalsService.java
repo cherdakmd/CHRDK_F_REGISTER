@@ -144,7 +144,12 @@ public final class GoalsService {
 
     private boolean ensureIncome() {
         if (paymentsBusy() || !plugin.store().healthy() || plugin.coreApi() == null || !plugin.coreApi().personalBankAvailable()) return false;
-        if (plugin.store().bankRegistered()) return plugin.coreApi().incomeSourceAvailable("common-goals", plugin.store().incomeId());
+        if (plugin.coreApi().incomeSourceAvailable("common-goals", plugin.store().incomeId())) {
+            try { plugin.store().markBankRegistered(); return true; }
+            catch (java.io.IOException error) { plugin.getLogger().log(java.util.logging.Level.SEVERE, "Не записана регистрация доходов целей", error); return false; }
+        }
+        // Прогресс целей не является банковским обязательством; взносы и награды — являются.
+        if (plugin.store().bankRegistered()&&!GoalRegistration.canRestore(plugin.store(),charges)) return false;
         if (!plugin.coreApi().registerIncomeSource("common-goals", plugin.store().incomeId())) return false;
         try { plugin.store().markBankRegistered(); return true; }
         catch (java.io.IOException error) { plugin.getLogger().log(java.util.logging.Level.SEVERE, "Не записана регистрация доходов целей", error); return false; }

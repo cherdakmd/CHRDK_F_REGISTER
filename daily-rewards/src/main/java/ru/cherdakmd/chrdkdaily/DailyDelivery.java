@@ -13,7 +13,10 @@ final class DailyDelivery {
     interface Native { void item(DailyConfig.ItemReward item) throws Exception; void boost(int hours) throws Exception; }
     static boolean bind(DailyStore store,Bank bank) throws IOException {
         if(!store.healthy()||!bank.available())return false;
-        if(store.registered())return bank.registered(store.lineage());
+        if(bank.registered(store.lineage())){if(!store.initialize())return false;store.markRegistered();return true;}
+        // Нулевые/пустые totals не создают банковских обязательств. История дней и
+        // немонетарные награды сами по себе не запрещают восстановить тот же lineage.
+        if(!store.totals().values().stream().allMatch(total->total==0)||!store.pendingRewards().isEmpty())return false;
         if(!store.initialize()||!bank.register(store.lineage()))return false;store.markRegistered();return true;
     }
     static void money(DailyStore store,Bank bank) throws IOException {

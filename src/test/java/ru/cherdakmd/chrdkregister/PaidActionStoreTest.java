@@ -88,6 +88,16 @@ class PaidActionStoreTest {
         assertEquals(j.nextSequence()-1,bank().bankChargeSequence("teleports",s.lineage())); Files.writeString(b.file(),old);
         assertNotEquals(j.nextSequence()-1,bank().bankChargeSequence("teleports",s.lineage()));
     }
+    @Test void pristinePaidActionCanRestoreLineageButAnyObligationFailsClosed() throws Exception {
+        var s=registered(); var j=new ChargeJournal(dir,"teleports",s.lineage());
+        assertTrue(PaidActions.registrationRecoverable(s,j));
+        var empty=new BankStore(dir.resolve("empty-core"),Logger.getAnonymousLogger());empty.load();
+        assertTrue(empty.registerIncomeSource("teleports",s.lineage()));
+        assertTrue(empty.incomeSourceAvailable("teleports",s.lineage()));
+        publish(s,action()); assertFalse(PaidActions.registrationRecoverable(s,j));
+        var older=new BankStore(dir.resolve("older-core"),Logger.getAnonymousLogger());older.load();
+        assertFalse(older.incomeSourceAvailable("teleports",s.lineage()));
+    }
     @Test void paymentJournalBlocksSourceMutationsUntilRecovery() throws Exception {
         var s=registered(); s.bind(()->true); assertThrows(IllegalStateException.class,()->s.putValue("home","overwrite")); assertThrows(IllegalStateException.class,()->s.preview(action()));
     }
