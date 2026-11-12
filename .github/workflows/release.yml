@@ -127,7 +127,7 @@ jobs:
           retention-days: 14
 
       - name: Pack DiamondShop-only prerelease
-        if: steps.verify-version.outputs.version == '2.0.2-rc.1'
+        if: startsWith(steps.verify-version.outputs.version, '2.0.2-rc.')
         shell: bash
         run: |
           set -euo pipefail
@@ -142,7 +142,7 @@ jobs:
           echo "dshop_checksums=${checksums}" >> "$GITHUB_ENV"
 
       - name: Pack general plugin ZIP and prepare standalone JARs
-        if: steps.verify-version.outputs.version != '2.0.2-rc.1'
+        if: !startsWith(steps.verify-version.outputs.version, '2.0.2-rc.')
         shell: bash
         run: |
           set -euo pipefail
@@ -190,7 +190,7 @@ jobs:
           echo "checksums=$checksums" >> "$GITHUB_ENV"
 
       - name: Upload DiamondShop-only dry-run candidate
-        if: github.event_name == 'workflow_dispatch' && steps.verify-version.outputs.version == '2.0.2-rc.1'
+        if: github.event_name == 'workflow_dispatch' && startsWith(steps.verify-version.outputs.version, '2.0.2-rc.')
         uses: actions/upload-artifact@v4
         with:
           name: release-candidate-${{ steps.verify-version.outputs.version }}-${{ github.sha }}
@@ -201,7 +201,7 @@ jobs:
           retention-days: 14
 
       - name: Upload dry-run release candidate
-        if: github.event_name == 'workflow_dispatch' && steps.verify-version.outputs.version != '2.0.2-rc.1'
+        if: github.event_name == 'workflow_dispatch' && !startsWith(steps.verify-version.outputs.version, '2.0.2-rc.')
         uses: actions/upload-artifact@v4
         with:
           name: release-candidate-${{ steps.verify-version.outputs.version }}-${{ github.sha }}
@@ -220,7 +220,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          if [[ "${{ steps.verify-version.outputs.version }}" == "2.0.2-rc.1" ]]; then
+          if [[ "${{ steps.verify-version.outputs.version }}" == 2.0.2-rc.* ]]; then
             gh release upload "${{ github.event.release.tag_name }}" "${{ env.dshop_jar }}" "${{ env.dshop_checksums }}" --clobber
           else
             gh release upload "${{ github.event.release.tag_name }}" "${{ env.zip }}" "${{ env.vk_jar }}" "${{ env.disasters_jar }}" "${{ env.datapack }}" "${{ env.checksums }}" --clobber

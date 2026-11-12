@@ -296,7 +296,7 @@ messages:
     open: '<light_purple>✦ Зелья опыта навыков</light_purple>'
     home: '<yellow>← На главную магазина</yellow>'
     forge: '<gold>⚒ Расходники Кузни</gold>'
-    empty: '<yellow>Зелья недоступны: проверьте CHRDK_Skills, xp-potions.enabled и skill-consumables.json. Данные не сброшены.</yellow>'
+    empty: '<yellow>Зелья не прошли проверку производителя/PDC. Точная причина каждого SKU записана в latest.log. Данные не сброшены.</yellow>'
     closed: '<yellow>Зелье недоступно: изменилась цена или CHRDK_Skills отключён. Ничего не списано.</yellow>'
     no-buyback: '<yellow>Обратной скупки зелий навыков нет.</yellow>'
     item-lore:

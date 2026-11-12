@@ -36,8 +36,8 @@
       "text": "503edef62357862f67d17df249b393023697d6dca6342cbe792b0d4dc78cb8cc"
     },
     "commands": {
-      "reason": "2.0.2-rc.1 DiamondShop: отдельная витрина десяти зелий, навигация и границы слотов проверены; остальные модули не изменены",
-      "sources": "d1b86a794b5867f188579a3a091653a11dbde46bf53bc26ac319c0b97f33b37d",
+      "reason": "2.0.2-rc.2 DiamondShop: PDC alias chrdk_skills/chrdkskills сверен со Skills 2.0.1 и Core whitelist; XP и native grant сохранены",
+      "sources": "5c988cbec0697a00cd559324f327166c30baabc4c12d18dee97bec83193dc1ea",
       "text": "46017ca1aca3a1d620ff09b3ffd40ff42885e551a850c85baa15f2c73d03b290"
     },
     "cosmetics": {
@@ -56,8 +56,8 @@
       "text": "121b1cc28a075ced29b6de8abec7dbc20bbb531a01441ddd5fdb836d066d0202"
     },
     "economy": {
-      "reason": "2.0.2-rc.1 DiamondShop: отдельная витрина десяти зелий, навигация и границы слотов проверены; остальные модули не изменены",
-      "sources": "b0829d8f68894c6e09a2acf147f4bbabfd2ce22df6058a3e3dacd3831c129cae",
+      "reason": "2.0.2-rc.2 DiamondShop: PDC alias chrdk_skills/chrdkskills сверен со Skills 2.0.1 и Core whitelist; XP и native grant сохранены",
+      "sources": "3b3cf9b487b300fa9474706cede18459e560d51a75d59c0d3eaa1cf080dd8b2a",
       "text": "95603b3cf3e787bf93015bc3b09a7d358ec10a3c9297426003539929db15bd69"
     },
     "enchants": {
@@ -66,8 +66,8 @@
       "text": "7e90321ef8a100bae11c53592c62328fa44a958be657b66a86d51ea8c1906a7d"
     },
     "faq": {
-      "reason": "2.0.2-rc.1 DiamondShop: отдельная витрина десяти зелий, навигация и границы слотов проверены; остальные модули не изменены",
-      "sources": "b1b4db400c4f9f75b54937bd17c0276fb35ee34b4a1ae05bcb5ac7647cb6f600",
+      "reason": "2.0.2-rc.2 DiamondShop: PDC alias chrdk_skills/chrdkskills сверен со Skills 2.0.1 и Core whitelist; XP и native grant сохранены",
+      "sources": "6c68274a26c0fbc416caf5a68023a54f9bc8e1b5ca5e62d32bb985ee5804d52d",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
@@ -86,13 +86,13 @@
       "text": "17c878e1ab52ceb2a7c3361a7bef133c8bd1004a59641898f2c525f7c48fff8f"
     },
     "index": {
-      "reason": "2.0.2-rc.1 DiamondShop: отдельная витрина десяти зелий, навигация и границы слотов проверены; остальные модули не изменены",
-      "sources": "7553c5857e7f9730b01ef53b9e2b726dc0e6d2ac5d7b1d8386976b95257507c8",
+      "reason": "2.0.2-rc.2 DiamondShop: PDC alias chrdk_skills/chrdkskills сверен со Skills 2.0.1 и Core whitelist; XP и native grant сохранены",
+      "sources": "e016915904d069d67cb3f2f279fbafe8d95beb3e7ee519bc856f9f383eb264bf",
       "text": "13b0089b89035cd13598d177608718282608bc671993a3c370012b297c779cd7"
     },
     "menu": {
-      "reason": "2.0.2-rc.1 DiamondShop: отдельная витрина десяти зелий, навигация и границы слотов проверены; остальные модули не изменены",
-      "sources": "b1b4db400c4f9f75b54937bd17c0276fb35ee34b4a1ae05bcb5ac7647cb6f600",
+      "reason": "2.0.2-rc.2 DiamondShop: PDC alias chrdk_skills/chrdkskills сверен со Skills 2.0.1 и Core whitelist; XP и native grant сохранены",
+      "sources": "6c68274a26c0fbc416caf5a68023a54f9bc8e1b5ca5e62d32bb985ee5804d52d",
       "text": "eb6fdaf663b2005735002c5f23bb7f751b31a7447b3fc2cc77d741ff7c4cb2f9"
     },
     "moderation": {
@@ -131,8 +131,8 @@
       "text": "664b466e4b44741175d9c2cdb4da728a0603a04aaaefada8396dd6517d5dca2d"
     },
     "shop": {
-      "reason": "2.0.2-rc.1 DiamondShop: отдельная витрина десяти зелий, навигация и границы слотов проверены; остальные модули не изменены",
-      "sources": "7553c5857e7f9730b01ef53b9e2b726dc0e6d2ac5d7b1d8386976b95257507c8",
+      "reason": "2.0.2-rc.2 DiamondShop: PDC alias chrdk_skills/chrdkskills сверен со Skills 2.0.1 и Core whitelist; XP и native grant сохранены",
+      "sources": "e016915904d069d67cb3f2f279fbafe8d95beb3e7ee519bc856f9f383eb264bf",
       "text": "c28f429d342f4c030938b22adaee5cb0792a5c93c7c5f107416537f2c9300a20"
     },
     "skills": {
@@ -171,9 +171,9 @@
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "2.0.2-rc.1 DiamondShop: отдельная витрина десяти зелий, навигация и границы слотов проверены; остальные модули не изменены",
-      "sources": "7553c5857e7f9730b01ef53b9e2b726dc0e6d2ac5d7b1d8386976b95257507c8",
-      "text": "68ecd562efdb223f57dcddd7034f76d9268a022bf2e9e6ff4a6dba7758d4e98f"
+      "reason": "2.0.2-rc.2 DiamondShop: PDC alias chrdk_skills/chrdkskills сверен со Skills 2.0.1 и Core whitelist; XP и native grant сохранены",
+      "sources": "e016915904d069d67cb3f2f279fbafe8d95beb3e7ee519bc856f9f383eb264bf",
+      "text": "1a180d23cc429bc6107ddfafb7ca54e4a4b9e1f783b2105db3782e272b8f8a07"
     },
     "vk": {
       "reason": "2.0.2-rc.1 DiamondShop: отдельная витрина десяти зелий, навигация и границы слотов проверены; остальные модули не изменены",

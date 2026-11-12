@@ -13,6 +13,14 @@
 > Порядок проверки и выпуска — [RELEASE.md](docs/RELEASE.md);
 > [аудит готовности от 10.11.2026](docs/audits/release-readiness-2026-11-10.md).
 
+## 2.0.2-rc.2 — исправление PDC-зелий (только DiamondShop)
+
+Исправлено несовпадение namespace `chrdk_skills`/`chrdkskills`, из-за которого Core
+отклонял все 10 зелий. Предмет сохраняет исходный PDC Skills для XP и получает
+проверенный alias для native grant/recovery Core. Fail-closed проверки сохранены.
+Публикуется один JAR, остальные плагины остаются 2.0.1.
+[Заметки RC2](docs/releases/2.0.2-rc.2.md).
+
 ## 2.0.2-rc.1 — отдельное меню зелий (только DiamondShop)
 
 `/shop potions` открывает отдельную витрину десяти зелий навыков; кнопки добавлены

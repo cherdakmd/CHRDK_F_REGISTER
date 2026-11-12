@@ -1,0 +1,3 @@
+{
+  "summary": "DiamondShop RC2: исправлено несовпадение PDC namespace Skills/Core, из-за которого исчезали все 10 зелий. Сохранены ключ начисления XP и строгий native grant; только один JAR."
+}
