@@ -151,6 +151,11 @@ messages:
       "promo-type": "<yellow>%type%</yellow>"
       "promo-items": "<gray>%items%</gray>"
       "promo-left": "<gray>Доплата +50% · осталось <gold>%left% ⛁</gold><gray> на сутки · новые 5 ресурсов каждые 6 ч</gray>"
+      "gift": "<green>◆ Подарок игроку</green>"
+      "gift-amount": "<gold>%amount% ⛁</gold><gray> на банковский счёт</gray>"
+      "gift-click": "<yellow>Нажмите, чтобы получить один раз.</yellow>"
+      "gift-claimed": "<gray>◆ Подарок получен</gray>"
+      "gift-claimed-lore": "<dark_gray>Эта награда уже выдана вашему игроку.</dark_gray>"
       "back": "<yellow>← На главную</yellow>"
     "category":
       "title": "<aqua>%category%</aqua> <dark_gray>•</dark_gray> <gray>%page%/%pages%</gray>"
@@ -168,6 +173,10 @@ messages:
       "misc": "<gray>Остальные товары и редкие находки.</gray>"
       "count": "<gray>Позиций: <white>%count%</white>"
       "open": "<dark_gray>Нажмите, чтобы открыть раздел →</dark_gray>"
+    "gift":
+      "received": "<green>Подарок получен: </green><gold>%amount% ⛁</gold><green> зачислено на /bal.</green>"
+      "already": "<yellow>Вы уже получили этот подарок. Повторная выдача невозможна.</yellow>"
+      "unavailable": "<red>Подарок сейчас недоступен. Деньги не начислены; сохранённое получение можно завершить следующим нажатием.</red>"
     "balance":
       "name": "<aqua>◆ Ваш баланс</aqua>"
       "wallet": "<white>%balance% ⛁</white> <gray>на /bal</gray>"

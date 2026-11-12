@@ -30,6 +30,7 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
     private ShopOverrides overrides;
     /** Прогресс дневных акций живёт отдельным файлом и переживает /shopadmin reload. */
     private ShopPromoStore promoStore;
+    private ShopWelcomeGift welcomeGift;
     private ForgeShopPrices forgePrices;
     private ForgeShopService forgeShop;
     private ForgeShopGui forgeShopGui;
@@ -151,6 +152,8 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
         }
         ShopPromoConfig.Settings promoSettings = ShopPromoConfig.from(getConfig(), data, getLogger());
         ShopPromoService promos = new ShopPromoService(promoSettings, promoStore);
+        this.welcomeGift = new ShopWelcomeGift(getDataFolder().toPath(),getLogger(),
+                getConfig().getBoolean("welcome-gift.enabled",true),getConfig().getLong("welcome-gift.amount",10000));
         this.shopService = new ShopService(data, store, this::coreApi, this::skillsApi, promos);
         this.forgePrices = ForgeShopPrices.parse(getConfig(), getLogger());
         if (this.forgeShopGui == null) this.forgeShopGui = new ForgeShopGui(this);
@@ -178,4 +181,6 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
     public ShopMarketGui gui() {
         return gui;
     }
+
+    public ShopWelcomeGift welcomeGift() { return welcomeGift; }
 }
