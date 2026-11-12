@@ -5,6 +5,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import ru.cherdakmd.chrdkregister.api.ApiAuthStage;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 import ru.cherdakmd.chrdkregister.api.IncomeSourceLineageProvider;
+import ru.cherdakmd.chrdkregister.api.ShopLineageProvider;
 
 import java.util.Optional;
 
@@ -12,7 +13,7 @@ import java.util.Optional;
  * Реализация публичного API, регистрируемая в {@code ServicesManager} при включении плагина.
  * Тонкая обёртка над {@link AccessManager}: аддоны видят только стабильный контракт.
  */
-final class ChrdkRegisterApiImpl implements ChrdkRegisterApi, IncomeSourceLineageProvider {
+final class ChrdkRegisterApiImpl implements ChrdkRegisterApi, IncomeSourceLineageProvider, ShopLineageProvider {
 
     private final RegisterPlugin plugin;
     private final java.util.Set<String> blocked = java.util.concurrent.ConcurrentHashMap.newKeySet();
@@ -68,6 +69,8 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi, IncomeSourceLineag
     @Override public boolean registerShop(java.util.UUID market) {
         return org.bukkit.Bukkit.isPrimaryThread()&&bank!=null&&bank.registerShop(market);
     }
+    @Override public java.util.UUID shopLineage() { return auctionBankReady()?bank.incomeSourceLineage("diamond-shop"):null; }
+    @Override public long shopSequence(java.util.UUID market) { return auctionBankReady()?bank.shopSequence(market):-1; }
     @Override public ru.cherdakmd.chrdkregister.api.ShopExchange.Status shopExchangeStatus(ru.cherdakmd.chrdkregister.api.ShopExchange t) {
         return bank==null?ru.cherdakmd.chrdkregister.api.ShopExchange.Status.UNAVAILABLE:bank.shopStatus(t);
     }
