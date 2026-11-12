@@ -10,17 +10,19 @@ import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Три типа акций, потолки и анти-арбитражный контракт. */
+/** Ежедневная горячая скупка, окно 6 часов, лимит 5000 и анти-арбитраж. */
 class ShopPromoServiceTest {
 
     @TempDir
     Path dir;
 
-    private static final List<String> POOL = List.of("DIRT", "STONE", "SAND", "COAL", "WHEAT");
+    private static final List<String> POOL = List.of(
+            "DIRT", "STONE", "SAND", "COAL", "WHEAT", "GRAVEL", "REDSTONE",
+            "OAK_LOG", "IRON_INGOT", "GOLD_INGOT", "SPRUCE_LOG", "RAW_IRON", "COBBLESTONE");
     private static final UUID STEVE = UUID.fromString("22222222-2222-2222-2222-222222222222");
 
     private ShopPromoConfig.Settings settings() {
-        return new ShopPromoConfig.Settings(true, POOL, 3, 25, 64, 12, 3, 16, 32, 128);
+        return new ShopPromoConfig.Settings(true, POOL, 5, 50, 64, 0, 3, 0, 1000, 5000);
     }
 
     private ShopPromoService service(ShopPromoConfig.Settings settings) {
@@ -30,92 +32,63 @@ class ShopPromoServiceTest {
         return new ShopPromoService(settings, store);
     }
 
-    private long nowFor(ShopPromoMath.Type type) {
-        for (long day = 1; day < 500; day++) {
-            if (ShopPromoMath.typeFor(day) == type) {
-                return day * ShopPromoMath.DAY_MILLIS + 1000L;
-            }
-        }
-        throw new IllegalStateException("type not found");
-    }
-
     private ShopConfig.ShopItem item(String material, boolean sellEnabled) {
         return new ShopConfig.ShopItem(material, "blocks", 0.05, 20000, 0.5, 2.0, sellEnabled);
     }
 
     @Test
-    void hotBuybackPaysPercentButNeverAboveThePurchasePrice() {
+    void hotBuybackPaysFiftyPercentButNeverAbovePurchasePrice() {
         ShopPromoService promos = service(settings());
-        long now = nowFor(ShopPromoMath.Type.HOT_BUYBACK);
+        long now = ShopPromoMath.DAY_MILLIS + 1000;
         assertEquals(ShopPromoMath.Type.HOT_BUYBACK, promos.plan(now).type());
+        assertEquals(5, promos.plan(now).featured().size());
         ShopConfig.ShopItem featured = item(promos.plan(now).featured().get(0), true);
 
-        assertEquals(25, promos.quote(STEVE, featured, 100, 200, 64, 1000, now).amount());
-        assertEquals(0, promos.quote(STEVE, featured, 100, 100, 64, 1000, now).amount(),
-                "выплата не может сравняться с ценой покупки и дать арбитраж");
+        assertEquals(50, promos.quote(STEVE, featured, 100, 200, 64, 1000, now).amount());
+        assertEquals(0, promos.quote(STEVE, featured, 100, 100, 64, 1000, now).amount());
         assertEquals(0, promos.quote(STEVE, item("NOT_IN_POOL", true), 100, 200, 64, 1000, now).amount());
-        assertEquals(0, promos.quote(STEVE, featured, 100, 200, 64, 0, now).amount(),
-                "нет места в дневном обороте — бонуса нет");
+        assertEquals(0, promos.quote(STEVE, featured, 100, 200, 64, 0, now).amount());
         assertEquals(0, promos.quote(STEVE, item(featured.material(), false), 100, 200, 64, 1000, now).amount());
     }
 
     @Test
-    void dailyPlayerCapIsEnforcedAcrossTrades() {
+    void fiveNewResourcesAppearAfterSixHours() {
         ShopPromoService promos = service(settings());
-        long now = nowFor(ShopPromoMath.Type.HOT_BUYBACK);
+        long now = ShopPromoMath.DAY_MILLIS + 1000;
+        var current = promos.plan(now).featured();
+        var next = promos.plan(now + ShopPromoMath.WINDOW_MILLIS).featured();
+        assertEquals(5, next.size());
+        assertTrue(current.stream().noneMatch(next::contains));
+        assertEquals(0, promos.quote(STEVE, item(current.get(0), true), 100, 200,
+                64, 1000, now + ShopPromoMath.WINDOW_MILLIS).amount());
+        assertEquals(50, promos.quote(STEVE, item(next.get(0), true), 100, 200,
+                64, 1000, now + ShopPromoMath.WINDOW_MILLIS).amount());
+    }
+
+    @Test
+    void dailyPlayerCapSurvivesWindowChangesAndResetsOnlyNextUtcDay() {
+        ShopPromoService promos = service(settings());
+        long now = ShopPromoMath.DAY_MILLIS + 1000;
         ShopConfig.ShopItem featured = item(promos.plan(now).featured().get(0), true);
-        assertEquals(12800, promos.remaining(STEVE, now));
+        assertEquals(500000, promos.remaining(STEVE, now));
 
-        // 25 % от 200 = 50, но потолок на сделку режет до 32.
         var first = promos.quote(STEVE, featured, 20000, 100000, 64, 100000, now);
-        assertEquals(3200, first.amount(), "срабатывает потолок на сделку");
+        assertEquals(100000, first.amount(), "потолок тестовой сделки 1000 ⛁");
         promos.record(STEVE, featured.material(), 64, first, now);
-        assertEquals(9600, promos.remaining(STEVE, now));
+        assertEquals(400000, promos.remaining(STEVE, now));
+        promos.record(STEVE, featured.material(), 1, new ShopPromoService.Bonus(400000, false, false), now);
 
-        // Исчерпываем суточный лимит бонуса и убеждаемся, что дальше акция молчит.
-        promos.record(STEVE, featured.material(), 1, new ShopPromoService.Bonus(9600, false, false), now);
-        assertEquals(0, promos.remaining(STEVE, now));
-        assertEquals(0, promos.quote(STEVE, featured, 100, 1000, 64, 1000, now).amount());
-    }
-
-    @Test
-    void contractPaysOnceOnlyForTargetAndRequiredVolume() {
-        ShopPromoService promos = service(settings());
-        long now = nowFor(ShopPromoMath.Type.CONTRACT);
-        List<String> featured = promos.plan(now).featured();
-        ShopConfig.ShopItem target = item(featured.get(0), true);
-
-        assertEquals(0, promos.quote(STEVE, target, 100, 1000, 1, 1000, now).amount());
-        assertEquals(0, promos.quote(STEVE, item(featured.get(1), true), 100, 1000, 64, 1000, now).amount());
-        var bonus = promos.quote(STEVE, target, 100, 2000, 64, 2000, now);
-        assertEquals(1200, bonus.amount());
-        assertTrue(bonus.contractPaid());
-        promos.record(STEVE, target.material(), 64, bonus, now);
-        assertEquals(0, promos.quote(STEVE, target, 100, 2000, 64, 2000, now).amount(),
-                "разовая награда за заказ не повторяется");
-    }
-
-    @Test
-    void seriesNeedsSeveralDifferentFeaturedGoods() {
-        ShopPromoService promos = service(settings());
-        long now = nowFor(ShopPromoMath.Type.SERIES);
-        List<String> featured = promos.plan(now).featured();
-        assertEquals(0, promos.quote(STEVE, item(featured.get(0), true), 100, 1000, 16, 1000, now).amount());
-
-        // Две разные сдачи того же дня фиксируются без бонуса.
-        promos.record(STEVE, featured.get(0), 16, ShopPromoService.Bonus.none(), now);
-        promos.record(STEVE, featured.get(1), 16, ShopPromoService.Bonus.none(), now);
-        var bonus = promos.quote(STEVE, item(featured.get(2), true), 100, 2000, 16, 2000, now);
-        assertEquals(1600, bonus.amount());
-        assertTrue(bonus.seriesPaid());
-        promos.record(STEVE, featured.get(2), 16, bonus, now);
-        assertEquals(0, promos.quote(STEVE, item(featured.get(0), true), 100, 1000, 16, 1000, now).amount());
+        long nextWindow = now + ShopPromoMath.WINDOW_MILLIS;
+        assertEquals(0, promos.remaining(STEVE, nextWindow));
+        assertEquals(0, promos.quote(STEVE, item(promos.plan(nextWindow).featured().get(0), true),
+                100, 1000, 64, 1000, nextWindow).amount());
+        assertEquals(500000, promos.remaining(STEVE, now + ShopPromoMath.DAY_MILLIS));
     }
 
     @Test
     void disabledSettingsNeverPay() {
         ShopPromoService promos = service(ShopPromoConfig.Settings.disabled());
-        long now = nowFor(ShopPromoMath.Type.HOT_BUYBACK);
+        long now = ShopPromoMath.DAY_MILLIS + 1000;
         assertFalse(promos.enabled());
         assertEquals(0, promos.remaining(STEVE, now));
         assertEquals(0, promos.quote(STEVE, item("DIRT", true), 100, 1000, 64, 1000, now).amount());

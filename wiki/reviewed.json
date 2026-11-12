@@ -36,8 +36,8 @@
       "text": "503edef62357862f67d17df249b393023697d6dca6342cbe792b0d4dc78cb8cc"
     },
     "commands": {
-      "reason": "2.0.2-rc.3 DiamondShop: переходы разделов и книг используют стабильный InventoryHolder; постороннее меню не перекрывается",
-      "sources": "0463bf0d2fd5dcf77e3ddf4424cbecc838a7b76a5e5e2d64b3233d607170470a",
+      "reason": "2.0.2-rc.4 DiamondShop: ежедневная горячая скупка 5 ресурсов, окна 6 часов, +50%, суточный лимит 5000 и legacy-миграция проверены",
+      "sources": "33d5459b56dfd703cf01751bf15317a94a5e393882e4163e156ee4ee23bf0bc0",
       "text": "46017ca1aca3a1d620ff09b3ffd40ff42885e551a850c85baa15f2c73d03b290"
     },
     "cosmetics": {
@@ -56,8 +56,8 @@
       "text": "121b1cc28a075ced29b6de8abec7dbc20bbb531a01441ddd5fdb836d066d0202"
     },
     "economy": {
-      "reason": "2.0.2-rc.3 DiamondShop: переходы разделов и книг используют стабильный InventoryHolder; постороннее меню не перекрывается",
-      "sources": "39d41d623e3ad42092662f0c6ffe37d1ccb3f3df39bfebed07d4d393c03458a5",
+      "reason": "2.0.2-rc.4 DiamondShop: ежедневная горячая скупка 5 ресурсов, окна 6 часов, +50%, суточный лимит 5000 и legacy-миграция проверены",
+      "sources": "e36824c3e7166a4850f65d81299489a19abae9e3cbfcd897db1ab2b00b0221b4",
       "text": "95603b3cf3e787bf93015bc3b09a7d358ec10a3c9297426003539929db15bd69"
     },
     "enchants": {
@@ -66,8 +66,8 @@
       "text": "7e90321ef8a100bae11c53592c62328fa44a958be657b66a86d51ea8c1906a7d"
     },
     "faq": {
-      "reason": "2.0.2-rc.3 DiamondShop: переходы разделов и книг используют стабильный InventoryHolder; постороннее меню не перекрывается",
-      "sources": "54f21c4e91d9b38b2a1dc0244ba993fda2ef9bb7747f7a0ccf8ef17d50eb45f0",
+      "reason": "2.0.2-rc.4 DiamondShop: ежедневная горячая скупка 5 ресурсов, окна 6 часов, +50%, суточный лимит 5000 и legacy-миграция проверены",
+      "sources": "cccf7724086af1f70af73a1aaf40e7ad77e834dbc286d3bd39bb75ea910266ce",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
@@ -86,13 +86,13 @@
       "text": "17c878e1ab52ceb2a7c3361a7bef133c8bd1004a59641898f2c525f7c48fff8f"
     },
     "index": {
-      "reason": "2.0.2-rc.3 DiamondShop: переходы разделов и книг используют стабильный InventoryHolder; постороннее меню не перекрывается",
-      "sources": "fa15e20b3c053e4c9366477ded15de6e0f02387ae2f19ab78246419d9dd17a4a",
+      "reason": "2.0.2-rc.4 DiamondShop: ежедневная горячая скупка 5 ресурсов, окна 6 часов, +50%, суточный лимит 5000 и legacy-миграция проверены",
+      "sources": "2b141d6878b0eca5aee90fb5210433ce5dc2a60f5082b29c58795ffceb38de94",
       "text": "13b0089b89035cd13598d177608718282608bc671993a3c370012b297c779cd7"
     },
     "menu": {
-      "reason": "2.0.2-rc.3 DiamondShop: переходы разделов и книг используют стабильный InventoryHolder; постороннее меню не перекрывается",
-      "sources": "54f21c4e91d9b38b2a1dc0244ba993fda2ef9bb7747f7a0ccf8ef17d50eb45f0",
+      "reason": "2.0.2-rc.4 DiamondShop: ежедневная горячая скупка 5 ресурсов, окна 6 часов, +50%, суточный лимит 5000 и legacy-миграция проверены",
+      "sources": "cccf7724086af1f70af73a1aaf40e7ad77e834dbc286d3bd39bb75ea910266ce",
       "text": "eb6fdaf663b2005735002c5f23bb7f751b31a7447b3fc2cc77d741ff7c4cb2f9"
     },
     "moderation": {
@@ -131,9 +131,9 @@
       "text": "664b466e4b44741175d9c2cdb4da728a0603a04aaaefada8396dd6517d5dca2d"
     },
     "shop": {
-      "reason": "2.0.2-rc.3 DiamondShop: переходы разделов и книг используют стабильный InventoryHolder; постороннее меню не перекрывается",
-      "sources": "fa15e20b3c053e4c9366477ded15de6e0f02387ae2f19ab78246419d9dd17a4a",
-      "text": "c28f429d342f4c030938b22adaee5cb0792a5c93c7c5f107416537f2c9300a20"
+      "reason": "2.0.2-rc.4 DiamondShop: ежедневная горячая скупка 5 ресурсов, окна 6 часов, +50%, суточный лимит 5000 и legacy-миграция проверены",
+      "sources": "2b141d6878b0eca5aee90fb5210433ce5dc2a60f5082b29c58795ffceb38de94",
+      "text": "17fbfc828a9338f60a92eefed0c7d7e8951fb99700e0728ea385ea64e4bbc6d3"
     },
     "skills": {
       "reason": "2.0.2-rc.1 DiamondShop: отдельная витрина десяти зелий, навигация и границы слотов проверены; остальные модули не изменены",
@@ -171,9 +171,9 @@
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "2.0.2-rc.3 DiamondShop: переходы разделов и книг используют стабильный InventoryHolder; постороннее меню не перекрывается",
-      "sources": "fa15e20b3c053e4c9366477ded15de6e0f02387ae2f19ab78246419d9dd17a4a",
-      "text": "dc9c4f9bbbaf5d57a345d176a7890b7282d2f30719652fcae7c0b4503d0fc77c"
+      "reason": "2.0.2-rc.4 DiamondShop: ежедневная горячая скупка 5 ресурсов, окна 6 часов, +50%, суточный лимит 5000 и legacy-миграция проверены",
+      "sources": "2b141d6878b0eca5aee90fb5210433ce5dc2a60f5082b29c58795ffceb38de94",
+      "text": "5f9cff8dc25d31eace768460bb15043d76c07829430b36fa100abb2becff6c40"
     },
     "vk": {
       "reason": "2.0.2-rc.1 DiamondShop: отдельная витрина десяти зелий, навигация и границы слотов проверены; остальные модули не изменены",

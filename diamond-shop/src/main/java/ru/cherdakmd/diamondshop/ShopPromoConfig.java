@@ -39,7 +39,7 @@ final class ShopPromoConfig {
     }
 
     static Settings defaults() {
-        return new Settings(true, DEFAULT_POOL, 3, 25, 64, 12, 3, 16, 32, 128);
+        return new Settings(true, DEFAULT_POOL, 5, 50, 64, 0, 3, 0, 5000, 5000);
     }
 
     static Settings from(FileConfiguration config, ShopConfig.ShopConfigData catalog, Logger logger) {
@@ -52,17 +52,20 @@ final class ShopPromoConfig {
             return fit(defaults(), catalog, logger);
         }
         Settings base = defaults();
+        // Старый production-блок без rotation-schema не может сохранить режим 3/день/128.
+        boolean modern = section.getInt("rotation-schema", 1) >= 2;
         Settings raw = new Settings(
                 section.getBoolean("enabled", base.enabled()),
                 strings(section, "pool", base.pool()),
-                clampInt(section.getInt("featured-per-day", base.featuredCount()), 1, 10),
-                clampInt(section.getInt("hot-buyback-percent", base.hotBuybackPercent()), 0, 100),
-                clampLong(section.getLong("contract-units", base.contractUnits()), 1, 2304),
-                clampLong(section.getLong("contract-reward", base.contractReward()), 0, 10000),
-                clampInt(section.getInt("series-kinds", base.seriesKinds()), 2, 10),
-                clampLong(section.getLong("series-reward", base.seriesReward()), 0, 10000),
-                clampLong(section.getLong("max-bonus-per-trade", base.maxBonusPerTrade()), 0, 10000),
-                clampLong(section.getLong("max-bonus-per-player-per-day", base.maxBonusPerPlayerPerDay()), 0, 100000));
+                clampInt(modern ? section.getInt("featured-per-window", base.featuredCount())
+                        : base.featuredCount(), 1, 10),
+                clampInt(modern ? section.getInt("hot-buyback-percent", base.hotBuybackPercent())
+                        : base.hotBuybackPercent(), 0, 100),
+                64, 0, 3, 0,
+                clampLong(modern ? section.getLong("max-bonus-per-trade", base.maxBonusPerTrade())
+                        : base.maxBonusPerTrade(), 0, 10000),
+                clampLong(modern ? section.getLong("max-bonus-per-player-per-day", base.maxBonusPerPlayerPerDay())
+                        : base.maxBonusPerPlayerPerDay(), 0, 100000));
         return fit(raw, catalog, logger);
     }
 

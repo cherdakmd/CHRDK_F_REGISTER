@@ -3,7 +3,7 @@ package ru.cherdakmd.diamondshop;
 import java.util.UUID;
 
 /**
- * Три ежедневных способа заработать алмазы в /shop, чередующиеся по суткам UTC.
+ * Ежедневная горячая скупка пяти ресурсов; набор меняется каждые шесть часов UTC.
  *
  * <p>Бонус всегда вычисляется ДО коммита сделки и добавляется к её выплате,
  * а не выдаётся отдельным переводом: WAL, {@link ShopJournal}, дневной оборот
@@ -36,8 +36,9 @@ final class ShopPromoService {
 
     ShopPromoMath.Plan plan(long nowMillis) {
         long day = ShopPromoMath.dayIndex(nowMillis);
-        return new ShopPromoMath.Plan(ShopPromoMath.typeFor(day), day,
-                ShopPromoMath.featured(settings.pool(), settings.featuredCount(), day));
+        long window = ShopPromoMath.windowIndex(nowMillis);
+        return new ShopPromoMath.Plan(ShopPromoMath.Type.HOT_BUYBACK, day,
+                ShopPromoMath.featured(settings.pool(), settings.featuredCount(), window));
     }
 
     String typeLabel(long nowMillis) { return plan(nowMillis).type().label(); }
@@ -77,45 +78,17 @@ final class ShopPromoService {
             return Bonus.none();
         }
         String material = item.material();
-        long desired;
-        boolean contractPaid = false, seriesPaid = false;
-        switch (plan.type()) {
-            case HOT_BUYBACK -> {
-                if (!plan.featured().contains(material)) {
-                    return Bonus.none();
-                }
-                desired = ShopPromoMath.percentOf(baseMoney, settings.hotBuybackPercent());
-            }
-            case CONTRACT -> {
-                if (progress.contractPaid() || !material.equals(plan.featured().get(0))) {
-                    return Bonus.none();
-                }
-                if (progress.soldOf(material) + units < settings.contractUnits()) {
-                    return Bonus.none();
-                }
-                desired = settings.contractReward()*100L;
-                contractPaid = true;
-            }
-            case SERIES -> {
-                if (progress.seriesPaid() || !plan.featured().contains(material)) {
-                    return Bonus.none();
-                }
-                int distinct = progress.distinct() + (progress.kinds().contains(material) ? 0 : 1);
-                if (distinct < settings.seriesKinds()) {
-                    return Bonus.none();
-                }
-                desired = settings.seriesReward()*100L;
-                seriesPaid = true;
-            }
-            default -> { return Bonus.none(); }
+        if (!plan.featured().contains(material)) {
+            return Bonus.none();
         }
+        long desired = ShopPromoMath.percentOf(baseMoney, settings.hotBuybackPercent());
         long noArbitrage = Math.max(0, askTotal - baseMoney);
         long amount = ShopPromoMath.cap(desired, noArbitrage, settings.maxBonusPerTrade()*100L,
                 dailyLeft, turnoverHeadroom);
         if (amount <= 0) {
             return Bonus.none();
         }
-        return new Bonus(amount, contractPaid, seriesPaid);
+        return new Bonus(amount, false, false);
     }
 
     /**
