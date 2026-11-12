@@ -1,6 +1,6 @@
 name: General RC announcement (VK chat)
 
-# Анонс ОБЩЕГО пререлиза комплекта (v1.*-rc.*) в беседу ВКонтакте.
+# Анонс ОБЩЕГО пререлиза комплекта (v*-rc.*) в беседу ВКонтакте.
 # Триггер — push тега: workflow берётся из самого тега, поэтому не требует
 # добавления файла в main. Стабильные релизы сюда не попадают; для RC без
 # подготовленной заметки docs/social/prereleases/<version>.json job тихо
@@ -11,7 +11,7 @@ name: General RC announcement (VK chat)
 # отклоняет prerelease — этот контур отдельный и явно включаемый.
 on:
   push:
-    tags: ['v1.*-rc.*']
+    tags: ['v*-rc.*']
 
 permissions:
   contents: read

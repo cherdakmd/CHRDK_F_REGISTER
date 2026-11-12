@@ -18,7 +18,7 @@ jobs:
     name: Verify and package plugins
     # Самостоятельные релизы датапаков не являются релизами плагинов.
     # Ручной запуск собирает те же ассеты, но ничего не публикует в Release.
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.release.tag_name, 'v1.')
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.release.tag_name, 'v')
     runs-on: ubuntu-latest
     steps:
       - name: Check out tagged or candidate source
