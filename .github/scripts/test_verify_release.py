@@ -140,6 +140,14 @@ class ReleaseWorkflowContractTest(unittest.TestCase):
             self.assertEqual(len(set(rows)), expected)
             self.assertEqual(len(rows), expected)
 
+    def test_release_and_prerelease_triggers_are_not_limited_to_major_one(self):
+        root = Path(__file__).resolve().parents[2]
+        release = (root / ".github/workflows/release.yml").read_text()
+        prerelease = (root / ".github/workflows/prerelease-announce.yml").read_text()
+        self.assertIn("startsWith(github.event.release.tag_name, 'v')", release)
+        self.assertNotIn("startsWith(github.event.release.tag_name, 'v1.')", release)
+        self.assertIn("tags: ['v*-rc.*']", prerelease)
+
     def test_memo_is_external_so_run_step_stays_below_github_limit(self):
         root = Path(__file__).resolve().parents[2]
         source = (root / ".github/workflows/release.yml").read_text()
