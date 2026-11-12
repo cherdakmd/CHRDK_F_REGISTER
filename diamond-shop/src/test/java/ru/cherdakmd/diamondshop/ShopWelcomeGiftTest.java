@@ -21,11 +21,12 @@ class ShopWelcomeGiftTest {
         final Map<UUID,Long> balances=new HashMap<>();
         final Map<UUID,Long> receipts=new HashMap<>();
         boolean available=true;
+        boolean creditAllowed=true;
         int calls;
         public boolean available(UUID market){return available&&MARKET.equals(market);}
         public boolean credit(UUID market,UUID player,String key,long amount) {
             calls++;
-            if(!available(market)||!ShopWelcomeGift.RECEIPT_KEY.equals(key))return false;
+            if(!available(market)||!creditAllowed||!ShopWelcomeGift.RECEIPT_KEY.equals(key))return false;
             long previous=receipts.getOrDefault(player,0L);
             if(previous>amount)return false;
             receipts.put(player,amount);
@@ -49,11 +50,11 @@ class ShopWelcomeGiftTest {
 
     @Test
     void failedBankRetryCompletesSameDurableObligation() {
-        Bank bank=new Bank(); bank.available=false;
+        Bank bank=new Bank(); bank.creditAllowed=false;
         ShopWelcomeGift first=gift();
         assertEquals(ShopWelcomeGift.Status.UNAVAILABLE,first.claim(STEVE,MARKET,bank));
-        assertTrue(first.claimed(STEVE),"обязательство сохранено до денежного вызова");
-        bank.available=true;
+        assertTrue(first.claimed(STEVE),"обязательство сохранено до неуспешного денежного вызова");
+        bank.creditAllowed=true;
         ShopWelcomeGift restarted=gift();
         assertEquals(ShopWelcomeGift.Status.ALREADY,restarted.claim(STEVE,MARKET,bank));
         assertEquals(10000,bank.balances.get(STEVE));
