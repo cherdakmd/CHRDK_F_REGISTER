@@ -85,13 +85,19 @@ class ReleaseValidationTest(unittest.TestCase):
         # только в следующий комплект, поэтому историческую памятку не трогаем.
         # После bump plugin_version эта оговорка перестаёт действовать и тест
         # снова требует полный набор модулей из settings.gradle.
-        published_kits = {"1.5.2-rc.2": 22}
-        jars = published_kits.get(version, len(expected_plugins(root)))
-        self.assertIn(f"{jars} JAR одной версии", current)
-        self.assertIn("CHRDK_Queue", current)
-        self.assertIn("plugins/update/", current)
-        self.assertIn("вручную", current)
-        self.assertIn(f"chrdk-vk-{version}.jar", current)
+        module_prereleases = {"2.0.2-rc.1": "chrdk-diamond-shop"}
+        if version in module_prereleases:
+            self.assertIn(f"только {module_prereleases[version]}-{version}.jar", current)
+            self.assertIn("Общего ZIP нет", current)
+            self.assertIn("остальные плагины остаются 2.0.1", current)
+        else:
+            published_kits = {"1.5.2-rc.2": 22}
+            jars = published_kits.get(version, len(expected_plugins(root)))
+            self.assertIn(f"{jars} JAR одной версии", current)
+            self.assertIn("CHRDK_Queue", current)
+            self.assertIn("plugins/update/", current)
+            self.assertIn("вручную", current)
+            self.assertIn(f"chrdk-vk-{version}.jar", current)
 
     def test_numbered_rc_archive_is_valid_but_arbitrary_suffixes_are_not(self):
         self.jar("core.jar", version="1.4.281-rc.1")

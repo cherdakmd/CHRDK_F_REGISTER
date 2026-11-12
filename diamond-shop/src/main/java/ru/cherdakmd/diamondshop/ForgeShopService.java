@@ -65,7 +65,19 @@ final class ForgeShopService {
         }
     }
 
-    /** 8 SKU; закрытая цена, отключённая операция или отсутствующий производитель — не продаём. */
+    static boolean isPotionSku(String sku) {
+        return sku != null && sku.startsWith("skill_xp_");
+    }
+
+    List<Offer> forgeOffers(Player player) {
+        return offers(player).stream().filter(offer -> !isPotionSku(offer.sku())).toList();
+    }
+
+    List<Offer> potionOffers(Player player) {
+        return offers(player).stream().filter(offer -> isPotionSku(offer.sku())).toList();
+    }
+
+    /** Полный каталог для проверки котировки/recovery; витрины разделяют его по типу SKU. */
     List<Offer> offers(Player player) {
         List<Offer> offers = new ArrayList<>();
         if (!prices.enabled()) return offers;

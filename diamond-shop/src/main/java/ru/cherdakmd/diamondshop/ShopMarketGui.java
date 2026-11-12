@@ -48,6 +48,7 @@ public final class ShopMarketGui implements Listener {
         }
         inventory.setItem(HOME_ALL,button(Material.CHEST,"market.home.all",List.of(plugin.messages().get("market.home.all-lore"))));
         inventory.setItem(ShopLayout.SLOT_FORGE,button(Material.ANVIL,"market.home.forge",List.of(plugin.messages().get("market.home.forge-lore"))));
+        inventory.setItem(ShopLayout.SLOT_NEXT,button(Material.POTION,"market.home.potions",List.of(plugin.messages().get("market.home.potions-lore"))));
         inventory.setItem(HOME_SELL_ALL,button(Material.HOPPER,"market.home.sellall",List.of(plugin.messages().get("market.home.sellall-lore"))));
         inventory.setItem(ShopLayout.SLOT_BALANCE,balanceIcon(player));
         inventory.setItem(HOME_GUIDE,button(Material.KNOWLEDGE_BOOK,"market.home.guide",List.of(
@@ -163,6 +164,7 @@ public final class ShopMarketGui implements Listener {
         if(slot==ShopAdminGui.SHOP_EDIT_SLOT){if(player.hasPermission("chrdkshop.admin")&&plugin.shopAdminGui()!=null)plugin.shopAdminGui().open(player,0);return;}
         if(slot==ShopLayout.SLOT_FORGE){plugin.forgeShopGui().open(player);return;}
         if(holder.home) {
+            if(slot==ShopLayout.SLOT_NEXT){plugin.potionShopGui().open(player);return;}
             List<ShopCategory> sections=ShopCatalog.tabs(plugin.shopService().config().items()).stream().filter(c->c!=ShopCategory.ALL).toList();
             for(int i=0;i<sections.size()&&i<HOME_SECTIONS.length;i++)if(slot==HOME_SECTIONS[i]){reopen(player,sections.get(i),0);return;}
             if(slot==HOME_ALL){reopen(player,ShopCategory.ALL,0);return;}
