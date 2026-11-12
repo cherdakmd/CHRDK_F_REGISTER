@@ -36,8 +36,8 @@
       "text": "503edef62357862f67d17df249b393023697d6dca6342cbe792b0d4dc78cb8cc"
     },
     "commands": {
-      "reason": "2.0.2-rc.4 DiamondShop: ежедневная горячая скупка 5 ресурсов, окна 6 часов, +50%, суточный лимит 5000 и legacy-миграция проверены",
-      "sources": "33d5459b56dfd703cf01751bf15317a94a5e393882e4163e156ee4ee23bf0bc0",
+      "reason": "2.0.2-rc.5 DiamondShop: durable-резерв бонуса до WAL, откат только непринятой сделки и сохранение резерва при recovery проверены",
+      "sources": "ba4f81d6dcbcf41c4fc4f29a3b30ab33d987737a44dc38f435cf22cf22547f0c",
       "text": "46017ca1aca3a1d620ff09b3ffd40ff42885e551a850c85baa15f2c73d03b290"
     },
     "cosmetics": {
@@ -56,8 +56,8 @@
       "text": "121b1cc28a075ced29b6de8abec7dbc20bbb531a01441ddd5fdb836d066d0202"
     },
     "economy": {
-      "reason": "2.0.2-rc.4 DiamondShop: ежедневная горячая скупка 5 ресурсов, окна 6 часов, +50%, суточный лимит 5000 и legacy-миграция проверены",
-      "sources": "e36824c3e7166a4850f65d81299489a19abae9e3cbfcd897db1ab2b00b0221b4",
+      "reason": "2.0.2-rc.5 DiamondShop: durable-резерв бонуса до WAL, откат только непринятой сделки и сохранение резерва при recovery проверены",
+      "sources": "1f586b5d8bfb3b18a90b59c309de2512a2a40b48e16cc2cdde48bd58bb5f3b3e",
       "text": "95603b3cf3e787bf93015bc3b09a7d358ec10a3c9297426003539929db15bd69"
     },
     "enchants": {
@@ -66,8 +66,8 @@
       "text": "7e90321ef8a100bae11c53592c62328fa44a958be657b66a86d51ea8c1906a7d"
     },
     "faq": {
-      "reason": "2.0.2-rc.4 DiamondShop: ежедневная горячая скупка 5 ресурсов, окна 6 часов, +50%, суточный лимит 5000 и legacy-миграция проверены",
-      "sources": "cccf7724086af1f70af73a1aaf40e7ad77e834dbc286d3bd39bb75ea910266ce",
+      "reason": "2.0.2-rc.5 DiamondShop: durable-резерв бонуса до WAL, откат только непринятой сделки и сохранение резерва при recovery проверены",
+      "sources": "b4f907c5464c2496f1aaed1b6415e7e067571c6884b8337255004de722ef1712",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
@@ -86,13 +86,13 @@
       "text": "17c878e1ab52ceb2a7c3361a7bef133c8bd1004a59641898f2c525f7c48fff8f"
     },
     "index": {
-      "reason": "2.0.2-rc.4 DiamondShop: ежедневная горячая скупка 5 ресурсов, окна 6 часов, +50%, суточный лимит 5000 и legacy-миграция проверены",
-      "sources": "2b141d6878b0eca5aee90fb5210433ce5dc2a60f5082b29c58795ffceb38de94",
+      "reason": "2.0.2-rc.5 DiamondShop: durable-резерв бонуса до WAL, откат только непринятой сделки и сохранение резерва при recovery проверены",
+      "sources": "5c2964e9582b3b9c0567901bfb8c64d7a9bd1074a9475c81cbbdbd26de0e1807",
       "text": "13b0089b89035cd13598d177608718282608bc671993a3c370012b297c779cd7"
     },
     "menu": {
-      "reason": "2.0.2-rc.4 DiamondShop: ежедневная горячая скупка 5 ресурсов, окна 6 часов, +50%, суточный лимит 5000 и legacy-миграция проверены",
-      "sources": "cccf7724086af1f70af73a1aaf40e7ad77e834dbc286d3bd39bb75ea910266ce",
+      "reason": "2.0.2-rc.5 DiamondShop: durable-резерв бонуса до WAL, откат только непринятой сделки и сохранение резерва при recovery проверены",
+      "sources": "b4f907c5464c2496f1aaed1b6415e7e067571c6884b8337255004de722ef1712",
       "text": "eb6fdaf663b2005735002c5f23bb7f751b31a7447b3fc2cc77d741ff7c4cb2f9"
     },
     "moderation": {
@@ -131,8 +131,8 @@
       "text": "664b466e4b44741175d9c2cdb4da728a0603a04aaaefada8396dd6517d5dca2d"
     },
     "shop": {
-      "reason": "2.0.2-rc.4 DiamondShop: ежедневная горячая скупка 5 ресурсов, окна 6 часов, +50%, суточный лимит 5000 и legacy-миграция проверены",
-      "sources": "2b141d6878b0eca5aee90fb5210433ce5dc2a60f5082b29c58795ffceb38de94",
+      "reason": "2.0.2-rc.5 DiamondShop: durable-резерв бонуса до WAL, откат только непринятой сделки и сохранение резерва при recovery проверены",
+      "sources": "5c2964e9582b3b9c0567901bfb8c64d7a9bd1074a9475c81cbbdbd26de0e1807",
       "text": "17fbfc828a9338f60a92eefed0c7d7e8951fb99700e0728ea385ea64e4bbc6d3"
     },
     "skills": {
@@ -171,9 +171,9 @@
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "2.0.2-rc.4 DiamondShop: ежедневная горячая скупка 5 ресурсов, окна 6 часов, +50%, суточный лимит 5000 и legacy-миграция проверены",
-      "sources": "2b141d6878b0eca5aee90fb5210433ce5dc2a60f5082b29c58795ffceb38de94",
-      "text": "5f9cff8dc25d31eace768460bb15043d76c07829430b36fa100abb2becff6c40"
+      "reason": "2.0.2-rc.5 DiamondShop: durable-резерв бонуса до WAL, откат только непринятой сделки и сохранение резерва при recovery проверены",
+      "sources": "5c2964e9582b3b9c0567901bfb8c64d7a9bd1074a9475c81cbbdbd26de0e1807",
+      "text": "7efb29a84c260c8357c6eda13476a46129181a003b1f6956e4d2876878733685"
     },
     "vk": {
       "reason": "2.0.2-rc.1 DiamondShop: отдельная витрина десяти зелий, навигация и границы слотов проверены; остальные модули не изменены",
