@@ -41,12 +41,12 @@ final class DiamondShopSchemaV3Test {
 
     private static ConfigSchemaEngine.Spec configSpec() {
         return new ConfigSchemaEngine.Spec("config.yml", CONFIG_MARKER,
-                ConfigSchemaEngine.MarkerMode.KEY, 3, Map.of());
+                ConfigSchemaEngine.MarkerMode.KEY, 4, Map.of());
     }
 
     private static ConfigSchemaEngine.Spec messagesSpec() {
         return new ConfigSchemaEngine.Spec("messages.yml", MESSAGES_MARKER,
-                ConfigSchemaEngine.MarkerMode.COMMENT, 3, Map.of());
+                ConfigSchemaEngine.MarkerMode.COMMENT, 4, Map.of());
     }
 
     /** Убирает только корневую секцию promotions:, сохраняя соседние разделы. */
@@ -102,10 +102,10 @@ final class DiamondShopSchemaV3Test {
     @Test
     void schemaDeclaresV3ForBothFiles() throws IOException {
         YamlConfiguration schema = yaml(read("config-schema.yml"));
-        assertEquals(3, schema.getInt(CONFIG_MARKER),
-                "config.yml владельца v2 должен получить новый блок promotions:");
-        assertEquals(3, schema.getInt(MESSAGES_MARKER),
-                "messages.yml владельца v2 должен получить три новых текста");
+        assertEquals(4, schema.getInt(CONFIG_MARKER),
+                "актуальная схема включает promotions и welcome-gift");
+        assertEquals(4, schema.getInt(MESSAGES_MARKER),
+                "актуальная схема включает тексты акций и подарка");
     }
 
     @Test
@@ -116,7 +116,7 @@ final class DiamondShopSchemaV3Test {
         ConfigSchemaEngine.Result result = ConfigSchemaEngine.apply(reference, owner, configSpec());
 
         assertTrue(result.changed(), "переход v2 → v3 обязан дописать новый раздел");
-        assertTrue(result.text().contains(CONFIG_MARKER + ": 3"));
+        assertTrue(result.text().contains(CONFIG_MARKER + ": 4"));
         assertTrue(result.text().contains("owner-note: \"моя правка\""));
         assertTrue(result.text().contains("Ежедневная горячая скупка"),
                 "комментарии эталона переносятся вместе с блоком");
@@ -132,6 +132,8 @@ final class DiamondShopSchemaV3Test {
         assertEquals(50, live.getInt("promotions.hot-buyback-percent"));
         assertEquals(5000, live.getInt("promotions.max-bonus-per-trade"));
         assertEquals(5000, live.getInt("promotions.max-bonus-per-player-per-day"));
+        assertTrue(live.getBoolean("welcome-gift.enabled"));
+        assertEquals(10000, live.getInt("welcome-gift.amount"));
         // Каталог магазина — СПИСОК из 248 записей, а не секция YAML.
         List<?> items = live.getList("items");
         assertNotNull(items, "каталог владельца остался на месте");
@@ -162,7 +164,7 @@ final class DiamondShopSchemaV3Test {
         ConfigSchemaEngine.Result result = ConfigSchemaEngine.apply(reference, owner, messagesSpec());
 
         assertTrue(result.changed());
-        assertTrue(result.text().startsWith("# " + MESSAGES_MARKER + ": 3"));
+        assertTrue(result.text().startsWith("# " + MESSAGES_MARKER + ": 4"));
         YamlConfiguration live = yaml(result.text());
         assertEquals(Set.of("messages"), new HashSet<>(live.getKeys(false)),
                 "маркер остаётся комментарием, новый корневой ключ не появляется");

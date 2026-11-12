@@ -85,7 +85,7 @@ class ReleaseValidationTest(unittest.TestCase):
         # только в следующий комплект, поэтому историческую памятку не трогаем.
         # После bump plugin_version эта оговорка перестаёт действовать и тест
         # снова требует полный набор модулей из settings.gradle.
-        module_prereleases = {f"2.0.2-rc.{number}": "chrdk-diamond-shop" for number in (1, 2, 3, 4, 5)}
+        module_prereleases = {f"2.0.2-rc.{number}": "chrdk-diamond-shop" for number in (1, 2, 3, 4, 5, 6)}
         if version in module_prereleases:
             self.assertIn(f"только {module_prereleases[version]}-{version}.jar", current)
             self.assertIn("Общего ZIP нет", current)

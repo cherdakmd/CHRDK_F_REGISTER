@@ -27,6 +27,7 @@ public final class ShopMarketGui implements Listener {
     private static final int HOME_SELL_ALL = 48;
     private static final int HOME_GUIDE = 50;
     private static final int HOME_PROMO = 31;
+    private static final int HOME_GIFT = 33;
     private static final int[] HOME_SECTIONS = {10,11,12,13,14,15,16,21,23};
 
     private final DiamondShopPlugin plugin;
@@ -60,6 +61,14 @@ public final class ShopMarketGui implements Listener {
                     plugin.messages().get("market.home.promo-type","type",promos.typeLabel(now)),
                     plugin.messages().get("market.home.promo-items","items",promos.featuredLabel(now)),
                     plugin.messages().get("market.home.promo-left","left",ShopMoney.text(promos.remaining(player.getUniqueId(),now))))));
+        }
+        ShopWelcomeGift gift=plugin.welcomeGift();
+        if(gift!=null&&gift.enabled()) {
+            boolean claimed=gift.claimed(player.getUniqueId());
+            inventory.setItem(HOME_GIFT,button(claimed?Material.GRAY_DYE:Material.EMERALD,
+                    claimed?"market.home.gift-claimed":"market.home.gift",List.of(
+                            plugin.messages().get("market.home.gift-amount","amount",ShopMoney.text(gift.amount()*100)),
+                            plugin.messages().get(claimed?"market.home.gift-claimed-lore":"market.home.gift-click"))));
         }
         if(player.hasPermission("chrdkshop.admin")) inventory.setItem(ShopAdminGui.SHOP_EDIT_SLOT,button(Material.COMMAND_BLOCK,"trading.gui.admin-edit",List.of()));
         player.openInventory(inventory);
@@ -163,6 +172,7 @@ public final class ShopMarketGui implements Listener {
         if(slot==ShopAdminGui.SHOP_EDIT_SLOT){if(player.hasPermission("chrdkshop.admin")&&plugin.shopAdminGui()!=null)plugin.shopAdminGui().open(player,0);return;}
         if(slot==ShopLayout.SLOT_FORGE){plugin.forgeShopGui().open(player);return;}
         if(holder.home) {
+            if(slot==HOME_GIFT){claimGift(player);return;}
             List<ShopCategory> sections=ShopCatalog.tabs(plugin.shopService().config().items()).stream().filter(c->c!=ShopCategory.ALL).toList();
             for(int i=0;i<sections.size()&&i<HOME_SECTIONS.length;i++)if(slot==HOME_SECTIONS[i]){reopen(player,sections.get(i),0);return;}
             if(slot==HOME_ALL){reopen(player,ShopCategory.ALL,0);return;}
@@ -189,6 +199,27 @@ public final class ShopMarketGui implements Listener {
             if(plugin.isEnabled()&&player.isOnline()&&sameInventory(player,expected))
                 plugin.quantities().open(player,item,buy,holder.category,holder.page,holder.service,offer.batch(),buy?offer.ask():offer.bid());
         });
+    }
+
+    private void claimGift(Player player) {
+        ShopWelcomeGift gift=plugin.welcomeGift();
+        if(gift==null||!gift.enabled())return;
+        var core=plugin.coreApi(); var market=plugin.shopService().store().market();
+        ShopWelcomeGift.Bank bank=new ShopWelcomeGift.Bank() {
+            public boolean available(java.util.UUID expected) {
+                return core!=null&&core.personalBankAvailable()&&core.incomeSourceAvailable("diamond-shop",expected);
+            }
+            public boolean credit(java.util.UUID expected,java.util.UUID playerId,String key,long amount) {
+                return core!=null&&core.creditMarketEntitlement("diamond-shop",expected,key,playerId,amount);
+            }
+        };
+        var status=gift.claim(player.getUniqueId(),market,bank);
+        switch(status) {
+            case CLAIMED -> plugin.messages().send(player,"market.gift.received","amount",ShopMoney.text(gift.amount()*100));
+            case ALREADY -> plugin.messages().send(player,"market.gift.already");
+            case UNAVAILABLE -> plugin.messages().send(player,"market.gift.unavailable");
+        }
+        if(status!=ShopWelcomeGift.Status.UNAVAILABLE)open(player,0);
     }
 
     @EventHandler(ignoreCancelled=true) public void onInventoryDrag(InventoryDragEvent event) {if(event.getInventory().getHolder() instanceof Holder)event.setCancelled(true);}
