@@ -175,7 +175,6 @@ security:
     # Админ-корни и алиасы аддонов CHRDK_*.
     - achadmin
     - artifactsadmin
-    - ahadmin
     - bpadmin
     - claimadmin
     - classadmin

@@ -30,7 +30,7 @@ record GuardSettings(boolean enabled, int ipBurst, int ipRefillSeconds, int glob
             // Админ-корни и алиасы CHRDK_Core.
             "guard", "rankadmin", "socialspy", "spy", "adminpanel", "apanel", "staffpanel", "honoradmin", "honorsadmin",
             // Админ-корни и алиасы аддонов CHRDK_* (все 22 модуля из ZIP).
-            "achadmin", "artifactsadmin", "auctionadmin", "ahadmin", "bpadmin", "claimadmin",
+            "achadmin", "artifactsadmin", "bpadmin", "claimadmin",
             "classadmin", "classesadmin", "clsadmin", "goalsadmin", "dailyadmin", "dlyadmin",
             "shopadmin", "dshopadmin", "marketadmin", "disastersadmin", "enchantsadmin",
             "guildadmin", "guildsadmin", "clanadmin", "clansadmin", "ga", "ordersadmin",

@@ -1,183 +1,183 @@
 {
   "pages": {
     "about": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "697bde857b34f3246469026aca3d149db8ee7fdcd8e478b8e82c556b1506f0b3",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "8b5941877d92a73cc129194b3d53e88c3967f0d0df0f4a11d9633fd10f101344",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "fdf794a478d552d9de045ac87c6a8a233a53ee8044a51a5a560935c2ba8a8688",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "a96c505699e1ef1e23cc5458860567c1de57c839d708a37b8ff367f5274e116a",
       "text": "bd128e475ee8efae55c3d2d6c9616d5278600f2a8ff1aad7af5e6df3e0b3f5c3"
     },
     "artifacts": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "a154f7b78bc881cd1d5c4fb44429299995a64e1913f046dd68bc72af1c0c02c8",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "cacd11e7fe9e9c6b0b933980754f084bdf6fabf0121827759ca9ca5b0511c791",
       "text": "51e3ef379d9a8f7e2ccfc6fd41cc0c0823f91f30d7c9a8326ec7962c182d98e4"
     },
     "battlepass": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "af68ccec9a4641ef710dbc5dc57e21373e5bd1fd9258e32739e78eb8271a4257",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "2251f378596972c432b2f394f3a5950876cae27b469982632d51243545e33351",
       "text": "997df6e0a9311ea115c4fd3c192b2729034b10c68a4f41c57261ef4b704c5add"
     },
     "chat": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "697bde857b34f3246469026aca3d149db8ee7fdcd8e478b8e82c556b1506f0b3",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "8b5941877d92a73cc129194b3d53e88c3967f0d0df0f4a11d9633fd10f101344",
       "text": "a51c51d20cfe94c553e80893422b000a579b87285b00cbceb452f29eb0773023"
     },
     "claims": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "3c1adb94904176eccb4b0d1d8485089d823b17addafd560ad249aeb6e3c276ae",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "4d8897ef1b7254a955f3110bcc448562e3e8594e6d4e95df2ee5d70549ce3a7d",
       "text": "3126e85c74cf79658fdcde5a03722da3d31459d702228865edec9eb15e142aa4"
     },
     "classes": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "f0eaac88784ef3b1c06f430670c13dfd2957a151fc5a4464614e2c47d6b184c0",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "2adb42752cb8567fa837a3f4c108c98754a2bf19bf4a2442f541928ec773b794",
       "text": "503edef62357862f67d17df249b393023697d6dca6342cbe792b0d4dc78cb8cc"
     },
     "commands": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "eeda8c9e3635c4f40bc3f8579ebde6bf9d9256c25d30515fa5ce42d41846f280",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "5189ea677847acd182edc0dee60e060dd66e8bc88430e751906a146ee1e7bbdd",
       "text": "46017ca1aca3a1d620ff09b3ffd40ff42885e551a850c85baa15f2c73d03b290"
     },
     "cosmetics": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "3390378ea66a6119929d80d22e7704215b2dfa3c143803275fa2ab05ef7c3f90",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "8bbbdb140b9eb65c3d3142a9c2e966c69296ff8c356f8b87e941d06453b53ee7",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "5ffbefa987baa21a9a3da26298bac712c9dec36a9999ab3100ae58679c9ea0a3",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "a002ab5b82d0864115c4660912aa856b7c6c511b3d31f32207a2d14fa3558313",
       "text": "4d7683f5677c50dfe0488961891915b5c2dd6533191a213ee8fdb077ea817eb5"
     },
     "disasters": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "35ef5ca858e4fce5987fec3a275cde4007ef145e17bc78a3a9d9bc34fa8af170",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "c86a4c50bd8c5e216b63b9fb5d9543e70b8ebc1b9c571eb9d695fdbe46a20ebf",
       "text": "121b1cc28a075ced29b6de8abec7dbc20bbb531a01441ddd5fdb836d066d0202"
     },
     "economy": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "b346f230702d1c85ce55ca72f66b8cdada91d01535d8acad19fa605cd917db12",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "55035a72e92c2773accf4fca4dc72fdbf77ba21c3b4ed788127a01835dffaa44",
       "text": "95603b3cf3e787bf93015bc3b09a7d358ec10a3c9297426003539929db15bd69"
     },
     "enchants": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "7e0d18e3c7e463f25857ddb3715c8bdf5d4e7a1517d6113e385442b81437ab72",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "82326169aa27ff82c3a69e385b8a05e9631a8d5fb26a02e629d9e7e1192ac998",
       "text": "7e90321ef8a100bae11c53592c62328fa44a958be657b66a86d51ea8c1906a7d"
     },
     "faq": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "cc9d71ccb571060ec75f908f5723307b083be93859df670a9b39ac8fb79dda96",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "9c433c5e4c9f265ca95ae1eec8308a1e7fda0a37d6c133e5a09c48be4f15a299",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "e4cd8491981474088f85ca79d532dde19c3685577f6104350e2bdd7e3bd76686",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "3de64bb043d8f7b4012efff89e45517951811cb20a403f49f1aada3c8835b250",
       "text": "615d89bba0ac116c220d571f530fcdab7d5ff46162ca7a7ecf24de441a7fb191"
     },
     "guilds": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "3c1adb94904176eccb4b0d1d8485089d823b17addafd560ad249aeb6e3c276ae",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "4d8897ef1b7254a955f3110bcc448562e3e8594e6d4e95df2ee5d70549ce3a7d",
       "text": "bb7d4121d6c42762b2f09d8eb57df986a942df35c77fd2cf899a5e7a38193216"
     },
     "honors": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "697bde857b34f3246469026aca3d149db8ee7fdcd8e478b8e82c556b1506f0b3",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "8b5941877d92a73cc129194b3d53e88c3967f0d0df0f4a11d9633fd10f101344",
       "text": "17c878e1ab52ceb2a7c3361a7bef133c8bd1004a59641898f2c525f7c48fff8f"
     },
     "index": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "f32b788cc1ee90817196dccc985d2ee8167ecc1793a375f3fae20e28f575a9dd",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "cc2daefd81457bdeb820272b38d043afd86ed770ac6673c8c3472ab4e6b7c470",
       "text": "13b0089b89035cd13598d177608718282608bc671993a3c370012b297c779cd7"
     },
     "menu": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "cc9d71ccb571060ec75f908f5723307b083be93859df670a9b39ac8fb79dda96",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "9c433c5e4c9f265ca95ae1eec8308a1e7fda0a37d6c133e5a09c48be4f15a299",
       "text": "eb6fdaf663b2005735002c5f23bb7f751b31a7447b3fc2cc77d741ff7c4cb2f9"
     },
     "moderation": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "697bde857b34f3246469026aca3d149db8ee7fdcd8e478b8e82c556b1506f0b3",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "8b5941877d92a73cc129194b3d53e88c3967f0d0df0f4a11d9633fd10f101344",
       "text": "79580a49c09219f65539abace395b5f2469f91fc2f0ac9b3ecae109c4fa1ecb4"
     },
     "orders": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "362ba6d470d3e8b357962f9c8e75ed9ef15ce4cfc3e205fd96827ae36e6aefec",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "0b93a7afde1ebbffcc82a6c29005f7b56f3234e9364b7c9e46245ed828ec62b7",
       "text": "8f1bddfa65aabb38fab8ebdad77656a627e340e765229de34ab3a24dd96fef2e"
     },
     "perktree": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "f0eaac88784ef3b1c06f430670c13dfd2957a151fc5a4464614e2c47d6b184c0",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "2adb42752cb8567fa837a3f4c108c98754a2bf19bf4a2442f541928ec773b794",
       "text": "3e1a2fe232bb8c384a682ac98f8133ab0560de790bab9a2a2d9542ea0b673666"
     },
     "pets": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "6589c80e526f52922cc7e4a79ab2c434d2b642e851f0f67963bffc9fed72123d",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "067c8e34b1b459cf004ab5eee4e20b6a8a84a9b48228d8e769a8aef46ac420c3",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "profile": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "6603817e808325fdca69526a4c543497f77f7474c4c8aa417b2b027283aed9a1",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "0180015869831e0e3a0900222c603ae8bcc708639376f515563f571ab98831f4",
       "text": "f2a1fafaef6d54a60b0dd2e9545374a59a83ad49a5de3ace0069e441c187d309"
     },
     "quests": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "c724092bffec72d6c1af7380d3613ccf3c019adb86b96e798450f5eb0a35bb31",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "b2e69e5072b2dfc40b2926aff314bf2fae73b6f7697c33bc159f55bfa3d2610a",
       "text": "a42f11010fddbf13238133ac1e2dca525dea95245f5286a88a57738af30fbf13"
     },
     "ranks": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "754318887fab1e64333feb5a5ba6b0d44198acc52c1669184cd8297eec0cec17",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "e7076bc2e2040a160576d387f2294406c42055741b96a5a0379342b963d41f36",
       "text": "664b466e4b44741175d9c2cdb4da728a0603a04aaaefada8396dd6517d5dca2d"
     },
     "shop": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "f32b788cc1ee90817196dccc985d2ee8167ecc1793a375f3fae20e28f575a9dd",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "cc2daefd81457bdeb820272b38d043afd86ed770ac6673c8c3472ab4e6b7c470",
       "text": "c28f429d342f4c030938b22adaee5cb0792a5c93c7c5f107416537f2c9300a20"
     },
     "skills": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "bdf5d2c52aba8cfebbe5196e8d8738864fe723a02d975a45faf8655bd055ab5a",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "0c70e4825e6d6c631c24f5c1dbe56b8c1dbd4675d7f0712f5260d2194b775815",
       "text": "2e6d03256421759755094a382f0145b72141c123c373f10f2ad120e7d741350b"
     },
     "social-link": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "e99f666355ea84afedf497c56e151c5c7e15b05d5be1e78844568259010cb1c1",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "37680d2fc5c19525e92443fc5a5efbb5059ecae1e120f19ac0902e21dbd3a08c",
       "text": "1f6cf95d9c8c2180dbf871aa9b19a7bfcde5405cf77b75954b7575920d2aef14"
     },
     "start": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "a9173514062e537270e40d38c2e413994e3934d738e1345e050e202ed1faa301",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "f5853168095d9b8f85067150d7e6200102b7f8274cdfdd5746f37500b47f0cea",
       "text": "1c0b307e38e52194bb2a42da0757744e32d93312bc6b83178a4745f9cd07a667"
     },
     "starter-kit": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "a154f7b78bc881cd1d5c4fb44429299995a64e1913f046dd68bc72af1c0c02c8",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "cacd11e7fe9e9c6b0b933980754f084bdf6fabf0121827759ca9ca5b0511c791",
       "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
     },
     "teleports": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "aebd39f9b7abaf63509c4858a50e6ab91c25836fea6e1d9b58dc5f2b2a016159",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "021a6780d133a46d26ffc816879d74fe9547260e2c8c2f3c53bca55203b97dfa",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "7e0d18e3c7e463f25857ddb3715c8bdf5d4e7a1517d6113e385442b81437ab72",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "82326169aa27ff82c3a69e385b8a05e9631a8d5fb26a02e629d9e7e1192ac998",
       "text": "c84eb8435e1e4b961e73b0ed64386b129e17395923de6d7b8f3d01bde6ddeaa1"
     },
     "titles": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "ff127384939cb8d66de0c2e4c62d6e6d73676e23315f5cd5882257b37e6dc538",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "377d1df2bbc8ce7a4c9f47ba7a927f47194ddd030268fa48b6fe475be16d22a4",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "f32b788cc1ee90817196dccc985d2ee8167ecc1793a375f3fae20e28f575a9dd",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "cc2daefd81457bdeb820272b38d043afd86ed770ac6673c8c3472ab4e6b7c470",
       "text": "643760c7138096b0312d43a6006ca5c691ba5f8a9cf46cc637cb5f12dbf910df"
     },
     "vk": {
-      "reason": "Сверено полное снятие Auction: 19 JAR, без /ah, меню, прав и лотов рангов",
-      "sources": "e99f666355ea84afedf497c56e151c5c7e15b05d5be1e78844568259010cb1c1",
+      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
+      "sources": "37680d2fc5c19525e92443fc5a5efbb5059ecae1e120f19ac0902e21dbd3a08c",
       "text": "b592e465a73dd13186763622b51190400cffd40960e233f58c63379b88a9bba9"
     }
   },

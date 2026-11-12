@@ -21,7 +21,7 @@ class AutoMessages276Test {
         var before = old.getMapList("auto-messages.messages");
         var after = fresh.getMapList("auto-messages.messages");
         assertEquals(41, before.size(), "сток 275 остаётся эталоном");
-        assertEquals(40, after.size(), "1.4.282 добавила Plasmo Voice, CHRDK_Disasters — подсказку о /disasters");
+        assertEquals(38, after.size(), "1.4.282 добавила Plasmo Voice, CHRDK_Disasters — подсказку о /disasters");
         var removedAudience = java.util.Set.of("CHRDK_Hunt", "CHRDK_Professions");
         var retained = before.stream().filter(item -> !removedAudience.contains(String.valueOf(item.get("plugin")))
                 && !RetiredAddons.announcement(String.valueOf(item.get("text")))).toList();

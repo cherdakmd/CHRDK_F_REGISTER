@@ -32,7 +32,7 @@ class EventsRemovalTest {
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_Events"));
         assertEquals(19, PluginUpdateService.MODULES.size());
         var stock = yaml("config.yml"); var items = stock.getMapList("server-menu.items");
-        assertEquals(47, items.size());
+        assertEquals(45, items.size());
         assertFalse(items.stream().anyMatch(item -> RetiredAddons.plugin(String.valueOf(item.get("plugin")))
                 || RetiredAddons.command(String.valueOf(item.get("command")))));
         assertEquals(0, items.stream().filter(item -> "adventure".equals(item.get("category"))).count());
@@ -87,7 +87,7 @@ class EventsRemovalTest {
         var changes = PresentationMigration.replacements(live, List.of(legacy), stock);
         assertTrue(changes.containsAll(List.of("server-menu.items", "server-menu.categories")));
         assertTrue(changes.contains("auto-messages.messages"), "1.4.245 обновляет подсказку общего /bal у магазина; реклама снятого модуля не возвращается");
-        assertEquals(3, legacy.getMapList("server-menu.items").size() - stock.getMapList("server-menu.items").size(), "два просмотра экономики, CHRDK_VK и катастрофы компенсируют снятые пункты");
+        assertEquals(5, legacy.getMapList("server-menu.items").size() - stock.getMapList("server-menu.items").size(), "просмотры экономики, два пункта Auction, CHRDK_VK и катастрофы компенсируют снятые пункты");
         for (String key : changes) live.set(key, stock.get(key));
         assertFalse(live.getBoolean("auto-messages.enabled")); assertEquals(777, live.getInt("auto-messages.interval-seconds"));
         assertEquals(List.of("Admin"), live.getStringList("tablist.pinned-names"));
