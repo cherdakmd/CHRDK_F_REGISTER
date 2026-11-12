@@ -91,15 +91,26 @@ final class ShopPromoService {
         return new Bonus(amount, false, false);
     }
 
-    /**
-     * Вызывается после успешного коммита КАЖДОЙ продажи. Прогресс заказа/серии
-     * должен расти и на сделках без бонуса, иначе условие никогда не наберётся.
-     */
+    /** Денежный резерв сохраняется до ShopStore.prepare; false запрещает только доплату. */
+    boolean reserve(UUID player, Bonus bonus, long nowMillis) {
+        if (!enabled() || bonus == null || bonus.amount() <= 0) return true;
+        long dailyLeft = Math.max(0, settings.maxBonusPerPlayerPerDay()*100L
+                - store.bonusPaid(player, nowMillis));
+        return bonus.amount() <= dailyLeft && store.reserve(player, nowMillis, bonus.amount());
+    }
+
+    /** Отклонённая/не принятая в WAL сделка не должна расходовать суточный лимит. */
+    void release(UUID player, Bonus bonus, long nowMillis) {
+        if (enabled() && bonus != null && bonus.amount() > 0) {
+            store.release(player, nowMillis, bonus.amount());
+        }
+    }
+
+    /** После успешного коммита записываются только единицы; бонус уже зарезервирован. */
     void record(UUID player, String material, long units, Bonus bonus, long nowMillis) {
         if (!enabled() || bonus == null) {
             return;
         }
-        store.commit(player, nowMillis, material, units, Math.max(0, bonus.amount()),
-                bonus.contractPaid(), bonus.seriesPaid());
+        store.commit(player, nowMillis, material, units, 0, false, false);
     }
 }

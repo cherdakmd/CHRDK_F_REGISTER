@@ -49,6 +49,23 @@ class ShopPromoStoreTest {
     }
 
     @Test
+    void reservationSurvivesRestartAndReleaseIsDurable() {
+        ShopPromoStore first = store();
+        first.load();
+        assertTrue(first.reserve(STEVE, NOW, 500000));
+        assertEquals(500000, first.bonusPaid(STEVE, NOW));
+
+        ShopPromoStore reloaded = store();
+        reloaded.load();
+        assertEquals(500000, reloaded.bonusPaid(STEVE, NOW));
+        reloaded.release(STEVE, NOW, 500000);
+
+        ShopPromoStore afterRelease = store();
+        afterRelease.load();
+        assertEquals(0, afterRelease.bonusPaid(STEVE, NOW));
+    }
+
+    @Test
     void newUtcDayStartsFromScratch() {
         ShopPromoStore store = store();
         store.load();

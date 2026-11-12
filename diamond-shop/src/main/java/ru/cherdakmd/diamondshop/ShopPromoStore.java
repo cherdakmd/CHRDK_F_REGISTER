@@ -159,7 +159,30 @@ final class ShopPromoStore {
         return snapshot(player, nowMillis).bonus();
     }
 
-    /** Фиксирует успешную сделку и начисленный бонус; вызывается после коммита WAL. */
+    /** Атомарно резервирует суточный бонус ДО принятия денежной сделки. */
+    synchronized boolean reserve(UUID player, long nowMillis, long bonus) {
+        if (bonus <= 0) return true;
+        rollDay(nowMillis);
+        Progress progress = players.computeIfAbsent(player.toString(), ignored -> new Progress());
+        long before = progress.bonus;
+        progress.bonus = Math.addExact(before, bonus);
+        if (save()) return true;
+        progress.bonus = before;
+        return false;
+    }
+
+    /** Снимает резерв отклонённой сделки; при ошибке записи резерв сохраняется fail-closed. */
+    synchronized void release(UUID player, long nowMillis, long bonus) {
+        if (bonus <= 0) return;
+        rollDay(nowMillis);
+        Progress progress = players.get(player.toString());
+        if (progress == null) return;
+        long before = progress.bonus;
+        progress.bonus = Math.max(0, before - bonus);
+        if (!save()) progress.bonus = before;
+    }
+
+    /** Фиксирует успешную сделку; денежный резерв уже создан через reserve(). */
     synchronized void commit(UUID player, long nowMillis, String material, long units,
                             long bonus, boolean contractPaid, boolean seriesPaid) {
         rollDay(nowMillis);
@@ -182,7 +205,7 @@ final class ShopPromoStore {
         }
     }
 
-    private synchronized void save() {
+    private synchronized boolean save() {
         JsonObject root = new JsonObject();
         root.addProperty("schema", SCHEMA);
         root.addProperty("day", day);
@@ -209,10 +232,12 @@ final class ShopPromoStore {
             } catch (AtomicMoveNotSupportedException ignored) {
                 Files.move(temporary, file, StandardCopyOption.REPLACE_EXISTING);
             }
+            return true;
         } catch (IOException error) {
-            // Бонус уже внутри совершённой сделки; не откатываем деньги, а честно
-            // предупреждаем: будущие награды могут посчитаться заново.
-            logger.warning("[Акции] Не удалось сохранить прогресс: " + error.getClass().getSimpleName());
+            // Резерв откатывается в памяти; сделка продолжится без бонуса.
+            logger.warning("[Акции] Не удалось сохранить прогресс; доплата закрыта: "
+                    + error.getClass().getSimpleName());
+            return false;
         }
     }
 }

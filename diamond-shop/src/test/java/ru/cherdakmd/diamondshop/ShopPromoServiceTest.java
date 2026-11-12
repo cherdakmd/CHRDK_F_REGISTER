@@ -3,6 +3,7 @@ package ru.cherdakmd.diamondshop;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
@@ -74,15 +75,42 @@ class ShopPromoServiceTest {
 
         var first = promos.quote(STEVE, featured, 2_000_000, 10_000_000, 64, 100_000_000, now);
         assertEquals(100000, first.amount(), "потолок тестовой сделки 1000 ⛁");
+        assertTrue(promos.reserve(STEVE, first, now));
+        assertEquals(400000, promos.remaining(STEVE, now), "лимит расходуется до WAL, а не после него");
         promos.record(STEVE, featured.material(), 64, first, now);
-        assertEquals(400000, promos.remaining(STEVE, now));
-        promos.record(STEVE, featured.material(), 1, new ShopPromoService.Bonus(400000, false, false), now);
+        assertEquals(400000, promos.remaining(STEVE, now), "commit не должен списать бонус повторно");
+        var rest = new ShopPromoService.Bonus(400000, false, false);
+        assertTrue(promos.reserve(STEVE, rest, now));
+        promos.record(STEVE, featured.material(), 1, rest, now);
 
         long nextWindow = now + ShopPromoMath.WINDOW_MILLIS;
         assertEquals(0, promos.remaining(STEVE, nextWindow));
         assertEquals(0, promos.quote(STEVE, item(promos.plan(nextWindow).featured().get(0), true),
                 100, 1000, 64, 1000, nextWindow).amount());
         assertEquals(500000, promos.remaining(STEVE, now + ShopPromoMath.DAY_MILLIS));
+    }
+
+    @Test
+    void rejectedTradeReleasesOnlyItsReservation() {
+        ShopPromoService promos = service(settings());
+        long now = ShopPromoMath.DAY_MILLIS + 1000;
+        var bonus = new ShopPromoService.Bonus(100000, false, false);
+        assertTrue(promos.reserve(STEVE, bonus, now));
+        assertEquals(400000, promos.remaining(STEVE, now));
+        promos.release(STEVE, bonus, now);
+        assertEquals(500000, promos.remaining(STEVE, now));
+    }
+
+    @Test
+    void unwritableProgressFailsBonusClosedWithoutChargingPlayer() throws Exception {
+        Path notAFolder = Files.writeString(dir.resolve("not-a-folder"), "x");
+        ShopPromoStore store = new ShopPromoStore(notAFolder, Logger.getAnonymousLogger());
+        store.load();
+        ShopPromoService promos = new ShopPromoService(settings(), store);
+        long now = ShopPromoMath.DAY_MILLIS + 1000;
+        var bonus = new ShopPromoService.Bonus(100000, false, false);
+        assertFalse(promos.reserve(STEVE, bonus, now));
+        assertEquals(500000, promos.remaining(STEVE, now));
     }
 
     @Test

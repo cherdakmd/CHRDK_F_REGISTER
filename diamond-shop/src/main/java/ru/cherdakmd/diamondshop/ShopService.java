@@ -261,6 +261,8 @@ public final class ShopService {
         // Дневная акция добавляет алмазы ВНУТРЬ этой же сделки: WAL, журнал и
         // дневной оборот видят одну выплату, отдельной эмиссии не существует.
         ShopPromoService.Bonus promo = ShopPromoService.Bonus.none();
+        long baseMoney=money, basePrice=price;
+        ShopSaleRemainder.Quote baseExact=exact;
         if (!buy && promos != null && money > 0) {
             long askTotal = ShopPromoMath.askTotal(askPrice(item), batch, units);
             double used = store.usedToday(player.getUniqueId(), now);
@@ -300,6 +302,13 @@ public final class ShopService {
                 if (money > WholeTrades.MAX) return fail("trading.invalid-number", money);
             }
         }
+        boolean promoReserved=!buy&&promos!=null&&promo.amount()>0;
+        if(promoReserved&&!promos.reserve(player.getUniqueId(),promo,now)) {
+            money=baseMoney; price=basePrice; exact=baseExact;
+            promo=ShopPromoService.Bonus.none(); promoReserved=false;
+        }
+        boolean tradeAccepted=false;
+        try {
         var marketQuote=api.get().diamondRate();
         if(carry) {
             price=marketQuote.scaleMinor(price);
@@ -355,17 +364,20 @@ public final class ShopService {
         if(!store.prepare(t,item,now,config.stockRecoveryPerHour(),limit,config.historyMaxPoints(),config.historyIntervalMillis(),afterPrice)) {
             if(!store.legacyAvailable()) lock(player); return fail("trading.unavailable",money);
         }
+        // WAL принял сделку: резерв нельзя снимать даже при сбое последующего recovery.
+        tradeAccepted=true;
         if(!recoverPending()) {
             if(store.pending()!=null||!store.legacyAvailable()) { lock(player); return fail("trading.pending",money); }
             return fail("trading.unavailable",money);
         }
-        // Прогресс акций копится на каждой ПРОДАЖЕ, даже если бонус сегодня не
-        // выпал. Покупки в зачёт не идут: иначе заказ/серию можно было бы закрыть,
-        // просто купив товар в магазине.
+        // Денежный резерв уже сохранён до WAL; после коммита остаются только единицы.
         if (!buy && promos != null) {
             promos.record(player.getUniqueId(), item.material(), units, promo, now);
         }
         return new TradeResult(true, money, null, units, debit, spent, change, promo.amount());
+        } finally {
+            if(promoReserved&&!tradeAccepted) promos.release(player.getUniqueId(),promo,now);
+        }
     }
     public record SellAllResult(long income, long units, int kinds, long bonus) {
         /** Прежний контракт без акций. */
