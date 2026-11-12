@@ -98,6 +98,18 @@ class PaidActionStoreTest {
         var older=new BankStore(dir.resolve("older-core"),Logger.getAnonymousLogger());older.load();
         assertFalse(older.incomeSourceAvailable("teleports",s.lineage()));
     }
+    @Test void emptyFinancialJournalAdoptsBankLineageAndKeepsHomes() throws Exception {
+        var s=registered(); s.initializeValues(Map.of("home","world:1:64:2"));
+        var external=UUID.randomUUID(); s.adoptLineage(external);
+        var restored=load(); assertEquals(external,restored.lineage()); assertTrue(restored.registered());
+        assertEquals("world:1:64:2",restored.values().get("home"));
+        assertTrue(PaidActions.registrationRecoverable(restored,new ChargeJournal(dir,"teleports",external)));
+    }
+    @Test void lineageAdoptionNeverDiscardsFinancialObligations() throws Exception {
+        var s=registered(); publish(s,action());
+        assertThrows(IllegalStateException.class,()->s.adoptLineage(UUID.randomUUID()));
+        assertEquals(1,load().actions().size());
+    }
     @Test void paymentJournalBlocksSourceMutationsUntilRecovery() throws Exception {
         var s=registered(); s.bind(()->true); assertThrows(IllegalStateException.class,()->s.putValue("home","overwrite")); assertThrows(IllegalStateException.class,()->s.preview(action()));
     }

@@ -86,6 +86,7 @@ class ReleaseValidationTest(unittest.TestCase):
         # После bump plugin_version эта оговорка перестаёт действовать и тест
         # снова требует полный набор модулей из settings.gradle.
         module_prereleases = {f"2.0.2-rc.{number}": "chrdk-diamond-shop" for number in (1, 2, 3, 4, 5, 6)}
+        module_prereleases["2.0.2-rc.7"] = "chrdk-core"
         if version in module_prereleases:
             self.assertIn(f"только {module_prereleases[version]}-{version}.jar", current)
             self.assertIn("Общего ZIP нет", current)

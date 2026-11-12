@@ -67,6 +67,14 @@ public final class PaidActionStore implements ChargeInventory.Source {
         write(n);
     }
     public synchronized UUID lineage() { return data.lineage; }
+    /** Пустой финансовый журнал может принять lineage банка после согласованного reset. */
+    public synchronized void adoptLineage(UUID external) throws IOException {
+        writable(); Objects.requireNonNull(external,"lineage");
+        if(external.equals(data.lineage)) { markRegistered(); return; }
+        if(!data.actions.isEmpty()||!data.refunds.isEmpty()||!data.resolutions.isEmpty())
+            throw new IllegalStateException("paid action lineage has financial obligations");
+        var next=copy(); next.lineage=external; next.registered=true; write(next);
+    }
     public synchronized boolean healthy() { return healthy; }
     public synchronized boolean registered() { return data.registered; }
     public synchronized void bind(BooleanSupplier busy) { this.busy=Objects.requireNonNull(busy); }
