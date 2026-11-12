@@ -50,7 +50,7 @@ class AutoMessagesUpdateTest {
     @Test void everyEntryParsesAndTargetsWorkingPlayerCommands() throws Exception {
         var config = yaml("config.yml");
         var entries = stock();
-        assertEquals(40, entries.size());
+        assertEquals(38, entries.size());
         assertEquals(config.getList("auto-messages.messages").size(), entries.size(), "ни один текст не отброшен парсером");
         var core = yaml("plugin.yml");
         var coreCommands = commands(core);
@@ -115,7 +115,6 @@ class AutoMessagesUpdateTest {
         assertFalse(text.contains("60 перков"));
         assertFalse(text.contains("не сгорает при перезапуске"));
         assertFalse(text.contains("https://"), "официальные адреса выдают публичные команды, ссылки не дублируются");
-        assertTrue(text.contains("/auction money показывает банк"));
         assertTrue(text.contains("Платный ранг не продлевается"));
         assertTrue(text.contains("2FA подключается по желанию"));
         assertTrue(text.contains("/wiki"));
@@ -153,7 +152,7 @@ class AutoMessagesUpdateTest {
         assertEquals(7, live.getInt("auto-messages.minimum-players"));
         assertEquals("Свой префикс: ", live.getString("auto-messages.prefix"));
         assertEquals(List.of("Owner"), live.getStringList("tablist.pinned-names"));
-        assertEquals(40, ChatConfig.fromBukkitConfig(live).autoMessageEntries().size());
+        assertEquals(38, ChatConfig.fromBukkitConfig(live).autoMessageEntries().size());
         assertTrue(PresentationMigration.replacements(live, List.of(legacy), fresh).isEmpty());
     }
 

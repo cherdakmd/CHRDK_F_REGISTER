@@ -68,7 +68,10 @@ security:
   # Если список отсутствует, применяется этот встроенный набор. [] явно снимает запрет.
   # Команды остаются доступны консоли/RCON. Namespace и штатные aliases проверяются.
   # Свои плагины-обёртки добавляйте сюда; защита не изолирует недоверенные плагины.
-  # Запрет действует на ВСЕХ игроков, включая OP и LuckPerms `*`, без исключений.
+  # Игроки без прав не проходят. После успешного /login (и 2FA, если включена)
+  # допускается только явное право chrdk.guard.trusted из админской группы LuckPerms.
+  # OP без этого права и любая неавторизованная сессия по-прежнему блокируются.
+  # Выдача владельцем: /lp group admin permission set chrdk.guard.trusted true
   console-only-commands:
     - op
     - deop
@@ -172,8 +175,6 @@ security:
     # Админ-корни и алиасы аддонов CHRDK_*.
     - achadmin
     - artifactsadmin
-    - auctionadmin
-    - ahadmin
     - bpadmin
     - claimadmin
     - classadmin
@@ -1095,7 +1096,7 @@ server-menu:
   categories:
     - {"id": "account", "slot": 10, "icon": "PAPER", "name": "<gold><bold>Ранг и аккаунт</bold></gold>", "lore": "<gray>Ранг, оплата, награды входа и защита аккаунта</gray>"}
     - {"id": "progress", "slot": 11, "icon": "EXPERIENCE_BOTTLE", "name": "<gold><bold>Прогресс и награды</bold></gold>", "lore": "<gray>Сезон, задания, навыки, класс и достижения</gray>"}
-    - {"id": "economy", "slot": 12, "icon": "DIAMOND", "name": "<gold><bold>Экономика</bold></gold>", "lore": "<gray>Банк, магазин, аукцион и заказы</gray>"}
+    - {"id": "economy", "slot": 12, "icon": "DIAMOND", "name": "<gold><bold>Экономика</bold></gold>", "lore": "<gray>Банк, магазин и заказы</gray>"}
     - {"id": "world", "slot": 13, "icon": "GRASS_BLOCK", "name": "<gold><bold>Мир и территории</bold></gold>", "lore": "<gray>Приваты, дома и телепорты</gray>"}
     - {"id": "gear", "slot": 14, "icon": "ANVIL", "name": "<gold><bold>Снаряжение и питомцы</bold></gold>", "lore": "<gray>Чары, тиры, артефакты, косметика и питомцы</gray>"}
     - {"id": "social", "slot": 16, "icon": "BELL", "name": "<gold><bold>Общество</bold></gold>", "lore": "<gray>Чат, гильдия, оформление</gray>"}
@@ -1132,8 +1133,6 @@ server-menu:
     - {"category": "economy", "icon": "PAPER", "name": "<gold><bold>Статистика банка</bold></gold>", "lore": "<gray>Личные исторические счётчики, не вся прибыль</gray>", "command": "bal stats", "permission": "chrdkregister.bal"}
     - {"category": "economy", "icon": "ENDER_PEARL", "name": "<gold><bold>Мои цены телепортов</bold></gold>", "lore": "<gray>Текущая скидка и точные тарифы</gray>", "command": "homes prices", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
     - {"category": "economy", "icon": "EMERALD", "name": "<gold><bold>Алмазный магазин</bold></gold>", "lore": "<gray>Ресурсы и строительная палитра</gray>\n<gray>Выбор количества, оплата с /bal</gray>\n<dark_gray>Новый декор — без обратной скупки</dark_gray>", "command": "shop", "plugin": "CHRDK_DiamondShop", "permission": "chrdkshop.use"}
-    - {"category": "economy", "icon": "GOLD_BLOCK", "name": "<gold><bold>Аукцион игроков</bold></gold>", "lore": "<gray>Лоты и подтверждение покупки</gray>\n<dark_gray>Выставить: /auction sell цена</dark_gray>", "command": "auction", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
-    - {"category": "economy", "icon": "ENDER_CHEST", "name": "<gold><bold>Почта аукциона</bold></gold>", "lore": "<gray>Купленное и возврат непроданного</gray>", "command": "auction mail", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
     - {"category": "economy", "icon": "OAK_SIGN", "name": "<gold><bold>Доска заказов</bold></gold>", "lore": "<gray>Заказы от ботов: принеси и получи</gray>", "command": "orders list", "plugin": "CHRDK_Orders", "permission": "chrdkorders.use"}
     - {"category": "economy", "icon": "HOPPER", "name": "<gold><bold>Бюджет приватов</bold></gold>", "lore": "<gray>Личный /bal и запас на 3 суток</gray>\n<dark_gray>/claim budget 1–30 · не календарь списаний</dark_gray>", "command": "claim budget", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
     # ------------------------------ мир ------------------------------
@@ -1546,8 +1545,6 @@ auto-messages:
     - {"text": "<gray>Наигранное время тоже становится историей: <white>/ranks</white> — заслуженные звания. Это не оплаченные ранги; отображение настраивается через <white>/labels</white>.</gray>", "plugin": "CHRDK_Ranks", "permission": "chrdkranks.use"}
     - {"text": "<gray>Перед покупкой узнайте сумму: <white>/shop quote buy товар количество</white>. Количество считается поштучно; расчёт не фиксирует цену. Оплата сначала с <white>/bal</white>, затем обычными алмазами при недостаче.</gray>", "plugin": "CHRDK_DiamondShop", "permission": "chrdkshop.use"}
     - {"text": "<gray>Разгрузите рюкзак осознанно: <white>/shop quote sell товар количество</white> — расчёт, <white>/shop sellall</white> — немедленная продажа. Продажа копит неоплаченную долю до целого алмаза в <white>/bal</white>, без округления вверх.</gray>", "plugin": "CHRDK_DiamondShop", "permission": "chrdkshop.use"}
-    - {"text": "<gray>Проверьте почту аукциона: <white>/auction mail</white> — покупки, возвраты и непроданные вещи. Выручка продажи идёт в личный <white>/bal</white>; <white>/auction money</white> показывает банк, отдельного кошелька аукциона нет.</gray>", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
-    - {"text": "<gray>Нашли вещь для другого игрока? Возьмите её в руку: <white>/auction sell цена</white>. Покупка — <white>/auction buy id confirm</white>; свойства, комиссию и итоговую сумму проверяйте до сделки.</gray>", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
     - {"text": "<gray>Ресурсы нужны не только вам: <white>/orders list</white> — заказы ботов, <white>/orders deliver номер</white> — сдача. Сверяйте срок и награду; репутация доски не заменяет репутацию фракций.</gray>", "plugin": "CHRDK_Orders", "permission": "chrdkorders.use"}
     - {"text": "<gray>Дом начинается с защищённой земли. Содержание личных чанков оплачивается с <white>/bal</white>; <white>/claim budget 3</white> считает запас с долгом и допустимыми продлениями аренды: предоплата не вычитается, это не календарь списаний. <white>/claim sellback</white> требует подтверждения.</gray>", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
     - {"text": "<gray>Нужен участок на время? <white>/claim rent</white>. Продление оплачивается с личного <white>/bal</white> арендатора, содержание — со счёта владельца. Нехватка средств прекращает аренду; оплаченный срок защищён, собственность не переходит.</gray>", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}

@@ -31,10 +31,6 @@ FIELDS = {
     "home_cost": ("teleports", "costs.home-diamonds"),
     "tp_delay": ("teleports", "teleport.delay-seconds"),
     "rtp_cooldown": ("teleports", "rtp.cooldown-seconds"),
-    "auction_min": ("auction", "market.min-price"),
-    "auction_max": ("auction", "market.max-price"),
-    "auction_fee": ("auction", "market.fee-percent"),
-    "auction_hours": ("auction", "market.duration-hours"),
     "orders_daily": ("orders", "limits.max-per-day"),
     "orders_slots": ("orders", "board.size"),
     "orders_hours": ("orders", "board.order-hours"),
@@ -427,13 +423,12 @@ class FactBook:
             )
         if name == "limits":
             return table(
-                ["Ступень (0 — без ранга)", "Дома", "Чанки", "Лоты аукциона"],
+                ["Ступень (0 — без ранга)", "Дома", "Чанки"],
                 [
                     (
                         i,
                         c["teleports"]["homes"]["rank-limits"][i],
                         c["claims"]["limits"]["rank-chunks"][i],
-                        c["auction"]["market"]["rank-lots"][i],
                     )
                     for i in range(6)
                 ],

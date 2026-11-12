@@ -46,7 +46,7 @@ class PresentationUpdateTest {
         assertTrue(changes.contains("server-menu.items"),changes.toString());
         var oldItems=live.getMapList("server-menu.items");
         var newItems=fresh.getMapList("server-menu.items");
-        assertEquals(oldItems.size()-3,newItems.size(),"кнопки ядра, доната, экономики, CHRDK_VK и катастроф вместо пяти снятых аддонов");
+        assertEquals(oldItems.size()-5,newItems.size(),"кнопки ядра, доната, экономики, CHRDK_VK и катастроф вместо пяти снятых аддонов");
         assertTrue(newItems.containsAll(oldItems.stream().filter(item -> !RetiredAddons.plugin(String.valueOf(item.get("plugin"))) && !"pass donate".equals(item.get("command")) && !"shop".equals(item.get("command")) && !"bal".equals(item.get("command")) && !"claim balance".equals(item.get("command"))).toList()),"пункты остальных аддонов не переписаны");
         var added=newItems.stream().filter(item -> !oldItems.contains(item)).filter(item -> !"shop".equals(item.get("command"))).toList();
         assertEquals(10,added.size(),added.toString());
@@ -72,7 +72,7 @@ class PresentationUpdateTest {
         assertTrue(changes.contains("server-menu.items"),changes.toString());
         var oldItems=live.getMapList("server-menu.items");
         var newItems=fresh.getMapList("server-menu.items");
-        assertEquals(oldItems.size()-4,newItems.size(),"кнопки ника/доната, экономики, CHRDK_VK и катастроф добавлены, пять снятых аддонов удалены");
+        assertEquals(oldItems.size()-6,newItems.size(),"кнопки ника/доната, экономики, CHRDK_VK и катастроф добавлены, пять снятых аддонов удалены");
         var added=newItems.stream().filter(item -> !oldItems.contains(item)).filter(item -> !"shop".equals(item.get("command"))).toList();
         assertEquals(9,added.size(),added.toString());
         assertEquals(1,added.stream().filter(item -> "labels".equals(item.get("command"))).count());
@@ -99,7 +99,7 @@ class PresentationUpdateTest {
         assertTrue(changes.contains("server-menu.items"),changes.toString());
         var oldItems=live.getMapList("server-menu.items");
         var newItems=fresh.getMapList("server-menu.items");
-        assertEquals(oldItems.size()-5,newItems.size(),"снятые аддоны удалены, добавлены донат, два просмотра экономики, CHRDK_VK и катастрофы");
+        assertEquals(oldItems.size()-7,newItems.size(),"снятые аддоны удалены, добавлены донат, два просмотра экономики, CHRDK_VK и катастрофы");
         var changed=newItems.stream().filter(item -> !oldItems.contains(item)).filter(item -> !"shop".equals(item.get("command"))).toList();
         assertEquals(9,changed.size(),changed.toString());
         assertEquals(1,changed.stream().filter(item -> "labels".equals(item.get("command"))).count());
@@ -116,7 +116,7 @@ class PresentationUpdateTest {
         var changes=PresentationMigration.replacements(live,List.of(legacy),fresh);
         assertTrue(changes.contains("server-menu.items"));
         assertTrue(changes.contains("auto-messages.messages"));
-        assertEquals(live.getMapList("server-menu.items").size()-5, fresh.getMapList("server-menu.items").size());
+        assertEquals(live.getMapList("server-menu.items").size()-7, fresh.getMapList("server-menu.items").size());
         for (var entry:fresh.getMapList("server-menu.items")) {
             assertFalse(RetiredAddons.plugin(String.valueOf(entry.get("plugin"))));
             assertFalse(RetiredAddons.command(String.valueOf(entry.get("command"))));
@@ -211,7 +211,7 @@ class PresentationUpdateTest {
         assertEquals(6,categories.size(),"разделы меню: "+categories);
         assertEquals(6,new HashSet<>(categories).size(),"ид разделов уникальны");
         var entries=config.getMapList("server-menu.items").stream().map(this::menuEntry).toList();
-        assertEquals(47,entries.size(),"актуальное меню с донатом, просмотрами экономики, CHRDK_VK и CHRDK_Disasters, без снятых аддонов");
+        assertEquals(45,entries.size(),"актуальное меню с донатом, просмотрами экономики, CHRDK_VK и CHRDK_Disasters, без снятых аддонов");
         for(String expected:List.of("bal stats","homes prices","claim budget"))
             assertEquals(1,entries.stream().filter(e->e.command().equals(expected)).count(),expected);
         for (var entry : entries) {
@@ -297,7 +297,7 @@ class PresentationUpdateTest {
     }
 
     @Test void menuAvailabilityRequiresBothAddonAndPermission() {
-        var entry=new ServerMenuSettings.Entry(10,org.bukkit.Material.PAPER,"a","","auction","CHRDK_Auction","chrdkauction.use");
+        var entry=new ServerMenuSettings.Entry(10,org.bukkit.Material.PAPER,"a","","orders","CHRDK_Orders","chrdkorders.use");
         assertFalse(entry.available(p->false,p->true));assertFalse(entry.available(p->true,p->false));
         assertTrue(entry.available(p->true,p->true));
     }
@@ -309,7 +309,7 @@ class PresentationUpdateTest {
         legacy.set("auto-messages.messages",List.of());assertTrue(ChatConfig.fromBukkitConfig(legacy).autoMessageEntries().isEmpty());
         var trial=AutoMessage.parse(Map.of("text","T","condition","trial"));
         assertFalse(trial.eligible(p->true,p->true,false,false));assertTrue(trial.eligible(p->true,p->true,true,false));
-        var addon=AutoMessage.parse(Map.of("text","A","plugin","CHRDK_Auction","permission","chrdkauction.use"));
+        var addon=AutoMessage.parse(Map.of("text","A","plugin","CHRDK_Orders","permission","chrdkorders.use"));
         assertFalse(addon.eligible(p->false,p->true,false,false));assertFalse(addon.eligible(p->true,p->false,false,false));
         assertNull(AutoMessage.parse(Map.of("text","a","condition","typo")));
         var noPass=AutoMessage.parse(Map.of("text","N","condition","no-pass"));

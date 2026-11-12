@@ -4,13 +4,15 @@ import org.bukkit.configuration.file.FileConfiguration;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/** Настройки встроенного защитного модуля. OP и донат не обходят ограничения. */
+/** Настройки встроенного защитного модуля. Только явное trusted-право после входа обходит console-only. */
 record GuardSettings(boolean enabled, int ipBurst, int ipRefillSeconds, int globalBurst,
                      int globalPerSecond, int maxAddresses, int unauthGlobal, int unauthPerIp,
                      int loginSeconds, int commandBurst, int commandsPerSecond,
                      int unauthCommandBurst, int unauthCommandsPerSecond, int maxCommandLength,
                      int blockedAttemptBurst, int blockedAttemptsPerSecond, int blockedAlertSeconds,
                      Set<String> consoleOnly, GuardTuning defense) {
+    /** Выдаётся только доверенной админской группе LuckPerms; без успешного входа не действует. */
+    static final String TRUSTED_PERMISSION = "chrdk.guard.trusted";
     /** Ванильные/серверные корни: эскалация прав, мир, выдача, отключение, раскрытие сборки. */
     static final Set<String> DEFAULT_CONSOLE_ONLY = Set.of(
             "op", "deop", "stop", "restart", "reload", "rl", "debug", "perf", "jfr", "paper", "purpur", "spigot", "fill", "fillbiome", "clone", "setblock",
@@ -28,7 +30,7 @@ record GuardSettings(boolean enabled, int ipBurst, int ipRefillSeconds, int glob
             // Админ-корни и алиасы CHRDK_Core.
             "guard", "rankadmin", "socialspy", "spy", "adminpanel", "apanel", "staffpanel", "honoradmin", "honorsadmin",
             // Админ-корни и алиасы аддонов CHRDK_* (все 22 модуля из ZIP).
-            "achadmin", "artifactsadmin", "auctionadmin", "ahadmin", "bpadmin", "claimadmin",
+            "achadmin", "artifactsadmin", "bpadmin", "claimadmin",
             "classadmin", "classesadmin", "clsadmin", "goalsadmin", "dailyadmin", "dlyadmin",
             "shopadmin", "dshopadmin", "marketadmin", "disastersadmin", "enchantsadmin",
             "guildadmin", "guildsadmin", "clanadmin", "clansadmin", "ga", "ordersadmin",

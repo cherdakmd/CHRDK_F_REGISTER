@@ -24,7 +24,7 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
     private volatile ru.cherdakmd.chrdkskills.ChrdkSkillsApi skillsApi;
     private volatile ShopService shopService;
     private ShopStore store;
-    private ShopGui gui;
+    private ShopMarketGui gui;
     private ShopQuantityGui quantities;
     private ShopAdminGui adminGui;
     private ShopOverrides overrides;
@@ -61,7 +61,7 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
 
         Bukkit.getPluginManager().registerEvents(this,this);
         recoveryTask=Bukkit.getScheduler().runTaskTimer(this,()->shopService.recoverPending(),1L,20L);
-        this.gui = new ShopGui(this);
+        this.gui = new ShopMarketGui(this);
         this.adminGui = new ShopAdminGui(this);
         this.quantities=new ShopQuantityGui(this);
         getServer().getPluginManager().registerEvents(quantities,this);
@@ -175,7 +175,7 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
         return messages;
     }
 
-    public ShopGui gui() {
+    public ShopMarketGui gui() {
         return gui;
     }
 }
