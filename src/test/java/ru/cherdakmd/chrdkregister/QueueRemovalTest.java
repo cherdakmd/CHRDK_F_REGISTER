@@ -34,7 +34,7 @@ class QueueRemovalTest {
         assertEquals(19, PluginUpdateService.MODULES.size());
         assertEquals(44,ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
         var stock = yaml("config.yml");
-        assertEquals(47, stock.getMapList("server-menu.items").size());
+        assertEquals(45, stock.getMapList("server-menu.items").size());
         assertEquals(40, stock.getList("auto-messages.messages").size());
         assertFalse(stock.saveToString().contains("CHRDK_Queue"));
         assertFalse(stock.saveToString().contains("Вход без очереди"));
