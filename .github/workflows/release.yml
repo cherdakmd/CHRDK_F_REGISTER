@@ -142,7 +142,7 @@ jobs:
           echo "dshop_checksums=${checksums}" >> "$GITHUB_ENV"
 
       - name: Pack general plugin ZIP and prepare standalone JARs
-        if: !startsWith(steps.verify-version.outputs.version, '2.0.2-rc.')
+        if: "!startsWith(steps.verify-version.outputs.version, '2.0.2-rc.')"
         shell: bash
         run: |
           set -euo pipefail
