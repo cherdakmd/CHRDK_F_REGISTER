@@ -163,8 +163,10 @@ Bukkit-обработчик `HIGHEST` — не изоляция от недов�
   чате для обычных игроков, включая OP без отдельного допуска. В том числе fill,
   execute, gamerule, title, particle, op, tp, function, stop, reload, give, summon.
   Авторизованная админская группа может получить явное право `chrdk.guard.trusted`:
-  `/lp group admin permission set chrdk.guard.trusted true`. LuckPerms `*` также
-  включает это право. Без успешного `/login` и требуемой 2FA допуск не действует.
+  `/lp group admin permission set chrdk.guard.trusted true`. Штатная `/pass
+  luckperms setup` добавляет узел в `admin` автоматически, не затрагивая
+  `default`/`moderator`. LuckPerms `*` также включает это право. Без успешного
+  `/login` и требуемой 2FA допуск не действует.
   Консоль и RCON продолжают работать: ServerCommandEvent не блокируется.
 - Учитываются namespace (`minecraft:fill`), зарегистрированное имя команды при
   обращении через alias и статические цепочки `commands.yml`. Циклы, динамический

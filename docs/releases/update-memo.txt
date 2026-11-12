@@ -12,7 +12,8 @@ chrdk-vk-1.5.7.jar и chrdk-disasters-1.5.7.jar отдельно; Mine Treasure 
 Цены, курс, /bal, sellall, WAL, ShopJournal, shop-data.json и shop-overrides.json
 не меняются. Новый интерфейс не снимает quarantine незавершённой сделки.
 Админы LuckPerms после /login и 2FA могут выполнять защищённые команды из игры
-с chrdk.guard.trusted: /lp group admin permission set chrdk.guard.trusted true.
+с chrdk.guard.trusted. Запустите /pass luckperms setup: право автоматически
+добавится в admin, но не в default/moderator; повторный запуск безопасен.
 OP без права и неавторизованные сессии остаются заблокированными.
 
 Остановить сервер, сделать backup, совместно заменить все JAR и полностью

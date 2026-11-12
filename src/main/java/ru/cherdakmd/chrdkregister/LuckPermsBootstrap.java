@@ -58,6 +58,7 @@ public final class LuckPermsBootstrap {
             "chrdkregister.admin.panel",
             "chrdkregister.admin.moderators",
             "chrdkregister.admin.audit",
+            GuardSettings.TRUSTED_PERMISSION,
             "chrdkregister.chat.color",
             "chrdkregister.chat.bypass",
             "chrdkregister.chat.socialspy",

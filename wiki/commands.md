@@ -36,8 +36,9 @@ review: [core, claims, teleports, diamond-shop, tier-forge]
 `/shopadmin`, `/tiersadmin` и остальные корни из `security.console-only-commands`.
 Админская группа LuckPerms с явным `chrdk.guard.trusted` может выполнять их после
 успешного `/login` и требуемой 2FA; OP без права и неавторизованные сессии не
-проходят. Владелец выдаёт допуск: `/lp group admin permission set
-chrdk.guard.trusted true`. Вместо `/help` игроку доступны `/menu` и `/guide`.
+проходят. Автонастройка `/pass luckperms setup` добавляет допуск в группу `admin`
+и не выдаёт его `default` или `moderator`; повторный запуск безопасен. Вместо
+`/help` игроку доступны `/menu` и `/guide`.
 Полный список и границы — в
 [защите сервера](https://github.com/cherdakmd/CHRDK_F_REGISTER/blob/main/docs/SERVER_GUARD.md).
 
