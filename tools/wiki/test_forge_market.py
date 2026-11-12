@@ -71,7 +71,7 @@ class ForgeMarketContractTest(unittest.TestCase):
         self.assertIn("ForgeMarketCatalog", self.exchange)
         self.assertIn("42", read(FORGE / "TierForgePlugin.java"))
 
-    def test_exactly_eight_forge_and_ten_skill_whitelist_skus_with_exact_prices(self):
+    def test_core_whitelist_retained_but_shop_has_only_eight_forge_skus(self):
         records = re.findall(
             r'new Sku\("([a-z_]+)", "([A-Z_]+)", (\d+), (true|false), (true|false)\)',
             self.catalog,
@@ -90,7 +90,9 @@ class ForgeMarketContractTest(unittest.TestCase):
         for sku, material, price, seed, hunt in records:
             self.assertEqual(expected[sku], (material, int(price)))
         prices = self.shop_config["forge-shop"]["prices"]
-        self.assertEqual({k: v[1] for k, v in expected.items()}, prices)
+        self.assertEqual({k: v[1] for k, v in expected.items() if not k.startswith("skill_xp_")}, prices)
+        self.assertIn("if (isPotionSku(sku.id())) continue;", self.service)
+        self.assertIn('if (isPotionSku(offer.sku())) return fail("forge.shop.closed", 0);', self.service)
         self.assertTrue(self.shop_config["forge-shop"]["enabled"])
         self.assertIn("validPrice", self.catalog)
         self.assertIn("закрыт", self.prices)

@@ -69,19 +69,12 @@ final class ForgeShopService {
         return sku != null && sku.startsWith("skill_xp_");
     }
 
-    List<Offer> forgeOffers(Player player) {
-        return offers(player).stream().filter(offer -> !isPotionSku(offer.sku())).toList();
-    }
-
-    List<Offer> potionOffers(Player player) {
-        return offers(player).stream().filter(offer -> isPotionSku(offer.sku())).toList();
-    }
-
-    /** Полный каталог для проверки котировки/recovery; витрины разделяют его по типу SKU. */
+    /** Только 8 расходников Кузни; зелья навыков полностью выведены из магазина. */
     List<Offer> offers(Player player) {
         List<Offer> offers = new ArrayList<>();
         if (!prices.enabled()) return offers;
         for (var sku : ForgeMarketCatalog.SKUS) {
+            if (isPotionSku(sku.id())) continue;
             var source = source(sku.id());
             long price = plugin.coreApi().diamondRate().scaleMinor(prices.price(sku.id()));
             if (source == null || price < 1 || !source.available(sku.id())) continue;
@@ -101,6 +94,7 @@ final class ForgeShopService {
 
     /** Штатное подтверждение: ровно одна искра, остальные — до 64 за покупку (по 1 в слоте). */
     Result purchase(Player player, Offer offer, int units) {
+        if (isPotionSku(offer.sku())) return fail("forge.shop.closed", 0);
         var service = plugin.shopService();
         if (!service.ready(player) || player.getGameMode() != GameMode.SURVIVAL) return fail("trading.unavailable", 0);
         var marketQuote=plugin.coreApi().diamondRate();

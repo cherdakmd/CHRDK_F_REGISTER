@@ -85,8 +85,11 @@ class ForgeShopTextTest {
     @Test
     void everyForgeSkuHasRussianName() throws Exception {
         Map<String, String> names = names();
-        assertEquals(18, ForgeMarketCatalog.SKUS.size(), "восемь расходников Кузни и десять зелий навыков");
+        assertEquals(8, ForgeMarketCatalog.SKUS.stream()
+                .filter(sku -> !ForgeShopService.isPotionSku(sku.id())).count(),
+                "в магазине остаются только восемь расходников Кузни");
         for (var sku : ForgeMarketCatalog.SKUS) {
+            if (ForgeShopService.isPotionSku(sku.id())) continue;
             assertTrue(names.containsKey(sku.id()), "нет русского имени у SKU " + sku.id());
             String name = names.get(sku.id());
             assertFalse(name.isBlank(), "пустое имя у SKU " + sku.id());
@@ -100,6 +103,7 @@ class ForgeShopTextTest {
     void everyForgeSkuExplainsWhatItDoesAndHowToUseIt() throws Exception {
         Map<String, List<String>> purposes = purposes();
         for (var sku : ForgeMarketCatalog.SKUS) {
+            if (ForgeShopService.isPotionSku(sku.id())) continue;
             assertTrue(purposes.containsKey(sku.id()), "нет назначения у SKU " + sku.id());
             List<String> description = purposes.get(sku.id());
             assertTrue(description.size() >= 2,
@@ -108,9 +112,8 @@ class ForgeShopTextTest {
                 assertTrue(CYRILLIC.matcher(line).find(),
                         "строка назначения SKU " + sku.id() + " не по-русски");
             }
-            String expectedUse = sku.id().startsWith("skill_xp_") ? "выпейте" : "наковальн";
             assertTrue(description.stream().anyMatch(
-                    line -> line.toLowerCase(Locale.ROOT).contains(expectedUse)),
+                    line -> line.toLowerCase(Locale.ROOT).contains("наковальн")),
                     "у SKU " + sku.id() + " не сказано, как применять расходник");
         }
         assertTrue(purposes.get("repair").stream().anyMatch(line -> line.contains("ремонт")),
@@ -124,6 +127,10 @@ class ForgeShopTextTest {
                 Files.newInputStream(Path.of("src/main/resources/messages.yml")), null,
                 Logger.getLogger("ForgeShopTextTest"));
         for (var sku : ForgeMarketCatalog.SKUS) {
+            if (ForgeShopService.isPotionSku(sku.id())) {
+                assertFalse(messages.has("forge.shop.name." + sku.id()));
+                continue;
+            }
             assertTrue(messages.has("forge.shop.name." + sku.id()),
                     "загрузчик не видит имя SKU " + sku.id());
             assertTrue(messages.has("forge.shop.purpose." + sku.id()),

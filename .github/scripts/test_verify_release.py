@@ -85,7 +85,7 @@ class ReleaseValidationTest(unittest.TestCase):
         # только в следующий комплект, поэтому историческую памятку не трогаем.
         # После bump plugin_version эта оговорка перестаёт действовать и тест
         # снова требует полный набор модулей из settings.gradle.
-        module_prereleases = {"2.0.2-rc.1": "chrdk-diamond-shop"}
+        module_prereleases = {"2.0.2-rc.1": "chrdk-diamond-shop", "2.0.2-rc.2": "chrdk-diamond-shop"}
         if version in module_prereleases:
             self.assertIn(f"только {module_prereleases[version]}-{version}.jar", current)
             self.assertIn("Общего ZIP нет", current)
@@ -159,9 +159,9 @@ class ReleaseWorkflowContractTest(unittest.TestCase):
         release = (root / ".github/workflows/release.yml").read_text()
         self.assertIn("Pack DiamondShop-only prerelease", release)
         self.assertIn("chrdk-diamond-shop-${version}.jar", release)
-        self.assertIn('if: steps.verify-version.outputs.version != \'2.0.2-rc.1\'', release)
+        self.assertIn("if: !startsWith(steps.verify-version.outputs.version, '2.0.2-rc.')", release)
         attach = release.split("name: Attach verified release assets", 1)[1]
-        self.assertIn('if [[ "${{ steps.verify-version.outputs.version }}" == "2.0.2-rc.1" ]]', attach)
+        self.assertIn('if [[ "${{ steps.verify-version.outputs.version }}" == 2.0.2-rc.* ]]', attach)
         self.assertIn('"${{ env.dshop_jar }}" "${{ env.dshop_checksums }}"', attach)
 
     def test_memo_is_external_so_run_step_stays_below_github_limit(self):
