@@ -159,7 +159,7 @@ class ReleaseWorkflowContractTest(unittest.TestCase):
         release = (root / ".github/workflows/release.yml").read_text()
         self.assertIn("Pack DiamondShop-only prerelease", release)
         self.assertIn("chrdk-diamond-shop-${version}.jar", release)
-        self.assertIn("if: !startsWith(steps.verify-version.outputs.version, '2.0.2-rc.')", release)
+        self.assertIn("if: \"!startsWith(steps.verify-version.outputs.version, '2.0.2-rc.')\"", release)
         attach = release.split("name: Attach verified release assets", 1)[1]
         self.assertIn('if [[ "${{ steps.verify-version.outputs.version }}" == 2.0.2-rc.* ]]', attach)
         self.assertIn('"${{ env.dshop_jar }}" "${{ env.dshop_checksums }}"', attach)
