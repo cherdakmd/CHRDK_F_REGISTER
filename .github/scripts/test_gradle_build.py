@@ -19,6 +19,13 @@ NETWORK = failure("Could not resolve all files for configuration ':compileClassp
 
 
 class RetryPolicyTest(unittest.TestCase):
+    def test_rc7_workflow_packages_core_instead_of_diamond_shop(self):
+        workflow=(Path(__file__).resolve().parents[2]/".github/workflows/release.yml").read_text()
+        self.assertIn("Pack Core-only prerelease",workflow)
+        self.assertIn('jar="chrdk-core-${version}.jar"',workflow)
+        self.assertIn('cp "build/libs/${jar}" "${jar}"',workflow)
+        self.assertIn("steps.verify-version.outputs.version != '2.0.2-rc.7'",workflow)
+
     def test_observed_timeouts_and_truncated_dependency_downloads(self):
         for message in ["Read timed out", "Connection reset", "Connect timed out",
                         "Premature end of Content-Length delimited message body (expected: 159446; received: 4096)",
