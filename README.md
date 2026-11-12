@@ -13,6 +13,15 @@
 > Порядок проверки и выпуска — [RELEASE.md](docs/RELEASE.md);
 > [аудит готовности от 10.11.2026](docs/audits/release-readiness-2026-11-10.md).
 
+## 2.0 — стабильный выпуск для чистого сервера
+
+Включает новый Diamond Shop, minor-экономику, полное удаление Auction и все защитные
+исправления recovery из 1.5.8 RC. Улучшена диагностика charge-witness: лог показывает
+ожидаемые и фактические метки. `/pass doctor` проверяет единую версию CHRDK-комплекта,
+банк и native pending. Fail-closed защита не ослаблена и не заменяется автосбросом.
+
+[Заметки 2.0](docs/releases/2.0.md) · [Чек-лист полного вайпа](docs/operations/clean-wipe-2.0.md).
+
 ## 1.5.8-rc.3 — сверка market с Core
 
 Если локальный shop-data.json создан заново, `/shop` принимает существующий market Core

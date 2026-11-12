@@ -116,6 +116,13 @@ class ScheduleTest(unittest.TestCase):
 
 
 class ContentTest(unittest.TestCase):
+    def test_current_two_component_stable_release_preview(self):
+        post = run.preview_news('2.0')
+        self.assertEqual('release:v2.0', post.key)
+        self.assertIn('CHRDK 2.0', post.text)
+        with self.assertRaises(SafetyError):
+            run.preview_news('v2.0')
+
     def test_catalog_only_current_verified_wiki(self):
         validate()
         self.assertGreaterEqual(len(catalog()), 15)
@@ -612,7 +619,7 @@ class ConnectionAndPosterTest(unittest.TestCase):
         self.assertEqual(1, vk.posts)
         self.assertEqual(1, vk.uploads)
         key = run.test_post(NOW).key
-        self.assertTrue(key.startswith('test:1.'))
+        self.assertRegex(key, r'^test:\d+\.\d+(?:\.\d+)?$')
         self.assertEqual(key, run.test_post(NOW+timedelta(days=100)).key)
         self.assertEqual('posted', Ledger(gh, 123, PEER).locate(key)[1]['status'])
 

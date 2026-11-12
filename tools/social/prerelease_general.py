@@ -28,7 +28,7 @@ from datetime import datetime, timezone
 import prerelease
 from content import MOSCOW, ROOT, Post, SafetyError
 
-GENERAL_TAG = re.compile(r'v1\.\d+\.\d+-rc\.[1-9]\d*')
+GENERAL_TAG = re.compile(r'v\d+\.\d+(?:\.\d+)?-rc\.[1-9]\d*')
 VERSION = re.compile(r'1\.\d+\.\d+-rc\.[1-9]\d*')
 REPOSITORY = prerelease.REPOSITORY
 MAX_ATTEMPTS = prerelease.MAX_ATTEMPTS

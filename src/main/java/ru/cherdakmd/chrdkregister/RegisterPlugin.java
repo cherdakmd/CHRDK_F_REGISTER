@@ -269,6 +269,16 @@ public final class RegisterPlugin extends JavaPlugin {
         Path pluginsFolder = getDataFolder().getParentFile() != null
                 ? getDataFolder().getParentFile().toPath() : getDataFolder().toPath();
         DuplicatePluginJarDetector.warnIfDuplicates(pluginsFolder, getLogger());
+        var installedVersions = new java.util.LinkedHashMap<String, String>();
+        for (var loadedPlugin : getServer().getPluginManager().getPlugins()) {
+            installedVersions.put(loadedPlugin.getName(), loadedPlugin.getPluginMeta().getVersion());
+        }
+        var mixedVersions = BundleVersionAudit.find(installedVersions, getPluginMeta().getVersion());
+        if (!mixedVersions.isEmpty()) {
+            getLogger().severe("КОМПЛЕКТ CHRDK СМЕШАННЫХ ВЕРСИЙ: " + BundleVersionAudit.summary(mixedVersions));
+            getLogger().severe("Остановите сервер, сохраните данные и установите все JAR одной версии. "
+                    + "Не удаляйте bank.json, локальные store, pending, WAL или playerdata.");
+        }
         this.pluginUpdater = new PluginUpdateService(pluginsFolder,
                 getServer().getUpdateFolderFile().toPath(), getDataFolder().toPath(),
                 () -> accessManager.config().updatesRepo(), getServer().getBukkitVersion());

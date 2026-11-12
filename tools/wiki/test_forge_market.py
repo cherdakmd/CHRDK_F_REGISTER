@@ -52,13 +52,12 @@ class ForgeMarketContractTest(unittest.TestCase):
         end = self.items.index("public void bumpUpgrade(", start)
         return self.items[start:end]
 
-    def test_version_and_core_api_are_current_release_candidate(self):
+    def test_version_and_core_api_are_current_release(self):
         props = read(ROOT / "gradle.properties")
         version = re.search(r"^plugin_version=(.+)$", props, re.M)
         self.assertIsNotNone(version, "plugin_version обязателен")
         current = version.group(1).strip()
-        self.assertEqual("1.5.8-rc.3", current)
-        self.assertRegex(current, r"^1\.5\.\d+(?:-fix|-rc\.[1-9]\d*)?$", "версия соответствует стабильному/fix/RC формату")
+        self.assertRegex(current, r"^\d+\.\d+(?:\.\d+)?(?:-fix|-rc\.[1-9]\d*)?$", "версия соответствует стабильному/fix/RC формату")
         self.assertTrue((ROOT / "docs/releases" / (current + ".md")).is_file(),
                         "для текущего выпуска нужны полные заметки в архиве")
         if "-rc." not in current:

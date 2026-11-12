@@ -16,9 +16,9 @@ from facts import FactBook
 from freshness import check as freshness_check
 
 MOSCOW = ZoneInfo('Europe/Moscow')
-TAG = re.compile(r'v1\.\d+\.\d+(?:-fix)?')
+TAG = re.compile(r'v\d+\.\d+(?:\.\d+)?(?:-fix)?')
 # Пререлизы собираются тем же Release-workflow, но под стабильный TAG не подходят.
-RC_TAG = re.compile(r'v1\.\d+\.\d+-rc\.[1-9]\d*')
+RC_TAG = re.compile(r'v\d+\.\d+(?:\.\d+)?-rc\.[1-9]\d*')
 
 
 class SafetyError(RuntimeError):

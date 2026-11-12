@@ -4,6 +4,18 @@ description: "Что меняется автоматически и почему
 review: [core, diamond-shop]
 ---
 
+## Версия 2.0 — стабильный чистый старт
+
+Выпуск объединяет новый Diamond Shop, minor-экономику, удаление Auction и защитные
+исправления recovery. `/pass doctor` проверяет единую версию CHRDK-комплекта, банк
+и незавершённые native-обмены; конфликт charge-witness теперь выводит ожидаемые
+и фактические метки. Автоматического сброса или ослабления fail-closed нет.
+
+Для полного вайпа старые миры, playerdata и финансовые JSON/WAL не переносятся.
+Архив сохраняется отдельно; перед открытием выполняются doctor, shop recovery,
+live smoke и restart. Подробно: `docs/releases/2.0.md` и
+`docs/operations/clean-wipe-2.0.md`.
+
 ## Версия 1.5.8-rc.3 — сверка market с Core
 
 Если локальный shop-data.json создан заново, `/shop` принимает существующий market Core
