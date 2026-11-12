@@ -171,9 +171,9 @@
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Сверено восстановление binding магазина только при sequence 0 и без pending",
+      "reason": "Хотфикс-пререлиз: безопасное восстановление market lineage Core",
       "sources": "c8c32ca9b8f3f5c5aae60f664f84b4a5a4b17d4d1adc08c7dba121314bde79c6",
-      "text": "12a3b064fb8635fbd6a78df65f04e6c42db987305eeb89da80ee2a599e8852d3"
+      "text": "2d23f1303456d24355adf7d8f0e641f9b682f6d2994331c7bb2f9d586e63ca85"
     },
     "vk": {
       "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
