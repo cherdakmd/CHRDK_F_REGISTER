@@ -36,8 +36,8 @@
       "text": "503edef62357862f67d17df249b393023697d6dca6342cbe792b0d4dc78cb8cc"
     },
     "commands": {
-      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
-      "sources": "5189ea677847acd182edc0dee60e060dd66e8bc88430e751906a146ee1e7bbdd",
+      "reason": "Сверено восстановление binding магазина только при sequence 0 и без pending",
+      "sources": "686030c2ad158e09de289e04c4fd6fe1eab4ba53c405fc6cd6c2378241b98fca",
       "text": "46017ca1aca3a1d620ff09b3ffd40ff42885e551a850c85baa15f2c73d03b290"
     },
     "cosmetics": {
@@ -56,8 +56,8 @@
       "text": "121b1cc28a075ced29b6de8abec7dbc20bbb531a01441ddd5fdb836d066d0202"
     },
     "economy": {
-      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
-      "sources": "55035a72e92c2773accf4fca4dc72fdbf77ba21c3b4ed788127a01835dffaa44",
+      "reason": "Сверено восстановление binding магазина только при sequence 0 и без pending",
+      "sources": "a564bceed1199aa37b42e37a7457bc34097518a1a89250313adc0fa344b930cd",
       "text": "95603b3cf3e787bf93015bc3b09a7d358ec10a3c9297426003539929db15bd69"
     },
     "enchants": {
@@ -66,8 +66,8 @@
       "text": "7e90321ef8a100bae11c53592c62328fa44a958be657b66a86d51ea8c1906a7d"
     },
     "faq": {
-      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
-      "sources": "9c433c5e4c9f265ca95ae1eec8308a1e7fda0a37d6c133e5a09c48be4f15a299",
+      "reason": "Сверено восстановление binding магазина только при sequence 0 и без pending",
+      "sources": "3cdc17e59207b625be49842056a3a90aa6ec0a7bd2af770906e81e2136595a0e",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
@@ -86,13 +86,13 @@
       "text": "17c878e1ab52ceb2a7c3361a7bef133c8bd1004a59641898f2c525f7c48fff8f"
     },
     "index": {
-      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
-      "sources": "cc2daefd81457bdeb820272b38d043afd86ed770ac6673c8c3472ab4e6b7c470",
+      "reason": "Сверено восстановление binding магазина только при sequence 0 и без pending",
+      "sources": "c8c32ca9b8f3f5c5aae60f664f84b4a5a4b17d4d1adc08c7dba121314bde79c6",
       "text": "13b0089b89035cd13598d177608718282608bc671993a3c370012b297c779cd7"
     },
     "menu": {
-      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
-      "sources": "9c433c5e4c9f265ca95ae1eec8308a1e7fda0a37d6c133e5a09c48be4f15a299",
+      "reason": "Сверено восстановление binding магазина только при sequence 0 и без pending",
+      "sources": "3cdc17e59207b625be49842056a3a90aa6ec0a7bd2af770906e81e2136595a0e",
       "text": "eb6fdaf663b2005735002c5f23bb7f751b31a7447b3fc2cc77d741ff7c4cb2f9"
     },
     "moderation": {
@@ -131,8 +131,8 @@
       "text": "664b466e4b44741175d9c2cdb4da728a0603a04aaaefada8396dd6517d5dca2d"
     },
     "shop": {
-      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
-      "sources": "cc2daefd81457bdeb820272b38d043afd86ed770ac6673c8c3472ab4e6b7c470",
+      "reason": "Сверено восстановление binding магазина только при sequence 0 и без pending",
+      "sources": "c8c32ca9b8f3f5c5aae60f664f84b4a5a4b17d4d1adc08c7dba121314bde79c6",
       "text": "c28f429d342f4c030938b22adaee5cb0792a5c93c7c5f107416537f2c9300a20"
     },
     "skills": {
@@ -171,9 +171,9 @@
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",
-      "sources": "cc2daefd81457bdeb820272b38d043afd86ed770ac6673c8c3472ab4e6b7c470",
-      "text": "643760c7138096b0312d43a6006ca5c691ba5f8a9cf46cc637cb5f12dbf910df"
+      "reason": "Хотфикс-пререлиз: безопасное восстановление market lineage Core",
+      "sources": "c8c32ca9b8f3f5c5aae60f664f84b4a5a4b17d4d1adc08c7dba121314bde79c6",
+      "text": "2d23f1303456d24355adf7d8f0e641f9b682f6d2994331c7bb2f9d586e63ca85"
     },
     "vk": {
       "reason": "Финальная сверка удаления Auction из fallback Guard и stock-тестов",

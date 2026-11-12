@@ -166,7 +166,10 @@ public final class ShopService {
     public double[] historyOf(ShopConfig.ShopItem item) { return store.historyOf(item.material()); }
     private boolean binding() {
         var core=api.get(); if(core==null||!Bukkit.isPrimaryThread()||!store.legacyAvailable()||!store.ensureMarket()) return false;
-        if(store.registered()) return core.shopRegistered(store.market());
+        if(core.shopRegistered(store.market())) return true;
+        // Core мог потерять/восстановить lineage отдельно от shop-data.json.
+        // Повторная регистрация того же UUID безопасна только до первой сделки.
+        if(!ShopRegistration.canRestore(store.sequence(),store.pending()!=null)) return false;
         return core.registerShop(store.market())&&store.markRegistered();
     }
     public boolean migrate(UUID id, double ignoredLegacyPreview) {
