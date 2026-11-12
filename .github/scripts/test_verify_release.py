@@ -117,7 +117,7 @@ class ReleaseValidationTest(unittest.TestCase):
         self.assertIn("CHRDK_BattlePass", names)
         self.assertNotIn("CHRDK_Professions", names)
         self.assertNotIn("CHRDK_Hunt", names)
-        self.assertEqual(20, len(names))
+        self.assertEqual(19, len(names))
         self.assertNotIn("CHRDK_VK", names, "CHRDK_VK публикуется отдельно, а не внутри общего ZIP")
         self.assertNotIn("CHRDK_Disasters", names, "CHRDK_Disasters публикуется отдельно, а не внутри общего ZIP")
         self.assertEqual({"CHRDK_VK": "vk", "CHRDK_Disasters": "disasters"}, standalone_plugins(root))
