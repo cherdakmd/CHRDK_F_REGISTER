@@ -118,7 +118,7 @@ final class DiamondShopSchemaV3Test {
         assertTrue(result.changed(), "переход v2 → v3 обязан дописать новый раздел");
         assertTrue(result.text().contains(CONFIG_MARKER + ": 3"));
         assertTrue(result.text().contains("owner-note: \"моя правка\""));
-        assertTrue(result.text().contains("Дневные акции"),
+        assertTrue(result.text().contains("Ежедневная горячая скупка"),
                 "комментарии эталона переносятся вместе с блоком");
 
         YamlConfiguration live = yaml(result.text());
@@ -127,14 +127,11 @@ final class DiamondShopSchemaV3Test {
         assertTrue(live.isConfigurationSection("promotions"));
         assertTrue(live.getBoolean("promotions.enabled"));
         assertEquals(14, live.getStringList("promotions.pool").size());
-        assertEquals(3, live.getInt("promotions.featured-per-day"));
-        assertEquals(25, live.getInt("promotions.hot-buyback-percent"));
-        assertEquals(64, live.getInt("promotions.contract-units"));
-        assertEquals(12, live.getInt("promotions.contract-reward"));
-        assertEquals(3, live.getInt("promotions.series-kinds"));
-        assertEquals(16, live.getInt("promotions.series-reward"));
-        assertEquals(32, live.getInt("promotions.max-bonus-per-trade"));
-        assertEquals(128, live.getInt("promotions.max-bonus-per-player-per-day"));
+        assertEquals(2, live.getInt("promotions.rotation-schema"));
+        assertEquals(5, live.getInt("promotions.featured-per-window"));
+        assertEquals(50, live.getInt("promotions.hot-buyback-percent"));
+        assertEquals(5000, live.getInt("promotions.max-bonus-per-trade"));
+        assertEquals(5000, live.getInt("promotions.max-bonus-per-player-per-day"));
         // Каталог магазина — СПИСОК из 248 записей, а не секция YAML.
         List<?> items = live.getList("items");
         assertNotNull(items, "каталог владельца остался на месте");
@@ -173,7 +170,7 @@ final class DiamondShopSchemaV3Test {
                 "владельческий текст не перезаписан");
         assertTrue(live.getString("messages.trading.promo-bonus-paid", "").contains("%bonus%"));
         assertTrue(live.getString("messages.trading.gui.promo-line", "").contains("%items%"));
-        assertEquals("★ Товар дня", plainTag(live.getString("messages.trading.gui.promo-tag")));
+        assertEquals("★ Горячий товар · 6 ч", plainTag(live.getString("messages.trading.gui.promo-tag")));
     }
 
     @Test
@@ -186,7 +183,7 @@ final class DiamondShopSchemaV3Test {
     }
 
     private static String plainTag(String text) {
-        // MiniMessage-тег в эталоне: <gold>★ Товар дня</gold>.
+        // MiniMessage-тег в эталоне: <gold>★ Горячий товар · 6 ч</gold>.
         return text == null ? "" : text.replace("<gold>", "").replace("</gold>", "");
     }
 }

@@ -1,11 +1,10 @@
 package ru.cherdakmd.diamondshop;
 
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
- * Чистая арифметика дневных акций алмазного магазина: календарные сутки UTC,
+ * Чистая арифметика горячей скупки: календарные сутки UTC, шестичасовая
  * детерминированная ротация товаров и потолки бонуса. Ни Bukkit, ни ввода-вывода,
  * ни состояния — всё проверяется юнит-тестами.
  *
@@ -15,13 +14,12 @@ import java.util.List;
 final class ShopPromoMath {
 
     static final long DAY_MILLIS = 86_400_000L;
+    static final long WINDOW_MILLIS = 21_600_000L;
     static final long MAX_BONUS_VALUE = 1_000_000_000L;
 
-    /** Три разных способа заработка, чередующиеся по дням. */
+    /** Горячая скупка действует ежедневно; суточный лимит и окно товаров независимы. */
     enum Type {
-        HOT_BUYBACK("Горячая скупка"),
-        CONTRACT("Заказ дня"),
-        SERIES("Серия товаров");
+        HOT_BUYBACK("Горячая скупка · 5 ресурсов · 6 ч");
 
         private final String label;
 
@@ -30,7 +28,7 @@ final class ShopPromoMath {
         String label() { return label; }
     }
 
-    /** План на конкретные сутки: тип акции и набор товаров дня. */
+    /** План на конкретное время: сутки лимита и набор текущего шестичасового окна. */
     record Plan(Type type, long day, List<String> featured) { }
 
     static long dayIndex(long nowMillis) {
@@ -42,16 +40,18 @@ final class ShopPromoMath {
     }
 
     static Type typeFor(long day) {
-        Type[] values = Type.values();
-        return values[(int) Math.floorMod(day, values.length)];
+        return Type.HOT_BUYBACK;
+    }
+
+    static long windowIndex(long nowMillis) {
+        return Math.floorDiv(nowMillis, WINDOW_MILLIS);
     }
 
     /**
-     * Ротация без случайности: сдвиг зависит от дня, шаг взаимно прост с размером
-     * пула, поэтому первые {@code count} позиций всегда различны. Соседние дни
-     * дают разные наборы, а один и тот же день на любом сервере — одинаковый.
+     * Непрерывные смены по пулу: при pool >= 2·count соседние окна не пересекаются.
+     * Один UTC-window на всех серверах даёт одинаковый набор без случайности.
      */
-    static List<String> featured(List<String> pool, int count, long day) {
+    static List<String> featured(List<String> pool, int count, long window) {
         if (pool == null || pool.isEmpty() || count <= 0) {
             return List.of();
         }
@@ -60,35 +60,12 @@ final class ShopPromoMath {
         if (size == 1) {
             return List.of(pool.get(0));
         }
-        int start = (int) Math.floorMod(day * 7L + 3L, size);
-        int stride = coprimeStride(size, day);
+        int start = (int) Math.floorMod(window * (long) want, size);
         LinkedHashSet<String> out = new LinkedHashSet<>();
         for (int k = 0; k < want; k++) {
-            out.add(pool.get((int) ((start + (long) k * stride) % size)));
+            out.add(pool.get((start + k) % size));
         }
         return List.copyOf(out);
-    }
-
-    private static int coprimeStride(int size, long day) {
-        List<Integer> strides = new ArrayList<>();
-        for (int candidate = 1; candidate < size; candidate++) {
-            if (gcd(candidate, size) == 1) {
-                strides.add(candidate);
-            }
-        }
-        if (strides.isEmpty()) {
-            return 1;
-        }
-        return strides.get((int) Math.floorMod(day, strides.size()));
-    }
-
-    private static int gcd(int a, int b) {
-        while (b != 0) {
-            int remainder = a % b;
-            a = b;
-            b = remainder;
-        }
-        return Math.abs(a);
     }
 
     /** Процент от выплаты за сделку, целыми алмазами. */

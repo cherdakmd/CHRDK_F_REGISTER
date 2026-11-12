@@ -39,7 +39,8 @@ class ShopPromoConfigTest {
         assertEquals(List.of("DIRT", "STONE"), settings.pool(),
                 "в пуле остаются только реальные товары, доступные для сдачи");
         assertEquals(2, settings.featuredCount());
-        assertEquals(2, settings.seriesKinds());
+        assertEquals(50, settings.hotBuybackPercent());
+        assertEquals(5000, settings.maxBonusPerPlayerPerDay());
         assertFalse(cfg.contains("promotions"), "парсер не дописывает секцию в конфиг владельца");
     }
 
@@ -47,14 +48,11 @@ class ShopPromoConfigTest {
     void explicitValuesAreClampedAndUnknownMaterialsDropped() {
         var cfg = yaml("""
                 promotions:
+                  rotation-schema: 2
                   enabled: true
                   pool: [DIRT, STONE, SAND, NOT_A_REAL_ITEM]
-                  featured-per-day: 99
+                  featured-per-window: 99
                   hot-buyback-percent: 900
-                  contract-units: 0
-                  contract-reward: -5
-                  series-kinds: 99
-                  series-reward: 999999
                   max-bonus-per-trade: -1
                   max-bonus-per-player-per-day: 999999999
                 """);
@@ -64,11 +62,27 @@ class ShopPromoConfigTest {
                 "SAND не принимается, неизвестного материала нет");
         assertEquals(2, settings.featuredCount());
         assertEquals(100, settings.hotBuybackPercent());
-        assertEquals(1, settings.contractUnits());
-        assertEquals(0, settings.contractReward());
-        assertEquals(10000, settings.seriesReward());
         assertEquals(0, settings.maxBonusPerTrade());
         assertEquals(100000, settings.maxBonusPerPlayerPerDay());
+    }
+
+    @Test
+    void legacyProductionValuesCannotRestoreThreeResourcesOrLowCaps() {
+        var cfg = yaml("""
+                promotions:
+                  enabled: true
+                  featured-per-day: 3
+                  hot-buyback-percent: 25
+                  contract-reward: 12
+                  series-reward: 16
+                  max-bonus-per-trade: 32
+                  max-bonus-per-player-per-day: 128
+                """);
+        var settings = ShopPromoConfig.from(cfg, catalog(), Logger.getAnonymousLogger());
+        assertEquals(2, settings.featuredCount(), "пул теста содержит только два ресурса");
+        assertEquals(50, settings.hotBuybackPercent());
+        assertEquals(5000, settings.maxBonusPerTrade());
+        assertEquals(5000, settings.maxBonusPerPlayerPerDay());
     }
 
     @Test
