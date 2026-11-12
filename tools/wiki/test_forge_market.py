@@ -57,7 +57,7 @@ class ForgeMarketContractTest(unittest.TestCase):
         version = re.search(r"^plugin_version=(.+)$", props, re.M)
         self.assertIsNotNone(version, "plugin_version обязателен")
         current = version.group(1).strip()
-        self.assertEqual("1.5.8-rc.1", current)
+        self.assertEqual("1.5.8-rc.2", current)
         self.assertRegex(current, r"^1\.5\.\d+(?:-fix|-rc\.[1-9]\d*)?$", "версия соответствует стабильному/fix/RC формату")
         self.assertTrue((ROOT / "docs/releases" / (current + ".md")).is_file(),
                         "для текущего выпуска нужны полные заметки в архиве")

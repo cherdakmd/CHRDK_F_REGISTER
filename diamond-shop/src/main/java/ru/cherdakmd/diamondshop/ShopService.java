@@ -164,9 +164,11 @@ public final class ShopService {
 
     public void recordPricePoint(ShopConfig.ShopItem item) { store.recordPrice(item, priceOf(item), System.currentTimeMillis(), config.historyMaxPoints(), config.historyIntervalMillis()); }
     public double[] historyOf(ShopConfig.ShopItem item) { return store.historyOf(item.material()); }
+    /** Диагностическая команда может восстановить только доказуемо пустую привязку. */
+    public boolean restoreBinding() { return binding(); }
     private boolean binding() {
         var core=api.get(); if(core==null||!Bukkit.isPrimaryThread()||!store.legacyAvailable()||!store.ensureMarket()) return false;
-        if(core.shopRegistered(store.market())) return true;
+        if(core.shopRegistered(store.market())) return store.markRegistered();
         // Core мог потерять/восстановить lineage отдельно от shop-data.json.
         // Повторная регистрация того же UUID безопасна только до первой сделки.
         if(!ShopRegistration.canRestore(store.sequence(),store.pending()!=null)) return false;

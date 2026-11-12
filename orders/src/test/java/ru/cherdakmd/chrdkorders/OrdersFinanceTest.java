@@ -64,6 +64,16 @@ class OrdersFinanceTest {
         assertFalse(OrdersFinance.deliver(s,gate,owner,17)); assertFalse(b.knows(owner)); assertEquals(17,load().incomes().get(owner));
         gate.known=true; assertTrue(OrdersFinance.deliver(load(),gate,owner,17)); assertEquals(17,b.balance(owner));
     }
+    @Test void missingCoreLineageRestoresOnlyPristineOrderSource() throws Exception {
+        var s=ready(); var initial=bank();
+        assertFalse(OrdersFinance.deliver(s,new Gateway(initial),null,0)); UUID lineage=s.lineage(); assertTrue(s.registered());
+        var empty=new BankStore(dir.resolve("empty-core"),log);empty.load();
+        assertFalse(OrdersFinance.deliver(s,new Gateway(empty),null,0));
+        assertTrue(empty.incomeSourceAvailable(OrdersStore.SOURCE,lineage));
+        var earned=earned(); var older=new BankStore(dir.resolve("older-core"),log);older.load();
+        assertThrows(IllegalStateException.class,()->OrdersFinance.deliver(earned,new Gateway(older),owner,17));
+        assertFalse(older.incomeSourceAvailable(OrdersStore.SOURCE,lineage));
+    }
     @Test void lineageConflictDoesNotRegisterReplacementOrPay() throws Exception {
         var s=earned(); var b=bank(); b.registerIncomeSource(OrdersStore.SOURCE,UUID.randomUUID());
         assertThrows(IllegalStateException.class,()->OrdersFinance.deliver(s,new Gateway(b),owner,17)); assertEquals(0,b.balance(owner));

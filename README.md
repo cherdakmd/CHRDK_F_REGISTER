@@ -13,6 +13,13 @@
 > Порядок проверки и выпуска — [RELEASE.md](docs/RELEASE.md);
 > [аудит готовности от 10.11.2026](docs/audits/release-readiness-2026-11-10.md).
 
+## 1.5.8-rc.2 — полное восстановление финансовых привязок
+
+Безопасное восстановление одинакового lineage и дозапись ACK добавлены для `/shop`,
+Claims, Daily, платных действий, Common Goals, Milestones и Orders. Только до первой
+финансовой операции и без pending; журналы, деньги и другой UUID не изменяются.
+[Аудит привязок](docs/audits/income-source-recovery.md) · [Заметки RC2](docs/releases/1.5.8-rc.2.md).
+
 ## 1.5.8-rc.1 — восстановление привязки магазина
 
 При `healthy true`, `binding false`, `sequence 0` и отсутствии `pending` `/shop`

@@ -1,0 +1,3 @@
+{
+  "summary": "RC2: восстановление пустых lineage и ACK для Shop, Claims, Daily, платных действий, целей и наград; при сделках и pending защита fail-closed сохраняется."
+}

@@ -38,8 +38,11 @@ public final class OrdersFinance implements AutoCloseable {
     public static boolean deliver(OrdersStore store,MilestoneAwards.Bank bank,UUID owner,long total) throws IOException {
         if(!store.healthy()||!bank.available()) return false;
         String source=OrdersStore.SOURCE;
-        if(store.registered()) { if(!bank.registered(source,store.lineage())) throw new IllegalStateException("orders lineage unavailable"); }
-        else { if(!bank.register(source,store.lineage())) throw new IllegalStateException("orders lineage conflict"); store.markRegistered(); }
+        if(!bank.registered(source,store.lineage())) {
+            if(store.pending()!=null||!store.incomes().isEmpty()) throw new IllegalStateException("orders lineage unavailable");
+            if(!bank.register(source,store.lineage())) throw new IllegalStateException("orders lineage conflict");
+        }
+        store.markRegistered();
         if(owner==null||!bank.known(owner)) return false;
         if(!Objects.equals(store.incomes().get(owner),total)) throw new IllegalArgumentException("unbacked orders income");
         long credited=bank.credited(source,store.lineage(),owner);

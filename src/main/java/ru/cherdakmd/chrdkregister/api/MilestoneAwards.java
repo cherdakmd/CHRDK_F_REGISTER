@@ -27,8 +27,12 @@ public final class MilestoneAwards {
     public static boolean deliver(MilestoneStore store,Bank bank,String source,UUID owner,long total) throws IOException {
         if(!source.equals(store.source())) throw new IllegalArgumentException("award namespace mismatch");
         if(!store.healthy()||!bank.available()) return false;
-        if(store.registered()) { if(!bank.registered(source,store.lineage())) throw new IllegalStateException("award lineage unavailable"); }
-        else { if(!bank.register(source,store.lineage())) throw new IllegalStateException("award lineage conflict"); store.markRegistered(); }
+        if(!bank.registered(source,store.lineage())) {
+            // Импортированные claimed с нулевой суммой не являются денежными обязательствами.
+            if(!store.totals().isEmpty()) throw new IllegalStateException("award lineage unavailable");
+            if(!bank.register(source,store.lineage())) throw new IllegalStateException("award lineage conflict");
+        }
+        store.markRegistered();
         if(owner==null||total<=0||!bank.known(owner)) return false;
         if(!Objects.equals(store.totals().get(owner),total)) throw new IllegalArgumentException("unbacked award total");
         long credited=bank.credited(source,store.lineage(),owner);

@@ -28,7 +28,10 @@ final class ClaimFinance {
     boolean readReady() { return !busy()&&store.financialRegistered()&&bank.registered(store.financialLineage()); }
     boolean binding() {
         if(!store.moneyAvailable()) return false;
-        if(store.financialRegistered()) return bank.registered(store.financialLineage());
+        if(bank.registered(store.financialLineage())) return store.ensureFinance()&&store.markFinanceRegistered();
+        // ACK в claims-data.json не доказывает, что lineage сохранился в Core.
+        // До первой финансовой последовательности восстановление того же UUID безопасно.
+        if(store.financialSequence()!=0||store.financialPending()!=null) return false;
         return store.ensureFinance()&&bank.register(store.financialLineage())&&store.markFinanceRegistered();
     }
     boolean recover() {

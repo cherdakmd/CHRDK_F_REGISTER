@@ -69,7 +69,7 @@ class ShopJournalTest {
     }
     @Test void sourceBindingNeverRegistersAgainAfterPriorAcknowledgement() throws Exception {
         String source=Files.readString(Path.of("src/main/java/ru/cherdakmd/diamondshop/ShopService.java"));
-        assertTrue(source.contains("if(core.shopRegistered(store.market())) return true;"));
+        assertTrue(source.contains("if(core.shopRegistered(store.market())) return store.markRegistered();"));
         assertTrue(source.contains("ShopRegistration.canRestore(store.sequence(),store.pending()!=null)"));
         assertTrue(source.contains("if(!binding()) return false;"));
     }

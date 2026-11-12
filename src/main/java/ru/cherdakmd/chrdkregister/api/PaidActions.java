@@ -29,14 +29,23 @@ public final class PaidActions {
     public PaidActionStore store() { return store; }
     public boolean paused() {
         if (!store.healthy() || !journal.healthy() || journal.pending()!=null) return true;
-        var core=api.get(); return store.registered() && (core==null || core.bankChargeSequence(source,store.lineage())!=journal.nextSequence()-1);
+        var core=api.get(); if(core==null) return true;
+        long bankSequence=core.bankChargeSequence(source,store.lineage());
+        return store.registered()&&bankSequence!=journal.nextSequence()-1&&!registrationRecoverable();
+    }
+    /** Ни оплата, ни refund/resolution ещё не существовали: потерян только ACK/lineage. */
+    private boolean registrationRecoverable() { return registrationRecoverable(store,journal); }
+    static boolean registrationRecoverable(PaidActionStore store,ChargeJournal journal) {
+        return store.healthy()&&journal.healthy()&&journal.pending()==null&&journal.nextSequence()==1
+                &&store.actions().isEmpty()&&store.refunds().isEmpty()&&store.resolutions().isEmpty();
     }
     public boolean occupied(UUID player) { return paused() || store.occupied(player); }
     private void say(CommandSender p,String key,Object...args) { messages.get().send(p,"finance.service-"+key,args); }
     private boolean ready() throws IOException {
         var core=api.get(); if (paused() || core==null || !core.personalBankAvailable()) return false;
-        if (store.registered()) return core.incomeSourceAvailable(source,store.lineage());
-        if (!core.registerIncomeSource(source,store.lineage())) return false; store.markRegistered(); return true;
+        if (core.incomeSourceAvailable(source,store.lineage())) { store.markRegistered(); return true; }
+        if (!registrationRecoverable()||!core.registerIncomeSource(source,store.lineage())) return false;
+        store.markRegistered(); return true;
     }
     private boolean eligible(Player p) {
         var core=api.get(); return p!=null && p.isOnline() && !p.isDead() && !p.hasMetadata("NPC") && core!=null && core.isAuthenticated(p)
