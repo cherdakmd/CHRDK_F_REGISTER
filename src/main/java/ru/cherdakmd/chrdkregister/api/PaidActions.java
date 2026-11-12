@@ -25,7 +25,7 @@ public final class PaidActions {
         var initial=new ChargeJournal(plugin.getDataFolder().toPath(),source,store.lineage());
         if (initial.pending()!=null && !ChargeInventory.valid(initial.pending())) throw new IOException("Неверный предметный план услуги");
         var core=api.get();
-        UUID external=core==null?null:core.incomeSourceLineage(source);
+        UUID external=core instanceof IncomeSourceLineageProvider provider?provider.incomeSourceLineage(source):null;
         if(external!=null&&!external.equals(store.lineage())&&registrationRecoverable(store,initial)) {
             store.adoptLineage(external);
             plugin.getLogger().info("Источник "+source+": принят lineage банка; финансовых обязательств не было, значения сохранены.");
