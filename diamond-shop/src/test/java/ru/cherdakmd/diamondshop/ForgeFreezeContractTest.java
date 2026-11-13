@@ -29,6 +29,18 @@ class ForgeFreezeContractTest {
         assertEquals(250,legacy.turnoverWhole());
     }
 
+    @Test void productionPendingFromIncidentIsAcceptedAndHealed() {
+        // Реальный pending с продакшена (инцидент 2026-11-13 22:37:33 MSK, kalinin_play):
+        // 8 ECHO_SHARD за 9,44 ⛁ (money=944 сотых, rateBps=9250); заморозка ушла через money:
+        // turnover 778.0 → 1722.0, а формула matches ждала 778+turnoverWhole(10)=788.0.
+        assertEquals(10,fractional(944,9250).turnoverWhole());
+        assertTrue(ShopJournal.frozenEffect(1722.0,778.0,944,10),"legacy-заморозка (money) довершается");
+        assertTrue(ShopJournal.frozenEffect(788.0,778.0,944,10),"новая заморозка (turnoverWhole) довершается");
+        assertFalse(ShopJournal.frozenEffect(1721.0,778.0,944,10),"чужое значение не принимается");
+        assertEquals(788.0,PriceEngine.round(778.0+fractional(944,9250).turnoverWhole()),0.0,
+                "heal довершает сделку с истинным эффектом, а не с баговым ×100");
+    }
+
     @Test void frozenEffectAcceptsBothLegacyAndCurrentForgeFreeze() {
         // legacy-заморозка (до RC16.1): round(old+money) — сотые алмаза, ×100 к целым.
         assertTrue(ShopJournal.frozenEffect(25000,0,25000,250));
