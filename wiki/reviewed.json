@@ -171,9 +171,9 @@
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Личные квитанции welcome-gift сверены с регресс-тестами ShopWelcomeGiftTest (два игрока, миграция старой глобальной квитанции, застрявшее обязательство); формулировка shop.md уточнена",
+      "reason": "Запись 2.0.4 сверена с релизными заметками docs/releases/2.0.4.md и регресс-тестами ShopWelcomeGiftTest (личные квитанции, миграция, застрявшее обязательство)",
       "sources": "b22851cbcf3ff43e34f13bae316bd6df3eebadcdd0bde0dcd6faaca90c4a47f6",
-      "text": "c9e169444056a3ba87044d4438f54d1ed3d223201408de65c79bf282cbf7b4db"
+      "text": "35fa82a2824b267600696e00d56247559677fc7dfba1c078bf948d81133c104c"
     },
     "vk": {
       "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
