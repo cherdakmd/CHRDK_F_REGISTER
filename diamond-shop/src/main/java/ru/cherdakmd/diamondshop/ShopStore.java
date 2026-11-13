@@ -396,14 +396,17 @@ public final class ShopStore {
             pending=p; dirty=false; return true;
         } catch(ArithmeticException e) { return false; }
     }
-    /** RC16: тот же WAL, но без виртуального склада/истории цены — грант заморожен в сделке. */
+    /** RC16: тот же WAL, но без виртуального склада/истории цены — грант заморожен в сделке.
+     *  RC16.1: заморозка идёт в целых алмазах ({@code turnoverWhole}) — ровно как штатный prepare
+     *  и как {@code matches()}; прежняя запись через {@code t.money()} (сотые алмаза) вела к
+     *  «Не совпадает frozen effect рынка» и карантину всего магазина после первой купли в Кузне. */
     synchronized boolean prepareForge(ru.cherdakmd.chrdkregister.api.ShopExchange t,long now,double limit) {
         if(!legacyAvailable||!registered||pending!=null||!market.equals(t.market())||t.sequence()!=sequence+1
                 ||!t.valid()||!t.buy()||!t.carriesGrant()||!canRecordTurnover(t.owner(),t.turnoverWhole(),limit,now)) return false;
         var p=new ShopJournal.Pending(t,1,0,0,now,now-Math.floorMod(now,86400000L),
-                limit==0?-1:PriceEngine.round(usedToday(t.owner(),now)+t.money()),
-                PriceEngine.round(turnover+t.money()),1.0,4,0L,true);
-        if(!p.valid()||!exactIncrease(turnover,p.turnover(),t.money())||p.used()!=-1&&!exactIncrease(usedToday(t.owner(),now),p.used(),t.money())) return false;
+                limit==0?-1:PriceEngine.round(usedToday(t.owner(),now)+t.turnoverWhole()),
+                PriceEngine.round(turnover+t.turnoverWhole()),1.0,4,0L,true);
+        if(!p.valid()||!exactIncrease(turnover,p.turnover(),t.turnoverWhole())||p.used()!=-1&&!exactIncrease(usedToday(t.owner(),now),p.used(),t.turnoverWhole())) return false;
         var json=com.google.gson.JsonParser.parseString(snapshotJson()).getAsJsonObject(); json.add("pending",GSON.toJsonTree(p));
         if(!writeJson(GSON.toJson(json))) return false;
         pending=p; dirty=false; return true;
@@ -421,6 +424,15 @@ public final class ShopStore {
         if(!pending.equals(p)) return false;
         var state=items.get(p.trade().material());
         if(!p.matches(state,usedToday(p.trade().owner(),p.time()),turnover)) { stop("Не совпадает frozen effect рынка"); return false; }
+        if(p.forge()) {
+            // RC16.1: legacy-заморозка Кузни (t.money() вместо turnoverWhole, ×100) довершается
+            // с истинным эффектом сделки, а не с баговыми счётчиками: игрок заплатил целые алмазы.
+            double fixedUsed=p.used()==-1?-1:PriceEngine.round(usedToday(p.trade().owner(),p.time())+p.trade().turnoverWhole());
+            double fixedTurnover=PriceEngine.round(turnover+p.trade().turnoverWhole());
+            if(fixedUsed!=p.used()||fixedTurnover!=p.turnover())
+                p=new ShopJournal.Pending(p.trade(),p.stock(),p.sold(),p.bought(),p.time(),p.day(),
+                        fixedUsed,fixedTurnover,p.price(),p.historyPoints(),p.historyInterval(),true);
+        }
         var json=com.google.gson.JsonParser.parseString(snapshotJson()).getAsJsonObject(); json.remove("pending"); json.addProperty("sequence",p.trade().sequence()); json.addProperty("turnover",p.turnover());
         double[] history=null; long historyAt=0;
         if(!p.forge()) {

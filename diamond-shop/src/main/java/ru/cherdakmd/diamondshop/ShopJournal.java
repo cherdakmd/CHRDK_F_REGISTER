@@ -19,8 +19,10 @@ final class ShopJournal {
         }
         boolean matches(ShopStore.ItemState state,double oldUsed,double oldTurnover) {
             try {
-                if(forge) return valid()&&turnover==PriceEngine.round(oldTurnover+trade.turnoverWhole())
-                        &&(used==-1||used==PriceEngine.round(oldUsed+trade.turnoverWhole()));
+                // RC16.1: Кузня принимает обе формулы заморозки — новую (turnoverWhole) и legacy
+                // (money): зависший pending продакшена, записанный до фикса, довершается честно.
+                if(forge) return valid()&&frozenEffect(turnover,oldTurnover,trade.money(),trade.turnoverWhole())
+                        &&(used==-1||frozenEffect(used,oldUsed,trade.money(),trade.turnoverWhole()));
                 return valid()&&state!=null&&stock==Math.max(1,Math.addExact(state.stock,trade.buy()?-trade.units():trade.units()))
                     &&sold==Math.addExact(state.soldByPlayers,trade.buy()?0:trade.units())
                     &&bought==Math.addExact(state.boughtByPlayers,trade.buy()?trade.units():0)
@@ -28,6 +30,11 @@ final class ShopJournal {
                     &&(used==-1||used==PriceEngine.round(oldUsed+trade.turnoverWhole()));
             } catch(ArithmeticException e) { return false; }
         }
+    }
+    /** Обе формулы заморозки Кузни: новая ({@code turnoverWhole}) и legacy ({@code money} до RC16.1).
+     *  Значения уже в целых алмазах; сверяются бинарно после {@link PriceEngine#round}. */
+    static boolean frozenEffect(double frozen,double old,long money,long turnoverWhole) {
+        return frozen==PriceEngine.round(old+turnoverWhole)||frozen==PriceEngine.round(old+money);
     }
     interface Bank {
         ShopExchange.Status status(ShopExchange t);

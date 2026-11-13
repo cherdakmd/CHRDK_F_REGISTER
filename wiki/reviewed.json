@@ -36,8 +36,8 @@
       "text": "503edef62357862f67d17df249b393023697d6dca6342cbe792b0d4dc78cb8cc"
     },
     "commands": {
-      "reason": "Личные квитанции welcome-gift сверены с регресс-тестами ShopWelcomeGiftTest (два игрока, миграция старой глобальной квитанции, застрявшее обязательство); формулировка shop.md уточнена",
-      "sources": "7e3cad82651d50a0256745816fa3a04f2609466cd0a32323bc0df9cad9bb7308",
+      "reason": "RC16.1: сверены два фикса — заморозка Кузни в целых алмазах (money→turnoverWhole, совместимость с legacy-pending) и забор предмета из наковальни после HIGHEST-слияния атрибутов (display догоняет объединённый стек, выдача без preview-лора); тексты страниц остаются верными",
+      "sources": "b5fd7a43e18172dd2661edd3c57721145e743f1e9175ec0b6c371fb72c79051f",
       "text": "46017ca1aca3a1d620ff09b3ffd40ff42885e551a850c85baa15f2c73d03b290"
     },
     "cosmetics": {
@@ -56,18 +56,18 @@
       "text": "121b1cc28a075ced29b6de8abec7dbc20bbb531a01441ddd5fdb836d066d0202"
     },
     "economy": {
-      "reason": "Личные квитанции welcome-gift сверены с регресс-тестами ShopWelcomeGiftTest (два игрока, миграция старой глобальной квитанции, застрявшее обязательство); формулировка shop.md уточнена",
-      "sources": "9f5e5f3ad4c47f70d88e5cea92fec50b958e3a50c30eabe721a920728bab3fa1",
+      "reason": "RC16.1: сверены два фикса — заморозка Кузни в целых алмазах (money→turnoverWhole, совместимость с legacy-pending) и забор предмета из наковальни после HIGHEST-слияния атрибутов (display догоняет объединённый стек, выдача без preview-лора); тексты страниц остаются верными",
+      "sources": "c2ed33750c5ba174f610e761fc6c801b80ef7fa2a57486b25739d2f3aab7e3d2",
       "text": "380ede76f428cfc00f3a9df848d00a9b5012222475c10d41cc83359ef3d12d97"
     },
     "enchants": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
-      "sources": "1d6946e4e204570366a9094e6001e9b96cb59ad47caa08c73db1b6b2446f195c",
+      "reason": "RC16.1: сверены два фикса — заморозка Кузни в целых алмазах (money→turnoverWhole, совместимость с legacy-pending) и забор предмета из наковальни после HIGHEST-слияния атрибутов (display догоняет объединённый стек, выдача без preview-лора); тексты страниц остаются верными",
+      "sources": "24827a0a05d347d4dfe4b7f0463062c4883cd2b6d9060936468dfb77a3c243ab",
       "text": "7e90321ef8a100bae11c53592c62328fa44a958be657b66a86d51ea8c1906a7d"
     },
     "faq": {
-      "reason": "Личные квитанции welcome-gift сверены с регресс-тестами ShopWelcomeGiftTest (два игрока, миграция старой глобальной квитанции, застрявшее обязательство); формулировка shop.md уточнена",
-      "sources": "fd72263243c77cea963b891e7ec444c9123538fa66b348662e946d1bb5c4dd99",
+      "reason": "RC16.1: сверены два фикса — заморозка Кузни в целых алмазах (money→turnoverWhole, совместимость с legacy-pending) и забор предмета из наковальни после HIGHEST-слияния атрибутов (display догоняет объединённый стек, выдача без preview-лора); тексты страниц остаются верными",
+      "sources": "13e6a62ef3630ba84446fa0fede52bd288a002aa69de015afc2186c402f19ad9",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
@@ -86,13 +86,13 @@
       "text": "17c878e1ab52ceb2a7c3361a7bef133c8bd1004a59641898f2c525f7c48fff8f"
     },
     "index": {
-      "reason": "Личные квитанции welcome-gift сверены с регресс-тестами ShopWelcomeGiftTest (два игрока, миграция старой глобальной квитанции, застрявшее обязательство); формулировка shop.md уточнена",
-      "sources": "b22851cbcf3ff43e34f13bae316bd6df3eebadcdd0bde0dcd6faaca90c4a47f6",
+      "reason": "RC16.1: сверены два фикса — заморозка Кузни в целых алмазах (money→turnoverWhole, совместимость с legacy-pending) и забор предмета из наковальни после HIGHEST-слияния атрибутов (display догоняет объединённый стек, выдача без preview-лора); тексты страниц остаются верными",
+      "sources": "961b855819a80fa76b4cc04cad799e09c087df8138235a1663d524ea800a9a4c",
       "text": "13b0089b89035cd13598d177608718282608bc671993a3c370012b297c779cd7"
     },
     "menu": {
-      "reason": "Личные квитанции welcome-gift сверены с регресс-тестами ShopWelcomeGiftTest (два игрока, миграция старой глобальной квитанции, застрявшее обязательство); формулировка shop.md уточнена",
-      "sources": "fd72263243c77cea963b891e7ec444c9123538fa66b348662e946d1bb5c4dd99",
+      "reason": "RC16.1: сверены два фикса — заморозка Кузни в целых алмазах (money→turnoverWhole, совместимость с legacy-pending) и забор предмета из наковальни после HIGHEST-слияния атрибутов (display догоняет объединённый стек, выдача без preview-лора); тексты страниц остаются верными",
+      "sources": "13e6a62ef3630ba84446fa0fede52bd288a002aa69de015afc2186c402f19ad9",
       "text": "eb6fdaf663b2005735002c5f23bb7f751b31a7447b3fc2cc77d741ff7c4cb2f9"
     },
     "moderation": {
@@ -116,8 +116,8 @@
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "profile": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
-      "sources": "cf483e0110c329304dcbf4621ecb05cd99c15b15f9d59ad06436938d7756c0c4",
+      "reason": "RC16.1: сверены два фикса — заморозка Кузни в целых алмазах (money→turnoverWhole, совместимость с legacy-pending) и забор предмета из наковальни после HIGHEST-слияния атрибутов (display догоняет объединённый стек, выдача без preview-лора); тексты страниц остаются верными",
+      "sources": "a8debd232cc003e4f541eec3309cb5aa69ca208f958e7b59b24a12001f33e418",
       "text": "f2a1fafaef6d54a60b0dd2e9545374a59a83ad49a5de3ace0069e441c187d309"
     },
     "quests": {
@@ -131,8 +131,8 @@
       "text": "664b466e4b44741175d9c2cdb4da728a0603a04aaaefada8396dd6517d5dca2d"
     },
     "shop": {
-      "reason": "Личные квитанции welcome-gift сверены с регресс-тестами ShopWelcomeGiftTest (два игрока, миграция старой глобальной квитанции, застрявшее обязательство); формулировка shop.md уточнена",
-      "sources": "b22851cbcf3ff43e34f13bae316bd6df3eebadcdd0bde0dcd6faaca90c4a47f6",
+      "reason": "RC16.1: сверены два фикса — заморозка Кузни в целых алмазах (money→turnoverWhole, совместимость с legacy-pending) и забор предмета из наковальни после HIGHEST-слияния атрибутов (display догоняет объединённый стек, выдача без preview-лора); тексты страниц остаются верными",
+      "sources": "961b855819a80fa76b4cc04cad799e09c087df8138235a1663d524ea800a9a4c",
       "text": "886ac96b52853ac174dc1b1a9b6f51bf8cfeecc1dc3a08799e6937f8bf0c9c30"
     },
     "skills": {
@@ -161,8 +161,8 @@
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
-      "sources": "1d6946e4e204570366a9094e6001e9b96cb59ad47caa08c73db1b6b2446f195c",
+      "reason": "RC16.1: сверены два фикса — заморозка Кузни в целых алмазах (money→turnoverWhole, совместимость с legacy-pending) и забор предмета из наковальни после HIGHEST-слияния атрибутов (display догоняет объединённый стек, выдача без preview-лора); тексты страниц остаются верными",
+      "sources": "24827a0a05d347d4dfe4b7f0463062c4883cd2b6d9060936468dfb77a3c243ab",
       "text": "c84eb8435e1e4b961e73b0ed64386b129e17395923de6d7b8f3d01bde6ddeaa1"
     },
     "titles": {
@@ -171,8 +171,8 @@
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Запись 2.0.4 сверена с релизными заметками docs/releases/2.0.4.md и регресс-тестами ShopWelcomeGiftTest (личные квитанции, миграция, застрявшее обязательство)",
-      "sources": "b22851cbcf3ff43e34f13bae316bd6df3eebadcdd0bde0dcd6faaca90c4a47f6",
+      "reason": "RC16.1: сверены два фикса — заморозка Кузни в целых алмазах (money→turnoverWhole, совместимость с legacy-pending) и забор предмета из наковальни после HIGHEST-слияния атрибутов (display догоняет объединённый стек, выдача без preview-лора); тексты страниц остаются верными",
+      "sources": "961b855819a80fa76b4cc04cad799e09c087df8138235a1663d524ea800a9a4c",
       "text": "35fa82a2824b267600696e00d56247559677fc7dfba1c078bf948d81133c104c"
     },
     "vk": {

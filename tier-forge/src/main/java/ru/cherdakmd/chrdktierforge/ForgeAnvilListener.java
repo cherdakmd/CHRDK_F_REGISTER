@@ -25,6 +25,7 @@ final class ForgeAnvilListener implements Listener {
         int index;
         ForgeMaterials.Plan plan;
         ItemStack display;
+        int previewLines;
         boolean busy;
     }
     ForgeAnvilListener(TierForgePlugin plugin) { this.plugin=plugin; }
@@ -114,8 +115,9 @@ final class ForgeAnvilListener implements Listener {
             var lore=meta.lore()==null?new ArrayList<net.kyori.adventure.text.Component>():new ArrayList<>(meta.lore());
             String id=state.choices.get(state.index);
             String name=choiceName(material,id);
-            lore.addAll(plugin.messages().getList("forge-anvil-preview","name",name,"index",state.index+1,"count",state.choices.size(),
-                    "units",state.plan.units(),"xp",state.plan.xp()));
+            var preview=plugin.messages().getList("forge-anvil-preview","name",name,"index",state.index+1,"count",state.choices.size(),
+                    "units",state.plan.units(),"xp",state.plan.xp());
+            lore.addAll(preview); state.previewLines=preview.size();
             meta.lore(lore); state.display.setItemMeta(meta);
             result.accept(state.display.clone());
             AnvilCosts.price(view,state.plan.xp()); view.setRepairItemCountCost(state.plan.units());
@@ -123,6 +125,15 @@ final class ForgeAnvilListener implements Listener {
             if (notices.shouldNotify(player.getUniqueId(),failure.key+Arrays.toString(failure.arguments)))
                 plugin.messages().send(player,failure.key,failure.arguments);
         }
+    }
+    /** Ядро на HIGHEST дообъединяет атрибуты уже после нашего HIGH-превью (ItemAttributeMergeListener).
+     *  Display обязан догонять объединённый стек, иначе строгая проверка current() молча запретит забор. */
+    @EventHandler(priority=EventPriority.MONITOR)
+    public void merged(PrepareAnvilEvent event) {
+        if (!(event.getView() instanceof AnvilView view) || !(view.getPlayer() instanceof Player player)) return;
+        State state=states.get(player.getUniqueId());
+        if (state==null || state.inputs.view()!=view || state.display==null) return;
+        if (ForgeAnvilPreview.stale(state.display,event.getResult())) state.display=event.getResult().clone();
     }
     private boolean current(Player player,AnvilView view,State state) {
         return states.get(player.getUniqueId())==state && player.getOpenInventory()==view && allowed(player,view)
@@ -153,13 +164,16 @@ final class ForgeAnvilListener implements Listener {
             }
             if (!player.getItemOnCursor().getType().isAir() || player.getLevel()<state.plan.xp()) { state.busy=false; return; }
             var plan=state.plan;
+            // Выдаём ровно показанное изменение (объединённый ядром стек) без служебного preview-лора,
+            // а не plan.result(): после HIGHEST-слияния атрибутов plan.result() беднее показанного.
+            ItemStack given=ForgeAnvilPreview.give(state.display,state.previewLines);
             ItemStack rest=plan.right().clone(); rest.setAmount(rest.getAmount()-plan.units());
             states.remove(player.getUniqueId()); AnvilCosts.clear(view);
             var inventory=view.getTopInventory();
             int level=player.getLevel(), total=player.getTotalExperience(); float exp=player.getExp();
             try {
                 inventory.setItem(2,null); inventory.setItem(0,null); inventory.setItem(1,rest.getAmount()==0?null:rest);
-                player.giveExpLevels(-plan.xp()); player.setItemOnCursor(plan.result().clone()); view.setRepairCost(-1);
+                player.giveExpLevels(-plan.xp()); player.setItemOnCursor(given); view.setRepairCost(-1);
             } catch (RuntimeException failure) {
                 player.setItemOnCursor(null); inventory.setItem(0,plan.left().clone()); inventory.setItem(1,plan.right().clone()); inventory.setItem(2,null);
                 AnvilCosts.clear(view); view.setRepairCost(-1);
@@ -168,7 +182,7 @@ final class ForgeAnvilListener implements Listener {
                 return;
             }
             player.updateInventory(); plugin.messages().send(player,"forge-done");
-            plugin.collection().record(player,plan.result()); AnvilUse.finish(view,player);
+            plugin.collection().record(player,given); AnvilUse.finish(view,player);
         });
     }
     @EventHandler(priority=EventPriority.HIGH,ignoreCancelled=true) public void drag(InventoryDragEvent event) {
