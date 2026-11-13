@@ -115,4 +115,52 @@ class ShopBooksCatalogTest {
         assertTrue(ShopConfig.parseBooks(yaml, Logger.getAnonymousLogger()).isEmpty());
         assertEquals(248, data(yaml).items().size());
     }
+
+    private static List<String> captureWarnings(Logger logger) {
+        List<String> warnings = new ArrayList<>();
+        logger.addHandler(new java.util.logging.Handler() {
+            @Override public void publish(java.util.logging.LogRecord record) {
+                if (record.getLevel().intValue() >= java.util.logging.Level.WARNING.intValue()) {
+                    warnings.add(String.valueOf(record.getMessage()));
+                }
+            }
+            @Override public void flush() { }
+            @Override public void close() { }
+        });
+        return warnings;
+    }
+
+    @Test
+    void customBooksWithoutPricesLoadNothingAndWarnLoudly() {
+        var yaml = new YamlConfiguration();
+        yaml.set("books.custom.enchants", List.of("thunderstrike:rare:3", "tracer:common:1"));
+        var logger = Logger.getAnonymousLogger();
+        var warnings = captureWarnings(logger);
+        assertTrue(ShopConfig.parseBooks(yaml, logger).isEmpty(),
+                "без books.custom.prices кастомные книги не загружаются");
+        assertTrue(warnings.stream().anyMatch(w -> w.contains("books.custom") && w.contains("не загрузилась")
+                        && w.contains("Книги чар: наши")),
+                "потеря всех кастомных книг должна быть видна в логе, а не молчать: " + warnings);
+    }
+
+    @Test
+    void vanillaBooksWithUnusablePriceLoadNothingAndWarnLoudly() {
+        var yaml = new YamlConfiguration();
+        yaml.set("books.vanilla.enchants", List.of("protection:4:0"));
+        var logger = Logger.getAnonymousLogger();
+        var warnings = captureWarnings(logger);
+        assertTrue(ShopConfig.parseBooks(yaml, logger).isEmpty());
+        assertTrue(warnings.stream().anyMatch(w -> w.contains("books.vanilla") && w.contains("не загрузилась")
+                        && w.contains("Книги чар: ванильные")),
+                "потеря всех ванильных книг должна быть видна в логе: " + warnings);
+    }
+
+    @Test
+    void startupLineReportsPerSectionCatalogBreakdown() throws Exception {
+        String plugin = java.nio.file.Files.readString(
+                java.nio.file.Path.of("src/main/java/ru/cherdakmd/diamondshop/DiamondShopPlugin.java"));
+        assertTrue(plugin.contains("(разделы: ") , "старт пишет сводку по разделам каталога");
+        assertTrue(plugin.contains("category.id()).append('=').append(count)"),
+                "сводка содержит id раздела и число его товаров");
+    }
 }

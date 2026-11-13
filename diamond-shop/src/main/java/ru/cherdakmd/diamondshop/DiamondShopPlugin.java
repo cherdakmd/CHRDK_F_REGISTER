@@ -101,7 +101,19 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
             }
             if (!legacy.hasNext()) { migrationTask.cancel(); migrationTask = null; }
         }, 1L, 20L);
+        StringBuilder sections = new StringBuilder();
+        for (ShopCategory category : ShopCategory.values()) {
+            if (category == ShopCategory.ALL) {
+                continue;
+            }
+            int count = ShopCatalog.filter(shopService.config().items(), category).size();
+            if (count > 0) {
+                if (sections.length() > 0) sections.append(", ");
+                sections.append(category.id()).append('=').append(count);
+            }
+        }
         getLogger().info("CHRDK_DiamondShop включён: товаров " + shopService.config().items().size()
+                + " (разделы: " + sections + ")"
                 + ", ядро " + (coreApi == null ? "НЕ найдено!" : "v" + coreApi.pluginVersion()) + ".");
     }
 

@@ -223,8 +223,10 @@ public final class ShopConfig {
         List<ShopItem> result = new ArrayList<>();
         ConfigurationSection custom = config.getConfigurationSection("books.custom");
         if (custom != null) {
+            List<String> records = custom.getStringList("enchants");
+            int before = result.size();
             ConfigurationSection prices = custom.getConfigurationSection("prices");
-            for (String raw : custom.getStringList("enchants")) {
+            for (String raw : records) {
                 String[] parts = raw.trim().toLowerCase(java.util.Locale.ROOT).split(":", -1);
                 if (parts.length != 3) {
                     logger.warning("[DiamondShop] books.custom: неверная запись '" + raw + "' — пропускаю.");
@@ -233,10 +235,17 @@ public final class ShopConfig {
                 double price = prices == null ? 0 : prices.getDouble(parts[1], 0);
                 addBook(result, config, logger, parts[0], parseInt(parts[2]), true, price, refStock);
             }
+            if (!records.isEmpty() && result.size() == before) {
+                logger.warning("[DiamondShop] books.custom: ни одна из " + records.size()
+                        + " записей не загрузилась — раздел «Книги чар: наши» не появится."
+                        + " Проверьте books.custom.prices и формат id:редкость:уровень.");
+            }
         }
         ConfigurationSection vanilla = config.getConfigurationSection("books.vanilla");
         if (vanilla != null) {
-            for (String raw : vanilla.getStringList("enchants")) {
+            List<String> records = vanilla.getStringList("enchants");
+            int before = result.size();
+            for (String raw : records) {
                 String[] parts = raw.trim().toLowerCase(java.util.Locale.ROOT).split(":", -1);
                 if (parts.length != 3) {
                     logger.warning("[DiamondShop] books.vanilla: неверная запись '" + raw + "' — пропускаю.");
@@ -244,6 +253,10 @@ public final class ShopConfig {
                 }
                 addBook(result, config, logger, parts[0], parseInt(parts[1]), false,
                         numberOf(parts[2], 0), refStock);
+            }
+            if (!records.isEmpty() && result.size() == before) {
+                logger.warning("[DiamondShop] books.vanilla: ни одна из " + records.size()
+                        + " записей не загрузилась — раздел «Книги чар: ванильные» не появится.");
             }
         }
         return result;
