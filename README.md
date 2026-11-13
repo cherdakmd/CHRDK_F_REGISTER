@@ -13,6 +13,17 @@
 > Порядок проверки и выпуска — [RELEASE.md](docs/RELEASE.md);
 > [аудит готовности от 10.11.2026](docs/audits/release-readiness-2026-11-10.md).
 
+## CHRDK 2.0.3-fix — HOTFIX (известные ограничения)
+
+Hotfix устраняет воспроизведённый production-отказ Claims 2.0.3: adopt-путь
+lineage при старте переписывал `paid-actions.json`, но оставлял `bank-charge.json`
+со старым lineage, из-за чего Claims отключался на каждом старте («plugin is
+disabled» на `/claim`, `/claimadmin`). Теперь оба файла переопознаются на lineage
+банка синхронно — только пока нет финансовых обязательств; fail-closed защита и
+данные сохраняются, расхождение лечится автоматически при первом старте.
+Staging-сценарии committed/missing/unknown по-прежнему не пройдены.
+[Статус и ограничения 2.0.3-fix](docs/releases/2.0.3-fix.md).
+
 ## CHRDK 2.0.3 — полный комплект (известные ограничения)
 
 Выпущен полный комплект: 19 основных JAR одной версии, отдельные VK/Disasters

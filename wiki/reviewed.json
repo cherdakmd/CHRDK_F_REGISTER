@@ -171,9 +171,9 @@
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "reason": "Запись 2.0.3-fix сверена с релизными заметками docs/releases/2.0.3-fix.md и регресс-тестами ChargeLineageAdoptTest; контракты обновлений не менялись",
       "sources": "46c67d325c64ecf4410e338dfebe1ce54a6dcd8cfd221a0f38bae495be7cd391",
-      "text": "e225f3c5229ec5438ba4098ec8f01b45b13c32d3208e90d4c48e5222c0933d5e"
+      "text": "c9e169444056a3ba87044d4438f54d1ed3d223201408de65c79bf282cbf7b4db"
     },
     "vk": {
       "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
