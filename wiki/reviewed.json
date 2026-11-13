@@ -1,183 +1,183 @@
 {
   "pages": {
     "about": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "3316a14dd3215e24ecb83b27219a0ead86f53c8a4b6f30476968a179217bf7b6",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "a32270eb3a74f6c64d22266027f17c58c891d1ac24800522410daf86df7fc463",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "af22793edb32a7c308731e24db6505ef1316b84aec7d5e57de14b7307ecd124c",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "a2a592341f80c8cb47f457740bdfa8e893306bb8c533be3d94adb34d083ab201",
       "text": "bd128e475ee8efae55c3d2d6c9616d5278600f2a8ff1aad7af5e6df3e0b3f5c3"
     },
     "artifacts": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "0a53397f3ab7d6166913d139bc1797b0947326ac5ea4e218ad5d83f3be78a892",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "716380bc6af94a379cffc5bf5d98a27afed4d8a4da6ed68877c55b388eb82276",
       "text": "51e3ef379d9a8f7e2ccfc6fd41cc0c0823f91f30d7c9a8326ec7962c182d98e4"
     },
     "battlepass": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "05e2ddb69ecd070674d7983e0159e7216c067b15a040556033341b959618ade9",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "37aa824b324a51866c61a364d8e07431a182ce281851d767a219b5bbb22a3a82",
       "text": "997df6e0a9311ea115c4fd3c192b2729034b10c68a4f41c57261ef4b704c5add"
     },
     "chat": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "3316a14dd3215e24ecb83b27219a0ead86f53c8a4b6f30476968a179217bf7b6",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "a32270eb3a74f6c64d22266027f17c58c891d1ac24800522410daf86df7fc463",
       "text": "a51c51d20cfe94c553e80893422b000a579b87285b00cbceb452f29eb0773023"
     },
     "claims": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "a4881186529df252204e9246750d0dc4d3639dfa1eee8be033d43b0d76c90d01",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "48b4b27001c5302828471610beeb077040e024fa28256d694aa729ee7827d194",
       "text": "50b80f02b9200ed8653d50c1bf802fd4de8d272a9bf1f46cf92618d743bed3cd"
     },
     "classes": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "3533423a9faa02538db125f25a7f1e1d60be46859ea7c44420826dc5620c7c98",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "b976f9d9bc97486cdcfddfc5387856678b05086364b0d2a2f10c63c21d789525",
       "text": "503edef62357862f67d17df249b393023697d6dca6342cbe792b0d4dc78cb8cc"
     },
     "commands": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "75af5a5730f5cf1b2e1217b26935479cf57a0e1bec0604d1912f3ab2e40ca6e9",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "f4e706e63c1c7d8e9ca2c132143918f520a9c7d1aae00b4898c26138f251cd66",
       "text": "46017ca1aca3a1d620ff09b3ffd40ff42885e551a850c85baa15f2c73d03b290"
     },
     "cosmetics": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "36a77258486e05818e3d1bc0f6bcf351cad13e996ef12f865ddfb738b54e62e7",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "f07c3f96c7331b438455d5b9c8bfda8c6c798247368d0340da60f525ec7f6377",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "639cb0c042f4efb03409f1fbb397460a21675f2392350558e31fbe7b4a2fdc27",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "bb0344939cb0b661c7e290b2cd0c373be58a06798e77482b341b55e88d660952",
       "text": "4d7683f5677c50dfe0488961891915b5c2dd6533191a213ee8fdb077ea817eb5"
     },
     "disasters": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "5d7f1df70262ad38388bfc6470635657bf575e4a3989ccb0febf6a2f62080b91",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "e685f2f53c8df70b0cd5afc13bfcff09b6fa8f2e1474883dd6a2c04333255669",
       "text": "121b1cc28a075ced29b6de8abec7dbc20bbb531a01441ddd5fdb836d066d0202"
     },
     "economy": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "ff15357815cd6efa409fa5c739598e69159c31d07648cd15c252cf148f046a80",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "981a88c242525bc183d5ec68b9cc494a8681713c97988870a2c648f2f509c87e",
       "text": "380ede76f428cfc00f3a9df848d00a9b5012222475c10d41cc83359ef3d12d97"
     },
     "enchants": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "2ba15d16753ccfb59ce1a58763c901f19cc139b137e76840b8268087a9d87d5b",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "1d6946e4e204570366a9094e6001e9b96cb59ad47caa08c73db1b6b2446f195c",
       "text": "7e90321ef8a100bae11c53592c62328fa44a958be657b66a86d51ea8c1906a7d"
     },
     "faq": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "04be1da51c4fa35e7515285973b95b45eb5baa89e35dfbac63d22f752fc3e9e3",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "f2bec4d7e147eb650d4eb3053ad2b94a37decc028e21e4a492dbb6c349d0c3ab",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "9f06f24afc0eb7236a29eef6125e62702b873246915150fd63e65edda6e101b0",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "96a87feb3e6298a8bc32e5a9dfcdf1de1c138c9fbf2788e4571c5682720c2060",
       "text": "615d89bba0ac116c220d571f530fcdab7d5ff46162ca7a7ecf24de441a7fb191"
     },
     "guilds": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "a4881186529df252204e9246750d0dc4d3639dfa1eee8be033d43b0d76c90d01",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "48b4b27001c5302828471610beeb077040e024fa28256d694aa729ee7827d194",
       "text": "bb7d4121d6c42762b2f09d8eb57df986a942df35c77fd2cf899a5e7a38193216"
     },
     "honors": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "3316a14dd3215e24ecb83b27219a0ead86f53c8a4b6f30476968a179217bf7b6",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "a32270eb3a74f6c64d22266027f17c58c891d1ac24800522410daf86df7fc463",
       "text": "17c878e1ab52ceb2a7c3361a7bef133c8bd1004a59641898f2c525f7c48fff8f"
     },
     "index": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "c04da3ce924decdf453f9801da0a8fdc5cd63049f3745daa3f8bd68da785282b",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "46c67d325c64ecf4410e338dfebe1ce54a6dcd8cfd221a0f38bae495be7cd391",
       "text": "13b0089b89035cd13598d177608718282608bc671993a3c370012b297c779cd7"
     },
     "menu": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "04be1da51c4fa35e7515285973b95b45eb5baa89e35dfbac63d22f752fc3e9e3",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "f2bec4d7e147eb650d4eb3053ad2b94a37decc028e21e4a492dbb6c349d0c3ab",
       "text": "eb6fdaf663b2005735002c5f23bb7f751b31a7447b3fc2cc77d741ff7c4cb2f9"
     },
     "moderation": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "3316a14dd3215e24ecb83b27219a0ead86f53c8a4b6f30476968a179217bf7b6",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "a32270eb3a74f6c64d22266027f17c58c891d1ac24800522410daf86df7fc463",
       "text": "79580a49c09219f65539abace395b5f2469f91fc2f0ac9b3ecae109c4fa1ecb4"
     },
     "orders": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "de6268417120ca2ff7ad971887953d207b603345f92079a62bb24749a5d02bff",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "8b1714a653f3d79179171d59d00396502f7c4d329d8339e488839d64d54380f3",
       "text": "8f1bddfa65aabb38fab8ebdad77656a627e340e765229de34ab3a24dd96fef2e"
     },
     "perktree": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "3533423a9faa02538db125f25a7f1e1d60be46859ea7c44420826dc5620c7c98",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "b976f9d9bc97486cdcfddfc5387856678b05086364b0d2a2f10c63c21d789525",
       "text": "3e1a2fe232bb8c384a682ac98f8133ab0560de790bab9a2a2d9542ea0b673666"
     },
     "pets": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "4d89b7cee97addf80fc81a4941584df36f658e06c851788b11872f4759d72d86",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "a24849a9d292b616dec9a4c36a5cb4421e3f1b8dfdacbc8843664adefb07b23f",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "profile": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "908b5d265c197fd2df0eef5d9dad65f2f48078a032d5185d65eab262b2869f78",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "cf483e0110c329304dcbf4621ecb05cd99c15b15f9d59ad06436938d7756c0c4",
       "text": "f2a1fafaef6d54a60b0dd2e9545374a59a83ad49a5de3ace0069e441c187d309"
     },
     "quests": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "4c810a96ce52e5afc3428eef9e9367a327b5cd21ac1870bf3198cb0ba8215c08",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "394da22648e6178a9cdd5fc776dba58ae2f094385d6faa48b8dab12a9865627a",
       "text": "a42f11010fddbf13238133ac1e2dca525dea95245f5286a88a57738af30fbf13"
     },
     "ranks": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "3214c3b414047d954f30893f87c30386b427e6394a424877794b135146b6d47e",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "f3b7c0b2163f90af58c88244062be525e2e70ac72456f2aabe16c4fd818b9627",
       "text": "664b466e4b44741175d9c2cdb4da728a0603a04aaaefada8396dd6517d5dca2d"
     },
     "shop": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "c04da3ce924decdf453f9801da0a8fdc5cd63049f3745daa3f8bd68da785282b",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "46c67d325c64ecf4410e338dfebe1ce54a6dcd8cfd221a0f38bae495be7cd391",
       "text": "77b980940c541a3aeec1ae44cc0127345d3a66269d675f9a04b04d0b8b50a566"
     },
     "skills": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "c4fbcffb09717b7754749f021f32e7fa8cc13cbcd0f9bf26ce5244d23e0108e6",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "8c3879a1bbfdab47d0d2992fa2f88fc2c847dddb5b9f116444086019cec9ccf1",
       "text": "2e6d03256421759755094a382f0145b72141c123c373f10f2ad120e7d741350b"
     },
     "social-link": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "89eeb7abd5c70874ba63f38eb80b636d0a28058c9416746218417060fa8b11ec",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "f87007f05a540e4f3294f49b5648f6252741eceb1a80ce508077ecd8f693329e",
       "text": "1f6cf95d9c8c2180dbf871aa9b19a7bfcde5405cf77b75954b7575920d2aef14"
     },
     "start": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "e7aabcd619735060f957f8db503460b995bdcb03a0876133d730b624201acfbb",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "8024a72829fd05db9475d4a59da0a354344afc34f9b48083f286867855798429",
       "text": "1c0b307e38e52194bb2a42da0757744e32d93312bc6b83178a4745f9cd07a667"
     },
     "starter-kit": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "0a53397f3ab7d6166913d139bc1797b0947326ac5ea4e218ad5d83f3be78a892",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "716380bc6af94a379cffc5bf5d98a27afed4d8a4da6ed68877c55b388eb82276",
       "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
     },
     "teleports": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "2fffc125315034459987ffb5ec4c59befbe0cf4c863aba60cd3713e3f4416894",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "f6b3dd7fd58999ac7d89222591b0dc6ce5fb6367ac8f008dd0fdc0e9154c916b",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "2ba15d16753ccfb59ce1a58763c901f19cc139b137e76840b8268087a9d87d5b",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "1d6946e4e204570366a9094e6001e9b96cb59ad47caa08c73db1b6b2446f195c",
       "text": "c84eb8435e1e4b961e73b0ed64386b129e17395923de6d7b8f3d01bde6ddeaa1"
     },
     "titles": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "fad8053d69079434e373bfb5f7701d8efb94edecc435222863bebfbc354cf683",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "24c4682b41d9483dc49be78059210c1f2dcd406cbae2de00121f2eda016d4047",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "c04da3ce924decdf453f9801da0a8fdc5cd63049f3745daa3f8bd68da785282b",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "46c67d325c64ecf4410e338dfebe1ce54a6dcd8cfd221a0f38bae495be7cd391",
       "text": "e225f3c5229ec5438ba4098ec8f01b45b13c32d3208e90d4c48e5222c0933d5e"
     },
     "vk": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
-      "sources": "89eeb7abd5c70874ba63f38eb80b636d0a28058c9416746218417060fa8b11ec",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
+      "sources": "f87007f05a540e4f3294f49b5648f6252741eceb1a80ce508077ecd8f693329e",
       "text": "b592e465a73dd13186763622b51190400cffd40960e233f58c63379b88a9bba9"
     }
   },
