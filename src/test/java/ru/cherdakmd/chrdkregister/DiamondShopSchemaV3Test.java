@@ -41,7 +41,7 @@ final class DiamondShopSchemaV3Test {
 
     private static ConfigSchemaEngine.Spec configSpec() {
         return new ConfigSchemaEngine.Spec("config.yml", CONFIG_MARKER,
-                ConfigSchemaEngine.MarkerMode.KEY, 4, Map.of());
+                ConfigSchemaEngine.MarkerMode.KEY, 5, Map.of());
     }
 
     private static ConfigSchemaEngine.Spec messagesSpec() {
@@ -102,10 +102,15 @@ final class DiamondShopSchemaV3Test {
     @Test
     void schemaDeclaresV3ForBothFiles() throws IOException {
         YamlConfiguration schema = yaml(read("config-schema.yml"));
-        assertEquals(4, schema.getInt(CONFIG_MARKER),
-                "актуальная схема включает promotions и welcome-gift");
+        assertEquals(5, schema.getInt(CONFIG_MARKER),
+                "актуальная схема включает вывод книг из продажи (v5)");
         assertEquals(4, schema.getInt(MESSAGES_MARKER),
                 "актуальная схема включает тексты акций и подарка");
+        assertEquals(
+                List.of("books", "pricing.purchase-multipliers.books-custom",
+                        "pricing.purchase-multipliers.books-vanilla"),
+                schema.getStringList("migrations.config.5.remove"),
+                "v5 удаляет books: и тарифы книг из файла владельца");
     }
 
     @Test
@@ -116,7 +121,7 @@ final class DiamondShopSchemaV3Test {
         ConfigSchemaEngine.Result result = ConfigSchemaEngine.apply(reference, owner, configSpec());
 
         assertTrue(result.changed(), "переход v2 → v3 обязан дописать новый раздел");
-        assertTrue(result.text().contains(CONFIG_MARKER + ": 4"));
+        assertTrue(result.text().contains(CONFIG_MARKER + ": 5"));
         assertTrue(result.text().contains("owner-note: \"моя правка\""));
         assertTrue(result.text().contains("Ежедневная горячая скупка"),
                 "комментарии эталона переносятся вместе с блоком");
@@ -154,6 +159,46 @@ final class DiamondShopSchemaV3Test {
         assertFalse(second.changed(), "файл с актуальным маркером v3 не переписывается");
         assertFalse(yaml(ownerDeletedAgain).isConfigurationSection("promotions"),
                 "владелец вправе удалить секцию после перехода");
+    }
+
+    /** v5: книги чар сняты с продажи — миграция remove вычищает books: с backup. */
+    @Test
+    void configV5RemovesBooksFromOwnerFile() throws IOException {
+        YamlConfiguration schema = yaml(read("config-schema.yml"));
+        List<String> removals = schema.getStringList("migrations.config.5.remove");
+        ConfigSchemaEngine.Spec spec = new ConfigSchemaEngine.Spec("config.yml", CONFIG_MARKER,
+                ConfigSchemaEngine.MarkerMode.KEY, 5,
+                Map.of(5, new ConfigSchemaEngine.Step(Map.of(), Set.copyOf(removals))));
+
+        String reference = read("config.yml");
+        String owner = CONFIG_MARKER + ": 4\n"
+                + "owner-note: \"моя правка\"\n"
+                + "books:\n"
+                + "  enabled: true\n"
+                + "  custom:\n"
+                + "    prices:\n"
+                + "      common: 80\n"
+                + "pricing:\n"
+                + "  purchase-multipliers:\n"
+                + "    books-custom: 1\n"
+                + "    books-vanilla: 1\n";
+
+        ConfigSchemaEngine.Result result = ConfigSchemaEngine.apply(reference, owner, spec);
+
+        assertTrue(result.changed(), "переход v4 → v5 обязан удалить книги");
+        YamlConfiguration live = yaml(result.text());
+        assertFalse(live.isConfigurationSection("books"),
+                "секция books: удалена из файла владельца");
+        assertFalse(live.contains("pricing.purchase-multipliers.books-custom"),
+                "тарифы книг удалены");
+        assertFalse(live.contains("pricing.purchase-multipliers.books-vanilla"),
+                "тарифы книг удалены");
+        assertTrue(result.text().contains("owner-note: \"моя правка\""),
+                "правки владельца целы");
+        assertTrue(result.text().contains(CONFIG_MARKER + ": 5"));
+
+        ConfigSchemaEngine.Result again = ConfigSchemaEngine.apply(reference, result.text(), spec);
+        assertFalse(again.changed(), "повторный старт файл не переписывает");
     }
 
     @Test

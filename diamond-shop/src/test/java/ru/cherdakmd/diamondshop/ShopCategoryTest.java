@@ -22,7 +22,7 @@ class ShopCategoryTest {
             assertEquals(category.id().toLowerCase(), category.id(), "id только в нижнем регистре");
             assertFalse(category.icon().isBlank(), "у вкладки должна быть иконка");
         }
-        assertEquals(10, ShopCategory.values().length, "9 разделов + «Все»");
+        assertEquals(8, ShopCategory.values().length, "7 разделов + «Все» (книги чар сняты с продажи)");
     }
 
     @Test
