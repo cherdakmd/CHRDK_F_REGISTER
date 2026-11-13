@@ -92,6 +92,7 @@ public final class ChargeJournal {
                 || !c.stateHash().equals(AuctionPayment.hash(p.beforeState, p.afterState))) throw new IllegalArgumentException("charge intent");
     }
     private void write(Data next) throws IOException {
+        validate(next); // валидация намерения не карантинирует журнал
         try {
             writeTo(file, next, checkpoint);
             data = next;
