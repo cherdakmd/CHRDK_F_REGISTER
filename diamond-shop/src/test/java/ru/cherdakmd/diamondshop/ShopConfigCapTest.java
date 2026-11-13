@@ -42,11 +42,10 @@ final class ShopConfigCapTest {
     private static ShopConfig.ShopConfigData parseKeysOnly() throws Exception {
         var yaml = shipped();
         yaml.set("items", new ArrayList<>());
-        yaml.set("books.enabled", false);
         return ShopConfig.parse(yaml, LOG);
     }
 
-    /** Эталонный каталог без Bukkit Registry: обычные товары + книги из books:. */
+    /** Эталонный каталог без Bukkit Registry: обычные товары из items:. */
     private static List<ShopConfig.ShopItem> rawCatalog() throws Exception {
         var yaml = shipped();
         List<ShopConfig.ShopItem> items = new ArrayList<>();
@@ -63,7 +62,6 @@ final class ShopConfigCapTest {
                     !Boolean.FALSE.equals(raw.get("sell-enabled")),
                     ShopConfig.purchaseMultiplier(yaml, category)));
         }
-        items.addAll(ShopConfig.parseBooks(yaml, LOG));
         return items;
     }
 
@@ -86,7 +84,7 @@ final class ShopConfigCapTest {
                 Set.copyOf(keys.retiredMaterials())).size());
 
         List<ShopConfig.ShopItem> all = rawCatalog();
-        assertTrue(all.size() > 300, "каталог книг и предметов загружен целиком");
+        assertTrue(all.size() > 200, "каталог предметов загружен целиком");
         assertFalse(all.stream().anyMatch(item -> item.material().equals("SHULKER_SHELL")));
     }
 
@@ -128,7 +126,7 @@ final class ShopConfigCapTest {
                     item.material() + ": скупка лота " + bid + " ⛁");
             checked++;
         }
-        assertTrue(checked > 300);
+        assertTrue(checked > 200);
     }
 
     @Test

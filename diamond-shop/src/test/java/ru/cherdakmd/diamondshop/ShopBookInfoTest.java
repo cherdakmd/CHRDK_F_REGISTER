@@ -8,8 +8,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
+import java.util.Set;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -19,22 +22,27 @@ import ru.cherdakmd.chrdkregister.api.ShopBookKey;
 /**
  * Офлайн-справочник русских названий чар: покрытие каталога, человекочитаемый
  * вывод и поиск. Тесты не требуют загруженного CHRDK_Enchants и Bukkit Registry.
+ * Книги сняты с продажи (2.0.5), справочник остаётся для выданных ранее книг;
+ * полнота сверяется с реестром чар {@code ../enchants/src/main/resources/config.yml}.
  */
 class ShopBookInfoTest {
 
-    private static YamlConfiguration shipped() throws Exception {
-        try (var in = ShopBookInfoTest.class.getResourceAsStream("/config.yml")) {
-            assertNotNull(in);
-            var yaml = new YamlConfiguration();
-            yaml.load(new InputStreamReader(in, StandardCharsets.UTF_8));
-            return yaml;
-        }
+    /** Реестр кастомных чар CHRDK_Enchants (id → enabled). */
+    private static Set<String> registryIds() throws Exception {
+        var yaml = YamlConfiguration.loadConfiguration(
+                new InputStreamReader(Files.newInputStream(
+                        Path.of("../enchants/src/main/resources/config.yml")), StandardCharsets.UTF_8));
+        return yaml.getConfigurationSection("enchants").getKeys(false);
     }
 
+    /** Товары-книги без парсера конфига: ключ строится из id реестра. */
     private static List<ShopConfig.ShopItem> customBooks() throws Exception {
-        return ShopConfig.parseBooks(shipped(), Logger.getAnonymousLogger()).stream()
-                .filter(item -> item.spec() != null && item.spec().custom())
-                .toList();
+        List<ShopConfig.ShopItem> books = new ArrayList<>();
+        for (String id : registryIds()) {
+            ShopBookKey.Spec spec = new ShopBookKey.Spec(id, 3, true);
+            books.add(new ShopConfig.ShopItem(spec.key(), spec.category(), 100, 200, 1, 1, true, 1, spec.key()));
+        }
+        return books;
     }
 
     /** Без дополнительных зависимостей: имена сборки — одиночные TextComponent. */
@@ -46,9 +54,9 @@ class ShopBookInfoTest {
     }
 
     @Test
-    void everyCustomBookInShippedCatalogHasRussianNameAndEffect() throws Exception {
+    void everyCustomEnchantHasRussianNameAndEffect() throws Exception {
         List<ShopConfig.ShopItem> books = customBooks();
-        assertEquals(76, books.size(), "Каталог кастомных книг изменился — нужен повтор генерации справочника");
+        assertEquals(76, books.size(), "Реестр чар изменился — нужен повтор генерации справочника");
         int curses = 0;
         for (ShopConfig.ShopItem item : books) {
             ShopBookKey.Spec spec = item.spec();

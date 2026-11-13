@@ -28,7 +28,7 @@ public final class ShopMarketGui implements Listener {
     private static final int HOME_GUIDE = 50;
     private static final int HOME_PROMO = 31;
     private static final int HOME_GIFT = 33;
-    private static final int[] HOME_SECTIONS = {10,11,12,13,14,15,16,21,23};
+    private static final int[] HOME_SECTIONS = {10,11,12,13,14,15,16};
 
     private final DiamondShopPlugin plugin;
 

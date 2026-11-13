@@ -8,8 +8,9 @@ import java.util.Optional;
  *
  * <p>Раздел товара задаётся полем {@code category} в {@code config.yml}; если поле
  * не указано или содержит неизвестное значение, товар попадает в {@link #MISC} —
- * старые конфиги продолжают работать без миграции. Книги чар занимают два
- * собственных раздела: кастомные и ванильные.</p>
+ * старые конфиги продолжают работать без миграции. Книги чар сняты с продажи
+ * (2.0.5): их разделов в каталоге больше нет, былые {@code books-*} из старых
+ * конфигов откатываются в {@link #MISC} как неизвестные.</p>
  */
 public enum ShopCategory {
 
@@ -20,8 +21,6 @@ public enum ShopCategory {
     MOBS("mobs", "shop.gui.tab-mobs", "BONE"),
     FOOD("food", "shop.gui.tab-food", "BREAD"),
     UTILITY("utility", "shop.gui.tab-utility", "CRAFTING_TABLE"),
-    BOOKS_CUSTOM("books-custom", "shop.gui.tab-books-custom", "ENCHANTED_BOOK"),
-    BOOKS_VANILLA("books-vanilla", "shop.gui.tab-books-vanilla", "BOOK"),
     MISC("misc", "shop.gui.tab-misc", "BARREL");
 
     /** Раздел для товаров без явной категории. */

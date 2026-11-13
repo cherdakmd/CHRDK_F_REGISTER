@@ -41,10 +41,6 @@ pricing:
     utility: 2
     mobs: 2
     misc: 2
-    # Книги чар: собственный тариф ×2. Повышать base-price вместе с ним нельзя —
-    # это увеличило бы и скупку. Дороговизна достигается базой 60..400 алмазов.
-    books-custom: 1
-    books-vanilla: 1
   # Насколько быстро запас товара возвращается к эталону (доля от разницы в час).
   # 0.05 = за час запас восстанавливается на 5% разницы с эталонным.
   stock-recovery-per-hour: 0.05
@@ -123,145 +119,9 @@ promotions:
   max-bonus-per-trade: 5000
   max-bonus-per-player-per-day: 5000
 
-# ── Книги чар: два отдельных раздела витрины ───────────────────────────────
-# Один товар = одна книга максимального уровня. Книги НЕ входят в items:
-# пользовательские каталоги не перезаписываются, разделы появляются у всех.
-# base-price — внутренняя база; покупка игроком = ask × purchase-multiplier (2),
-# а скупка ограничена собственной нижней ask, поэтому «купил → продал дороже»
-# не работает. Скупаются только книги с меткой источника SHOP, выданные тут же.
-# Кастомные: id:редкость:максимальный уровень, цена из prices по редкости
-# (список синхронизирован с EnchantRegistry, 76 чар, включая 15 проклятий).
-# Ванильные: id:уровень:цена; id нет в реестре сервера — книгу выдать нельзя.
-books:
-  enabled: true
-  ref-stock: 200
-  custom:
-    prices:
-      common: 80
-      rare: 150
-      epic: 250
-      legendary: 400
-    enchants:
-      - "thunderstrike:rare:3"
-      - "lifesteal:epic:3"
-      - "chainspark:epic:2"
-      - "bleeding:rare:3"
-      - "paralyze:epic:2"
-      - "execution:legendary:2"
-      - "berserk:rare:3"
-      - "slayer:rare:2"
-      - "souleater:epic:2"
-      - "stormarrow:rare:3"
-      - "explosive:epic:2"
-      - "sniper:rare:3"
-      - "frostarrow:rare:2"
-      - "tracer:common:1"
-      - "headhunter:legendary:1"
-      - "retribution:epic:3"
-      - "laststand:legendary:1"
-      - "fortified:rare:3"
-      - "lightningrod:common:1"
-      - "phoenix:legendary:1"
-      - "iceward:rare:2"
-      - "truesight:epic:1"
-      - "seer:common:1"
-      - "swiftfeet:rare:2"
-      - "froggy:common:2"
-      - "lavawalker:legendary:1"
-      - "autosmelt:rare:1"
-      - "veinminer:epic:3"
-      - "excavator:epic:2"
-      - "midas:legendary:1"
-      - "keen_edge:rare:3"
-      - "frenzy:rare:3"
-      - "plunder:common:3"
-      - "duelist:epic:3"
-      - "steady_aim:rare:3"
-      - "quickdraw:common:3"
-      - "bulwark:rare:3"
-      - "second_skin:epic:3"
-      - "vitality:rare:3"
-      - "grounded:common:3"
-      - "lightfoot:rare:3"
-      - "featherstep:common:3"
-      - "prospector:rare:3"
-      - "fortunate:epic:2"
-      - "scholar:common:3"
-      - "crippling_edge:rare:3"
-      - "sapping_edge:epic:2"
-      - "pinning_shot:rare:3"
-      - "sapping_shot:epic:2"
-      - "briar_guard:rare:2"
-      - "faltering_guard:rare:2"
-      - "provoking_strike:rare:2"
-      - "signal_guard:rare:2"
-      - "careful_work:rare:3"
-      - "garden_step:common:1"
-      - "air_reserve:rare:2"
-      - "quiet_step:epic:1"
-      - "tool_safeguard:rare:1"
-      - "frost_resistance:rare:2"
-      - "pve_anchor:rare:2"
-      - "harvest_replant:rare:1"
-      - "dull_blade:common:3"
-      - "clumsy_swing:common:3"
-      - "brittle:common:3"
-      - "weak_draw:common:3"
-      - "sluggish_shot:common:2"
-      - "thin_padding:common:3"
-      - "exposed:common:3"
-      - "heavy_hull:common:3"
-      - "fire_prone:common:3"
-      - "fragile_bones:common:3"
-      - "dull_pick:common:3"
-      - "jinxed:common:3"
-      - "gluttony:common:3"
-      - "slow_learner:common:3"
-      - "cursed_blood:rare:3"
-  vanilla:
-    enchants:
-      - "protection:4:150"
-      - "fire_protection:4:80"
-      - "feather_falling:4:80"
-      - "blast_protection:4:80"
-      - "projectile_protection:4:80"
-      - "respiration:3:60"
-      - "aqua_affinity:1:60"
-      - "thorns:3:90"
-      - "depth_strider:3:60"
-      - "frost_walker:2:120"
-      - "binding_curse:1:60"
-      - "soul_speed:3:120"
-      - "swift_sneak:3:120"
-      - "sharpness:5:150"
-      - "smite:5:80"
-      - "bane_of_arthropods:5:80"
-      - "knockback:2:60"
-      - "fire_aspect:2:80"
-      - "looting:3:120"
-      - "sweeping_edge:3:90"
-      - "efficiency:5:150"
-      - "silk_touch:1:120"
-      - "unbreaking:3:90"
-      - "fortune:3:160"
-      - "power:5:100"
-      - "punch:2:60"
-      - "flame:1:60"
-      - "infinity:1:120"
-      - "luck_of_the_sea:3:80"
-      - "lure:3:80"
-      - "mending:1:200"
-      - "vanishing_curse:1:60"
-      - "multishot:1:90"
-      - "quick_charge:3:80"
-      - "piercing:4:80"
-      - "channeling:1:100"
-      - "impaling:5:80"
-      - "riptide:3:90"
-      - "loyalty:3:80"
-      - "density:5:100"
-      - "breach:4:100"
-      - "wind_burst:3:120"
+# ── Книги чар сняты с продажи (2.0.5) ───────────────────────────────────
+# Секция books: удалена: витрина больше не продаёт и не скупает книги чар.
+# Миграция v5 удаляет books: и тарифы книг из старых config.yml с backup.
 
 # Товары магазина. Цена = base-price * clamp(ref-stock / stock, min-mult, max-mult):
 # игроки продают товар → запас растёт → цена падает; скупают → запас падает → цена растёт.

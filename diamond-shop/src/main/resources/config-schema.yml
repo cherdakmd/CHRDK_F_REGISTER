@@ -1,4 +1,9 @@
 # CHRDK_DiamondShop — версии схемы эталонных YAML.
+# v5 (13 ноября 2026): книги чар сняты с продажи. Секция books: и тарифы
+#     pricing.purchase-multipliers.books-* удалены из эталона и вычищаются из
+#     файлов владельцев миграцией remove (с backup, повторный старт идемпотентен).
+#     Разделы «Книги чар: наши/ванильные» исчезают из витрины /shop; прежние
+#     бэкапы конфига с books: не вернут книги: парсер книг удалён из каталога.
 # v4 (13 ноября 2026): одноразовый welcome-gift 10000 ⛁ и тексты главной витрины.
 # v3 (8 ноября 2026): дневные акции /shop. В config.yml добавлена секция
 #     promotions: (пул, товары дня, три награды и потолки), в messages.yml —
@@ -17,5 +22,9 @@
 # значения, каталог и комментарии сохраняются, перед записью создаётся backup.
 # pricing.daily-turnover-limit: 0 теперь означает «жёсткий ручной потолок не
 # задан», а не «без лимита»; выключается лимит ключом daily-cap.enabled.
-config-version: 4
+config-version: 5
 messages-version: 4
+migrations:
+  config:
+    5:
+      remove: [books, pricing.purchase-multipliers.books-custom, pricing.purchase-multipliers.books-vanilla]
