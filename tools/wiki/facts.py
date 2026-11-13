@@ -167,15 +167,7 @@ class FactBook:
         if name == "plugins":
             return len(self.modules)
         if name == "shop_count":
-            shop = self.configs["diamond-shop"]
-            books = shop.get("books", {})
-            return (len(shop["items"])
-                    + len(books.get("custom", {}).get("enchants", []))
-                    + len(books.get("vanilla", {}).get("enchants", [])))
-        if name == "book_count":
-            books = self.configs["diamond-shop"].get("books", {})
-            return (len(books.get("custom", {}).get("enchants", []))
-                    + len(books.get("vanilla", {}).get("enchants", [])))
+            return len(self.configs["diamond-shop"]["items"])
         if name == "buy_only":
             return sum(
                 r.get("sell-enabled", True) is False
@@ -331,13 +323,6 @@ class FactBook:
                 ["Команда", "Алиасы", "Назначение"],
                 [(f"`/{cmd}`", a, d) for _, cmd, a, d in self.commands(module)],
             )
-        if name == "shop_book_prices":
-            prices = c["diamond-shop"]["books"]["custom"]["prices"]
-            labels = {"common": "Обычная", "rare": "Редкая", "epic": "Эпическая", "legendary": "Легендарная"}
-            return table(
-                ["Редкость кастомной чары", "База за книгу, алм."],
-                [(label, prices[key]) for key, label in labels.items()],
-            )
         if name == "shop":
             return table(
                 ["Материал / ID", "Раздел", "База mid за штуку, алм.", "Тариф покупки", "Обратная скупка"],
@@ -360,21 +345,13 @@ class FactBook:
                 "mobs": "Добыча мобов",
                 "food": "Еда и ферма",
                 "utility": "Полезное",
-                "books-custom": "Книги чар: наши",
-                "books-vanilla": "Книги чар: ванильные",
-            }
-            books = c["diamond-shop"].get("books", {})
-            extra = {
-                "books-custom": len(books.get("custom", {}).get("enchants", [])),
-                "books-vanilla": len(books.get("vanilla", {}).get("enchants", [])),
             }
             return table(
                 ["Раздел", "Товаров"],
                 [
                     (
                         title,
-                        sum(r["category"] == cat for r in c["diamond-shop"]["items"])
-                        + extra.get(cat, 0),
+                        sum(r["category"] == cat for r in c["diamond-shop"]["items"]),
                     )
                     for cat, title in titles.items()
                 ],

@@ -192,100 +192,13 @@ public final class ShopConfig {
             }
             items.add(item);
         }
-        // Книги чар живут в отдельной секции books: пользовательский каталог items
-        // не перезаписывается миграцией, поэтому новые разделы появляются у всех.
-        for (ShopItem book : parseBooks(config, logger)) {
-            if (!seen.add(book.material())) {
-                logger.warning("[DiamondShop] books: дубликат товара '" + book.material()
-                        + "' — запись пропущена.");
-                continue;
-            }
-            items.add(book);
-        }
+        // Книги чар выведены из продажи (2.0.5): секция books: в конфиге и её
+        // записи каталогом не читаются — миграция v5 удаляет секцию из файлов
+        // владельцев, прежние бэкапы с books: тоже не вернут книги в витрину.
         ShopOverrides effective = overrides == null ? ShopOverrides.EMPTY : overrides;
         List<ShopItem> catalog = effective.apply(items, retired);
         return new ShopConfigData(rates, recovery, maxWithdraw, minMult, maxMult, List.copyOf(catalog),
                 spread, dailyLimit, dailyCap, List.copyOf(retired), historyPoints, historyInterval);
-    }
-
-    /**
-     * Книги чар из {@code books.custom.enchants} ({@code id:редкость:уровень}) и
-     * {@code books.vanilla.enchants} ({@code id:уровень:цена}). Один товар — одна
-     * книга максимального уровня. Цена фиксированная (multiplier 1..1), скупка
-     * разрешена, но ограничена собственной нижней ask в {@link RecipeEconomy}.
-     */
-    /** Доступен юнит-тестам: не вызывает Material#isItem() и не требует Bukkit Registry. */
-    static List<ShopItem> parseBooks(FileConfiguration config, Logger logger) {
-        if (!config.getBoolean("books.enabled", true)) {
-            return List.of();
-        }
-        long refStock = Math.max(1, config.getLong("books.ref-stock", 200));
-        List<ShopItem> result = new ArrayList<>();
-        ConfigurationSection custom = config.getConfigurationSection("books.custom");
-        if (custom != null) {
-            List<String> records = custom.getStringList("enchants");
-            int before = result.size();
-            ConfigurationSection prices = custom.getConfigurationSection("prices");
-            for (String raw : records) {
-                String[] parts = raw.trim().toLowerCase(java.util.Locale.ROOT).split(":", -1);
-                if (parts.length != 3) {
-                    logger.warning("[DiamondShop] books.custom: неверная запись '" + raw + "' — пропускаю.");
-                    continue;
-                }
-                double price = prices == null ? 0 : prices.getDouble(parts[1], 0);
-                addBook(result, config, logger, parts[0], parseInt(parts[2]), true, price, refStock);
-            }
-            if (!records.isEmpty() && result.size() == before) {
-                logger.warning("[DiamondShop] books.custom: ни одна из " + records.size()
-                        + " записей не загрузилась — раздел «Книги чар: наши» не появится."
-                        + " Проверьте books.custom.prices и формат id:редкость:уровень.");
-            }
-        }
-        ConfigurationSection vanilla = config.getConfigurationSection("books.vanilla");
-        if (vanilla != null) {
-            List<String> records = vanilla.getStringList("enchants");
-            int before = result.size();
-            for (String raw : records) {
-                String[] parts = raw.trim().toLowerCase(java.util.Locale.ROOT).split(":", -1);
-                if (parts.length != 3) {
-                    logger.warning("[DiamondShop] books.vanilla: неверная запись '" + raw + "' — пропускаю.");
-                    continue;
-                }
-                addBook(result, config, logger, parts[0], parseInt(parts[1]), false,
-                        numberOf(parts[2], 0), refStock);
-            }
-            if (!records.isEmpty() && result.size() == before) {
-                logger.warning("[DiamondShop] books.vanilla: ни одна из " + records.size()
-                        + " записей не загрузилась — раздел «Книги чар: ванильные» не появится.");
-            }
-        }
-        return result;
-    }
-
-    private static int parseInt(String raw) {
-        try {
-            return Integer.parseInt(raw.trim());
-        } catch (NumberFormatException error) {
-            return 0;
-        }
-    }
-
-    private static void addBook(List<ShopItem> result, FileConfiguration config, Logger logger,
-                                String id, int level, boolean custom, double price, long refStock) {
-        if (!(price > 0) || !Double.isFinite(price) || level < 1) {
-            logger.warning("[DiamondShop] books: неверная цена или уровень для '" + id + "' — пропускаю.");
-            return;
-        }
-        ru.cherdakmd.chrdkregister.api.ShopBookKey.Spec spec;
-        try {
-            spec = new ru.cherdakmd.chrdkregister.api.ShopBookKey.Spec(id, level, custom);
-        } catch (IllegalArgumentException error) {
-            logger.warning("[DiamondShop] books: неверный идентификатор '" + id + "' — пропускаю.");
-            return;
-        }
-        String category = spec.category();
-        result.add(new ShopItem(spec.key(), category, price, refStock, 1d, 1d, true,
-                purchaseMultiplier(config, category), spec.key()));
     }
 
     private static ShopItem parseItem(Map<?, ?> raw, double defMin, double defMax, FileConfiguration config, Logger logger) {
@@ -341,7 +254,6 @@ public final class ShopConfig {
         double fallback = switch (category) {
             case "blocks", "wood", "food" -> 4;
             case "minerals", "utility" -> 8;
-            case "books-custom", "books-vanilla" -> 2;
             default -> 6;
         };
         double value = config.getDouble("pricing.purchase-multipliers." + category, fallback);
