@@ -41,6 +41,39 @@ public final class ChargeJournal {
             var fresh = new Data(); fresh.source = source; fresh.lineage = lineage; write(fresh);
         }
     }
+    /** Lineage, записанный в bank-charge.json; null — файла ещё нет. Повреждённый файл — ошибка. */
+    public static UUID recordedLineage(Path folder) throws IOException {
+        var existing = readExisting(folder);
+        return existing == null ? null : existing.lineage;
+    }
+
+    /** Переопознать незафиксированный журнал зарегистрированным lineage банка. Идентичность
+     *  bank-charge.json обязана следовать за paid-actions.json, иначе повторное открытие журнала
+     *  видит несогласованные lineage и останавливает модуль (production-отказ Claims 2.0.3). */
+    public static boolean adoptLineage(Path folder, String source, UUID external) throws IOException {
+        Objects.requireNonNull(external, "lineage");
+        var existing = readExisting(folder);
+        if (existing == null) return true;
+        if (!source.equals(existing.source) || existing.pending != null || existing.sequence != 0) return false;
+        if (external.equals(existing.lineage)) return true;
+        existing.lineage = external;
+        writeTo(folder.resolve("bank-charge.json"), existing, () -> { });
+        return true;
+    }
+
+    private static Data readExisting(Path folder) throws IOException {
+        Path file = folder.resolve("bank-charge.json");
+        if (!Files.exists(file)) return null;
+        try {
+            if (Files.size(file) > 64L * 1024 * 1024) throw new IllegalArgumentException("journal capacity");
+            var object = JsonParser.parseString(Files.readString(file)).getAsJsonObject(); FinanceNumbers.requireIntegral(object);
+            for (String field : List.of("schema", "source", "lineage", "sequence"))
+                if (!object.has(field)) throw new IllegalArgumentException("missing " + field);
+            var data = JSON.fromJson(object, Data.class); validate(data);
+            return data;
+        } catch (RuntimeException error) { throw new IOException("Повреждён bank-charge.json; не удаляйте журнал", error); }
+    }
+
     public synchronized boolean healthy() { return healthy; }
     public synchronized Pending pending() { return data.pending; }
     public synchronized long nextSequence() { return data.sequence + 1; }
@@ -59,18 +92,22 @@ public final class ChargeJournal {
                 || !c.stateHash().equals(AuctionPayment.hash(p.beforeState, p.afterState))) throw new IllegalArgumentException("charge intent");
     }
     private void write(Data next) throws IOException {
-        validate(next);
+        validate(next); // валидация намерения не карантинирует журнал
         try {
-            Files.createDirectories(file.getParent()); Path temp = file.resolveSibling("bank-charge.json.tmp");
-            byte[] bytes = JSON.toJson(next).getBytes(StandardCharsets.UTF_8);
-            if (bytes.length > 64 * 1024 * 1024) throw new IllegalArgumentException("journal capacity");
-            Files.write(temp, bytes);
-            try (FileChannel channel = FileChannel.open(temp, StandardOpenOption.WRITE)) { channel.force(true); }
-            Files.move(temp, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-            checkpoint.afterReplace();
-            try (FileChannel directory = FileChannel.open(file.getParent(), StandardOpenOption.READ)) { directory.force(true); }
+            writeTo(file, next, checkpoint);
             data = next;
         } catch (IOException | RuntimeException error) { healthy = false; throw error; }
+    }
+    private static void writeTo(Path file, Data next, WriteCheckpoint checkpoint) throws IOException {
+        validate(next);
+        Files.createDirectories(file.getParent()); Path temp = file.resolveSibling("bank-charge.json.tmp");
+        byte[] bytes = JSON.toJson(next).getBytes(StandardCharsets.UTF_8);
+        if (bytes.length > 64 * 1024 * 1024) throw new IllegalArgumentException("journal capacity");
+        Files.write(temp, bytes);
+        try (FileChannel channel = FileChannel.open(temp, StandardOpenOption.WRITE)) { channel.force(true); }
+        Files.move(temp, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        checkpoint.afterReplace();
+        try (FileChannel directory = FileChannel.open(file.getParent(), StandardOpenOption.READ)) { directory.force(true); }
     }
     public synchronized BankCharge prepare(UUID payer, long price, long debit, long cash, long change,
                                             String beforeInventory, String afterInventory, String beforeState, String afterState) throws IOException {
