@@ -221,7 +221,7 @@ public final class ClaimStore {
     synchronized boolean hasCleanState() {
         if(!Files.isRegularFile(file)) return false;
         try {
-            var data=GSON.fromJson(ClaimJson.read(file),DATA_TYPE);
+            Map<String,Object> data=GSON.fromJson(ClaimJson.read(file),DATA_TYPE);
             return data!=null&&longOf(data.get("cleanStateEpoch"))==CLEAN_STATE_EPOCH;
         } catch(IOException|RuntimeException ignored) { return false; }
     }
