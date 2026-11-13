@@ -28,17 +28,33 @@ public final class PaidActions {
         this.plugin=plugin; this.api=api; this.messages=messages; this.source=source;
         this.bankOnly=bankOnly||BankCharge.bankOnlySource(source);
         store=new PaidActionStore(plugin.getDataFolder().toPath());
-        var initial=new ChargeJournal(plugin.getDataFolder().toPath(),source,store.lineage());
-        if (initial.pending()!=null && !ChargeInventory.valid(initial.pending())) throw new IOException("Неверный предметный план услуги");
         var core=api.get();
         UUID external=core instanceof IncomeSourceLineageProvider provider?provider.incomeSourceLineage(source):null;
-        if(external!=null&&!external.equals(store.lineage())&&registrationRecoverable(store,initial)) {
-            store.adoptLineage(external);
-            plugin.getLogger().info("Источник "+source+": принят lineage банка; финансовых обязательств не было, значения сохранены.");
-        }
+        reconcileLineage(plugin.getDataFolder().toPath(),source,store,external,plugin.getLogger()::info);
+        var initial=new ChargeJournal(plugin.getDataFolder().toPath(),source,store.lineage());
+        if (initial.pending()!=null && !ChargeInventory.valid(initial.pending())) throw new IOException("Неверный предметный план услуги");
         journal=new ChargeJournal(plugin.getDataFolder().toPath(),source,store.lineage());
         store.bind(this::paused);
         recover(null);
+    }
+    /** До первого обязательства пустой журнал вправе принять зарегистрированный lineage банка.
+     *  Идентичность bank-charge.json обязана следовать за paid-actions.json: иначе повторное
+     *  открытие журнала видит несогласованные lineage и останавливает модуль (отказ Claims 2.0.3).
+     *  Любые финансовые обязательства запрещают переопознание и оставляют fail-closed поведение. */
+    public static void reconcileLineage(java.nio.file.Path folder, String source, PaidActionStore store, UUID external, Consumer<String> log) throws IOException {
+        boolean storePristine=store.healthy()&&store.actions().isEmpty()&&store.refunds().isEmpty()&&store.resolutions().isEmpty();
+        UUID recorded=ChargeJournal.recordedLineage(folder);
+        if(recorded!=null&&!recorded.equals(store.lineage())) {
+            if(!storePristine||external==null||!ChargeJournal.adoptLineage(folder,source,external))
+                throw new IOException("Повреждён bank-charge.json; не удаляйте журнал");
+            store.adoptLineage(external);
+            if(log!=null) log.accept("Источник "+source+": принят lineage банка; финансовых обязательств не было, значения сохранены.");
+            return;
+        }
+        if(storePristine&&external!=null&&!external.equals(store.lineage())&&ChargeJournal.adoptLineage(folder,source,external)) {
+            store.adoptLineage(external);
+            if(log!=null) log.accept("Источник "+source+": принят lineage банка; финансовых обязательств не было, значения сохранены.");
+        }
     }
     public PaidActionStore store() { return store; }
     public boolean paused() {

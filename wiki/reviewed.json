@@ -1,183 +1,183 @@
 {
   "pages": {
     "about": {
-      "reason": "Проверено: изменения Core ограничены bank-only оплатой claim-teleports и сценарием recovery; тема страницы и её утверждения сверены с неизменным кодом модулей",
-      "sources": "a03665ac2a924fb4b0e7685229940bc3820d168bf6afc94da3ef31d5f76661f0",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "3316a14dd3215e24ecb83b27219a0ead86f53c8a4b6f30476968a179217bf7b6",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "Проверено: изменения Core ограничены bank-only оплатой claim-teleports и сценарием recovery; тема страницы и её утверждения сверены с неизменным кодом модулей",
-      "sources": "e59a27bd5997b69eeaf10ad078762c7c651b5b9961b2809b8686d44a25b5cc48",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "af22793edb32a7c308731e24db6505ef1316b84aec7d5e57de14b7307ecd124c",
       "text": "bd128e475ee8efae55c3d2d6c9616d5278600f2a8ff1aad7af5e6df3e0b3f5c3"
     },
     "artifacts": {
-      "reason": "Проверено: изменения Core ограничены bank-only оплатой claim-teleports и сценарием recovery; тема страницы и её утверждения сверены с неизменным кодом модулей",
-      "sources": "05e6f17e2771a91337b666155bfe92952af62c4de9c966fecd837eb062601960",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "0a53397f3ab7d6166913d139bc1797b0947326ac5ea4e218ad5d83f3be78a892",
       "text": "51e3ef379d9a8f7e2ccfc6fd41cc0c0823f91f30d7c9a8326ec7962c182d98e4"
     },
     "battlepass": {
-      "reason": "Проверено: изменения Core ограничены bank-only оплатой claim-teleports и сценарием recovery; тема страницы и её утверждения сверены с неизменным кодом модулей",
-      "sources": "0fb3d68534f59aa4a9fcc8c21cab191de5a4e77e88ab3af202bd44af50f0cfed",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "05e2ddb69ecd070674d7983e0159e7216c067b15a040556033341b959618ade9",
       "text": "997df6e0a9311ea115c4fd3c192b2729034b10c68a4f41c57261ef4b704c5add"
     },
     "chat": {
-      "reason": "Проверено: изменения Core ограничены bank-only оплатой claim-teleports и сценарием recovery; тема страницы и её утверждения сверены с неизменным кодом модулей",
-      "sources": "a03665ac2a924fb4b0e7685229940bc3820d168bf6afc94da3ef31d5f76661f0",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "3316a14dd3215e24ecb83b27219a0ead86f53c8a4b6f30476968a179217bf7b6",
       "text": "a51c51d20cfe94c553e80893422b000a579b87285b00cbceb452f29eb0773023"
     },
     "claims": {
-      "reason": "Сверено с bank-only оплатой личного /bal и clean cutover Claims: сообщения, команды, бюджет и отказ предметной оплаты перепроверены по коду",
-      "sources": "7afd906e6fb8145ecba33fae56de766407e6db14b872e7ad7869c1d31b95365c",
-      "text": "905fb233b036e301d685d3ed894f82e3f8c3d76c763546fe0cc460876ea5227d"
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "a4881186529df252204e9246750d0dc4d3639dfa1eee8be033d43b0d76c90d01",
+      "text": "50b80f02b9200ed8653d50c1bf802fd4de8d272a9bf1f46cf92618d743bed3cd"
     },
     "classes": {
-      "reason": "Проверено: изменения Core ограничены bank-only оплатой claim-teleports и сценарием recovery; тема страницы и её утверждения сверены с неизменным кодом модулей",
-      "sources": "0e8d3eecddeaaf5c40396395cb896b6e846bd6b2779b70dcc18ef284e51b3a69",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "3533423a9faa02538db125f25a7f1e1d60be46859ea7c44420826dc5620c7c98",
       "text": "503edef62357862f67d17df249b393023697d6dca6342cbe792b0d4dc78cb8cc"
     },
     "commands": {
-      "reason": "Сверено с bank-only оплатой личного /bal и clean cutover Claims: сообщения, команды, бюджет и отказ предметной оплаты перепроверены по коду",
-      "sources": "f39b502d982d4ab02b5f4b2b1540c82492b997fd8da96398c26db9a29d31806a",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "75af5a5730f5cf1b2e1217b26935479cf57a0e1bec0604d1912f3ab2e40ca6e9",
       "text": "46017ca1aca3a1d620ff09b3ffd40ff42885e551a850c85baa15f2c73d03b290"
     },
     "cosmetics": {
-      "reason": "Проверено: изменения Core ограничены bank-only оплатой claim-teleports и сценарием recovery; тема страницы и её утверждения сверены с неизменным кодом модулей",
-      "sources": "a9df0f1c6dc41386c87abc53d5370e8615c59af79a54d934507853d51e6b584d",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "36a77258486e05818e3d1bc0f6bcf351cad13e996ef12f865ddfb738b54e62e7",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "Проверено: изменения Core ограничены bank-only оплатой claim-teleports и сценарием recovery; тема страницы и её утверждения сверены с неизменным кодом модулей",
-      "sources": "aae839d0c1960eb9f8c6c6dd0ec5e7dd53e86faf065198bd940f7a5728cd33d1",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "639cb0c042f4efb03409f1fbb397460a21675f2392350558e31fbe7b4a2fdc27",
       "text": "4d7683f5677c50dfe0488961891915b5c2dd6533191a213ee8fdb077ea817eb5"
     },
     "disasters": {
-      "reason": "Проверено: изменения Claims (оплата только с /bal, чистый сброс без переноса приватов) не противоречат странице; пересечения с казнами, товарами и телепортами сверены с кодом",
-      "sources": "a2ea243f9aa525d0155a7d509595d953d184d595b0ef97abb70b68cc2ac9cf33",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "5d7f1df70262ad38388bfc6470635657bf575e4a3989ccb0febf6a2f62080b91",
       "text": "121b1cc28a075ced29b6de8abec7dbc20bbb531a01441ddd5fdb836d066d0202"
     },
     "economy": {
-      "reason": "Сверено с bank-only оплатой личного /bal и clean cutover Claims: сообщения, команды, бюджет и отказ предметной оплаты перепроверены по коду",
-      "sources": "8906cf3fb2e73cefb57e03809e0334931a55eaaba425650ef533b455378d9ae7",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "ff15357815cd6efa409fa5c739598e69159c31d07648cd15c252cf148f046a80",
       "text": "380ede76f428cfc00f3a9df848d00a9b5012222475c10d41cc83359ef3d12d97"
     },
     "enchants": {
-      "reason": "Проверено: изменения Core ограничены bank-only оплатой claim-teleports и сценарием recovery; тема страницы и её утверждения сверены с неизменным кодом модулей",
-      "sources": "654ff0e65fa45670067e904d170e2eb96bfdec0ee8f379b1ae63a8d8f2b375f0",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "2ba15d16753ccfb59ce1a58763c901f19cc139b137e76840b8268087a9d87d5b",
       "text": "7e90321ef8a100bae11c53592c62328fa44a958be657b66a86d51ea8c1906a7d"
     },
     "faq": {
-      "reason": "Сверено с bank-only оплатой личного /bal и clean cutover Claims: сообщения, команды, бюджет и отказ предметной оплаты перепроверены по коду",
-      "sources": "be3f59e1329c564a78fbca518bc27b1b6122e2d82c029bb6d3f4e9206ae3a69e",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "04be1da51c4fa35e7515285973b95b45eb5baa89e35dfbac63d22f752fc3e9e3",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "Проверено: изменения Core ограничены bank-only оплатой claim-teleports и сценарием recovery; тема страницы и её утверждения сверены с неизменным кодом модулей",
-      "sources": "09b324849277425731e462cae4bfe402ab345e3e7607e96f80bfd3bc67745152",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "9f06f24afc0eb7236a29eef6125e62702b873246915150fd63e65edda6e101b0",
       "text": "615d89bba0ac116c220d571f530fcdab7d5ff46162ca7a7ecf24de441a7fb191"
     },
     "guilds": {
-      "reason": "Проверено: изменения Claims (оплата только с /bal, чистый сброс без переноса приватов) не противоречат странице; пересечения с казнами, товарами и телепортами сверены с кодом",
-      "sources": "7afd906e6fb8145ecba33fae56de766407e6db14b872e7ad7869c1d31b95365c",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "a4881186529df252204e9246750d0dc4d3639dfa1eee8be033d43b0d76c90d01",
       "text": "bb7d4121d6c42762b2f09d8eb57df986a942df35c77fd2cf899a5e7a38193216"
     },
     "honors": {
-      "reason": "Проверено: изменения Core ограничены bank-only оплатой claim-teleports и сценарием recovery; тема страницы и её утверждения сверены с неизменным кодом модулей",
-      "sources": "a03665ac2a924fb4b0e7685229940bc3820d168bf6afc94da3ef31d5f76661f0",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "3316a14dd3215e24ecb83b27219a0ead86f53c8a4b6f30476968a179217bf7b6",
       "text": "17c878e1ab52ceb2a7c3361a7bef133c8bd1004a59641898f2c525f7c48fff8f"
     },
     "index": {
-      "reason": "Проверено: изменения Claims (оплата только с /bal, чистый сброс без переноса приватов) не противоречат странице; пересечения с казнами, товарами и телепортами сверены с кодом",
-      "sources": "dc38d0db4762b5d75ce4ddc888ffc2a987a999f20772a4e4d279411de26d06c2",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "c04da3ce924decdf453f9801da0a8fdc5cd63049f3745daa3f8bd68da785282b",
       "text": "13b0089b89035cd13598d177608718282608bc671993a3c370012b297c779cd7"
     },
     "menu": {
-      "reason": "Сверено с bank-only оплатой личного /bal и clean cutover Claims: сообщения, команды, бюджет и отказ предметной оплаты перепроверены по коду",
-      "sources": "be3f59e1329c564a78fbca518bc27b1b6122e2d82c029bb6d3f4e9206ae3a69e",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "04be1da51c4fa35e7515285973b95b45eb5baa89e35dfbac63d22f752fc3e9e3",
       "text": "eb6fdaf663b2005735002c5f23bb7f751b31a7447b3fc2cc77d741ff7c4cb2f9"
     },
     "moderation": {
-      "reason": "Проверено: изменения Core ограничены bank-only оплатой claim-teleports и сценарием recovery; тема страницы и её утверждения сверены с неизменным кодом модулей",
-      "sources": "a03665ac2a924fb4b0e7685229940bc3820d168bf6afc94da3ef31d5f76661f0",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "3316a14dd3215e24ecb83b27219a0ead86f53c8a4b6f30476968a179217bf7b6",
       "text": "79580a49c09219f65539abace395b5f2469f91fc2f0ac9b3ecae109c4fa1ecb4"
     },
     "orders": {
-      "reason": "Проверено: изменения Core ограничены bank-only оплатой claim-teleports и сценарием recovery; тема страницы и её утверждения сверены с неизменным кодом модулей",
-      "sources": "ca8a2f47a632d074d7629edc21c9bf7a151f789db67c14f0d0244c0ea15daec7",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "de6268417120ca2ff7ad971887953d207b603345f92079a62bb24749a5d02bff",
       "text": "8f1bddfa65aabb38fab8ebdad77656a627e340e765229de34ab3a24dd96fef2e"
     },
     "perktree": {
-      "reason": "Проверено: изменения Core ограничены bank-only оплатой claim-teleports и сценарием recovery; тема страницы и её утверждения сверены с неизменным кодом модулей",
-      "sources": "0e8d3eecddeaaf5c40396395cb896b6e846bd6b2779b70dcc18ef284e51b3a69",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "3533423a9faa02538db125f25a7f1e1d60be46859ea7c44420826dc5620c7c98",
       "text": "3e1a2fe232bb8c384a682ac98f8133ab0560de790bab9a2a2d9542ea0b673666"
     },
     "pets": {
-      "reason": "Проверено: изменения Core ограничены bank-only оплатой claim-teleports и сценарием recovery; тема страницы и её утверждения сверены с неизменным кодом модулей",
-      "sources": "41c2c33755212b645bc9ad3bef25bc604cac3f0d34e91cf1ba9bfd62ab007061",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "4d89b7cee97addf80fc81a4941584df36f658e06c851788b11872f4759d72d86",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "profile": {
-      "reason": "Проверено: изменения Claims (оплата только с /bal, чистый сброс без переноса приватов) не противоречат странице; пересечения с казнами, товарами и телепортами сверены с кодом",
-      "sources": "0d496335f313d3548138a053ab44e3fc2cee3065cf742eb484d38a408beee4fb",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "908b5d265c197fd2df0eef5d9dad65f2f48078a032d5185d65eab262b2869f78",
       "text": "f2a1fafaef6d54a60b0dd2e9545374a59a83ad49a5de3ace0069e441c187d309"
     },
     "quests": {
-      "reason": "Проверено: изменения Core ограничены bank-only оплатой claim-teleports и сценарием recovery; тема страницы и её утверждения сверены с неизменным кодом модулей",
-      "sources": "90c3b07e29911a71eda799dbe6a1de03ac25541105d19edf505ee598963f4b14",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "4c810a96ce52e5afc3428eef9e9367a327b5cd21ac1870bf3198cb0ba8215c08",
       "text": "a42f11010fddbf13238133ac1e2dca525dea95245f5286a88a57738af30fbf13"
     },
     "ranks": {
-      "reason": "Проверено: изменения Claims (оплата только с /bal, чистый сброс без переноса приватов) не противоречат странице; пересечения с казнами, товарами и телепортами сверены с кодом",
-      "sources": "931ed65e5bc176d601cdff13cb958349c9648262352251b4f570e08b1215bc09",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "3214c3b414047d954f30893f87c30386b427e6394a424877794b135146b6d47e",
       "text": "664b466e4b44741175d9c2cdb4da728a0603a04aaaefada8396dd6517d5dca2d"
     },
     "shop": {
-      "reason": "Проверено: изменения Claims (оплата только с /bal, чистый сброс без переноса приватов) не противоречат странице; пересечения с казнами, товарами и телепортами сверены с кодом",
-      "sources": "dc38d0db4762b5d75ce4ddc888ffc2a987a999f20772a4e4d279411de26d06c2",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "c04da3ce924decdf453f9801da0a8fdc5cd63049f3745daa3f8bd68da785282b",
       "text": "77b980940c541a3aeec1ae44cc0127345d3a66269d675f9a04b04d0b8b50a566"
     },
     "skills": {
-      "reason": "Проверено: изменения Core ограничены bank-only оплатой claim-teleports и сценарием recovery; тема страницы и её утверждения сверены с неизменным кодом модулей",
-      "sources": "64450e45240e8c06b159c1a9a50f7f6d349f5ea621d10d8a6943979872126a1e",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "c4fbcffb09717b7754749f021f32e7fa8cc13cbcd0f9bf26ce5244d23e0108e6",
       "text": "2e6d03256421759755094a382f0145b72141c123c373f10f2ad120e7d741350b"
     },
     "social-link": {
-      "reason": "Проверено: изменения Core ограничены bank-only оплатой claim-teleports и сценарием recovery; тема страницы и её утверждения сверены с неизменным кодом модулей",
-      "sources": "65f322225bfdd8310318370bba5394da9b62fd2c0aef6b34bd589887c80c91cd",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "89eeb7abd5c70874ba63f38eb80b636d0a28058c9416746218417060fa8b11ec",
       "text": "1f6cf95d9c8c2180dbf871aa9b19a7bfcde5405cf77b75954b7575920d2aef14"
     },
     "start": {
-      "reason": "Проверено: изменения Claims (оплата только с /bal, чистый сброс без переноса приватов) не противоречат странице; пересечения с казнами, товарами и телепортами сверены с кодом",
-      "sources": "2c5b6ee1f53935f6bdde8eb5fbc51f913b36549d620056cd4dbc8a151401a87f",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "e7aabcd619735060f957f8db503460b995bdcb03a0876133d730b624201acfbb",
       "text": "1c0b307e38e52194bb2a42da0757744e32d93312bc6b83178a4745f9cd07a667"
     },
     "starter-kit": {
-      "reason": "Проверено: изменения Core ограничены bank-only оплатой claim-teleports и сценарием recovery; тема страницы и её утверждения сверены с неизменным кодом модулей",
-      "sources": "05e6f17e2771a91337b666155bfe92952af62c4de9c966fecd837eb062601960",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "0a53397f3ab7d6166913d139bc1797b0947326ac5ea4e218ad5d83f3be78a892",
       "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
     },
     "teleports": {
-      "reason": "Проверено: изменения Claims (оплата только с /bal, чистый сброс без переноса приватов) не противоречат странице; пересечения с казнами, товарами и телепортами сверены с кодом",
-      "sources": "55b5b128bf727c5974e35f6d4d8e705b363db436ce3e3029c0640425df49b194",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "2fffc125315034459987ffb5ec4c59befbe0cf4c863aba60cd3713e3f4416894",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "Проверено: изменения Core ограничены bank-only оплатой claim-teleports и сценарием recovery; тема страницы и её утверждения сверены с неизменным кодом модулей",
-      "sources": "654ff0e65fa45670067e904d170e2eb96bfdec0ee8f379b1ae63a8d8f2b375f0",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "2ba15d16753ccfb59ce1a58763c901f19cc139b137e76840b8268087a9d87d5b",
       "text": "c84eb8435e1e4b961e73b0ed64386b129e17395923de6d7b8f3d01bde6ddeaa1"
     },
     "titles": {
-      "reason": "Проверено: изменения Core ограничены bank-only оплатой claim-teleports и сценарием recovery; тема страницы и её утверждения сверены с неизменным кодом модулей",
-      "sources": "a40119aa06861849f4c83d76f8f3a984d4521906c63217365604c6b448574090",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "fad8053d69079434e373bfb5f7701d8efb94edecc435222863bebfbc354cf683",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Сверено: статус 2.0.3 обновлён после зелёной Java 25-сборки; известное ограничение (staging-гейт Claims) сохранено в тексте",
-      "sources": "dc38d0db4762b5d75ce4ddc888ffc2a987a999f20772a4e4d279411de26d06c2",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "c04da3ce924decdf453f9801da0a8fdc5cd63049f3745daa3f8bd68da785282b",
       "text": "e225f3c5229ec5438ba4098ec8f01b45b13c32d3208e90d4c48e5222c0933d5e"
     },
     "vk": {
-      "reason": "Проверено: изменения Core ограничены bank-only оплатой claim-teleports и сценарием recovery; тема страницы и её утверждения сверены с неизменным кодом модулей",
-      "sources": "65f322225bfdd8310318370bba5394da9b62fd2c0aef6b34bd589887c80c91cd",
+      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest и сверкой разделов claims/updates; платёжные контракты bank-only не менялись",
+      "sources": "89eeb7abd5c70874ba63f38eb80b636d0a28058c9416746218417060fa8b11ec",
       "text": "b592e465a73dd13186763622b51190400cffd40960e233f58c63379b88a9bba9"
     }
   },
