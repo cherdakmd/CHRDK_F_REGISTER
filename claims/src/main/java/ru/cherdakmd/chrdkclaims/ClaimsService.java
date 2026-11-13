@@ -11,7 +11,7 @@ import java.util.Map;
 
 /**
  * Покупка/продажа чанков, участники, ежесуточная рента.
- * Единственный личный /bal; предметы добираются только при ручной покупке.
+ * Единственный денежный источник Claims — личный /bal; предметы инвентаря не принимаются.
  */
 public final class ClaimsService {
 
@@ -87,20 +87,14 @@ public final class ClaimsService {
         return Bukkit.getPlayerExact(name) != null || Bukkit.getOfflinePlayerIfCached(name) != null;
     }
 
-    /** Личный /bal + обычные алмазы в storage (с защитой от переполнения int). */
+    /** Только подтверждённый личный /bal; предметы инвентаря не считаются валютой Claims. */
     public int available(Player player) {
-        long sum = (long) plugin.store().treasuryOf(player.getName())
-                + DiamondItems.count(player.getInventory());
-        return (int) Math.min(Integer.MAX_VALUE, sum);
+        return plugin.store().treasuryOf(player.getName());
     }
 
-    /**
-     * Списывает сумму: сначала /bal, недостающее — обычными предметами (сдача на /bal).
-     *
-     * @return true, если сумма набралась и списана
-     */
+    /** Денежная операция допустима только внутри ClaimLand/ClaimRentals с domain WAL. */
     public boolean charge(Player player, int amount) {
-        return false; // Денежная операция допустима только внутри ClaimLand/ClaimRentals с domain WAL.
+        return false;
     }
 
     // ------------------------------------------------------------ purchase --

@@ -15,9 +15,11 @@ class ForgeMarketContractTest {
         return Files.readString(Path.of(path));
     }
 
-    @Test void api44KeepsCatalogGrantAndSoftSource() throws Exception {
+    @Test void api45KeepsClaimLineageAndApi44CatalogContracts() throws Exception {
         String api = read("src/main/java/ru/cherdakmd/chrdkregister/api/ChrdkRegisterApi.java");
-        assertTrue(api.contains("int API_VERSION = 44;"));
+        assertTrue(api.contains("int API_VERSION = 45;"));
+        assertTrue(api.contains("UUID claimSourceLineage()"));
+        assertTrue(api.contains("long claimExchangeSequence(UUID lineage)"));
         assertTrue(api.contains("ForgeMaterialSource forgeMaterialSource()"));
         String impl = read("src/main/java/ru/cherdakmd/chrdkregister/ChrdkRegisterApiImpl.java");
         assertTrue(impl.contains("public ru.cherdakmd.chrdkregister.api.ForgeMaterialSource forgeMaterialSource()"));

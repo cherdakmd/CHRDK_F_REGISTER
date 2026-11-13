@@ -19,14 +19,14 @@ claims:
   # -------------------------------- профиль ----------------------------------
   profile-title: "Приваты"
   profile-claims: "<gray>Чанков: </gray><white>%used%/%limit%</white>"
-  profile-treasury: "<gray>Казна: </gray><aqua>%amount%</aqua> <gray>алмазов</gray>"
+  profile-treasury: "<gray>Личный /bal: </gray><aqua>%amount%</aqua> <gray>⛁</gray>"
 
   player-only: "<red>Команда доступна только игрокам.</red>"
   need-auth: "<red>Сначала войдите на сервер (/login).</red>"
   no-permission: "<red>Недостаточно прав.</red>"
   unknown-sub: "<red>Неизвестная подкоманда. Смотрите /claim help.</red>"
   coords-invalid: "<red>Координаты чанка — два целых числа: /claim info <x> <z> или /claim tp <x> <z>.</red>"
-  usage: "<gray>/claim — купить чанк · menu · tp [x z] · info [x z] · map [радиус] · list [стр] · forsale [стр] · near [радиус] · borders · notices [on|off] · greeting [текст|снять] · rent · clan · unclaim [all confirm] · add/remove <ник> [доступ|контейнеры|полный] [все] · transfer <ник> · deposit [n|все] · withdraw <n> · balance · sell <цена|снять> · sellback [confirm] · budget [1–30] · buy [x z] · help</gray>"
+  usage: "<gray>/claim — купить чанк · menu · tp [x z] · info [x z] · map [радиус] · list [стр] · forsale [стр] · near [радиус] · borders · notices [on|off] · greeting [текст|снять] · rent · clan · unclaim [all confirm] · add/remove <ник> [доступ|контейнеры|полный] [все] · transfer <ник> · balance (/bal) · sell <цена|снять> · sellback [confirm] · budget [1–30] · buy [x z] · help</gray>"
   # покупка/продажа
   bought: "<green>Чанк приватизирован за %price% ⛁! Рента %upkeep% ⛁/сутки, оплачен до %paid%. Участники: /claim add <ник>.</green>"
   already-claimed: "<red>Этот чанк уже занят (%owner%). Границы — /claim map.</red>"
@@ -34,10 +34,10 @@ claims:
   already-yours: "<yellow>Этот чанк уже ваш.</yellow>"
   limit-reached: "<red>Лимит приватов исчерпан: %limit% чанков максимум%pass-hint%.</red>"
   pass-hint: " (с рангом — больше)"
-  not-enough: "<red>Не хватает алмазов: нужно %need% ⛁, есть %have% ⛁ (казна + инвентарь).</red>"
+  not-enough: "<red>На личном /bal недостаточно средств: нужно %need% ⛁, доступно %have% ⛁. Предметы не принимаются.</red>"
   spawn-margin: "<red>Ближе %margin% блоков к спавну приватить нельзя.</red>"
   world-disabled: "<red>В мире %world% приваты отключены администрацией.</red>"
-  change-to-treasury: "<gray>Сдача с алмазных блоков (%change% ⛁) зачислена в казну.</gray>"
+  change-to-treasury: "<gray>Claims не принимает предметы: все расчёты проходят через личный /bal.</gray>"
   # информация
   info-header: "<gold>═══ Чанк [%x%, %z%] (%world%) ═══</gold>"
   info-free: "<gray>Свободен. Покупка: /claim — %price% ⛁, рента %upkeep% ⛁/сутки.</gray>"
@@ -63,7 +63,7 @@ claims:
   sell-invalid: "<red>Цена — целое число от 1 до %max% (или «снять»).</red>"
   sell-usage: "<gray>Выставить цену: /claim sell <цена> · снять: /claim sell снять</gray>"
   sell-not-yours: "<red>Вы не владелец этого чанка.</red>"
-  sell-debt: "<red>У привата долг %days% сут. — сначала пополните казну (/claim deposit), затем выставляйте на продажу.</red>"
+  sell-debt: "<red>У привата долг %days% сут. — сначала пополните личный /bal (/bal deposit), затем выставляйте на продажу.</red>"
   buy-done: "<green>Вы купили приват у %seller% за %price% ⛁ (налог %tax% ⛁ удержан с продавца).</green>"
   buy-sold: "<aqua>Ваш чанк [%x%, %z%] куплен за %price% ⛁ покупателем %buyer%; зачислено %net% ⛁ (налог %tax% ⛁).</aqua>"
   # бес-теговый вариант для отложенной вести (минисообщения в заметках экранируются)
@@ -71,7 +71,7 @@ claims:
   buy-not-for-sale: "<red>Этот чанк не продаётся.</red>"
   notice-sold-member: "приват %where% продан игроком %seller% игроку %buyer% — доступ снят"
   # возврат серверу
-  sellback-done: "<green>Сервер выкупил чанк за %reward% ⛁ (выдано предметами).</green>"
+  sellback-done: "<green>Сервер выкупил чанк за %reward% ⛁; сумма зачислена на личный /bal.</green>"
   # участники
   add-done: "<green>%name% теперь участник этого привата с ролью «%role%».</green>"
   add-all-done: "<green>%name% добавлен в %count% ваших приватов с ролью «%role%».</green>"
@@ -100,18 +100,18 @@ claims:
   transfer-received: "<aqua>Вам передан чанк [%x%, %z%] от %from%.</aqua>"
   transfer-given: "<yellow>Ваш чанк [%x%, %z%] передан игроку %name%.</yellow>"
   transfer-limit: "<red>У игрока %name% уже %limit% приватов — лимит исчерпан.</red>"
-  # казна
-  deposit-done: "<green>В казну внесено %amount% ⛁. Баланс: %balance% ⛁.</green>"
-  deposit-none: "<red>Нет алмазных предметов (алмазы, их руды или блоки).</red>"
-  deposit-not-enough: "<red>Для взноса не хватает алмазов: нужно %need% ⛁, есть %have% ⛁.</red>"
-  deposit-invalid: "<red>Количество — целое число от 1 до %max% или «все».</red>"
-  withdraw-done: "<green>Из казны выдано %amount% ⛁ предметами. Баланс: %balance% ⛁.</green>"
-  withdraw-dropped: "<gray>Часть выдачи (%amount% ⛁) не поместилась в инвентарь и выпала под ноги.</gray>"
-  withdraw-not-enough: "<red>В казне всего %balance% ⛁.</red>"
-  withdraw-invalid: "<red>Количество — целое число от 1 до %max%.</red>"
-  balance-line: "<gold>Казна: <aqua>%treasury% ⛁</aqua></gold> <gray>· приватов %claims%/%limit% · рента %upkeep% ⛁/сут за чанк%debt%</gray>"
+  # Совместимые подкоманды перенаправляют к личному Core-банку /bal.
+  deposit-done: "<green>Отдельной казны Claims нет. Используйте /bal deposit для личного счёта.</green>"
+  deposit-none: "<red>Claims не принимает алмазы и другие предметы. Используйте /bal deposit.</red>"
+  deposit-not-enough: "<red>Claims не принимает предметы; пополните личный /bal через /bal deposit.</red>"
+  deposit-invalid: "<yellow>У Claims нет отдельного внесения. Пополните личный счёт: /bal deposit.</yellow>"
+  withdraw-done: "<green>Отдельной казны Claims нет. Используйте /bal withdraw для личного счёта.</green>"
+  withdraw-dropped: "<gray>Claims не выдаёт и не принимает валюту предметами.</gray>"
+  withdraw-not-enough: "<red>Отдельной казны Claims нет. Проверьте личный баланс командой /bal.</red>"
+  withdraw-invalid: "<yellow>У Claims нет отдельного снятия. Используйте личный счёт: /bal withdraw.</yellow>"
+  balance-line: "<gold>Личный /bal: <aqua>%balance% ⛁</aqua></gold> <gray>· приватов %claims%/%limit% · рента %upkeep% ⛁/сут за чанк%debt%</gray>"
   balance-debt: " · есть долги!"
-  balance-due: "<gray>Ближайшая рента: %date% · казна %balance% ⛁ · нужно %need% ⛁.</gray>"
+  balance-due: "<gray>Ближайшая рента: %date% · личный /bal %balance% ⛁ · нужно %need% ⛁.</gray>"
   # список и карта
   list-header: "<gold>═══ Ваши территории: %count% · чанков %chunks%/%limit% ═══</gold>"
   list-line: "<gray>• %world% [%x%, %z%] — территория %chunks% чанков, этот чанк до %paid%%sale%%debt%</gray>"
@@ -136,7 +136,7 @@ claims:
     - "<gray>%tab% · всего: %count%</gray>"
     - "<gray>Страница %page%/%pages%</gray>"
     - "<gray>Лимит: %limit% чанков · свободно: %free%</gray>"
-    - "<gray>Казна: %treasury% ⛁</gray>"
+    - "<gray>Личный /bal: %treasury% ⛁</gray>"
   menu-tab-mine-name: "<green><bold>Мои приваты</bold></green>"
   menu-tab-mine-lore:
     - "<gray>Чанки, где вы владелец</gray>"
@@ -210,10 +210,10 @@ claims:
   notice-debt: "чанк %where% не оплачен (долг %days% сут. из %grace%)"
   notice-lost: "чанк %where% освобождён за долги — приват снят"
   claim-lost: "<red>Приват %where% освобождён за долги — защита снята.</red>"
-  debt-warning: "<red>Приват %where% не оплачен: долг %days% сут. из %grace%. Пополните казну: /claim deposit.</red>"
-  rent-warning: "<yellow>Рента по приватам: казна %balance% ⛁, нужно минимум %need% ⛁ до %date%. Пополните: /claim deposit.</yellow>"
+  debt-warning: "<red>Приват %where% не оплачен: долг %days% сут. из %grace%. Пополните личный /bal: /bal deposit.</red>"
+  rent-warning: "<yellow>Рента по приватам: личный /bal %balance% ⛁, нужно минимум %need% ⛁ до %date%. Пополните: /bal deposit.</yellow>"
   limit-shrunk: "<yellow>Ранг закончился: лимит приватов снизился до %limit%. У вас %claims% чанков — существующие сохранены, новые не купить.</yellow>"
-  rent-paid-line: "<gray>Рента списана: %amount% ⛁ за приваты (казна: %balance% ⛁).</gray>"
+  rent-paid-line: "<gray>Рента списана: %amount% ⛁ за приваты (личный /bal: %balance% ⛁).</gray>"
   # админка
   near-usage: "<gray>/claim near [радиус %min%..%max%] — чужие приваты вокруг (по умолчанию %default% чанков).</gray>"
   near-header: "<gold>═══ Приваты рядом (%count% в радиусе %radius% ч.) ═══</gold>"
@@ -234,7 +234,7 @@ claims:
   greeting-not-yours: "<red>Приветствие может менять только владелец этого привата.</red>"
   greeting-invalid: "<red>Приветствие — одна строка до %max% символов.</red>"
 
-  unclaim-all-confirm: "<red>Будут сняты все ваши приваты (%count%). Казна и оплата не возвращаются. Подтвердите: <yellow>/claim unclaim all confirm</yellow></red>"
+  unclaim-all-confirm: "<red>Будут сняты все ваши приваты (%count%). Банк не изменится, возврата оплаты нет. Подтвердите: <yellow>/claim unclaim all confirm</yellow></red>"
   unclaim-all-done: "<yellow>Снято приватов: %count%. Стройка больше не защищена.</yellow>"
   unclaim-all-none: "<gray>У вас нет приватов.</gray>"
 
@@ -263,9 +263,9 @@ claims:
   admin-chunks-set: "<green>Вечный бонус %name%: +%bonus% чанков. Фактический лимит: %limit%.</green>"
   admin-chunks-reset: "<yellow>Вечный бонус %name% снят (было +%was% чанков).</yellow>"
   admin-chunks-invalid: "<red>Бонус — целое число от 0 до 100000.</red>"
-  admin-transferall-done: "<green>Перенесено с %from% на %name%: приватов %claims%, казна %treasury% ⛁, вестей %notices%.</green>"
-  admin-transferall-none: "<red>У %name% нет приватов, казны или вестей — переносить нечего.</red>"
-  admin-transferall-received: "<aqua>Администрация перенесла на вас %claims% приватов и %treasury% ⛁ казны от %from%.</aqua>"
+  admin-transferall-done: "<green>Перенесено с %from% на %name%: приватов %claims%, вестей %notices%. Личный /bal не менялся.</green>"
+  admin-transferall-none: "<red>У %name% нет приватов или вестей для переноса. Личный /bal этой командой не меняется.</red>"
+  admin-transferall-received: "<aqua>Администрация перенесла на вас %claims% приватов от %from%. Личный /bal не менялся.</aqua>"
   admin-transferall-self: "<red>Ники совпадают — переносить нечего.</red>"
   admin-confirm-needed: "<red>Операция необратима. Повторите с подтверждением: <yellow>%command%</yellow></red>"
   admin-backup-header: "<gold>═══ Резервные копии (%count%) ═══</gold>"
@@ -285,7 +285,7 @@ claims:
   admin-rent-done: "<green>Рента: списано %charged% ⛁, освобождено чанков %released%, с долгом %debt%.</green>"
   admin-stats-header: "<gold>═══ Приваты: статистика ═══</gold>"
   admin-stats-empty: "<gray>Приватов ещё нет.</gray>"
-  admin-stats-general: "<gray>Чанков: %claims% · владельцев: %owners% · казна: %treasury% ⛁ · с долгом: %debt%</gray>"
+  admin-stats-general: "<gray>Чанков: %claims% · владельцев: %owners% · архивные остатки старого Claims: %treasury% ⛁ (не расходуются) · с долгом: %debt%</gray>"
   admin-stats-economy: "<gray>Куплено за всё время: %bought% · потрачено: %spent% ⛁ · налоги сожжены: %tax% ⛁</gray>"
   admin-stats-top: "<gray>%place%. %name% — %count% чанк(ов)</gray>"
   admin-usage: "<yellow>/claimadmin reload | bypass | delete | deleteall <ник> confirm | info <ник> | give <ник> | transfer <ник> | limit <ник> [n|сброс] | chunks <ник> [add <n>|set <n>|сброс] | transferall <от> <кому> | backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | rent | stats | recovery</yellow>"
@@ -293,19 +293,19 @@ claims:
   # 1.4.215: территории и аренда отдельного чанка.
   foreign-buffer: "<red>До чужого привата нужен минимум один свободный чанк, в том числе по диагонали. Выберите чанк дальше.</red>"
   info-territory: "<gold>Единая территория: %chunks% чанков. Права, продажа и передача — всей территории; аренда — только этого чанка.</gold>"
-  rent-usage: "<gray>В текущем чанке: /claim rent · rent offer <цена 1–1000000 ⛁/сутки> · rent off · rent take <цена> · rent stop. Оплата из казны арендатора каждые 24 часа, без списаний за простой сервера.</gray>"
+  rent-usage: "<gray>В текущем чанке: /claim rent · rent offer <цена 1–1000000 ⛁/сутки> · rent off · rent take <цена> · rent stop. Оплата только с личного /bal арендатора каждые 24 часа, без списаний за простой сервера.</gray>"
   rent-info: "<gray>Аренда чанка: предложение %offer% ⛁/сутки; арендатор %tenant%, его цена %price% ⛁/сутки, оплачено до %until%, автопродление: %renew%.</gray>"
   rent-not-owner: "<red>Предложение аренды меняет только владелец территории.</red>"
   rent-no-offer: "<red>Этот чанк не предлагается в аренду.</red>"
   rent-self: "<red>Собственный чанк арендовать нельзя.</red>"
   rent-busy: "<red>Чанк уже оплачен другим арендатором. Дождитесь окончания срока.</red>"
   rent-sale: "<red>Продажа всей территории и аренда её чанков несовместимы. Сначала снимите предложения и дождитесь конца оплаченной аренды.</red>"
-  rent-funds: "<red>В казне арендатора недостаточно алмазов на сутки. Пополните её: /claim deposit.</red>"
-  rent-owner-funds: "<red>Казны владельца и выручки не хватает на серверную ренту до конца аренды либо превышен предел казны. Средства не списаны.</red>"
+  rent-funds: "<red>На личном /bal арендатора недостаточно средств на сутки. Пополните счёт: /bal deposit.</red>"
+  rent-owner-funds: "<red>Личного /bal владельца и выручки не хватает на серверную ренту до конца аренды либо достигнут предел счёта. Средства не списаны.</red>"
   rent-not-tenant: "<red>Отменить своё автопродление может только арендатор этого чанка.</red>"
   rent-locked: "<red>На чанке есть оплаченная аренда. До её окончания нельзя снять защиту, продать или передать владение. /claim rent off останавливает только следующие продления.</red>"
   rent-updated: "<green>Условия обновлены. Уже оплаченные сутки действуют до конца; права арендатора — только на этот чанк.</green>"
-  transfer-protected: "<red>Перенос не выполнен: есть оплаченная аренда или новый владелец нарушит отступ от чужих приватов. Данные и казна не изменены.</red>"
+  transfer-protected: "<red>Перенос не выполнен: есть оплаченная аренда или новый владелец нарушит отступ от чужих приватов. Данные и личный /bal не изменены.</red>"
   profile-rented: "<gray>Арендуете чанков: <aqua>%count%</aqua> · условия: /claim rent</gray>"
 
   rent-price-changed: "<yellow>Цена предложения изменилась. Проверьте /claim rent и подтвердите нужную цену: /claim rent take <цена>.</yellow>"
@@ -316,12 +316,12 @@ claims:
     confirm-busy: '<yellow>Подтверждений слишком много. Через 30 секунд запросите условия заново. Приват не продан.</yellow>'
     sellback-preview: '<yellow>Сервер выкупит только чанк %where% за %reward% алм. в личный /bal. Земля будет освобождена. В этом чанке в течение 30 секунд: /claim sellback confirm. Это не продажа всей территории.</yellow>'
     budget-usage: '<yellow>/claim budget [сутки 1–30]; по умолчанию 3.</yellow>'
-    budget: '<gold>Резерв на %days% сут.: свои чанки %owned%, продления аренды %rentals%.</gold><newline><gray>В сутки: содержание %upkeep%, аренда %rental%; долг %debt%. Резерв %reserve%, казна %balance%, не хватает %shortage%. Полных суток после долга: %coverage% (0 также при нулевой ставке).</gray><newline><gray>Это запас по текущим ставкам: предоплата не вычитается, календарь и будущие изменения не прогнозируются. Казна приватов — ваш личный /bal, без предметов и ещё не перенесённых старых средств. Арендатор платит со своего счёта, владелец — со своего; повторного кошелька нет.</gray>'
-    budget-warning: '<yellow>Казны может не хватить на 3 суток с долгом: есть %balance%, резерв %reserve%, не хватает %shortage% алм. Подробности: /claim budget 3. Это консервативный запас, не требование немедленной оплаты.</yellow>'
-    service-quote: '<gray>Цена услуги: %cost% 💠. Оплата только после ожидания и выбора точки: /bal, затем обычные предметы; сдача и возврат — /bal.</gray>'
+    budget: '<gold>Резерв на %days% сут.: свои чанки %owned%, продления аренды %rentals%.</gold><newline><gray>В сутки: содержание %upkeep%, аренда %rental%; долг %debt%. Резерв %reserve%, личный /bal %balance%, не хватает %shortage%. Полных суток после долга: %coverage% (0 также при нулевой ставке).</gray><newline><gray>Это запас по текущим ставкам: предоплата не вычитается, календарь и будущие изменения не прогнозируются. Расчёт учитывает только личный /bal; предметы и отдельный кошелёк Claims не используются. Арендатор платит со своего счёта, владелец — со своего.</gray>'
+    budget-warning: '<yellow>Личного /bal может не хватить на 3 суток с долгом: есть %balance%, резерв %reserve%, не хватает %shortage% ⛁. Подробности: /claim budget 3. Это консервативный запас, не требование немедленной оплаты.</yellow>'
+    service-quote: '<gray>Цена услуги: %cost% 💠. Оплата только с личного /bal — после ожидания и выбора безопасной точки.</gray>'
     service-mode: '<red>Оплата требует авторизации, живого игрока в Survival/Adventure; NPC не допускаются.</red>'
     service-wait: '<yellow>Платёж/исход услуги ожидает сверки. Новые сделки приостановлены; уже начатая оплата не объявляется отменённой. Администратору: finance / recover.</yellow>'
-    service-insufficient: '<red>Нужно %cost% 💠: сначала /bal, затем обычные алмазы/руда/блоки из storage. Именные предметы, броня и offhand не расходуются.</red>'
+    service-insufficient: '<red>На личном /bal недостаточно средств: нужно %cost% 💠. Предметы из инвентаря не принимаются.</red>'
     service-refused: '<red>Операция отклонена. Новое списание/возврат не выполнены.</red>'
     service-refunding: '<yellow>Телепорт отменён. Полный возврат %cost% 💠 учтён для /bal; при недоступном/заполненном банке непогашенная часть сохранена.</yellow>'
     service-checked: '<green>Безопасная сверка завершена. Это не принудительное подтверждение и не обход IO-карантина.</green>'
@@ -329,48 +329,47 @@ claims:
     service-action: '<yellow>Резерв %id%: payer=%payer%, actor=%actor%, цена=%price%, этап=%phase%, вид=%kind%, цель=%target%.</yellow>'
     service-status: '<gray>Незавершённых услуг: %count%, блокировка оплаты: %paused%. EXECUTING требует доказательства исхода.</gray>'
     service-resolve-usage: '<yellow>После ручной сверки: resolve <UUID> success|refund confirm. Для Claims: /claimadmin tpresolve; для Teleports: /tpadmin resolve. Не угадывайте исход.</yellow>'
-    service-lock: '<red>Предметная оплата не завершена. Нужна сверка банка и playerdata; повторите вход после восстановления.</red>'
-    admin-stats-general: '<gray>Чанков: %claims% · владельцев: %owners% · замороженный источник переноса казны: %treasury% ⛁ (не второй расходуемый баланс) · с долгом: %debt%</gray>'
+    service-lock: '<red>Оплата через личный /bal не завершена. Нужна сверка банка и журнала; не повторяйте операцию до восстановления.</red>'
+    admin-stats-general: '<gray>Чанков: %claims% · владельцев: %owners% · архивные остатки старого Claims: %legacy% ⛁ (не расходуются) · с долгом: %debt%</gray>'
     admin-transferall-done: '<green>Перенесено с %from% на %name%: приватов %claims%, вестей %notices%, вечный бонус чанков +%bonus%. Личные /bal и исходные остатки миграции не переводились.</green>'
     admin-transferall-none: <red>У %name% нет приватов или вестей для переноса. Личные деньги этой командой не переводятся.</red>
     admin-transferall-received: <aqua>Администрация перенесла на вас %claims% приватов от %from%. Личный счёт прежнего владельца не переводился.</aqua>
     balance-due: '<gray>Ближайшая рента: %date% · личный /bal %balance% ⛁ · нужно %need% ⛁. Автоматическое списание только со счёта, не из инвентаря.</gray>'
-    balance-line: '<gold>Личный /bal: <aqua>%treasury% ⛁</aqua></gold> <gray>· в инвентаре %physical% ⛁ · приватов %claims%/%limit% · рента %upkeep% ⛁/сут за чанк%debt%</gray>'
-    bank-commands: '<yellow>Отдельной казны приватов больше нет. Пополнение личного счёта: /bal deposit [all|hand|сумма]; снятие: /bal withdraw <сумма>. /claim balance показывает общий /bal и предметы в инвентаре.</yellow>'
+    balance-line: '<gold>Личный /bal: <aqua>%balance% ⛁</aqua></gold> <gray>· приватов %claims%/%limit% · рента %upkeep% ⛁/сут за чанк%debt%</gray>'
+    bank-commands: '<yellow>Отдельной казны приватов нет. Все покупки, сделки, рента и услуги Claims оплачиваются только с личного /bal. Пополнение: /bal deposit; снятие: /bal withdraw <сумма>.</yellow>'
     buy-sold: "<aqua>Ваш чанк [%x%, %z%] куплен за %price% ⛁ покупателем %buyer%; на личный /bal зачислено %net% ⛁ (налог %tax% ⛁).</aqua>"
     buy-sold-notice: ваш чанк [%x%, %z%] куплен за %price% ⛁ покупателем %buyer%; на личный /bal зачислено %net% ⛁ (налог %tax% ⛁)
-    change-to-treasury: <gray>Сдача с алмазных блоков (%change% ⛁) зачислена на личный /bal.</gray>
+    change-to-treasury: <gray>Предметная сдача не используется. Все расчёты Claims проходят через личный /bal.</gray>
     debt-warning: '<red>Приват %where% не оплачен: долг %days% сут. из %grace%. Пополните /bal: /bal deposit.</red>'
-    deposit-done: '<green>В казну внесено %amount% ⛁. Баланс: %balance% ⛁.</green>'
+    deposit-done: '<green>Отдельной казны Claims нет. Пополните личный счёт командой /bal deposit.</green>'
     menu-info-lore:
     - '<gray>%tab% · всего: %count%</gray>'
     - <gray>Страница %page%/%pages%</gray>
     - '<gray>Лимит: %limit% чанков · свободно: %free%</gray>'
-    - '<gray>Личный /bal: %treasury% ⛁</gray>'
-    - '<gray>В инвентаре: %physical% ⛁. Автооплата — только /bal.</gray>'
-    not-enough: '<red>Не хватает алмазов: нужно %need% ⛁, есть %have% ⛁ (личный /bal + обычные предметы в инвентаре).</red>'
-    payment: '<gray>Оплачено с /bal: %bank% ⛁; обычными предметами: %physical% ⛁; целая сдача на /bal: %change% ⛁.</gray>'
-    profile-inventory: "<gray>В инвентаре: </gray><aqua>%amount% ⛁</aqua><gray>; автооплата только с /bal.</gray>"
-    profile-unavailable: "<yellow>Банк/перенос казны пока недоступен: автоматическая оплата приостановлена.</yellow>"
+    - '<gray>Личный /bal: %balance% ⛁</gray>'
+    - '<gray>Оплата Claims — только с личного /bal; предметы инвентаря не списываются.</gray>'
+    not-enough: '<red>На личном /bal недостаточно средств: нужно %need% ⛁, доступно %have% ⛁. Алмазы из инвентаря не принимаются.</red>'
+    payment: '<gray>Оплата прошла только через личный /bal: %bank% ⛁.</gray>'
+    profile-inventory: "<gray>Предметы в инвентаре не являются средствами Claims; оплата проходит только с /bal.</gray>"
+    profile-unavailable: "<yellow>Личный банк пока недоступен: операции Claims приостановлены.</yellow>"
     profile-treasury: '<gray>Личный /bal: </gray><aqua>%amount%</aqua> <gray>алмазов</gray>'
     rent-funds: <red>Не хватает средств арендатора либо сделка не принята банком. Для продления нужны деньги на /bal; пополнение /bal deposit.</red>
     rent-info: '<gray>Аренда чанка: предложение %offer% ⛁/сутки; арендатор %tenant%, его цена %price% ⛁/сутки, оплачено до %until%, автопродление: %renew%.</gray>'
     rent-owner-funds: <red>Выручки и личного /bal владельца не хватает на серверную ренту до конца оплачиваемой аренды либо достигнут предел счёта. Ни одна сторона не оплачивает частичную сделку.</red>
     rent-paid-line: '<gray>Рента списана: %amount% ⛁ за приваты (личный /bal: %balance% ⛁).</gray>'
     rent-minimum: "<red>Новая аренда стоит не менее %min% ⛁ за чанк в сутки. Собственнику нужно обновить предложение; оплаченный срок не изменён.</red>"
-    rent-usage: '<gray>/claim rent · rent offer <алмазов/сутки> · rent off · rent take <цена> · rent stop. Первые сутки: /bal, затем недостача предметами. Продление каждые 24 часа — только /bal арендатора, включая офлайн; без списаний за простой
-      сервера.</gray>'
+    rent-usage: '<gray>/claim rent · rent offer <⛁/сутки> · rent off · rent take <цена> · rent stop. Первые сутки и каждое продление списываются только с личного /bal арендатора, включая офлайн; без списаний за простой сервера.</gray>'
     rent-warning: '<yellow>Рента по приватам: личный /bal %balance% ⛁, нужно минимум %need% ⛁ до %date%. Пополните: /bal deposit.</yellow>'
     sell-debt: <red>У привата долг %days% сут. — сначала пополните /bal (/bal deposit), затем выставляйте на продажу.</red>
     sellback-done: <green>Чанк возвращён серверу. Возврат %reward% ⛁ зачислен на личный /bal.</green>
     transfer-protected: '<red>Перенос не выполнен: есть оплаченная аренда или новый владелец нарушит отступ от чужих приватов. Данные и личные счета не изменены.</red>'
-    unavailable: '<yellow>Операция недоступна или ожидает сверки: не считайте начатую оплату отменённой. Проверьте авторизацию/Survival, Core, банк, UUID и предел счёта. Предметная недостача сначала пополняет ваш /bal и остаётся там при отказе покупки. Администратору: /claimadmin recovery.</yellow>'
-    recovery: '<gray>Claims: исправность=%healthy%, источник=%lineage%, подтверждение регистрации=%registered%, последовательность=%sequence%, незавершённая операция=%pending%.</gray>'
+    unavailable: '<yellow>Операция недоступна или ожидает сверки: не считайте начатое списание отменённым. Проверьте авторизацию/Survival, Core, банк, UUID и предел счёта. Платежи Claims идут только с /bal; предметы из инвентаря не списываются. Администратору: /claimadmin recovery.</yellow>'
+    recovery: '<gray>Claims: исправность=%healthy%, готовность=%ready%, причина=%reason%; local lineage/sequence=%lineage%/%sequence%, Core lineage/sequence=%bankLineage%/%bankSequence%, registration ACK local/Core=%registered%/%bankRegistered%, pending=%pending%.</gray>'
     backup-protected: '<yellow>Финансовый источник нельзя откатывать отдельно в работающем сервере. Нужны остановка и согласованные копии Claims, банка и playerdata. Не удаляйте журналы и квитанции.</yellow>'
     unclaim-all-confirm: '<red>Будут сняты все ваши приваты (%count%). Возврата оплаты нет; личный /bal не обнуляется. Подтвердите: <yellow>/claim unclaim all confirm</yellow></red>'
     usage: <gray>/claim — купить чанк · menu · tp [x z] · info [x z] · map [радиус] · list [стр] · forsale [стр] · near [радиус] · borders · notices [on|off] · greeting [текст|снять] · rent · clan · unclaim [all confirm] · add/remove <ник> [доступ|контейнеры|полный]
       [все] · transfer <ник> · balance (личный /bal) · sell <цена|снять> · sellback [confirm] · budget [1–30] · buy [x z] · help</gray>
-    withdraw-done: '<green>С личного /bal выдано %amount% ⛁ предметами. Баланс: %balance% ⛁.</green>'
+    withdraw-done: '<green>Отдельной казны Claims нет. Используйте /bal withdraw для личного счёта.</green>'
     withdraw-not-enough: <red>На личном /bal всего %balance% ⛁.</red>
 
   borders-territory-on: "<green>Внешний контур всей смерженной территории подсвечен на %seconds% сек. Владелец: %owner%. Свои границы — зелёные, чужие — золотые.</green>"

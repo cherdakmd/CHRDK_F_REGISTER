@@ -60,6 +60,8 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi, IncomeSourceLineag
     @Override public boolean checkpointGameplayRewards() { return org.bukkit.Bukkit.isPrimaryThread()&&accessManager.store().checkpointGameplayRewards(); }
     @Override public boolean claimSourceRegistered(java.util.UUID id) { return bank!=null&&bank.claimSourceRegistered(id); }
     @Override public boolean registerClaimSource(java.util.UUID id) { return org.bukkit.Bukkit.isPrimaryThread()&&bank!=null&&bank.registerClaimSource(id); }
+    @Override public java.util.UUID claimSourceLineage() { return auctionBankReady()?bank.incomeSourceLineage("claim-land"):null; }
+    @Override public long claimExchangeSequence(java.util.UUID lineage) { return auctionBankReady()?bank.claimSequence(lineage):-1L; }
     @Override public ru.cherdakmd.chrdkregister.api.ClaimExchange.Status claimExchangeStatus(ru.cherdakmd.chrdkregister.api.ClaimExchange t) { return bank==null?ru.cherdakmd.chrdkregister.api.ClaimExchange.Status.UNAVAILABLE:bank.claimStatus(t); }
     @Override public ru.cherdakmd.chrdkregister.api.ClaimExchange.Status commitClaimExchange(ru.cherdakmd.chrdkregister.api.ClaimExchange t) { return !org.bukkit.Bukkit.isPrimaryThread()||bank==null?ru.cherdakmd.chrdkregister.api.ClaimExchange.Status.UNAVAILABLE:bank.commitClaim(t); }
     @Override public boolean fundClaimPayment(Player payer,long cost) { return plugin!=null&&plugin.bank()!=null&&plugin.bank().fundClaimPayment(payer,cost); }
@@ -156,12 +158,21 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi, IncomeSourceLineag
                 || expected == null || expected.length != 36 || !java.util.Arrays.equals(expected, payer.getInventory().getStorageContents())) return false;
         String permission = ru.cherdakmd.chrdkregister.api.BankCharge.permission(payment.source());
         if (permission == null || !payer.hasPermission(permission)) return false;
+        boolean bankOnly=ru.cherdakmd.chrdkregister.api.BankCharge.bankOnlySource(payment.source());
         if (bank.bankChargeStatus(payment) == ru.cherdakmd.chrdkregister.api.BankCharge.Status.COMMITTED) return true;
+        // Preserve completion of an already committed legacy intent above, but never recommit historical item tender.
+        if(bankOnly&&(payment.debit()!=payment.price()||payment.cash()!=0||payment.change()!=0)) return false;
         var plan = payment.minor()
-                ? ru.cherdakmd.chrdkregister.api.ChargeInventory.planMinor(expected, payment.price(),
+                ? (bankOnly
+                    ? ru.cherdakmd.chrdkregister.api.ChargeInventory.planMinorBankOnly(expected, payment.price(),
                         bank.spendableBalanceMinor(payer.getUniqueId()), payment.rateBps())
-                : ru.cherdakmd.chrdkregister.api.ChargeInventory.plan(expected, payment.price(),
-                        bank.spendableBalance(payer.getUniqueId()));
+                    : ru.cherdakmd.chrdkregister.api.ChargeInventory.planMinor(expected, payment.price(),
+                        bank.spendableBalanceMinor(payer.getUniqueId()), payment.rateBps()))
+                : (bankOnly
+                    ? ru.cherdakmd.chrdkregister.api.ChargeInventory.planBankOnly(expected, payment.price(),
+                        bank.spendableBalance(payer.getUniqueId()))
+                    : ru.cherdakmd.chrdkregister.api.ChargeInventory.plan(expected, payment.price(),
+                        bank.spendableBalance(payer.getUniqueId())));
         if (plan == null || plan.debit() != payment.debit() || plan.cash() != payment.cash() || plan.change() != payment.change()
                 || !payment.inventoryHash().equals(ru.cherdakmd.chrdkregister.api.AuctionPayment.hash(
                     ru.cherdakmd.chrdkregister.api.ChargeInventory.encode(expected), ru.cherdakmd.chrdkregister.api.ChargeInventory.encode(plan.after())))) return false;

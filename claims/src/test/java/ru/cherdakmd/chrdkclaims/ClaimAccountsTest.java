@@ -11,10 +11,11 @@ class ClaimAccountsTest {
     @TempDir Path dir;
     static final class Accounts implements ClaimAccounts {
         final Map<String,Long> money=new HashMap<>(); boolean available=true, reject=false; String payer;
+        long physicalDiamonds;
         public boolean ready(String n) { return available && money.containsKey(n.toLowerCase(Locale.ROOT)); }
         public long balance(String n) { return money.getOrDefault(n.toLowerCase(Locale.ROOT),0L); }
-        public boolean exchange(Map<String,Long> changes,String inventoryPayer) {
-            payer=inventoryPayer; if (reject) return false;
+        public boolean exchange(Map<String,Long> changes,String paymentPayer) {
+            payer=paymentPayer; if (reject) return false;
             for(var e:changes.entrySet()) if(!ready(e.getKey()) || balance(e.getKey())+e.getValue()<0 || balance(e.getKey())+e.getValue()>1_000_000_000L) return false;
             changes.forEach((n,d)->money.put(n.toLowerCase(Locale.ROOT),balance(n)+d)); return true;
         }
@@ -32,6 +33,14 @@ class ClaimAccountsTest {
         assertEquals(11,a.balance("Owner")); assertEquals(30,a.balance("NewOwner"));
         assertEquals(70,s.legacyTreasuryOf("Owner")); assertEquals(0,s.legacyTreasuryOf("NewOwner"));
     }
+    @Test void testBankCannotUsePhysicalInventoryToCoverAClaimPurchaseShortfall() {
+        var s=store(); var a=wire(s); a.set("Tenant",2); a.physicalDiamonds=64;
+        assertFalse(ClaimLand.buy(s,"world",1,1,"Tenant",3,System.currentTimeMillis()+ClaimMath.DAY_MILLIS));
+        assertEquals(2,a.balance("Tenant"));
+        assertEquals(64,a.physicalDiamonds);
+        assertNull(s.claimAt("world",1,1));
+    }
+
     @Test void leaseUsesManualPayerOnlyOnAcceptanceAndBankOnlyOfflineRenewal() {
         var s=store(); long now=System.currentTimeMillis(); var c=claim(s,now); var a=wire(s);
         assertNull(ClaimRentals.offer(s,c,"Owner",10,now));
@@ -84,10 +93,13 @@ class ClaimAccountsTest {
         String bridge=Files.readString(Path.of(base+"ClaimBankBridge.java"));
         String plugin=Files.readString(Path.of(base+"ClaimsPlugin.java"));
         assertFalse(service.contains("DiamondItems.give(")); assertFalse(service.contains("DiamondItems.collect("));
+        assertFalse(service.contains("DiamondItems.count("));
         assertTrue(plugin.indexOf("store.accounts(bank)")<plugin.indexOf("service.processUpkeep"));
+        assertTrue(plugin.contains("\"claim-teleports\",true)"),"claim teleport payment must be bank-only");
         assertTrue(plugin.contains("new ClaimFinance(store,bank)"));
         assertFalse(bridge.contains("exchangeClaimAccounts("));
-        assertTrue(bridge.contains("fundClaimPaymentMinor(player,plugin.coreApi().diamondRate().scaleMinor(cost*100L))"));
+        assertFalse(bridge.contains("fundClaimPaymentMinor"),"Claims must never supplement /bal with physical items");
+        assertTrue(bridge.contains("knownBankPlayer(name)"));
         assertTrue(bridge.contains("commitClaimExchange(t)"));
         assertTrue(bridge.contains("financialPending()==null"));
         assertTrue(service.contains("ClaimUpkeep.day")); assertTrue(service.contains("finance.bank-commands"));
@@ -99,12 +111,20 @@ class ClaimAccountsTest {
         }
         assertTrue(messages.raw("profile-treasury").contains("Старая пользовательская"));
         assertTrue(messages.raw("finance.balance-line").contains("/bal"));
-        assertTrue(messages.raw("finance.balance-line").contains("%physical%"));
+        assertFalse(messages.raw("finance.balance-line").contains("%physical%"));
+        assertTrue(messages.raw("finance.balance-line").contains("%balance%"));
+        assertFalse(messages.raw("finance.balance-line").contains("%treasury%"));
+        assertTrue(messages.raw("finance.menu-info-lore").contains("%balance%"));
+        assertFalse(messages.raw("finance.menu-info-lore").contains("%treasury%"));
         assertFalse(messages.raw("finance.profile-treasury").contains("Казна"));
         assertTrue(messages.raw("finance.bank-commands").contains("/bal deposit"));
-        assertTrue(messages.raw("finance.profile-inventory").contains("%amount%"));
+        assertTrue(messages.raw("finance.bank-commands").contains("Отдельной казны"));
+        assertFalse(messages.raw("finance.usage").contains("/claim deposit"));
+        assertFalse(messages.raw("finance.usage").contains("/claim withdraw"));
+        assertTrue(messages.raw("finance.profile-inventory").contains("не являются средствами"));
         String profile=Files.readString(Path.of(base+"ClaimsProfile.java"));
-        assertTrue(profile.contains("context.self() && context.online()"));
+        assertFalse(profile.contains("context.self() && context.online()"),"profile must not inspect inventory for Claims currency");
+        assertTrue(profile.contains("finance.profile-treasury"));
         assertTrue(profile.contains("finance.profile-unavailable"));
     }
 }

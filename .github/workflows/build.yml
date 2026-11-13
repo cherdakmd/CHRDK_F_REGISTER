@@ -39,6 +39,9 @@ jobs:
           python3 .github/scripts/check_retired_addons.py
           python3 -m unittest discover -s .github/scripts -p 'test_retired_addons.py' -v
 
+      - name: Test offline backup validation and restore safety
+        run: python3 -m unittest discover -s tools/backup -p 'test_*.py' -v
+
       - name: Messages contract check
         shell: bash
         run: python3 .github/scripts/check_messages.py
@@ -46,6 +49,7 @@ jobs:
       - name: Test release archive validation
         run: |
           python3 -m unittest discover -s .github/scripts -p 'test_*release.py' -v
+          python3 -m unittest discover -s .github/scripts -p 'test_release_spec.py' -v
           python3 -m unittest discover -s .github/scripts -p 'test_gradle_build.py' -v
           python3 -m unittest discover -s .github/scripts -p 'test_prepare_papi.py' -v
 

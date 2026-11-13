@@ -79,6 +79,16 @@ class ReleaseValidationTest(unittest.TestCase):
         version = re.search(r"^plugin_version=(.+)$", (root / "gradle.properties").read_text(), re.M).group(1)
         memo = (root / "docs/releases/update-memo.txt").read_text(encoding="utf-8")
         current = memo.split("Ниже — предыдущие изменения", 1)[0]
+        if version == "2.0.3":
+            self.assertIn("Кандидат 2.0.3", current)
+            self.assertIn("НЕ ПУБЛИКОВАТЬ", current)
+            self.assertIn("19 JAR одной версии", current)
+            self.assertIn("chrdk-vk-2.0.3.jar", current)
+            self.assertIn("chrdk-disasters-2.0.3.jar", current)
+            self.assertIn("Mine Treasure", current)
+            self.assertIn("Core RC7 и DiamondShop RC2–RC6", current)
+            self.assertIn("production-причина отказа ещё не воспроизведена", current)
+            return
         self.assertIn(f"Комплект {version}", current)
         # v1.5.2-rc.2 уже опубликован: его ZIP физически содержит 22 JAR.
         # Модуль disasters добавлен в ветку после этого пререлиза и войдёт
@@ -155,15 +165,22 @@ class ReleaseWorkflowContractTest(unittest.TestCase):
         self.assertNotIn("startsWith(github.event.release.tag_name, 'v1.')", release)
         self.assertIn("tags: ['v*-rc.*']", prerelease)
 
-    def test_diamondshop_rc_release_cannot_attach_full_bundle(self):
+    def test_standalone_release_requires_manifest_selected_plugin(self):
+        import json
         root = Path(__file__).resolve().parents[2]
         release = (root / ".github/workflows/release.yml").read_text()
-        self.assertIn("Pack DiamondShop-only prerelease", release)
-        self.assertIn("chrdk-diamond-shop-${version}.jar", release)
-        self.assertIn("if: \"!startsWith(steps.verify-version.outputs.version, '2.0.2-rc.')\"", release)
-        attach = release.split("name: Attach verified release assets", 1)[1]
-        self.assertIn('if [[ "${{ steps.verify-version.outputs.version }}" == 2.0.2-rc.* ]]', attach)
-        self.assertIn('"${{ env.dshop_jar }}" "${{ env.dshop_checksums }}"', attach)
+        manifest = json.loads((root / "docs/releases/2.0.2-rc.7.json").read_text())
+        self.assertEqual(("standalone", "core", "CHRDK_Core"),
+                         (manifest["kind"], manifest["module"], manifest["plugin"]))
+        self.assertIn("Pack manifest-selected standalone plugin", release)
+        self.assertIn("verify_release.py --standalone", release)
+        self.assertIn("steps.release-spec.outputs.kind == 'standalone'", release)
+        self.assertIn("steps.release-spec.outputs.kind == 'full'", release)
+        self.assertNotIn("Pack DiamondShop-only prerelease", release)
+        self.assertNotIn("steps.verify-version.outputs.version == '2.0.2-rc.7'", release)
+        attach = release.split("name: Attach manifest-verified release assets", 1)[1]
+        self.assertIn("steps.release-spec.outputs.kind", attach)
+        self.assertIn('"${{ env.standalone_jar }}" "${{ env.standalone_checksums }}"', attach)
 
     def test_memo_is_external_so_run_step_stays_below_github_limit(self):
         root = Path(__file__).resolve().parents[2]
@@ -192,7 +209,9 @@ class ReleaseWorkflowContractTest(unittest.TestCase):
         self.assertIn('--standalone "chrdk-disasters-${version}.jar" CHRDK_Disasters "$version"', source)
         self.assertNotIn("zip -j -9", source)
         self.assertNotIn("--zip", source)
-        self.assertIn('"${{ env.zip }}" "${{ env.vk_jar }}" "${{ env.disasters_jar }}" "${{ env.datapack }}" "${{ env.checksums }}" --clobber', source)
+        self.assertIn("Attach manifest-verified release assets", source)
+        self.assertIn('"${{ env.zip }}" "${{ env.vk_jar }}"', source)
+        self.assertIn('"${{ env.disasters_jar }}" "${{ env.datapack }}" "${{ env.checksums }}" --clobber', source)
         # GitHub limits each run script to 21000 characters. Avoid parsing YAML/dependencies.
         for section in source.split("run: |\n")[1:]:
             script = section.split("\n      - name:", 1)[0]

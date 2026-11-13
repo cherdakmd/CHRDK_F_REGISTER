@@ -18,6 +18,27 @@ class ChargeNativePathTest {
         assertTrue(commit.contains("bank.spendableBalanceMinor(payer.getUniqueId()), payment.rateBps()"));
         assertTrue(commit.indexOf("planMinor")<commit.indexOf("bank.settleCharge"));
     }
+    @Test void claimsTeleportNamespaceUsesBankOnlyPlannerAndCoreRevalidationWithoutChangingOtherServices() throws Exception {
+        String actions=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkregister/api/PaidActions.java"));
+        String claims=Files.readString(Path.of("claims/src/main/java/ru/cherdakmd/chrdkclaims/ClaimsPlugin.java"));
+        String core=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkregister/ChrdkRegisterApiImpl.java"));
+        String commit=core.substring(core.indexOf("public boolean commitBankCharge"),core.indexOf("public boolean personalBankAvailable"));
+        String inventory=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkregister/api/ChargeInventory.java"));
+        String bankCharge=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkregister/api/BankCharge.java"));
+        assertTrue(actions.contains("planMinorBankOnly"));
+        assertTrue(actions.contains("planBankOnly"));
+        assertTrue(claims.contains("\"claim-teleports\",true"));
+        assertTrue(actions.contains("this(plugin,api,messages,source,false)"),"other service namespaces keep their prior payment policy");
+        assertTrue(actions.contains("this.bankOnly=bankOnly||BankCharge.bankOnlySource(source)"),
+                "the namespace policy cannot be disabled by an accidentally legacy constructor call");
+        assertTrue(core.contains("BankCharge.bankOnlySource(payment.source())"));
+        assertTrue(commit.contains("bankOnly&&(payment.debit()!=payment.price()||payment.cash()!=0||payment.change()!=0)"),
+                "uncommitted legacy item tenders cannot be replayed through the new Core path");
+        assertTrue(commit.contains("ChargeInventory.planMinorBankOnly(expected, payment.price()"));
+        assertTrue(inventory.contains("c.debit()==c.price()&&c.cash()==0&&c.change()==0"),
+                "new bank-only intents are validated without inventory tender");
+        assertTrue(bankCharge.contains("bankOnlySource(String source)"));
+    }
     @Test void recoverySavesPlayerdataBeforeSourceAndNeverAutomaticallyRefundsOrDrops() throws Exception {
         String code=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkregister/api/ChargeInventory.java"));
         String apply=code.substring(code.indexOf("public void apply("),code.indexOf("public void checkpoint()"));

@@ -524,10 +524,10 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
         if (!plugin.store().fundsReady(player.getName())) { plugin.messages().send(player,"finance.unavailable"); return; }
         List<Claim> claims = plugin.store().ofOwner(player.getName());
         boolean debt = claims.stream().anyMatch(claim -> claim.debtDays > 0);
-        int treasury = plugin.store().treasuryOf(player.getName());
+        int balance = plugin.store().treasuryOf(player.getName());
         String here = player.getWorld().getName();
         plugin.messages().send(player, "finance.balance-line",
-                "treasury", String.valueOf(treasury), "physical", DiamondItems.count(player.getInventory()),
+                "balance", String.valueOf(balance),
                 "claims", String.valueOf(claims.size()),
                 "limit", String.valueOf(service().limitOf(player.getName())),
                 "upkeep", String.valueOf(plugin.config().upkeepIn(here)),
@@ -544,7 +544,7 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
         if (!claims.isEmpty() && earliest != Long.MAX_VALUE) {
             plugin.messages().send(player, "finance.balance-due",
                     "date", service().formatDate(earliest),
-                    "balance", String.valueOf(treasury),
+                    "balance", String.valueOf(balance),
                     "need", String.valueOf(Math.min(Integer.MAX_VALUE, need)));
         }
     }

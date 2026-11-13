@@ -19,12 +19,16 @@ NETWORK = failure("Could not resolve all files for configuration ':compileClassp
 
 
 class RetryPolicyTest(unittest.TestCase):
-    def test_rc7_workflow_packages_core_instead_of_diamond_shop(self):
+    def test_release_workflow_selects_assets_from_explicit_manifest(self):
         workflow=(Path(__file__).resolve().parents[2]/".github/workflows/release.yml").read_text()
-        self.assertIn("Pack Core-only prerelease",workflow)
-        self.assertIn('jar="chrdk-core-${version}.jar"',workflow)
-        self.assertIn('cp "build/libs/${jar}" "${jar}"',workflow)
-        self.assertIn("steps.verify-version.outputs.version != '2.0.2-rc.7'",workflow)
+        self.assertIn(".github/scripts/release_spec.py",workflow)
+        self.assertIn("steps.release-spec.outputs.kind == 'standalone'",workflow)
+        self.assertIn("steps.release-spec.outputs.kind == 'full'",workflow)
+        self.assertNotIn("steps.verify-version.outputs.version == '2.0.2-rc.7'",workflow)
+
+    def test_build_workflow_runs_offline_backup_restore_regressions(self):
+        workflow=(Path(__file__).resolve().parents[2]/".github/workflows/build.yml").read_text()
+        self.assertIn("python3 -m unittest discover -s tools/backup -p 'test_*.py' -v",workflow)
 
     def test_observed_timeouts_and_truncated_dependency_downloads(self):
         for message in ["Read timed out", "Connection reset", "Connect timed out",

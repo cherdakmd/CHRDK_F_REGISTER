@@ -45,6 +45,24 @@ class RestoreBackupTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "SERVER_STOPPED"):
                 restore(archive, root / "plugins", "")
 
+    def test_rejects_symlinked_destination_ancestor_without_writing_outside_plugins(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            archive = self.make_archive(root)
+            plugins = root / "plugins"
+            plugins.mkdir()
+            outside = root / "outside"
+            outside.mkdir()
+            sentinel = outside / "data.json"
+            sentinel.write_text('{"must":"stay unchanged"}')
+            (plugins / "CHRDK_Core").symlink_to(outside, target_is_directory=True)
+
+            with self.assertRaisesRegex(ValueError, "симлинк"):
+                restore(archive, plugins, "SERVER_STOPPED")
+
+            self.assertEqual('{"must":"stay unchanged"}', sentinel.read_text())
+            self.assertFalse((outside / "backups").exists())
+
     def test_rejects_traversal_and_wrong_hash(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -59,6 +77,21 @@ class RestoreBackupTest(unittest.TestCase):
                     output.writestr(item, raw)
             with self.assertRaisesRegex(ValueError, "Небезопасный путь"):
                 verify(root / "bad.zip")
+
+    def test_rejects_secret_named_ancestor_even_when_file_name_is_generic(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            archive = self.make_archive(root)
+            with zipfile.ZipFile(archive) as source, zipfile.ZipFile(root / "secret.zip", "w") as output:
+                for item in source.infolist():
+                    raw = source.read(item)
+                    if item.filename == "CHRDK-BACKUP.json":
+                        manifest = json.loads(raw)
+                        manifest["entries"][0]["path"] = "CHRDK_Core/secrets/data.json"
+                        raw = json.dumps(manifest).encode()
+                    output.writestr(item, raw)
+            with self.assertRaisesRegex(ValueError, "Конфиг/токен"):
+                verify(root / "secret.zip")
 
 
 if __name__ == "__main__":

@@ -2,14 +2,14 @@ name: CHRDK_Claims
 version: ${version}
 main: ru.cherdakmd.chrdkclaims.ClaimsPlugin
 api-version: '26.3'
-description: "Приваты чанков за алмазы: покупка территории, рента из казны, налог на сделки, продажа и передача игрокам, полная защита территории (аддон CHRDK_Core)"
+description: "Приваты чанков с оплатой только с личного /bal: аренда, сделки, роли и защита территории (аддон CHRDK_Core)"
 author: cherdakmd
 depend: [CHRDK_Core]
 commands:
   claim:
-    description: "Территории: покупка, аренда чанков, меню, казна, продажа"
+    description: "Территории: покупка, аренда чанков, меню и личный /bal"
     aliases: [parcel, land]
-    usage: "/claim [menu [стр]|tp [x z]|info [x z]|map [радиус]|list [стр]|forsale [стр]|near [радиус]|borders|notices [on|off]|greeting [текст]|rent [offer <цена>|off|take <цена>|stop]|unclaim [all confirm]|add|remove <ник> [доступ|контейнеры|полный]|deposit|withdraw|balance|sell|sellback [confirm]|budget [1–30]|buy [x z]|transfer|help]"
+    usage: "/claim [menu [стр]|tp [x z]|info [x z]|map [радиус]|list [стр]|forsale [стр]|near [радиус]|borders|notices [on|off]|greeting [текст]|rent [offer <цена>|off|take <цена>|stop]|unclaim [all confirm]|add|remove <ник> [доступ|контейнеры|полный]|deposit|withdraw (переход к /bal)|balance|sell|sellback [confirm]|budget [1–30]|buy [x z]|transfer|help]"
   claimadmin:
     description: "Администрирование приватов: выдача, лимиты, перенос, рента, статистика"
     usage: "/claimadmin [reload|bypass|delete|deleteall|info|give|transfer|limit|chunks|transferall|purge|rent|stats|recovery]"
