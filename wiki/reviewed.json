@@ -36,8 +36,8 @@
       "text": "503edef62357862f67d17df249b393023697d6dca6342cbe792b0d4dc78cb8cc"
     },
     "commands": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
-      "sources": "f4e706e63c1c7d8e9ca2c132143918f520a9c7d1aae00b4898c26138f251cd66",
+      "reason": "Личные квитанции welcome-gift сверены с регресс-тестами ShopWelcomeGiftTest (два игрока, миграция старой глобальной квитанции, застрявшее обязательство); формулировка shop.md уточнена",
+      "sources": "7e3cad82651d50a0256745816fa3a04f2609466cd0a32323bc0df9cad9bb7308",
       "text": "46017ca1aca3a1d620ff09b3ffd40ff42885e551a850c85baa15f2c73d03b290"
     },
     "cosmetics": {
@@ -56,8 +56,8 @@
       "text": "121b1cc28a075ced29b6de8abec7dbc20bbb531a01441ddd5fdb836d066d0202"
     },
     "economy": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
-      "sources": "981a88c242525bc183d5ec68b9cc494a8681713c97988870a2c648f2f509c87e",
+      "reason": "Личные квитанции welcome-gift сверены с регресс-тестами ShopWelcomeGiftTest (два игрока, миграция старой глобальной квитанции, застрявшее обязательство); формулировка shop.md уточнена",
+      "sources": "9f5e5f3ad4c47f70d88e5cea92fec50b958e3a50c30eabe721a920728bab3fa1",
       "text": "380ede76f428cfc00f3a9df848d00a9b5012222475c10d41cc83359ef3d12d97"
     },
     "enchants": {
@@ -66,8 +66,8 @@
       "text": "7e90321ef8a100bae11c53592c62328fa44a958be657b66a86d51ea8c1906a7d"
     },
     "faq": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
-      "sources": "f2bec4d7e147eb650d4eb3053ad2b94a37decc028e21e4a492dbb6c349d0c3ab",
+      "reason": "Личные квитанции welcome-gift сверены с регресс-тестами ShopWelcomeGiftTest (два игрока, миграция старой глобальной квитанции, застрявшее обязательство); формулировка shop.md уточнена",
+      "sources": "fd72263243c77cea963b891e7ec444c9123538fa66b348662e946d1bb5c4dd99",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
@@ -86,13 +86,13 @@
       "text": "17c878e1ab52ceb2a7c3361a7bef133c8bd1004a59641898f2c525f7c48fff8f"
     },
     "index": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
-      "sources": "46c67d325c64ecf4410e338dfebe1ce54a6dcd8cfd221a0f38bae495be7cd391",
+      "reason": "Личные квитанции welcome-gift сверены с регресс-тестами ShopWelcomeGiftTest (два игрока, миграция старой глобальной квитанции, застрявшее обязательство); формулировка shop.md уточнена",
+      "sources": "b22851cbcf3ff43e34f13bae316bd6df3eebadcdd0bde0dcd6faaca90c4a47f6",
       "text": "13b0089b89035cd13598d177608718282608bc671993a3c370012b297c779cd7"
     },
     "menu": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
-      "sources": "f2bec4d7e147eb650d4eb3053ad2b94a37decc028e21e4a492dbb6c349d0c3ab",
+      "reason": "Личные квитанции welcome-gift сверены с регресс-тестами ShopWelcomeGiftTest (два игрока, миграция старой глобальной квитанции, застрявшее обязательство); формулировка shop.md уточнена",
+      "sources": "fd72263243c77cea963b891e7ec444c9123538fa66b348662e946d1bb5c4dd99",
       "text": "eb6fdaf663b2005735002c5f23bb7f751b31a7447b3fc2cc77d741ff7c4cb2f9"
     },
     "moderation": {
@@ -131,9 +131,9 @@
       "text": "664b466e4b44741175d9c2cdb4da728a0603a04aaaefada8396dd6517d5dca2d"
     },
     "shop": {
-      "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
-      "sources": "46c67d325c64ecf4410e338dfebe1ce54a6dcd8cfd221a0f38bae495be7cd391",
-      "text": "77b980940c541a3aeec1ae44cc0127345d3a66269d675f9a04b04d0b8b50a566"
+      "reason": "Личные квитанции welcome-gift сверены с регресс-тестами ShopWelcomeGiftTest (два игрока, миграция старой глобальной квитанции, застрявшее обязательство); формулировка shop.md уточнена",
+      "sources": "b22851cbcf3ff43e34f13bae316bd6df3eebadcdd0bde0dcd6faaca90c4a47f6",
+      "text": "886ac96b52853ac174dc1b1a9b6f51bf8cfeecc1dc3a08799e6937f8bf0c9c30"
     },
     "skills": {
       "reason": "Переопознание bank-charge.json при adopt lineage закрыто регресс-тестами ChargeLineageAdoptTest; восстановлено прежнее поведение валидации намерения (без карантина журнала), платёжные контракты bank-only сверены",
@@ -171,8 +171,8 @@
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Запись 2.0.3-fix сверена с релизными заметками docs/releases/2.0.3-fix.md и регресс-тестами ChargeLineageAdoptTest; контракты обновлений не менялись",
-      "sources": "46c67d325c64ecf4410e338dfebe1ce54a6dcd8cfd221a0f38bae495be7cd391",
+      "reason": "Личные квитанции welcome-gift сверены с регресс-тестами ShopWelcomeGiftTest (два игрока, миграция старой глобальной квитанции, застрявшее обязательство); формулировка shop.md уточнена",
+      "sources": "b22851cbcf3ff43e34f13bae316bd6df3eebadcdd0bde0dcd6faaca90c4a47f6",
       "text": "c9e169444056a3ba87044d4438f54d1ed3d223201408de65c79bf282cbf7b4db"
     },
     "vk": {

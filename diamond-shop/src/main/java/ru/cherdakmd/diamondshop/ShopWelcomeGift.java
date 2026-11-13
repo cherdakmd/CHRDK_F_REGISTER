@@ -19,9 +19,14 @@ public final class ShopWelcomeGift {
     interface Bank {
         boolean available(UUID market);
         boolean credit(UUID market,UUID player,String key,long amount);
+        /** Уже начислено по этой квитанции; -1 — чужая квитанция или банк недоступен. */
+        long creditedBase(UUID market,UUID player,String key);
     }
     public static final String FILE_NAME="welcome-gifts.json";
+    /** Старая глобальная квитанция 2.0.3-fix и ниже: одна на весь сервер. */
     public static final String RECEIPT_KEY="welcome-gift";
+    /** Личная квитанция игрока: entitlement Core не может сменить владельца, поэтому ключ обязан быть личным. */
+    public static String receiptKey(UUID player) { return RECEIPT_KEY+"-"+player; }
     private static final Gson GSON=new GsonBuilder().setPrettyPrinting().create();
     private final Path file;
     private final Logger logger;
@@ -48,10 +53,15 @@ public final class ShopWelcomeGift {
             claims.put(player,total);
             if(!save()) { claims.remove(player); healthy=false; return Status.UNAVAILABLE; }
         }
-        // Сначала локальное обязательство, затем деньги. При сбое следующий клик повторит
-        // тот же receipt и не сможет начислить подарок дважды, даже после restart.
-        if(!bank.credit(market,player,RECEIPT_KEY,total)) return Status.UNAVAILABLE;
-        return previous==null?Status.CLAIMED:Status.ALREADY;
+        // Старая глобальная квитанция: получивший по ней не получает повторно.
+        if(bank.creditedBase(market,player,RECEIPT_KEY)>0) return Status.ALREADY;
+        String key=receiptKey(player);
+        long before=Math.max(0L,bank.creditedBase(market,player,key));
+        if(!bank.credit(market,player,key,total)) {
+            logger.warning("[Подарок] Кредит банка отклонён для "+player+"; обязательство сохранено, следующее нажатие завершит выдачу.");
+            return Status.UNAVAILABLE;
+        }
+        return before==0?Status.CLAIMED:Status.ALREADY;
     }
 
     private void load() {
