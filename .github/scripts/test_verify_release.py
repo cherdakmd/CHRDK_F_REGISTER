@@ -79,15 +79,18 @@ class ReleaseValidationTest(unittest.TestCase):
         version = re.search(r"^plugin_version=(.+)$", (root / "gradle.properties").read_text(), re.M).group(1)
         memo = (root / "docs/releases/update-memo.txt").read_text(encoding="utf-8")
         current = memo.split("Ниже — предыдущие изменения", 1)[0]
-        if version == "2.0.4":
-            self.assertIn("CHRDK 2.0.4", current)
-            self.assertIn("HOTFIX", current)
-            self.assertIn("19 JAR одной версии", current)
-            self.assertIn("chrdk-vk-2.0.4.jar", current)
-            self.assertIn("chrdk-disasters-2.0.4.jar", current)
-            self.assertIn("Mine Treasure", current)
-            self.assertIn("welcome-gifts.json", current)
-            self.assertIn("личная", current)
+        # 2.0.x: блок мемо описывает полный комплект и ключевые пункты своего выпуска.
+        current_kits = {
+            "2.0.4": ("HOTFIX", "19 JAR одной версии", "chrdk-vk-2.0.4.jar",
+                      "chrdk-disasters-2.0.4.jar", "Mine Treasure", "welcome-gifts.json", "личная"),
+            "2.0.5": ("19 JAR одной версии", "chrdk-vk-2.0.5.jar",
+                      "chrdk-disasters-2.0.5.jar", "Mine Treasure", "shop-data.json",
+                      "карантин", "наковальни"),
+        }
+        if version in current_kits:
+            self.assertIn(f"CHRDK {version}", current)
+            for marker in current_kits[version]:
+                self.assertIn(marker, current)
             return
         self.assertIn(f"Комплект {version}", current)
         # v1.5.2-rc.2 уже опубликован: его ZIP физически содержит 22 JAR.
