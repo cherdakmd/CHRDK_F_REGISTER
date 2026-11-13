@@ -7,11 +7,16 @@ Minecraft-сервер и публикация товаров TradeMC — три
 
 1. Убедиться, что рабочая копия чиста, а основной `Build` зелёный.
 2. Обновить `plugin_version` в `gradle.properties` (например, `1.5.2`).
-3. Добавить `docs/releases/<версия>.md`, актуальный блок в начало
-   `docs/releases/update-memo.txt` и краткие заметки в `README.md`.
-4. Не менять `Core API`, цены, схемы хранения и состав модулей неявно. Такие
+3. Добавить `docs/releases/<версия>.md`, `docs/releases/<версия>.json`,
+   актуальный блок в начало `docs/releases/update-memo.txt`, заметку в `README.md`
+   и социальную карточку `docs/social/releases/<версия>.json`.
+4. В JSON manifest явно указать `kind` (`full` или `standalone`), версию и
+   prerelease-флаг; для одиночного JAR дополнительно указать Gradle-модуль,
+   ожидаемый `plugin.yml name` и `archivesName`. Release workflow сверяет manifest
+   с исходниками и собранным JAR; шаблоны версии не выбирают плагин.
+5. Не менять `Core API`, цены, схемы хранения и состав модулей неявно. Такие
    изменения должны быть явно описаны вместе с миграцией и порядком отката.
-5. Для RC использовать только суффикс `-rc.N`, где `N >= 1`. RC публикуется
+6. Для RC использовать только суффикс `-rc.N`, где `N >= 1`. RC публикуется
    исключительно как GitHub prerelease.
 
 Локальная проверка при установленной Java 25:
@@ -35,8 +40,9 @@ clan_shop, datapacks и offline social из `.github/workflows/build.yml`.
 gh workflow run release.yml --ref main -f version=1.5.2
 ```
 
-Ручной запуск выполняет тот же Gradle build, тесты, проверку 22 общих JAR,
-отдельных `CHRDK_VK`/`CHRDK_Disasters`, Mine Treasure, ZIP CRC и версий, но
+Ручной запуск выполняет тот же Gradle build и тесты; для полного комплекта
+проверяет ровно 19 общих JAR, отдельно `CHRDK_VK`/`CHRDK_Disasters` и Mine Treasure,
+ZIP CRC, plugin.yml, версии, manifest и SHA-256, но
 **не создает тег, Release и не загружает публичные ассеты**. Результат сохраняется как временный artifact
 `release-candidate-<версия>-<sha>`.
 
@@ -63,8 +69,13 @@ unzip -t chrdk-plugins-1.5.2.zip
   GUI изменённых модулей, PlaceholderAPI, LuckPerms и отсутствие ошибок;
 - проверить миграции, повторный запуск, восстановление после restart и
   критичные финансовые операции с идемпотентностью;
+- если изменён Claims: воспроизвести фактический отказ на сохранённой копии,
+  установить и устранить его причину, пройти Claims/Core Java-тесты и проверить
+  committed, definitively-missing и unknown outcomes на staging. Нельзя считать
+  proposed guard исправлением production-инцидента; unknown остаётся закрытым;
 - проверить внешние интеграции, затронутые выпуском (VK/MAX, TradeMC, RCON);
-- записать результат и нерешённые ограничения в заметки релиза.
+- записать результат и нерешённые ограничения в заметки релиза. Нерешённый
+  production-отказ Claims — блокирующее условие стабильной публикации.
 
 Зелёный CI и dry-run не заменяют живой smoke/нагрузочный тест.
 

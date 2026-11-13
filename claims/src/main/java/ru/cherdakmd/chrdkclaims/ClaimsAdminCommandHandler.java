@@ -28,14 +28,27 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if(!plugin.financeReady()&&(args.length==0||!args[0].equalsIgnoreCase("recovery"))) { plugin.messages().send(sender,"finance.unavailable");return true; }
-
+        boolean recovery=args.length>0&&args[0].equalsIgnoreCase("recovery");
+        // Keep recovery inspection read-only: financeReady() may persist registration/adopt a lineage.
+        if(!recovery&&!plugin.financeReady()) { plugin.messages().send(sender,"finance.unavailable");return true; }
         if (!sender.hasPermission("chrdkclaims.admin")) {
             plugin.messages().send(sender, "no-permission");
             return true;
         }
-        if(args.length>0&&args[0].equalsIgnoreCase("recovery")) {
-            var store=plugin.store(); plugin.messages().send(sender,"finance.recovery","healthy",String.valueOf(store.moneyAvailable()),"lineage",store.financialLineage().toString(),"registered",String.valueOf(store.financialRegistered()),"sequence",String.valueOf(store.financialSequence()),"pending",String.valueOf(store.financialPending()!=null)); return true;
+        if(recovery) {
+            var store=plugin.store();var finance=plugin.finance();
+            plugin.messages().send(sender,"finance.recovery",
+                    "healthy",String.valueOf(store.moneyAvailable()),
+                    "lineage",store.financialLineage().toString(),
+                    "registered",String.valueOf(store.financialRegistered()),
+                    "sequence",String.valueOf(store.financialSequence()),
+                    "pending",String.valueOf(store.financialPending()!=null),
+                    "ready",String.valueOf(finance!=null&&finance.readReady()),
+                    "reason",finance==null?"finance-not-initialized":finance.recoveryReason(),
+                    "bankLineage",finance==null?"unknown":String.valueOf(finance.bankLineage()),
+                    "bankRegistered",String.valueOf(finance!=null&&finance.bankRegistered()),
+                    "bankSequence",finance==null?"-1":String.valueOf(finance.bankSequence()));
+            return true;
         }
         if (args.length == 0) {
             usage(sender);

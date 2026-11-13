@@ -66,7 +66,9 @@ class ForgeMarketContractTest(unittest.TestCase):
         else:
             self.assertTrue((ROOT / "docs/social/prereleases" / (current + ".json")).is_file(),
                             "без RC-заметки workflow молча пропустит VK-анонс с картинкой")
-        self.assertIn("int API_VERSION = 44;", self.api)
+        self.assertIn("int API_VERSION = 45;", self.api)
+        self.assertIn("UUID claimSourceLineage()", self.api)
+        self.assertIn("long claimExchangeSequence(UUID lineage)", self.api)
         self.assertIn("ForgeMaterialSource forgeMaterialSource()", self.api)
         self.assertIn("ForgeMarketCatalog", self.exchange)
         self.assertIn("42", read(FORGE / "TierForgePlugin.java"))

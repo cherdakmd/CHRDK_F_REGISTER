@@ -29,6 +29,8 @@ class ClaimFinanceTest {
         public boolean exchange(Map<String,Long> deltas,String payer) {throw new AssertionError("legacy callback forbidden");}
         public boolean registered(UUID id) {return !hide&&root.claimSourceRegistered(id);}
         public boolean register(UUID id) {return !hide&&root.registerClaimSource(id);}
+        public UUID registeredLineage() {return hide?null:root.incomeSourceLineage("claim-land");}
+        public long sequence(UUID id) {return hide?-1L:root.claimSequence(id);}
         public Map<UUID,Long> resolve(Map<String,Long> changes,String payer) {
             var result=new LinkedHashMap<UUID,Long>();for(var e:changes.entrySet()) {if(!ready(e.getKey()))return null;result.merge(id(e.getKey()),e.getValue(),Long::sum);}
             if(payer!=null) {long cost=-changes.getOrDefault(payer.toLowerCase(Locale.ROOT),0L);if(balance(payer)<cost){long amount=cost-balance(payer);if(amount>physical)return null;fundCalls++;physical-=amount;root.deposit(id(payer),payer,amount);root.flush();afterFunding.run();}}
@@ -60,6 +62,35 @@ class ClaimFinanceTest {
     @Test void registrationAckRestoresMissingCoreBindingOnlyBeforeFinancialHistory() {start();UUID lineage=store.financialLineage();bank.root=new BankStore(dir.resolve("empty-root"),log);bank.root.load();assertTrue(store.finance.recover());assertTrue(bank.root.claimSourceRegistered(lineage));bank.root.open(owner,"Owner");bank.root.open(buyer,"Buyer");bank.root.deposit(buyer,"Buyer",100);bank.root.flush();assertTrue(buy());assertEquals(1,store.financialSequence());
         bank.root=new BankStore(dir.resolve("older-root"),log);bank.root.load();assertFalse(store.finance.recover());assertFalse(bank.root.claimSourceRegistered(lineage));}
     @Test void firstRegistrationPersistsSourceBeforeCallingCore() {start();assertTrue(Files.isRegularFile(file()));UUID lineage=store.financialLineage();assertTrue(store.financialRegistered());assertTrue(bank.root.claimSourceRegistered(lineage));restart();assertEquals(lineage,store.financialLineage());}
+    @Test void emptyBankLineageAdoptionPreservesClaimsAndTreasuryDomain() {
+        store=new ClaimStore(dir.resolve("claims"),log);store.load();assertEquals(23,store.addTreasury("Owner",23));bank=new Bank();attach();
+        var c=claim();c.greeting="welcome";store.setLimitOverride("Owner",7);String domain=store.domainJson();UUID old=store.financialLineage(),replacement=UUID.randomUUID();
+        bank.root=new BankStore(dir.resolve("reset-core"),log);bank.root.load();bank.root.open(owner,"Owner");bank.root.open(buyer,"Buyer");assertTrue(bank.root.registerClaimSource(replacement));
+        assertNotEquals(old,bank.registeredLineage());assertEquals(0,bank.sequence(replacement));assertEquals("lineage-mismatch-safe-to-adopt",store.finance.recoveryReason());
+        assertTrue(store.finance.recover());assertEquals(replacement,store.financialLineage());assertTrue(store.financialRegistered());assertEquals(0,store.financialSequence());assertNull(store.financialPending());assertEquals(23,store.legacyTreasuryOf("Owner"));assertEquals(domain,store.domainJson());
+        restart();assertEquals(replacement,store.financialLineage());assertEquals(23,store.legacyTreasuryOf("Owner"));assertEquals(domain,store.domainJson());assertTrue(store.finance.readReady());
+    }
+    @Test void differentBankLineageWithCommittedClaimCannotBeAdopted() {
+        start();claim();String domain=store.domainJson();UUID old=store.financialLineage(),replacement=UUID.randomUUID();
+        bank.root=new BankStore(dir.resolve("used-core"),log);bank.root.load();assertTrue(bank.root.registerClaimSource(replacement));
+        var committed=new ClaimExchange(UUID.randomUUID(),replacement,1,"land-buy",Map.of(),ClaimExchange.hash("already committed"));assertEquals(ClaimExchange.Status.COMMITTED,bank.root.commitClaim(committed));
+        assertFalse(store.finance.recover());assertEquals(old,store.financialLineage());assertEquals(0,store.financialSequence());assertNull(store.financialPending());assertEquals(domain,store.domainJson());assertEquals(1,bank.sequence(replacement));assertEquals("lineage-mismatch-financial-history",store.finance.recoveryReason());
+    }
+    @Test void localFinancialHistoryPreventsAdoptingAnEmptyDifferentCoreLineage() {
+        start();assertTrue(buy());String domain=store.domainJson();UUID old=store.financialLineage(),replacement=UUID.randomUUID();
+        bank.root=new BankStore(dir.resolve("history-core"),log);bank.root.load();assertTrue(bank.root.registerClaimSource(replacement));
+        assertEquals(0,bank.sequence(replacement));assertFalse(store.finance.recover());assertEquals(old,store.financialLineage());assertEquals(1,store.financialSequence());assertNull(store.financialPending());assertEquals(domain,store.domainJson());assertEquals("lineage-mismatch-financial-history",store.finance.recoveryReason());
+    }
+    @Test void localPendingPreventsAdoptingAnEmptyDifferentCoreLineage() {
+        start();bank.hideAfterCommit=true;assertFalse(buy());var pending=store.financialPending();assertNotNull(pending);String domain=store.domainJson();UUID old=store.financialLineage(),replacement=UUID.randomUUID();
+        assertEquals(ClaimExchange.Status.COMMITTED,bank.root.claimStatus(pending.exchange()));
+        bank.root=new BankStore(dir.resolve("pending-core"),log);bank.root.load();assertTrue(bank.root.registerClaimSource(replacement));bank.hide=false;bank.hideAfterCommit=false;
+        assertEquals(0,bank.sequence(replacement));assertFalse(store.finance.recover());assertEquals(old,store.financialLineage());assertEquals(pending,store.financialPending());assertEquals(domain,store.domainJson());assertEquals("lineage-mismatch-financial-history",store.finance.recoveryReason());
+    }
+    @Test void coreHighWaterAheadOfLocalWithoutPendingRemainsBlockedAndVisible() {
+        start();UUID lineage=store.financialLineage();var committed=new ClaimExchange(UUID.randomUUID(),lineage,1,"land-upkeep",Map.of(),ClaimExchange.hash("committed without local ack"));assertEquals(ClaimExchange.Status.COMMITTED,bank.root.commitClaim(committed));
+        assertFalse(store.finance.readReady());assertFalse(store.finance.recover());assertEquals(lineage,store.financialLineage());assertEquals(0,store.financialSequence());assertNull(store.financialPending());assertEquals("sequence-mismatch",store.finance.recoveryReason());
+    }
     @Test void missingRegistrationAckRetriesSamePersistedLineage() throws Exception {start();UUID lineage=store.financialLineage();var json=JsonParser.parseString(Files.readString(file())).getAsJsonObject();json.getAsJsonObject("finance").addProperty("registered",false);Files.writeString(file(),json.toString());restart();assertEquals(lineage,store.financialLineage());assertTrue(store.financialRegistered());}
     @Test void sellbackCreditAndRemovalAreRecoveredTogether() {start();var c=claim();bank.hideAfterCommit=true;assertFalse(ClaimLand.sellback(store,c,12));assertSame(c,store.claimAt("world",0,0));assertEquals(12,bank.balance("Owner"));restart();assertNull(store.claimAt("world",0,0));assertEquals(12,bank.balance("Owner"));}
     @Test void regionSaleMovesAllChunksRolesTaxAndAccountsOnce() {start();var c=claim();var adjacent=new Claim("world",1,0,"Owner",now);store.add(adjacent);c.salePrice=30;adjacent.salePrice=30;assertTrue(ClaimLand.trade(store,c,"Buyer",3));assertSame(c,store.claimAt("world",0,0));assertSame(adjacent,store.claimAt("world",1,0));assertEquals("Buyer",c.owner);assertEquals("Buyer",adjacent.owner);assertTrue(c.members.isEmpty());assertTrue(c.explicitRoles().isEmpty());assertEquals(3,store.taxBurned());assertEquals(27,bank.balance("Owner"));assertEquals(70,bank.balance("Buyer"));restart();assertEquals(3,store.taxBurned());}

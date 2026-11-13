@@ -60,6 +60,8 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi, IncomeSourceLineag
     @Override public boolean checkpointGameplayRewards() { return org.bukkit.Bukkit.isPrimaryThread()&&accessManager.store().checkpointGameplayRewards(); }
     @Override public boolean claimSourceRegistered(java.util.UUID id) { return bank!=null&&bank.claimSourceRegistered(id); }
     @Override public boolean registerClaimSource(java.util.UUID id) { return org.bukkit.Bukkit.isPrimaryThread()&&bank!=null&&bank.registerClaimSource(id); }
+    @Override public java.util.UUID claimSourceLineage() { return auctionBankReady()?bank.incomeSourceLineage("claim-land"):null; }
+    @Override public long claimExchangeSequence(java.util.UUID lineage) { return auctionBankReady()?bank.claimSequence(lineage):-1L; }
     @Override public ru.cherdakmd.chrdkregister.api.ClaimExchange.Status claimExchangeStatus(ru.cherdakmd.chrdkregister.api.ClaimExchange t) { return bank==null?ru.cherdakmd.chrdkregister.api.ClaimExchange.Status.UNAVAILABLE:bank.claimStatus(t); }
     @Override public ru.cherdakmd.chrdkregister.api.ClaimExchange.Status commitClaimExchange(ru.cherdakmd.chrdkregister.api.ClaimExchange t) { return !org.bukkit.Bukkit.isPrimaryThread()||bank==null?ru.cherdakmd.chrdkregister.api.ClaimExchange.Status.UNAVAILABLE:bank.commitClaim(t); }
     @Override public boolean fundClaimPayment(Player payer,long cost) { return plugin!=null&&plugin.bank()!=null&&plugin.bank().fundClaimPayment(payer,cost); }

@@ -10,6 +10,8 @@ final class ClaimBankBridge implements ClaimFinance.Bank {
     ClaimBankBridge(ClaimsPlugin plugin) { this.plugin=plugin; }
     public boolean registered(UUID id) { return plugin.coreApi()!=null&&plugin.coreApi().claimSourceRegistered(id); }
     public boolean register(UUID id) { return plugin.coreApi()!=null&&plugin.coreApi().registerClaimSource(id); }
+    public UUID registeredLineage() { return plugin.coreApi()==null?null:plugin.coreApi().claimSourceLineage(); }
+    public long sequence(UUID lineage) { return plugin.coreApi()==null?-1L:plugin.coreApi().claimExchangeSequence(lineage); }
     public boolean ready(String name) {
         return Bukkit.isPrimaryThread()&&plugin.store().moneyAvailable()&&plugin.store().financialPending()==null&&plugin.coreApi()!=null&&name!=null&&!name.isBlank()
             &&plugin.finance()!=null&&plugin.finance().binding()&&plugin.coreApi().importLegacyClaims(name,plugin.store().legacyTreasuryOf(name));

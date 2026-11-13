@@ -12,6 +12,9 @@ final class ClaimFinance {
     interface Bank extends ClaimAccounts {
         boolean registered(UUID lineage);
         boolean register(UUID lineage);
+        UUID registeredLineage();
+        /** Durable committed sequence for the registered lineage; -1 means unknown or unavailable. */
+        long sequence(UUID lineage);
         /** May durably convert shortage into the player's own bank; never consumes for the domain. */
         Map<UUID,Long> resolve(Map<String,Long> deltas,String payer);
         ClaimExchange.Status status(ClaimExchange t);
@@ -24,20 +27,42 @@ final class ClaimFinance {
     private boolean planning;
     ClaimFinance(ClaimStore store,Bank bank) { this.store=store; this.bank=bank; }
     boolean busy() { return planning||store.financialPending()!=null||!store.moneyAvailable(); }
-    /** Только состояние существующей привязки; без регистрации/миграции или WAL. */
-    boolean readReady() { return !busy()&&store.financialRegistered()&&bank.registered(store.financialLineage()); }
+    /** Read-only readiness: no registration, migration, persistence or WAL recovery. */
+    boolean readReady() {
+        if(busy()||!store.financialRegistered()) return false;
+        UUID lineage=store.financialLineage();
+        return bank.registered(lineage)&&bank.sequence(lineage)==store.financialSequence();
+    }
+    private boolean registrationRecoverable() {
+        return store.moneyAvailable()&&store.financialSequence()==0&&store.financialPending()==null;
+    }
     boolean binding() {
         if(!store.moneyAvailable()) return false;
-        if(bank.registered(store.financialLineage())) return store.ensureFinance()&&store.markFinanceRegistered();
-        // ACK в claims-data.json не доказывает, что lineage сохранился в Core.
-        // До первой финансовой последовательности восстановление того же UUID безопасно.
-        if(store.financialSequence()!=0||store.financialPending()!=null) return false;
-        return store.ensureFinance()&&bank.register(store.financialLineage())&&store.markFinanceRegistered();
+        UUID local=store.financialLineage();
+        UUID external=bank.registeredLineage();
+        if(external!=null&&!external.equals(local)) {
+            // A different Core lineage is authoritative only while both journals prove
+            // that no Claims settlement has ever been committed. Adoption rewrites only
+            // financial metadata; the land/profile/domain snapshot remains byte-for-byte
+            // equivalent after canonicalization.
+            if(!registrationRecoverable()||bank.sequence(external)!=0||!store.adoptFinanceLineage(external)) return false;
+            local=store.financialLineage();
+        }
+        if(bank.registered(local)) {
+            long highWater=bank.sequence(local);
+            ClaimFinance.Pending pending=store.financialPending();
+            if(highWater<0||(pending==null&&highWater!=store.financialSequence())) return false;
+            return store.ensureFinance()&&store.markFinanceRegistered();
+        }
+        // A missing registration can be retried only before the first accepted
+        // domain transition. Unknown Core lineage/history is never treated as empty.
+        if(!registrationRecoverable()) return false;
+        return store.ensureFinance()&&bank.register(local)&&store.markFinanceRegistered();
     }
     boolean recover() {
         synchronized(store) {
             if(!binding()) return false;
-            var p=store.financialPending(); if(p==null) return true;
+            var p=store.financialPending(); if(p==null) return bank.registered(store.financialLineage())&&bank.sequence(store.financialLineage())==store.financialSequence();
             var status=bank.status(p.exchange());
             if(status==ClaimExchange.Status.MISSING) status=bank.commit(p.exchange());
             if(status==ClaimExchange.Status.COMMITTED) return store.finishFinance(p);
@@ -45,6 +70,30 @@ final class ClaimFinance {
             else if(status==ClaimExchange.Status.MISSING&&bank.status(p.exchange())==ClaimExchange.Status.MISSING) store.cancelFinance(p);
             return false;
         }
+    }
+    UUID bankLineage() { return bank.registeredLineage(); }
+    boolean bankRegistered() { return bank.registered(store.financialLineage()); }
+    long bankSequence() {
+        UUID external=bank.registeredLineage();
+        return bank.sequence(external==null?store.financialLineage():external);
+    }
+    String recoveryReason() {
+        if(planning) return "planning";
+        if(!store.moneyAvailable()) return "claims-store-unavailable";
+        UUID local=store.financialLineage(), external=bank.registeredLineage();
+        ClaimFinance.Pending pending=store.financialPending();
+        if(external!=null&&!external.equals(local)) {
+            long externalSequence=bank.sequence(external);
+            return registrationRecoverable()&&externalSequence==0
+                    ? "lineage-mismatch-safe-to-adopt" : "lineage-mismatch-financial-history";
+        }
+        if(!bank.registered(local)) return external==null?"bank-source-unregistered-or-unavailable":"bank-lineage-mismatch";
+        long highWater=bank.sequence(local);
+        if(highWater<0) return "bank-sequence-unavailable";
+        if(pending!=null) return "pending-reconciliation";
+        if(highWater!=store.financialSequence()) return "sequence-mismatch";
+        if(!store.financialRegistered()) return "local-registration-ack-missing";
+        return "ready";
     }
     <T> T execute(String kind,Function<ClaimStore,T> action,Predicate<T> success,T refused) {
         synchronized(store) {

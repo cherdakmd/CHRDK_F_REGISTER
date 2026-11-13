@@ -90,7 +90,7 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         ConfigUpgrader.apply(this);
         reloadClaimsConfig();
         try {
-            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 30) throw new IllegalStateException("Нужен Core API 30+");
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 45) throw new IllegalStateException("Нужен Core API 45+ для безопасной сверки Claims lineage");
             teleportPayments = new ru.cherdakmd.chrdkregister.api.PaidActions(this,this::coreApi,this::messages,"claim-teleports");
         } catch (Exception | LinkageError error) {
             getLogger().log(java.util.logging.Level.SEVERE,"Приваты остановлены: платёжный протокол недоступен; данные не сброшены",error);
@@ -105,7 +105,11 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         reloadClaimsConfig();
         var bank=new ClaimBankBridge(this); store.accounts(bank);
         finance=new ClaimFinance(store,bank); store.finance=finance;
-        financeTask=Bukkit.getScheduler().runTaskTimer(this,()->{ if(!finance.recover()) getLogger().fine("Финансы Claims ожидают банк или завершение canonical WAL"); },1L,100L);
+        financeTask=Bukkit.getScheduler().runTaskTimer(this,()->{
+            if(!finance.recover()) getLogger().fine("Финансы Claims ожидают recovery: reason="+finance.recoveryReason()
+                    +", local="+store.financialLineage()+"/"+store.financialSequence()
+                    +", Core="+finance.bankLineage()+"/"+finance.bankSequence()+", pending="+(store.financialPending()!=null));
+        },1L,100L);
         var names = new java.util.LinkedHashSet<String>(store.legacyTreasuries().keySet());
         for (var claim : store.all()) { names.add(claim.owner); if (!claim.tenant.isBlank()) names.add(claim.tenant); }
         var pendingNames = names.iterator();

@@ -81,6 +81,14 @@ public final class ClaimStore {
         var data=snapshot().data(); financeMap(data).put("registered",true);
         if(!write(data)) return false; financialRegistered=true; dirty=false; return true;
     }
+    /** Adopt Core's current Claims lineage only before any local financial transition or pending WAL. */
+    synchronized boolean adoptFinanceLineage(java.util.UUID external) {
+        if(!moneyAvailable()||external==null||financialSequence!=0||financialPending!=null) return false;
+        if(financialLineage.equals(external)) return true;
+        var data=snapshot().data(); financeMap(data).put("lineage",external.toString());
+        if(!write(data)) return false;
+        financialLineage=external; dirty=false; return true;
+    }
     @SuppressWarnings("unchecked") private static Map<String,Object> financeMap(Map<String,Object> data) { return (Map<String,Object>) data.get("finance"); }
     private Map<String,Object> financialMetadata() {
         var data=new LinkedHashMap<String,Object>(); data.put("lineage",financialLineage.toString()); data.put("registered",financialRegistered); data.put("sequence",financialSequence);
