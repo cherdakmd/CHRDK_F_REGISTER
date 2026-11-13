@@ -10,40 +10,47 @@ final class ClaimBankBridge implements ClaimFinance.Bank {
     ClaimBankBridge(ClaimsPlugin plugin) { this.plugin=plugin; }
     public boolean registered(UUID id) { return plugin.coreApi()!=null&&plugin.coreApi().claimSourceRegistered(id); }
     public boolean register(UUID id) { return plugin.coreApi()!=null&&plugin.coreApi().registerClaimSource(id); }
+    public UUID registeredLineage() { return plugin.coreApi()==null?null:plugin.coreApi().claimSourceLineage(); }
+    public long sequence(UUID lineage) { return plugin.coreApi()==null?-1L:plugin.coreApi().claimExchangeSequence(lineage); }
     public boolean ready(String name) {
-        return Bukkit.isPrimaryThread()&&plugin.store().moneyAvailable()&&plugin.store().financialPending()==null&&plugin.coreApi()!=null&&name!=null&&!name.isBlank()
-            &&plugin.finance()!=null&&plugin.finance().binding()&&plugin.coreApi().importLegacyClaims(name,plugin.store().legacyTreasuryOf(name));
+        return Bukkit.isPrimaryThread()&&plugin.store().moneyAvailable()&&plugin.store().financialPending()==null
+            &&plugin.coreApi()!=null&&name!=null&&!name.isBlank()&&plugin.finance()!=null&&plugin.finance().binding()
+            &&plugin.coreApi().knownBankPlayer(name)!=null&&plugin.coreApi().bankBalanceMinor(name)>=0;
     }
     public boolean minor() { return true; }
+    /** Whole-unit view for legacy domain math; fractional balances are conservatively rounded down. */
     public long balance(String name) {
-        if(!ready(name))return 0;long minor=plugin.coreApi().bankBalanceMinor(name);if(minor<0)return 0;
-        return (minor+99)/100;
+        if(!ready(name))return 0;long minor=plugin.coreApi().bankBalanceMinor(name);return minor<0?0:minor/100;
     }
+    /** No inventory tender: only spendable personal-bank funds count. */
     public long spendable(String name) {
-        long bank=balance(name); var player=Bukkit.getPlayerExact(name);
-        long physical=player==null?0:DiamondItems.count(player.getInventory());
-        return Math.addExact(bank,Math.multiplyExact(physical,(long)plugin.coreApi().diamondRateBps())/100);
+        if(!ready(name))return 0;
+        var id=plugin.coreApi().knownBankPlayer(name); if(id==null)return 0;
+        long minor=plugin.coreApi().spendableBankBalanceMinor(id);return minor<0?0:minor/100;
     }
     public boolean exchange(Map<String,Long> changes,String payer) { return false; }
     public Map<UUID,Long> resolve(Map<String,Long> changes,String payer) {
-        if(!Bukkit.isPrimaryThread()||plugin.coreApi()==null) return null;
-        var resolved=new LinkedHashMap<UUID,Long>();
+        if(!Bukkit.isPrimaryThread()||plugin.coreApi()==null||changes==null||changes.isEmpty()) return null;
+        var baseDeltas=new LinkedHashMap<UUID,Long>(); var balances=new LinkedHashMap<UUID,Long>();
         try {
             for(var e:changes.entrySet()) {
-                if(!ready(e.getKey())) return null;
+                if(e.getValue()==null||!ready(e.getKey())) return null;
                 var id=plugin.coreApi().knownBankPlayer(e.getKey()); if(id==null) return null;
-                resolved.merge(id,e.getValue(),Math::addExact);
-                long value=plugin.coreApi().claimBankBalance(e.getKey())+e.getValue();
-                if(value>1_000_000_000L||value<0&&(payer==null||!payer.equalsIgnoreCase(e.getKey()))) return null;
+                long minor=plugin.coreApi().bankBalanceMinor(e.getKey()); if(minor<0)return null;
+                Long prior=balances.putIfAbsent(id,minor); if(prior!=null&&prior.longValue()!=minor)return null;
+                baseDeltas.merge(id,e.getValue(),Math::addExact);
             }
-        } catch(ArithmeticException e) { return null; }
-        if(payer!=null) {
-            var player=Bukkit.getPlayerExact(payer); long cost=Math.max(0,-changes.getOrDefault(payer.toLowerCase(Locale.ROOT),0L));
-            if(player==null||!plugin.coreApi().fundClaimPaymentMinor(player,plugin.coreApi().diamondRate().scaleMinor(cost*100L))) return null;
-        }
-        for(var e:resolved.entrySet()) if(e.getValue() < -1_000_000_000L||e.getValue()>1_000_000_000L) return null;
-        resolved.replaceAll((id,value)->plugin.coreApi().diamondRate().scaleMinor(value*100L));
-        return resolved;
+            var quote=plugin.coreApi().diamondRate(); var resolved=new LinkedHashMap<UUID,Long>();
+            for(var e:baseDeltas.entrySet()) {
+                long base=e.getValue(); long magnitude=base<0?Math.negateExact(base):base;
+                long scaled=quote.scaleMinor(Math.multiplyExact(magnitude,100L));
+                long delta=base<0?Math.negateExact(scaled):scaled;
+                long after=Math.addExact(balances.get(e.getKey()),delta);
+                if(after<0||after>100_000_000_000L)return null;
+                resolved.put(e.getKey(),delta);
+            }
+            return resolved;
+        } catch(RuntimeException e) { return null; }
     }
     public ClaimExchange.Status status(ClaimExchange t) { return plugin.coreApi()==null?ClaimExchange.Status.UNAVAILABLE:plugin.coreApi().claimExchangeStatus(t); }
     public ClaimExchange.Status commit(ClaimExchange t) { return plugin.coreApi()==null?ClaimExchange.Status.UNAVAILABLE:plugin.coreApi().commitClaimExchange(t); }

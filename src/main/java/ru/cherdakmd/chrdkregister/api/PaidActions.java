@@ -16,11 +16,17 @@ public final class PaidActions {
     private final Supplier<ChrdkRegisterApi> api;
     private final Supplier<Messages> messages;
     private final String source;
+    private final boolean bankOnly;
     private final PaidActionStore store;
     private final ChargeJournal journal;
     private int refundCursor;
     public PaidActions(JavaPlugin plugin, Supplier<ChrdkRegisterApi> api, Supplier<Messages> messages, String source) throws IOException {
+        this(plugin,api,messages,source,false);
+    }
+    /** @param bankOnly true prevents any physical-item tender for this service namespace. */
+    public PaidActions(JavaPlugin plugin, Supplier<ChrdkRegisterApi> api, Supplier<Messages> messages, String source, boolean bankOnly) throws IOException {
         this.plugin=plugin; this.api=api; this.messages=messages; this.source=source;
+        this.bankOnly=bankOnly||BankCharge.bankOnlySource(source);
         store=new PaidActionStore(plugin.getDataFolder().toPath());
         var initial=new ChargeJournal(plugin.getDataFolder().toPath(),source,store.lineage());
         if (initial.pending()!=null && !ChargeInventory.valid(initial.pending())) throw new IOException("Неверный предметный план услуги");
@@ -64,8 +70,11 @@ public final class PaidActions {
         if (!ready()) { say(payer,"wait"); return false; }
         var before=ChargeInventory.copy(payer.getInventory().getStorageContents());
         var quote=api.get().diamondRate();
-        var plan=store.minor()?ChargeInventory.planMinor(before,price,api.get().spendableBankBalanceMinor(payer.getUniqueId()),quote.rateBps())
-                :ChargeInventory.plan(before,price,api.get().spendableBankBalance(payer.getUniqueId()));
+        var plan=store.minor()
+                ?(bankOnly?ChargeInventory.planMinorBankOnly(before,price,api.get().spendableBankBalanceMinor(payer.getUniqueId()),quote.rateBps())
+                    :ChargeInventory.planMinor(before,price,api.get().spendableBankBalanceMinor(payer.getUniqueId()),quote.rateBps()))
+                :(bankOnly?ChargeInventory.planBankOnly(before,price,api.get().spendableBankBalance(payer.getUniqueId()))
+                    :ChargeInventory.plan(before,price,api.get().spendableBankBalance(payer.getUniqueId())));
         if (plan==null) { say(payer,"insufficient","cost",store.minor()?DiamondMoney.format(price):price); return false; }
         String afterState=preview.get();
         var payment=store.minor()?journal.prepareMinor(payer.getUniqueId(),price,plan.debit(),plan.cash(),plan.change(),quote.rateBps(),ChargeInventory.encode(before),ChargeInventory.encode(plan.after()),store.snapshot(),afterState)

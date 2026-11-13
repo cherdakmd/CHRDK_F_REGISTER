@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Версия из gradle.properties для dry-run (например, 1.5.2)'
+        description: 'Версия из gradle.properties для dry-run (например, 2.0.3)'
         required: true
         type: string
 
@@ -63,11 +63,29 @@ jobs:
           fi
           echo "version=$plugin_version" >> "$GITHUB_OUTPUT"
 
+      - name: Resolve and validate explicit release manifest
+        id: release-spec
+        run: python3 .github/scripts/release_spec.py "${{ steps.verify-version.outputs.version }}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify published release kind matches manifest
+        if: github.event_name == 'release'
+        shell: bash
+        env:
+          PUBLISHED_PRERELEASE: ${{ github.event.release.prerelease }}
+          MANIFEST_PRERELEASE: ${{ steps.release-spec.outputs.prerelease }}
+        run: |
+          set -euo pipefail
+          if [[ "$PUBLISHED_PRERELEASE" != "$MANIFEST_PRERELEASE" ]]; then
+            echo 'GitHub prerelease flag does not match the versioned release manifest' >&2
+            exit 1
+          fi
+
       - name: Check messages, patched Mine Treasure and release validation tests
         run: |
           python3 .github/scripts/check_retired_addons.py
           python3 -m unittest discover -s .github/scripts -p 'test_retired_addons.py' -v
           python3 -m unittest discover -s .github/scripts -p 'test_*release.py' -v
+          python3 -m unittest discover -s .github/scripts -p 'test_release_spec.py' -v
           python3 -m unittest discover -s .github/scripts -p 'test_gradle_build.py' -v
           python3 -m unittest discover -s .github/scripts -p 'test_prepare_papi.py' -v
           python3 .github/scripts/check_messages.py
@@ -126,38 +144,25 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-      - name: Pack DiamondShop-only prerelease
-        if: startsWith(steps.verify-version.outputs.version, '2.0.2-rc.') && steps.verify-version.outputs.version != '2.0.2-rc.7'
+      - name: Pack manifest-selected standalone plugin
+        if: steps.release-spec.outputs.kind == 'standalone'
         shell: bash
         run: |
           set -euo pipefail
           version="${{ steps.verify-version.outputs.version }}"
-          jar="chrdk-diamond-shop-${version}.jar"
-          cp "diamond-shop/build/libs/${jar}" "${jar}"
-          python3 .github/scripts/verify_release.py --standalone "${jar}" CHRDK_DiamondShop "${version}"
-          checksums="chrdk-diamond-shop-${version}-SHA256SUMS.txt"
-          sha256sum "${jar}" > "${checksums}"
-          sha256sum -c "${checksums}"
-          echo "dshop_jar=${jar}" >> "$GITHUB_ENV"
-          echo "dshop_checksums=${checksums}" >> "$GITHUB_ENV"
+          source="${{ steps.release-spec.outputs.source }}"
+          jar="${{ steps.release-spec.outputs.jar }}"
+          plugin="${{ steps.release-spec.outputs.plugin }}"
+          checksums="${{ steps.release-spec.outputs.checksums }}"
+          cp "$source" "$jar"
+          python3 .github/scripts/verify_release.py --standalone "$jar" "$plugin" "$version"
+          sha256sum "$jar" > "$checksums"
+          sha256sum -c "$checksums"
+          echo "standalone_jar=$jar" >> "$GITHUB_ENV"
+          echo "standalone_checksums=$checksums" >> "$GITHUB_ENV"
 
-      - name: Pack Core-only prerelease
-        if: steps.verify-version.outputs.version == '2.0.2-rc.7'
-        shell: bash
-        run: |
-          set -euo pipefail
-          version="${{ steps.verify-version.outputs.version }}"
-          jar="chrdk-core-${version}.jar"
-          cp "build/libs/${jar}" "${jar}"
-          python3 .github/scripts/verify_release.py --standalone "${jar}" CHRDK_Core "${version}"
-          checksums="chrdk-core-${version}-SHA256SUMS.txt"
-          sha256sum "${jar}" > "${checksums}"
-          sha256sum -c "${checksums}"
-          echo "dshop_jar=${jar}" >> "$GITHUB_ENV"
-          echo "dshop_checksums=${checksums}" >> "$GITHUB_ENV"
-
-      - name: Pack general plugin ZIP and prepare standalone JARs
-        if: "!startsWith(steps.verify-version.outputs.version, '2.0.2-rc.')"
+      - name: Pack full plugin ZIP and separate add-ons
+        if: steps.release-spec.outputs.kind == 'full'
         shell: bash
         run: |
           set -euo pipefail
@@ -170,17 +175,12 @@ jobs:
           count="$(find release -maxdepth 1 -name '*.jar' | wc -l)"
           echo "Собрано JAR общего комплекта: $count"
           find release -maxdepth 1 -name '*.jar' -printf '%f\n' | sort
-          if [[ "$count" -lt 1 ]]; then
-            echo 'Не найден ни один JAR — архив не собран.' >&2
-            exit 1
-          fi
           cp docs/releases/update-memo.txt 'release/ОБНОВЛЕНИЕ.txt'
           printf '\nВерсия: %s\nПлатформа: Purpur 26.3 / Java 25\n' "$version" >> 'release/ОБНОВЛЕНИЕ.txt'
           for notes in docs/releases/1.4.{200,201,{220..289}}.md; do
             printf '\n\n' >> 'release/ОБНОВЛЕНИЕ.txt'
             cat "$notes" >> 'release/ОБНОВЛЕНИЕ.txt'
           done
-          # Минорный выпуск (1.5.0+) лежит вне исторического списка 1.4.x.
           if [[ "$version" != 1.4.* ]]; then
             printf '\n\n' >> 'release/ОБНОВЛЕНИЕ.txt'
             cat "docs/releases/${version}.md" >> 'release/ОБНОВЛЕНИЕ.txt'
@@ -204,19 +204,19 @@ jobs:
           echo "datapack=mine-treasure-1.6.5-ru.zip" >> "$GITHUB_ENV"
           echo "checksums=$checksums" >> "$GITHUB_ENV"
 
-      - name: Upload DiamondShop-only dry-run candidate
-        if: github.event_name == 'workflow_dispatch' && startsWith(steps.verify-version.outputs.version, '2.0.2-rc.')
+      - name: Upload standalone dry-run candidate
+        if: github.event_name == 'workflow_dispatch' && steps.release-spec.outputs.kind == 'standalone'
         uses: actions/upload-artifact@v4
         with:
           name: release-candidate-${{ steps.verify-version.outputs.version }}-${{ github.sha }}
           path: |
-            ${{ env.dshop_jar }}
-            ${{ env.dshop_checksums }}
+            ${{ env.standalone_jar }}
+            ${{ env.standalone_checksums }}
           if-no-files-found: error
           retention-days: 14
 
-      - name: Upload dry-run release candidate
-        if: github.event_name == 'workflow_dispatch' && !startsWith(steps.verify-version.outputs.version, '2.0.2-rc.')
+      - name: Upload full dry-run release candidate
+        if: github.event_name == 'workflow_dispatch' && steps.release-spec.outputs.kind == 'full'
         uses: actions/upload-artifact@v4
         with:
           name: release-candidate-${{ steps.verify-version.outputs.version }}-${{ github.sha }}
@@ -229,14 +229,15 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      - name: Attach verified release assets
+      - name: Attach manifest-verified release assets
         if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          if [[ "${{ steps.verify-version.outputs.version }}" == 2.0.2-rc.* ]]; then
-            gh release upload "${{ github.event.release.tag_name }}" "${{ env.dshop_jar }}" "${{ env.dshop_checksums }}" --clobber
+          if [[ "${{ steps.release-spec.outputs.kind }}" == 'standalone' ]]; then
+            gh release upload "${{ github.event.release.tag_name }}" "${{ env.standalone_jar }}" "${{ env.standalone_checksums }}" --clobber
           else
-            gh release upload "${{ github.event.release.tag_name }}" "${{ env.zip }}" "${{ env.vk_jar }}" "${{ env.disasters_jar }}" "${{ env.datapack }}" "${{ env.checksums }}" --clobber
+            gh release upload "${{ github.event.release.tag_name }}" "${{ env.zip }}" "${{ env.vk_jar }}" \
+              "${{ env.disasters_jar }}" "${{ env.datapack }}" "${{ env.checksums }}" --clobber
           fi

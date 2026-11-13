@@ -33,8 +33,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * CHRDK_Claims — приваты чанков за алмазные предметы: покупка территории,
- * ежесуточная рента с личного /bal, налог на сделки, продажа игрокам, полная защита.
+ * CHRDK_Claims — приваты чанков с оплатой только с личного /bal: покупка,
+ * ежесуточная рента, налог на сделки, продажа игрокам и защита территории.
  */
 public final class ClaimsPlugin extends JavaPlugin implements Listener {
 
@@ -82,7 +82,6 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
     private BukkitTask saveTask;
     private BukkitTask upkeepTask;
     private BukkitTask rentalTask;
-    private BukkitTask moneyMigrationTask;
 
     @Override
     public void onEnable() {
@@ -90,33 +89,54 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         ConfigUpgrader.apply(this);
         reloadClaimsConfig();
         try {
-            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 30) throw new IllegalStateException("Нужен Core API 30+");
-            teleportPayments = new ru.cherdakmd.chrdkregister.api.PaidActions(this,this::coreApi,this::messages,"claim-teleports");
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 45) throw new IllegalStateException("Нужен Core API 45+ для безопасной сверки Claims lineage");
+            teleportPayments = new ru.cherdakmd.chrdkregister.api.PaidActions(this,this::coreApi,this::messages,"claim-teleports",true);
         } catch (Exception | LinkageError error) {
             getLogger().log(java.util.logging.Level.SEVERE,"Приваты остановлены: платёжный протокол недоступен; данные не сброшены",error);
             Bukkit.getPluginManager().disablePlugin(this); return;
         }
         teleportFinanceTask=Bukkit.getScheduler().runTaskTimer(this,teleportPayments::tick,100L,100L);
         this.store = new ClaimStore(getDataFolder().toPath(), getLogger());
-        store.load();
+        if(store.hasCleanState()) {
+            store.load();
+        } else {
+            try {
+                var seed=ClaimStore.inspectCleanSeed(getDataFolder().toPath(),getLogger());
+                if(seed!=null&&!getConfig().getBoolean("data.confirm-clean-reset",false)) {
+                    store.load();
+                    store.stopFinance("Чистая генерация ожидает явное подтверждение data.confirm-clean-reset; старые приваты оставлены загруженными только для защиты");
+                    getLogger().severe("[CHRDK_Claims] Чистый сброс не запускался. После проверки docs/design/CLAIMS_REBUILD.md включите data.confirm-clean-reset: true и перезапустите сервер.");
+                } else if(!cleanResetBankSafe(seed)) {
+                    store.load();
+                    store.stopFinance("Чистый сброс остановлен: Claims/Core lineage или sequence не доказывают безопасную точку");
+                    getLogger().severe("[CHRDK_Claims] Старые приваты оставлены защищёнными; все Claims-операции заблокированы до согласованной сверки.");
+                } else if(!store.initializeCleanState(seed)) {
+                    store.protectUnknownState("Не удалось надёжно сохранить чистую генерацию Claims; требуется ручная сверка backup и источника");
+                } else {
+                    if(seed!=null) {
+                        getConfig().set("data.confirm-clean-reset",false);
+                        try { saveConfig(); }
+                        catch(RuntimeException error) { getLogger().log(java.util.logging.Level.SEVERE,"[CHRDK_Claims] Чистая генерация создана, но одноразовый флаг подтверждения не удалось сбросить",error); }
+                    }
+                    getLogger().warning("[CHRDK_Claims] Создана чистая генерация Claims; старые игровые записи не перенесены. /bal и безопасный финансовый high-water сохранены; legacy bonus-chunks не импортируются без ещё не реализованного receipt-источника. Старые JSON и backup архивированы под claims-data.json*.pre-clean-*.");
+                }
+            } catch(java.io.IOException|RuntimeException error) {
+                getLogger().log(java.util.logging.Level.SEVERE,"[CHRDK_Claims] Чистый сброс не выполнен: старые Claims-файлы не удалены. Проверьте бонусные receipt, WAL, backup и docs/design/CLAIMS_REBUILD.md.",error);
+                store.load();
+                store.stopFinance("Чистый cutover не прошёл проверку; старые данные доступны только для защиты, финансовые операции и изменения заблокированы");
+            }
+        }
         store.membershipIndex(this::clanMembership);
         this.audit = new ClaimAudit(getDataFolder().toPath(), getLogger());
         this.service = new ClaimsService(this);
         reloadClaimsConfig();
         var bank=new ClaimBankBridge(this); store.accounts(bank);
         finance=new ClaimFinance(store,bank); store.finance=finance;
-        financeTask=Bukkit.getScheduler().runTaskTimer(this,()->{ if(!finance.recover()) getLogger().fine("Финансы Claims ожидают банк или завершение canonical WAL"); },1L,100L);
-        var names = new java.util.LinkedHashSet<String>(store.legacyTreasuries().keySet());
-        for (var claim : store.all()) { names.add(claim.owner); if (!claim.tenant.isBlank()) names.add(claim.tenant); }
-        var pendingNames = names.iterator();
-        moneyMigrationTask = Bukkit.getScheduler().runTaskTimer(this, () -> {
-            if(!financeReady()) return;
-            for (int i=0; i<4 && pendingNames.hasNext(); i++) {
-                String name = pendingNames.next();
-                if (!store.fundsReady(name)) getLogger().warning("Казна " + name + " пока не перенесена: банк/UUID/предел счёта недоступен. Остаток сохранён, рента этого владельца приостановлена.");
-            }
-            if (!pendingNames.hasNext()) { moneyMigrationTask.cancel(); moneyMigrationTask = null; }
-        }, 1L, 20L);
+        financeTask=Bukkit.getScheduler().runTaskTimer(this,()->{
+            if(!finance.recover()) getLogger().fine("Финансы Claims ожидают recovery: reason="+finance.recoveryReason()
+                    +", local="+store.financialLineage()+"/"+store.financialSequence()
+                    +", Core="+finance.bankLineage()+"/"+finance.bankSequence()+", pending="+(store.financialPending()!=null));
+        },1L,100L);
         if (coreApi != null) {
             try {
                 coreApi.registerProfile("claims", new ClaimsProfile(this));
@@ -180,11 +200,25 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
                 + ", цена чанка " + config.chunkPrice + ", рента " + config.upkeepPerDay + "/сут.");
     }
 
+    /** The bank balance is never reset; only a matching or still-empty Claims cursor may cross the cutover. */
+    private boolean cleanResetBankSafe(ClaimStore.CleanSeed seed) {
+        if(coreApi==null||!coreApi.personalBankAvailable()) return false;
+        java.util.UUID external=coreApi.claimSourceLineage();
+        if(seed==null) {
+            if(external==null) return true;
+            return coreApi.claimExchangeSequence(external)==0;
+        }
+        if(external==null) return !seed.registered()&&seed.sequence()==0;
+        long highWater=coreApi.claimExchangeSequence(external);
+        if(highWater<0) return false;
+        if(seed.sequence()==0&&highWater==0) return true;
+        return seed.registered()&&seed.lineage().equals(external)&&seed.sequence()==highWater;
+    }
+
     @Override
     public void onDisable() {
         if(financeTask!=null) financeTask.cancel();
         if (teleportFinanceTask!=null) teleportFinanceTask.cancel();
-        if (moneyMigrationTask != null) { moneyMigrationTask.cancel(); moneyMigrationTask = null; }
         if (coreApi != null) {
             try {
                 coreApi.unregisterProfile("claims");

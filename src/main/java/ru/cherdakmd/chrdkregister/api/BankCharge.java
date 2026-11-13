@@ -10,6 +10,8 @@ public record BankCharge(String source, UUID lineage, long sequence, UUID transa
         this(source,lineage,sequence,transaction,payer,price,debit,cash,change,inventoryHash,stateHash,false,DiamondExchangePolicy.BASE_BPS);
     }
     public enum Status { UNAVAILABLE, MISSING, COMMITTED, CONFLICT }
+    /** Service namespaces whose currency contract forbids all inventory tender. */
+    public static boolean bankOnlySource(String source) { return "claim-teleports".equals(source); }
     public static String permission(String source) {
         if(source==null) return null;
         return switch(source) {

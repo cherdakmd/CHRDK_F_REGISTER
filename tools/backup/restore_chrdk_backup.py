@@ -24,9 +24,23 @@ def _path(name: str) -> PurePosixPath:
             or ".." in path.parts or "." in path.parts or not name.startswith("CHRDK_")
             or name == MANIFEST):
         raise ValueError(f"Небезопасный путь: {name!r}")
-    if path.name.lower() in {"config.yml", "config.yaml"} or "token" in path.name.lower() or "secret" in path.name.lower():
+    if any(part.lower() in {"config.yml", "config.yaml"} or "token" in part.lower() or "secret" in part.lower()
+           for part in path.parts):
         raise ValueError(f"Конфиг/токен не разрешён в снимке: {name}")
     return path
+
+
+def _assert_no_symlink_path(root: Path, target: Path) -> None:
+    """Reject symlinks in every existing path component, not just the final file."""
+    try:
+        relative = target.relative_to(root)
+    except ValueError as error:
+        raise ValueError(f"Цель восстановления выходит за plugins-dir: {target}") from error
+    current = root
+    for part in relative.parts:
+        current = current / part
+        if current.is_symlink():
+            raise ValueError(f"Небезопасный симлинк в пути восстановления: {current}")
 
 
 def _json(raw: bytes) -> object:
@@ -90,28 +104,36 @@ def restore(archive: Path, plugins: Path, confirmation: str) -> None:
     plugins = plugins.resolve(strict=True)
     if not plugins.is_dir():
         raise ValueError("plugins-dir не является каталогом")
+
+    # Preflight every destination before creating the safety copy or writing anything.
+    # A symlink in an ancestor (for example plugins/CHRDK_Core -> another disk) is
+    # just as dangerous as a symlink at the destination itself.
+    destinations = {name: plugins / Path(*PurePosixPath(name).parts) for name in files}
+    for target in destinations.values():
+        _assert_no_symlink_path(plugins, target)
+        if target.exists() and not target.is_file():
+            raise ValueError(f"Небезопасная цель: {target}")
     safety = plugins / "CHRDK_Core" / "backups" / "pre-restore"
+    _assert_no_symlink_path(plugins, safety)
+
     safety.mkdir(parents=True, exist_ok=True)
     safety_copy = Path(tempfile.mkdtemp(prefix="before-restore-", dir=safety))
     staging = Path(tempfile.mkdtemp(prefix="chrdk-restore-", dir=plugins.parent))
     try:
         for name, raw in files.items():
-            relative = Path(*PurePosixPath(name).parts)
-            current = plugins / relative
-            if current.is_symlink() or (current.exists() and not current.is_file()):
-                raise ValueError(f"Небезопасная цель: {current}")
+            current = destinations[name]
+            _assert_no_symlink_path(plugins, current)
             if current.exists():
-                saved = safety_copy / relative
+                saved = safety_copy / Path(*PurePosixPath(name).parts)
                 saved.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(current, saved)
-            staged = staging / relative
+            staged = staging / Path(*PurePosixPath(name).parts)
             staged.parent.mkdir(parents=True, exist_ok=True)
             staged.write_bytes(raw)
-        for name in files:
-            relative = Path(*PurePosixPath(name).parts)
-            target = plugins / relative
+        for target_name, target in destinations.items():
+            _assert_no_symlink_path(plugins, target)
             target.parent.mkdir(parents=True, exist_ok=True)
-            os.replace(staging / relative, target)
+            os.replace(staging / Path(*PurePosixPath(target_name).parts), target)
             try:
                 target.chmod(0o600)
             except OSError:

@@ -24,8 +24,9 @@ import java.util.UUID;
  * завершение авторизации). Контракт: интерфейс расширяется только добавлением методов,
  * {@link #API_VERSION} растёт на каждое такое расширение.</p>
  *
- * <p>API42 добавляет замороженный грант Кузни ({@link ShopExchange}, {@link ForgeMarketCatalog})
- * и мягкий мост к производителю расходников ({@link ForgeMaterialSource}).</p>
+ * <p>API45 добавляет lineage и sequence-сверку Claims. API42 добавляет замороженный
+ * грант Кузни ({@link ShopExchange}, {@link ForgeMarketCatalog}) и мягкий мост к
+ * производителю расходников ({@link ForgeMaterialSource}).</p>
  *
  * <p>Методы {@link #economy()}, {@link #permissions()} и {@link #luckPerms()} возвращают
  * {@link Optional#empty()}, когда соответствующий плагин не установлен; типы Vault и
@@ -34,8 +35,8 @@ import java.util.UUID;
  */
 public interface ChrdkRegisterApi {
 
-    /** Версия контракта API. API42: восемь PDC-расходников Кузни, ForgeMarketCatalog, nullable frozen grant в ShopExchange и ForgeMaterialSource; API41: уведомление AnvilPaidResultEvent после ручной полной оплаты; API40: AnvilCosts/AnvilUse — полная цена без клиентского запрета 40; API39: денежная награда BP once и накопление буста без игрового потолка; API38: MobRewardPolicy временных мобов; API37: общие helpers ExplorationCatalog/ExplorationStore/ExplorationAtlas; API 33: мосты внешних интеграций (слушатели безопасности, уведомлений и глобального чата с фильтром получателей, бонус длительности покупок, заморозка входа и сброс сессий без смены пароля); API 32: общий владелец непрерывных пассивных зелий PassivePotions; API 30: общий helper одноразового согласия с котировкой; API 29: точный остаток выручки магазина; API 28: индекс членства кланов; API 27: снят источник оформления удалённого аддона; API 26: сняты контракты удалённых аддонов; API 25: durable checkpoint игровых наград; API 24 — Claims domain settlement. */
-    int API_VERSION = 44;
+    /** Версия контракта API. API45: Claims source lineage и durable high-water для безопасной сверки; API44: точная minor-экономика; API42: восемь PDC-расходников Кузни, ForgeMarketCatalog, nullable frozen grant в ShopExchange и ForgeMaterialSource; API41: уведомление AnvilPaidResultEvent после ручной полной оплаты; API40: AnvilCosts/AnvilUse — полная цена без клиентского запрета 40; API39: денежная награда BP once и накопление буста без игрового потолка; API38: MobRewardPolicy временных мобов; API37: общие helpers ExplorationCatalog/ExplorationStore/ExplorationAtlas; API 33: мосты внешних интеграций (слушатели безопасности, уведомлений и глобального чата с фильтром получателей, бонус длительности покупок, заморозка входа и сброс сессий без смены пароля); API 32: общий владелец непрерывных пассивных зелий PassivePotions; API 30: общий helper одноразового согласия с котировкой; API 29: точный остаток выручки магазина; API 28: индекс членства кланов; API 27: снят источник оформления удалённого аддона; API 26: сняты контракты удалённых аддонов; API 25: durable checkpoint игровых наград; API 24 — Claims domain settlement. */
+    int API_VERSION = 45;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -238,6 +239,10 @@ public interface ChrdkRegisterApi {
     /** API 24: Claims source WAL precedes bank-only atomic domain settlement. */
     default boolean claimSourceRegistered(UUID lineage) { return false; }
     default boolean registerClaimSource(UUID lineage) { return false; }
+    /** API45: current registered Claims source lineage; null means bank unavailable or unregistered. */
+    default UUID claimSourceLineage() { return null; }
+    /** API45: durable Claims settlement high-water for this lineage; -1 means unknown/unavailable. */
+    default long claimExchangeSequence(UUID lineage) { return -1L; }
     default ClaimExchange.Status claimExchangeStatus(ClaimExchange t) { return ClaimExchange.Status.UNAVAILABLE; }
     default ClaimExchange.Status commitClaimExchange(ClaimExchange t) { return ClaimExchange.Status.UNAVAILABLE; }
     default boolean fundClaimPayment(Player payer,long cost) { return false; }

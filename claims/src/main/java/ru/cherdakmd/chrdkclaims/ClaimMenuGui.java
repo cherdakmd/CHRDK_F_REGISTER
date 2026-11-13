@@ -149,7 +149,7 @@ public final class ClaimMenuGui implements Listener {
 
     private ItemStack infoIcon(Player player, MenuHolder holder, int total, int pages) {
         int limit = plugin.service().limitOf(player.getName());
-        int treasury = plugin.store().treasuryOf(player.getName());
+        int balance = plugin.store().treasuryOf(player.getName());
         int own = plugin.store().count(player.getName());
         return item(Material.BOOK, "menu-info-name", "finance.menu-info-lore",
                 "tab", plugin.messages().plain(ClaimMenuModel.titleKey(holder.tab)),
@@ -158,7 +158,7 @@ public final class ClaimMenuGui implements Listener {
                 "pages", String.valueOf(pages),
                 "limit", String.valueOf(limit),
                 "free", String.valueOf(Math.max(0, limit - own)),
-                "treasury", String.valueOf(treasury), "physical", DiamondItems.count(player.getInventory()));
+                "balance", String.valueOf(balance));
     }
 
     private ItemStack emptyIcon(MenuHolder holder) {

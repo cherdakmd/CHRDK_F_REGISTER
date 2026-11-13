@@ -40,6 +40,8 @@ public final class ClaimStore {
     public static final int SCHEMA_VERSION = 4;
     /** Сколько отложенных вестей хранить на игрока (старые вытесняются). */
     public static final int MAX_NOTICES = 40;
+    /** Первая чистая генерация данных: старые приваты/роли/рента не загружаются. */
+    static final int CLEAN_STATE_EPOCH = 2;
 
     private static final Type DATA_TYPE = new TypeToken<LinkedHashMap<String, Object>>() {
     }.getType();
@@ -80,6 +82,14 @@ public final class ClaimStore {
         if(!moneyAvailable()) return false; if(financialRegistered) return true;
         var data=snapshot().data(); financeMap(data).put("registered",true);
         if(!write(data)) return false; financialRegistered=true; dirty=false; return true;
+    }
+    /** Adopt Core's current Claims lineage only before any local financial transition or pending WAL. */
+    synchronized boolean adoptFinanceLineage(java.util.UUID external) {
+        if(!moneyAvailable()||external==null||financialSequence!=0||financialPending!=null) return false;
+        if(financialLineage.equals(external)) return true;
+        var data=snapshot().data(); financeMap(data).put("lineage",external.toString());
+        if(!write(data)) return false;
+        financialLineage=external; dirty=false; return true;
     }
     @SuppressWarnings("unchecked") private static Map<String,Object> financeMap(Map<String,Object> data) { return (Map<String,Object>) data.get("finance"); }
     private Map<String,Object> financialMetadata() {
@@ -122,7 +132,7 @@ public final class ClaimStore {
             old.clearMembers(); old.members.addAll(n.members); n.explicitRoles().forEach(old::applyRole); old.copyClanSharing(n); world.put(e.getKey(),old);
         }
         claims.clear(); claims.putAll(copy.claims); treasury.clear(); treasury.putAll(copy.treasury); notices.clear(); notices.putAll(copy.notices); limits.clear(); limits.putAll(copy.limits); bonuses.clear(); bonuses.putAll(copy.bonuses);
-        chunksClaimedTotal=copy.chunksClaimedTotal; diamondsSpent=copy.diamondsSpent; taxBurned=copy.taxBurned; revision++;
+        chunksClaimedTotal=copy.chunksClaimedTotal; diamondsSpent=copy.diamondsSpent; taxBurned=copy.taxBurned; cleanStateEpoch=copy.cleanStateEpoch; revision++;
     }
     synchronized Claim protectedClaimAt(String world,int x,int z) {
         var before=claimAt(world,x,z); if(before!=null) return before;
@@ -145,8 +155,8 @@ public final class ClaimStore {
     synchronized int legacyTreasuryOf(String name) {
         Integer value = treasury.get(keyIgnoreCase(treasury, name)); return value == null ? 0 : value;
     }
-    boolean transferFunds(Map<String, Long> changes, String inventoryPayer) {
-        if (accounts != null) return accounts.exchange(changes, inventoryPayer);
+    boolean transferFunds(Map<String, Long> changes, String payer) {
+        if (accounts != null) return accounts.exchange(changes, payer);
         // Чистый embedded-режим старых unit-тестов. ClaimsPlugin всегда ставит Core-мост до таймеров.
         synchronized (this) {
             var next = new LinkedHashMap<String, Long>();
@@ -179,6 +189,7 @@ public final class ClaimStore {
     private long taxBurned;
     private long revision;
     private boolean dirty;
+    private int cleanStateEpoch;
     /** Запись запрещена: повреждённый файл не удалось отложить, затирать его нельзя. */
     private volatile boolean blocked;
 
@@ -192,22 +203,162 @@ public final class ClaimStore {
         this.logger = logger;
     }
 
+    /** Only an externally verified bank cursor and receipt-backed permanent bonus may cross the clean-state boundary. */
+    record CleanSeed(java.util.UUID lineage, boolean registered, long sequence, Map<String,Integer> bonuses) {
+        CleanSeed {
+            java.util.Objects.requireNonNull(lineage);
+            if(sequence<0||sequence>=Long.MAX_VALUE||!registered&&sequence!=0) throw new IllegalArgumentException("clean seed sequence");
+            var verified=new LinkedHashMap<String,Integer>(); var names=new java.util.HashSet<String>();
+            if(bonuses!=null) bonuses.forEach((name,count)->{
+                if(name==null||name.isBlank()||name.length()>16||count==null||count<=0||count>100_000
+                        ||!names.add(name.toLowerCase(java.util.Locale.ROOT))) throw new IllegalArgumentException("verified bonus");
+                verified.put(name,count);
+            });
+            bonuses=Map.copyOf(verified);
+        }
+    }
+
+    synchronized boolean hasCleanState() {
+        if(!Files.isRegularFile(file)) return false;
+        try {
+            Map<String,Object> data=GSON.fromJson(ClaimJson.read(file),DATA_TYPE);
+            return data!=null&&longOf(data.get("cleanStateEpoch"))==CLEAN_STATE_EPOCH;
+        } catch(IOException|RuntimeException ignored) { return false; }
+    }
+
+    /** Inspect legacy data without changing/quarantining it; no pending operation or unverified bonus may be discarded. */
+    static CleanSeed inspectCleanSeed(Path dataFolder,Logger logger) throws IOException {
+        Path legacyFile=dataFolder.resolve("claims-data.json");
+        if(Files.exists(dataFolder.resolve("claims-data.json.tmp")))
+            throw new IOException("Interrupted Claims temporary snapshot exists; reconcile it before clean start");
+        if(!Files.exists(legacyFile)) {
+            if(hasLegacyCopies(dataFolder)) throw new IOException("Claims file is missing but backup/corrupt copies exist; reconcile them before clean start");
+            return null;
+        }
+        if(!Files.isRegularFile(legacyFile)) throw new IOException("Claims data path exists but is not a regular file");
+        validateLegacyBonusSchema(legacyFile);
+        var legacy=new ClaimStore(dataFolder,logger);
+        if(!legacy.loadReadOnly()) throw new IOException("Legacy Claims state is invalid; source file left untouched");
+        if(legacy.financialPending()!=null) throw new IOException("Legacy Claims WAL is pending; finish reconciliation before clean reset");
+        if(!legacy.bonusChunks().isEmpty()) throw new IOException("Legacy bonus-chunks has no receipt provenance; purchase confirmation is required before clean reset");
+        return new CleanSeed(legacy.financialLineage(),legacy.financialRegistered(),legacy.financialSequence(),Map.of());
+    }
+
+    private static void validateLegacyBonusSchema(Path legacyFile) throws IOException {
+        var data=ClaimJson.read(legacyFile);
+        if(!data.has("bonus-chunks")) return;
+        var raw=data.get("bonus-chunks");
+        if(raw==null||!raw.isJsonObject()) throw new IOException("Legacy bonus-chunks is not an object; source left untouched");
+        var seen=new java.util.HashSet<String>();
+        for(var entry:raw.getAsJsonObject().entrySet()) {
+            String name=entry.getKey().trim(); var value=entry.getValue();
+            if(name.isBlank()||name.length()>16||!seen.add(name.toLowerCase(java.util.Locale.ROOT))
+                    ||value==null||!value.isJsonPrimitive()||!value.getAsJsonPrimitive().isNumber())
+                throw new IOException("Malformed legacy bonus-chunks entry; source left untouched");
+            int amount;
+            try { amount=value.getAsBigDecimal().intValueExact(); }
+            catch(ArithmeticException|NumberFormatException error) { throw new IOException("Non-integral legacy bonus-chunks entry; source left untouched",error); }
+            if(amount<0||amount>100_000) throw new IOException("Out-of-range legacy bonus-chunks entry; source left untouched");
+            if(amount>0) throw new IOException("Legacy bonus-chunks has no receipt provenance; purchase confirmation is required before clean reset");
+        }
+    }
+
+    private static boolean hasLegacyCopies(Path dataFolder) throws IOException {
+        if(!Files.isDirectory(dataFolder)) return false;
+        try(var paths=Files.list(dataFolder)) {
+            return paths.map(p->p.getFileName().toString()).anyMatch(name->name.equals("claims-data.json.bak")
+                    ||name.equals("claims-data.json.tmp")||name.startsWith("claims-data.json.corrupt-")||name.startsWith("claims-data.json.pre-restore-")
+                    ||name.startsWith("claims-data.json.pre-clean-"));
+        }
+    }
+
+    /** Write a new empty Claims domain, preserving only verified transaction high-water and receipt-backed bonus entries. */
+    synchronized boolean initializeCleanState(CleanSeed seed) {
+        if(finance!=null||blocked||Files.exists(file)&&seed==null||Files.exists(file.resolveSibling("claims-data.json.tmp"))
+                ||!Files.exists(file)&&hasLegacyCopiesUnchecked()) return false;
+        if(Files.exists(file)&&!archiveLegacyFiles()) {
+            protectionUnknown=true; moneyAvailable=false; blocked=true;
+            return false;
+        }
+        reset();
+        if(seed!=null) {
+            financialLineage=seed.lineage();
+            financialRegistered=seed.registered();
+            financialSequence=seed.sequence();
+            bonuses.putAll(seed.bonuses());
+        }
+        cleanStateEpoch=CLEAN_STATE_EPOCH;
+        dirty=true;
+        if(!write(snapshot().data())) {
+            protectionUnknown=true; moneyAvailable=false; blocked=true;
+            return false;
+        }
+        dirty=false;
+        return true;
+    }
+
+    private boolean hasLegacyCopiesUnchecked() {
+        try { return hasLegacyCopies(file.getParent()); }
+        catch(IOException error) { return true; }
+    }
+
+    /** Preserve current and prior backups under unique names before the regular .bak rotates. */
+    private boolean archiveLegacyFiles() {
+        try {
+            String stamp=Long.toString(System.currentTimeMillis());
+            archive(file,stamp);
+            archive(backup,stamp);
+            return true;
+        } catch(IOException error) {
+            logger.log(Level.SEVERE,"[CHRDK_Claims] Не удалось архивировать все старые Claims-файлы; чистый сброс остановлен",error);
+            return false;
+        }
+    }
+
+    private void archive(Path source,String stamp) throws IOException {
+        if(!Files.isRegularFile(source)) return;
+        Path target=source.resolveSibling(source.getFileName()+".pre-clean-epoch-"+CLEAN_STATE_EPOCH+"-"+stamp);
+        int suffix=1;
+        while(Files.exists(target)) target=source.resolveSibling(source.getFileName()+".pre-clean-epoch-"+CLEAN_STATE_EPOCH+"-"+stamp+"-"+(suffix++));
+        Files.copy(source,target,StandardCopyOption.COPY_ATTRIBUTES);
+        try(var channel=java.nio.channels.FileChannel.open(target,java.nio.file.StandardOpenOption.WRITE)) {channel.force(true);}
+        try(var channel=java.nio.channels.FileChannel.open(target.getParent(),java.nio.file.StandardOpenOption.READ)) {channel.force(true);}
+    }
+
+    /** Fail closed when no trustworthy Claims snapshot is available for protection. */
+    synchronized void protectUnknownState(String reason) {
+        protectionUnknown=true; moneyAvailable=false; blocked=true;
+        logger.severe("[CHRDK_Claims] "+reason+"; вся земля временно считается защищённой, платежи и изменения заблокированы");
+    }
+
     // ------------------------------------------------------------------ io --
 
     public synchronized void load() {
+        loadInternal(true);
+    }
+
+    /** Read-only load used before a clean cutover; a bad legacy file is never quarantined or rewritten here. */
+    synchronized boolean loadReadOnly() {
+        return loadInternal(false);
+    }
+
+    private boolean loadInternal(boolean quarantineInvalid) {
         if(finance!=null) throw new IllegalStateException("Финансовый источник перезагружается только при остановленном сервере");
         reset();
-        if (!Files.exists(file)) return;
+        if (!Files.exists(file)) {
+            try {
+                if(hasLegacyCopies(file.getParent())) return invalidRead(new IOException("Claims JSON отсутствует, но сохранены старые резервные копии"),quarantineInvalid);
+            } catch(IOException error) { return invalidRead(error,quarantineInvalid); }
+            return true;
+        }
         Map<String, Object> data;
         try {
             data = GSON.fromJson(ClaimJson.read(file), DATA_TYPE);
         } catch (IOException | RuntimeException exception) {
-            quarantine(exception);
-            return;
+            return invalidRead(exception, quarantineInvalid);
         }
         if (data == null) {
-            quarantine(new IllegalArgumentException("Пустой файл приватов"));
-            return;
+            return invalidRead(new IllegalArgumentException("Пустой файл приватов"), quarantineInvalid);
         }
         try {
             read(data);
@@ -226,14 +377,28 @@ public final class ClaimStore {
                     }
                 } catch(RuntimeException e) { throw new LegacyMoneyException("Неверный финансовый domain/WAL: "+e.getMessage()); }
             } else if(json.has("finance")) throw new LegacyMoneyException("Пониженная схема с финансовым WAL");
+            cleanStateEpoch = (int) longOf(data.get("cleanStateEpoch"));
+            if(cleanStateEpoch!=0&&cleanStateEpoch!=CLEAN_STATE_EPOCH) throw new LegacyMoneyException("Неизвестная генерация состояния Claims");
             dirty = (int) longOf(data.get("version")) < SCHEMA_VERSION;
+            return true;
         } catch (LegacyMoneyException exception) {
             treasury.clear(); // Территории уже прочитаны: финансовая ошибка не снимает их защиту.
-            quarantine(exception);
+            return invalidRead(exception, quarantineInvalid);
         } catch (RuntimeException exception) {
             reset();
-            quarantine(exception);
+            return invalidRead(exception, quarantineInvalid);
         }
+    }
+
+    private boolean invalidRead(Exception exception, boolean quarantineInvalid) {
+        if(quarantineInvalid) quarantine(exception);
+        else {
+            protectionUnknown=true;
+            moneyAvailable=false;
+            blocked=true;
+            logger.log(Level.SEVERE,"[CHRDK_Claims] Старые данные нельзя безопасно проверить; исходный файл не изменён, чистый сброс остановлен",exception);
+        }
+        return false;
     }
 
     /** Пишет данные синхронно. Вызывается из onDisable и асинхронной задачи. */
@@ -285,6 +450,7 @@ public final class ClaimStore {
         taxBurned = 0;
         revision = 0;
         dirty = false;
+        cleanStateEpoch = 0;
         blocked = false;
     }
 
@@ -299,6 +465,8 @@ public final class ClaimStore {
     @SuppressWarnings("unchecked")
     private void read(Map<String, Object> data) {
         int version = (int) longOf(data.get("version"));
+        cleanStateEpoch = (int) longOf(data.get("cleanStateEpoch"));
+        if(cleanStateEpoch!=0&&cleanStateEpoch!=CLEAN_STATE_EPOCH) throw new LegacyMoneyException("Неизвестная генерация состояния Claims");
 
         long now = System.currentTimeMillis();
         int repairedDates = 0;
@@ -456,6 +624,7 @@ public final class ClaimStore {
         synchronized (this) {
             Map<String, Object> data = new LinkedHashMap<>();
             data.put("version", SCHEMA_VERSION); data.put("finance",financialMetadata());
+            if(cleanStateEpoch>0) data.put("cleanStateEpoch",cleanStateEpoch);
             List<Map<String, Object>> claimsList = new ArrayList<>();
             for (Map<Long, Claim> world : claims.values()) {
                 for (Claim claim : world.values()) {

@@ -238,6 +238,11 @@ public final class BankStore {
 
     public synchronized boolean claimSourceRegistered(UUID lineage) { return incomeSourceAvailable("claim-land",lineage); }
     public synchronized boolean registerClaimSource(UUID lineage) { return registerIncomeSource("claim-land",lineage); }
+    /** Durable committed sequence for the one registered Claims lineage; -1 means unavailable or foreign. */
+    public synchronized long claimSequence(UUID lineage) {
+        if(!available||lineage==null||!lineage.equals(entitlementSources.get("claim-land"))) return -1L;
+        var old=claimSettlements.get(lineage); return old==null?0L:old.sequence();
+    }
     public synchronized ClaimExchange.Status claimStatus(ClaimExchange t) {
         if(!available||t==null||!t.valid()||!claimSourceRegistered(t.lineage())) return ClaimExchange.Status.UNAVAILABLE;
         var old=claimSettlements.get(t.lineage());

@@ -82,10 +82,27 @@ public final class ChargeInventory {
         }
         return remaining>0?null:new Plan(after,debit,cash,-remaining);
     }
+    /** Bank-only plan used by sources that must never take currency items from storage. */
+    public static Plan planBankOnly(ItemStack[] before,long price,long spendableBalance) {
+        if(before==null||before.length!=36||price<0||spendableBalance<0||spendableBalance<price)return null;
+        return new Plan(copy(before),price,0,0);
+    }
+    /** Exact minor-unit bank-only plan; the inventory snapshot is retained but never tendered. */
+    public static Plan planMinorBankOnly(ItemStack[] before,long price,long spendableBalanceMinor,int rateBps) {
+        if(before==null||before.length!=36||price<0||spendableBalanceMinor<0||spendableBalanceMinor<price
+                ||rateBps<5000||rateBps>20000)return null;
+        return new Plan(copy(before),price,0,0);
+    }
     public static boolean valid(ChargeJournal.Pending pending) {
         if (pending == null || pending.payment() == null || !pending.payment().valid()) return false;
-        var c = pending.payment(); var plan = c.minor()?planMinor(decode(pending.beforeInventory()),c.price(),c.debit(),c.rateBps())
-                :plan(decode(pending.beforeInventory()), c.price(), c.debit());
+        var c = pending.payment();
+        // Existing in-flight claims teleports may contain a historical item tender. Validate that exact old plan for recovery,
+        // but Core will not recommit it if the bank has no receipt. New plans carry debit=price and cash=change=0.
+        boolean bankOnly=BankCharge.bankOnlySource(c.source())&&c.debit()==c.price()&&c.cash()==0&&c.change()==0;
+        var before=decode(pending.beforeInventory());
+        var plan = c.minor()
+                ?(bankOnly?planMinorBankOnly(before,c.price(),c.debit(),c.rateBps()):planMinor(before,c.price(),c.debit(),c.rateBps()))
+                :(bankOnly?planBankOnly(before,c.price(),c.debit()):plan(before,c.price(),c.debit()));
         return plan != null && plan.debit == c.debit() && plan.cash == c.cash() && plan.change == c.change()
                 && matches(plan.after, pending.afterInventory())
                 && c.inventoryHash().equals(AuctionPayment.hash(pending.beforeInventory(), pending.afterInventory()))
