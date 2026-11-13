@@ -79,15 +79,15 @@ class ReleaseValidationTest(unittest.TestCase):
         version = re.search(r"^plugin_version=(.+)$", (root / "gradle.properties").read_text(), re.M).group(1)
         memo = (root / "docs/releases/update-memo.txt").read_text(encoding="utf-8")
         current = memo.split("Ниже — предыдущие изменения", 1)[0]
-        if version == "2.0.3-fix":
-            self.assertIn("CHRDK 2.0.3-fix", current)
+        if version == "2.0.4":
+            self.assertIn("CHRDK 2.0.4", current)
             self.assertIn("HOTFIX", current)
             self.assertIn("19 JAR одной версии", current)
-            self.assertIn("chrdk-vk-2.0.3-fix.jar", current)
-            self.assertIn("chrdk-disasters-2.0.3-fix.jar", current)
+            self.assertIn("chrdk-vk-2.0.4.jar", current)
+            self.assertIn("chrdk-disasters-2.0.4.jar", current)
             self.assertIn("Mine Treasure", current)
-            self.assertIn("bank-charge.json", current)
-            self.assertIn("fail-closed", current)
+            self.assertIn("welcome-gifts.json", current)
+            self.assertIn("личная", current)
             return
         self.assertIn(f"Комплект {version}", current)
         # v1.5.2-rc.2 уже опубликован: его ZIP физически содержит 22 JAR.
