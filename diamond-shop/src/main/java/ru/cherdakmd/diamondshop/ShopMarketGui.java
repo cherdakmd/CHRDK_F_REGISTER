@@ -204,6 +204,7 @@ public final class ShopMarketGui implements Listener {
     private void claimGift(Player player) {
         ShopWelcomeGift gift=plugin.welcomeGift();
         if(gift==null||!gift.enabled())return;
+        plugin.shopService().restoreBinding(); // источник diamond-shop должен быть закреплён в банке до кредитования
         var core=plugin.coreApi(); var market=plugin.shopService().store().market();
         ShopWelcomeGift.Bank bank=new ShopWelcomeGift.Bank() {
             public boolean available(java.util.UUID expected) {
@@ -211,6 +212,9 @@ public final class ShopMarketGui implements Listener {
             }
             public boolean credit(java.util.UUID expected,java.util.UUID playerId,String key,long amount) {
                 return core!=null&&core.creditMarketEntitlement("diamond-shop",expected,key,playerId,amount);
+            }
+            public long creditedBase(java.util.UUID expected,java.util.UUID playerId,String key) {
+                return core==null?-1:core.creditedEntitlementBase("diamond-shop",expected,key,playerId);
             }
         };
         var status=gift.claim(player.getUniqueId(),market,bank);
