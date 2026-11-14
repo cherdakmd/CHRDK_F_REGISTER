@@ -83,10 +83,31 @@ class SkillsLayoutTest {
         assertTrue(source.contains("case POTIONS -> renderPotions"));
         assertTrue(source.contains("case POTIONS -> onPotionsClick"));
         assertTrue(source.contains("Tab.POTIONS"));
+        assertTrue(source.contains("slot == TAB_POTIONS"),
+                "клик по кнопке вкладки должен переключать на вкладку зелий");
         String api = Files.readString(
                 Path.of("src/main/java/ru/cherdakmd/chrdkskills/SkillsMenuApi.java"),
                 StandardCharsets.UTF_8);
         assertTrue(api.contains("POTIONS"), "вкладка должна быть в публичном контракте");
+    }
+
+    /**
+     * Каждая кнопка вкладки верхнего ряда должна переключать вкладку по клику:
+     * без маршрута в onClick клик проваливается в обработчик текущей вкладки и
+     * «ничего не происходит» (так было с вкладкой зелий).
+     */
+    @Test
+    void everyTabButtonIsRoutedInClickHandler() throws IOException {
+        String source = source();
+        Matcher matcher = Pattern.compile("TAB_[A-Z_]+\\s*=\\s*\\d+").matcher(source);
+        int found = 0;
+        while (matcher.find()) {
+            String name = matcher.group().split("=")[0].trim();
+            assertTrue(source.contains("slot == " + name),
+                    "вкладка " + name + " не переключается по клику");
+            found++;
+        }
+        assertTrue(found >= 5, "вкладки верхнего ряда должны существовать");
     }
 
     @Test
