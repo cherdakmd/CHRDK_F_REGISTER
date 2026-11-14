@@ -11,11 +11,10 @@ class ForgeShopGuiTest {
         var visible = ForgeMarketCatalog.SKUS.stream()
                 .filter(s -> !ForgeShopService.isPotionSku(s.id())).toList();
         assertEquals(8, visible.size());
-        // Зелья опыта сняты из каталога (2.0.6): в Кузне их нет вообще,
-        // покупка живёт в меню /skills.
-        assertEquals(0, ForgeMarketCatalog.SKUS.stream()
+        // skill_xp_* — только валидация старых грантов в whitelist; витрина
+        // их не показывает, покупка зелий живёт в меню /skills.
+        assertEquals(10, ForgeMarketCatalog.SKUS.stream()
                 .filter(s -> ForgeShopService.isPotionSku(s.id())).count());
-        assertEquals(8, ForgeMarketCatalog.SKUS.size());
         int first = ShopLayout.FIRST_ITEM_SLOT + 9;
         for (int index = 0; index < visible.size(); index++) {
             assertEquals(index, ForgeShopGui.offerIndex(first + index, visible.size()));

@@ -40,6 +40,7 @@ public final class SkillsPlugin extends JavaPlugin {
     private SkillAbilities abilities;
     private SkillXpStore xpStore;
     private SkillXpItems xpItems;
+    private SkillXpShop xpShop;
     private BukkitTask abilityTask;
     private BukkitTask saveTask;
     private BukkitTask effectTask;
