@@ -1,0 +1,4 @@
+# CHRDK_Mobs — тексты тиров мобов.
+messages:
+  mob-name-prefix: "<gold>Т%tier%</gold> <dark_gray>·</dark_gray> <white>%name%</white>"
+  mob-reward: "<gray>Тир %tier% · <white>%mob%</white>: <green>+%amount% ⛁</green> в /bal</gray>"

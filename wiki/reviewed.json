@@ -31,8 +31,8 @@
       "text": "50b80f02b9200ed8653d50c1bf802fd4de8d272a9bf1f46cf92618d743bed3cd"
     },
     "classes": {
-      "reason": "Кулдаун зелий в конфиге (по умолчанию 0) и миграция messages v4: xp-potion-used без %left%, удалён xp-potion-daily-limit; wiki/skills.md обновлён, классы и дерево перков не затронуты",
-      "sources": "dd54b4bce21d0e54c6525d25ac67ba68d6e3fdadbcd4f0a0518ff196e0914648",
+      "reason": "Ступени кривой навыков (тир каждые 10 уровней) и новый модуль тиров мобов (расстояние от спавна, здоровье/урон, награды в /bal); wiki/mobs.md добавлена, index и skills обновлены",
+      "sources": "b8e5c47457721bbc89197332f31bebf424f53bcd3604efbc296a017007e6cd7f",
       "text": "503edef62357862f67d17df249b393023697d6dca6342cbe792b0d4dc78cb8cc"
     },
     "commands": {
@@ -86,14 +86,19 @@
       "text": "17c878e1ab52ceb2a7c3361a7bef133c8bd1004a59641898f2c525f7c48fff8f"
     },
     "index": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
+      "reason": "Ступени кривой навыков (тир каждые 10 уровней) и новый модуль тиров мобов (расстояние от спавна, здоровье/урон, награды в /bal); wiki/mobs.md добавлена, index и skills обновлены",
       "sources": "a5d85a6707bd89dfdb796d660a447d88dc10ca86802912784747c4866c5bb3cf",
-      "text": "13b0089b89035cd13598d177608718282608bc671993a3c370012b297c779cd7"
+      "text": "81105e7dc18f0959f41385bc2c2c448c76cdccf250f2e0256b1207fc28e468b7"
     },
     "menu": {
       "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
       "sources": "fd1707a01988f440bee55b62397646dd5666b3c4f4e4575eecbc8ea3dac573d7",
       "text": "eb6fdaf663b2005735002c5f23bb7f751b31a7447b3fc2cc77d741ff7c4cb2f9"
+    },
+    "mobs": {
+      "reason": "Ступени кривой навыков (тир каждые 10 уровней) и новый модуль тиров мобов (расстояние от спавна, здоровье/урон, награды в /bal); wiki/mobs.md добавлена, index и skills обновлены",
+      "sources": "18716780448407828662b4ca011c9c9fd9c00f8f0db64fdabc1e79a8be3c618c",
+      "text": "1c11b65d2b66ec442127d7bc28bbb16cb8632c83363e67783ef96fd4bba87b8c"
     },
     "moderation": {
       "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
@@ -106,8 +111,8 @@
       "text": "8f1bddfa65aabb38fab8ebdad77656a627e340e765229de34ab3a24dd96fef2e"
     },
     "perktree": {
-      "reason": "Кулдаун зелий в конфиге (по умолчанию 0) и миграция messages v4: xp-potion-used без %left%, удалён xp-potion-daily-limit; wiki/skills.md обновлён, классы и дерево перков не затронуты",
-      "sources": "dd54b4bce21d0e54c6525d25ac67ba68d6e3fdadbcd4f0a0518ff196e0914648",
+      "reason": "Ступени кривой навыков (тир каждые 10 уровней) и новый модуль тиров мобов (расстояние от спавна, здоровье/урон, награды в /bal); wiki/mobs.md добавлена, index и skills обновлены",
+      "sources": "b8e5c47457721bbc89197332f31bebf424f53bcd3604efbc296a017007e6cd7f",
       "text": "3e1a2fe232bb8c384a682ac98f8133ab0560de790bab9a2a2d9542ea0b673666"
     },
     "pets": {
@@ -136,9 +141,9 @@
       "text": "3952f8546596c3e43fd324d30ea4030512bd593d4d7bf1d1e92badb6dc07e5b8"
     },
     "skills": {
-      "reason": "Кулдаун зелий в конфиге (по умолчанию 0) и миграция messages v4: xp-potion-used без %left%, удалён xp-potion-daily-limit; wiki/skills.md обновлён, классы и дерево перков не затронуты",
-      "sources": "90b176fdaf759277cd9bceff88ca12e83188d9bdf4c3f508cdb3a9056de41cdb",
-      "text": "c04699155486a26b65fe3c7a41d2f8b30a3cb77f4f081865dafe3076b00a6787"
+      "reason": "Ступени кривой навыков (тир каждые 10 уровней) и новый модуль тиров мобов (расстояние от спавна, здоровье/урон, награды в /bal); wiki/mobs.md добавлена, index и skills обновлены",
+      "sources": "a4b4034a147b7363200f644825f24b620955bed67c84c5496295fef22eecb011",
+      "text": "e496d2162230009687a96ce03b6b033302016f072669d7ec8e304c40cbca15a7"
     },
     "social-link": {
       "reason": "Сверены повторно после финальных правок: social-link.md и vk.md описывают 8 карточек дня (тиры/прорыв/коллекционер/день сервера, часы 09:00-19:00), девятый пост дайджеста 21:00, контакт 4rdk.ru-mc.ru · 1.21 и выше на PNG и в тексте; plugin.yml дополнен softdepend CHRDK_TierForge/CHRDK_Achievements (опрос без них молчит); profile.md не затронут",
