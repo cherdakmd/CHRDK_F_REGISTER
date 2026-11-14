@@ -70,4 +70,17 @@ class SkillXpShopTest {
         assertTrue(schema.contains("xp-potions.price"));
         assertTrue(schema.contains("xp-potions.cooldown-seconds"));
     }
+
+    @Test
+    void stalePotionTextsAreMigratedFromOwnerFiles() throws IOException {
+        String messages = read("src/main/resources/messages.yml");
+        assertTrue(messages.contains("xp-potion-used: \"<green>%skill%: +%xp% XP.</green>\""),
+                "текст без %left%: суточного остатка зелий больше нет");
+        assertFalse(messages.contains("xp-potion-daily-limit"),
+                "суточный лимит зелий удалён вместе с текстом");
+        String schema = read("src/main/resources/config-schema.yml");
+        assertTrue(schema.contains("messages-version: 4"));
+        assertTrue(schema.contains("remove: [messages.xp-potion-daily-limit, messages.xp-potion-used]"),
+                "старые значения с %left% вычищаются из файлов владельцев миграцией");
+    }
 }

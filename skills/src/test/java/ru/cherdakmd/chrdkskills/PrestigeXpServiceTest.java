@@ -184,7 +184,7 @@ final class PrestigeXpServiceTest {
 
         String schema = read("src/main/resources/config-schema.yml");
         assertTrue(schema.contains("config-version: 4"));
-        assertTrue(schema.contains("messages-version: 3"));
+        assertTrue(schema.contains("messages-version: 4"));
 
         String wiki = read("../wiki/skills.md");
         assertTrue(wiki.contains("/skills balance"));
