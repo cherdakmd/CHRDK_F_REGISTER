@@ -32,7 +32,7 @@
     },
     "classes": {
       "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "4708cb069ef0a0afe3927cf62ba782365a94f176806b4e85da1b7b952c7653d1",
+      "sources": "0b03fed6a154222afdf7c3bc46b114adfc83545882ebcec699b65ba987aad3f7",
       "text": "503edef62357862f67d17df249b393023697d6dca6342cbe792b0d4dc78cb8cc"
     },
     "commands": {
@@ -107,7 +107,7 @@
     },
     "perktree": {
       "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "4708cb069ef0a0afe3927cf62ba782365a94f176806b4e85da1b7b952c7653d1",
+      "sources": "0b03fed6a154222afdf7c3bc46b114adfc83545882ebcec699b65ba987aad3f7",
       "text": "3e1a2fe232bb8c384a682ac98f8133ab0560de790bab9a2a2d9542ea0b673666"
     },
     "pets": {
@@ -137,7 +137,7 @@
     },
     "skills": {
       "reason": "2.0.6: зелья — дроп с серийным pity и покупка в меню /skills; Кузня зелья не продаёт. Страницы skills и shop обновлены и сверены",
-      "sources": "cac5afde1e154bd43a99233cdd8285f864d1053c273dd744b760342438079a65",
+      "sources": "8254c5f406df406fcfe86f8480a2f003fdff3f6e65346fdc9b933090483a4e1f",
       "text": "0d19624a9617043c16fba9f91d1dbc2d5f1be32e0ad540437fc4bbe89ebb558b"
     },
     "social-link": {
