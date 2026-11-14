@@ -20,9 +20,14 @@ class DailyCardsConfigTest {
         assertTrue(cfg.showValues());
         assertNotNull(cfg.footer());
         assertEquals(9, cfg.hour(DailyCardKind.RICHEST));
+        assertEquals(10, cfg.hour(DailyCardKind.TIERS));
         assertEquals(12, cfg.hour(DailyCardKind.PRESTIGE));
+        assertEquals(13, cfg.hour(DailyCardKind.PROGRESS));
         assertEquals(15, cfg.hour(DailyCardKind.MINER));
+        assertEquals(16, cfg.hour(DailyCardKind.COLLECTOR));
         assertEquals(18, cfg.hour(DailyCardKind.HUNTER));
+        assertEquals(19, cfg.hour(DailyCardKind.SERVER));
+        assertEquals(DailyCardsConfig.DEFAULT_CONTACT, cfg.contact());
     }
 
     @Test
@@ -56,17 +61,32 @@ class DailyCardsConfigTest {
     }
 
     @Test
-    void fourSlotsAndRetryUseOwnerTimezone() {
+    void eightSlotsAndRetryUseOwnerTimezone() {
         DailyCardsConfig cfg = DailyCardsConfig.DEFAULT;
-        // 06:00Z = 09:00 МСК, 09:00Z = 12:00 МСК и т.д.
+        // 06:00Z = 09:00 МСК, 07:00Z = 10:00 МСК и т.д.
         assertTrue(cfg.isSlotTime(DailyCardKind.RICHEST, Instant.parse("2026-11-03T06:00:00Z")));
+        assertTrue(cfg.isSlotTime(DailyCardKind.TIERS, Instant.parse("2026-11-03T07:00:00Z")));
         assertTrue(cfg.isSlotTime(DailyCardKind.PRESTIGE, Instant.parse("2026-11-03T09:00:00Z")));
+        assertTrue(cfg.isSlotTime(DailyCardKind.PROGRESS, Instant.parse("2026-11-03T10:00:00Z")));
         assertTrue(cfg.isSlotTime(DailyCardKind.MINER, Instant.parse("2026-11-03T12:00:00Z")));
+        assertTrue(cfg.isSlotTime(DailyCardKind.COLLECTOR, Instant.parse("2026-11-03T13:00:00Z")));
         assertTrue(cfg.isSlotTime(DailyCardKind.HUNTER, Instant.parse("2026-11-03T15:00:00Z")));
+        assertTrue(cfg.isSlotTime(DailyCardKind.SERVER, Instant.parse("2026-11-03T16:00:00Z")));
         assertFalse(cfg.isSlotTime(DailyCardKind.HUNTER, Instant.parse("2026-11-03T15:01:00Z")));
         assertTrue(cfg.isRetryTime(DailyCardKind.HUNTER, Instant.parse("2026-11-03T15:04:00Z")));
         assertFalse(cfg.isRetryTime(DailyCardKind.HUNTER, Instant.parse("2026-11-03T15:06:00Z")));
         assertEquals("2026-11-03", cfg.dayKey(Instant.parse("2026-11-03T06:00:00Z")));
         assertTrue(cfg.scheduleLabel().contains("21:00"));
+    }
+
+    @Test
+    void contactIsReadOrFallsBackToDefault() {
+        YamlConfiguration yaml = new YamlConfiguration();
+        yaml.set("wall-daily-cards.contact", "  play.example.org · версия 1.22 и выше  ");
+        assertEquals("play.example.org · версия 1.22 и выше",
+                DailyCardsConfig.parse(yaml).contact());
+        YamlConfiguration blank = new YamlConfiguration();
+        blank.set("wall-daily-cards.contact", "  ");
+        assertEquals(DailyCardsConfig.DEFAULT_CONTACT, DailyCardsConfig.parse(blank).contact());
     }
 }

@@ -13,8 +13,10 @@ import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 
 /**
- * Оркестратор четырёх персональных карточек дня. Вместе с суточным дайджестом
- * в 21:00 это ровно пять записей на стене сообщества за сутки.
+ * Оркестратор восьми карточек дня: четыре номинации игроков, три новые
+ * номинации 2.0.6 (тиры, прокачка, достижения) и агрегат «День сервера».
+ * Вместе с суточным дайджестом в 21:00 это ровно девять записей на стене
+ * сообщества за сутки.
  *
  * <p>Планировщик тикает на главном потоке раз в минуту: сбор никнеймов и
  * балансов требует Bukkit API. Сама сеть ({@code wall.post} текстом и PNG в
@@ -62,7 +64,7 @@ public final class DailyCardsService {
                     + "карточки уходят в беседу ВК");
         }
         schedule();
-        plugin.getLogger().info("[daily-cards] четыре карточки игроков включены: " + config.scheduleLabel());
+        plugin.getLogger().info("[daily-cards] восемь карточек дня включены: " + config.scheduleLabel());
     }
 
     /** Живая перезагрузка конфига плагина без рестарта сервера. */
@@ -117,6 +119,10 @@ public final class DailyCardsService {
         Instant now = Instant.now();
         String day = config.dayKey(now);
         for (DailyCardKind kind : ledger.due(config, now)) {
+            if (kind == DailyCardKind.SERVER) {
+                checkDueServer(day);
+                continue;
+            }
             DailyNomination nomination;
             try {
                 nomination = nomination(kind);
@@ -136,25 +142,60 @@ public final class DailyCardsService {
             ledger.markPosting(kind);
             ledger.save();
             plugin.getServer().getScheduler().runTaskAsynchronously(plugin,
-                    () -> publish(kind, nomination, day));
+                    () -> publish(kind, nomination, null, day));
         }
     }
 
+    /** Серверная карточка: агрегаты суток вместо номинации игрока. */
+    private void checkDueServer(String day) {
+        DailyServerCard.Stats stats = serverStats();
+        if (!stats.hasData()) {
+            plugin.getLogger().info("[daily-cards] нет данных для «" + DailyCardKind.SERVER.title()
+                    + "» за " + day + " — карточка пропущена");
+            ledger.markAttempt(DailyCardKind.SERVER);
+            ledger.save();
+            return;
+        }
+        ledger.markAttempt(DailyCardKind.SERVER);
+        ledger.markPosting(DailyCardKind.SERVER);
+        ledger.save();
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin,
+                () -> publish(DailyCardKind.SERVER, null, stats, day));
+    }
+
+    /** Суточный срез для карточки «День сервера» из накопленных агрегатов. */
+    private DailyServerCard.Stats serverStats() {
+        WallDigestCollector collector = digest.collector();
+        return new DailyServerCard.Stats(collector.peakOnline(), collector.newPlayers(),
+                collector.totalMobKills(), collector.totalBlocks());
+    }
+
     /** Сетевая часть: текст на стену + PNG в беседу + локальный ledger. */
-    private void publish(DailyCardKind kind, DailyNomination nomination, String day) {
+    private void publish(DailyCardKind kind, DailyNomination nomination,
+                         DailyServerCard.Stats stats, String day) {
         try {
             VkConfig cfg = plugin.config();
-            byte[] png = DailyPlayerCard.render(nomination, config, day);
             String marker = "#chrdk_" + shortHash(day + kind.id());
-            String baseText = DailyPlayerCard.message(nomination, config, day, marker);
+            byte[] png;
+            String baseText;
+            String subject;
+            if (stats != null) {
+                png = DailyServerCard.render(stats, config, day);
+                baseText = DailyServerCard.message(stats, config, day, marker);
+                subject = "";
+            } else {
+                png = DailyPlayerCard.render(nomination, config, day);
+                baseText = DailyPlayerCard.message(nomination, config, day, marker);
+                subject = nomination.playerName();
+            }
             String guid = "chrdk-card-" + kind.id() + "-" + day;
             String wallText = cfg.withDiscuss(baseText);
             long postId = cfg.photoWallEnabled()
                     ? publisher.publish(png, wallText, guid)
                     : publisher.publishText(wallText, guid);
             ledger.markPosted(kind, postId);
-            plugin.getLogger().info("[daily-cards] «" + kind.title() + "» → "
-                    + nomination.playerName() + ": " + cfg.wallPostUrl(postId));
+            plugin.getLogger().info("[daily-cards] «" + kind.title() + "»"
+                    + (subject.isBlank() ? "" : " → " + subject) + ": " + cfg.wallPostUrl(postId));
             sendChatCard(cfg, png, baseText, guid, kind.title());
             if (plugin.socialService() != null) {
                 plugin.socialService().audit().write("social.wall.card", "", "vk",
@@ -199,10 +240,24 @@ public final class DailyCardsService {
     private DailyNomination nomination(DailyCardKind kind) {
         return switch (kind) {
             case RICHEST -> richest();
+            case TIERS -> tiers();
             case PRESTIGE -> fromLeader(kind, digest.collector().topPrestige());
-            case HUNTER -> fromLeader(kind, digest.collector().topMobKills());
+            case PROGRESS -> fromLeader(kind, digest.collector().topLevelGain());
             case MINER -> miner();
+            case COLLECTOR -> fromLeader(kind, digest.collector().topAchievements());
+            case HUNTER -> fromLeader(kind, digest.collector().topMobKills());
+            case SERVER -> null; // агрегаты собираются отдельно — см. checkDueServer
         };
+    }
+
+    /** Мастер тиров: лучший тир за сутки, имя тира едет строкой величины. */
+    private DailyNomination tiers() {
+        WallDigestCollector.Leader leader = digest.collector().topTier();
+        if (leader == null) {
+            return null;
+        }
+        return new DailyNomination(DailyCardKind.TIERS, leader.name(), leader.value(), 0L,
+                digest.collector().tierNameOf(leader.name()));
     }
 
     /** Самый богатый: обезличенный баланс из CHRDK_Core по всем известным никам. */

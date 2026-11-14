@@ -31,6 +31,8 @@ dependencies {
     // Публичный ChrdkSkillsApi.totalPrestige(Player) нужен дайджесту стены.
     // compileOnly + softdepend: без CHRDK_Skills плагин просто не показывает престиж.
     compileOnly project(':skills')
+    // Достижения и тиры — для новых карточек «Коллекционер»/«Мастер тиров» (2.0.6).
+    compileOnly project(':achievements')
     compileOnly "com.google.code.gson:gson:2.11.0"
     // Счётчики TAB (%chrdksocial_*%) реализованы как PlaceholderExpansion.
     // Тот же pinned jar, что и в корневом проекте; compileOnly, в JAR не упаковывается.
@@ -41,6 +43,7 @@ dependencies {
     testImplementation "org.purpurmc.purpur:purpur-api:${project.purpur_api_version}"
     testImplementation project(':')
     testImplementation project(':skills')
+    testImplementation project(':achievements')
     testImplementation "com.google.code.gson:gson:2.11.0"
     testImplementation(rootProject.findProperty('chrdk.papiJar')
             ? files(rootProject.file(rootProject.property('chrdk.papiJar')))

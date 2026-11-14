@@ -44,6 +44,9 @@ public final class DailyPlayerCard {
             out.append(value).append('\n');
         }
         out.append('\n').append(config.footer());
+        if (!config.contact().isBlank()) {
+            out.append('\n').append(config.contact());
+        }
         if (marker != null && !marker.isBlank()) {
             out.append('\n').append(marker);
         }
@@ -110,6 +113,13 @@ public final class DailyPlayerCard {
             g.setColor(WallDigestCard.ACCENT);
             g.drawLine(64, 645, 118, 645);
             WallDigestCard.text(g, config.footer(), 132, 651, footerFont, WallDigestCard.CREAM);
+            String contact = config.contact();
+            if (!contact.isBlank()) {
+                int contactX = WIDTH - 64 - g.getFontMetrics(footerFont).stringWidth(contact);
+                if (contactX > 560) {
+                    WallDigestCard.text(g, contact, contactX, 651, footerFont, WallDigestCard.ACCENT);
+                }
+            }
 
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             if (!ImageIO.write(image, "png", out)) {

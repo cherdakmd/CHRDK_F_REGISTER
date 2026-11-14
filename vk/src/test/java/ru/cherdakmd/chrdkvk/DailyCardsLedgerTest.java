@@ -70,8 +70,8 @@ class DailyCardsLedgerTest {
     void disabledConfigSuppressesEverything() {
         DailyCardsLedger ledger = fresh();
         DailyCardsConfig disabled = new DailyCardsConfig(false,
-                java.time.ZoneId.of("Europe/Moscow"), true, 9, 12, 15, 18, 5,
-                "ТВОЙ МИР. ТВОЯ ИСТОРИЯ.");
+                java.time.ZoneId.of("Europe/Moscow"), true, 9, 10, 12, 13, 15, 16, 18, 19, 5,
+                "ТВОЙ МИР. ТВОЯ ИСТОРИЯ.", DailyCardsConfig.DEFAULT_CONTACT);
         assertEquals(List.of(), ledger.due(disabled, SLOT_RICHEST));
     }
 

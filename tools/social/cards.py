@@ -1,7 +1,7 @@
 """Игровые постеры: утверждённая иллюстрация, крупный заголовок и минимум текста."""
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont, ImageOps
-from content import SafetyError
+from content import CONTACT, SafetyError
 
 LABELS = {'news': 'Новости CHERDAK', 'tip': 'Полезный совет',
           'feature': 'Открой возможности', 'reminder': 'Не забудь о главном'}
@@ -71,5 +71,10 @@ def render(post, path):
     d.line((64, 645, 118, 645), fill=accent, width=3)
     d.text((132, 630), 'ТВОЙ МИР. ТВОЯ ИСТОРИЯ.', font=font(19, True), fill=cream,
            stroke_width=1, stroke_fill='#20312b')
+    contact_font = font(19, True)
+    contact_x = 1280 - 64 - d.textlength(CONTACT, font=contact_font)
+    if contact_x > 560:
+        d.text((contact_x, 630), CONTACT, font=contact_font, fill=accent,
+               stroke_width=1, stroke_fill='#20312b')
     path = Path(path); path.parent.mkdir(parents=True, exist_ok=True)
     image.convert('RGB').save(path, format='PNG', optimize=True)

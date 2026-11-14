@@ -116,8 +116,8 @@
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "profile": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "d855e16fe12dde7865a0b19f1b920f99698dc874bd9af5fdbfbb3aa8b4d940e8",
+      "reason": "Сверены повторно после финальных правок: social-link.md и vk.md описывают 8 карточек дня (тиры/прорыв/коллекционер/день сервера, часы 09:00-19:00), девятый пост дайджеста 21:00, контакт 4rdk.ru-mc.ru · 1.21 и выше на PNG и в тексте; plugin.yml дополнен softdepend CHRDK_TierForge/CHRDK_Achievements (опрос без них молчит); profile.md не затронут",
+      "sources": "23ceec347425c8f7571fd4182f457783ff7b226121cbf19b210abc442c4f04c7",
       "text": "f2a1fafaef6d54a60b0dd2e9545374a59a83ad49a5de3ace0069e441c187d309"
     },
     "quests": {
@@ -141,9 +141,9 @@
       "text": "0d19624a9617043c16fba9f91d1dbc2d5f1be32e0ad540437fc4bbe89ebb558b"
     },
     "social-link": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "362ff0f211219b6c625a3ea0ba9d3c433545e331c7c1c979838cd955d527b7e8",
-      "text": "1f6cf95d9c8c2180dbf871aa9b19a7bfcde5405cf77b75954b7575920d2aef14"
+      "reason": "Сверены повторно после финальных правок: social-link.md и vk.md описывают 8 карточек дня (тиры/прорыв/коллекционер/день сервера, часы 09:00-19:00), девятый пост дайджеста 21:00, контакт 4rdk.ru-mc.ru · 1.21 и выше на PNG и в тексте; plugin.yml дополнен softdepend CHRDK_TierForge/CHRDK_Achievements (опрос без них молчит); profile.md не затронут",
+      "sources": "e7d96a3e9777bbf5d88b927508f0fdf32af0d4fb8dd8c3894b6ce2f2cbfd992c",
+      "text": "8c1868e80db8506e56c66fb266e510b44a1ceb3e23a115f7b713a0f8640abb0d"
     },
     "start": {
       "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
@@ -176,9 +176,9 @@
       "text": "d6c40448c8dfbd722efc367869e505f89521efcbd348d03c8891231b3d202e9c"
     },
     "vk": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "362ff0f211219b6c625a3ea0ba9d3c433545e331c7c1c979838cd955d527b7e8",
-      "text": "b592e465a73dd13186763622b51190400cffd40960e233f58c63379b88a9bba9"
+      "reason": "Сверены повторно после финальных правок: social-link.md и vk.md описывают 8 карточек дня (тиры/прорыв/коллекционер/день сервера, часы 09:00-19:00), девятый пост дайджеста 21:00, контакт 4rdk.ru-mc.ru · 1.21 и выше на PNG и в тексте; plugin.yml дополнен softdepend CHRDK_TierForge/CHRDK_Achievements (опрос без них молчит); profile.md не затронут",
+      "sources": "e7d96a3e9777bbf5d88b927508f0fdf32af0d4fb8dd8c3894b6ce2f2cbfd992c",
+      "text": "1fd95870417ca29ef985ee87f50119955bb51d4efbcfb772defd6f6c47a3c927"
     }
   },
   "schema": 1

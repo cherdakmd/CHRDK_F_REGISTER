@@ -125,6 +125,8 @@ class PublishMaxTests(unittest.TestCase):
         self.assertIn('1.4.287 — заголовок', text)
         self.assertIn('Полный текст новости для игроков.', text)
         self.assertIn('releases/tag/v1.4.287', text)
+        self.assertIn('4rdk.ru-mc.ru', text)
+        self.assertIn('версия 1.21 и выше', text)
 
 
 class EnvTests(unittest.TestCase):

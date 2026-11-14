@@ -133,6 +133,13 @@ class ContentTest(unittest.TestCase):
             self.assertLess(len(post.text), 8000)
             self.assertIn('проверяйте в игре', post.text)
 
+    def test_contact_line_precedes_marker_in_every_post_text(self):
+        for topic in catalog():
+            post = tip(NOW, topic)
+            self.assertIn('4rdk.ru-mc.ru', post.text)
+            self.assertIn('версия 1.21 и выше', post.text)
+            self.assertTrue(post.text.rstrip().endswith(post.marker))
+
     def test_removed_and_changed_source_are_blocked(self):
         topic = {**catalog()[0], 'source': 'missing-page'}
         with self.assertRaises(SafetyError):

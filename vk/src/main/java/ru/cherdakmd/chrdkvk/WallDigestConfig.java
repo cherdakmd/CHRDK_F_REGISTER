@@ -35,14 +35,15 @@ public record WallDigestConfig(
         int minEvents,
         int pollMinutes,
         String title,
-        String footer) {
+        String footer,
+        String contact) {
 
     public static final String PREFIX = "wall-digest.";
 
     public static final WallDigestConfig DEFAULT = new WallDigestConfig(
             true, 21, 0, ZoneId.of("Europe/Moscow"),
             true, true, true, true, true, true, false, 3, 1, 5,
-            "Итоги дня", "ТВОЙ МИР. ТВОЯ ИСТОРИЯ.");
+            "Итоги дня", "ТВОЙ МИР. ТВОЯ ИСТОРИЯ.", DailyCardsConfig.DEFAULT_CONTACT);
 
     public WallDigestConfig {
         hour = Math.clamp(hour, 0, 23);
@@ -53,6 +54,7 @@ public record WallDigestConfig(
         zone = zone == null ? ZoneId.of("Europe/Moscow") : zone;
         title = blank(title) ? "Итоги дня" : title.trim();
         footer = blank(footer) ? "ТВОЙ МИР. ТВОЯ ИСТОРИЯ." : footer.trim();
+        contact = blank(contact) ? DailyCardsConfig.DEFAULT_CONTACT : contact.trim();
     }
 
     public static WallDigestConfig parse(FileConfiguration cfg) {
@@ -81,7 +83,8 @@ public record WallDigestConfig(
                 cfg.getInt(PREFIX + "min-events", DEFAULT.minEvents()),
                 cfg.getInt(PREFIX + "poll-minutes", DEFAULT.pollMinutes()),
                 cfg.getString(PREFIX + "title", DEFAULT.title()),
-                cfg.getString(PREFIX + "footer", DEFAULT.footer()));
+                cfg.getString(PREFIX + "footer", DEFAULT.footer()),
+                cfg.getString(PREFIX + "contact", DEFAULT.contact()));
     }
 
     /** Ключ игровых суток в часовом поясе владельца ({@code YYYY-MM-DD}). */
@@ -117,7 +120,7 @@ public record WallDigestConfig(
     public WallDigestConfig withPlayerNames(boolean show) {
         return new WallDigestConfig(enabled, hour, minute, zone, includePrestige,
                 includeDonations, includeOnline, includeBlocks, includeDiamonds,
-                includeMobs, show, maxNames, minEvents, pollMinutes, title, footer);
+                includeMobs, show, maxNames, minEvents, pollMinutes, title, footer, contact);
     }
 
     private static boolean blank(String value) {

@@ -57,6 +57,9 @@ public final class WallDigestCard {
             }
         }
         out.append("\n").append(config.footer());
+        if (!config.contact().isBlank()) {
+            out.append("\n").append(config.contact());
+        }
         if (marker != null && !marker.isBlank()) {
             out.append("\n").append(marker);
         }
@@ -138,6 +141,13 @@ public final class WallDigestCard {
             g.setColor(ACCENT);
             g.drawLine(64, 645, 118, 645);
             text(g, config.footer(), 132, 651, footerFont, CREAM);
+            String contact = config.contact();
+            if (!contact.isBlank()) {
+                int contactX = WIDTH - 64 - g.getFontMetrics(footerFont).stringWidth(contact);
+                if (contactX > 560) {
+                    text(g, contact, contactX, 651, footerFont, ACCENT);
+                }
+            }
         } finally {
             g.dispose();
         }

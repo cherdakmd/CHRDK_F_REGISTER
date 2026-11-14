@@ -4,7 +4,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HexFormat;
+import java.util.List;
 import java.util.Locale;
 import java.util.logging.Level;
 import org.bukkit.Bukkit;
@@ -18,7 +21,10 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
+import ru.cherdakmd.chrdkachievements.ChrdkAchievementsApi;
+import ru.cherdakmd.chrdkregister.api.ChrdkTierApi;
 import ru.cherdakmd.chrdkregister.api.events.PassGrantedEvent;
 import ru.cherdakmd.chrdkskills.ChrdkSkillsApi;
 
@@ -214,7 +220,7 @@ public final class WallDigestService implements Listener {
         collector.recordMobKills(killer.getName(), 1);
     }
 
-    /** Опрос престижа идёт на главном потоке: Bukkit API так безопаснее. */
+    /** Опрос статистики идёт на главном потоке: Bukkit API так безопаснее. */
     private void pollPrestige() {
         if (stopped || !config.enabled()) {
             return;
@@ -224,23 +230,74 @@ public final class WallDigestService implements Listener {
         if (config.includeOnline()) {
             collector.recordOnline(Bukkit.getOnlinePlayers().size());
         }
-        if (config.includePrestige()) {
-            try {
-                ChrdkSkillsApi skills = Bukkit.getServicesManager().load(ChrdkSkillsApi.class);
-                if (skills != null) {
-                    for (Player player : Bukkit.getOnlinePlayers()) {
-                        try {
-                            collector.observePrestige(player.getName(), skills.totalPrestige(player));
-                        } catch (RuntimeException onePlayer) {
-                            // Один сломанный игрок не должен ронять весь опрос.
-                        }
+        try {
+            ChrdkSkillsApi skills = Bukkit.getServicesManager().load(ChrdkSkillsApi.class);
+            ChrdkAchievementsApi achievements = Bukkit.getServicesManager().load(ChrdkAchievementsApi.class);
+            ChrdkTierApi tiers = Bukkit.getServicesManager().load(ChrdkTierApi.class);
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                try {
+                    if (config.includePrestige() && skills != null) {
+                        collector.observePrestige(player.getName(), skills.totalPrestige(player));
                     }
+                    if (skills != null) {
+                        collector.observeLevelGain(player.getName(), skills.totalLevel(player));
+                    }
+                    if (achievements != null) {
+                        collector.observeAchievements(player.getName(), achievements.unlockedCount(player));
+                    }
+                    if (tiers != null) {
+                        pollTier(player, tiers);
+                    }
+                } catch (RuntimeException onePlayer) {
+                    // Один сломанный игрок не должен ронять весь опрос.
                 }
-            } catch (LinkageError | RuntimeException missingSkills) {
-                // CHRDK_Skills не установлен: публикуем поддержку и онлайн без престижа.
             }
+        } catch (LinkageError | RuntimeException missingApi) {
+            // CHRDK_Skills/TierForge/Achievements не установлены: топы карточек молчат.
         }
         collector.save();
+    }
+
+    /** Лучший тир в инвентаре и экипировке игрока — для карточки «Мастер тиров». */
+    private void pollTier(Player player, ChrdkTierApi tiers) {
+        List<String> ladder = tiers.ladder();
+        if (ladder == null || ladder.isEmpty()) {
+            return;
+        }
+        List<ItemStack> items = new ArrayList<>();
+        Collections.addAll(items, player.getInventory().getContents());
+        Collections.addAll(items, player.getInventory().getArmorContents());
+        items.add(player.getInventory().getItemInOffHand());
+        int bestIndex = -1;
+        String bestId = "";
+        for (ItemStack item : items) {
+            if (item == null || item.getType().isAir()) {
+                continue;
+            }
+            String id = tiers.tierOf(item);
+            int index = id == null ? -1 : ladder.indexOf(id);
+            if (index > bestIndex) {
+                bestIndex = index;
+                bestId = id;
+            }
+        }
+        if (bestIndex >= 0) {
+            collector.observeTier(player.getName(), bestIndex, tierLabel(bestId));
+        }
+    }
+
+    /** Русское имя тира для карточки (соответствует CHRDK_TierForge messages). */
+    static String tierLabel(String tierId) {
+        return switch (tierId == null ? "" : tierId) {
+            case "cursed" -> "Проклятый";
+            case "weak" -> "Слабый";
+            case "common" -> "Простой";
+            case "fine" -> "Хороший";
+            case "rare" -> "Редкий";
+            case "epic" -> "Эпический";
+            case "legendary" -> "Легендарный";
+            default -> tierId == null ? "" : tierId;
+        };
     }
 
     /** Сетевая часть вынесена в асинхронный таймер, чтобы не блокировать тики. */
