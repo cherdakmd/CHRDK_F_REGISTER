@@ -32,11 +32,33 @@ class MobTierConfigTest {
     }
 
     @Test
+    void progressionAndEliteSettingsAreNamed() throws IOException {
+        String config = read("src/main/resources/config.yml");
+        assertTrue(config.contains("progression:"));
+        assertTrue(config.contains("health-per-100: 0.10"));
+        assertTrue(config.contains("damage-per-100: 0.05"));
+        assertTrue(config.contains("prestige-weight: 5"));
+        assertTrue(config.contains("max-bonus: 1.5"));
+        assertTrue(config.contains("elite:"));
+        assertTrue(config.contains("chance: 0.03"));
+        assertTrue(config.contains("health-multiplier: 2.0"));
+        assertTrue(config.contains("damage-multiplier: 1.5"));
+        assertTrue(config.contains("abilities-min: 2"));
+        assertTrue(config.contains("abilities-max: 3"));
+        assertTrue(config.contains("reward-tiers: 2"));
+        assertTrue(config.contains("epithets:"), "имена элит настраиваются");
+    }
+
+    @Test
     void textsAndPluginContract() throws IOException {
         String messages = read("src/main/resources/messages.yml");
         assertTrue(messages.contains("mob-name-prefix"));
         assertTrue(messages.contains("mob-reward"));
         assertTrue(messages.contains("mobtiers-header"));
+        assertTrue(messages.contains("elite-name"), "имя элиты");
+        assertTrue(messages.contains("elite-reward"), "награда за элиту");
+        assertTrue(messages.contains("mobtiers-progression"));
+        assertTrue(messages.contains("mobtiers-elite"));
         String plugin = read("src/main/resources/plugin.yml");
         assertTrue(plugin.contains("name: CHRDK_Mobs"));
         assertTrue(plugin.contains("main: ru.cherdakmd.chrdkmobs.MobsPlugin"));

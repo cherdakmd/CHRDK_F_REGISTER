@@ -33,6 +33,7 @@ public final class MobsPlugin extends JavaPlugin {
             }
         }
         Bukkit.getPluginManager().registerEvents(new MobTierListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new EliteAbilityListener(this), this);
         var mobtiers = getCommand("mobtiers");
         if (mobtiers != null) {
             var handler = new MobTierCommand(this);
