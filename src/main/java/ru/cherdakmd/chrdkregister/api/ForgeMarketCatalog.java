@@ -35,7 +35,12 @@ public final class ForgeMarketCatalog {
     /** Неизменяемый каталог: id, материал, цена за штуку, искра ли это, дроп ли с Hunt. */
     public record Sku(String id, String material, long price, boolean seed, boolean huntDrop) { }
 
-    /** Ровно восемь настоящих PDC-расходников. Порядок — порядок витрины. */
+    /**
+     * Неизменяемый whitelist: восемь настоящих PDC-расходников + десять
+     * skill_xp_* — только для валидации замороженных грантов старых сделок
+     * (requireJson/shop-data.json), витрина и цены их не продают. Порядок —
+     * порядок витрины.
+     */
     public static final List<Sku> SKUS = List.of(
             new Sku("ascend", "ECHO_SHARD", 128, false, false),
             new Sku("temper", "NAUTILUS_SHELL", 96, false, false),

@@ -66,6 +66,9 @@ final class ForgeShopService {
     }
 
     static boolean isPotionSku(String sku) {
+        // Зелья опыта навыков не продаются в Кузне: витрина их пропускает, а
+        // покупка живёт в меню /skills. Whitelist skill_xp_* в каталоге ядра
+        // остаётся только для валидации замороженных грантов старых сделок.
         return sku != null && sku.startsWith("skill_xp_");
     }
 

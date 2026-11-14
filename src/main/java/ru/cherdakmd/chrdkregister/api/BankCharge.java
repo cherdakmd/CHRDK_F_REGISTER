@@ -19,6 +19,7 @@ public record BankCharge(String source, UUID lineage, long sequence, UUID transa
             case "teleports" -> "chrdktele.use";
             case "claim-teleports" -> "chrdkclaims.teleport";
             case "guilds" -> "chrdkguilds.use";
+            case "skill-xp" -> "chrdkskills.use";
             default -> null;
         };
     }

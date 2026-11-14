@@ -11,6 +11,8 @@ class ForgeShopGuiTest {
         var visible = ForgeMarketCatalog.SKUS.stream()
                 .filter(s -> !ForgeShopService.isPotionSku(s.id())).toList();
         assertEquals(8, visible.size());
+        // skill_xp_* — только валидация старых грантов в whitelist; витрина
+        // их не показывает, покупка зелий живёт в меню /skills.
         assertEquals(10, ForgeMarketCatalog.SKUS.stream()
                 .filter(s -> ForgeShopService.isPotionSku(s.id())).count());
         int first = ShopLayout.FIRST_ITEM_SLOT + 9;
