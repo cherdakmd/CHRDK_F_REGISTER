@@ -640,6 +640,10 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
             switchTab(player, holder, Tab.PRESTIGE);
             return;
         }
+        if (slot == TAB_POTIONS) {
+            switchTab(player, holder, Tab.POTIONS);
+            return;
+        }
         if (slot == SLOT_GUIDE) {
             sendGuide(player);
             return;
