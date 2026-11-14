@@ -16,6 +16,8 @@ from facts import FactBook
 from freshness import check as freshness_check
 
 MOSCOW = ZoneInfo('Europe/Moscow')
+# Контакт анонса сервера в тексте каждого поста-картинки: адрес и версия Minecraft.
+CONTACT = '4rdk.ru-mc.ru · версия 1.21 и выше'
 TAG = re.compile(r'v\d+\.\d+(?:\.\d+)?(?:-fix)?')
 # Пререлизы собираются тем же Release-workflow, но под стабильный TAG не подходят.
 RC_TAG = re.compile(r'v\d+\.\d+(?:\.\d+)?-rc\.[1-9]\d*')
@@ -44,7 +46,7 @@ class Post:
 
     @property
     def text(self):
-        return self.body.rstrip() + '\n\n' + self.marker
+        return self.body.rstrip() + '\n\n' + CONTACT + '\n' + self.marker
 
 
 def normalize(text):

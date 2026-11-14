@@ -73,6 +73,11 @@ public final class WallDigestCollector {
         state.diamondsByPlayer.clear();
         state.mobKillsByPlayer.clear();
         state.prestigeGains.clear();
+        state.tierByPlayer.clear();
+        state.tierNameByPlayer.clear();
+        state.levelGainByPlayer.clear();
+        state.levelBaselineByPlayer.clear();
+        state.achievementsByPlayer.clear();
         state.postingDay = ""; // прошлая незавершённая попытка больше не актуальна
         // Снимок престижа и lastPostedDay намеренно сохраняются между сутками.
     }
@@ -188,6 +193,100 @@ public final class WallDigestCollector {
         return best;
     }
 
+    /** Лучший замеченный тир за сутки; имя тира несёт {@link #tierNameOf}. */
+    public synchronized Leader topTier() {
+        Leader best = null;
+        for (Map.Entry<String, Integer> row : state.tierByPlayer.entrySet()) {
+            int value = row.getValue() == null ? 0 : row.getValue();
+            if (row.getKey() == null || row.getKey().isBlank()) {
+                continue;
+            }
+            if (best == null || value > best.value()
+                    || (value == best.value() && row.getKey().compareToIgnoreCase(best.name()) < 0)) {
+                best = new Leader(row.getKey(), value);
+            }
+        }
+        return best;
+    }
+
+    /** Отображаемое имя тира игрока («Легендарный») или пустая строка. */
+    public synchronized String tierNameOf(String playerName) {
+        return playerName == null ? "" : state.tierNameByPlayer.getOrDefault(playerName, "");
+    }
+
+    /** Лидер по приросту суммарного уровня навыков за сутки. */
+    public synchronized Leader topLevelGain() {
+        return topInt(state.levelGainByPlayer);
+    }
+
+    /** Лидер по числу открытых достижений. */
+    public synchronized Leader topAchievements() {
+        return topInt(state.achievementsByPlayer);
+    }
+
+    /** Опрос тиров: сохраняем максимум за сутки вместе с отображаемым именем. */
+    public synchronized void observeTier(String playerName, int ladderIndex, String displayName) {
+        String name = SocialEventText.safePlayer(playerName);
+        if (name.isEmpty() || ladderIndex < 0) {
+            return;
+        }
+        Integer known = state.tierByPlayer.get(name);
+        if (known == null || ladderIndex > known) {
+            state.tierByPlayer.put(name, ladderIndex);
+            state.tierNameByPlayer.put(name, DailyNomination.safeNote(displayName));
+        }
+    }
+
+    /** Опрос уровней навыков: прирост от первого наблюдения суток. */
+    public synchronized void observeLevelGain(String playerName, int totalLevel) {
+        String name = SocialEventText.safePlayer(playerName);
+        if (name.isEmpty() || totalLevel < 0) {
+            return;
+        }
+        Integer baseline = state.levelBaselineByPlayer.get(name);
+        if (baseline == null) {
+            state.levelBaselineByPlayer.put(name, totalLevel);
+            return;
+        }
+        int gain = Math.max(0, totalLevel - baseline);
+        Integer known = state.levelGainByPlayer.get(name);
+        if (known == null || gain > known) {
+            state.levelGainByPlayer.put(name, gain);
+        }
+    }
+
+    /** Опрос достижений: максимум открытого за сутки. */
+    public synchronized void observeAchievements(String playerName, int unlocked) {
+        String name = SocialEventText.safePlayer(playerName);
+        if (name.isEmpty() || unlocked < 0) {
+            return;
+        }
+        Integer known = state.achievementsByPlayer.get(name);
+        if (known == null || unlocked > known) {
+            state.achievementsByPlayer.put(name, unlocked);
+        }
+    }
+
+    /** Пик онлайна за сутки — для карточки «День сервера». */
+    public synchronized int peakOnline() {
+        return state.peakOnline;
+    }
+
+    /** Сколько новичков зашло за сутки. */
+    public synchronized int newPlayers() {
+        return state.newPlayers;
+    }
+
+    /** Все победы над монстрами за сутки. */
+    public synchronized long totalMobKills() {
+        return state.mobKills;
+    }
+
+    /** Все добытые блоки за сутки. */
+    public synchronized long totalBlocks() {
+        return state.blocksBroken;
+    }
+
     /** Сколько алмазов поднял конкретный игрок за эти сутки. */
     public synchronized long diamondsOf(String playerName) {
         if (playerName == null) {
@@ -209,6 +308,21 @@ public final class WallDigestCollector {
         Leader best = null;
         for (Map.Entry<String, Long> row : source.entrySet()) {
             long value = row.getValue() == null ? 0L : row.getValue();
+            if (value <= 0 || row.getKey() == null || row.getKey().isBlank()) {
+                continue;
+            }
+            if (best == null || value > best.value()
+                    || (value == best.value() && row.getKey().compareToIgnoreCase(best.name()) < 0)) {
+                best = new Leader(row.getKey(), value);
+            }
+        }
+        return best;
+    }
+
+    private static Leader topInt(Map<String, Integer> source) {
+        Leader best = null;
+        for (Map.Entry<String, Integer> row : source.entrySet()) {
+            int value = row.getValue() == null ? 0 : row.getValue();
             if (value <= 0 || row.getKey() == null || row.getKey().isBlank()) {
                 continue;
             }

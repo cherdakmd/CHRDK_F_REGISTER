@@ -48,8 +48,8 @@ class DailyPlayerCardTest {
         assertEquals("Марияscript_123456789012", nomination.playerName());
         assertEquals(24, nomination.playerName().length());
         DailyCardsConfig hidden = new DailyCardsConfig(true,
-                java.time.ZoneId.of("Europe/Moscow"), false, 9, 12, 15, 18, 5,
-                "ТВОЙ МИР. ТВОЯ ИСТОРИЯ.");
+                java.time.ZoneId.of("Europe/Moscow"), false, 9, 10, 12, 13, 15, 16, 18, 19, 5,
+                "ТВОЙ МИР. ТВОЯ ИСТОРИЯ.", DailyCardsConfig.DEFAULT_CONTACT);
         String text = DailyPlayerCard.message(nomination, hidden, DAY, "");
         assertTrue(text.contains("Марияscript"));
         assertFalse(text.contains("37"));
@@ -73,6 +73,45 @@ class DailyPlayerCardTest {
         assertEquals("1 победа над монстрами",
                 new DailyNomination(DailyCardKind.HUNTER, "A", 1L, 0L)
                         .valueLine(true));
+    }
+
+    @Test
+    void newNominationValueLinesArePinned() {
+        assertEquals("+1 уровень навыков за сутки",
+                new DailyNomination(DailyCardKind.PROGRESS, "A", 1L, 0L)
+                        .valueLine(true));
+        assertEquals("+5 уровней навыков за сутки",
+                new DailyNomination(DailyCardKind.PROGRESS, "A", 5L, 0L)
+                        .valueLine(true));
+        assertEquals("21 достижение открыто",
+                new DailyNomination(DailyCardKind.COLLECTOR, "A", 21L, 0L)
+                        .valueLine(true));
+        assertEquals("лучший тир — Легендарный",
+                new DailyNomination(DailyCardKind.TIERS, "A", 6L, 0L, "Легендарный")
+                        .valueLine(true));
+        assertEquals("лучший тир предмета",
+                new DailyNomination(DailyCardKind.TIERS, "A", 0L, 0L)
+                        .valueLine(true));
+        assertEquals("",
+                new DailyNomination(DailyCardKind.TIERS, "A", 6L, 0L, "Легендарный")
+                        .valueLine(false));
+    }
+
+    @Test
+    void tierNoteIsSanitizedAndShortened() {
+        var nomination = new DailyNomination(DailyCardKind.TIERS, "A", 6L, 0L,
+                "<gold>Легендарный</gold> предмет игрока очень длинный вообще");
+        assertEquals("goldЛегендарныйgold предмет игро", nomination.note());
+        assertEquals(32, nomination.note().length());
+    }
+
+    @Test
+    void contactLineAppearsInMessage() {
+        var nomination = new DailyNomination(DailyCardKind.RICHEST, "Steve", 12340L, 0L);
+        String text = DailyPlayerCard.message(nomination, DailyCardsConfig.DEFAULT,
+                DAY, "#chrdk_abc123");
+        assertTrue(text.contains("4rdk.ru-mc.ru"));
+        assertTrue(text.contains("1.21"));
     }
 
     @Test

@@ -100,7 +100,7 @@ class WallDigestCardTest {
         var data = digest(3, 2, 17, 1, 1842, 96, 37, List.of());
         var cfg = new WallDigestConfig(true, 21, 0, java.time.ZoneId.of("Europe/Moscow"),
                 true, true, true, false, false, false, false, 3, 1, 5,
-                "Итоги дня", "ТВОЙ МИР. ТВОЯ ИСТОРИЯ.");
+                "Итоги дня", "ТВОЙ МИР. ТВОЯ ИСТОРИЯ.", DailyCardsConfig.DEFAULT_CONTACT);
         String text = WallDigestCard.message(data, cfg, "");
         assertFalse(text.contains("Добыто блоков"));
         assertFalse(text.contains("Получено алмазов"));

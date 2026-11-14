@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from hashlib import sha256
 from pathlib import Path
 
-from content import SafetyError
+from content import CONTACT, SafetyError
 from publisher import Transport
 
 BASE = 'https://platform-api2.max.ru'
@@ -128,8 +128,8 @@ class MaxLedger:
 
 
 def news_text(post, release_url=''):
-    """Текст для MAX: заголовок, краткая карточка и тело поста."""
-    lines = [post.title.strip(), post.caption.strip(), '', post.body.strip()]
+    """Текст для MAX: заголовок, краткая карточка, тело поста и контакт сервера."""
+    lines = [post.title.strip(), post.caption.strip(), '', post.body.strip(), '', CONTACT]
     if release_url:
         lines += ['', release_url]
     return '\n'.join(line for line in lines if line is not None).strip()
