@@ -360,6 +360,7 @@ public final class PluginUpdateService implements AutoCloseable {
         result.put("CHRDK_DailyRewards", "chrdk-daily-rewards");
         result.put("CHRDK_DiamondShop", "chrdk-diamond-shop");
         result.put("CHRDK_Enchants", "chrdk-enchants");
+        result.put("CHRDK_Mobs", "chrdk-mobs");
         result.put("CHRDK_Orders", "chrdk-orders");
         result.put("CHRDK_Quests", "chrdk-quests");
         result.put("CHRDK_Pets", "chrdk-pets");

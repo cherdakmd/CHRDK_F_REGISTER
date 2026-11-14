@@ -36,9 +36,12 @@ class MobTierConfigTest {
         String messages = read("src/main/resources/messages.yml");
         assertTrue(messages.contains("mob-name-prefix"));
         assertTrue(messages.contains("mob-reward"));
+        assertTrue(messages.contains("mobtiers-header"));
         String plugin = read("src/main/resources/plugin.yml");
         assertTrue(plugin.contains("name: CHRDK_Mobs"));
         assertTrue(plugin.contains("main: ru.cherdakmd.chrdkmobs.MobsPlugin"));
         assertTrue(plugin.contains("CHRDK_Core"));
+        assertTrue(plugin.contains("mobtiers"), "команда для меню и рассылки");
+        assertTrue(plugin.contains("chrdkmobs.use"), "право пункта меню");
     }
 }

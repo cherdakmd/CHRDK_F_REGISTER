@@ -33,6 +33,12 @@ public final class MobsPlugin extends JavaPlugin {
             }
         }
         Bukkit.getPluginManager().registerEvents(new MobTierListener(this), this);
+        var mobtiers = getCommand("mobtiers");
+        if (mobtiers != null) {
+            var handler = new MobTierCommand(this);
+            mobtiers.setExecutor(handler);
+            mobtiers.setTabCompleter(handler);
+        }
         getLogger().info("Тиры мобов: " + (config == null ? "конфиг не прочитан" : config.describe()));
     }
 
