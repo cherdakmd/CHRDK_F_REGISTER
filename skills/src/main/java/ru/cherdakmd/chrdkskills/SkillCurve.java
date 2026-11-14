@@ -5,11 +5,14 @@ import java.util.Arrays;
 /**
  * Кривая опыта и уровней.
  *
- * <p>Стоимость следующего уровня растёт линейно:
- * {@code base + growth × (level − 1)}. При базе 100 и росте 25 первый переход
- * стоит 100 опыта, последний (99-й) — 2 550, а весь путь 1..100 — 131 175 опыта.
- * Линейная кривая (а не экспонента) выбрана осознанно: в игре десять навыков,
- * и экспонента превратила бы прокачку в бесконечность уже к 30-му уровню.</p>
+ * <p>Стоимость следующего уровня растёт ступенями по тирам:
+ * {@code (base + growth × (level − 1)) × (1 + tierStep × тир)}, где тир —
+ * каждые 10 уровней (0 для 1–10, 1 для 11–20 и так далее). При базе 100,
+ * росте 25 и шаге 0,5 первый переход стоит 100 опыта, с 11-го уровня — уже
+ * 525, последний (99-й) — 14 025, а весь путь 1..100 — 523 662 опыта: после
+ * каждого тира прокачка заметно сложнее. {@code tierStep = 0} возвращает
+ * прежнюю линейную кривую. Экспонента не используется — при десяти навыках
+ * она упёрлась бы в стену уже к 30-му уровню.</p>
  *
  * <p>Класс чистый (никаких Bukkit-типов) и не хранит состояния — все величины
  * считаются из параметров, поэтому конфиг можно менять без миграции данных:
@@ -17,18 +20,24 @@ import java.util.Arrays;
  */
 public final class SkillCurve {
 
-    public record Params(int maxLevel, long baseXp, double growth) {
+    public record Params(int maxLevel, long baseXp, double growth, double tierStep) {
 
         public Params {
             maxLevel = Math.max(2, Math.min(500, maxLevel));
             baseXp = Math.max(1L, baseXp);
             growth = Math.max(0.0, growth);
+            tierStep = Math.min(10.0, Math.max(0.0, tierStep));
         }
 
-        public static final Params DEFAULT = new Params(100, 100, 25.0);
+        public static final Params DEFAULT = new Params(100, 100, 25.0, 0.5);
     }
 
     private SkillCurve() {
+    }
+
+    /** Тир уровня: 0 для 1–10, 1 для 11–20 и так далее — ступени каждые 10 уровней. */
+    public static int tierOf(int level) {
+        return Math.max(0, level - 1) / 10;
     }
 
     /** Сколько опыта нужно, чтобы перейти с {@code level} на следующий. */
@@ -36,7 +45,8 @@ public final class SkillCurve {
         if (level < 1) {
             return params.baseXp();
         }
-        return Math.round(params.baseXp() + params.growth() * (level - 1));
+        double factor = 1.0 + params.tierStep() * tierOf(level);
+        return Math.round((params.baseXp() + params.growth() * (level - 1)) * factor);
     }
 
     /** Полный опыт, накопленный к началу уровня {@code level} (для 1-го — 0). */

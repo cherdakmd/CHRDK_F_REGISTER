@@ -131,7 +131,8 @@ public final class SkillsConfig {
         SkillCurve.Params curve = new SkillCurve.Params(
                 cfg.getInt("leveling.max-level", 100),
                 cfg.getLong("leveling.base-xp", 100L),
-                cfg.getDouble("leveling.xp-growth", 25.0));
+                cfg.getDouble("leveling.xp-growth", 25.0),
+                cfg.getDouble("leveling.xp-tier-step", 0.5));
         double xpRate = clamp(cfg.getDouble("leveling.xp-rate", 1.0), 0.0, 100.0);
         long maxXp = clamp(cfg.getLong("limits.max-xp-per-action", 100L), 1L, 100_000L);
 

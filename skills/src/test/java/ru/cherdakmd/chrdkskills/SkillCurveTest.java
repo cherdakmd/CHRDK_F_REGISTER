@@ -7,22 +7,45 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Кривая опыта: стоимость уровней, границы и полоса прогресса.
+ * Кривая опыта: ступени тиров, стоимость уровней, границы и полоса прогресса.
  *
- * <p>Все ожидания — из формулы {@code 100 + 25 × (уровень − 1)}. Путь до
- * 100-го уровня — 131 175 опыта; тест страхует и саму формулу, и то, что
- * границы уровней не «съедают» игрока на ровном счёте.</p>
+ * <p>Все ожидания — из формулы {@code (100 + 25 × (уровень − 1)) × (1 + 0,5 ×
+ * тир)}, тир — каждые 10 уровней. Путь до 100-го уровня — 523 662 опыта;
+ * {@code tierStep = 0} возвращает прежнюю линейную кривую (131 175). Тест
+ * страхует и саму формулу, и то, что границы уровней не «съедают» игрока на
+ * ровном счёте.</p>
  */
 class SkillCurveTest {
 
     private static final SkillCurve.Params DEFAULT = SkillCurve.Params.DEFAULT;
 
     @Test
-    void costGrowsLinearly() {
+    void costGrowsByTierStairs() {
         assertEquals(100, SkillCurve.xpForNext(1, DEFAULT));
         assertEquals(125, SkillCurve.xpForNext(2, DEFAULT));
-        assertEquals(2_575, SkillCurve.xpForNext(100, DEFAULT));
+        assertEquals(325, SkillCurve.xpForNext(10, DEFAULT), "тир 0 — без надбавки");
+        assertEquals(525, SkillCurve.xpForNext(11, DEFAULT), "скачок на 11-м: второй тир ×1.5");
+        assertEquals(1_200, SkillCurve.xpForNext(21, DEFAULT), "третий тир ×2");
+        assertEquals(14_163, SkillCurve.xpForNext(100, DEFAULT), "десятый тир ×5.5");
         assertEquals(100, SkillCurve.xpForNext(0, DEFAULT), "нулевой уровень считается первым");
+    }
+
+    @Test
+    void tierOfCountsTenLevelBlocks() {
+        assertEquals(0, SkillCurve.tierOf(1));
+        assertEquals(0, SkillCurve.tierOf(10));
+        assertEquals(1, SkillCurve.tierOf(11));
+        assertEquals(9, SkillCurve.tierOf(100));
+        assertEquals(0, SkillCurve.tierOf(0), "нулевой уровень живёт в первом тире");
+    }
+
+    @Test
+    void tierStepZeroKeepsOldLinearCurve() {
+        SkillCurve.Params linear = new SkillCurve.Params(100, 100, 25.0, 0.0);
+        assertEquals(100, SkillCurve.xpForNext(1, linear));
+        assertEquals(2_550, SkillCurve.xpForNext(99, linear));
+        assertEquals(2_575, SkillCurve.xpForNext(100, linear));
+        assertEquals(131_175, SkillCurve.totalForLevel(100, linear), "прежний путь 1..100");
     }
 
     @Test
@@ -30,7 +53,7 @@ class SkillCurveTest {
         assertEquals(0, SkillCurve.totalForLevel(1, DEFAULT));
         assertEquals(100, SkillCurve.totalForLevel(2, DEFAULT));
         assertEquals(225, SkillCurve.totalForLevel(3, DEFAULT));
-        assertEquals(131_175, SkillCurve.totalForLevel(100, DEFAULT));
+        assertEquals(523_662, SkillCurve.totalForLevel(100, DEFAULT));
     }
 
     @Test
@@ -41,7 +64,8 @@ class SkillCurveTest {
         assertEquals(2, SkillCurve.levelFor(100, DEFAULT));
         assertEquals(2, SkillCurve.levelFor(224, DEFAULT));
         assertEquals(3, SkillCurve.levelFor(225, DEFAULT));
-        assertEquals(100, SkillCurve.levelFor(131_175, DEFAULT));
+        assertEquals(60, SkillCurve.levelFor(131_175, DEFAULT), "прежний полный путь — теперь 60-й уровень");
+        assertEquals(100, SkillCurve.levelFor(523_662, DEFAULT));
         assertEquals(100, SkillCurve.levelFor(999_999_999, DEFAULT), "потолок не пробивается");
     }
 
@@ -53,7 +77,7 @@ class SkillCurveTest {
         assertEquals(125, progress.need());
         assertEquals(40, progress.percent());
 
-        SkillCurve.LevelProgress max = SkillCurve.progress(131_175, DEFAULT);
+        SkillCurve.LevelProgress max = SkillCurve.progress(523_662, DEFAULT);
         assertEquals(100, max.level());
         assertEquals(100, max.percent(), "на максимуме полоса полная");
         assertEquals(0, max.need(), "после 100-го уровня опыт не нужен");
@@ -67,7 +91,7 @@ class SkillCurveTest {
     void missingForLevelNeverNegative() {
         assertEquals(100, SkillCurve.missingForLevel(0, 2, DEFAULT));
         assertEquals(0, SkillCurve.missingForLevel(1_000, 2, DEFAULT));
-        assertEquals(131_175, SkillCurve.missingForLevel(0, 100, DEFAULT));
+        assertEquals(523_662, SkillCurve.missingForLevel(0, 100, DEFAULT));
     }
 
     @Test
@@ -82,13 +106,15 @@ class SkillCurveTest {
 
     @Test
     void paramsAreClamped() {
-        SkillCurve.Params tiny = new SkillCurve.Params(0, 0, -5.0);
+        SkillCurve.Params tiny = new SkillCurve.Params(0, 0, -5.0, -1.0);
         assertEquals(2, tiny.maxLevel(), "минимум два уровня");
         assertEquals(1, tiny.baseXp());
         assertEquals(0.0, tiny.growth());
+        assertEquals(0.0, tiny.tierStep(), "отрицательная ступень прижимается к нулю");
 
-        SkillCurve.Params huge = new SkillCurve.Params(10_000, 100, 25);
+        SkillCurve.Params huge = new SkillCurve.Params(10_000, 100, 25, 99.0);
         assertEquals(500, huge.maxLevel(), "максимум 500 уровней");
+        assertEquals(10.0, huge.tierStep(), "потолок ступени — 10");
     }
 
     @Test
