@@ -1,183 +1,188 @@
 {
   "pages": {
     "about": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "15ecf1b67a9e2742f42b67b70db660fc2aa5e88113c8ee927bdaf639daf11b16",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "a7f57ee748ff6816f690a519976bcf2bbcae66ee627849594d3da803df098de3",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "cae70479c006466e66c64cf71b7a0ded1e7f477c16d7ef0109ac860c84e0a2df",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "c7199f66dfe399e55e68f51ecfb88c50d5613bf6eb0f852351a09aeb0f0e4e3c",
       "text": "bd128e475ee8efae55c3d2d6c9616d5278600f2a8ff1aad7af5e6df3e0b3f5c3"
     },
     "artifacts": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "e17bb951fa11b01412614f551e2ca324f05eafaf1656b45c806a408e8eb82ab5",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "a7725c261a3319e556017d85745083a648a337af3c0a6ee4c19e6f65fcacd73c",
       "text": "51e3ef379d9a8f7e2ccfc6fd41cc0c0823f91f30d7c9a8326ec7962c182d98e4"
     },
     "battlepass": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "e3d413a02cb6bc02c08ee2c6109647766d783afd71ebbda6cf08afbbaef05b5b",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "3ebadd583cf6801e92cb7fddd0201b50c0a318df46f93ce830c5dc63858e5048",
       "text": "997df6e0a9311ea115c4fd3c192b2729034b10c68a4f41c57261ef4b704c5add"
     },
     "chat": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "15ecf1b67a9e2742f42b67b70db660fc2aa5e88113c8ee927bdaf639daf11b16",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "a7f57ee748ff6816f690a519976bcf2bbcae66ee627849594d3da803df098de3",
       "text": "a51c51d20cfe94c553e80893422b000a579b87285b00cbceb452f29eb0773023"
     },
     "claims": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "6b2a6f0c6d3eb777ea152669edd46396eed9e4462286886ef4f524302cebe29e",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "34cfb38e6f86ba0cd7af544973b34f00ac848ea251ff83aab182166c93320293",
       "text": "50b80f02b9200ed8653d50c1bf802fd4de8d272a9bf1f46cf92618d743bed3cd"
     },
     "classes": {
-      "reason": "Кулдаун зелий в конфиге (по умолчанию 0) и миграция messages v4: xp-potion-used без %left%, удалён xp-potion-daily-limit; wiki/skills.md обновлён, классы и дерево перков не затронуты",
-      "sources": "dd54b4bce21d0e54c6525d25ac67ba68d6e3fdadbcd4f0a0518ff196e0914648",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "21481d5b11e5b0694cb2c5085d2ee8a9c4396c6d0afaa0da363ef9443ff9a629",
       "text": "503edef62357862f67d17df249b393023697d6dca6342cbe792b0d4dc78cb8cc"
     },
     "commands": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "f29ad52dc4f06074e01342fea3cfcaf8b0ed6a5f772fdc1fea537b8f568289ed",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "4f0e44b63fa66496605f114a4e44d92fc3f21563d5ab9f66ced2b9e8f0260bdb",
       "text": "46017ca1aca3a1d620ff09b3ffd40ff42885e551a850c85baa15f2c73d03b290"
     },
     "cosmetics": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "3cb2efdbc8738ca34ce9a71f659d90d76f95c978b872ecc4eeecba78103adbca",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "ac323e6e68f0cd71ad72dfc7ab50b29324935aac2f135296ae50c9bf011f8f2d",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "cf250eec6ca806272c00c66d1624d3f6556143b0abd9e7af9bcb556780efd194",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "c5a46a386ecaa2911a96325bf74364901f8ac63fe806c057af226477dedd5fd5",
       "text": "4d7683f5677c50dfe0488961891915b5c2dd6533191a213ee8fdb077ea817eb5"
     },
     "disasters": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "a210ac4e68ac9bd26cac15c4a46f4bb92235f566a77cece53c0b783e55228c74",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "053ac6f6c17f56ef60fc149432a0e2cb28ba51c56a61a190e9d12de048ebc347",
       "text": "121b1cc28a075ced29b6de8abec7dbc20bbb531a01441ddd5fdb836d066d0202"
     },
     "economy": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "2aabd0609f7ae5422fc4376fc17197da63f596c5496be64f87c2c369bd11512b",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "a6692876b59b1dca75457a3bdf356a0aa47e2e67dc754b821e0409e3eb68d3c2",
       "text": "380ede76f428cfc00f3a9df848d00a9b5012222475c10d41cc83359ef3d12d97"
     },
     "enchants": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "1f8bb47026c1f30a4fa542bf68681e509bb9598f97ac4d31f187f378a654eba3",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "42a8b572943c5f06d1b07b16895895948ae235dc609698293572605226f121e6",
       "text": "7e90321ef8a100bae11c53592c62328fa44a958be657b66a86d51ea8c1906a7d"
     },
     "faq": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "fd1707a01988f440bee55b62397646dd5666b3c4f4e4575eecbc8ea3dac573d7",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "80693bf3f8a1ec25ca8cca195cbd74f894414a451cb6e384f34b4180fb88afb2",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "4d9bc5eb58e973f512c848e2c145ed5b2b1d7b5167c6b06e1fe20695cf073be3",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "55b052e8a13ef156c230b8c6d2a9455358802f3be64a2a68aab7a3173f76527b",
       "text": "615d89bba0ac116c220d571f530fcdab7d5ff46162ca7a7ecf24de441a7fb191"
     },
     "guilds": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "6b2a6f0c6d3eb777ea152669edd46396eed9e4462286886ef4f524302cebe29e",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "34cfb38e6f86ba0cd7af544973b34f00ac848ea251ff83aab182166c93320293",
       "text": "bb7d4121d6c42762b2f09d8eb57df986a942df35c77fd2cf899a5e7a38193216"
     },
     "honors": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "15ecf1b67a9e2742f42b67b70db660fc2aa5e88113c8ee927bdaf639daf11b16",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "a7f57ee748ff6816f690a519976bcf2bbcae66ee627849594d3da803df098de3",
       "text": "17c878e1ab52ceb2a7c3361a7bef133c8bd1004a59641898f2c525f7c48fff8f"
     },
     "index": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "a5d85a6707bd89dfdb796d660a447d88dc10ca86802912784747c4866c5bb3cf",
-      "text": "13b0089b89035cd13598d177608718282608bc671993a3c370012b297c779cd7"
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "c4b50cf5f750d9e5cf8f4423e2be5eb94f87088de965f8e6320934ed8ad46620",
+      "text": "81105e7dc18f0959f41385bc2c2c448c76cdccf250f2e0256b1207fc28e468b7"
     },
     "menu": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "fd1707a01988f440bee55b62397646dd5666b3c4f4e4575eecbc8ea3dac573d7",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "80693bf3f8a1ec25ca8cca195cbd74f894414a451cb6e384f34b4180fb88afb2",
       "text": "eb6fdaf663b2005735002c5f23bb7f751b31a7447b3fc2cc77d741ff7c4cb2f9"
     },
+    "mobs": {
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "997b36c7844b4b4df46aa9f4e0279a45ca7f794adb5ca9a086ff9dbaaf373047",
+      "text": "1c11b65d2b66ec442127d7bc28bbb16cb8632c83363e67783ef96fd4bba87b8c"
+    },
     "moderation": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "15ecf1b67a9e2742f42b67b70db660fc2aa5e88113c8ee927bdaf639daf11b16",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "a7f57ee748ff6816f690a519976bcf2bbcae66ee627849594d3da803df098de3",
       "text": "79580a49c09219f65539abace395b5f2469f91fc2f0ac9b3ecae109c4fa1ecb4"
     },
     "orders": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "67b41817a48de7afbe3c2332eb7415f9bdf24bb5cf27dbc6851df725849978f4",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "077143ca72bfacd6816529bab0d185f7465089921dc99a20be29e4480d2ea3d3",
       "text": "8f1bddfa65aabb38fab8ebdad77656a627e340e765229de34ab3a24dd96fef2e"
     },
     "perktree": {
-      "reason": "Кулдаун зелий в конфиге (по умолчанию 0) и миграция messages v4: xp-potion-used без %left%, удалён xp-potion-daily-limit; wiki/skills.md обновлён, классы и дерево перков не затронуты",
-      "sources": "dd54b4bce21d0e54c6525d25ac67ba68d6e3fdadbcd4f0a0518ff196e0914648",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "21481d5b11e5b0694cb2c5085d2ee8a9c4396c6d0afaa0da363ef9443ff9a629",
       "text": "3e1a2fe232bb8c384a682ac98f8133ab0560de790bab9a2a2d9542ea0b673666"
     },
     "pets": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "7d25d842a93768cc5edb889e45b016f14495511a421b57713b0f266c352d6ad1",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "f2cbdf8202fb414ddfb64dc9943e5e98220397ba905df0b5f8d32e1722c7da22",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "profile": {
-      "reason": "Сверены повторно после финальных правок: social-link.md и vk.md описывают 8 карточек дня (тиры/прорыв/коллекционер/день сервера, часы 09:00-19:00), девятый пост дайджеста 21:00, контакт 4rdk.ru-mc.ru · 1.21 и выше на PNG и в тексте; plugin.yml дополнен softdepend CHRDK_TierForge/CHRDK_Achievements (опрос без них молчит); profile.md не затронут",
-      "sources": "23ceec347425c8f7571fd4182f457783ff7b226121cbf19b210abc442c4f04c7",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "fc9421061b9a52c2fd553891fdea04843d415dfe9a13822e91098d0bd05a3423",
       "text": "f2a1fafaef6d54a60b0dd2e9545374a59a83ad49a5de3ace0069e441c187d309"
     },
     "quests": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "85c2f4437d87bf8df4e6086ae4087a13110dbd62120db37e194c0f311e31aa39",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "d494cb7b6aa691566a99bdcdcfef6d739af3fa256b87dd2404685e089cc2c2c5",
       "text": "a42f11010fddbf13238133ac1e2dca525dea95245f5286a88a57738af30fbf13"
     },
     "ranks": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "88cedabd437b68984bcea8e86376ac793795008c27a872e92ac784bb35bc11cb",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "01ea67efab79da40fb4beaf187698838f8cbf7ad5ff21f122374ac43a5d82814",
       "text": "664b466e4b44741175d9c2cdb4da728a0603a04aaaefada8396dd6517d5dca2d"
     },
     "shop": {
-      "reason": "2.0.6: зелья — дроп с серийным pity и покупка в меню /skills; Кузня зелья не продаёт. Страницы skills и shop обновлены и сверены",
-      "sources": "a5d85a6707bd89dfdb796d660a447d88dc10ca86802912784747c4866c5bb3cf",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "c4b50cf5f750d9e5cf8f4423e2be5eb94f87088de965f8e6320934ed8ad46620",
       "text": "3952f8546596c3e43fd324d30ea4030512bd593d4d7bf1d1e92badb6dc07e5b8"
     },
     "skills": {
-      "reason": "Кулдаун зелий в конфиге (по умолчанию 0) и миграция messages v4: xp-potion-used без %left%, удалён xp-potion-daily-limit; wiki/skills.md обновлён, классы и дерево перков не затронуты",
-      "sources": "90b176fdaf759277cd9bceff88ca12e83188d9bdf4c3f508cdb3a9056de41cdb",
-      "text": "c04699155486a26b65fe3c7a41d2f8b30a3cb77f4f081865dafe3076b00a6787"
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "75621b7a0921861192812d414f41604eefc423bbe17eb150b11fc728d93e791c",
+      "text": "e496d2162230009687a96ce03b6b033302016f072669d7ec8e304c40cbca15a7"
     },
     "social-link": {
-      "reason": "Сверены повторно после финальных правок: social-link.md и vk.md описывают 8 карточек дня (тиры/прорыв/коллекционер/день сервера, часы 09:00-19:00), девятый пост дайджеста 21:00, контакт 4rdk.ru-mc.ru · 1.21 и выше на PNG и в тексте; plugin.yml дополнен softdepend CHRDK_TierForge/CHRDK_Achievements (опрос без них молчит); profile.md не затронут",
-      "sources": "e7d96a3e9777bbf5d88b927508f0fdf32af0d4fb8dd8c3894b6ce2f2cbfd992c",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "b6c02cc1559be5b2bf239451dec350997aa967fcd02da0c9ff757065777b50f3",
       "text": "8c1868e80db8506e56c66fb266e510b44a1ceb3e23a115f7b713a0f8640abb0d"
     },
     "start": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "6c5a0bde57fad4e4fcaa8c659b61b95f5af2fb8c28fdf99bf9e4f24253470eb9",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "f8de85df14350c148814e32bf2f98b04ba6f5e21ea97190cd946cb7d21893196",
       "text": "1c0b307e38e52194bb2a42da0757744e32d93312bc6b83178a4745f9cd07a667"
     },
     "starter-kit": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "e17bb951fa11b01412614f551e2ca324f05eafaf1656b45c806a408e8eb82ab5",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "a7725c261a3319e556017d85745083a648a337af3c0a6ee4c19e6f65fcacd73c",
       "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
     },
     "teleports": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "6a9a03384be018964055d35e49c974ba884796c6f2ac552f7b0bb2d15196aa4f",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "582e0b7c3756a01824a31e908e2130d6c4210576683fa3e0d6dc2d37448f4d4d",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "1f8bb47026c1f30a4fa542bf68681e509bb9598f97ac4d31f187f378a654eba3",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "42a8b572943c5f06d1b07b16895895948ae235dc609698293572605226f121e6",
       "text": "c84eb8435e1e4b961e73b0ed64386b129e17395923de6d7b8f3d01bde6ddeaa1"
     },
     "titles": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "5794c7710ba4a3409fbc0c2d060685dd9c383cf46a5a0e075565f44bb5393ae2",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "d90c16183fd4dfa5c11d089b51e4db0775f683477d67fd464e9a6d9f09e5b025",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "2.0.6 (зелья опыта): ядро — источник skill-xp в BankCharge; whitelist Кузни сохранён для валидации старых грантов, механика страниц сверена",
-      "sources": "a5d85a6707bd89dfdb796d660a447d88dc10ca86802912784747c4866c5bb3cf",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "c4b50cf5f750d9e5cf8f4423e2be5eb94f87088de965f8e6320934ed8ad46620",
       "text": "d6c40448c8dfbd722efc367869e505f89521efcbd348d03c8891231b3d202e9c"
     },
     "vk": {
-      "reason": "Сверены повторно после финальных правок: social-link.md и vk.md описывают 8 карточек дня (тиры/прорыв/коллекционер/день сервера, часы 09:00-19:00), девятый пост дайджеста 21:00, контакт 4rdk.ru-mc.ru · 1.21 и выше на PNG и в тексте; plugin.yml дополнен softdepend CHRDK_TierForge/CHRDK_Achievements (опрос без них молчит); profile.md не затронут",
-      "sources": "e7d96a3e9777bbf5d88b927508f0fdf32af0d4fb8dd8c3894b6ce2f2cbfd992c",
+      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
+      "sources": "b6c02cc1559be5b2bf239451dec350997aa967fcd02da0c9ff757065777b50f3",
       "text": "1fd95870417ca29ef985ee87f50119955bb51d4efbcfb772defd6f6c47a3c927"
     }
   },

@@ -1,0 +1,15 @@
+name: CHRDK_Mobs
+version: '${version}'
+main: ru.cherdakmd.chrdkmobs.MobsPlugin
+api-version: '26.3'
+depend:
+  - CHRDK_Core
+description: Тиры мобов — чем дальше от спавна мира, тем сильнее естественные враги и щедрее награда за их убийство (аддон CHRDK_Core)
+commands:
+  mobtiers:
+    description: 'Тиры мобов — границы, надбавки и награды'
+    usage: /<command>
+permissions:
+  chrdkmobs.use:
+    description: Смотреть тиры мобов через /mobtiers
+    default: true

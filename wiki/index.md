@@ -20,6 +20,7 @@ CHRDK — выживание с развитием навыков, исслед�
 | Обустроить базу | [Дома и телепорты](teleports.html) → [территории](claims.html) |
 | Заработать или купить ресурсы | [Экономика](economy.html) → [магазин](shop.html) → [заказы](orders.html) |
 | Развивать персонажа | [навыки](skills.html) → [класс](classes.html) → [дерево перков](perktree.html) |
+| Охотиться с риском | [тиры мобов](mobs.html) → [редкости](tierforge.html) |
 | Найти снаряжение | [редкости](tierforge.html) → [чары](enchants.html) |
 | Играть вместе | [Клан](guilds.html) → [общение](chat.html) → голос Plasmo Voice |
 
