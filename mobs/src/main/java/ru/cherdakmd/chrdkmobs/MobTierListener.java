@@ -35,11 +35,13 @@ final class MobTierListener implements Listener {
     private final MobsPlugin plugin;
     private final NamespacedKey tierKey;
     private final NamespacedKey eliteKey;
+    private final NamespacedKey nameKey;
 
     MobTierListener(MobsPlugin plugin) {
         this.plugin = plugin;
         this.tierKey = new NamespacedKey(plugin, "tier-v1");
         this.eliteKey = new NamespacedKey(plugin, "elite-v1");
+        this.nameKey = new NamespacedKey(plugin, "name-v1");
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -105,16 +107,17 @@ final class MobTierListener implements Listener {
         if (elite) {
             applyPassives(mob, abilities);
         }
-        if (config.namePrefix() && plugin.messages() != null) {
+        if (config.namePrefix() && plugin.messages() != null && (elite || tiered)) {
+            // Базовое имя для награды: после переименования getName() вернёт префикс.
+            mob.getPersistentDataContainer().set(nameKey, PersistentDataType.STRING, mob.getName());
             if (elite) {
                 mob.customName(plugin.messages().get("elite-name",
                         "tier", tier, "title", epithet(config), "name", mob.getName()));
-                mob.setCustomNameVisible(true);
-            } else if (tiered) {
+            } else {
                 mob.customName(plugin.messages().get("mob-name-prefix",
                         "tier", tier, "name", mob.getName()));
-                mob.setCustomNameVisible(true);
             }
+            mob.setCustomNameVisible(true);
         }
     }
 
@@ -149,8 +152,12 @@ final class MobTierListener implements Listener {
         }
         if (plugin.loot().accept(killer, "mob-tier-" + mob.getUniqueId(), reward)
                 && plugin.messages() != null) {
+            String baseName = mob.getPersistentDataContainer()
+                    .get(nameKey, PersistentDataType.STRING);
             killer.sendActionBar(plugin.messages().get(elite ? "elite-reward" : "mob-reward",
-                    "tier", effectiveTier, "mob", mob.getName(), "amount", reward));
+                    "tier", effectiveTier,
+                    "mob", baseName != null ? baseName : mob.getName(),
+                    "amount", reward));
         }
     }
 
@@ -166,6 +173,11 @@ final class MobTierListener implements Listener {
         Player best = null;
         double bestDistance = radius * (double) radius;
         for (Player player : mob.getWorld().getPlayers()) {
+            if (player.isDead() || player.isSpectator()
+                    || (player.getGameMode() != GameMode.SURVIVAL
+                            && player.getGameMode() != GameMode.ADVENTURE)) {
+                continue;
+            }
             double distance = player.getLocation().distanceSquared(location);
             if (distance <= bestDistance) {
                 bestDistance = distance;
@@ -190,8 +202,8 @@ final class MobTierListener implements Listener {
                 default -> null;
             };
             if (type != null) {
-                int amplifier = (ability == EliteAbilities.SPEED
-                        || ability == EliteAbilities.STRENGTH) ? 1 : 0;
+                // Скорость II; сила, сопротивление, огнестойкость и регенерация — I.
+                int amplifier = ability == EliteAbilities.SPEED ? 1 : 0;
                 mob.addPotionEffect(new PotionEffect(type, PASSIVE_DURATION, amplifier));
             }
         }

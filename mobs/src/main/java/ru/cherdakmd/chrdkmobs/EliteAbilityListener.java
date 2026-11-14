@@ -50,13 +50,14 @@ final class EliteAbilityListener implements Listener {
         if (reflecting) {
             return;
         }
-        if (event.getEntity() instanceof Player player) {
-            LivingEntity attacker = attackerOf(event.getDamager());
-            if (attacker != null) {
-                onMobHitPlayer(player, attacker, event.getFinalDamage());
-            }
+        LivingEntity attacker = attackerOf(event.getDamager());
+        if (attacker == null || attacker.equals(event.getEntity())) {
+            return;
+        }
+        if (event.getEntity() instanceof Player player && !(attacker instanceof Player)) {
+            onMobHitPlayer(player, attacker, event.getFinalDamage());
         } else if (event.getEntity() instanceof LivingEntity victim
-                && event.getDamager() instanceof Player player) {
+                && attacker instanceof Player player) {
             onPlayerHitMob(player, victim, event.getFinalDamage());
         }
     }
@@ -79,7 +80,10 @@ final class EliteAbilityListener implements Listener {
             player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, TOUCH_POTION_TICKS, 1));
         }
         if (abilities.contains(EliteAbilities.KNOCKBACK)) {
-            var push = player.getLocation().getDirection().multiply(1.1).setY(0.35);
+            // Толчок от моба к жертве (раньше вектор был по взгляду жертвы).
+            var push = player.getLocation().toVector()
+                    .subtract(mob.getLocation().toVector()).normalize().multiply(1.1);
+            push.setY(0.35);
             player.setVelocity(player.getVelocity().add(push));
         }
         if (abilities.contains(EliteAbilities.LIFESTEAL)) {
