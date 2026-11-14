@@ -61,11 +61,13 @@ class SkillXpShopTest {
         assertTrue(config.contains("pity-kills: 25"));
         assertTrue(config.contains("shop-enabled: true"));
         assertTrue(config.contains("price: 96"));
+        assertTrue(config.contains("cooldown-seconds: 0"));
         String schema = read("src/main/resources/config-schema.yml");
         assertTrue(schema.contains("xp-potions.base-chance"));
         assertTrue(schema.contains("xp-potions.streak-step"));
         assertTrue(schema.contains("xp-potions.pity-kills"));
         assertTrue(schema.contains("xp-potions.shop-enabled"));
         assertTrue(schema.contains("xp-potions.price"));
+        assertTrue(schema.contains("xp-potions.cooldown-seconds"));
     }
 }
