@@ -114,6 +114,7 @@ public final class SkillListener implements Listener {
         }
         plugin.abilities().noteBreak(event, skill);
         service.award(player, skill, 1L);
+        plugin.xpItems().rollDrop(player, skill, 1.0);
         doubleDrop(player, block, skill);
         diamondDrop(player, skill, block.getLocation().add(0.5, 0.5, 0.5), type, false);
         if (skill == SkillType.FARMING) {
@@ -321,7 +322,10 @@ public final class SkillListener implements Listener {
         }
         long units = Math.min(MAX_COMBAT_UNITS,
                 Math.max(1L, (long) Math.ceil(event.getFinalDamage() / 2.0)));
-        if (!ru.cherdakmd.chrdkregister.api.MobRewardPolicy.temporary(byEntity.getDamager())) service.award(player, SkillType.DEFENSE, units);
+        if (!ru.cherdakmd.chrdkregister.api.MobRewardPolicy.temporary(byEntity.getDamager())) {
+            service.award(player, SkillType.DEFENSE, units);
+            plugin.xpItems().rollDrop(player, SkillType.DEFENSE, 1.0);
+        }
     }
 
     /**
@@ -372,6 +376,7 @@ public final class SkillListener implements Listener {
         }
         service.award(player, SkillType.FISHING, 1L);
         if (plugin.abilities().activeFor(player, SkillType.FISHING)) service.award(player, SkillType.FISHING, 1L);
+        plugin.xpItems().rollDrop(player, SkillType.FISHING, 1.0);
         SkillPerks.Active perks = service.perksFor(player, SkillType.FISHING);
         // Два независимых шанса: «лишняя рыба» и «клад» на 100-м уровне. Оба
         // дают копию пойманного предмета, но бросаются отдельно — иначе
@@ -416,6 +421,7 @@ public final class SkillListener implements Listener {
         }
         service.award(player, SkillType.ALCHEMY, 1L);
         if (plugin.abilities().activeFor(player, SkillType.ALCHEMY)) service.award(player, SkillType.ALCHEMY, 1L);
+        plugin.xpItems().rollDrop(player, SkillType.ALCHEMY, 1.0);
         double chance = service.perksFor(player, SkillType.ALCHEMY)
                 .value(SkillPerk.Kind.EXTRA_POTION);
         ItemStack ingredient = event.getContents().getIngredient();
@@ -468,6 +474,7 @@ public final class SkillListener implements Listener {
         SkillPerks.Active perks = service.perksFor(player, SkillType.ENCHANTING);
         service.award(player, SkillType.ENCHANTING, 1L);
         if (plugin.abilities().activeFor(player, SkillType.ENCHANTING)) service.award(player, SkillType.ENCHANTING, 1L);
+        plugin.xpItems().rollDrop(player, SkillType.ENCHANTING, 1.0);
         double bonusChance = perks.value(SkillPerk.Kind.ENCHANT_BONUS);
         if (bonusChance > 0.0 && random.nextDouble() < bonusChance
                 && !event.getEnchantsToAdd().isEmpty()) {

@@ -16,9 +16,11 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
 
-/** Маленький durable-журнал суточного лимита зелий; при повреждении расходники закрываются. */
+/** Маленький durable-журнал применения зелий: пауза и счётчик суток; при повреждении расходники закрываются. */
 final class SkillXpStore {
     private static final int MAX_PLAYERS = 200_000;
+    /** Потолок здравого смысла для дневного счётчика (кулдаун 60 с → до 1440 в сутки). */
+    private static final int MAX_USED_PER_DAY = 2_000;
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private final Path file;
     private final Logger logger;
@@ -49,12 +51,12 @@ final class SkillXpStore {
     }
 
     /** Одна атомарная проверка+трата; отклонённое зелье остаётся в инвентаре. */
-    synchronized boolean consume(UUID id, int limit, long now, long cooldownMillis) {
-        if (!available || id == null || limit < 1 || rows.size() >= MAX_PLAYERS && !rows.containsKey(id)) return false;
+    synchronized boolean consume(UUID id, long now, long cooldownMillis) {
+        if (!available || id == null || rows.size() >= MAX_PLAYERS && !rows.containsKey(id)) return false;
         Row row = rows.computeIfAbsent(id, ignored -> new Row());
         String day = today();
         if (!day.equals(row.day)) { row.day = day; row.used = 0; }
-        if (row.used >= limit || row.cooldownUntil > now) return false;
+        if (row.cooldownUntil > now) return false;
         row.used++;
         row.cooldownUntil = now + cooldownMillis;
         dirty = true;
@@ -74,7 +76,7 @@ final class SkillXpStore {
                 row.day = json.get("day").getAsString();
                 row.used = json.get("used").getAsInt();
                 row.cooldownUntil = json.get("cooldownUntil").getAsLong();
-                if (row.used < 0 || row.used > SkillXpPolicy.MAX_DAILY_USES || row.cooldownUntil < 0) throw new IllegalArgumentException("values");
+                if (row.used < 0 || row.used > MAX_USED_PER_DAY || row.cooldownUntil < 0) throw new IllegalArgumentException("values");
                 loaded.put(UUID.fromString(entry.getKey()), row);
             }
             rows.clear(); rows.putAll(loaded);
