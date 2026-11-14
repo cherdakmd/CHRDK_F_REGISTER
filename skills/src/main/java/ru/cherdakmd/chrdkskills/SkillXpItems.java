@@ -89,7 +89,8 @@ final class SkillXpItems implements Listener {
             plugin.messages().send(player, "xp-potion-cooldown", "time", cooldown); return;
         }
         long xp = SkillXpPolicy.xp(plugin.skills().totalPrestige(player), rank);
-        if (!store.consume(player.getUniqueId(), now, 60_000L)) {
+        long cooldownMillis = Math.max(0, plugin.getConfig().getInt("xp-potions.cooldown-seconds", 0)) * 1000L;
+        if (!store.consume(player.getUniqueId(), now, cooldownMillis)) {
             plugin.messages().send(player, "xp-potion-unavailable"); return;
         }
         var award = plugin.skills().grantXp(player, skill, xp);

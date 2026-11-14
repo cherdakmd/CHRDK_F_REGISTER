@@ -6,8 +6,18 @@
 #     xp-potions.streak-step и xp-potions.pity-kills вместо mob-drop-chance;
 #     покупка в меню /skills: xp-potions.shop-enabled и xp-potions.price.
 #     Тексты finance.service-* и potion-*.
+# v4: пауза между зельями xp-potions.cooldown-seconds — секунды, 0 без паузы.
+#     Сообщения: messages.xp-potion-used переписывается эталоном без
+#     «Сегодня осталось зелий: %left%» (суточного остатка больше нет),
+#     messages.xp-potion-daily-limit удалён — remove-миграция вычищает
+#     старые значения из файлов владельцев (backup, повторный старт
+#     идемпотентен).
 # Удалён только устаревший xp-potions.mob-drop-chance (замён на три новых
 # ключа дропа); владельческие значения и комментарии остальных ключей
 # сохраняются, перед записью создаётся backup.
-config-version: 3
-messages-version: 3
+config-version: 4
+messages-version: 4
+migrations:
+  messages:
+    4:
+      remove: [messages.xp-potion-daily-limit, messages.xp-potion-used]
