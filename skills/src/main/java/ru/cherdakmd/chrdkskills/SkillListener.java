@@ -498,6 +498,12 @@ public final class SkillListener implements Listener {
         plugin.effects().apply(event.getPlayer());
     }
 
+    /** Сверка незавершённых покупок зелий после входа и авторизации. */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onAuthenticated(ru.cherdakmd.chrdkregister.api.events.PlayerAuthCompletedEvent event) {
+        if (plugin.xpShop() != null) plugin.xpShop().payments().recover(event.getPlayer());
+    }
+
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent event) {
         ru.cherdakmd.chrdkregister.api.CropReplanting.cancelPlayer(event.getPlayer().getUniqueId());

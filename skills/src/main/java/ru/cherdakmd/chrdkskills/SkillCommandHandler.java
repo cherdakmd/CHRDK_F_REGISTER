@@ -284,6 +284,7 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
             return true;
         }
         if (plugin.awards().admin(sender,args)) return true;
+        if (plugin.xpShop() != null && plugin.xpShop().payments().admin(sender, args)) return true;
         if (args.length == 1 && args[0].equalsIgnoreCase("reload")) {
             plugin.reloadSkillsConfig();
             plugin.messages().send(sender, "admin-reloaded");

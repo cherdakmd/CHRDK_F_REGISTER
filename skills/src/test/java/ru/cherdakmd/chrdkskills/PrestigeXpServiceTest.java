@@ -183,8 +183,8 @@ final class PrestigeXpServiceTest {
                 "старый ключ остался только в комментарии как фолбэк");
 
         String schema = read("src/main/resources/config-schema.yml");
-        assertTrue(schema.contains("config-version: 2"));
-        assertTrue(schema.contains("messages-version: 2"));
+        assertTrue(schema.contains("config-version: 3"));
+        assertTrue(schema.contains("messages-version: 3"));
 
         String wiki = read("../wiki/skills.md");
         assertTrue(wiki.contains("/skills balance"));

@@ -49,6 +49,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
     private static final int SLOT_GUIDE = 3;
     private static final int TAB_PRESTIGE = 5;
     private static final int SLOT_CONTEXT = 4;
+    private static final int TAB_POTIONS = 6;
     private static final int SLOT_CLOSE = 8;
 
     /**
@@ -175,6 +176,8 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
                 "menu-top"));
         inventory.setItem(TAB_PRESTIGE, tabItem(holder, Tab.PRESTIGE,
                 Material.NETHERITE_INGOT, "menu-tab-prestige"));
+        inventory.setItem(TAB_POTIONS, tabItem(holder, Tab.POTIONS,
+                Material.POTION, "menu-tab-potions"));
         inventory.setItem(SLOT_GUIDE, button(Material.BOOK, "menu-guide-button",
                 guideLore(player)));
         inventory.setItem(SLOT_CLOSE, button(Material.BARRIER, "menu-close"));
@@ -183,6 +186,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
             case TREE -> renderTree(player, holder);
             case TOP -> renderTop(player, holder);
             case PRESTIGE -> renderPrestige(player, holder);
+            case POTIONS -> renderPotions(player, holder);
         }
         fillEmpty(inventory);
     }
@@ -644,6 +648,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
             case TREE -> onTreeClick(player, holder, slot);
             case SKILLS -> onSkillsClick(player, holder, slot);
             case PRESTIGE -> onPrestigeClick(player, holder, slot);
+            case POTIONS -> onPotionsClick(player, holder, slot);
             case TOP -> { /* рейтинг только для чтения */ }
         }
     }
@@ -718,6 +723,56 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
                 render(player, holder);
                 return;
             }
+        }
+    }
+
+    /** Витрина зелий: клик по зелью — покупка одного предмета за алмазы. */
+    private void renderPotions(Player player, Holder holder) {
+        Inventory inventory = holder.inventory;
+        SkillXpShop shop = plugin.xpShop();
+        List<SkillType> skills = SkillRegistry.all();
+        for (int index = 0; index < Math.min(SKILL_SLOTS.length, skills.size()); index++) {
+            inventory.setItem(SKILL_SLOTS[index], potionIcon(player, skills.get(index), shop));
+        }
+        inventory.setItem(SLOT_SUMMARY, summary(player));
+        inventory.setItem(SLOT_CONTEXT, button(Material.EMERALD, "potion-shop-info",
+                List.of(plugin.messages().get(shop != null && shop.shopEnabled()
+                        ? "potion-shop-price" : "potion-shop-closed",
+                        "cost", String.valueOf(shop == null ? 0 : shop.price())))));
+    }
+
+    private ItemStack potionIcon(Player player, SkillType skill, SkillXpShop shop) {
+        ItemStack potion = plugin.xpItems().create(skill);
+        ItemMeta meta = potion.getItemMeta();
+        List<Component> lore = meta.lore() == null ? new ArrayList<>() : new ArrayList<>(meta.lore());
+        if (shop != null && shop.shopEnabled()) {
+            lore.add(plugin.messages().get("potion-buy", "cost", String.valueOf(shop.price())));
+            lore.add(plugin.messages().get("potion-buy-hint"));
+        } else {
+            lore.add(plugin.messages().get("potion-shop-closed", "cost", "0"));
+        }
+        meta.lore(lore);
+        potion.setItemMeta(meta);
+        return potion;
+    }
+
+    private void onPotionsClick(Player player, Holder holder, int slot) {
+        SkillXpShop shop = plugin.xpShop();
+        if (shop == null || !shop.shopEnabled()) {
+            plugin.messages().send(player, "potion-shop-closed", "cost", "0");
+            return;
+        }
+        List<SkillType> skills = SkillRegistry.all();
+        for (int index = 0; index < Math.min(SKILL_SLOTS.length, skills.size()); index++) {
+            if (slot != SKILL_SLOTS[index]) continue;
+            SkillType skill = skills.get(index);
+            if (shop.buy(player, skill)) {
+                plugin.messages().send(player, "potion-bought",
+                        "skill", Messages.trusted(plugin.messages().raw("skill." + skill.id() + ".name")),
+                        "cost", String.valueOf(shop.price()));
+            }
+            // Отказ/возврат уже объявлены движком оплаты (finance.service-*).
+            return;
         }
     }
 

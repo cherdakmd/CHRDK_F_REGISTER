@@ -66,6 +66,9 @@ final class ForgeShopService {
     }
 
     static boolean isPotionSku(String sku) {
+        // Зелья опыта навыков сняты из Кузни (2.0.6): каталог не содержит
+        // skill_xp_*, покупка живёт в меню /skills. Метод оставлен защитой
+        // на случай старых Offer из кэша.
         return sku != null && sku.startsWith("skill_xp_");
     }
 

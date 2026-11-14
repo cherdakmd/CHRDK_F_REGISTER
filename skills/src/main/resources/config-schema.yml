@@ -2,7 +2,11 @@
 # v2: база дневного лимита diamonds.daily-cap выросла 64 → 256, добавлена
 #     аддитивная секция diamonds.cap.* (ранг, престиж, уровни, Pass, буст,
 #     entitlement, потолок) и строка профиля profile-diamond-cap.
-# Переименований и удалений нет: миграция чисто аддитивная, владельческие
-# значения и комментарии сохраняются, перед записью создаётся backup.
-config-version: 2
-messages-version: 2
+# v3: зелья опыта — дроп с серийным pity (xp-potions.base-chance/streak-step/
+#     pity-kills вместо mob-drop-chance) и покупка в меню /skills
+#     (xp-potions.shop-enabled/price); тексты finance.service-* и potion-*.
+# Удалён только устаревший xp-potions.mob-drop-chance (замён на три новых
+# ключа дропа); владельческие значения и комментарии остальных ключей
+# сохраняются, перед записью создаётся backup.
+config-version: 3
+messages-version: 3

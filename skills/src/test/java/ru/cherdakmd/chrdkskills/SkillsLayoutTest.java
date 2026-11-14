@@ -77,6 +77,19 @@ class SkillsLayoutTest {
     }
 
     @Test
+    void potionsTabIsWiredIntoTheSameInventory() throws IOException {
+        String source = source();
+        assertTrue(source.contains("TAB_POTIONS = 6"));
+        assertTrue(source.contains("case POTIONS -> renderPotions"));
+        assertTrue(source.contains("case POTIONS -> onPotionsClick"));
+        assertTrue(source.contains("Tab.POTIONS"));
+        String api = Files.readString(
+                Path.of("src/main/java/ru/cherdakmd/chrdkskills/SkillsMenuApi.java"),
+                StandardCharsets.UTF_8);
+        assertTrue(api.contains("POTIONS"), "вкладка должна быть в публичном контракте");
+    }
+
+    @Test
     void emptySlotsAreFilledAndDetailButtonsAreCentred() throws IOException {
         String source = source();
         assertTrue(source.contains("fillEmpty(inventory);"),

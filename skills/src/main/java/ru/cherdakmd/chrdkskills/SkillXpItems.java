@@ -7,6 +7,8 @@ import org.bukkit.Color;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.entity.Boss;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -16,20 +18,25 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionType;
-import ru.cherdakmd.chrdkregister.api.ForgeMaterialSource;
 import ru.cherdakmd.chrdkregister.api.RankBonus;
 
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
+import java.util.Map;
 import java.util.Random;
 
-/** Настоящие PDC-зелья XP: магазин выдаёт те же предметы, что и дроп с мобов. */
-final class SkillXpItems implements Listener, ForgeMaterialSource {
-    static final String SKU_PREFIX = "skill_xp_";
+/** Настоящие PDC-зелья XP: покупка в /skills выдаёт те же предметы, что и дроп с мобов. */
+final class SkillXpItems implements Listener {
     private final SkillsPlugin plugin;
     private final SkillXpStore store;
     private final NamespacedKey token;
     private final Random random = new Random();
+    /** Серия убийств без дропа по игрокам (мягкий pity); после рестарта начинается заново. */
+    private final Map<java.util.UUID, Long> streaks = new LinkedHashMap<>() {
+        @Override protected boolean removeEldestEntry(Map.Entry<java.util.UUID, Long> eldest) {
+            return size() > 10_000;
+        }
+    };
 
     SkillXpItems(SkillsPlugin plugin, SkillXpStore store) {
         this.plugin = plugin;
@@ -37,22 +44,9 @@ final class SkillXpItems implements Listener, ForgeMaterialSource {
         token = new NamespacedKey(plugin, "skill_xp_v1");
     }
 
-    @Override public String provider() { return "CHRDK_Skills"; }
-    @Override public boolean available(String sku) {
-        return enabled() && skill(sku) != null;
-    }
-    @Override public ItemStack prototype(String sku) {
-        SkillType skill = skill(sku);
-        return skill == null ? null : create(skill);
-    }
-
     private boolean enabled() {
         return plugin.config().enabled() && store.available()
                 && plugin.getConfig().getBoolean("xp-potions.enabled", true);
-    }
-
-    private SkillType skill(String sku) {
-        return sku == null || !sku.startsWith(SKU_PREFIX) ? null : SkillType.byId(sku.substring(SKU_PREFIX.length()));
     }
 
     SkillType skill(ItemStack item) {
@@ -117,12 +111,25 @@ final class SkillXpItems implements Listener, ForgeMaterialSource {
 
     void rollDrop(Player killer, LivingEntity entity) {
         if (!enabled() || entity.hasMetadata("NPC")) return;
+        long streak = streaks.merge(killer.getUniqueId(), 1L, Long::sum);
         RankBonus rank = rank(killer);
-        double baseChance = plugin.getConfig().getDouble("xp-potions.mob-drop-chance", 0.002);
-        double chance = Math.min(0.01, baseChance * SkillXpPolicy.dropChance(rank) / 0.002);
-        if (random.nextDouble() >= chance) return;
+        boolean pity = SkillXpPolicy.pityReached(streak);
+        if (!pity && random.nextDouble() >= SkillXpPolicy.dropChance(streak, mobTier(entity), rank)) return;
+        streaks.remove(killer.getUniqueId());
         SkillType skill = SkillType.values()[random.nextInt(SkillType.values().length)];
         entity.getWorld().dropItemNaturally(entity.getLocation(), create(skill));
+    }
+
+    /**
+     * Тир моба для шанса дропа: 2,0 — босс или больше 60 HP; 1,5 — сильный
+     * (больше 20 HP); 1,0 — обычный. Именованные мобы не дают бонус: имя
+     * ставится биркой и открывало бы фарм через переименование.
+     */
+    static double mobTier(LivingEntity entity) {
+        if (entity instanceof Boss) return 2.0;
+        var health = entity.getAttribute(Attribute.MAX_HEALTH);
+        double hp = health == null ? 20.0 : health.getValue();
+        return hp > 60.0 ? 2.0 : hp > 20.0 ? 1.5 : 1.0;
     }
 
     private RankBonus rank(Player player) {
@@ -133,6 +140,4 @@ final class SkillXpItems implements Listener, ForgeMaterialSource {
             return RankBonus.NONE;
         }
     }
-
-    static String sku(SkillType skill) { return SKU_PREFIX + skill.id().toLowerCase(Locale.ROOT); }
 }

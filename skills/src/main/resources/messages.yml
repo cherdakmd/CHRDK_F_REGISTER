@@ -53,6 +53,7 @@ messages:
   # Один инвентарь /skills: верхний ряд переключает разделы без второго окна.
   menu-tab-skills: "<gold>Навыки</gold>"
   menu-tab-tree: "<aqua>Дерево перков</aqua>"
+  menu-tab-potions: "<light_purple>Зелья опыта</light_purple>"
   menu-tab-selected: "<green>▸ Открытая вкладка</green>"
   menu-tab-hint: "<gray>Клик — переключить раздел</gray>"
   menu-tab-domain: "<gold>%domain%</gold> <gray>· стр. %page%/%pages%</gray>"
@@ -458,5 +459,27 @@ messages:
   xp-potion-daily-limit: "<yellow>Суточный лимит зелий исчерпан: %limit%. Он растёт вместе с прокачкой, престижем и рангом.</yellow>"
   xp-potion-cooldown: "<yellow>Следующее зелье опыта можно выпить через %time% сек.</yellow>"
   xp-potion-used: "<green>%skill%: +%xp% XP. Сегодня осталось зелий: %left%.</green>"
+
+  # ---------------------------------- зелья ------------------------------------
+  # Покупка в меню /skills: единственный платный источник, дроп с мобов бесплатен.
+  potion-shop-info: "<light_purple>Зелья опыта</light_purple>"
+  potion-shop-price: "<gray>Цена зелья: </gray><white>%cost%</white> 💠. Клик по зелью — купить одно."
+  potion-shop-closed: "<red>Покупка зелий закрыта.</red>"
+  potion-buy: "<gray>Цена: </gray><white>%cost%</white> 💠"
+  potion-buy-hint: "<yellow>Клик — купить одно зелье</yellow>"
+  potion-bought: "<green>Куплено зелье навыка</green> <white>%skill%</white><green> за</green> <white>%cost%</white> 💠."
+
+  # --------------------------- оплата (движок PaidActions) -----------------------
+  finance.service-mode: "<red>Оплата требует авторизации, живого игрока в Survival/Adventure; NPC не допускаются.</red>"
+  finance.service-wait: "<yellow>Платёж/исход покупки ожидает сверки. Новые сделки приостановлены; уже начатая оплата не объявляется отменённой. Администратору: /skillsadmin recover.</yellow>"
+  finance.service-insufficient: "<red>Нужно %cost% 💠: сначала /bal, затем обычные алмазы/руда/блоки из storage. Именные предметы, броня и offhand не расходуются.</red>"
+  finance.service-refused: "<red>Операция отклонена. Новое списание/возврат не выполнены.</red>"
+  finance.service-refunding: "<yellow>Зелье не выдано. Полный возврат %cost% 💠 учтён для /bal; при недоступном/заполненном банке непогашенная часть сохранена.</yellow>"
+  finance.service-checked: "<green>Безопасная сверка завершена. Это не принудительное подтверждение и не обход IO-карантина.</green>"
+  finance.service-payment: "<yellow>Pending оплаты %id%; плательщик %payer%. Не удаляйте журнал.</yellow>"
+  finance.service-action: "<yellow>Резерв %id%: payer=%payer%, actor=%actor%, цена=%price%, этап=%phase%, вид=%kind%, цель=%target%.</yellow>"
+  finance.service-status: "<gray>Незавершённых покупок: %count%, блокировка оплаты: %paused%. EXECUTING требует доказательства исхода.</gray>"
+  finance.service-resolve-usage: "<yellow>После ручной сверки: /skillsadmin resolve <UUID> success|refund confirm. Не угадывайте исход.</yellow>"
+  finance.service-lock: "<red>Предметная оплата не завершена. Нужна сверка банка и playerdata; повторите вход после восстановления.</red>"
 
   finance.award-status: '<gray>Награды /bal: %source%, lineage=%lineage%, получателей с доходом=%count%, исправен=%healthy%, конфликт=%conflict%. Это не сброс IO-карантина.</gray>'

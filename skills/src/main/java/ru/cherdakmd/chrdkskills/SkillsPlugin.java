@@ -70,6 +70,12 @@ public final class SkillsPlugin extends JavaPlugin {
         this.xpStore = new SkillXpStore(getDataFolder().toPath(), getLogger());
         xpStore.load();
         this.xpItems = new SkillXpItems(this, xpStore);
+        try {
+            this.xpShop = new SkillXpShop(this);
+        } catch (Exception | LinkageError error) {
+            getLogger().log(java.util.logging.Level.SEVERE,
+                    "Покупка зелий в /skills отключена: журнал оплат не открыт", error);
+        }
         this.effects = new SkillEffects(this);
         this.listener = new SkillListener(this, service);
         this.gui = new SkillsGui(this, service);
@@ -106,7 +112,10 @@ public final class SkillsPlugin extends JavaPlugin {
         this.effectTask = Bukkit.getScheduler().runTaskTimer(this, this::refreshEffects,
                 Math.max(1, config.refreshTicks()), Math.max(1, config.refreshTicks()));
 
-        this.abilityTask = Bukkit.getScheduler().runTaskTimer(this, abilities::pulse, 20L, 20L);
+        this.abilityTask = Bukkit.getScheduler().runTaskTimer(this, () -> {
+            abilities.pulse();
+            if (xpShop != null) xpShop.payments().tick();
+        }, 20L, 20L);
 
         for (Player player : Bukkit.getOnlinePlayers()) {
             service.rememberName(player);
@@ -124,7 +133,14 @@ public final class SkillsPlugin extends JavaPlugin {
             Bukkit.getServicesManager().unregister(SkillsMenuApi.class, gui);
         }
         if (awards != null) awards.close();
-        if (xpItems != null) Bukkit.getServicesManager().unregister(ru.cherdakmd.chrdkregister.api.ForgeMaterialSource.class, xpItems);
+        if (xpShop != null) {
+            try {
+                xpShop.payments().flushRefunds();
+            } catch (Exception | LinkageError error) {
+                getLogger().log(java.util.logging.Level.WARNING,
+                        "Возвраты по покупке зелий сохранены и ожидают доставки в банк", error);
+            }
+        }
         if (xpStore != null) xpStore.saveNow();
         ru.cherdakmd.chrdkregister.api.CropReplanting.cancel(this);
         if (abilityTask != null) abilityTask.cancel();
@@ -209,8 +225,6 @@ public final class SkillsPlugin extends JavaPlugin {
         // Единое меню: /perktree из CHRDK_Classes открывает тот же инвентарь.
         Bukkit.getServicesManager().register(SkillsMenuApi.class, gui,
                 this, ServicePriority.Normal);
-        Bukkit.getServicesManager().register(ru.cherdakmd.chrdkregister.api.ForgeMaterialSource.class,
-                xpItems, this, ServicePriority.Normal);
     }
 
     public Messages messages() {
@@ -235,6 +249,7 @@ public final class SkillsPlugin extends JavaPlugin {
 
     SkillAbilities abilities() { return abilities; }
     SkillXpItems xpItems() { return xpItems; }
+    SkillXpShop xpShop() { return xpShop; }
 
     public SkillEffects effects() {
         return effects;

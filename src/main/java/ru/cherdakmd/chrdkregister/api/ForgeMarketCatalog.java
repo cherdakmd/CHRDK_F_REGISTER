@@ -35,7 +35,11 @@ public final class ForgeMarketCatalog {
     /** Неизменяемый каталог: id, материал, цена за штуку, искра ли это, дроп ли с Hunt. */
     public record Sku(String id, String material, long price, boolean seed, boolean huntDrop) { }
 
-    /** Ровно восемь настоящих PDC-расходников. Порядок — порядок витрины. */
+    /**
+     * Ровно восемь настоящих PDC-расходников. Порядок — порядок витрины.
+     * Зелья опыта навыков (skill_xp_*) сняты из Кузни (2.0.6): их покупка
+     * живёт в меню /skills, дроп — у враждебных мобов.
+     */
     public static final List<Sku> SKUS = List.of(
             new Sku("ascend", "ECHO_SHARD", 128, false, false),
             new Sku("temper", "NAUTILUS_SHELL", 96, false, false),
@@ -44,17 +48,7 @@ public final class ForgeMarketCatalog {
             new Sku("repair", "IRON_INGOT", 24, false, false),
             new Sku("inscribe", "GOLD_NUGGET", 192, false, false),
             new Sku("remove", "GUNPOWDER", 32, false, false),
-            new Sku("name", "INK_SAC", 16, false, false),
-            new Sku("skill_xp_mining", "POTION", 96, false, false),
-            new Sku("skill_xp_woodcutting", "POTION", 96, false, false),
-            new Sku("skill_xp_digging", "POTION", 96, false, false),
-            new Sku("skill_xp_farming", "POTION", 96, false, false),
-            new Sku("skill_xp_fishing", "POTION", 96, false, false),
-            new Sku("skill_xp_combat", "POTION", 96, false, false),
-            new Sku("skill_xp_archery", "POTION", 96, false, false),
-            new Sku("skill_xp_defense", "POTION", 96, false, false),
-            new Sku("skill_xp_alchemy", "POTION", 96, false, false),
-            new Sku("skill_xp_enchanting", "POTION", 96, false, false)
+            new Sku("name", "INK_SAC", 16, false, false)
     );
 
     public static Optional<Sku> sku(String id) {
