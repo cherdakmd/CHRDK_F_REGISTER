@@ -5,6 +5,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Enemy;
 import org.bukkit.entity.EnderDragon;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Wither;
 import org.bukkit.event.EventHandler;
@@ -13,7 +14,12 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import ru.cherdakmd.chrdkregister.api.MobRewardPolicy;
+
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Тиры мобов на живых событиях. Естественные враги получают тир при
@@ -24,12 +30,16 @@ import ru.cherdakmd.chrdkregister.api.MobRewardPolicy;
  */
 final class MobTierListener implements Listener {
 
+    private static final int PASSIVE_DURATION = Integer.MAX_VALUE;
+
     private final MobsPlugin plugin;
     private final NamespacedKey tierKey;
+    private final NamespacedKey eliteKey;
 
     MobTierListener(MobsPlugin plugin) {
         this.plugin = plugin;
         this.tierKey = new NamespacedKey(plugin, "tier-v1");
+        this.eliteKey = new NamespacedKey(plugin, "elite-v1");
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -49,25 +59,62 @@ final class MobTierListener implements Listener {
             return;
         }
         int tier = MobTierMath.tierFor(distanceFromSpawn(mob), config.thresholds());
-        if (tier < 2) {
+        boolean tiered = tier >= 2;
+        // Прокачка: снапшот очков прогресса ближайшего игрока при появлении.
+        int metric = config.progression().enabled()
+                ? SkillsHook.progressMetric(plugin.getLogger(),
+                        nearestPlayer(mob, config.progression().radius()),
+                        config.progression().prestigeWeight())
+                : 0;
+        boolean scaled = metric > 0;
+        boolean elite = config.elite().chance() > 0
+                && ThreadLocalRandom.current().nextDouble() < config.elite().chance();
+        if (!tiered && !scaled && !elite) {
             return;
         }
-        mob.getPersistentDataContainer().set(tierKey, PersistentDataType.INTEGER, tier);
+        List<EliteAbilities> abilities = elite
+                ? EliteAbilities.pick(ThreadLocalRandom.current(),
+                        config.elite().abilitiesMin(), config.elite().abilitiesMax())
+                : List.of();
+        if (tiered) {
+            mob.getPersistentDataContainer().set(tierKey, PersistentDataType.INTEGER, tier);
+        }
+        if (elite) {
+            mob.getPersistentDataContainer().set(eliteKey, PersistentDataType.STRING,
+                    EliteAbilities.join(abilities));
+        }
+        double healthFactor = (tiered
+                ? MobTierMath.healthFactor(tier, config.healthPerTier()) : 1.0)
+                * (scaled ? MobTierMath.progressFactor(metric,
+                        config.progression().healthPer100(), config.progression().maxBonus()) : 1.0)
+                * (elite ? config.elite().healthMultiplier() : 1.0);
+        double damageFactor = (tiered
+                ? MobTierMath.damageFactor(tier, config.damagePerTier()) : 1.0)
+                * (scaled ? MobTierMath.progressFactor(metric,
+                        config.progression().damagePer100(), config.progression().maxBonus()) : 1.0)
+                * (elite ? config.elite().damageMultiplier() : 1.0);
         var health = mob.getAttribute(Attribute.MAX_HEALTH);
         if (health != null) {
-            health.setBaseValue(health.getBaseValue()
-                    * MobTierMath.healthFactor(tier, config.healthPerTier()));
+            health.setBaseValue(health.getBaseValue() * healthFactor);
             mob.setHealth(health.getValue());
         }
         var damage = mob.getAttribute(Attribute.ATTACK_DAMAGE);
         if (damage != null) {
-            damage.setBaseValue(damage.getBaseValue()
-                    * MobTierMath.damageFactor(tier, config.damagePerTier()));
+            damage.setBaseValue(damage.getBaseValue() * damageFactor);
+        }
+        if (elite) {
+            applyPassives(mob, abilities);
         }
         if (config.namePrefix() && plugin.messages() != null) {
-            mob.customName(plugin.messages().get("mob-name-prefix",
-                    "tier", tier, "name", mob.getName()));
-            mob.setCustomNameVisible(true);
+            if (elite) {
+                mob.customName(plugin.messages().get("elite-name",
+                        "tier", tier, "title", epithet(config), "name", mob.getName()));
+                mob.setCustomNameVisible(true);
+            } else if (tiered) {
+                mob.customName(plugin.messages().get("mob-name-prefix",
+                        "tier", tier, "name", mob.getName()));
+                mob.setCustomNameVisible(true);
+            }
         }
     }
 
@@ -81,21 +128,29 @@ final class MobTierListener implements Listener {
             return;
         }
         Integer tier = mob.getPersistentDataContainer().get(tierKey, PersistentDataType.INTEGER);
-        if (tier == null || tier < 2 || MobRewardPolicy.temporary(mob)) {
+        boolean elite = mob.getPersistentDataContainer().has(eliteKey, PersistentDataType.STRING);
+        if ((tier == null || tier < 2) && !elite) {
+            return;
+        }
+        if (MobRewardPolicy.temporary(mob)) {
             return;
         }
         Player killer = mob.getKiller();
         if (killer == null || !honest(killer)) {
             return;
         }
-        long reward = MobTierMath.rewardDiamonds(tier, config.rewardPerTier());
+        int effectiveTier = tier == null ? 1 : tier;
+        long reward = elite
+                ? MobTierMath.eliteRewardDiamonds(effectiveTier, config.rewardPerTier(),
+                        (int) config.elite().rewardTiers())
+                : MobTierMath.rewardDiamonds(effectiveTier, config.rewardPerTier());
         if (reward <= 0L) {
             return;
         }
         if (plugin.loot().accept(killer, "mob-tier-" + mob.getUniqueId(), reward)
                 && plugin.messages() != null) {
-            killer.sendActionBar(plugin.messages().get("mob-reward",
-                    "tier", tier, "mob", mob.getName(), "amount", reward));
+            killer.sendActionBar(plugin.messages().get(elite ? "elite-reward" : "mob-reward",
+                    "tier", effectiveTier, "mob", mob.getName(), "amount", reward));
         }
     }
 
@@ -103,6 +158,49 @@ final class MobTierListener implements Listener {
         return player.isOnline() && !player.isDead()
                 && (player.getGameMode() == GameMode.SURVIVAL || player.getGameMode() == GameMode.ADVENTURE)
                 && plugin.coreApi() != null && plugin.coreApi().isAuthenticated(player);
+    }
+
+    /** Ближайший игрок в радиусе (блоки) — источник снапшота прогресса. */
+    private static Player nearestPlayer(LivingEntity mob, int radius) {
+        var location = mob.getLocation();
+        Player best = null;
+        double bestDistance = radius * (double) radius;
+        for (Player player : mob.getWorld().getPlayers()) {
+            double distance = player.getLocation().distanceSquared(location);
+            if (distance <= bestDistance) {
+                bestDistance = distance;
+                best = player;
+            }
+        }
+        return best;
+    }
+
+    /** Пассивные баффы элиты: постоянные эффекты из её набора способностей. */
+    private static void applyPassives(LivingEntity mob, List<EliteAbilities> abilities) {
+        for (EliteAbilities ability : abilities) {
+            if (ability.kind() != EliteAbilities.Kind.PASSIVE) {
+                continue;
+            }
+            PotionEffectType type = switch (ability) {
+                case SPEED -> PotionEffectType.SPEED;
+                case STRENGTH -> PotionEffectType.STRENGTH;
+                case RESISTANCE -> PotionEffectType.RESISTANCE;
+                case FIRE_RESISTANCE -> PotionEffectType.FIRE_RESISTANCE;
+                case REGENERATION -> PotionEffectType.REGENERATION;
+                default -> null;
+            };
+            if (type != null) {
+                int amplifier = (ability == EliteAbilities.SPEED
+                        || ability == EliteAbilities.STRENGTH) ? 1 : 0;
+                mob.addPotionEffect(new PotionEffect(type, PASSIVE_DURATION, amplifier));
+            }
+        }
+    }
+
+    /** Случайный эпитет элиты из конфига. */
+    private static String epithet(MobsConfig config) {
+        List<String> epithets = config.elite().epithets();
+        return epithets.get(ThreadLocalRandom.current().nextInt(epithets.size()));
     }
 
     private static double distanceFromSpawn(org.bukkit.entity.Entity entity) {

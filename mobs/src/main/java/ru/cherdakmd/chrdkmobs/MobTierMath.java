@@ -58,4 +58,31 @@ public final class MobTierMath {
         long safeStep = Math.max(0L, rewardPerTier);
         return (long) (safeTier - 1) * safeStep;
     }
+
+    /** Очки прогресса игрока: суммарный уровень навыков + престиж × вес. */
+    public static int progressMetric(int totalLevel, int prestige, int prestigeWeight) {
+        int safeLevel = Math.max(0, totalLevel);
+        int safePrestige = Math.max(0, prestige);
+        int safeWeight = Math.max(0, prestigeWeight);
+        return safeLevel + safePrestige * safeWeight;
+    }
+
+    /**
+     * Множитель прогресса: 1 + min(maxBonus, per100 × метрика / 100).
+     * Шаг надбавки зажимается в 0..10, потолок — в 0..10.
+     */
+    public static double progressFactor(int metric, double per100, double maxBonus) {
+        int safeMetric = Math.max(0, metric);
+        double safeStep = Math.min(10.0, Math.max(0.0, per100));
+        double safeCap = Math.min(10.0, Math.max(0.0, maxBonus));
+        return 1.0 + Math.min(safeCap, safeStep * safeMetric / 100.0);
+    }
+
+    /**
+     * Награда за элитного моба: как за тир выше на {@code rewardTiers}
+     * ступеней (элита тира 1 платит тоже).
+     */
+    public static long eliteRewardDiamonds(int tier, long rewardPerTier, int rewardTiers) {
+        return rewardDiamonds(Math.max(1, tier) + Math.max(0, rewardTiers), rewardPerTier);
+    }
 }

@@ -34,6 +34,18 @@ final class MobTierCommand implements CommandExecutor, TabCompleter {
                     "damage", formatFactor(MobTierMath.damageFactor(tier, config.damagePerTier())),
                     "reward", MobTierMath.rewardDiamonds(tier, config.rewardPerTier()));
         }
+        plugin.messages().send(sender, "mobtiers-progression",
+                "health", percent(config.progression().healthPer100()),
+                "damage", percent(config.progression().damagePer100()),
+                "prestige", config.progression().prestigeWeight(),
+                "cap", percent(config.progression().maxBonus()),
+                "radius", config.progression().radius());
+        plugin.messages().send(sender, "mobtiers-elite",
+                "chance", String.format(Locale.ROOT, "%.1f", config.elite().chance() * 100),
+                "health", formatFactor(config.elite().healthMultiplier()),
+                "damage", formatFactor(config.elite().damageMultiplier()),
+                "abilities", config.elite().abilitiesMin() + "–" + config.elite().abilitiesMax(),
+                "reward", config.elite().rewardTiers());
         return true;
     }
 
@@ -58,5 +70,9 @@ final class MobTierCommand implements CommandExecutor, TabCompleter {
         return value == Math.rint(value)
                 ? String.valueOf((long) value)
                 : String.format(Locale.ROOT, "%.2f", value);
+    }
+
+    private static String percent(double value) {
+        return String.format(Locale.ROOT, "%.0f", value * 100);
     }
 }
