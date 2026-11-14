@@ -56,9 +56,9 @@ class SkillXpShopTest {
     @Test
     void dropModelAndShopUseNamedConfigKeys() throws IOException {
         String config = read("src/main/resources/config.yml");
-        assertTrue(config.contains("base-chance: 0.0022"));
-        assertTrue(config.contains("streak-step: 0.00028"));
-        assertTrue(config.contains("pity-kills: 145"));
+        assertTrue(config.contains("base-chance: 0.02"));
+        assertTrue(config.contains("streak-step: 0.002"));
+        assertTrue(config.contains("pity-kills: 25"));
         assertTrue(config.contains("shop-enabled: true"));
         assertTrue(config.contains("price: 96"));
         String schema = read("src/main/resources/config-schema.yml");

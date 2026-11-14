@@ -11,8 +11,10 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Boss;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.PotionMeta;
@@ -64,14 +66,10 @@ final class SkillXpItems implements Listener {
         meta.displayName(Component.text("Зелье опыта: " + name, NamedTextColor.GOLD).decoration(TextDecoration.ITALIC, false));
         meta.lore(List.of(
                 Component.text("Базовый заряд: 250 XP", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
-                Component.text("Сила и лимит зависят от прогресса и ранга", NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false)));
+                Component.text("Сила зависит от престижа и ранга", NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false)));
         meta.getPersistentDataContainer().set(token, PersistentDataType.STRING, skill.id());
         item.setItemMeta(meta);
         return item;
-    }
-
-    int dailyLimit(Player player, RankBonus rank) {
-        return SkillXpPolicy.dailyUses(plugin.skills().totalLevel(player), plugin.skills().totalPrestige(player), rank);
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -85,17 +83,13 @@ final class SkillXpItems implements Listener {
             plugin.messages().send(player, "xp-potion-unavailable"); return;
         }
         RankBonus rank = rank(player);
-        int limit = dailyLimit(player, rank);
         long now = System.currentTimeMillis();
         long cooldown = store.cooldownLeft(player.getUniqueId(), now);
-        if (store.used(player.getUniqueId()) >= limit) {
-            plugin.messages().send(player, "xp-potion-daily-limit", "limit", limit); return;
-        }
         if (cooldown > 0) {
             plugin.messages().send(player, "xp-potion-cooldown", "time", cooldown); return;
         }
         long xp = SkillXpPolicy.xp(plugin.skills().totalPrestige(player), rank);
-        if (!store.consume(player.getUniqueId(), limit, now, 60_000L)) {
+        if (!store.consume(player.getUniqueId(), now, 60_000L)) {
             plugin.messages().send(player, "xp-potion-unavailable"); return;
         }
         var award = plugin.skills().grantXp(player, skill, xp);
@@ -106,18 +100,33 @@ final class SkillXpItems implements Listener {
         consumed.setAmount(1);
         if (!player.getInventory().removeItem(consumed).isEmpty()) return;
         plugin.messages().send(player, "xp-potion-used", "skill", plugin.messages().mini("skill." + skill.id() + ".name"),
-                "xp", xp, "left", Math.max(0, limit - store.used(player.getUniqueId())));
+                "xp", xp);
     }
 
-    void rollDrop(Player killer, LivingEntity entity) {
-        if (!enabled() || entity.hasMetadata("NPC")) return;
-        long streak = streaks.merge(killer.getUniqueId(), 1L, Long::sum);
-        RankBonus rank = rank(killer);
+    /**
+     * Дроп зелья с игрового действия: добыча, рыбалка, варка, чары, защита.
+     * Зелье всегда соответствует навыку действия; серия без дропа и pity
+     * общие на игрока — лимитов на количество зелий нет.
+     */
+    void rollDrop(Player player, SkillType skill, double tier) {
+        if (!enabled() || player == null || skill == null) return;
+        long streak = streaks.merge(player.getUniqueId(), 1L, Long::sum);
         boolean pity = SkillXpPolicy.pityReached(streak);
-        if (!pity && random.nextDouble() >= SkillXpPolicy.dropChance(streak, mobTier(entity), rank)) return;
-        streaks.remove(killer.getUniqueId());
-        SkillType skill = SkillType.values()[random.nextInt(SkillType.values().length)];
-        entity.getWorld().dropItemNaturally(entity.getLocation(), create(skill));
+        if (!pity && random.nextDouble() >= SkillXpPolicy.dropChance(streak, tier, rank(player))) return;
+        streaks.remove(player.getUniqueId());
+        player.getWorld().dropItemNaturally(player.getLocation(), create(skill));
+    }
+
+    /** Дроп с мобов: боевое зелье по способу убийства — «Стрельба» или «Ближний бой». */
+    void rollDrop(Player killer, LivingEntity entity) {
+        if (entity.hasMetadata("NPC")) return;
+        rollDrop(killer, rangedKill(entity) ? SkillType.ARCHERY : SkillType.COMBAT, mobTier(entity));
+    }
+
+    /** Убийство снарядом (лук, арбалет, трезубец) — «Стрельба», иначе «Ближний бой». */
+    private static boolean rangedKill(LivingEntity entity) {
+        return entity.getLastDamageCause() instanceof EntityDamageByEntityEvent byEntity
+                && byEntity.getDamager() instanceof Projectile;
     }
 
     /**
