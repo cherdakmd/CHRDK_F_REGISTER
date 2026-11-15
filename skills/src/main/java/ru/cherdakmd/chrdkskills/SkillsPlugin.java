@@ -38,6 +38,7 @@ public final class SkillsPlugin extends JavaPlugin {
     private SkillsGui gui;
     private SkillAbilityStore abilityStore;
     private SkillAbilities abilities;
+    private BranchAbilities branchAbilities;
     private SkillXpStore xpStore;
     private SkillXpItems xpItems;
     private SkillXpShop xpShop;
@@ -68,6 +69,7 @@ public final class SkillsPlugin extends JavaPlugin {
         this.abilityStore = new SkillAbilityStore(getDataFolder().toPath(), getLogger());
         abilityStore.load();
         this.abilities = new SkillAbilities(this, abilityStore);
+        this.branchAbilities = new BranchAbilities(this, abilityStore);
         this.xpStore = new SkillXpStore(getDataFolder().toPath(), getLogger());
         xpStore.load();
         this.xpItems = new SkillXpItems(this, xpStore);
@@ -83,6 +85,7 @@ public final class SkillsPlugin extends JavaPlugin {
 
         Bukkit.getPluginManager().registerEvents(listener, this);
         Bukkit.getPluginManager().registerEvents(abilities, this);
+        Bukkit.getPluginManager().registerEvents(new PveContributionListener(this), this);
         Bukkit.getPluginManager().registerEvents(xpItems, this);
         Bukkit.getPluginManager().registerEvents(gui, this);
 
@@ -249,6 +252,7 @@ public final class SkillsPlugin extends JavaPlugin {
     }
 
     SkillAbilities abilities() { return abilities; }
+    BranchAbilities branchAbilities() { return branchAbilities; }
     SkillXpItems xpItems() { return xpItems; }
     SkillXpShop xpShop() { return xpShop; }
 
@@ -344,6 +348,11 @@ public final class SkillsPlugin extends JavaPlugin {
         @Override
         public int stamina(Player player) {
             return service.stamina(player);
+        }
+
+        @Override
+        public int branchLevel(Player player, String branchId) {
+            return service.branchLevel(player, branchId);
         }
 
         @Override

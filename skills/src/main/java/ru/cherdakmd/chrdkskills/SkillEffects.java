@@ -41,14 +41,17 @@ public final class SkillEffects {
                 AttributeModifier.Operation.ADD_NUMBER);
         int agility = plugin.skills().attribute(player, PlayerAttribute.AGILITY);
         int stamina = plugin.skills().attribute(player, PlayerAttribute.STAMINA);
+        // Разбойник ускоряет атаку, Жрец добавляет здоровье — пассивы веток.
         applyModifier(player, Attribute.ATTACK_SPEED, "chrdkskills_attr_attack_speed",
-                AttributeMath.attackSpeed(agility),
+                AttributeMath.attackSpeed(agility)
+                        + BranchMath.rogueAttackSpeed(plugin.skills().branchLevel(player, BuildBranch.ROGUE)),
                 AttributeModifier.Operation.MULTIPLY_SCALAR_1);
         applyModifier(player, Attribute.MOVEMENT_SPEED, "chrdkskills_attr_move_speed",
                 AttributeMath.moveSpeed(agility),
                 AttributeModifier.Operation.MULTIPLY_SCALAR_1);
         applyModifier(player, Attribute.MAX_HEALTH, "chrdkskills_attr_health",
-                AttributeMath.bonusHealth(stamina),
+                AttributeMath.bonusHealth(stamina)
+                        + BranchMath.priestHealth(plugin.skills().branchLevel(player, BuildBranch.PRIEST)),
                 AttributeModifier.Operation.ADD_NUMBER);
     }
 

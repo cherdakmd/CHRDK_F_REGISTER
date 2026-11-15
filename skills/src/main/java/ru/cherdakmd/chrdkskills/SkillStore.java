@@ -54,6 +54,12 @@ public final class SkillStore {
         public int stamina = 0;
         public int wisdom = 0;
         public int cunning = 0;
+        /** Уровни веток билда: ветки и атрибуты делят один общий пул очков. */
+        public final Map<BuildBranch, Integer> branches = new EnumMap<>(BuildBranch.class);
+        /** Бонусные очки общего пула за честный PvE-вклад. */
+        public int bonusPoints = 0;
+        /** Журнал PvE-вклада: суммарные единицы честного вклада. */
+        public long pve = 0L;
 
         public long xp(SkillType skill) {
             return xp.getOrDefault(skill, 0L);
@@ -85,6 +91,26 @@ public final class SkillStore {
         /** Суммарно вложенные очки всех атрибутов. */
         public int spentAttributes() {
             return strength + agility + stamina + wisdom + cunning;
+        }
+
+        /** Уровень ветки билда. */
+        public int branch(BuildBranch branch) {
+            return branch == null ? 0 : branches.getOrDefault(branch, 0);
+        }
+
+        /** Ставит уровень ветки; итог зажимается в [0, {@link BuildBranch#MAX_LEVEL}]. */
+        public void setBranch(BuildBranch branch, int level) {
+            if (branch == null) return;
+            int next = Math.max(0, Math.min(BuildBranch.MAX_LEVEL, level));
+            if (next == 0) branches.remove(branch);
+            else branches.put(branch, next);
+        }
+
+        /** Суммарно потрачено очков общего пула на ветки. */
+        public int spentBranches() {
+            int total = 0;
+            for (int level : branches.values()) total += level;
+            return total;
         }
 
         public long totalXp() {
@@ -204,6 +230,20 @@ public final class SkillStore {
                         }
                     }
                 }
+                if (row.get("branches") instanceof Map<?, ?> branchRows) {
+                    for (Map.Entry<?, ?> branch : branchRows.entrySet()) {
+                        BuildBranch target = BuildBranch.byId(String.valueOf(branch.getKey()));
+                        if (target != null && branch.getValue() instanceof Number number) {
+                            player.setBranch(target, Math.max(0, Math.min(BuildBranch.MAX_LEVEL, number.intValue())));
+                        }
+                    }
+                }
+                if (row.get("bonusPoints") instanceof Number number) {
+                    player.bonusPoints = Math.max(0, Math.min(100_000, number.intValue()));
+                }
+                if (row.get("pve") instanceof Number number) {
+                    player.pve = Math.max(0L, number.longValue());
+                }
                 players.put(String.valueOf(entry.getKey()), player);
             }
             logger.info("[CHRDK_Skills] Загружено профилей: " + players.size() + ".");
@@ -273,6 +313,70 @@ public final class SkillStore {
             data.addAttribute(attribute, -data.attribute(attribute));
         }
         dirty = true;
+    }
+
+    /** Уровень ветки билда; нет профиля — ноль. */
+    public synchronized int branch(String playerKey, BuildBranch branch) {
+        PlayerData data = players.get(playerKey);
+        return data == null ? 0 : data.branch(branch);
+    }
+
+    /** Суммарно потрачено очков общего пула на ветки. */
+    public synchronized int spentBranches(String playerKey) {
+        PlayerData data = players.get(playerKey);
+        return data == null ? 0 : data.spentBranches();
+    }
+
+    /** Ставит уровень ветки; {@code false} — нет ветки или уровень вне диапазона. */
+    public synchronized boolean setBranch(String playerKey, BuildBranch branch, int level) {
+        if (playerKey == null || branch == null || level < 0 || level > BuildBranch.MAX_LEVEL) {
+            return false;
+        }
+        PlayerData data = players.computeIfAbsent(playerKey, key -> new PlayerData());
+        data.setBranch(branch, level);
+        dirty = true;
+        return true;
+    }
+
+    /** Сбрасывает все ветки билда; очки возвращаются в общий пул. */
+    public synchronized void resetBranches(String playerKey) {
+        PlayerData data = players.get(playerKey);
+        if (data == null) {
+            return;
+        }
+        for (BuildBranch branch : BuildBranch.values()) {
+            data.setBranch(branch, 0);
+        }
+        dirty = true;
+    }
+
+    /** Бонусные очки общего пула за честный PvE-вклад. */
+    public synchronized int bonusPoints(String playerKey) {
+        PlayerData data = players.get(playerKey);
+        return data == null ? 0 : data.bonusPoints;
+    }
+
+    /** Кладёт бонусные очки; итог не уходит в минус. */
+    public synchronized void addBonusPoints(String playerKey, int points) {
+        if (playerKey == null) return;
+        PlayerData data = players.computeIfAbsent(playerKey, key -> new PlayerData());
+        data.bonusPoints = Math.max(0, data.bonusPoints + points);
+        dirty = true;
+    }
+
+    /** Суммарный честный PvE-вклад (журнал). */
+    public synchronized long pve(String playerKey) {
+        PlayerData data = players.get(playerKey);
+        return data == null ? 0L : data.pve;
+    }
+
+    /** Прибавляет единицы вклада; итог не уходит в минус. */
+    public synchronized long addPve(String playerKey, long units) {
+        if (playerKey == null) return 0L;
+        PlayerData data = players.computeIfAbsent(playerKey, key -> new PlayerData());
+        data.pve = Math.max(0L, data.pve + units);
+        dirty = true;
+        return data.pve;
     }
 
     /** Опыт по всем навыкам разом. */
@@ -463,6 +567,16 @@ public final class SkillStore {
                 }
             }
             fields.put("attributes", attributeRows);
+            Map<String, Object> branchRows = new LinkedHashMap<>();
+            for (BuildBranch branch : BuildBranch.values()) {
+                int value = player.branch(branch);
+                if (value > 0) {
+                    branchRows.put(branch.id(), value);
+                }
+            }
+            fields.put("branches", branchRows);
+            if (player.bonusPoints > 0) fields.put("bonusPoints", player.bonusPoints);
+            if (player.pve > 0) fields.put("pve", player.pve);
             rows.put(key, fields);
         });
         data.put("players", rows);

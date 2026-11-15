@@ -76,7 +76,9 @@ final class SkillsHook {
                 return 0.0;
             }
             return ru.cherdakmd.chrdkskills.AttributeMath.mitigationBonus(
-                    registration.getProvider().stamina(player));
+                    registration.getProvider().stamina(player))
+                    + ru.cherdakmd.chrdkskills.BranchMath.clericMitigation(
+                            registration.getProvider().branchLevel(player, "cleric"));
         } catch (LinkageError | RuntimeException error) {
             log.log(Level.WARNING,
                     "[CHRDK_Mobs] CHRDK_Skills несовместим: стойкость не учтена", error);

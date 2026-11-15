@@ -272,6 +272,9 @@ public final class SkillListener implements Listener {
                 service.attribute(player, PlayerAttribute.CUNNING),
                 mobTier, service.attributeSum(player));
         factor *= 1.0 - AttributeMath.pressure(mobTier, service.attributeSum(player));
+        // Ветки билда: Воин усиливает ближний бой, Разбойник — урон в целом.
+        factor *= BranchMath.meleeMult(service.branchLevel(player, BuildBranch.WARRIOR));
+        factor *= BranchMath.rogueDamageMult(service.branchLevel(player, BuildBranch.ROGUE));
         event.setDamage(event.getDamage() * factor);
         long units = Math.min(MAX_COMBAT_UNITS, Math.max(1L, (long) Math.ceil(event.getFinalDamage())));
         if (!ru.cherdakmd.chrdkregister.api.MobRewardPolicy.temporary(victim)) service.award(player, SkillType.COMBAT, units);
@@ -302,6 +305,9 @@ public final class SkillListener implements Listener {
                 service.attribute(player, PlayerAttribute.CUNNING),
                 mobTier, service.attributeSum(player));
         factor *= 1.0 - AttributeMath.pressure(mobTier, service.attributeSum(player));
+        // Ветки билда: Стрелок усиливает дальний бой, Разбойник — урон в целом.
+        factor *= BranchMath.rangedMult(service.branchLevel(player, BuildBranch.ARCHER));
+        factor *= BranchMath.rogueDamageMult(service.branchLevel(player, BuildBranch.ROGUE));
         event.setDamage(event.getDamage() * factor);
         long units = Math.min(MAX_COMBAT_UNITS, Math.max(1L, (long) Math.ceil(event.getFinalDamage())));
         if (!ru.cherdakmd.chrdkregister.api.MobRewardPolicy.temporary(victim)) service.award(player, SkillType.ARCHERY, units);

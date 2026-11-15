@@ -477,6 +477,20 @@ messages:
   attrs-short: "<red>Не хватает свободных очков: есть %points%.</red>"
   attrs-error: "<red>Использование: /skills attrs [сила|ловкость|стойкость|мудрость|хитрость] [N] | reset.</red>"
 
+  # --------------------------- ветки билда (п.28) --------------------------------
+  # Очки веток и атрибутов делят один общий пул; сброс веток платный.
+  build-view: "<gold>Ветки билда:</gold> свободно очков <white>%points%</white> из <white>%total%</white>, честный PvE-вклад: <white>%pve%</white>."
+  build-branch: "<gray>—</gray> <yellow>%name%</yellow><gray>: уровень</gray> <white>%level%</white><gray>/</gray><white>%max%</white>"
+  build-added: "<green>Вложено %points% оч. в ветку «%name%»: уровень %level%.</green>"
+  build-max: "<yellow>Ветка «%name%» уже на максимуме.</yellow>"
+  build-short: "<red>Не хватает свободных очков: есть %points%.</red>"
+  build-error: "<red>Использование: /skills build [воин|стрелок|маг|клирик|жрец|разбойник] [N] | reset.</red>"
+  build-reset-done: "<green>Ветки сброшены, очки вернулись в пул: свободно %points%.</green>"
+  build-reset-fail: "<red>Сброс веток стоит %price% — оплата не прошла.</red>"
+  branch-used: "<green>Приём «%name%» применён, выносливость %energy%.</green>"
+  branch-locked: "<red>Приём закрыт: нужен уровень ветки %level%.</red>"
+  pve-award: "<green>Честный PvE-вклад:</green> <white>+%points%</white><green> оч. веток (всего вклада %pve%).</green>"
+
   # --------------------------- оплата (движок PaidActions) -----------------------
   finance.service-mode: "<red>Оплата требует авторизации, живого игрока в Survival/Adventure; NPC не допускаются.</red>"
   finance.service-wait: "<yellow>Платёж/исход покупки ожидает сверки. Новые сделки приостановлены; уже начатая оплата не объявляется отменённой. Администратору: /skillsadmin recover.</yellow>"

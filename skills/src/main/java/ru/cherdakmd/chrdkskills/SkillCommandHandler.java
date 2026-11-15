@@ -72,8 +72,7 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
             plugin.abilities().status(player); return true;
         }
         if (args[0].equalsIgnoreCase("use")) {
-            if (args.length != 2) { plugin.messages().send(player, "ability-usage"); return true; }
-            plugin.abilities().activate(player, SkillAbility.of(SkillType.byId(args[1]))); return true;
+            return handleUse(player, args);
         }
         if (args[0].equalsIgnoreCase("list")) {
             return handleList(player);
@@ -92,6 +91,9 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
         }
         if (args[0].equalsIgnoreCase("attrs") || args[0].equalsIgnoreCase("атрибуты")) {
             return handleAttributes(player, args);
+        }
+        if (args[0].equalsIgnoreCase("build") || args[0].equalsIgnoreCase("ветки")) {
+            return handleBuild(player, args);
         }
         SkillType skill = SkillType.byId(args[0]);
         if (skill == null) {
@@ -147,6 +149,93 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
         } catch (NumberFormatException error) {
             return -1;
         }
+    }
+
+    /** {@code /skills use <приём>} — активный приём навыка или ветки билда. */
+    private boolean handleUse(Player player, String[] args) {
+        if (args.length != 2) {
+            plugin.messages().send(player, "ability-usage");
+            return true;
+        }
+        SkillAbility skillAbility = SkillAbility.of(SkillType.byId(args[1]));
+        if (skillAbility != null) {
+            plugin.abilities().activate(player, skillAbility);
+            return true;
+        }
+        BranchAbility branchAbility = BranchAbility.byId(args[1]);
+        if (branchAbility == null) {
+            plugin.messages().send(player, "ability-usage");
+            return true;
+        }
+        String error = plugin.branchAbilities().use(player, branchAbility);
+        if (!error.isEmpty()) {
+            plugin.messages().send(player, error,
+                    "time", plugin.branchAbilities().cooldownLeft(player, branchAbility),
+                    "cost", branchAbility.cost(),
+                    "level", branchAbility.unlockLevel());
+            return true;
+        }
+        plugin.messages().send(player, "branch-used",
+                "name", branchAbility.displayName(),
+                "energy", plugin.branchAbilities().energy(player));
+        return true;
+    }
+
+    /**
+     * {@code /skills build [ветка] [N] | reset} — ветки билда. Очки веток и
+     * атрибутов делят один общий пул; сброс веток платный.
+     */
+    private boolean handleBuild(Player player, String[] args) {
+        if (args.length == 1) {
+            plugin.messages().send(player, "build-view",
+                    "points", service.freeAttributePoints(player),
+                    "total", service.attributePoints(player) + service.bonusPoints(player),
+                    "pve", service.pveContribution(player));
+            for (BuildBranch branch : BuildBranch.values()) {
+                plugin.messages().send(player, "build-branch",
+                        "name", branch.displayName(),
+                        "level", service.branchLevel(player, branch),
+                        "max", BuildBranch.MAX_LEVEL);
+            }
+            return true;
+        }
+        if (args[1].equalsIgnoreCase("reset")) {
+            boolean paid = plugin.xpShop() != null && plugin.xpShop().payments().perform(player, player,
+                    (int) BranchMath.RESPEC_PRICE, "skill-branch-respec", "reset",
+                    () -> {
+                        service.resetBranches(player);
+                        plugin.effects().apply(player);
+                        return true;
+                    });
+            if (paid) {
+                plugin.messages().send(player, "build-reset-done",
+                        "points", service.freeAttributePoints(player));
+            } else {
+                plugin.messages().send(player, "build-reset-fail", "price", BranchMath.RESPEC_PRICE);
+            }
+            return true;
+        }
+        BuildBranch branch = BuildBranch.byId(args[1]);
+        int points = args.length >= 3 ? parsePoints(args[2]) : 1;
+        if (branch == null || points <= 0) {
+            plugin.messages().send(player, "build-error");
+            return true;
+        }
+        if (service.branchLevel(player, branch) >= BuildBranch.MAX_LEVEL) {
+            plugin.messages().send(player, "build-max", "name", branch.displayName());
+            return true;
+        }
+        if (!service.spendBranch(player, branch, points)) {
+            plugin.messages().send(player, "build-short",
+                    "points", service.freeAttributePoints(player));
+            return true;
+        }
+        plugin.effects().apply(player);
+        plugin.messages().send(player, "build-added",
+                "points", points,
+                "name", branch.displayName(),
+                "level", service.branchLevel(player, branch));
+        return true;
     }
 
     private boolean handleList(Player player) {
@@ -415,17 +504,30 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
             if (args.length == 1) {
                 List<String> options = new ArrayList<>(List.of(
                         "list", "top", "rating", "menu", "tree", "perks", "perktree",
-                        "use", "energy", "prestige", "prestigetop", "balance", "attrs"));
+                        "use", "energy", "prestige", "prestigetop", "balance", "attrs", "build"));
                 for (SkillType skill : SkillRegistry.all()) {
                     options.add(skill.id());
                 }
                 return filter(options, args[0]);
             }
-            if (args.length == 2 && args[0].equalsIgnoreCase("use"))
-                return filter(java.util.Arrays.stream(SkillAbility.values()).map(SkillAbility::id).toList(), args[1]);
+            if (args.length == 2 && args[0].equalsIgnoreCase("use")) {
+                List<String> abilityIds = new ArrayList<>(
+                        java.util.Arrays.stream(SkillAbility.values()).map(SkillAbility::id).toList());
+                for (BranchAbility ability : BranchAbility.values()) {
+                    abilityIds.add(ability.id());
+                }
+                return filter(abilityIds, args[1]);
+            }
             if (args.length == 2 && args[0].equalsIgnoreCase("attrs"))
                 return filter(List.of("сила", "ловкость", "стойкость", "мудрость", "хитрость",
                         "strength", "agility", "stamina", "wisdom", "cunning", "reset"), args[1]);
+            if (args.length == 2 && args[0].equalsIgnoreCase("build")) {
+                List<String> branchIds = new ArrayList<>(List.of("reset"));
+                for (BuildBranch branch : BuildBranch.values()) {
+                    branchIds.add(branch.id());
+                }
+                return filter(branchIds, args[1]);
+            }
             if (args.length == 2 && args[0].equalsIgnoreCase("prestige")) {
                 List<String> ids = new ArrayList<>(SkillRegistry.all().stream()
                         .map(SkillType::id).toList());

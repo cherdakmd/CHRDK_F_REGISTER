@@ -140,9 +140,13 @@ public final class SkillService {
         return AttributeMath.points(totalLevel(player), totalPrestige(player));
     }
 
-    /** Свободные очки: всего минус вложенные. */
+    /**
+     * Свободные очки общего пула: атрибуты и ветки билда делят один бюджет
+     * (уровни навыков + престиж), честный PvE-вклад добавляет бонусные очки.
+     */
     public int freeAttributePoints(Player player) {
-        return Math.max(0, attributePoints(player) - store.spentAttributes(key(player)));
+        return Math.max(0, attributePoints(player) + bonusPoints(player)
+                - store.spentAttributes(key(player)) - store.spentBranches(key(player)));
     }
 
     /** Вложенные очки атрибута. */
@@ -178,6 +182,70 @@ public final class SkillService {
             return;
         }
         store.resetAttributes(key(player));
+    }
+
+    /** Бонусные очки общего пула за честный PvE-вклад. */
+    public int bonusPoints(Player player) {
+        return player == null ? 0 : store.bonusPoints(key(player));
+    }
+
+    /** Уровень ветки билда. */
+    public int branchLevel(Player player, BuildBranch branch) {
+        return player == null || branch == null ? 0 : store.branch(key(player), branch);
+    }
+
+    /** Уровень ветки по строковому id — мягкий мост для других аддонов. */
+    public int branchLevel(Player player, String branchId) {
+        return branchLevel(player, BuildBranch.byId(branchId));
+    }
+
+    /**
+     * Вкладывает очки общего пула в ветку (уровень ветки = очко);
+     * {@code false} — не хватает свободных или ветка на потолке.
+     */
+    public boolean spendBranch(Player player, BuildBranch branch, int points) {
+        if (player == null || branch == null || points <= 0
+                || points > freeAttributePoints(player)) {
+            return false;
+        }
+        int level = branchLevel(player, branch);
+        if (level + points > BuildBranch.MAX_LEVEL) {
+            return false;
+        }
+        return store.setBranch(key(player), branch, level + points);
+    }
+
+    /** Сброс веток; очки возвращаются в общий пул. Оплата сброса — у вызывающего. */
+    public void resetBranches(Player player) {
+        if (player == null) {
+            return;
+        }
+        store.resetBranches(key(player));
+    }
+
+    /** Суммарный честный PvE-вклад (журнал). */
+    public long pveContribution(Player player) {
+        return player == null ? 0L : store.pve(key(player));
+    }
+
+    /**
+     * Прибавляет единицы честного PvE-вклада и возвращает число выданных
+     * бонусных очков пула ({@link BranchMath#PVE_PER_POINT}). Дневной потолок
+     * очков и честность события проверяет вызывающий слушатель.
+     */
+    public int addPve(Player player, long units) {
+        if (player == null || units <= 0) return 0;
+        long before = store.pve(key(player));
+        long after = store.addPve(key(player), units);
+        return (int) (after / BranchMath.PVE_PER_POINT - before / BranchMath.PVE_PER_POINT);
+    }
+
+    /** Выдаёт бонусные очки общего пула (награда за вклад). */
+    public void grantBonusPoints(Player player, int points) {
+        if (player == null || points <= 0) {
+            return;
+        }
+        store.addBonusPoints(key(player), points);
     }
 
     /**
@@ -428,6 +496,9 @@ public final class SkillService {
         // Мудрость ускоряет прокачку навыков (атрибуты персонажа).
         gained = Math.round(gained * AttributeMath.xpFactor(
                 attribute(player, PlayerAttribute.WISDOM)));
+        // Маг: интеллект внутри ветки билда — ещё +2% опыта за уровень.
+        gained = Math.round(gained * BranchMath.xpMult(
+                branchLevel(player, BuildBranch.MAGE)));
         // Мягкая зона: хотя бы 1 XP за реальное действие (scaledXp).
         gained = PrestigeXpGate.scaledXp(gained, balanceFactor);
         gained = Math.max(0L, Math.min(plugin.config().maxXpPerAction(), gained));

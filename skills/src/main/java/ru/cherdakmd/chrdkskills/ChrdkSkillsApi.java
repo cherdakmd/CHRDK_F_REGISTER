@@ -62,4 +62,12 @@ public interface ChrdkSkillsApi {
     default int stamina(Player player) {
         return 0;
     }
+
+    /**
+     * Уровень ветки билда ({@code warrior}, {@code archer}, {@code mage},
+     * {@code cleric}, {@code priest}, {@code rogue}). Без поддержки — 0.
+     */
+    default int branchLevel(Player player, String branchId) {
+        return 0;
+    }
 }
