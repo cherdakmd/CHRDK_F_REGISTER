@@ -57,21 +57,25 @@ final class MobMitigationGuard implements Listener {
             return;
         }
         LivingEntity mob = mobAttacker(event.getDamager());
-        if (mob == null) {
+        if (!(event.getEntity() instanceof Player player) || mob == null) {
             return;
         }
-        double minimum = original * (1.0 - capFor(mob));
-        if (event.getDamage() < minimum) {
-            event.setDamage(minimum);
-        }
+        int tier = tierOf(mob);
+        MobsConfig.Mitigation mitigation = plugin.config().mitigation();
+        // Стойкость компенсирует пробивание высших тиров, но потолок жёсткий.
+        double cap = Math.min(0.9, MobTierMath.mitigationCap(tier,
+                mitigation.cap(), mitigation.perTierStep(), mitigation.floor())
+                + SkillsHook.mitigationBonus(plugin.getLogger(), player));
+        double damage = Math.max(event.getDamage(), original * (1.0 - cap));
+        // Давление тира: недобор атрибутов зоны усиливает урон моба.
+        damage *= 1.0 + SkillsHook.pressure(plugin.getLogger(), player, tier);
+        event.setDamage(damage);
     }
 
-    /** Потолок снижения по тиру моба: без метки тира моб считается первым. */
-    private double capFor(LivingEntity mob) {
+    /** Тир моба из метки тирующего слушателя: без метки моб считается первым тиром. */
+    private int tierOf(LivingEntity mob) {
         Integer tier = mob.getPersistentDataContainer().get(tierKey, PersistentDataType.INTEGER);
-        MobsConfig.Mitigation mitigation = plugin.config().mitigation();
-        return MobTierMath.mitigationCap(tier == null ? 1 : tier,
-                mitigation.cap(), mitigation.perTierStep(), mitigation.floor());
+        return tier == null ? 1 : Math.max(1, tier);
     }
 
     /** Моб-вредитель: прямой или снаряд, выпущенный мобом. */

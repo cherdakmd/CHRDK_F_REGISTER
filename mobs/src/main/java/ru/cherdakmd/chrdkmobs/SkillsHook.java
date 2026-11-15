@@ -61,4 +61,48 @@ final class SkillsHook {
             return false;
         }
     }
+
+    /**
+     * Компенсация пробивания стойкостью: столько добавляется к потолку
+     * снижения урона игрока. Нет навыков — 0 (пробивание работает в полную).
+     */
+    static double mitigationBonus(Logger log, Player player) {
+        if (player == null || !Bukkit.getPluginManager().isPluginEnabled(PLUGIN)) {
+            return 0.0;
+        }
+        try {
+            var registration = Bukkit.getServicesManager().getRegistration(ChrdkSkillsApi.class);
+            if (registration == null) {
+                return 0.0;
+            }
+            return ru.cherdakmd.chrdkskills.AttributeMath.mitigationBonus(
+                    registration.getProvider().stamina(player));
+        } catch (LinkageError | RuntimeException error) {
+            log.log(Level.WARNING,
+                    "[CHRDK_Mobs] CHRDK_Skills несовместим: стойкость не учтена", error);
+            return 0.0;
+        }
+    }
+
+    /**
+     * Давление тира: штраф игрока за недобор атрибутов зоны тира (доля).
+     * Нет навыков — 0 (модуль работает автономно).
+     */
+    static double pressure(Logger log, Player player, int tier) {
+        if (player == null || !Bukkit.getPluginManager().isPluginEnabled(PLUGIN)) {
+            return 0.0;
+        }
+        try {
+            var registration = Bukkit.getServicesManager().getRegistration(ChrdkSkillsApi.class);
+            if (registration == null) {
+                return 0.0;
+            }
+            return ru.cherdakmd.chrdkskills.AttributeMath.pressure(
+                    tier, registration.getProvider().attributeSum(player));
+        } catch (LinkageError | RuntimeException error) {
+            log.log(Level.WARNING,
+                    "[CHRDK_Mobs] CHRDK_Skills несовместим: давление тира не учтено", error);
+            return 0.0;
+        }
+    }
 }

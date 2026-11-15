@@ -337,6 +337,16 @@ public final class SkillsPlugin extends JavaPlugin {
         }
 
         @Override
+        public int attributeSum(Player player) {
+            return service.attributeSum(player);
+        }
+
+        @Override
+        public int stamina(Player player) {
+            return service.stamina(player);
+        }
+
+        @Override
         public int award(Player player, String skillId, long units) {
             SkillType skill = SkillType.byId(skillId);
             if (skill == null) {

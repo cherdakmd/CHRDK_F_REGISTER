@@ -90,12 +90,63 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
         if (args[0].equalsIgnoreCase("balance")) {
             return handleBalance(player);
         }
+        if (args[0].equalsIgnoreCase("attrs") || args[0].equalsIgnoreCase("атрибуты")) {
+            return handleAttributes(player, args);
+        }
         SkillType skill = SkillType.byId(args[0]);
         if (skill == null) {
             plugin.messages().send(player, "unknown-skill");
             return true;
         }
         return handleCard(player, skill);
+    }
+
+    /** {@code /skills attrs [сила|ловкость|стойкость|мудрость|хитрость] [N] | reset} — очки атрибутов. */
+    private boolean handleAttributes(Player player, String[] args) {
+        if (args.length == 1) {
+            plugin.messages().send(player, "attrs-view",
+                    "strength", service.attribute(player, PlayerAttribute.STRENGTH),
+                    "agility", service.attribute(player, PlayerAttribute.AGILITY),
+                    "stamina", service.attribute(player, PlayerAttribute.STAMINA),
+                    "wisdom", service.attribute(player, PlayerAttribute.WISDOM),
+                    "cunning", service.attribute(player, PlayerAttribute.CUNNING));
+            plugin.messages().send(player, "attrs-points",
+                    "points", service.freeAttributePoints(player),
+                    "total", service.attributePoints(player));
+            return true;
+        }
+        if (args[1].equalsIgnoreCase("reset")) {
+            service.resetAttributes(player);
+            plugin.effects().apply(player);
+            plugin.messages().send(player, "attrs-reset-done",
+                    "points", service.freeAttributePoints(player));
+            return true;
+        }
+        PlayerAttribute attribute = PlayerAttribute.byId(args[1]);
+        int points = args.length >= 3 ? parsePoints(args[2]) : 1;
+        if (attribute == null || points <= 0) {
+            plugin.messages().send(player, "attrs-error");
+            return true;
+        }
+        if (!service.spendAttribute(player, attribute, points)) {
+            plugin.messages().send(player, "attrs-short",
+                    "points", service.freeAttributePoints(player));
+            return true;
+        }
+        plugin.effects().apply(player);
+        plugin.messages().send(player, "attrs-added",
+                "points", points,
+                "attribute", attribute.name(),
+                "value", service.attribute(player, attribute));
+        return true;
+    }
+
+    private static int parsePoints(String raw) {
+        try {
+            return Integer.parseInt(raw.trim());
+        } catch (NumberFormatException error) {
+            return -1;
+        }
     }
 
     private boolean handleList(Player player) {
@@ -364,7 +415,7 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
             if (args.length == 1) {
                 List<String> options = new ArrayList<>(List.of(
                         "list", "top", "rating", "menu", "tree", "perks", "perktree",
-                        "use", "energy", "prestige", "prestigetop", "balance"));
+                        "use", "energy", "prestige", "prestigetop", "balance", "attrs"));
                 for (SkillType skill : SkillRegistry.all()) {
                     options.add(skill.id());
                 }
@@ -372,6 +423,9 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
             }
             if (args.length == 2 && args[0].equalsIgnoreCase("use"))
                 return filter(java.util.Arrays.stream(SkillAbility.values()).map(SkillAbility::id).toList(), args[1]);
+            if (args.length == 2 && args[0].equalsIgnoreCase("attrs"))
+                return filter(List.of("сила", "ловкость", "стойкость", "мудрость", "хитрость",
+                        "strength", "agility", "stamina", "wisdom", "cunning", "reset"), args[1]);
             if (args.length == 2 && args[0].equalsIgnoreCase("prestige")) {
                 List<String> ids = new ArrayList<>(SkillRegistry.all().stream()
                         .map(SkillType::id).toList());

@@ -48,9 +48,43 @@ public final class SkillStore {
         public int diamondToday = 0;
         /** Последний известный ник — чтобы топ не ходил за профилями. */
         public String name = "";
+        /** Распределённые очки атрибутов: сила, ловкость, стойкость, мудрость, хитрость. */
+        public int strength = 0;
+        public int agility = 0;
+        public int stamina = 0;
+        public int wisdom = 0;
+        public int cunning = 0;
 
         public long xp(SkillType skill) {
             return xp.getOrDefault(skill, 0L);
+        }
+
+        /** Вложенные очки атрибута. */
+        public int attribute(PlayerAttribute attribute) {
+            return switch (attribute) {
+                case STRENGTH -> strength;
+                case AGILITY -> agility;
+                case STAMINA -> stamina;
+                case WISDOM -> wisdom;
+                case CUNNING -> cunning;
+            };
+        }
+
+        /** Кладёт очки атрибута; отрицательный итог зажимается к нулю. */
+        public void addAttribute(PlayerAttribute attribute, int points) {
+            int next = Math.max(0, attribute(attribute) + points);
+            switch (attribute) {
+                case STRENGTH -> strength = next;
+                case AGILITY -> agility = next;
+                case STAMINA -> stamina = next;
+                case WISDOM -> wisdom = next;
+                case CUNNING -> cunning = next;
+            }
+        }
+
+        /** Суммарно вложенные очки всех атрибутов. */
+        public int spentAttributes() {
+            return strength + agility + stamina + wisdom + cunning;
         }
 
         public long totalXp() {
@@ -162,6 +196,14 @@ public final class SkillStore {
                 if (row.get("diamondToday") instanceof Number number) {
                     player.diamondToday = Math.max(0, Math.min(1_000_000, number.intValue()));
                 }
+                if (row.get("attributes") instanceof Map<?, ?> attributeRows) {
+                    for (PlayerAttribute attribute : PlayerAttribute.values()) {
+                        Object value = attributeRows.get(attribute.id());
+                        if (value instanceof Number number) {
+                            player.addAttribute(attribute, Math.max(0, Math.min(100_000, number.intValue())));
+                        }
+                    }
+                }
                 players.put(String.valueOf(entry.getKey()), player);
             }
             logger.info("[CHRDK_Skills] Загружено профилей: " + players.size() + ".");
@@ -195,6 +237,41 @@ public final class SkillStore {
         }
         PlayerData data = players.computeIfAbsent(playerKey, key -> new PlayerData());
         data.xp.put(skill, Math.max(0L, amount));
+        dirty = true;
+    }
+
+    /** Вложенные очки атрибута; нет профиля — нули. */
+    public synchronized int attribute(String playerKey, PlayerAttribute attribute) {
+        PlayerData data = players.get(playerKey);
+        return data == null || attribute == null ? 0 : data.attribute(attribute);
+    }
+
+    /** Суммарно вложенные очки атрибутов; нет профиля — ноль. */
+    public synchronized int spentAttributes(String playerKey) {
+        PlayerData data = players.get(playerKey);
+        return data == null ? 0 : data.spentAttributes();
+    }
+
+    /** Вкладывает очки в атрибут; {@code false} — нет игрока, атрибута или очков. */
+    public synchronized boolean addAttribute(String playerKey, PlayerAttribute attribute, int points) {
+        if (playerKey == null || attribute == null || points <= 0) {
+            return false;
+        }
+        PlayerData data = players.computeIfAbsent(playerKey, key -> new PlayerData());
+        data.addAttribute(attribute, points);
+        dirty = true;
+        return true;
+    }
+
+    /** Сбрасывает все атрибуты в ноль; очки возвращаются в свободный пул. */
+    public synchronized void resetAttributes(String playerKey) {
+        PlayerData data = players.get(playerKey);
+        if (data == null) {
+            return;
+        }
+        for (PlayerAttribute attribute : PlayerAttribute.values()) {
+            data.addAttribute(attribute, -data.attribute(attribute));
+        }
         dirty = true;
     }
 
@@ -378,6 +455,14 @@ public final class SkillStore {
             fields.put("claimedTiers", new ArrayList<>(player.claimedTiers));
             fields.put("diamondDay", player.diamondDay);
             fields.put("diamondToday", player.diamondToday);
+            Map<String, Object> attributeRows = new LinkedHashMap<>();
+            for (PlayerAttribute attribute : PlayerAttribute.values()) {
+                int value = player.attribute(attribute);
+                if (value > 0) {
+                    attributeRows.put(attribute.id(), value);
+                }
+            }
+            fields.put("attributes", attributeRows);
             rows.put(key, fields);
         });
         data.put("players", rows);

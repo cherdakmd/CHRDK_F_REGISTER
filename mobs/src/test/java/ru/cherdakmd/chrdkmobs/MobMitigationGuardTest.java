@@ -29,6 +29,8 @@ class MobMitigationGuardTest {
                 "суммарное снижение зажимается после всех редукторов");
         assertTrue(guard.contains("tier-v1"), "потолок зависит от тира моба");
         assertTrue(guard.contains("MobTierMath.mitigationCap"), "формула потолка — чистая математика");
+        assertTrue(guard.contains("SkillsHook.mitigationBonus"), "стойкость компенсирует пробивание тиров");
+        assertTrue(guard.contains("SkillsHook.pressure"), "давление тира усиливает урон моба");
         String plugin = read("src/main/java/ru/cherdakmd/chrdkmobs/MobsPlugin.java");
         assertTrue(plugin.contains("new MobMitigationGuard(this)"), "страж зарегистрирован при старте");
     }

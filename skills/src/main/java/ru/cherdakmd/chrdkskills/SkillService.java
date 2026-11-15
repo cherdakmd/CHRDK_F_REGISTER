@@ -133,6 +133,53 @@ public final class SkillService {
         return total;
     }
 
+    /* -------------------------------- атрибуты -------------------------------- */
+
+    /** Всего очков атрибутов за прокачку: уровни навыков и ступени престижа. */
+    public int attributePoints(Player player) {
+        return AttributeMath.points(totalLevel(player), totalPrestige(player));
+    }
+
+    /** Свободные очки: всего минус вложенные. */
+    public int freeAttributePoints(Player player) {
+        return Math.max(0, attributePoints(player) - store.spentAttributes(key(player)));
+    }
+
+    /** Вложенные очки атрибута. */
+    public int attribute(Player player, PlayerAttribute attribute) {
+        return player == null || attribute == null ? 0 : store.attribute(key(player), attribute);
+    }
+
+    /** Сумма вложенных очков — «ранг атрибутов» для порогов тиров. */
+    public int attributeSum(Player player) {
+        return player == null ? 0 : store.spentAttributes(key(player));
+    }
+
+    /** Стойкость — компенсация пробивания защиты высшими тирами. */
+    public int stamina(Player player) {
+        return attribute(player, PlayerAttribute.STAMINA);
+    }
+
+    /**
+     * Вкладывает очки; {@code false} — не хватает свободных. После вклада
+     * вызывающий обновляет эффекты ({@code plugin.effects().apply(player)}).
+     */
+    public boolean spendAttribute(Player player, PlayerAttribute attribute, int points) {
+        if (player == null || attribute == null || points <= 0
+                || points > freeAttributePoints(player)) {
+            return false;
+        }
+        return store.addAttribute(key(player), attribute, points);
+    }
+
+    /** Полный сброс распределения; все очки возвращаются в свободный пул. */
+    public void resetAttributes(Player player) {
+        if (player == null) {
+            return;
+        }
+        store.resetAttributes(key(player));
+    }
+
     /**
      * Перки одного навыка. События спрашивают именно так: шанс двойной добычи
      * горного дела не должен срабатывать на брёвнах, хотя вид эффекта общий.
@@ -378,6 +425,9 @@ public final class SkillService {
         // действия: иначе ветеран получал бы экспоненциальный опыт.
         gained = Math.round(gained * PrestigeMath.xpFactor(
                 prestigeLevel(player, skill), plugin.config().prestigeXpPerStep()));
+        // Мудрость ускоряет прокачку навыков (атрибуты персонажа).
+        gained = Math.round(gained * AttributeMath.xpFactor(
+                attribute(player, PlayerAttribute.WISDOM)));
         // Мягкая зона: хотя бы 1 XP за реальное действие (scaledXp).
         gained = PrestigeXpGate.scaledXp(gained, balanceFactor);
         gained = Math.max(0L, Math.min(plugin.config().maxXpPerAction(), gained));

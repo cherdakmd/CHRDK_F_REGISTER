@@ -468,6 +468,15 @@ messages:
   potion-buy-hint: "<yellow>Клик — купить один кристалл</yellow>"
   potion-bought: "<green>Куплен кристалл навыка</green> <white>%skill%</white><green> за</green> <white>%cost%</white> 💠."
 
+  # ------------------------------- атрибуты --------------------------------------
+  # Очки за уровни навыков: игрок распределяет их сам (/skills attrs).
+  attrs-view: "<gold>Атрибуты:</gold> сила <white>%strength%</white>, ловкость <white>%agility%</white>, стойкость <white>%stamina%</white>, мудрость <white>%wisdom%</white>, хитрость <white>%cunning%</white>."
+  attrs-points: "<gray>Свободно очков: <white>%points%</white> из <white>%total%</white>. Вклад: /skills attrs <атрибут> <N>, сброс: /skills attrs reset.</gray>"
+  attrs-added: "<green>Вложено %points% оч. в «%attribute%»: теперь %value%.</green>"
+  attrs-reset-done: "<green>Атрибуты сброшены, свободно %points% очков.</green>"
+  attrs-short: "<red>Не хватает свободных очков: есть %points%.</red>"
+  attrs-error: "<red>Использование: /skills attrs [сила|ловкость|стойкость|мудрость|хитрость] [N] | reset.</red>"
+
   # --------------------------- оплата (движок PaidActions) -----------------------
   finance.service-mode: "<red>Оплата требует авторизации, живого игрока в Survival/Adventure; NPC не допускаются.</red>"
   finance.service-wait: "<yellow>Платёж/исход покупки ожидает сверки. Новые сделки приостановлены; уже начатая оплата не объявляется отменённой. Администратору: /skillsadmin recover.</yellow>"

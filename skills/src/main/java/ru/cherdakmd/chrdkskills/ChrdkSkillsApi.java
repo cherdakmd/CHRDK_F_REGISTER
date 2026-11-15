@@ -49,4 +49,17 @@ public interface ChrdkSkillsApi {
 
     /** Суммарная величина активного эффекта навыка (0, если перк не открыт). */
     double perk(Player player, String skillId, String kind);
+
+    /**
+     * Сумма распределённых очков атрибутов (ранг атрибутов для порогов тиров).
+     * Дефолт — 0: старые реализации API совместимы без пересборки.
+     */
+    default int attributeSum(Player player) {
+        return 0;
+    }
+
+    /** Очки стойкости: компенсируют пробивание защиты высшими тирами. */
+    default int stamina(Player player) {
+        return 0;
+    }
 }
