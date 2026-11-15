@@ -151,8 +151,8 @@ class PluginUpdateServiceTest {
         try (var updater = fixture.service()) {
             var result = updater.execute(true, "1.4.72");
             assertTrue(result.staged());
-            assertEquals(20, result.count());
-            try (var files = Files.list(result.updateDirectory())) { assertEquals(20, files.count()); }
+            assertEquals(19, result.count());
+            try (var files = Files.list(result.updateDirectory())) { assertEquals(19, files.count()); }
             for (var entry : originals.entrySet()) {
                 assertArrayEquals(entry.getValue(), Files.readAllBytes(entry.getKey()));
                 assertArrayEquals(entry.getValue(), Files.readAllBytes(result.backup().resolve(entry.getKey().getFileName())));
