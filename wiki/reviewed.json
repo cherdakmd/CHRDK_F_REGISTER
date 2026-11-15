@@ -96,8 +96,8 @@
       "text": "eb6fdaf663b2005735002c5f23bb7f751b31a7447b3fc2cc77d741ff7c4cb2f9"
     },
     "mobs": {
-      "reason": "Привязка мощности мобов к прокачке (снапшот очков ближайшего игрока) и элитные мобы со способностями; страница обновлена",
-      "sources": "b0e5fa3cdd36b8004e560c9e027ba2f4a45a748a1ba0df863443ab9bebd41340",
+      "reason": "Аудит: упрощён фильтр игроков-источников прогресса (GameMode вместо isSpectator)",
+      "sources": "88c685ffc0349da695f7f7102c24d418e9d51bd0c7514d79bb9ece5c9d967495",
       "text": "8385bf71a6a66e7a86ae54d9e5dbaa24c070920d14ddf03cedb3f91772485f64"
     },
     "moderation": {
