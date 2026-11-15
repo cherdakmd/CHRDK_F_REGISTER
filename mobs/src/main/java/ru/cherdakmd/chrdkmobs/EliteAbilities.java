@@ -81,7 +81,12 @@ public enum EliteAbilities {
      * размер равновероятен. Выход за размеры пула зажимается.
      */
     public static List<EliteAbilities> pick(Random random, int min, int max) {
-        List<EliteAbilities> pool = new ArrayList<>(List.of(values()));
+        return pickFrom(List.of(values()), random, min, max);
+    }
+
+    /** Случайный набор из тематического пула (например, варианта моба). */
+    public static List<EliteAbilities> pickFrom(List<EliteAbilities> source, Random random, int min, int max) {
+        List<EliteAbilities> pool = new ArrayList<>(source);
         Collections.shuffle(pool, random);
         int low = Math.max(0, Math.min(min, pool.size()));
         int high = Math.max(low, Math.min(max, pool.size()));
