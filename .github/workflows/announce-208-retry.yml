@@ -63,9 +63,9 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           # Канонический путь run.py (как у штатного workflow_dispatch на main):
           # журнал с дедупликацией и поиск маркера в беседе защищают от двойного
-          # поста, если первая попытка успела отправить сообщение.
-          GITHUB_EVENT_NAME: workflow_dispatch
-          GITHUB_REF: refs/heads/main
+          # поста, если первая попытка успела отправить сообщение. GITHUB_REF и
+          # GITHUB_EVENT_NAME раннер переопределять не даёт, поэтому выставляются
+          # внутри процесса; код и релиз — доверенный main.
           VK_AUTOPUBLISH_ENABLED: 'true'
           VK_NEWS_GROUP_ID: ${{ vars.VK_NEWS_GROUP_ID }}
           VK_NEWS_PEER_ID: ${{ vars.VK_NEWS_PEER_ID }}
@@ -73,7 +73,14 @@ jobs:
           MAX_AUTOPUBLISH_ENABLED: ${{ vars.MAX_AUTOPUBLISH_ENABLED }}
           MAX_BOT_TOKEN: ${{ secrets.MAX_BOT_TOKEN }}
           MAX_NEWS_CHAT_ID: ${{ vars.MAX_NEWS_CHAT_ID }}
-        run: python3 tools/social/run.py --publish --kind news --release-tag v2.0.8
+        run: |
+          python3 - <<'PY'
+          import os, runpy, sys
+          os.environ['GITHUB_EVENT_NAME'] = 'workflow_dispatch'
+          os.environ['GITHUB_REF'] = 'refs/heads/main'
+          sys.argv = ['run.py', '--publish', '--kind', 'news', '--release-tag', 'v2.0.8']
+          runpy.run_path('tools/social/run.py', run_name='__main__')
+          PY
 
       - name: Save text and PNG preview (no tokens or API responses)
         if: always()
