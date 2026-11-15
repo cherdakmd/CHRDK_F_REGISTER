@@ -31,11 +31,11 @@ class QueueRemovalTest {
         assertFalse(Files.readString(Path.of("settings.gradle")).contains("include 'queue'"));
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_Queue"));
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_VK"));
-        assertEquals(20, PluginUpdateService.MODULES.size());
+        assertEquals(19, PluginUpdateService.MODULES.size());
         assertEquals(45,ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
         var stock = yaml("config.yml");
-        assertEquals(46, stock.getMapList("server-menu.items").size());
-        assertEquals(39, stock.getList("auto-messages.messages").size());
+        assertEquals(45, stock.getMapList("server-menu.items").size());
+        assertEquals(38, stock.getList("auto-messages.messages").size());
         assertFalse(stock.saveToString().contains("CHRDK_Queue"));
         assertFalse(stock.saveToString().contains("Вход без очереди"));
         assertFalse(yaml("messages.yml").getString("messages.rank.ability-1").contains("очереди"));
