@@ -79,7 +79,7 @@ final class SkillXpItems implements Listener {
             case FISHING -> Material.TROPICAL_FISH;
             case COMBAT -> Material.IRON_NUGGET;
             case ARCHERY -> Material.FEATHER;
-            case DEFENSE -> Material.CHAIN;
+            case DEFENSE -> Material.IRON_BARS;
             case ALCHEMY -> Material.NETHER_WART;
             case ENCHANTING -> Material.LAPIS_LAZULI;
         };

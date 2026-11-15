@@ -26,7 +26,7 @@ class SkillXpItemsTest {
         assertEquals(Material.TROPICAL_FISH, SkillXpItems.materialOf(SkillType.FISHING));
         assertEquals(Material.IRON_NUGGET, SkillXpItems.materialOf(SkillType.COMBAT));
         assertEquals(Material.FEATHER, SkillXpItems.materialOf(SkillType.ARCHERY));
-        assertEquals(Material.CHAIN, SkillXpItems.materialOf(SkillType.DEFENSE));
+        assertEquals(Material.IRON_BARS, SkillXpItems.materialOf(SkillType.DEFENSE));
         assertEquals(Material.NETHER_WART, SkillXpItems.materialOf(SkillType.ALCHEMY));
         assertEquals(Material.LAPIS_LAZULI, SkillXpItems.materialOf(SkillType.ENCHANTING));
     }
