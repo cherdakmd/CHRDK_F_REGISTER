@@ -95,6 +95,9 @@ class ReleaseValidationTest(unittest.TestCase):
             "2.0.8": ("20 JAR одной версии", "chrdk-vk-2.0.8.jar",
                       "chrdk-disasters-2.0.8.jar", "Mine Treasure", "тиры мобов",
                       "элитные", "523 662", "вкладка «Зелья»"),
+            "2.0.9": ("20 JAR одной версии", "chrdk-vk-2.0.9.jar",
+                      "chrdk-disasters-2.0.9.jar", "Mine Treasure", "10 тиров",
+                      "особый лут", "по-русски", "сквозь блоки"),
         }
         if version in current_kits:
             self.assertIn(f"CHRDK {version}", current)
