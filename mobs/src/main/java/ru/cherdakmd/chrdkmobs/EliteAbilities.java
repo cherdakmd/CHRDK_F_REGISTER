@@ -38,15 +38,27 @@ public enum EliteAbilities {
     KNOCKBACK(Kind.TOUCH),
     /** Вампиризм: лечение за нанесённый урон. */
     LIFESTEAL(Kind.TOUCH),
+    /** Усушение при ударе (по мотивам Infernal-Mobs). */
+    WITHER_TOUCH(Kind.TOUCH),
+    /** Гроза: разряд по жертве при ударе (по мотивам Infernal-Mobs). */
+    LIGHTNING_TOUCH(Kind.TOUCH),
+    /** Притяжение: моб тянет жертву к себе (по мотивам Infernal-Mobs). */
+    PULL(Kind.TOUCH),
+    /** Взмёт: моб подбрасывает жертву вверх (по мотивам Infernal-Mobs). */
+    LAUNCH(Kind.TOUCH),
+    /** Паутина под ногами жертвы (по мотивам Infernal-Mobs). */
+    WEB_TOUCH(Kind.TOUCH),
     /** Шипы: отражение части урона атакующему. */
     THORNS(Kind.TACTIC),
     /** Призыв подмоги при получении урона. */
     MINIONS(Kind.TACTIC),
     /** Телепорт к жертве при получении урона. */
-    BLINK(Kind.TACTIC);
+    BLINK(Kind.TACTIC),
+    /** Взрыв при гибели без разрушения блоков (по мотивам Infernal-Mobs). */
+    EXPLOSIVE_DEATH(Kind.DEATH);
 
     /** Группа способности: когда она срабатывает. */
-    public enum Kind { PASSIVE, TOUCH, TACTIC }
+    public enum Kind { PASSIVE, TOUCH, TACTIC, DEATH }
 
     private final Kind kind;
 

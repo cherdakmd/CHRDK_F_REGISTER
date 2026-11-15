@@ -1,6 +1,8 @@
 package ru.cherdakmd.chrdkmobs;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
@@ -35,13 +37,20 @@ final class EliteAbilityListener implements Listener {
     private static final double BLINK_CHANCE = 0.25;
     private static final int TOUCH_FIRE_TICKS = 60;
     private static final int TOUCH_POTION_TICKS = 100;
+    private static final double LIGHTNING_CHANCE = 0.20;
+    private static final double LIGHTNING_DAMAGE = 3.0;
+    private static final double WEB_CHANCE = 0.25;
+    private static final long WEB_LIFETIME_TICKS = 80L;
+    private static final float DEATH_EXPLOSION_POWER = 2.0f;
 
+    private final MobsPlugin plugin;
     private final NamespacedKey eliteKey;
     private final Map<UUID, Long> minionsCooldown = new ConcurrentHashMap<>();
     private final Map<UUID, Long> blinkCooldown = new ConcurrentHashMap<>();
     private boolean reflecting;
 
     EliteAbilityListener(MobsPlugin plugin) {
+        this.plugin = plugin;
         this.eliteKey = new NamespacedKey(plugin, "elite-v1");
     }
 
@@ -89,6 +98,48 @@ final class EliteAbilityListener implements Listener {
         if (abilities.contains(EliteAbilities.LIFESTEAL)) {
             mob.heal(Math.min(8.0, damage * 0.5));
         }
+        if (abilities.contains(EliteAbilities.WITHER_TOUCH)) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, TOUCH_POTION_TICKS, 0));
+        }
+        if (abilities.contains(EliteAbilities.LIGHTNING_TOUCH)
+                && ThreadLocalRandom.current().nextDouble() < LIGHTNING_CHANCE) {
+            player.getWorld().strikeLightningEffect(player.getLocation());
+            // Урон разрядом — под флагом reflecting: иначе рекурсия касательных эффектов.
+            reflecting = true;
+            try {
+                player.damage(LIGHTNING_DAMAGE, mob);
+            } finally {
+                reflecting = false;
+            }
+        }
+        if (abilities.contains(EliteAbilities.PULL)) {
+            // Притяжение к мобу — обратный вектор отбрасывания.
+            var pull = mob.getLocation().toVector()
+                    .subtract(player.getLocation().toVector()).normalize().multiply(0.9);
+            pull.setY(0.25);
+            player.setVelocity(player.getVelocity().add(pull));
+        }
+        if (abilities.contains(EliteAbilities.LAUNCH)) {
+            player.setVelocity(player.getVelocity().add(new org.bukkit.util.Vector(0.0, 1.05, 0.0)));
+        }
+        if (abilities.contains(EliteAbilities.WEB_TOUCH)
+                && ThreadLocalRandom.current().nextDouble() < WEB_CHANCE) {
+            webFeet(player);
+        }
+    }
+
+    /** Паутина под ногами жертвы на несколько секунд. */
+    private void webFeet(Player player) {
+        var block = player.getLocation().getBlock();
+        if (!block.getType().isReplaceable()) {
+            return;
+        }
+        block.setType(Material.COBWEB);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (block.getType() == Material.COBWEB) {
+                block.setType(Material.AIR);
+            }
+        }, WEB_LIFETIME_TICKS);
     }
 
     private void onPlayerHitMob(Player player, LivingEntity victim, double damage) {
@@ -161,6 +212,11 @@ final class EliteAbilityListener implements Listener {
         UUID id = event.getEntity().getUniqueId();
         minionsCooldown.remove(id);
         blinkCooldown.remove(id);
+        if (abilitiesOf(event.getEntity()).contains(EliteAbilities.EXPLOSIVE_DEATH)) {
+            // Взрыв без урона по блокам: добыча остаётся на месте.
+            event.getEntity().getWorld().createExplosion(
+                    event.getEntity().getLocation(), DEATH_EXPLOSION_POWER, false, false);
+        }
     }
 
     private EnumSet<EliteAbilities> abilitiesOf(Entity entity) {

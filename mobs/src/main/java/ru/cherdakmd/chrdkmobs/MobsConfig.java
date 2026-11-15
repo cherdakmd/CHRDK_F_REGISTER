@@ -15,17 +15,17 @@ import java.util.logging.Logger;
  * привязка к прокачке, элитные мобы и редкие варианты.
  */
 record MobsConfig(boolean enabled, List<Integer> thresholds, Map<Integer, Tier> table,
-                  boolean namePrefix, Progression progression, Elite elite,
+                  boolean namePrefix, boolean particles, Progression progression, Elite elite,
                   Variants variants, Loot loot) {
 
     /**
      * Свойства одного тира: множители здоровья и урона, число способностей
-     * особых мобов (min..max), награда в {@code /bal} и число предметов лута
-     * (min..max).
+     * особых мобов (min..max), награда в {@code /bal}, число предметов лута
+     * (min..max) и шанс дропа лута (0..1; сущности вариантов падают всегда).
      */
     record Tier(int tier, double health, double damage,
                 int abilitiesMin, int abilitiesMax,
-                long reward, int lootMin, int lootMax) { }
+                long reward, int lootMin, int lootMax, double lootChance) { }
 
     /**
      * Привязка к прокачке: мощность моба закрепляется при появлении по
@@ -58,7 +58,8 @@ record MobsConfig(boolean enabled, List<Integer> thresholds, Map<Integer, Tier> 
             return row;
         }
         int last = table.keySet().stream().mapToInt(Integer::intValue).max().orElse(1);
-        return table.getOrDefault(last, new Tier(Math.max(1, tier), 1.0, 1.0, 1, 1, 0L, 1, 1));
+        return table.getOrDefault(last,
+                new Tier(Math.max(1, tier), 1.0, 1.0, 1, 1, 0L, 1, 1, 0.35));
     }
 
     static MobsConfig parse(FileConfiguration cfg, Logger log) {
@@ -114,7 +115,8 @@ record MobsConfig(boolean enabled, List<Integer> thresholds, Map<Integer, Tier> 
         Loot loot = new Loot(
                 Math.min(1_000_000L, Math.max(0L, cfg.getLong("loot.essence-xp", 40L))),
                 Math.min(1_000_000L, Math.max(0L, cfg.getLong("loot.variant-xp", 60L))));
-        return new MobsConfig(enabled, List.copyOf(thresholds), table, namePrefix,
+        boolean particles = cfg.getBoolean("effects.particles", true);
+        return new MobsConfig(enabled, List.copyOf(thresholds), table, namePrefix, particles,
                 progression, elite, variants, loot);
     }
 
@@ -151,7 +153,8 @@ record MobsConfig(boolean enabled, List<Integer> thresholds, Map<Integer, Tier> 
                     clampCount(abilities.size() < 2 ? 2 : abilities.get(1)),
                     Math.max(0L, row.getLong("reward", 0L)),
                     clampCount(lootRange.isEmpty() ? 1 : lootRange.get(0)),
-                    clampCount(lootRange.size() < 2 ? 1 : lootRange.get(1))));
+                    clampCount(lootRange.size() < 2 ? 1 : lootRange.get(1)),
+                    Math.min(1.0, Math.max(0.0, row.getDouble("loot-chance", 0.35)))));
         }
         return table;
     }
@@ -167,13 +170,15 @@ record MobsConfig(boolean enabled, List<Integer> thresholds, Map<Integer, Tier> 
     String describe() {
         return String.format(Locale.ROOT,
                 "enabled=%s, tiers=%d (%s..%s), таблица %d тиров, прогресс +%,.0f%%/100 очков "
-                        + "(до +%,.0f%%), элита %,.1f%%, варианты %,.1f%%, лут %d/%d опыта",
+                        + "(до +%,.0f%%), элита %,.1f%%, варианты %,.1f%%, лут %d/%d опыта, "
+                        + "частицы %s",
                 enabled, thresholds.size() + 1,
                 thresholds.isEmpty() ? "?" : thresholds.get(0),
                 thresholds.isEmpty() ? "?" : thresholds.get(thresholds.size() - 1),
                 table.size(),
                 progression.healthPer100() * 100, progression.maxBonus() * 100,
                 elite.chance() * 100, variants.chance() * 100,
-                loot.essenceXp(), loot.variantXp());
+                loot.essenceXp(), loot.variantXp(),
+                particles ? "вкл" : "выкл");
     }
 }

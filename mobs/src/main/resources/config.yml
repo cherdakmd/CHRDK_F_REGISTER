@@ -27,17 +27,19 @@ tiers:
   # прогресса и элиты), число способностей особых мобов (элит и вариантов),
   # награда в /bal за убийство (деньги, без предметов) и число предметов
   # лута (min..max). Тиры выше последней строки наследуют её свойства.
+  #   loot-chance — шанс (0..1), что лут вообще выпадет; особым мобам
+  #   (вариантам) тематический лут падает всегда, независимо от шанса.
   table:
-    1:  {health: 1.0,  damage: 1.0,  abilities: [1, 2], reward: 0, loot: [1, 1]}
-    2:  {health: 1.4,  damage: 1.15, abilities: [2, 2], reward: 1, loot: [1, 1]}
-    3:  {health: 1.9,  damage: 1.3,  abilities: [2, 2], reward: 1, loot: [1, 2]}
-    4:  {health: 2.5,  damage: 1.5,  abilities: [2, 3], reward: 2, loot: [1, 2]}
-    5:  {health: 3.2,  damage: 1.75, abilities: [2, 3], reward: 2, loot: [2, 2]}
-    6:  {health: 4.1,  damage: 2.0,  abilities: [3, 3], reward: 3, loot: [2, 3]}
-    7:  {health: 5.2,  damage: 2.3,  abilities: [3, 3], reward: 3, loot: [2, 3]}
-    8:  {health: 6.5,  damage: 2.7,  abilities: [3, 4], reward: 4, loot: [3, 3]}
-    9:  {health: 8.0,  damage: 3.2,  abilities: [3, 4], reward: 4, loot: [3, 4]}
-    10: {health: 10.0, damage: 3.8,  abilities: [4, 5], reward: 5, loot: [3, 4]}
+    1:  {health: 1.0,  damage: 1.0,  abilities: [1, 2], reward: 0, loot: [1, 1], loot-chance: 0.15}
+    2:  {health: 1.4,  damage: 1.15, abilities: [2, 2], reward: 1, loot: [1, 1], loot-chance: 0.15}
+    3:  {health: 1.9,  damage: 1.3,  abilities: [2, 2], reward: 1, loot: [1, 1], loot-chance: 0.13}
+    4:  {health: 2.5,  damage: 1.5,  abilities: [2, 3], reward: 2, loot: [1, 2], loot-chance: 0.13}
+    5:  {health: 3.2,  damage: 1.75, abilities: [2, 3], reward: 2, loot: [1, 2], loot-chance: 0.11}
+    6:  {health: 4.1,  damage: 2.0,  abilities: [3, 3], reward: 3, loot: [2, 2], loot-chance: 0.11}
+    7:  {health: 5.2,  damage: 2.3,  abilities: [3, 3], reward: 3, loot: [2, 2], loot-chance: 0.09}
+    8:  {health: 6.5,  damage: 2.7,  abilities: [3, 4], reward: 4, loot: [2, 3], loot-chance: 0.09}
+    9:  {health: 8.0,  damage: 3.2,  abilities: [3, 4], reward: 4, loot: [3, 3], loot-chance: 0.08}
+    10: {health: 10.0, damage: 3.8,  abilities: [4, 5], reward: 5, loot: [3, 3], loot-chance: 0.08}
 
 progression:
   # Привязка к прокачке игрока: мощность моба закрепляется при появлении по
@@ -76,11 +78,19 @@ elite:
 variants:
   # Редкие особые мобы любого тира со своей темой: проклятые, тлеющие,
   # всратые и кринжовые. Своя тема способностей, своё имя и тематический
-  # лут (сущности с полезными эффектами). Шанс — доля от 0 до 1 на моба,
+  # лут (сущности с полезными эффектами) — он падает всегда, вопреки
+  # loot-chance тира. Шанс — доля от 0 до 1 на моба,
   # тип выбирается случайно; мощность считается поверх тира и прогресса.
   chance: 0.012
   health-multiplier: 2.5
   damage-multiplier: 1.75
+
+effects:
+  # Частицы у особых мобов (по мотивам Infernal-Mobs): элиты и варианты
+  # подсвечиваются частицами своей темы — элиты и проклятые потусторонним
+  # вихрём, тлеющие огнём, всратые ведьмовской мглой, кринжовые золотым
+  # сиянием. false — отключить подсветку совсем.
+  particles: true
 
 loot:
   # Опыт навыка (addXp) за использование лута: эссенции навыков и

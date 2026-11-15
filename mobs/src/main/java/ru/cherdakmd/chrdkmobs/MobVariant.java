@@ -38,13 +38,18 @@ enum MobVariant {
     public List<EliteAbilities> pool() {
         return switch (this) {
             case CURSED -> List.of(EliteAbilities.RESISTANCE, EliteAbilities.STRENGTH,
-                    EliteAbilities.WEAKNESS_TOUCH, EliteAbilities.LIFESTEAL, EliteAbilities.THORNS);
+                    EliteAbilities.WEAKNESS_TOUCH, EliteAbilities.LIFESTEAL, EliteAbilities.THORNS,
+                    EliteAbilities.WITHER_TOUCH, EliteAbilities.EXPLOSIVE_DEATH);
             case SMOLDERING -> List.of(EliteAbilities.FIRE_RESISTANCE, EliteAbilities.FIRE_TOUCH,
-                    EliteAbilities.STRENGTH, EliteAbilities.KNOCKBACK);
+                    EliteAbilities.STRENGTH, EliteAbilities.KNOCKBACK,
+                    EliteAbilities.EXPLOSIVE_DEATH);
             case GROSS -> List.of(EliteAbilities.VENOM, EliteAbilities.SLOW_TOUCH,
-                    EliteAbilities.MINIONS, EliteAbilities.REGENERATION);
+                    EliteAbilities.MINIONS, EliteAbilities.REGENERATION,
+                    EliteAbilities.WEB_TOUCH, EliteAbilities.WITHER_TOUCH);
             case CRINGE -> List.of(EliteAbilities.BLINK, EliteAbilities.MINIONS,
-                    EliteAbilities.SPEED, EliteAbilities.KNOCKBACK, EliteAbilities.THORNS);
+                    EliteAbilities.SPEED, EliteAbilities.KNOCKBACK, EliteAbilities.THORNS,
+                    EliteAbilities.PULL, EliteAbilities.LAUNCH, EliteAbilities.WEB_TOUCH,
+                    EliteAbilities.LIGHTNING_TOUCH);
         };
     }
 

@@ -38,8 +38,9 @@ public final class MobsPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new EliteAbilityListener(this), this);
         Bukkit.getPluginManager().registerEvents(lootItems, this);
         // Имена мобов не видны сквозь блоки: видимость табличек пересчитывается
-        // каждые полсекунды для всех мобов с именем.
-        Bukkit.getScheduler().runTaskTimer(this, new NameplateVisibility(), 20L, 10L);
+        // каждые полсекунды для всех мобов с именем; элиты и варианты
+        // подсвечиваются частицами своей темы.
+        Bukkit.getScheduler().runTaskTimer(this, new NameplateVisibility(this), 20L, 10L);
         var mobtiers = getCommand("mobtiers");
         if (mobtiers != null) {
             var handler = new MobTierCommand(this);

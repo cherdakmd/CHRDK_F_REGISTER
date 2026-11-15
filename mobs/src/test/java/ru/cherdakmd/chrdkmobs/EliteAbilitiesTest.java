@@ -54,4 +54,21 @@ class EliteAbilitiesTest {
         assertEquals(EnumSet.allOf(EliteAbilities.Kind.class), kinds);
         assertTrue(EliteAbilities.values().length >= 10, "пул способностей достаточен");
     }
+
+    @Test
+    void infernalMobsAbilitiesRoundTrip() {
+        String joined = EliteAbilities.join(List.of(
+                EliteAbilities.WITHER_TOUCH, EliteAbilities.LIGHTNING_TOUCH,
+                EliteAbilities.PULL, EliteAbilities.LAUNCH,
+                EliteAbilities.WEB_TOUCH, EliteAbilities.EXPLOSIVE_DEATH));
+        assertEquals("wither_touch,lightning_touch,pull,launch,web_touch,explosive_death", joined);
+        assertEquals(EnumSet.of(
+                        EliteAbilities.WITHER_TOUCH, EliteAbilities.LIGHTNING_TOUCH,
+                        EliteAbilities.PULL, EliteAbilities.LAUNCH,
+                        EliteAbilities.WEB_TOUCH, EliteAbilities.EXPLOSIVE_DEATH),
+                EliteAbilities.parse(joined), "новые иды переживают PDC");
+        assertEquals(EliteAbilities.Kind.TOUCH, EliteAbilities.WITHER_TOUCH.kind());
+        assertEquals(EliteAbilities.Kind.TOUCH, EliteAbilities.WEB_TOUCH.kind());
+        assertEquals(EliteAbilities.Kind.DEATH, EliteAbilities.EXPLOSIVE_DEATH.kind());
+    }
 }

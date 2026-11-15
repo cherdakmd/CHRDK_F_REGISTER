@@ -28,6 +28,7 @@ class MobTierConfigTest {
         assertTrue(config.contains("distances: [500, 1200, 2200, 3500, 5200, 7200, 9600, 12500, 16000]"),
                 "девять границ = десять тиров");
         assertTrue(config.contains("table:"), "свойства каждого тира");
+        assertTrue(config.contains("loot-chance: 0.15"), "шанс дропа лута настраивается на тир");
         assertTrue(config.contains("name-prefix: true"));
         assertTrue(config.contains("NATURAL/PATROL"), "фермы спавнеров исключены документированно");
         assertTrue(config.contains("reward-tiers: 2"));
@@ -48,6 +49,8 @@ class MobTierConfigTest {
         assertTrue(config.contains("loot:"));
         assertTrue(config.contains("essence-xp: 40"));
         assertTrue(config.contains("variant-xp: 60"));
+        assertTrue(config.contains("effects:"), "эффекты особых мобов");
+        assertTrue(config.contains("particles: true"), "частицы особых мобов по мотивам Infernal-Mobs");
         assertTrue(config.contains("прогрессией НЕ"), "награда не масштабируется прогрессией");
     }
 
@@ -62,6 +65,7 @@ class MobTierConfigTest {
         MobsConfig.Tier first = config.tier(1);
         assertEquals(1.0, first.health());
         assertEquals(0, first.reward(), "первый тир без денег");
+        assertEquals(0.15, first.lootChance(), "шанс дропа лута тира 1");
         MobsConfig.Tier last = config.tier(10);
         assertEquals(10.0, last.health());
         assertEquals(3.8, last.damage());
@@ -69,9 +73,21 @@ class MobTierConfigTest {
         assertEquals(4, last.abilitiesMin());
         assertEquals(5, last.abilitiesMax());
         assertEquals(3, last.lootMin());
-        assertEquals(4, last.lootMax());
+        assertEquals(3, last.lootMax());
+        assertEquals(0.08, last.lootChance(), "шанс дропа лута тира 10");
         assertEquals(last.health(), config.tier(99).health(),
                 "тиры выше последней строки наследуют её");
+    }
+
+    @Test
+    void lootChanceFallsBackWhenRowOmitsIt() {
+        YamlConfiguration cfg = YamlConfiguration.loadConfiguration(new StringReader(
+                "tiers:\n"
+                        + "  table:\n"
+                        + "    1: {health: 1.0, damage: 1.0, abilities: [1, 1], reward: 0, loot: [1, 2]}\n"));
+        MobsConfig config = MobsConfig.parse(cfg, Logger.getLogger("test"));
+        assertEquals(0.35, config.tier(1).lootChance(),
+                "строка без loot-chance не роняет парсер");
     }
 
     @Test
@@ -83,6 +99,8 @@ class MobTierConfigTest {
         assertTrue(messages.contains("mob-name-prefix"));
         assertTrue(messages.contains("mob-reward"));
         assertTrue(messages.contains("mobtiers-header"));
+        assertTrue(messages.contains("mobtiers-line"));
+        assertTrue(messages.contains("дроп %chance%"), "шанс дропа лута виден в /mobtiers");
         assertTrue(messages.contains("elite-name"), "имя элиты");
         assertTrue(messages.contains("elite-reward"), "награда за элиту");
         assertTrue(messages.contains("variant-reward"), "награда за вариант");

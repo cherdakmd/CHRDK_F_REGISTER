@@ -77,7 +77,7 @@ messages:
     - "<light_purple>Падает с кринжовых мобов</light_purple>"
   loot-used: "<gray>Лут: <green>+%amount% опыта навыка</green></gray>"
   mobtiers-header: "<gold>Тиры мобов</gold> <gray>— дальше от спавна мира враги сильнее и щедрее</gray>"
-  mobtiers-line: "<gray>Тир %tier%: %range% · здоровье ×%health% · урон ×%damage% · награда %reward% ⛁ · навыков %abilities% · лут %loot%</gray>"
+  mobtiers-line: "<gray>Тир %tier%: %range% · здоровье ×%health% · урон ×%damage% · награда %reward% ⛁ · навыков %abilities% · лут %loot% · дроп %chance%%</gray>"
   mobtiers-off: "<yellow>Тиры мобов выключены в конфиге.</yellow>"
   mobtiers-progression: "<gray>Прокачка: +%health%% здоровья и +%damage%% урона за 100 очков (уровни навыков + престиж ×%prestige%, до +%cap%%), игрок в %radius% блоках</gray>"
   mobtiers-elite: "<gray>Элита: шанс %chance%%, здоровья ×%health%, урон ×%damage%, награда как за тир +%reward%</gray>"
