@@ -99,15 +99,12 @@ class SkillsMenuTextTest {
     void tabsAndStepsHaveRussianTexts() {
         Messages messages = messages();
         for (String key : new String[]{
-                "menu-title", "menu-tab-skills", "menu-tab-tree", "menu-top",
-                "menu-tab-selected", "menu-tab-hint", "menu-tab-domain",
-                "menu-tab-domain-hint", "menu-guide-button", "menu-guide",
-                "menu-top-hint", "menu-tree-unavailable", "menu-tree-no-tree",
-                "menu-steps-title", "menu-skill-steps", "card-steps"}) {
+                "menu-title", "menu-tab-skills", "menu-top",
+                "menu-tab-selected", "menu-tab-hint", "menu-guide-button", "menu-guide",
+                "menu-top-hint", "menu-steps-title", "menu-skill-steps", "card-steps"}) {
             assertTrue(messages.has(key), "нет текста вкладки/ступеней " + key);
         }
         assertTrue(messages.template("menu-title").contains("Навыки"));
-        assertTrue(messages.template("menu-tab-tree").contains("Дерево перков"));
         String guide = messages.template("menu-guide");
         assertTrue(guide.contains("12 ступеней"), "нужно число ступеней");
         assertTrue(guide.contains("одно меню"), "нужно объяснение вкладок");
@@ -115,7 +112,7 @@ class SkillsMenuTextTest {
                 "нужны пороги ступеней");
         assertTrue(messages.getList("menu-guide").size() >= 6,
                 "инструкция должна быть подробной");
-        assertTrue(messages.template("menu-tree-unavailable").contains("CHRDK_Classes"));
+        assertFalse(guide.contains("ерево перков"), "дерево перков вырезано (п.29)");
     }
 
     @Test

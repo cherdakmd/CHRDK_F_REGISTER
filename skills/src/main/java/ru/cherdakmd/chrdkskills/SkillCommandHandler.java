@@ -59,13 +59,8 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
             plugin.messages().send(sender, "player-only");
             return true;
         }
-        if (args[0].equalsIgnoreCase("tree") || args[0].equalsIgnoreCase("perktree")
-                || args[0].equalsIgnoreCase("perks")) {
-            gui.open(player, SkillsMenuApi.Tab.TREE, args.length > 1 ? args[1] : null, 0);
-            return true;
-        }
         if (args[0].equalsIgnoreCase("rating")) {
-            gui.open(player, SkillsMenuApi.Tab.TOP, null, 0);
+            gui.open(player, SkillsMenuApi.Tab.TOP, 0);
             return true;
         }
         if (args[0].equalsIgnoreCase("energy")) {
@@ -270,7 +265,7 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
     /** Без аргумента — витрина престижа; с аргументом — двухшаговый сброс. */
     private boolean handlePrestige(Player player, String[] args) {
         if (args.length == 1) {
-            gui.open(player, SkillsMenuApi.Tab.PRESTIGE, null, 0);
+            gui.open(player, SkillsMenuApi.Tab.PRESTIGE, 0);
             return true;
         }
         if (args.length != 2) {
@@ -503,7 +498,7 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
         if (command.getName().equalsIgnoreCase("skills")) {
             if (args.length == 1) {
                 List<String> options = new ArrayList<>(List.of(
-                        "list", "top", "rating", "menu", "tree", "perks", "perktree",
+                        "list", "top", "rating", "menu",
                         "use", "energy", "prestige", "prestigetop", "balance", "attrs", "build"));
                 for (SkillType skill : SkillRegistry.all()) {
                     options.add(skill.id());

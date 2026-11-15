@@ -60,6 +60,8 @@ public final class SkillStore {
         public int bonusPoints = 0;
         /** Журнал PvE-вклада: суммарные единицы честного вклада. */
         public long pve = 0L;
+        /** Метка конвертации классового прогресса (п.29): очки уже выданы. */
+        public boolean classConverted = false;
 
         public long xp(SkillType skill) {
             return xp.getOrDefault(skill, 0L);
@@ -244,6 +246,9 @@ public final class SkillStore {
                 if (row.get("pve") instanceof Number number) {
                     player.pve = Math.max(0L, number.longValue());
                 }
+                if (row.get("classConverted") instanceof Boolean flag) {
+                    player.classConverted = flag;
+                }
                 players.put(String.valueOf(entry.getKey()), player);
             }
             logger.info("[CHRDK_Skills] Загружено профилей: " + players.size() + ".");
@@ -377,6 +382,24 @@ public final class SkillStore {
         data.pve = Math.max(0L, data.pve + units);
         dirty = true;
         return data.pve;
+    }
+
+    /**
+     * Одноразовая конвертация классового прогресса в очки пула;
+     * {@code false} — игрок уже конвертирован или очков нет.
+     */
+    public synchronized boolean migrateClassPoints(String playerKey, int points) {
+        if (playerKey == null || points <= 0) {
+            return false;
+        }
+        PlayerData data = players.computeIfAbsent(playerKey, key -> new PlayerData());
+        if (data.classConverted) {
+            return false;
+        }
+        data.classConverted = true;
+        data.bonusPoints = Math.max(0, data.bonusPoints + points);
+        dirty = true;
+        return true;
     }
 
     /** Опыт по всем навыкам разом. */
@@ -577,6 +600,7 @@ public final class SkillStore {
             fields.put("branches", branchRows);
             if (player.bonusPoints > 0) fields.put("bonusPoints", player.bonusPoints);
             if (player.pve > 0) fields.put("pve", player.pve);
+            if (player.classConverted) fields.put("classConverted", true);
             rows.put(key, fields);
         });
         data.put("players", rows);

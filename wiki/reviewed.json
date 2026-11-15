@@ -1,188 +1,178 @@
 {
   "pages": {
     "about": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "a7f57ee748ff6816f690a519976bcf2bbcae66ee627849594d3da803df098de3",
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "879b95e0db3adb836522a3b36ccfa6b6ce105466f34ec544a00af012c7d753c2",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "c7199f66dfe399e55e68f51ecfb88c50d5613bf6eb0f852351a09aeb0f0e4e3c",
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "dc9d8dcb4ebefc3a530024dcb1c7df8553f126461bcc1f3f45c73562e327d83e",
       "text": "bd128e475ee8efae55c3d2d6c9616d5278600f2a8ff1aad7af5e6df3e0b3f5c3"
     },
     "artifacts": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "a7725c261a3319e556017d85745083a648a337af3c0a6ee4c19e6f65fcacd73c",
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "d2d0d9f2aed64f9b35f7a2edbc6bd708d2c1531a2464575bc976f45734edc1d5",
       "text": "51e3ef379d9a8f7e2ccfc6fd41cc0c0823f91f30d7c9a8326ec7962c182d98e4"
     },
     "battlepass": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "3ebadd583cf6801e92cb7fddd0201b50c0a318df46f93ce830c5dc63858e5048",
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "dde1787b36020f70ac73eb1867534bc16fea0507aee659d4d102e5391321f457",
       "text": "997df6e0a9311ea115c4fd3c192b2729034b10c68a4f41c57261ef4b704c5add"
     },
     "chat": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "a7f57ee748ff6816f690a519976bcf2bbcae66ee627849594d3da803df098de3",
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "879b95e0db3adb836522a3b36ccfa6b6ce105466f34ec544a00af012c7d753c2",
       "text": "a51c51d20cfe94c553e80893422b000a579b87285b00cbceb452f29eb0773023"
     },
     "claims": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "34cfb38e6f86ba0cd7af544973b34f00ac848ea251ff83aab182166c93320293",
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "f08dcd2981b5234f5e25e82c909190f1b5fcb24b3176252d89fbfb7ad950b4ef",
       "text": "50b80f02b9200ed8653d50c1bf802fd4de8d272a9bf1f46cf92618d743bed3cd"
     },
-    "classes": {
-      "reason": "П.28: ветки билда — шесть веток, общий пул очков, приёмы, щиты Клирик/Жрец и честный PvE-вклад; страницы сверены",
-      "sources": "764f304787337fbb8e9635d9f08c3133f4d5659f4b8294e21644c3542fe76f0d",
-      "text": "503edef62357862f67d17df249b393023697d6dca6342cbe792b0d4dc78cb8cc"
-    },
     "commands": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "4f0e44b63fa66496605f114a4e44d92fc3f21563d5ab9f66ced2b9e8f0260bdb",
-      "text": "46017ca1aca3a1d620ff09b3ffd40ff42885e551a850c85baa15f2c73d03b290"
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "467937aa626ff232636bc18eb8252deee3fe00604b3d55d46674dd61195a1553",
+      "text": "c177198348ad294daba4968fb8f353701dd7cf6e28744a0a0380cd7cbea835be"
     },
     "cosmetics": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "ac323e6e68f0cd71ad72dfc7ab50b29324935aac2f135296ae50c9bf011f8f2d",
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "8b973e92cddd599108c3d6aa21bc56d485832e936bc3d6d4e9fb68cb3fcfa852",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "c5a46a386ecaa2911a96325bf74364901f8ac63fe806c057af226477dedd5fd5",
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "e1ab1f471ea15f3fabf3161d3de8539b29ebaa915063ed74a2f8ed2cd5a35a18",
       "text": "4d7683f5677c50dfe0488961891915b5c2dd6533191a213ee8fdb077ea817eb5"
     },
     "disasters": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "053ac6f6c17f56ef60fc149432a0e2cb28ba51c56a61a190e9d12de048ebc347",
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "ed87a5df092fe525a9ff1adb74dc47b74317125882b033895f6f402b54a8f050",
       "text": "121b1cc28a075ced29b6de8abec7dbc20bbb531a01441ddd5fdb836d066d0202"
     },
     "economy": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "a6692876b59b1dca75457a3bdf356a0aa47e2e67dc754b821e0409e3eb68d3c2",
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "70193fe8ac468987656a0bc40750e138eb62fdb8b1e55806b27bf61de5484e16",
       "text": "380ede76f428cfc00f3a9df848d00a9b5012222475c10d41cc83359ef3d12d97"
     },
     "enchants": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "42a8b572943c5f06d1b07b16895895948ae235dc609698293572605226f121e6",
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "9da5193d48ad898c8d4eba6ffde1c9326b1436469e8a868c9cd394f45ddb8efe",
       "text": "7e90321ef8a100bae11c53592c62328fa44a958be657b66a86d51ea8c1906a7d"
     },
     "faq": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "80693bf3f8a1ec25ca8cca195cbd74f894414a451cb6e384f34b4180fb88afb2",
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "a694ff88953886a8caf76f6ce656ab7961a43074fb13a95bfea58c28f24a72a0",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "55b052e8a13ef156c230b8c6d2a9455358802f3be64a2a68aab7a3173f76527b",
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "02ab10a970de86fc4cfe968b18702ca3d7560654edb9f9e1235f1202742beddc",
       "text": "615d89bba0ac116c220d571f530fcdab7d5ff46162ca7a7ecf24de441a7fb191"
     },
     "guilds": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "34cfb38e6f86ba0cd7af544973b34f00ac848ea251ff83aab182166c93320293",
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "f08dcd2981b5234f5e25e82c909190f1b5fcb24b3176252d89fbfb7ad950b4ef",
       "text": "bb7d4121d6c42762b2f09d8eb57df986a942df35c77fd2cf899a5e7a38193216"
     },
     "honors": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "a7f57ee748ff6816f690a519976bcf2bbcae66ee627849594d3da803df098de3",
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "879b95e0db3adb836522a3b36ccfa6b6ce105466f34ec544a00af012c7d753c2",
       "text": "17c878e1ab52ceb2a7c3361a7bef133c8bd1004a59641898f2c525f7c48fff8f"
     },
     "index": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "c4b50cf5f750d9e5cf8f4423e2be5eb94f87088de965f8e6320934ed8ad46620",
-      "text": "81105e7dc18f0959f41385bc2c2c448c76cdccf250f2e0256b1207fc28e468b7"
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "640b86fc05e996e3349d63962fc64d3bd690d9e2f387a61cc6a49aa990b47ab5",
+      "text": "04ca129c1f9ab7e324063232304320ccda860991e29150c928c7f869745fed6b"
     },
     "menu": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "80693bf3f8a1ec25ca8cca195cbd74f894414a451cb6e384f34b4180fb88afb2",
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "a694ff88953886a8caf76f6ce656ab7961a43074fb13a95bfea58c28f24a72a0",
       "text": "eb6fdaf663b2005735002c5f23bb7f751b31a7447b3fc2cc77d741ff7c4cb2f9"
     },
     "mobs": {
-      "reason": "П.28: ветки билда — шесть веток, общий пул очков, приёмы, щиты Клирик/Жрец и честный PvE-вклад; страницы сверены",
-      "sources": "14f4dd6ee5f1ede84c9f45465ecb46e612cdf17421fc982f16a11b2489a3b543",
-      "text": "876904fed481d082800a2dfd7413c79a78d638b5b7619d029fd2dbe3b0ba8918"
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "0018cbabffef090a1b3fe413a52a3b49250d24c8d49d931d7c28239b18ab14ea",
+      "text": "b4220fc406c00dedaa5d733fc33493a1e801758d0aacb5821c20259e10132d55"
     },
     "moderation": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "a7f57ee748ff6816f690a519976bcf2bbcae66ee627849594d3da803df098de3",
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "879b95e0db3adb836522a3b36ccfa6b6ce105466f34ec544a00af012c7d753c2",
       "text": "79580a49c09219f65539abace395b5f2469f91fc2f0ac9b3ecae109c4fa1ecb4"
     },
     "orders": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "077143ca72bfacd6816529bab0d185f7465089921dc99a20be29e4480d2ea3d3",
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "fca58f5a895418bf5f4268d39deadb6b59d010bf48974b34f3d0047a4963c89f",
       "text": "8f1bddfa65aabb38fab8ebdad77656a627e340e765229de34ab3a24dd96fef2e"
     },
-    "perktree": {
-      "reason": "П.28: ветки билда — шесть веток, общий пул очков, приёмы, щиты Клирик/Жрец и честный PvE-вклад; страницы сверены",
-      "sources": "764f304787337fbb8e9635d9f08c3133f4d5659f4b8294e21644c3542fe76f0d",
-      "text": "3e1a2fe232bb8c384a682ac98f8133ab0560de790bab9a2a2d9542ea0b673666"
-    },
     "pets": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "f2cbdf8202fb414ddfb64dc9943e5e98220397ba905df0b5f8d32e1722c7da22",
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "483daf695c399f020776deccd77e7bdf0574afad0062e4209b8e5ecbe1df3dbc",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "profile": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "fc9421061b9a52c2fd553891fdea04843d415dfe9a13822e91098d0bd05a3423",
-      "text": "f2a1fafaef6d54a60b0dd2e9545374a59a83ad49a5de3ace0069e441c187d309"
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "e5f338f9f5da38bb2ccd4259dc983ab2b725c0633bb47d1e0f92a7df2c1757f8",
+      "text": "8506729db6d50085ba1c4efbb7f3daa0d4ad1845f19f36703246e80b2492cc16"
     },
     "quests": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "d494cb7b6aa691566a99bdcdcfef6d739af3fa256b87dd2404685e089cc2c2c5",
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "483218eb6597e82166084e554f0772beaa2465352e50b0bcab0782615983cf66",
       "text": "a42f11010fddbf13238133ac1e2dca525dea95245f5286a88a57738af30fbf13"
     },
     "ranks": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "01ea67efab79da40fb4beaf187698838f8cbf7ad5ff21f122374ac43a5d82814",
-      "text": "664b466e4b44741175d9c2cdb4da728a0603a04aaaefada8396dd6517d5dca2d"
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "a8ddcac2986d2b95f370595037ad52c7acc6247dd4d0eb956674cde0d83283da",
+      "text": "98c887a6da826cc2530c6ffbad39541c3b91ca463a83fe3877f607998cfa59ed"
     },
     "shop": {
-      "reason": "Замена несуществующего Material.CHAIN на IRON_BARS в кристалле обороны; страницы сверены с финальной реализацией",
-      "sources": "c4b50cf5f750d9e5cf8f4423e2be5eb94f87088de965f8e6320934ed8ad46620",
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "640b86fc05e996e3349d63962fc64d3bd690d9e2f387a61cc6a49aa990b47ab5",
       "text": "7df8bdefeccfb0fd4943e63ce1896282c16c3491c21f364dd8b2f0fbf5378c6d"
     },
     "skills": {
-      "reason": "П.28: ветки билда — шесть веток, общий пул очков, приёмы, щиты Клирик/Жрец и честный PvE-вклад; страницы сверены",
-      "sources": "b6814d8bf59ae316342932be9ed4d0aea4fa8a70bb4e491e1e8dcbdafcdeaa19",
-      "text": "ac2579e274effe5376bdd92f2ea4a0aeeb40e8929f0d7853e0ea1fc93a462167"
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "09d9aca89a00004f05ef85d698d4ed487622d116e07e541b15255561a2d93a21",
+      "text": "aaae83be170125deb4b5571a7a5f25ec1ed420ce4c9ea7597f4adf9ed6a96ccf"
     },
     "social-link": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "b6c02cc1559be5b2bf239451dec350997aa967fcd02da0c9ff757065777b50f3",
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "2cf64470001623254234d886a75b61e0fd0d31ad505fd0a1273140c390856931",
       "text": "8c1868e80db8506e56c66fb266e510b44a1ceb3e23a115f7b713a0f8640abb0d"
     },
     "start": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "f8de85df14350c148814e32bf2f98b04ba6f5e21ea97190cd946cb7d21893196",
-      "text": "1c0b307e38e52194bb2a42da0757744e32d93312bc6b83178a4745f9cd07a667"
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "7aba0ec4c7bcf15246fd4446764bc98c80f0d39269e82a10c00f7e9d0f654ee8",
+      "text": "ed918be6a65bdc28666148d1dac07b0d14ef631bd20c2d50648694244822a460"
     },
     "starter-kit": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "a7725c261a3319e556017d85745083a648a337af3c0a6ee4c19e6f65fcacd73c",
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "d2d0d9f2aed64f9b35f7a2edbc6bd708d2c1531a2464575bc976f45734edc1d5",
       "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
     },
     "teleports": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "582e0b7c3756a01824a31e908e2130d6c4210576683fa3e0d6dc2d37448f4d4d",
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "7aba0ec4c7bcf15246fd4446764bc98c80f0d39269e82a10c00f7e9d0f654ee8",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "42a8b572943c5f06d1b07b16895895948ae235dc609698293572605226f121e6",
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "9da5193d48ad898c8d4eba6ffde1c9326b1436469e8a868c9cd394f45ddb8efe",
       "text": "c84eb8435e1e4b961e73b0ed64386b129e17395923de6d7b8f3d01bde6ddeaa1"
     },
     "titles": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "d90c16183fd4dfa5c11d089b51e4db0775f683477d67fd464e9a6d9f09e5b025",
-      "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "ce5163413f594e2c227183b5610ebc0a698c3c4275be1cccecfa43c26759e267",
+      "text": "bcc217b388db006684a99c2af5c0747236878ffc8519043c0dc5660b66135827"
     },
     "updates": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "c4b50cf5f750d9e5cf8f4423e2be5eb94f87088de965f8e6320934ed8ad46620",
-      "text": "d6c40448c8dfbd722efc367869e505f89521efcbd348d03c8891231b3d202e9c"
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "640b86fc05e996e3349d63962fc64d3bd690d9e2f387a61cc6a49aa990b47ab5",
+      "text": "86d8fb7e52ba88ed0e3ba02254a6ac983a5903dd96d0e8cd1b347320788e0b45"
     },
     "vk": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "b6c02cc1559be5b2bf239451dec350997aa967fcd02da0c9ff757065777b50f3",
+      "reason": "П.29 вырезание classes и дерева перков: факты классов удалены из facts.py, страницы сверены с остаточной реальностью",
+      "sources": "2cf64470001623254234d886a75b61e0fd0d31ad505fd0a1273140c390856931",
       "text": "1fd95870417ca29ef985ee87f50119955bb51d4efbcfb772defd6f6c47a3c927"
     }
   },

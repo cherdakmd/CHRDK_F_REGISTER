@@ -15,8 +15,7 @@ import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import ru.cherdakmd.chrdkregister.Messages;
-import ru.cherdakmd.chrdkskills.tree.PerkTreeMenuApi;
-import ru.cherdakmd.chrdkskills.tree.TreeDomain;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,12 +30,6 @@ import java.util.UUID;
  * второго инвентаря и не вызывая {@code openInventory} повторно. Карточка
  * навыка — тоже состояние вкладки «Навыки», а не отдельное окно на 27 слотов.</p>
  *
- * <p>Дерево перков приходит из {@code CHRDK_Classes} через
- * {@link PerkTreeMenuApi}, зарегистрированный в {@code ServicesManager}. Сам
- * модуль {@code skills} о классах ничего не знает: если аддон не установлен,
- * вкладка показывает понятную заглушку. {@code /perktree} открывает это же окно
- * сразу на вкладке дерева через {@link SkillsMenuApi}.</p>
- *
  * <p>Иконки не показывают чужие данные и не позволяют таскать предметы: все
  * клики по верхнему инвентарю отменяются, драг запрещён.</p>
  */
@@ -44,7 +37,6 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
 
     /** Верхний ряд — вкладки и общие кнопки. */
     private static final int TAB_SKILLS = 0;
-    private static final int TAB_TREE = 1;
     private static final int TAB_TOP = 2;
     private static final int SLOT_GUIDE = 3;
     private static final int TAB_PRESTIGE = 5;
@@ -81,21 +73,19 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
 
     /** {@code /skills}: витрина навыков. */
     public void open(Player player) {
-        open(player, Tab.SKILLS, null, 0);
+        open(player, Tab.SKILLS, 0);
     }
 
     /**
-     * Открыть единое меню. Если оно уже открыто у игрока — только сменить
-     * вкладку/домен/страницу и перерисовать слоты, без второго окна.
+     * Открыть меню. Если оно уже открыто у игрока — только сменить
+     * вкладку/страницу и перерисовать слоты, без второго окна.
      */
     @Override
-    public void open(Player player, Tab tab, String domain, int page) {
+    public void open(Player player, Tab tab, int page) {
         if (player == null) {
             return;
         }
-        // Вкладка дерева живёт в CHRDK_Classes и не зависит от выключателя
-        // навыков: /perktree должен открываться даже при enabled: false.
-        if (!plugin.config().enabled() && tab != Tab.TREE) {
+        if (!plugin.config().enabled()) {
             plugin.messages().send(player, "skills-disabled");
             return;
         }
@@ -108,7 +98,6 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         }
         holder.tab = tab == null ? Tab.SKILLS : tab;
         holder.page = Math.max(0, page);
-        holder.domain = resolveDomain(player, domain, holder.tab);
         if (holder.tab != Tab.SKILLS) {
             holder.skill = null;
         }
@@ -130,38 +119,6 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         return null;
     }
 
-    /** Ленивый lookup: аддон классов может включиться позже навыков. */
-    private PerkTreeMenuApi perkTrees() {
-        try {
-            return Bukkit.getServicesManager().load(PerkTreeMenuApi.class);
-        } catch (LinkageError | RuntimeException error) {
-            return null;
-        }
-    }
-
-    private TreeDomain resolveDomain(Player player, String raw, Tab tab) {
-        if (tab != Tab.TREE) {
-            return null;
-        }
-        PerkTreeMenuApi api = perkTrees();
-        if (api == null) {
-            return null;
-        }
-        List<TreeDomain> domains = api.domains(player);
-        if (raw != null) {
-            for (TreeDomain candidate : domains) {
-                if (candidate.id().equalsIgnoreCase(raw)) {
-                    return candidate;
-                }
-            }
-        }
-        TreeDomain primary = api.primary(player);
-        if (primary != null && domains.contains(primary)) {
-            return primary;
-        }
-        return domains.isEmpty() ? null : domains.get(0);
-    }
-
     /* --------------------------------- отрисовка -------------------------------- */
 
     /** Перерисовать ВСЕ слоты одного и того же инвентаря. */
@@ -170,8 +127,6 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         inventory.clear();
         inventory.setItem(TAB_SKILLS, tabItem(holder, Tab.SKILLS, Material.IRON_PICKAXE,
                 "menu-tab-skills"));
-        inventory.setItem(TAB_TREE, tabItem(holder, Tab.TREE, Material.NETHER_STAR,
-                "menu-tab-tree"));
         inventory.setItem(TAB_TOP, tabItem(holder, Tab.TOP, Material.GOLD_INGOT,
                 "menu-top"));
         inventory.setItem(TAB_PRESTIGE, tabItem(holder, Tab.PRESTIGE,
@@ -183,7 +138,6 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         inventory.setItem(SLOT_CLOSE, button(Material.BARRIER, "menu-close"));
         switch (holder.tab) {
             case SKILLS -> renderSkills(player, holder);
-            case TREE -> renderTree(player, holder);
             case TOP -> renderTop(player, holder);
             case PRESTIGE -> renderPrestige(player, holder);
             case POTIONS -> renderPotions(player, holder);
@@ -251,41 +205,6 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         }
         inventory.setItem(DETAIL_BACK, button(Material.ARROW, "detail-back"));
         inventory.setItem(SLOT_SUMMARY, summary(player));
-    }
-
-    private void renderTree(Player player, Holder holder) {
-        Inventory inventory = holder.inventory;
-        PerkTreeMenuApi api = perkTrees();
-        if (api == null) {
-            inventory.setItem(22, placeholder(Material.BARRIER, "menu-tree-unavailable"));
-            return;
-        }
-        List<TreeDomain> domains = api.domains(player);
-        if (domains.isEmpty() || holder.domain == null) {
-            inventory.setItem(22, placeholder(Material.PAPER, "menu-tree-no-tree"));
-            return;
-        }
-        if (!domains.contains(holder.domain)) {
-            holder.domain = domains.get(0);
-        }
-        int pages = Math.max(1, api.pages(holder.domain));
-        holder.page = Math.max(0, Math.min(holder.page, pages - 1));
-        Map<Integer, ItemStack> items = api.items(player, holder.domain, holder.page);
-        if (items.isEmpty()) {
-            inventory.setItem(22, placeholder(Material.PAPER, "menu-tree-no-tree"));
-        } else {
-            for (Map.Entry<Integer, ItemStack> entry : items.entrySet()) {
-                int slot = entry.getKey();
-                if (slot >= 9 && slot < inventory.getSize()) {
-                    inventory.setItem(slot, entry.getValue());
-                }
-            }
-        }
-        inventory.setItem(SLOT_CONTEXT, button(Material.COMPASS, "menu-tab-domain",
-                List.of(plugin.messages().get("menu-tab-domain-hint"),
-                        api.title(player, holder.domain, holder.page)),
-                "domain", api.domainName(holder.domain),
-                "page", holder.page + 1, "pages", pages));
     }
 
     /* ------------------------------- престиж -------------------------------- */
@@ -417,24 +336,13 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
     }
 
     private List<Component> guideLore(Player player) {
-        List<Component> lines = new ArrayList<>(plugin.messages().getList("menu-guide",
+        return new ArrayList<>(plugin.messages().getList("menu-guide",
                 "steps", SkillRegistry.thresholdLine()));
-        PerkTreeMenuApi api = perkTrees();
-        if (api != null) {
-            lines.addAll(api.guide(player));
-        }
-        return lines;
     }
 
     private void sendGuide(Player player) {
         plugin.messages().sendList(player, "menu-guide",
                 "steps", SkillRegistry.thresholdLine());
-        PerkTreeMenuApi api = perkTrees();
-        if (api != null) {
-            for (Component line : api.guide(player)) {
-                player.sendMessage(line);
-            }
-        }
     }
 
     /* ---------------------------------- иконки ---------------------------------- */
@@ -628,10 +536,6 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
             switchTab(player, holder, Tab.SKILLS);
             return;
         }
-        if (slot == TAB_TREE) {
-            switchTab(player, holder, Tab.TREE);
-            return;
-        }
         if (slot == TAB_TOP) {
             switchTab(player, holder, Tab.TOP);
             return;
@@ -649,7 +553,6 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
             return;
         }
         switch (holder.tab) {
-            case TREE -> onTreeClick(player, holder, slot);
             case SKILLS -> onSkillsClick(player, holder, slot);
             case PRESTIGE -> onPrestigeClick(player, holder, slot);
             case POTIONS -> onPotionsClick(player, holder, slot);
@@ -661,49 +564,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         holder.tab = tab;
         holder.skill = null;
         holder.page = 0;
-        if (tab == Tab.TREE) {
-            holder.domain = resolveDomain(player, null, Tab.TREE);
-        } else {
-            holder.domain = null;
-        }
         render(player, holder);
-    }
-
-    private void onTreeClick(Player player, Holder holder, int slot) {
-        PerkTreeMenuApi api = perkTrees();
-        if (api == null) {
-            return;
-        }
-        if (slot == SLOT_CONTEXT) {
-            List<TreeDomain> domains = api.domains(player);
-            if (!domains.isEmpty()) {
-                int index = holder.domain == null ? -1 : domains.indexOf(holder.domain);
-                holder.domain = domains.get((index + 1) % domains.size());
-                holder.page = 0;
-                render(player, holder);
-            }
-            return;
-        }
-        if (slot == api.closeSlot()) {
-            player.closeInventory();
-            return;
-        }
-        if (holder.domain == null) {
-            return;
-        }
-        PerkTreeMenuApi.Result result = api.click(player, holder.domain, holder.page, slot);
-        if (result == null) {
-            return;
-        }
-        switch (result.action()) {
-            case CLOSE -> player.closeInventory();
-            case REPAINT -> {
-                holder.domain = result.domain();
-                holder.page = result.page();
-                render(player, holder);
-            }
-            case NONE -> { /* сообщение уже отправила реализация */ }
-        }
     }
 
     private void onSkillsClick(Player player, Holder holder, int slot) {
@@ -794,7 +655,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         private Inventory inventory;
         private Tab tab = Tab.SKILLS;
         private SkillType skill;
-        private TreeDomain domain;
+
         private int page;
 
         private Holder(UUID owner) {

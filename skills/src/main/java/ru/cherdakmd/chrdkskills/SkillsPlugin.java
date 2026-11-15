@@ -65,6 +65,10 @@ public final class SkillsPlugin extends JavaPlugin {
             Bukkit.getPluginManager().disablePlugin(this); return;
         }
         this.store.load();
+        // П.29: классовый прогресс из вырезанного модуля classes конвертируется
+        // в очки пула. classes.json читается только на чтение.
+        ClassProgressMigrator.run(this.store, getDataFolder().getAbsoluteFile().getParentFile().toPath(),
+                getLogger());
         this.service = new SkillService(this, store);
         this.abilityStore = new SkillAbilityStore(getDataFolder().toPath(), getLogger());
         abilityStore.load();
@@ -226,7 +230,7 @@ public final class SkillsPlugin extends JavaPlugin {
     public void registerApi() {
         Bukkit.getServicesManager().register(ChrdkSkillsApi.class,
                 new SkillsApiImpl(service), this, ServicePriority.Normal);
-        // Единое меню: /perktree из CHRDK_Classes открывает тот же инвентарь.
+        // Публичный контракт меню «Навыки» — ServicesManager.
         Bukkit.getServicesManager().register(SkillsMenuApi.class, gui,
                 this, ServicePriority.Normal);
     }

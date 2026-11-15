@@ -35,8 +35,6 @@ FIELDS = {
     "orders_slots": ("orders", "board.size"),
     "orders_hours": ("orders", "board.order-hours"),
     "skills_max": ("skills", "leveling.max-level"),
-    "class_change": ("classes", "general.change-cooldown-days"),
-    "class_respec": ("classes", "general.respec-cooldown-hours"),
     "quest_daily": ("quests", "general.claims-per-day"),
     "guild_create": ("guilds", "general.creation-cost"),
     "pet_level": ("pets", "levels.max-level"),
