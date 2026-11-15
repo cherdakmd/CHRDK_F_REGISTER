@@ -25,8 +25,8 @@ public enum PlayerAttribute {
         return id;
     }
 
-    /** Русское имя для сообщений и команд. */
-    public String name() {
+    /** Русское имя для сообщений и команд (имя метода {@code name()} занято {@link Enum}). */
+    public String displayName() {
         return name;
     }
 

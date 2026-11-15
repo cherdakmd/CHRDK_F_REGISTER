@@ -136,7 +136,7 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
         plugin.effects().apply(player);
         plugin.messages().send(player, "attrs-added",
                 "points", points,
-                "attribute", attribute.name(),
+                "attribute", attribute.displayName(),
                 "value", service.attribute(player, attribute));
         return true;
     }
