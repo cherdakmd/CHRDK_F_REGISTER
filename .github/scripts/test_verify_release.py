@@ -98,6 +98,9 @@ class ReleaseValidationTest(unittest.TestCase):
             "2.0.9": ("20 JAR одной версии", "chrdk-vk-2.0.9.jar",
                       "chrdk-disasters-2.0.9.jar", "Mine Treasure", "10 тиров",
                       "особый лут", "по-русски", "сквозь блоки"),
+            "2.0.9.1": ("20 JAR одной версии", "chrdk-vk-2.0.9.1.jar",
+                        "chrdk-disasters-2.0.9.1.jar", "Mine Treasure", "loot-chance",
+                        "Infernal-Mobs", "частиц"),
         }
         if version in current_kits:
             self.assertIn(f"CHRDK {version}", current)
@@ -205,7 +208,7 @@ class ReleaseWorkflowContractTest(unittest.TestCase):
         import re
         notes = re.search(r"1\.4\.\{200,201,\{220\.\.(\d+)\}\}\.md", source)
         self.assertIsNotNone(notes, "Release должен включать подробные инструкции перехода")
-        version = re.search(r"^plugin_version=(\d+)\.(\d+)(?:\.(\d+))?(?:-rc\.[1-9]\d*|-fix)?$", (root / "gradle.properties").read_text(), re.M)
+        version = re.search(r"^plugin_version=(\d+)\.(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:-rc\.[1-9]\d*|-fix)?$", (root / "gradle.properties").read_text(), re.M)
         self.assertIsNotNone(version)
         major, minor = int(version.group(1)), int(version.group(2))
         patch = int(version.group(3) or 0)

@@ -9,7 +9,7 @@ import sys
 
 from verify_release import expected_plugins, scalar, standalone_plugins
 
-VERSION_PATTERN = re.compile(r"\d+\.\d+(?:\.\d+)?(?:-rc\.[1-9]\d*|-fix)?\Z")
+VERSION_PATTERN = re.compile(r"\d+\.\d+(?:\.\d+){0,2}(?:-rc\.[1-9]\d*|-fix)?\Z")
 MODULE_PATTERN = re.compile(r"[a-z][a-z0-9-]{0,47}\Z")
 ARCHIVE_PATTERN = re.compile(r"chrdk-[a-z0-9]+(?:-[a-z0-9]+)*\Z")
 
