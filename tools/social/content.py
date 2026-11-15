@@ -18,7 +18,7 @@ from freshness import check as freshness_check
 MOSCOW = ZoneInfo('Europe/Moscow')
 # Контакт анонса сервера в тексте каждого поста-картинки: адрес и версия Minecraft.
 CONTACT = '4rdk.ru-mc.ru · версия 1.21 и выше'
-TAG = re.compile(r'v\d+\.\d+(?:\.\d+)?(?:-fix)?')
+TAG = re.compile(r'v\d+\.\d+(?:\.\d+){0,2}(?:-fix)?')
 # Пререлизы собираются тем же Release-workflow, но под стабильный TAG не подходят.
 RC_TAG = re.compile(r'v\d+\.\d+(?:\.\d+)?-rc\.[1-9]\d*')
 
