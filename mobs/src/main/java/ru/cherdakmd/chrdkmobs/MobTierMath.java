@@ -51,4 +51,21 @@ public final class MobTierMath {
         double safeCap = Math.min(10.0, Math.max(0.0, maxBonus));
         return 1.0 + Math.min(safeCap, safeStep * safeMetric / 100.0);
     }
+
+    /**
+     * Потолок суммарного снижения входящего урона плагинами: с тира 6 потолок
+     * падает на {@code perTierStep} за тир — высшие тиры пробивают больше
+     * защиты, — но не ниже {@code floor}.
+     */
+    public static double mitigationCap(int tier, double cap, double perTierStep, double floor) {
+        double safeCap = unit(cap);
+        double safeStep = unit(perTierStep);
+        double safeFloor = Math.min(safeCap, unit(floor));
+        return Math.max(safeFloor, safeCap - safeStep * Math.max(0, Math.max(1, tier) - 5));
+    }
+
+    /** Доли 0..1; нечисловое значение считается нулём. */
+    private static double unit(double value) {
+        return Double.isFinite(value) ? Math.min(1.0, Math.max(0.0, value)) : 0.0;
+    }
 }

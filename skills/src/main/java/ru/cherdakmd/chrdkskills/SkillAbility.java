@@ -35,7 +35,8 @@ public enum SkillAbility {
     public int cost(int prestige) { return prestige >= MASTER_PRESTIGE ? 0 : Math.max(10, cost - rank(prestige) + 1); }
     public int seconds(int prestige) { return seconds + rank(prestige) - 1; }
     public int cooldown(int prestige) { return Math.max(15, cooldown - 2 * (rank(prestige) - 1)); }
-    public int gatherLimit(int prestige) { return 64 + 16 * (rank(prestige) - 1); }
+    /** Сбор за раз: квадратичный рост — на I ступени слабый, максимум на верхних. */
+    public int gatherLimit(int prestige) { return 8 + 2 * rank(prestige) * rank(prestige); }
     public int effectTicks(int baseTicks, int prestige) { return baseTicks + 20 * (rank(prestige) - 1); }
     public int durabilitySave(int prestige) { return rank(prestige); }
     public boolean master(int prestige) { return prestige >= MASTER_PRESTIGE; }

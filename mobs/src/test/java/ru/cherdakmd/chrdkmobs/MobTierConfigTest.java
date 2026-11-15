@@ -52,6 +52,10 @@ class MobTierConfigTest {
         assertTrue(config.contains("effects:"), "эффекты особых мобов");
         assertTrue(config.contains("particles: true"), "частицы особых мобов по мотивам Infernal-Mobs");
         assertTrue(config.contains("прогрессией НЕ"), "награда не масштабируется прогрессией");
+        assertTrue(config.contains("mitigation:"), "потолок суммарного снижения урона плагинами");
+        assertTrue(config.contains("cap: 0.5"));
+        assertTrue(config.contains("per-tier-step: 0.04"));
+        assertTrue(config.contains("floor: 0.3"));
     }
 
     @Test
@@ -77,6 +81,9 @@ class MobTierConfigTest {
         assertEquals(0.08, last.lootChance(), "шанс дропа лута тира 10");
         assertEquals(last.health(), config.tier(99).health(),
                 "тиры выше последней строки наследуют её");
+        assertEquals(0.5, config.mitigation().cap(), 1e-9);
+        assertEquals(0.04, config.mitigation().perTierStep(), 1e-9);
+        assertEquals(0.3, config.mitigation().floor(), 1e-9);
     }
 
     @Test
