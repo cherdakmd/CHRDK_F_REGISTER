@@ -131,7 +131,7 @@ final class EliteAbilityListener implements Listener {
     /** Паутина под ногами жертвы на несколько секунд. */
     private void webFeet(Player player) {
         var block = player.getLocation().getBlock();
-        if (!block.getType().isReplaceable()) {
+        if (!block.getType().isAir()) {
             return;
         }
         block.setType(Material.COBWEB);

@@ -74,7 +74,7 @@ final class NameplateVisibility implements Runnable {
             case CURSED -> Particle.SOUL;
             case SMOLDERING -> Particle.FLAME;
             case GROSS -> Particle.WITCH;
-            case CRINGE -> Particle.TOTEM;
+            case CRINGE -> Particle.TOTEM_OF_UNDYING;
         };
     }
 
