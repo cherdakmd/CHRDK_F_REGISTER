@@ -76,6 +76,7 @@ jobs:
         run: |
           python3 - <<'PY'
           import os, runpy, sys
+          sys.path.insert(0, 'tools/social')
           os.environ['GITHUB_EVENT_NAME'] = 'workflow_dispatch'
           os.environ['GITHUB_REF'] = 'refs/heads/main'
           sys.argv = ['run.py', '--publish', '--kind', 'news', '--release-tag', 'v2.0.8']
