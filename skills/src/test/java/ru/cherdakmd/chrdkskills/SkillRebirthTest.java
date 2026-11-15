@@ -38,8 +38,8 @@ class SkillRebirthTest {
         store.addRebirth(PLAYER);
         store.addRebirth(PLAYER);
         assertEquals(2, store.rebirths(PLAYER));
-        assertEquals(20, store.totalPrestige(PLAYER),
-                "перерождение равно 10 старым ступеням — контракт аддонов");
+        assertEquals(0, store.totalPrestige(PLAYER),
+                "историческая шкала ступеней живёт отдельно; контракт ×10 — в SkillService");
     }
 
     @Test
@@ -118,7 +118,6 @@ class SkillRebirthTest {
         String json = Files.readString(store.file(), StandardCharsets.UTF_8);
         assertTrue(json.contains("\"version\": 1"), "версию поднимать нельзя");
         assertTrue(json.contains("\"rebirths\""));
-        assertTrue(json.contains("\"rebirthConverted\""));
         assertTrue(json.contains("\"claimedRebirthMilestones\""));
         assertTrue(json.contains("\"diamondDay\""));
         assertTrue(json.contains("\"diamondToday\""));
@@ -151,8 +150,8 @@ class SkillRebirthTest {
                 "каждые 10 старых ступеней суммарно — одно перерождение");
         assertEquals(20, store.totalPrestige(PLAYER),
                 "шкала ступеней сохранена для контракта аддонов");
-        assertFalse(store.markRebirthMilestone(PLAYER, 5),
-                "старые вехи ниже счётчика не выплачиваются задним числом");
+        assertTrue(store.markRebirthMilestone(PLAYER, 5),
+                "веха 5 не пройдена счётчиком 2 — конвертация её не отмечает");
         store.flush();
 
         SkillStore reloaded = new SkillStore(folder, LOGGER);

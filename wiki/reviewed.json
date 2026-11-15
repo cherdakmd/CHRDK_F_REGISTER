@@ -131,8 +131,8 @@
       "text": "7df8bdefeccfb0fd4943e63ce1896282c16c3491c21f364dd8b2f0fbf5378c6d"
     },
     "skills": {
-      "reason": "исправлена компиляция buildUnique (Messages.markup вместо Trusted) — механика перерождений не менялась, страница сверена ранее в этом же PR",
-      "sources": "2ece4cb897b362affd05ecf553cb4e23d35a016d47dfa6bc950f8288e94bad15",
+      "reason": "фиксы тестов П.30 (математика затухания, dirty при конверсии, source-контракты) — механика и страница не менялись",
+      "sources": "f06e08b4eb914bc8cbb2e23081fbac545a1275979107b067887e2e76867127db",
       "text": "e58a65c1a1471721a23569cd3efbb251afe9fe02fdb1b16da352b6c0413b6147"
     },
     "social-link": {

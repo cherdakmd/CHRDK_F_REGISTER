@@ -269,16 +269,21 @@ public final class SkillStore {
                 // Конвертация престижа (п.30): каждые 10 старых ступеней суммарно
                 // по навыкам — одно перерождение. Вехи до полученного счётчика
                 // помечаем выданными: ветеран не получает награды задним числом.
+                // Грязным хранилище становится только при реальном изменении —
+                // само чтение файла не обязано провоцировать запись.
                 if (!player.rebirthConverted) {
-                    player.rebirths = Math.max(player.rebirths,
+                    int converted = Math.max(player.rebirths,
                             RebirthMath.fromLegacySteps(player.totalPrestige()));
+                    if (converted != player.rebirths) {
+                        player.rebirths = converted;
+                        dirty = true;
+                    }
                     for (int mark : RebirthMath.milestoneThresholds()) {
                         if (mark <= player.rebirths) {
                             player.claimedRebirthMilestones.add(mark);
                         }
                     }
                     player.rebirthConverted = true;
-                    dirty = true;
                 }
                 players.put(String.valueOf(entry.getKey()), player);
             }

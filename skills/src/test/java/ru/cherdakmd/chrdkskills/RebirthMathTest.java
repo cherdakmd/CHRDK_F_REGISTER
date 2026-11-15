@@ -28,8 +28,8 @@ class RebirthMathTest {
     void xpBonusIsDiminishingAndCapped() {
         assertEquals(0.0, RebirthMath.xpBonusPercent(0, 5.0, 0.9, 50.0), 1e-9);
         assertEquals(5.0, RebirthMath.xpBonusPercent(1, 5.0, 0.9, 50.0), 1e-9);
-        // 5 + 4.5 + 4.05 + ... ≈ 32.5 % на десятом перерождении.
-        assertEquals(32.51, RebirthMath.xpBonusPercent(10, 5.0, 0.9, 50.0), 0.01);
+        // 5 + 4.5 + 4.05 + ... ≈ 32.57 % на десятом перерождении.
+        assertEquals(32.566, RebirthMath.xpBonusPercent(10, 5.0, 0.9, 50.0), 0.001);
         assertTrue(RebirthMath.xpBonusPercent(1000, 5.0, 0.9, 50.0) <= 50.0 + 1e-9,
                 "потолок +50 % не пробивается");
         assertEquals(1.325, RebirthMath.xpFactor(10, 5.0, 0.9, 50.0), 0.001);

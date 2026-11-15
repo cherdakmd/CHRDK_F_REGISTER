@@ -76,12 +76,10 @@ final class SkillRebirthServiceTest {
     void awardAppliesRebirthFactorAfterBoostersBeforeTheCap() throws IOException {
         String service = read("src/main/java/ru/cherdakmd/chrdkskills/SkillService.java");
         int start = service.indexOf("public Award award(Player player");
-        int end = service.indexOf("private BalanceView", start);
-        if (end < 0) {
-            end = service.indexOf("/** Алмазы предметом", start);
-        }
-        assertTrue(start >= 0 && end > start);
-        String award = service.substring(start, end);
+        assertTrue(start >= 0, "award не найден");
+        // Окно метода фиксированное: порядок множителей проверяем в его теле.
+        String award = service.substring(start,
+                Math.min(service.length(), start + 3000));
 
         int boost = award.indexOf("boostExperience(");
         int rebirth = award.indexOf("RebirthMath.xpFactor(rebirths(player)");

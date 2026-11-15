@@ -11,8 +11,9 @@ class SkillXpPolicyTest {
         // 20 перерождений: убывающий прирост ≈ +43.9 % (потолок +50 %).
         assertEquals(360, SkillXpPolicy.xp(20, RankBonus.NONE));
         assertEquals(375, SkillXpPolicy.xp(0, new RankBonus(5, 50, 25, 10)));
-        // Потолок бонуса перерождений: 250 × 1.5 × 1.5 = 562.5.
-        assertEquals(563, SkillXpPolicy.xp(200, new RankBonus(5, 50, 25, 10)));
+        // Потолок бонуса перерождений — ровно 50 %, но затухание не
+        // достигает его вплотную: 250 × 1.49999… × 1.5 округляется в 562.
+        assertEquals(562, SkillXpPolicy.xp(200, new RankBonus(5, 50, 25, 10)));
     }
 
     @Test void dropChanceUsesStreakTierAndRankWithHardCap() {
