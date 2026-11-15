@@ -48,7 +48,7 @@ class MobTierConfigTest {
         assertTrue(config.contains("loot:"));
         assertTrue(config.contains("essence-xp: 40"));
         assertTrue(config.contains("variant-xp: 60"));
-        assertTrue(config.contains("Прогрессией НЕ"), "награда не масштабируется прогрессией");
+        assertTrue(config.contains("прогрессией НЕ"), "награда не масштабируется прогрессией");
     }
 
     @Test
