@@ -16,6 +16,9 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.MobRewardPolicy;
 
 import java.util.List;
@@ -108,16 +111,21 @@ final class MobTierListener implements Listener {
             applyPassives(mob, abilities);
         }
         if (config.namePrefix() && plugin.messages() != null && (elite || tiered)) {
-            // Базовое имя для награды: после переименования getName() вернёт префикс.
-            mob.getPersistentDataContainer().set(nameKey, PersistentDataType.STRING, mob.getName());
+            // Базовое имя для награды: имя с бирки игрока, иначе русское название
+            // из mob-names; после переименования getName() вернул бы префикс.
+            Component tag = mob.customName();
+            String base = resolveBaseName(plugin.messages(), mob.getType().name(),
+                    tag == null ? null : plain(tag), mob.getName());
+            mob.getPersistentDataContainer().set(nameKey, PersistentDataType.STRING, base);
             if (elite) {
                 mob.customName(plugin.messages().get("elite-name",
-                        "tier", tier, "title", epithet(config), "name", mob.getName()));
+                        "tier", tier, "title", epithet(config), "name", base));
             } else {
                 mob.customName(plugin.messages().get("mob-name-prefix",
-                        "tier", tier, "name", mob.getName()));
+                        "tier", tier, "name", base));
             }
-            mob.setCustomNameVisible(true);
+            // Имя не должно светиться сквозь блоки: показываем только при прямой видимости.
+            mob.setCustomNameVisible(NameplateVisibility.visible(mob));
         }
     }
 
@@ -212,6 +220,28 @@ final class MobTierListener implements Listener {
     private static String epithet(MobsConfig config) {
         List<String> epithets = config.elite().epithets();
         return epithets.get(ThreadLocalRandom.current().nextInt(epithets.size()));
+    }
+
+    /**
+     * Базовое имя моба для подписи и наград: имя с бирки игрока, иначе русское
+     * название из {@code mob-names} (messages.yml), иначе ванильное имя.
+     */
+    static String resolveBaseName(Messages messages, String typeKey, String customName, String fallback) {
+        if (customName != null && !customName.isBlank()) {
+            return customName;
+        }
+        if (messages != null && messages.has("mob-names." + typeKey)) {
+            String value = messages.plain("mob-names." + typeKey);
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+        return fallback;
+    }
+
+    /** Имя с бирки игрока без разметки — для подстановки в шаблоны. */
+    private static String plain(Component customName) {
+        return PlainTextComponentSerializer.plainText().serialize(customName);
     }
 
     private static double distanceFromSpawn(org.bukkit.entity.Entity entity) {

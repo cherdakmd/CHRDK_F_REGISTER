@@ -96,9 +96,9 @@
       "text": "eb6fdaf663b2005735002c5f23bb7f751b31a7447b3fc2cc77d741ff7c4cb2f9"
     },
     "mobs": {
-      "reason": "Аудит: упрощён фильтр игроков-источников прогресса (GameMode вместо isSpectator)",
-      "sources": "88c685ffc0349da695f7f7102c24d418e9d51bd0c7514d79bb9ece5c9d967495",
-      "text": "8385bf71a6a66e7a86ae54d9e5dbaa24c070920d14ddf03cedb3f91772485f64"
+      "reason": "Сверка после замены hasCustomName() на customName() — поведение (русские имена, видимость табличек) без изменений",
+      "sources": "82e24c111f5c77d5f2afe319cc9d18ff6b6dc3ef5aa800b083c209b966f50f34",
+      "text": "93916c5f1e51ba1d4dfdc4ce2773e85c4d3a0bc041174e9ce2745f680e45635d"
     },
     "moderation": {
       "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
