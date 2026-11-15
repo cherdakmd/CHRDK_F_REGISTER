@@ -12,12 +12,23 @@
 #     messages.xp-potion-daily-limit удалён — remove-миграция вычищает
 #     старые значения из файлов владельцев (backup, повторный старт
 #     идемпотентен).
+# v5: зелья опыта заменены кристаллами опыта — стакуемые предметы с
+#     использованием правым кликом (ключи xp-potions.* и покупка в /skills
+#     сохранены). Старые зелья остаются рабочими и конвертируются в кристаллы
+#     при входе. Тексты вкладки, покупки и паузы переписываются эталоном:
+#     формулировки про зелья вычищаются remove-миграцией v5 из файлов
+#     владельцев (backup, повторный старт идемпотентен).
 # Удалён только устаревший xp-potions.mob-drop-chance (замён на три новых
 # ключа дропа); владельческие значения и комментарии остальных ключей
 # сохраняются, перед записью создаётся backup.
 config-version: 4
-messages-version: 4
+messages-version: 5
 migrations:
   messages:
     4:
       remove: [messages.xp-potion-daily-limit, messages.xp-potion-used]
+    5:
+      remove: [messages.menu-tab-potions, messages.xp-potion-unavailable,
+               messages.xp-potion-cooldown, messages.potion-shop-info,
+               messages.potion-shop-price, messages.potion-shop-closed,
+               messages.potion-buy-hint, messages.potion-bought]

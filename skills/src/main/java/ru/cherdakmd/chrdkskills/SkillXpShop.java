@@ -7,11 +7,12 @@ import ru.cherdakmd.chrdkregister.api.PaidActions;
 import java.io.IOException;
 
 /**
- * Покупка зелий опыта в меню {@code /skills}. Оплата идёт через общий движок
- * платных действий ({@link PaidActions}): durable-намерение BankCharge,
+ * Покупка кристаллов опыта в меню {@code /skills}. Оплата идёт через общий
+ * движок платных действий ({@link PaidActions}): durable-намерение BankCharge,
  * идемпотентная выдача с {@code saveData} и полный refund при неудаче выдачи
- * или рестарте до неё. Зелья сняты из «Кузни» /shop — это единственный
- * платный источник, дроп с мобов остаётся бесплатным.
+ * или рестарте до неё. Кристаллы сняты из «Кузни» /shop — это единственный
+ * платный источник, дроп с мобов и действий остаётся бесплатным. Идентификатор
+ * услуги {@code skill-xp-potion} сохранён ради незавершённых покупок в журнале.
  */
 final class SkillXpShop {
     private final SkillsPlugin plugin;
@@ -27,7 +28,7 @@ final class SkillXpShop {
         return payments;
     }
 
-    /** {@code true} — зелье выдано и оплачено; {@code false} — отказ или refund. */
+    /** {@code true} — кристалл выдан и оплачен; {@code false} — отказ или refund. */
     boolean buy(Player player, SkillType skill) {
         if (player == null || skill == null || !shopEnabled()) return false;
         int price = price();
@@ -36,10 +37,10 @@ final class SkillXpShop {
                 () -> give(player, skill));
     }
 
-    /** Выдача одного зелья; {@code false} — нет места, оплата вернётся игроку. */
+    /** Выдача одного кристалла; {@code false} — нет места, оплата вернётся игроку. */
     private boolean give(Player player, SkillType skill) {
-        ItemStack potion = plugin.xpItems().create(skill);
-        if (!player.getInventory().addItem(potion).isEmpty()) return false;
+        ItemStack crystal = plugin.xpItems().create(skill);
+        if (!player.getInventory().addItem(crystal).isEmpty()) return false;
         // Позиция сохраняется до закрытия резерва услуги; исключение saveData
         // остаётся неизвестным исходом и выясняется по журналу действий.
         player.saveData();

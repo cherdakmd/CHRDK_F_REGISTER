@@ -11,9 +11,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Покупка зелий в меню /skills (2.0.6): Кузня зелья больше не продаёт, платный
+ * Покупка кристаллов опыта в меню /skills: Кузня кристаллы не продаёт, платный
  * источник один. Оплата идёт через общий движок PaidActions — durable-намерение
  * BankCharge, идемпотентная выдача с saveData и полный refund при неудаче.
+ * Вид услуги skill-xp-potion сохранён: журнал покупок не переименовывается.
  */
 class SkillXpShopTest {
 
@@ -32,7 +33,7 @@ class SkillXpShopTest {
                 "покупка идёт через perform: вид и цель услуги фиксируются в журнале");
         assertTrue(shop.contains("player.saveData();"),
                 "выдача сохраняет playerdata до закрытия резерва услуги");
-        assertTrue(shop.contains("addItem(potion).isEmpty()"),
+        assertTrue(shop.contains("addItem(crystal).isEmpty()"),
                 "отсутствие места закрывает выдачу и включает полный refund");
     }
 
@@ -79,8 +80,10 @@ class SkillXpShopTest {
         assertFalse(messages.contains("xp-potion-daily-limit"),
                 "суточный лимит зелий удалён вместе с текстом");
         String schema = read("src/main/resources/config-schema.yml");
-        assertTrue(schema.contains("messages-version: 4"));
+        assertTrue(schema.contains("messages-version: 5"));
         assertTrue(schema.contains("remove: [messages.xp-potion-daily-limit, messages.xp-potion-used]"),
                 "старые значения с %left% вычищаются из файлов владельцев миграцией");
+        assertTrue(schema.contains("remove: [messages.menu-tab-potions, messages.xp-potion-unavailable,"),
+                "v5 переписывает тексты магазина и вкладки: старые формулировки про зелья вычищены");
     }
 }
