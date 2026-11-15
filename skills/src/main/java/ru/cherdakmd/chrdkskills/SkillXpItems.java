@@ -161,7 +161,7 @@ final class SkillXpItems implements Listener {
             plugin.messages().send(player, "xp-potion-cooldown", "time", cooldown);
             return;
         }
-        long xp = Math.round(SkillXpPolicy.xp(plugin.skills().totalPrestige(player), rank)
+        long xp = Math.round(SkillXpPolicy.xp(plugin.skills().rebirths(player), rank)
                 * AttributeMath.xpFactor(plugin.skills().attribute(player, PlayerAttribute.WISDOM)));
         long cooldownMillis = Math.max(0, plugin.getConfig().getInt("xp-potions.cooldown-seconds", 0)) * 1000L;
         if (!store.consume(player.getUniqueId(), now, cooldownMillis)) {

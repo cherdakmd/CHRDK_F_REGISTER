@@ -158,7 +158,7 @@ public final class SkillListener implements Listener {
         DiamondDrops.Result result = DiamondDrops.roll(
                 service.level(player, skill),
                 plugin.config().curve().maxLevel(),
-                service.prestigeLevel(player, skill),
+                service.rebirths(player),
                 bonus.level(), bonus.xpPercent(), bonus.dropPercent(),
                 service.diamondDropsToday(player), mob,
                 random.nextDouble(), personal);

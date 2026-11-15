@@ -22,7 +22,7 @@ class SkillAbilityTest {
 
     @Test void catalogHasTenPrestigeAbilitiesAndStrictToolMatching() {
         assertEquals(10, SkillAbility.values().length);
-        assertEquals(1, SkillAbility.UNLOCK_PRESTIGE);
+        assertEquals(1, SkillAbility.UNLOCK_REBIRTH);
         assertNotNull(SkillAbility.of(SkillType.ALCHEMY));
         assertNull(SkillAbility.of(null));
         assertTrue(SkillAbility.WOODCUTTING.acceptsTool("DIAMOND_AXE"));

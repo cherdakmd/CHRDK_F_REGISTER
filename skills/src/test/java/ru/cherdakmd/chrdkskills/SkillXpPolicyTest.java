@@ -6,10 +6,12 @@ import ru.cherdakmd.chrdkregister.api.RankBonus;
 import static org.junit.jupiter.api.Assertions.*;
 
 class SkillXpPolicyTest {
-    @Test void potionXpHasBoundedPrestigeAndRankBonuses() {
+    @Test void potionXpHasBoundedRebirthAndRankBonuses() {
         assertEquals(250, SkillXpPolicy.xp(0, RankBonus.NONE));
-        assertEquals(300, SkillXpPolicy.xp(20, RankBonus.NONE));
+        // 20 перерождений: убывающий прирост ≈ +43.9 % (потолок +50 %).
+        assertEquals(360, SkillXpPolicy.xp(20, RankBonus.NONE));
         assertEquals(375, SkillXpPolicy.xp(0, new RankBonus(5, 50, 25, 10)));
+        // Потолок бонуса перерождений: 250 × 1.5 × 1.5 = 562.5.
         assertEquals(563, SkillXpPolicy.xp(200, new RankBonus(5, 50, 25, 10)));
     }
 

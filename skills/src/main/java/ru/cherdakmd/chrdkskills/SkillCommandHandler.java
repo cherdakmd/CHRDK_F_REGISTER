@@ -75,14 +75,11 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
         if (args[0].equalsIgnoreCase("top")) {
             return handleTop(player);
         }
-        if (args[0].equalsIgnoreCase("prestige")) {
-            return handlePrestige(player, args);
+        if (args[0].equalsIgnoreCase("rebirth")) {
+            return handleRebirth(player, args);
         }
-        if (args[0].equalsIgnoreCase("prestigetop")) {
-            return handlePrestigeTop(player);
-        }
-        if (args[0].equalsIgnoreCase("balance")) {
-            return handleBalance(player);
+        if (args[0].equalsIgnoreCase("rebirthtop")) {
+            return handleRebirthTop(player);
         }
         if (args[0].equalsIgnoreCase("attrs") || args[0].equalsIgnoreCase("атрибуты")) {
             return handleAttributes(player, args);
@@ -262,107 +259,44 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
         return true;
     }
 
-    /** Без аргумента — витрина престижа; с аргументом — двухшаговый сброс. */
-    private boolean handlePrestige(Player player, String[] args) {
+    /** Без аргумента — витрина перерождения; с confirm — двухшаговый сброс. */
+    private boolean handleRebirth(Player player, String[] args) {
         if (args.length == 1) {
-            gui.open(player, SkillsMenuApi.Tab.PRESTIGE, 0);
+            gui.open(player, SkillsMenuApi.Tab.REBIRTH, 0);
             return true;
         }
-        if (args.length != 2) {
-            plugin.messages().send(player, "prestige-usage");
+        if (args.length != 2 || !args[1].equalsIgnoreCase("confirm")) {
+            plugin.messages().send(player, "rebirth-usage");
             return true;
         }
-        SkillService.PrestigeResult result;
-        if (args[1].equalsIgnoreCase("all")) {
-            result = service.requestPrestigeAll(player);
-        } else {
-            SkillType skill = SkillType.byId(args[1]);
-            if (skill == null) {
-                plugin.messages().send(player, "unknown-skill");
-                return true;
-            }
-            result = service.requestPrestige(player, skill);
-        }
-        switch (result) {
-            case DISABLED -> plugin.messages().send(player, "prestige-disabled");
-            case AT_CAP -> plugin.messages().send(player, "prestige-at-cap",
-                    "cap", String.valueOf(PrestigeMath.MAX_PER_SKILL));
-            case NOT_MAX -> plugin.messages().send(player, "prestige-not-max",
+        switch (service.requestRebirth(player)) {
+            case DISABLED -> plugin.messages().send(player, "rebirth-disabled");
+            case NOT_READY -> plugin.messages().send(player, "rebirth-not-ready",
                     "level", String.valueOf(plugin.config().curve().maxLevel()));
-            case PENDING -> plugin.messages().send(player, "prestige-confirm");
-            case DONE -> {
-                plugin.messages().send(player, "prestige-done",
-                        "total", String.valueOf(service.totalPrestige(player)),
-                        "title", Messages.trusted(service.prestigeTier(player).title()));
-                plugin.getLogger().info("[CHRDK_Skills] " + player.getName()
-                        + " подтвердил престиж, серверный уровень "
-                        + service.totalPrestige(player));
-            }
+            case PENDING -> plugin.messages().send(player, "rebirth-confirm");
+            case DONE -> plugin.getLogger().info("[CHRDK_Skills] " + player.getName()
+                    + " переродился, счётчик " + service.rebirths(player));
         }
         return true;
     }
 
-    /** Топ престижа в чат — та же выборка, что и на вкладке меню. */
-    private boolean handlePrestigeTop(Player player) {
-        plugin.messages().send(player, "prestige-top-header");
+    /** Топ перерождений в чат — та же выборка, что и на вкладке меню. */
+    private boolean handleRebirthTop(Player player) {
+        plugin.messages().send(player, "rebirth-top-header");
         int place = 1;
-        for (SkillService.PrestigeEntry entry : service.prestigeTop()) {
-            plugin.messages().send(player, "prestige-top-line",
+        for (SkillService.RebirthEntry entry : service.rebirthTop()) {
+            plugin.messages().send(player, "rebirth-top-line",
                     "place", String.valueOf(place++),
                     "name", entry.name(),
-                    "total", String.valueOf(entry.total()));
+                    "count", String.valueOf(entry.count()));
         }
         if (place == 1) {
-            plugin.messages().send(player, "prestige-top-empty");
+            plugin.messages().send(player, "rebirth-top-empty");
         }
         return true;
     }
 
-    /** Таблица «навык → ступень → уровень → множитель» и что делать дальше. */
-    private boolean handleBalance(Player player) {
-        if (!plugin.config().prestigeEnabled() || !plugin.config().prestigeBalanceEnabled()) {
-            plugin.messages().send(player, "prestige-disabled");
-            return true;
-        }
-        SkillService.BalanceReport report = service.balanceReport(player);
-        if (report == null) {
-            plugin.messages().send(player, "prestige-disabled");
-            return true;
-        }
-        plugin.messages().send(player, "balance-header",
-                "allowance", String.valueOf(report.allowance()),
-                "base", String.valueOf(report.baseMaxLead()),
-                "rank_bonus", String.valueOf(report.rankBonus()),
-                "rank", String.valueOf(report.rankLevel()),
-                "hard_cap", String.valueOf(report.hardCap()));
-        for (SkillService.BalanceRow row : report.rows()) {
-            String name = plugin.messages().raw("skill." + row.skill().id() + ".name");
-            if (!row.tracked()) {
-                plugin.messages().send(player, "balance-line-off", "name", Messages.trusted(name));
-            } else if (row.factor() <= 0.0) {
-                plugin.messages().send(player, "balance-line-stop",
-                        "name", Messages.trusted(name),
-                        "step", String.valueOf(row.step()),
-                        "level", String.valueOf(row.level()),
-                        "lead", String.valueOf(row.lead()));
-            } else if (row.factor() >= 1.0) {
-                plugin.messages().send(player, "balance-line-full",
-                        "name", Messages.trusted(name),
-                        "step", String.valueOf(row.step()),
-                        "level", String.valueOf(row.level()));
-            } else {
-                plugin.messages().send(player, "balance-line",
-                        "name", Messages.trusted(name),
-                        "step", String.valueOf(row.step()),
-                        "level", String.valueOf(row.level()),
-                        "lead", String.valueOf(row.lead()),
-                        "factor", PrestigeXpGate.factorText(row.factor()));
-            }
-        }
-        plugin.messages().send(player, "balance-footer",
-                "minimum", String.valueOf(report.minimum()));
-        return true;
-    }
+
 
     private boolean handleTop(Player player) {
         List<SkillService.Entry> top = service.top();
@@ -499,7 +433,7 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
             if (args.length == 1) {
                 List<String> options = new ArrayList<>(List.of(
                         "list", "top", "rating", "menu",
-                        "use", "energy", "prestige", "prestigetop", "balance", "attrs", "build"));
+                        "use", "energy", "rebirth", "rebirthtop", "attrs", "build"));
                 for (SkillType skill : SkillRegistry.all()) {
                     options.add(skill.id());
                 }
@@ -523,11 +457,8 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
                 }
                 return filter(branchIds, args[1]);
             }
-            if (args.length == 2 && args[0].equalsIgnoreCase("prestige")) {
-                List<String> ids = new ArrayList<>(SkillRegistry.all().stream()
-                        .map(SkillType::id).toList());
-                ids.add("all");
-                return filter(ids, args[1]);
+            if (args.length == 2 && args[0].equalsIgnoreCase("rebirth")) {
+                return filter(List.of("confirm"), args[1]);
             }
             return List.of();
         }

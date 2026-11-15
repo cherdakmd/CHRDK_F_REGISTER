@@ -13,10 +13,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class AttributeMathTest {
 
     @Test
-    void pointsComeFromLevelsAndPrestige() {
+    void pointsComeFromLevelsAndRebirths() {
         assertEquals(0, AttributeMath.points(0, 0));
         assertEquals(10, AttributeMath.points(50, 0), "каждые 5 уровней — очко");
-        assertEquals(14, AttributeMath.points(50, 2), "ступень престижа — два очка");
+        assertEquals(50, AttributeMath.points(50, 2), "перерождение — двадцать очков");
+        assertEquals(200, AttributeMath.points(0, 10),
+                "ветеран 100 ступеней престижа получил те же 200 очков");
         assertEquals(0, AttributeMath.points(-5, -5), "отрицательное зажимается к нулю");
     }
 

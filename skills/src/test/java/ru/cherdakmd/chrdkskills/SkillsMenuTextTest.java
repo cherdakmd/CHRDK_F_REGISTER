@@ -44,9 +44,9 @@ class SkillsMenuTextTest {
         assertTrue(activated.contains("Рудная жила"), activated);
         assertTrue(messages.has("ability-card-master"));
         assertTrue(messages.has("ability-master-activated"));
-        assertTrue(messages.has("prestige-ability-upgraded"));
-        assertTrue(messages.has("prestige-ability-master"));
-        assertTrue(messages.has("prestige-master-title"));
+        assertTrue(messages.has("rebirth-done"));
+        assertTrue(messages.has("rebirth-milestone-announce"));
+        assertTrue(messages.has("menu-rebirth-title"));
         assertFalse(activated.contains("TextComponentImpl"), activated);
         assertFalse(activated.contains("content="), activated);
 

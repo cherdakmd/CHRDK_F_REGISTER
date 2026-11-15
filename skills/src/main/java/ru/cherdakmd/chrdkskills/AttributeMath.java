@@ -3,8 +3,8 @@ package ru.cherdakmd.chrdkskills;
 /**
  * Атрибуты персонажа: чистая математика без Bukkit.
  *
- * <p>Очки даёт прокачка: каждые 5 уровней любого навыка — одно очко, каждая
- * ступень престижа — ещё два. Атрибуты взаимодействуют с тирами мобов тремя
+ * <p>Очки даёт прокачка: каждые 5 уровней любого навыка — одно очко, каждое
+ * перерождение — ещё двадцать. Атрибуты взаимодействуют с тирами мобов тремя
  * способами: <b>порог зоны</b> (недобор атрибутов давит штрафом), <b>бонус
  * против сильных</b> (бонусы атаки сильнее против мобов выше своего ранга) и
  * <b>компенсация пробивания</b> (стойкость возвращает часть потолка защиты,
@@ -14,8 +14,8 @@ public final class AttributeMath {
 
     /** Каждые столько уровней навыка дают одно очко атрибута. */
     public static final int LEVELS_PER_POINT = 5;
-    /** Каждая ступень престижа даёт столько очков. */
-    public static final int POINTS_PER_PRESTIGE = 2;
+    /** Каждое перерождение даёт столько очков (10 старых ступеней × 2). */
+    public static final int POINTS_PER_REBIRTH = 20;
     /** Очки суммы за ступень «ранга атрибутов» и порог тира. */
     public static final int SUM_PER_RANK = 20;
     /** Максимальный штраф давления тира (доля). */
@@ -25,10 +25,10 @@ public final class AttributeMath {
 
     private AttributeMath() { }
 
-    /** Всего очков за прокачку: уровни навыков и ступени престижа. */
-    public static int points(int totalLevel, int totalPrestige) {
+    /** Всего очков за прокачку: уровни навыков и перерождения. */
+    public static int points(int totalLevel, int rebirths) {
         return Math.max(0, totalLevel) / LEVELS_PER_POINT
-                + POINTS_PER_PRESTIGE * Math.max(0, totalPrestige);
+                + POINTS_PER_REBIRTH * Math.max(0, rebirths);
     }
 
     /** Порог атрибутов зоны тира: с тира 6 — (тир − 5) × 20 очков суммы. */

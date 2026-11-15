@@ -47,7 +47,7 @@ final class BranchAbilities {
         if (level < ability.unlockLevel()) {
             return "branch-locked";
         }
-        int prestige = plugin.skills().totalPrestige(player);
+        int prestige = plugin.skills().rebirths(player);
         String error = store.activate(player.getUniqueId(), ability.id(), ability.cost(),
                 ability.cooldown(prestige), System.currentTimeMillis());
         if (!error.isEmpty()) {

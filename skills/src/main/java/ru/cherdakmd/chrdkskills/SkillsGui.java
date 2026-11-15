@@ -39,7 +39,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
     private static final int TAB_SKILLS = 0;
     private static final int TAB_TOP = 2;
     private static final int SLOT_GUIDE = 3;
-    private static final int TAB_PRESTIGE = 5;
+    private static final int TAB_REBIRTH = 5;
     private static final int SLOT_CONTEXT = 4;
     private static final int TAB_POTIONS = 6;
     private static final int SLOT_CLOSE = 8;
@@ -129,8 +129,8 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
                 "menu-tab-skills"));
         inventory.setItem(TAB_TOP, tabItem(holder, Tab.TOP, Material.GOLD_INGOT,
                 "menu-top"));
-        inventory.setItem(TAB_PRESTIGE, tabItem(holder, Tab.PRESTIGE,
-                Material.NETHERITE_INGOT, "menu-tab-prestige"));
+        inventory.setItem(TAB_REBIRTH, tabItem(holder, Tab.REBIRTH,
+                Material.NETHERITE_INGOT, "menu-tab-rebirth"));
         inventory.setItem(TAB_POTIONS, tabItem(holder, Tab.POTIONS,
                 Material.AMETHYST_SHARD, "menu-tab-potions"));
         inventory.setItem(SLOT_GUIDE, button(Material.BOOK, "menu-guide-button",
@@ -139,7 +139,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         switch (holder.tab) {
             case SKILLS -> renderSkills(player, holder);
             case TOP -> renderTop(player, holder);
-            case PRESTIGE -> renderPrestige(player, holder);
+            case REBIRTH -> renderRebirth(player, holder);
             case POTIONS -> renderPotions(player, holder);
         }
         fillEmpty(inventory);
@@ -187,10 +187,10 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         }
         lore.add(plugin.messages().get("menu-skill-steps",
                 "steps", SkillRegistry.thresholdLine()));
-        int prestige = service.prestigeLevel(player, holder.skill);
-        if (prestige > 0) {
-            lore.add(plugin.messages().get("menu-prestige-line",
-                    "count", String.valueOf(prestige)));
+        int rebirths = service.rebirths(player);
+        if (rebirths > 0) {
+            lore.add(plugin.messages().get("menu-rebirth-line",
+                    "count", String.valueOf(rebirths)));
         }
         headMeta.lore(lore);
         head.setItemMeta(headMeta);
@@ -209,110 +209,108 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
 
     /* ------------------------------- престиж -------------------------------- */
 
-    private static final int PRESTIGE_TIER_SLOT = 31;
-    private static final int PRESTIGE_TOP_SLOT = 46;
+    private static final int REBIRTH_TIER_SLOT = 31;
+    private static final int REBIRTH_TOP_SLOT = 46;
 
-    private void renderPrestige(Player player, Holder holder) {
+    private void renderRebirth(Player player, Holder holder) {
         Inventory inventory = holder.inventory;
         List<SkillType> skills = SkillRegistry.all();
         for (int index = 0; index < Math.min(SKILL_SLOTS.length, skills.size()); index++) {
-            inventory.setItem(SKILL_SLOTS[index], prestigeIcon(player, skills.get(index)));
+            inventory.setItem(SKILL_SLOTS[index], rebirthSkillIcon(player, skills.get(index)));
         }
-        int total = service.totalPrestige(player);
-        PrestigeMath.Tier tier = service.prestigeTier(player);
-        PrestigeMath.Tier next = service.nextPrestigeTier(player);
-        int percent = PrestigeMath.progressPercent(total);
+        int count = service.rebirths(player);
+        double bonus = RebirthMath.xpBonusPercent(count,
+                plugin.config().rebirthXpPercentPerRebirth(),
+                plugin.config().rebirthXpDecay(),
+                plugin.config().rebirthXpBonusCapPercent());
+        int next = 0;
+        for (int mark : RebirthMath.milestoneThresholds()) {
+            if (mark > count) {
+                next = mark;
+                break;
+            }
+        }
+        if (next == 0 && count >= 50) {
+            next = (count / 25 + 1) * 25;
+        }
         List<Component> lore = new ArrayList<>();
-        lore.add(plugin.messages().get("menu-prestige-total",
-                "total", String.valueOf(total),
-                "max", String.valueOf(PrestigeMath.MAX_TOTAL)));
-        lore.add(plugin.messages().get("menu-prestige-progress",
-                "bar", SkillCurve.bar(percent, 10),
-                "percent", String.valueOf(percent)));
-        if (next != null) {
-            lore.add(plugin.messages().get("menu-prestige-next",
-                    "title", Messages.trusted(next.title()),
-                    "need", String.valueOf(next.threshold() - total)));
+        lore.add(plugin.messages().get("menu-rebirth-count",
+                "count", String.valueOf(count),
+                "title", Messages.trusted(RebirthMath.title(count))));
+        lore.add(plugin.messages().get("menu-rebirth-bonus-xp",
+                "percent", String.format(java.util.Locale.ROOT, "%.1f", bonus)));
+        if (next > 0) {
+            lore.add(plugin.messages().get("menu-rebirth-next-milestone",
+                    "count", String.valueOf(next),
+                    "need", String.valueOf(next - count)));
         } else {
-            lore.add(plugin.messages().get("menu-prestige-cap"));
+            lore.add(plugin.messages().get("menu-rebirth-milestone-cap"));
         }
-        lore.add(plugin.messages().get("menu-prestige-bonus-xp",
-                "percent", String.valueOf((int) Math.round(
-                        (PrestigeMath.xpFactor(PrestigeMath.MAX_PER_SKILL,
-                                plugin.config().prestigeXpPerStep()) - 1.0) * 100))));
-        inventory.setItem(PRESTIGE_TIER_SLOT,
-                button(Material.NETHERITE_INGOT, "menu-prestige-tier-name",
-                        lore, "title", Messages.trusted(tier.title()),
-                        "total", String.valueOf(total)));
-        inventory.setItem(PRESTIGE_TOP_SLOT,
-                button(Material.PAPER, "menu-prestige-top-button", prestigeTopLore(player)));
-        inventory.setItem(DETAIL_BACK, button(Material.ARROW, "menu-prestige-back"));
+        lore.add(plugin.messages().get("menu-rebirth-hint",
+                "level", String.valueOf(plugin.config().curve().maxLevel())));
+        inventory.setItem(REBIRTH_TIER_SLOT,
+                button(Material.NETHERITE_INGOT, "menu-rebirth-title", lore,
+                        "title", Messages.trusted(RebirthMath.title(count)),
+                        "count", String.valueOf(count)));
+        inventory.setItem(REBIRTH_TOP_SLOT,
+                button(Material.PAPER, "menu-rebirth-top-button", rebirthTopLore(player)));
+        inventory.setItem(DETAIL_BACK, button(Material.ARROW, "menu-rebirth-back"));
         inventory.setItem(SLOT_SUMMARY, summary(player));
     }
 
-    private ItemStack prestigeIcon(Player player, SkillType skill) {
-        int steps = service.prestigeLevel(player, skill);
+    private ItemStack rebirthSkillIcon(Player player, SkillType skill) {
         int level = service.level(player, skill);
+        int max = plugin.config().curve().maxLevel();
         ItemStack item = new ItemStack(materialOf(skill));
         ItemMeta meta = item.getItemMeta();
-        meta.displayName(plugin.messages().get("menu-prestige-skill-name",
-                "name", Messages.trusted(plugin.messages().raw("skill." + skill.id() + ".name")),
-                "roman", PrestigeMath.roman(steps)));
+        meta.displayName(plugin.messages().get("menu-rebirth-skill-name",
+                "name", Messages.trusted(plugin.messages().raw("skill." + skill.id() + ".name"))));
         List<Component> lore = new ArrayList<>();
-        lore.add(plugin.messages().get("menu-prestige-skill-level",
+        lore.add(plugin.messages().get("menu-rebirth-skill-level",
                 "level", String.valueOf(level),
-                "max", String.valueOf(plugin.config().curve().maxLevel()),
-                "steps", String.valueOf(steps),
-                "cap", String.valueOf(PrestigeMath.MAX_PER_SKILL)));
-        SkillPerk.Kind kind = PrestigeMath.perkKind(skill);
-        lore.add(plugin.messages().get("menu-prestige-skill-bonus",
-                "kind", Messages.trusted(kind.name().toLowerCase(java.util.Locale.ROOT)),
-                "value", String.valueOf(Math.round(PrestigeMath.perkValue(skill, steps,
-                        plugin.config().prestigePerkPerStep()) * 100.0))));
-        lore.add(plugin.messages().get(steps >= PrestigeMath.MAX_PER_SKILL
-                ? "menu-prestige-skill-cap"
-                : level >= plugin.config().curve().maxLevel()
-                        ? "menu-prestige-skill-ready" : "menu-prestige-skill-hint"));
+                "max", String.valueOf(max)));
+        lore.add(plugin.messages().get(level >= max
+                ? "menu-rebirth-skill-ready" : "menu-rebirth-skill-hint"));
         meta.lore(lore);
         item.setItemMeta(meta);
         return item;
     }
 
-    private List<Component> prestigeTopLore(Player player) {
+    private List<Component> rebirthTopLore(Player player) {
         List<Component> out = new ArrayList<>();
         int place = 1;
-        for (SkillService.PrestigeEntry entry : service.prestigeTop()) {
+        for (SkillService.RebirthEntry entry : service.rebirthTop()) {
             if (place > 5) {
                 break;
             }
-            out.add(plugin.messages().get("menu-prestige-top-line",
+            out.add(plugin.messages().get("menu-rebirth-top-line",
                     "place", String.valueOf(place++),
                     "name", entry.name(),
-                    "total", String.valueOf(entry.total())));
+                    "count", String.valueOf(entry.count())));
         }
         if (out.isEmpty()) {
-            out.add(plugin.messages().get("menu-prestige-top-empty"));
+            out.add(plugin.messages().get("menu-rebirth-top-empty"));
         }
         return out;
     }
 
-    private void onPrestigeClick(Player player, Holder holder, int slot) {
+    private void onRebirthClick(Player player, Holder holder, int slot) {
         if (slot == DETAIL_BACK) {
             switchTab(player, holder, Tab.SKILLS);
             return;
         }
-        if (slot == PRESTIGE_TOP_SLOT) {
+        if (slot == REBIRTH_TOP_SLOT) {
             player.closeInventory();
-            plugin.messages().send(player, "prestige-top-header");
+            plugin.messages().send(player, "rebirth-top-header");
             int place = 1;
-            for (SkillService.PrestigeEntry entry : service.prestigeTop()) {
-                plugin.messages().send(player, "prestige-top-line",
+            for (SkillService.RebirthEntry entry : service.rebirthTop()) {
+                plugin.messages().send(player, "rebirth-top-line",
                         "place", String.valueOf(place++),
                         "name", entry.name(),
-                        "total", String.valueOf(entry.total()));
+                        "count", String.valueOf(entry.count()));
             }
             if (place == 1) {
-                plugin.messages().send(player, "prestige-top-empty");
+                plugin.messages().send(player, "rebirth-top-empty");
             }
         }
     }
@@ -377,10 +375,10 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
             lore.add(plugin.messages().get("menu-skill-max"));
         }
         lore.add(plugin.messages().get("menu-skill-click"));
-        int prestige = service.prestigeLevel(player, skill);
-        if (prestige > 0) {
-            lore.add(plugin.messages().get("menu-prestige-line",
-                    "count", String.valueOf(prestige)));
+        int rebirths = service.rebirths(player);
+        if (rebirths > 0) {
+            lore.add(plugin.messages().get("menu-rebirth-line",
+                    "count", String.valueOf(rebirths)));
         }
         meta.lore(lore);
         item.setItemMeta(meta);
@@ -410,8 +408,8 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
                         "all", String.valueOf(all)),
                 plugin.messages().get("menu-summary-xp",
                         "xp", String.valueOf(service.totalXp(player))),
-                plugin.messages().get("menu-summary-prestige",
-                        "count", String.valueOf(service.totalPrestige(player))),
+                plugin.messages().get("menu-summary-rebirth",
+                        "count", String.valueOf(service.rebirths(player))),
                 plugin.messages().get("ability-energy", "energy", plugin.abilities().energy(player.getUniqueId()), "max", SkillAbility.MAX_ENERGY)));
         item.setItemMeta(meta);
         return item;
@@ -427,7 +425,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         ItemStack item = new ItemStack(Material.BLAZE_POWDER);
         ItemMeta meta = item.getItemMeta();
         meta.displayName(plugin.messages().get(ability.nameKey()));
-        int prestige = Math.max(SkillAbility.UNLOCK_PRESTIGE, plugin.skills().prestigeLevel(player, ability.skill()));
+        int prestige = Math.max(SkillAbility.UNLOCK_REBIRTH, plugin.skills().rebirths(player));
         var lore = new java.util.ArrayList<net.kyori.adventure.text.Component>();
         lore.add(plugin.messages().get(ability.descKey()));
         lore.add(plugin.messages().get("ability-card", "level", prestige, "cost", ability.cost(prestige),
@@ -540,8 +538,8 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
             switchTab(player, holder, Tab.TOP);
             return;
         }
-        if (slot == TAB_PRESTIGE) {
-            switchTab(player, holder, Tab.PRESTIGE);
+        if (slot == TAB_REBIRTH) {
+            switchTab(player, holder, Tab.REBIRTH);
             return;
         }
         if (slot == TAB_POTIONS) {
@@ -554,7 +552,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         }
         switch (holder.tab) {
             case SKILLS -> onSkillsClick(player, holder, slot);
-            case PRESTIGE -> onPrestigeClick(player, holder, slot);
+            case REBIRTH -> onRebirthClick(player, holder, slot);
             case POTIONS -> onPotionsClick(player, holder, slot);
             case TOP -> { /* рейтинг только для чтения */ }
         }

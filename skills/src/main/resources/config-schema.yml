@@ -18,11 +18,15 @@
 #     при входе. Тексты вкладки, покупки и паузы переписываются эталоном:
 #     формулировки про зелья вычищаются remove-миграцией v5 из файлов
 #     владельцев (backup, повторный старт идемпотентен).
+# v6: престиж заменён перерождениями (п.30) — команды /skills rebirth и
+#     /skills rebirthtop, вкладка «Перерождение». Старые тексты престижа,
+#     баланса прокачки и /skills balance вычищаются remove-миграцией из
+#     файлов владельцев (backup, повторный старт идемпотентен).
 # Удалён только устаревший xp-potions.mob-drop-chance (замён на три новых
 # ключа дропа); владельческие значения и комментарии остальных ключей
 # сохраняются, перед записью создаётся backup.
 config-version: 4
-messages-version: 5
+messages-version: 6
 migrations:
   messages:
     4:
@@ -32,3 +36,26 @@ migrations:
                messages.xp-potion-cooldown, messages.potion-shop-info,
                messages.potion-shop-price, messages.potion-shop-closed,
                messages.potion-buy-hint, messages.potion-bought]
+    6:
+      remove: [messages.prestige-usage, messages.prestige-disabled,
+               messages.prestige-not-max, messages.prestige-at-cap,
+               messages.prestige-confirm, messages.prestige-done,
+               messages.prestige-tier-announce, messages.prestige-top-header,
+               messages.prestige-top-line, messages.prestige-top-empty,
+               messages.prestige-balance-bar, messages.prestige-balance-bar-stop,
+               messages.prestige-balance-state, messages.prestige-balance-state-stop,
+               messages.balance-header, messages.balance-line,
+               messages.balance-line-full, messages.balance-line-stop,
+               messages.balance-line-off, messages.balance-footer,
+               messages.menu-summary-prestige, messages.profile-prestige,
+               messages.menu-tab-prestige, messages.menu-prestige-tier-name,
+               messages.menu-prestige-total, messages.menu-prestige-progress,
+               messages.menu-prestige-next, messages.menu-prestige-cap,
+               messages.menu-prestige-bonus-xp, messages.menu-prestige-skill-name,
+               messages.menu-prestige-skill-level, messages.menu-prestige-skill-bonus,
+               messages.menu-prestige-skill-ready, messages.menu-prestige-skill-hint,
+               messages.menu-prestige-skill-cap, messages.menu-prestige-top-button,
+               messages.menu-prestige-top-line, messages.menu-prestige-top-empty,
+               messages.menu-prestige-back, messages.menu-prestige-line,
+               messages.prestige-ability-upgraded, messages.prestige-ability-master,
+               messages.prestige-master-title, messages.prestige-master-subtitle]

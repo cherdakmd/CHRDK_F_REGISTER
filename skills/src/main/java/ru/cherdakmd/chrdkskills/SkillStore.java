@@ -62,6 +62,14 @@ public final class SkillStore {
         public long pve = 0L;
         /** Метка конвертации классового прогресса (п.29): очки уже выданы. */
         public boolean classConverted = false;
+        /** Перерождения (п.30): полные сбросы персонажа за постоянные награды. */
+        public int rebirths = 0;
+        /** Метка конвертации старого престижа (п.30): ступени уже переведены. */
+        public boolean rebirthConverted = false;
+        /** Пороги вех перерождений, за которые уже выдали особые награды. */
+        public final Set<Integer> claimedRebirthMilestones = new TreeSet<>();
+        /** Уникальные предметы пула, уже выданные за перерождения (без повторов). */
+        public final List<String> rebirthUniques = new ArrayList<>();
 
         public long xp(SkillType skill) {
             return xp.getOrDefault(skill, 0L);
@@ -193,30 +201,18 @@ public final class SkillStore {
                         SkillType skill = SkillType.byId(String.valueOf(prestige.getKey()));
                         if (skill != null && prestige.getValue() instanceof Number number
                                 && number.intValue() > 0) {
-                            player.prestige.put(skill,
-                                    Math.min(PrestigeMath.MAX_PER_SKILL, number.intValue()));
+                            // Старые ступени (потолок 10 на навык) сохраняем как
+                            // историю: из них один раз считается конвертация.
+                            player.prestige.put(skill, Math.min(10, number.intValue()));
                         }
                     }
                 }
-                boolean legacyTiers = !(row.get("claimedTiers") instanceof List<?>);
-                if (!legacyTiers && row.get("claimedTiers") instanceof List<?> tiers) {
+                if (row.get("claimedTiers") instanceof List<?> tiers) {
                     for (Object element : tiers) {
                         if (element instanceof Number number && number.intValue() > 0) {
                             player.claimedTiers.add(number.intValue());
                         }
                     }
-                }
-                // Миграция 6 ноября 2026: у старых профилей поля claimedTiers
-                // ещё не было. Уже достигнутые звания помечаем выданными без
-                // выплаты — иначе первый сброс после обновления разом выплеснул
-                // бы ветерану все накопленные разовые награды.
-                if (legacyTiers && player.totalPrestige() > 0) {
-                    for (int threshold : PrestigeMath.rewardThresholds()) {
-                        if (player.totalPrestige() >= threshold) {
-                            player.claimedTiers.add(threshold);
-                        }
-                    }
-                    dirty = true;
                 }
                 if (row.get("diamondDay") != null) {
                     player.diamondDay = String.valueOf(row.get("diamondDay")).trim();
@@ -248,6 +244,41 @@ public final class SkillStore {
                 }
                 if (row.get("classConverted") instanceof Boolean flag) {
                     player.classConverted = flag;
+                }
+                if (row.get("rebirths") instanceof Number number) {
+                    player.rebirths = Math.max(0, Math.min(1_000_000, number.intValue()));
+                }
+                if (row.get("rebirthConverted") instanceof Boolean flag) {
+                    player.rebirthConverted = flag;
+                }
+                if (row.get("claimedRebirthMilestones") instanceof List<?> marks) {
+                    for (Object element : marks) {
+                        if (element instanceof Number number && number.intValue() > 0) {
+                            player.claimedRebirthMilestones.add(number.intValue());
+                        }
+                    }
+                }
+                if (row.get("rebirthUniques") instanceof List<?> uniques) {
+                    for (Object element : uniques) {
+                        String id = String.valueOf(element).trim();
+                        if (!id.isEmpty()) {
+                            player.rebirthUniques.add(id);
+                        }
+                    }
+                }
+                // Конвертация престижа (п.30): каждые 10 старых ступеней суммарно
+                // по навыкам — одно перерождение. Вехи до полученного счётчика
+                // помечаем выданными: ветеран не получает награды задним числом.
+                if (!player.rebirthConverted) {
+                    player.rebirths = Math.max(player.rebirths,
+                            RebirthMath.fromLegacySteps(player.totalPrestige()));
+                    for (int mark : RebirthMath.milestoneThresholds()) {
+                        if (mark <= player.rebirths) {
+                            player.claimedRebirthMilestones.add(mark);
+                        }
+                    }
+                    player.rebirthConverted = true;
+                    dirty = true;
                 }
                 players.put(String.valueOf(entry.getKey()), player);
             }
@@ -456,75 +487,96 @@ public final class SkillStore {
         return true;
     }
 
-    /* -------------------------- престиж и дневной лут ----------------------- */
+    /* ------------------------ перерождения и дневной лут --------------------- */
 
-    /** Ступени престижа одного навыка. */
-    public synchronized int prestige(String playerKey, SkillType skill) {
+    /** Сколько перерождений сделал игрок. */
+    public synchronized int rebirths(String playerKey) {
         PlayerData data = players.get(playerKey);
-        return data == null ? 0 : data.prestige(skill);
+        return data == null ? 0 : data.rebirths;
     }
 
-    /** Сумма ступеней престижа — значок в меню и профиле. */
-    public synchronized int totalPrestige(String playerKey) {
-        PlayerData data = players.get(playerKey);
-        return data == null ? 0 : data.totalPrestige();
-    }
-
-    /** Все ступени престижа игрока (копия, для чистого расчёта бонусов). */
-    public synchronized Map<SkillType, Integer> allPrestige(String playerKey) {
-        PlayerData data = players.get(playerKey);
-        Map<SkillType, Integer> out = new EnumMap<>(SkillType.class);
-        if (data != null) {
-            out.putAll(data.prestige);
-        }
-        return out;
-    }
-
-    /** Добавляет ступень престижа; {@code false}, если потолок навыка достигнут. */
-    public synchronized boolean addPrestige(String playerKey, SkillType skill) {
-        if (playerKey == null || skill == null) {
-            return false;
+    /** Добавляет перерождение. */
+    public synchronized void addRebirth(String playerKey) {
+        if (playerKey == null) {
+            return;
         }
         PlayerData data = players.computeIfAbsent(playerKey, key -> new PlayerData());
-        int current = data.prestige(skill);
-        if (current >= PrestigeMath.MAX_PER_SKILL) {
-            return false;
-        }
-        data.prestige.put(skill, current + 1);
+        data.rebirths = Math.min(1_000_000, data.rebirths + 1);
         dirty = true;
-        return true;
     }
 
-    /** Пороги званий, за которые награда уже выдана. */
-    public synchronized Set<Integer> claimedTiers(String playerKey) {
+    /** Полный сброс персонажа: уровни навыков, атрибуты и ветки — под ноль. */
+    public synchronized void resetForRebirth(String playerKey) {
         PlayerData data = players.get(playerKey);
-        return data == null ? Set.of() : Set.copyOf(data.claimedTiers);
+        if (data == null) {
+            return;
+        }
+        data.xp.clear();
+        data.strength = 0;
+        data.agility = 0;
+        data.stamina = 0;
+        data.wisdom = 0;
+        data.cunning = 0;
+        data.branches.clear();
+        dirty = true;
     }
 
-    /** Отмечает звание выданным; {@code true} — порог новый. */
-    public synchronized boolean markTier(String playerKey, int threshold) {
+    /** Пороги вех перерождений, за которые награда уже выдана. */
+    public synchronized Set<Integer> claimedRebirthMilestones(String playerKey) {
+        PlayerData data = players.get(playerKey);
+        return data == null ? Set.of() : Set.copyOf(data.claimedRebirthMilestones);
+    }
+
+    /** Отмечает веху перерождения выданной; {@code true} — порог новый. */
+    public synchronized boolean markRebirthMilestone(String playerKey, int threshold) {
         if (playerKey == null || threshold <= 0) {
             return false;
         }
         PlayerData data = players.computeIfAbsent(playerKey, key -> new PlayerData());
-        if (!data.claimedTiers.add(threshold)) {
+        if (!data.claimedRebirthMilestones.add(threshold)) {
             return false;
         }
         dirty = true;
         return true;
     }
 
-    /** Топ по общему уровню престижа (только игроки с хотя бы одной ступенью). */
-    public synchronized List<Map.Entry<String, Integer>> prestigeTop(int limit) {
+    /** Уникальные предметы пула, уже выданные игроку за перерождения. */
+    public synchronized List<String> rebirthUniques(String playerKey) {
+        PlayerData data = players.get(playerKey);
+        return data == null ? List.of() : List.copyOf(data.rebirthUniques);
+    }
+
+    /** Выдаёт уникальный предмет из пула; {@code false} — уже был. */
+    public synchronized boolean grantRebirthUnique(String playerKey, String itemId) {
+        if (playerKey == null || itemId == null || itemId.isBlank()) {
+            return false;
+        }
+        PlayerData data = players.computeIfAbsent(playerKey, key -> new PlayerData());
+        if (data.rebirthUniques.contains(itemId.trim())) {
+            return false;
+        }
+        data.rebirthUniques.add(itemId.trim());
+        dirty = true;
+        return true;
+    }
+
+    /** Топ по числу перерождений (только игроки с хотя бы одним). */
+    public synchronized List<Map.Entry<String, Integer>> rebirthTop(int limit) {
         List<Map.Entry<String, Integer>> ranked = new ArrayList<>();
         for (Map.Entry<String, PlayerData> entry : players.entrySet()) {
-            int total = entry.getValue().totalPrestige();
-            if (total > 0) {
-                ranked.add(Map.entry(entry.getKey(), total));
+            int count = entry.getValue().rebirths;
+            if (count > 0) {
+                ranked.add(Map.entry(entry.getKey(), count));
             }
         }
         ranked.sort((left, right) -> Integer.compare(right.getValue(), left.getValue()));
         return List.copyOf(ranked.subList(0, Math.min(Math.max(0, limit), ranked.size())));
+    }
+
+    /** Сумма старых ступеней престижа — история и конвертация, механики не питает. */
+    public synchronized int totalPrestige(String playerKey) {
+        PlayerData data = players.get(playerKey);
+        return data == null ? 0 : data.totalPrestige();
     }
 
     /** Сколько физических алмазов выпало игроку в указанный день. */
@@ -601,6 +653,14 @@ public final class SkillStore {
             if (player.bonusPoints > 0) fields.put("bonusPoints", player.bonusPoints);
             if (player.pve > 0) fields.put("pve", player.pve);
             if (player.classConverted) fields.put("classConverted", true);
+            if (player.rebirths > 0) fields.put("rebirths", player.rebirths);
+            if (player.rebirthConverted) fields.put("rebirthConverted", true);
+            if (!player.claimedRebirthMilestones.isEmpty()) {
+                fields.put("claimedRebirthMilestones", new ArrayList<>(player.claimedRebirthMilestones));
+            }
+            if (!player.rebirthUniques.isEmpty()) {
+                fields.put("rebirthUniques", new ArrayList<>(player.rebirthUniques));
+            }
             rows.put(key, fields);
         });
         data.put("players", rows);

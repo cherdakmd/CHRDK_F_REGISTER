@@ -46,43 +46,14 @@ public final class SkillService {
 
     private final SkillsPlugin plugin;
     private final SkillStore store;
-    /** Двухшаговое подтверждение сброса навыка: TTL и одноразовость из ядра. */
+    /** Двухшаговое подтверждение перерождения: TTL и одноразовость из ядра. */
     private final EconomyConfirmations confirmations = new EconomyConfirmations();
-    /** Кулдаун actionbar-подсказки: не дёргаем полосу на каждый блок. */
-    private final Map<UUID, Long> balanceBars = new ConcurrentHashMap<>();
-    /** Последнее объявленное состояние «навык → множитель»: чат без повторов. */
-    private final Map<String, BalanceState> balanceStates = new ConcurrentHashMap<>();
 
-    /** Снимок правила баланса для одного начисления. */
-    private record BalanceView(Map<SkillType, Integer> prestige,
-                               Collection<SkillType> tracked, int allowance,
-                               int hardCap, double softStep, double minFactor,
-                               int rankLevel, int baseMaxLead, int rankBonus) {
-    }
+    /** Результат обращения к {@link #requestRebirth}. */
+    public enum RebirthResult { DISABLED, NOT_READY, PENDING, DONE }
 
-    /** Состояние, о котором уже написали в чат (только память, без skills.json). */
-    record BalanceState(double factor, int allowance) {
-        boolean same(double otherFactor, int otherAllowance) {
-            return Double.compare(factor, otherFactor) == 0 && allowance == otherAllowance;
-        }
-    }
-
-    /** Отчёт для {@code /skills balance}: сводка плюс строка на каждый навык. */
-    public record BalanceReport(int allowance, int hardCap, int minimum,
-                                int rankLevel, int baseMaxLead, int rankBonus,
-                                List<BalanceRow> rows) {
-    }
-
-    /** Одна строка отчёта. */
-    public record BalanceRow(SkillType skill, int step, int level, int lead,
-                             double factor, boolean tracked) {
-    }
-
-    /** Результат обращения к {@link #requestPrestige}. */
-    public enum PrestigeResult { DISABLED, NOT_MAX, AT_CAP, PENDING, DONE }
-
-    /** Строка топа престижа. */
-    public record PrestigeEntry(String name, int total) {
+    /** Строка топа перерождений. */
+    public record RebirthEntry(String name, int count) {
     }
 
     public SkillService(SkillsPlugin plugin, SkillStore store) {
@@ -137,7 +108,7 @@ public final class SkillService {
 
     /** Всего очков атрибутов за прокачку: уровни навыков и ступени престижа. */
     public int attributePoints(Player player) {
-        return AttributeMath.points(totalLevel(player), totalPrestige(player));
+        return AttributeMath.points(totalLevel(player), rebirths(player));
     }
 
     /**
@@ -256,168 +227,145 @@ public final class SkillService {
         if (player == null || skill == null) {
             return new SkillPerks.Active(Map.of(), List.of());
         }
-        return SkillPerks.active(
-                Map.of(skill, level(player, skill)),
-                Map.of(skill, prestigeLevel(player, skill)),
-                plugin.config().prestigePerkPerStep());
+        return SkillPerks.active(Map.of(skill, level(player, skill)));
     }
 
-    /* -------------------------------- престиж -------------------------------- */
+    /* ------------------------------ перерождения ------------------------------ */
 
-    /** Ступени престижа одного навыка (0 — ещё не сбрасывали). */
-    public int prestigeLevel(Player player, SkillType skill) {
-        return player == null || skill == null ? 0 : store.prestige(key(player), skill);
+    /** Сколько перерождений сделал игрок (0 — ещё не перерождался). */
+    public int rebirths(Player player) {
+        return player == null ? 0 : store.rebirths(key(player));
     }
 
-    /** Сумма ступеней по всем навыкам — значок «✦ Престиж N». */
+    /** Старая шкала ступеней (перерождение = 10 ступеней) — контракт аддонов. */
     public int totalPrestige(Player player) {
-        return player == null ? 0 : store.totalPrestige(key(player));
+        return rebirths(player) * 10;
     }
 
-    /** Текущее звание серверного уровня престижа. */
-    public PrestigeMath.Tier prestigeTier(Player player) {
-        return PrestigeMath.tierFor(totalPrestige(player));
+    /** Текущий титул перерождения. */
+    public String rebirthTitle(Player player) {
+        return RebirthMath.title(rebirths(player));
     }
 
-    /** Следующее звание или {@code null} на потолке. */
-    public PrestigeMath.Tier nextPrestigeTier(Player player) {
-        return PrestigeMath.nextTier(totalPrestige(player));
-    }
-
-    /** Топ игроков по общему уровню престижа. */
-    public List<PrestigeEntry> prestigeTop() {
-        List<PrestigeEntry> out = new ArrayList<>();
+    /** Топ игроков по числу перерождений. */
+    public List<RebirthEntry> rebirthTop() {
+        List<RebirthEntry> out = new ArrayList<>();
         for (Map.Entry<String, Integer> row
-                : store.prestigeTop(plugin.config().leaderboardSize())) {
+                : store.rebirthTop(plugin.config().leaderboardSize())) {
             String name = store.name(row.getKey());
-            out.add(new PrestigeEntry(name.isBlank() ? shortKey(row.getKey()) : name,
+            out.add(new RebirthEntry(name.isBlank() ? shortKey(row.getKey()) : name,
                     row.getValue()));
         }
         return List.copyOf(out);
     }
 
     /**
-     * Добровольный сброс одного навыка с потолка. Первый вызов выдаёт
-     * подтверждение, повторный в течение TTL реально сбрасывает опыт.
+     * Перерождение (п.30): полный сброс персонажа, когда все десять навыков на
+     * потолке. Первый вызов выдаёт подтверждение, повторный в течение TTL
+     * реально сбрасывает уровни, атрибуты и ветки и выдаёт награды.
      */
-    public PrestigeResult requestPrestige(Player player, SkillType skill) {
-        if (!prestigeReady(player) || skill == null) {
-            return PrestigeResult.DISABLED;
+    public RebirthResult requestRebirth(Player player) {
+        if (player == null || !plugin.config().enabled() || !plugin.config().rebirthEnabled()) {
+            return RebirthResult.DISABLED;
         }
-        if (store.prestige(key(player), skill) >= PrestigeMath.MAX_PER_SKILL) {
-            return PrestigeResult.AT_CAP;
-        }
-        if (level(player, skill) < curve().maxLevel()) {
-            return PrestigeResult.NOT_MAX;
-        }
-        return applyPrestige(player, skill.id(), List.of(skill));
-    }
-
-    /** Сброс всех навыков, достигших потолка, одним подтверждением. */
-    public PrestigeResult requestPrestigeAll(Player player) {
-        if (!prestigeReady(player)) {
-            return PrestigeResult.DISABLED;
-        }
-        List<SkillType> ready = new ArrayList<>();
-        boolean anyMaxed = false;
+        List<Integer> levels = new ArrayList<>();
         for (SkillType skill : SkillRegistry.all()) {
-            boolean maxed = level(player, skill) >= curve().maxLevel();
-            anyMaxed |= maxed;
-            if (maxed && store.prestige(key(player), skill) < PrestigeMath.MAX_PER_SKILL) {
-                ready.add(skill);
-            }
+            levels.add(level(player, skill));
         }
-        if (ready.isEmpty()) {
-            return anyMaxed ? PrestigeResult.AT_CAP : PrestigeResult.NOT_MAX;
+        if (!RebirthMath.ready(levels, curve().maxLevel())) {
+            return RebirthResult.NOT_READY;
         }
-        return applyPrestige(player, "all", ready);
-    }
-
-    private boolean prestigeReady(Player player) {
-        return player != null && plugin.config().enabled()
-                && plugin.config().prestigeEnabled();
+        return applyRebirth(player);
     }
 
     /**
-     * Общий исполнитель: двухшаговое подтверждение, сброс, физические алмазы
-     * за ступени и за новые звания. Разовые вехи в {@code /bal} не
-     * перевыдаются — у нового цикла свой предметный источник наград.
+     * Общий исполнитель: двухшаговое подтверждение, полный сброс персонажа и
+     * награды — алмазы предметом, уникальный предмет из пула без повторов и
+     * особые награды на вехах.
      */
-    private PrestigeResult applyPrestige(Player player, String quote,
-                                         List<SkillType> targets) {
+    private RebirthResult applyRebirth(Player player) {
         long now = System.nanoTime();
-        if (!confirmations.consume(player.getUniqueId(), "prestige", quote, now)) {
-            confirmations.offer(player.getUniqueId(), "prestige", quote, now);
-            return PrestigeResult.PENDING;
+        if (!confirmations.consume(player.getUniqueId(), "rebirth", "all", now)) {
+            confirmations.offer(player.getUniqueId(), "rebirth", "all", now);
+            return RebirthResult.PENDING;
         }
-        int steps = 0;
-        for (SkillType skill : targets) {
-            // Сначала фиксируем ступень: если потолок достигнут, опыт не трогаем.
-            if (!store.addPrestige(key(player), skill)) {
-                continue;
-            }
-            store.setXp(key(player), skill, 0L);
-            announceAbilityUpgrade(player, skill, store.prestige(key(player), skill));
-            steps++;
-        }
-        if (steps == 0) {
-            return PrestigeResult.AT_CAP;
-        }
-        giveDiamonds(player, PrestigeMath.stepDiamonds(
-                plugin.config().prestigeDiamondsPerStep()) * steps);
-        grantTierRewards(player);
-        return PrestigeResult.DONE;
-    }
-
-    private void announceAbilityUpgrade(Player player, SkillType skill, int prestige) {
-        SkillAbility ability = SkillAbility.of(skill);
-        if (ability == null) return;
-        var name = Messages.trusted(plugin.messages().raw("skill." + skill.id() + ".name"));
-        plugin.messages().send(player, "prestige-ability-upgraded", "skill", name,
-                "level", prestige, "cost", ability.cost(prestige), "seconds", ability.seconds(prestige),
-                "cooldown", ability.cooldown(prestige), "limit", ability.gatherLimit(prestige));
-        if (!ability.master(prestige)) return;
-        Bukkit.broadcast(plugin.messages().get("prestige-ability-master", "player", player.getName(), "skill", name));
+        store.resetForRebirth(key(player));
+        store.addRebirth(key(player));
+        int count = store.rebirths(key(player));
+        double bonus = RebirthMath.xpBonusPercent(count,
+                plugin.config().rebirthXpPercentPerRebirth(),
+                plugin.config().rebirthXpDecay(),
+                plugin.config().rebirthXpBonusCapPercent());
+        giveDiamonds(player, RebirthMath.rebirthDiamonds(plugin.config().rebirthDiamondsPerRebirth()));
+        giveUniqueReward(player);
+        plugin.messages().send(player, "rebirth-done",
+                "count", String.valueOf(count),
+                "title", Messages.trusted(RebirthMath.title(count)),
+                "bonus", String.format(java.util.Locale.ROOT, "%.1f", bonus));
         player.showTitle(net.kyori.adventure.title.Title.title(
-                plugin.messages().get("prestige-master-title"),
-                plugin.messages().get("prestige-master-subtitle", "skill", name)));
+                plugin.messages().get("rebirth-title", "count", String.valueOf(count)),
+                plugin.messages().get("rebirth-subtitle",
+                        "title", Messages.trusted(RebirthMath.title(count)))));
         var location = player.getLocation().add(0, 1, 0);
         player.getWorld().spawnParticle(org.bukkit.Particle.TOTEM_OF_UNDYING, location, 160, 1.0, 1.2, 1.0, 0.18);
         player.getWorld().playSound(location, org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.5f);
+        grantMilestoneRewards(player, count);
+        return RebirthResult.DONE;
     }
 
     /**
-     * Разовые алмазы за каждое новое звание, один раз на порог. При сбросе
-     * всех навыков игрок может пересечь несколько порогов сразу: в чат уходит
-     * один анонс старшего звания с суммарной наградой, а не пачка сообщений.
+     * Уникальный предмет из пула: случайный из ещё не выданных. Пул исчерпан —
+     * утешительные алмазы двойной нормы.
      */
-    private void grantTierRewards(Player player) {
-        int total = totalPrestige(player);
-        int diamonds = 0;
-        int crossed = 0;
-        PrestigeMath.Tier highest = null;
-        for (int threshold : PrestigeMath.rewardThresholds()) {
-            if (total < threshold || !store.markTier(key(player), threshold)) {
-                continue;
-            }
-            PrestigeMath.Tier tier = PrestigeMath.tierAt(threshold);
-            diamonds += PrestigeMath.tierDiamonds(tier);
-            crossed++;
-            highest = tier == null ? highest : tier;
-            plugin.getLogger().info("[CHRDK_Skills] " + player.getName()
-                    + " достиг звания «" + (tier == null ? threshold : tier.title())
-                    + "» (престиж " + total + ")");
-        }
-        if (crossed == 0) {
+    private void giveUniqueReward(Player player) {
+        List<SkillsConfig.UniqueItem> fresh = plugin.config().rebirthUniqueItems().stream()
+                .filter(item -> !store.rebirthUniques(key(player)).contains(item.id()))
+                .toList();
+        if (fresh.isEmpty()) {
+            giveDiamonds(player, RebirthMath.rebirthDiamonds(
+                    plugin.config().rebirthDiamondsPerRebirth()) * 2);
             return;
         }
-        giveDiamonds(player, diamonds);
-        if (highest != null && plugin.config().prestigeAnnounceTiers()) {
-            Bukkit.broadcast(plugin.messages().get("prestige-tier-announce",
+        SkillsConfig.UniqueItem pick = fresh.get(
+                java.util.concurrent.ThreadLocalRandom.current().nextInt(fresh.size()));
+        store.grantRebirthUnique(key(player), pick.id());
+        giveItem(player, buildUnique(pick));
+        plugin.getLogger().info("[CHRDK_Skills] " + player.getName()
+                + " получил уникальный предмет «" + pick.name() + "» за перерождение");
+    }
+
+    private ItemStack buildUnique(SkillsConfig.UniqueItem item) {
+        Material material = Material.matchMaterial(item.material());
+        if (material == null || !material.isItem()) {
+            material = Material.NETHER_STAR;
+        }
+        ItemStack stack = new ItemStack(material);
+        ItemMeta meta = stack.getItemMeta();
+        meta.displayName(Messages.trusted(item.name()));
+        if (!item.lore().isEmpty()) {
+            meta.lore(item.lore().stream().map(Messages::trusted).toList());
+        }
+        stack.setItemMeta(meta);
+        return stack;
+    }
+
+    /**
+     * Особые награды на вехах (5, 10, 25, 50, далее каждые 25): доплата
+     * алмазами, второй уникальный предмет и анонс в общий чат.
+     */
+    private void grantMilestoneRewards(Player player, int count) {
+        if (!RebirthMath.milestone(count) || !store.markRebirthMilestone(key(player), count)) {
+            return;
+        }
+        giveDiamonds(player, RebirthMath.milestoneDiamonds(plugin.config().rebirthMilestoneDiamonds()));
+        giveUniqueReward(player);
+        plugin.getLogger().info("[CHRDK_Skills] " + player.getName()
+                + " достиг вехи перерождения " + count);
+        if (plugin.config().rebirthAnnounceMilestones()) {
+            Bukkit.broadcast(plugin.messages().get("rebirth-milestone-announce",
                     "player", player.getName(),
-                    "title", Messages.trusted(highest.title()),
-                    "count", String.valueOf(total),
-                    "diamonds", String.valueOf(diamonds)));
+                    "count", String.valueOf(count),
+                    "title", Messages.trusted(RebirthMath.title(count))));
         }
     }
 
@@ -426,7 +374,14 @@ public final class SkillService {
         if (player == null || !player.isOnline() || amount <= 0) {
             return;
         }
-        ItemStack stack = new ItemStack(Material.DIAMOND, Math.min(64 * 36, amount));
+        giveItem(player, new ItemStack(Material.DIAMOND, Math.min(64 * 36, amount)));
+    }
+
+    /** Предмет в инвентарь, остаток — под ноги. */
+    private void giveItem(Player player, ItemStack stack) {
+        if (player == null || !player.isOnline() || stack == null) {
+            return;
+        }
         try {
             player.getInventory().addItem(stack).values().forEach(rest ->
                     player.getWorld().dropItemNaturally(player.getLocation(), rest));
@@ -461,25 +416,6 @@ public final class SkillService {
         if (!plugin.config().skill(skill).enabled()) {
             return Award.none(skill);
         }
-        // Баланс престижа: мягкая зона урезает XP, жёсткий потолок его ставит.
-        // Считаем до начисления, но применяем после бустеров ядра и престижа.
-        BalanceView balance = balanceView(player);
-        double balanceFactor = 1.0;
-        int lead = 0;
-        if (balance != null) {
-            lead = PrestigeXpGate.lead(balance.prestige(), balance.tracked(), skill);
-            balanceFactor = PrestigeXpGate.factor(balance.prestige(), balance.tracked(), skill,
-                    balance.allowance(), balance.hardCap(), balance.softStep(), balance.minFactor());
-            if (balanceFactor >= 1.0) {
-                clearBalanceState(player, skill);
-            } else {
-                notifyBalance(player, skill, lead, balance.allowance(), balanceFactor,
-                        balance.hardCap());
-            }
-            if (balanceFactor <= 0.0) {
-                return Award.none(skill);
-            }
-        }
         long perUnit = plugin.config().xpFor(skill);
         if (perUnit <= 0L) {
             return Award.none(skill);
@@ -489,18 +425,18 @@ public final class SkillService {
         long safeUnits = Math.min(1000L, units);
         long gained = perUnit * safeUnits;
         if (plugin.coreApi() != null) gained = plugin.coreApi().boostExperience(player.getName(), "skills", gained, gained);
-        // Престиж ускоряет повторную прокачку, но не пробивает потолок одного
-        // действия: иначе ветеран получал бы экспоненциальный опыт.
-        gained = Math.round(gained * PrestigeMath.xpFactor(
-                prestigeLevel(player, skill), plugin.config().prestigeXpPerStep()));
+        // Перерождение ускоряет прокачку навсегда: убывающий прирост, потолок
+        // +50%, один множитель на все навыки.
+        gained = Math.round(gained * RebirthMath.xpFactor(rebirths(player),
+                plugin.config().rebirthXpPercentPerRebirth(),
+                plugin.config().rebirthXpDecay(),
+                plugin.config().rebirthXpBonusCapPercent()));
         // Мудрость ускоряет прокачку навыков (атрибуты персонажа).
         gained = Math.round(gained * AttributeMath.xpFactor(
                 attribute(player, PlayerAttribute.WISDOM)));
         // Маг: интеллект внутри ветки билда — ещё +2% опыта за уровень.
         gained = Math.round(gained * BranchMath.xpMult(
                 branchLevel(player, BuildBranch.MAGE)));
-        // Мягкая зона: хотя бы 1 XP за реальное действие (scaledXp).
-        gained = PrestigeXpGate.scaledXp(gained, balanceFactor);
         gained = Math.max(0L, Math.min(plugin.config().maxXpPerAction(), gained));
         int oldLevel = level(player, skill);
         if (store.xp(key(player), skill) > Long.MAX_VALUE - gained) return Award.none(skill);
@@ -511,33 +447,6 @@ public final class SkillService {
         long total = store.addXp(key(player), skill, gained);
         announceLevels(player, skill, oldLevel, newLevel);
         return new Award(skill, gained, oldLevel, newLevel, granted);
-    }
-
-    /** {@code null} — баланс выключен или престиж отключён полностью. */
-    private BalanceView balanceView(Player player) {
-        SkillsConfig cfg = plugin.config();
-        if (!cfg.prestigeEnabled() || !cfg.prestigeBalanceEnabled()) {
-            return null;
-        }
-        Set<SkillType> tracked = EnumSet.noneOf(SkillType.class);
-        for (SkillType type : SkillType.values()) {
-            if (cfg.skill(type).enabled()) {
-                tracked.add(type);
-            }
-        }
-        if (tracked.isEmpty()) {
-            return null;
-        }
-        // Эффективная ступень ранга (включая особые звания), мягко: старое ядро
-        // или аддон без API просто не дают послабления, а не роняют прокачку.
-        int rankLevel = effectiveRankLevel(plugin.coreApi(), player.getName());
-        int rankBonus = PrestigeXpGate.rankBonus(cfg.prestigeBalanceRankMaxLead(), rankLevel);
-        int allowance = PrestigeXpGate.allowance(cfg.prestigeBalanceBaseMaxLead(),
-                cfg.prestigeBalanceRankMaxLead(), rankLevel, cfg.prestigeBalanceHardCap());
-        return new BalanceView(store.allPrestige(key(player)), tracked, allowance,
-                cfg.prestigeBalanceHardCap(), cfg.prestigeBalanceSoftStep(),
-                cfg.prestigeBalanceMinXpFactor(), rankLevel,
-                cfg.prestigeBalanceBaseMaxLead(), rankBonus);
     }
 
     /**
@@ -556,74 +465,9 @@ public final class SkillService {
         }
     }
 
-    /** Отчёт для {@code /skills balance}; {@code null}, если правило выключено. */
-    public BalanceReport balanceReport(Player player) {
-        BalanceView view = balanceView(player);
-        if (view == null) {
-            return null;
-        }
-        int minimum = PrestigeXpGate.minimum(view.prestige(), view.tracked());
-        List<BalanceRow> rows = new ArrayList<>();
-        for (SkillType type : SkillType.values()) {
-            boolean tracked = view.tracked().contains(type);
-            rows.add(new BalanceRow(type,
-                    PrestigeXpGate.step(view.prestige(), type), level(player, type),
-                    tracked ? PrestigeXpGate.lead(view.prestige(), view.tracked(), type) : 0,
-                    tracked ? PrestigeXpGate.factor(view.prestige(), view.tracked(), type,
-                            view.allowance(), view.hardCap(), view.softStep(), view.minFactor()) : 1.0,
-                    tracked));
-        }
-        return new BalanceReport(view.allowance(), view.hardCap(), minimum, view.rankLevel(),
-                view.baseMaxLead(), view.rankBonus(), List.copyOf(rows));
-    }
+    /** Отчёт для {@code /skills balance} удалён вместе с правилом баланса (п.30). */
 
-    /**
-     * Actionbar — с кулдауном, чат — только при смене состояния. Ранг истёк или
-     * куплен: allowance пересчитывается на следующем действии без отката данных.
-     */
-    private void notifyBalance(Player player, SkillType skill, int lead, int allowance,
-                               double factor, int hardCap) {
-        long now = System.currentTimeMillis();
-        long window = TimeUnit.SECONDS.toMillis(plugin.config().prestigeBalanceNoticeSeconds());
-        Long lastBar = balanceBars.putIfAbsent(player.getUniqueId(), now);
-        if (lastBar == null || now - lastBar >= window) {
-            balanceBars.put(player.getUniqueId(), now);
-            String name = plugin.messages().raw("skill." + skill.id() + ".name");
-            if (plugin.config().actionbar()) {
-                if (factor <= 0.0) {
-                    player.sendActionBar(plugin.messages().get("prestige-balance-bar-stop",
-                            "skill", Messages.trusted(name)));
-                } else {
-                    player.sendActionBar(plugin.messages().get("prestige-balance-bar",
-                            "skill", Messages.trusted(name),
-                            "factor", PrestigeXpGate.factorText(factor)));
-                }
-            }
-        }
-        String key = player.getUniqueId() + ":" + skill.id();
-        BalanceState previous = balanceStates.put(key, new BalanceState(factor, allowance));
-        if (previous != null && previous.same(factor, allowance)) {
-            return;
-        }
-        String name = plugin.messages().raw("skill." + skill.id() + ".name");
-        if (factor <= 0.0) {
-            plugin.messages().send(player, "prestige-balance-state-stop",
-                    "skill", Messages.trusted(name),
-                    "lead", Integer.toString(lead),
-                    "hard_cap", Integer.toString(hardCap));
-        } else {
-            plugin.messages().send(player, "prestige-balance-state",
-                    "skill", Messages.trusted(name),
-                    "factor", PrestigeXpGate.factorText(factor),
-                    "lead", Integer.toString(lead),
-                    "allowance", Integer.toString(allowance));
-        }
-    }
 
-    /** Вернулись к полному опыту: сбрасываем состояние, чтобы новый отрыв снова объявился. */
-    private void clearBalanceState(Player player, SkillType skill) {
-        balanceStates.remove(player.getUniqueId() + ":" + skill.id());
-    }
 
     /** Админское начисление: то же, но без ограничения «единиц» и с проверкой прав. */
     public Award grantXp(Player player, SkillType skill, long xp) {
