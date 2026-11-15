@@ -177,7 +177,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         inventory.setItem(TAB_PRESTIGE, tabItem(holder, Tab.PRESTIGE,
                 Material.NETHERITE_INGOT, "menu-tab-prestige"));
         inventory.setItem(TAB_POTIONS, tabItem(holder, Tab.POTIONS,
-                Material.POTION, "menu-tab-potions"));
+                Material.AMETHYST_SHARD, "menu-tab-potions"));
         inventory.setItem(SLOT_GUIDE, button(Material.BOOK, "menu-guide-button",
                 guideLore(player)));
         inventory.setItem(SLOT_CLOSE, button(Material.BARRIER, "menu-close"));

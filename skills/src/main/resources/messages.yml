@@ -53,7 +53,7 @@ messages:
   # Один инвентарь /skills: верхний ряд переключает разделы без второго окна.
   menu-tab-skills: "<gold>Навыки</gold>"
   menu-tab-tree: "<aqua>Дерево перков</aqua>"
-  menu-tab-potions: "<light_purple>Зелья опыта</light_purple>"
+  menu-tab-potions: "<light_purple>Кристаллы опыта</light_purple>"
   menu-tab-selected: "<green>▸ Открытая вкладка</green>"
   menu-tab-hint: "<gray>Клик — переключить раздел</gray>"
   menu-tab-domain: "<gold>%domain%</gold> <gray>· стр. %page%/%pages%</gray>"
@@ -455,18 +455,18 @@ messages:
   ability.defense.name: "<gold>Сдерживание</gold>"
   ability.defense.desc: "<gray>Следующий полученный удар враждебного моба: Замедление I атакующему на 3 секунды. Нужен щит. Урон не отменяется. Только PvE.</gray>"
 
-  xp-potion-unavailable: "<yellow>Зелье сейчас недоступно: требуется вход, выживание и исправное хранилище.</yellow>"
-  xp-potion-cooldown: "<yellow>Следующее зелье опыта можно выпить через %time% сек.</yellow>"
+  xp-potion-unavailable: "<yellow>Кристалл опыта сейчас недоступен: требуется вход, выживание и исправное хранилище.</yellow>"
+  xp-potion-cooldown: "<yellow>Следующий кристалл опыта можно использовать через %time% сек.</yellow>"
   xp-potion-used: "<green>%skill%: +%xp% XP.</green>"
 
-  # ---------------------------------- зелья ------------------------------------
+  # ------------------------------- кристаллы ------------------------------------
   # Покупка в меню /skills: единственный платный источник, дроп с мобов бесплатен.
-  potion-shop-info: "<light_purple>Зелья опыта</light_purple>"
-  potion-shop-price: "<gray>Цена зелья: </gray><white>%cost%</white> 💠. Клик по зелью — купить одно."
-  potion-shop-closed: "<red>Покупка зелий закрыта.</red>"
+  potion-shop-info: "<light_purple>Кристаллы опыта</light_purple>"
+  potion-shop-price: "<gray>Цена кристалла: </gray><white>%cost%</white> 💠. Клик по кристаллу — купить один."
+  potion-shop-closed: "<red>Покупка кристаллов закрыта.</red>"
   potion-buy: "<gray>Цена: </gray><white>%cost%</white> 💠"
-  potion-buy-hint: "<yellow>Клик — купить одно зелье</yellow>"
-  potion-bought: "<green>Куплено зелье навыка</green> <white>%skill%</white><green> за</green> <white>%cost%</white> 💠."
+  potion-buy-hint: "<yellow>Клик — купить один кристалл</yellow>"
+  potion-bought: "<green>Куплен кристалл навыка</green> <white>%skill%</white><green> за</green> <white>%cost%</white> 💠."
 
   # --------------------------- оплата (движок PaidActions) -----------------------
   finance.service-mode: "<red>Оплата требует авторизации, живого игрока в Survival/Adventure; NPC не допускаются.</red>"
