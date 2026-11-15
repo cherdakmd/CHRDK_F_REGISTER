@@ -131,8 +131,8 @@
       "text": "7df8bdefeccfb0fd4943e63ce1896282c16c3491c21f364dd8b2f0fbf5378c6d"
     },
     "skills": {
-      "reason": "престиж заменён перерождением (п.30): команды rebirth/rebirthtop, множитель убывающей отдачей, конвертация 10 ступеней = 1 перерождение; формулировки всех шести страниц сверены с RebirthMath/SkillService",
-      "sources": "2fca8f42a70c81ae8eadbd9707e0aa64eeb5909f73b9318c8d719d4d04faa665",
+      "reason": "исправлена компиляция buildUnique (Messages.markup вместо Trusted) — механика перерождений не менялась, страница сверена ранее в этом же PR",
+      "sources": "2ece4cb897b362affd05ecf553cb4e23d35a016d47dfa6bc950f8288e94bad15",
       "text": "e58a65c1a1471721a23569cd3efbb251afe9fe02fdb1b16da352b6c0413b6147"
     },
     "social-link": {

@@ -342,9 +342,9 @@ public final class SkillService {
         }
         ItemStack stack = new ItemStack(material);
         ItemMeta meta = stack.getItemMeta();
-        meta.displayName(Messages.trusted(item.name()));
+        meta.displayName(plugin.messages().markup(item.name()));
         if (!item.lore().isEmpty()) {
-            meta.lore(item.lore().stream().map(Messages::trusted).toList());
+            meta.lore(item.lore().stream().map(plugin.messages()::markup).toList());
         }
         stack.setItemMeta(meta);
         return stack;
