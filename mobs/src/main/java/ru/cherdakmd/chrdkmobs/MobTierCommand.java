@@ -27,12 +27,15 @@ final class MobTierCommand implements CommandExecutor, TabCompleter {
         plugin.messages().send(sender, "mobtiers-header");
         List<Integer> thresholds = config.thresholds();
         for (int tier = 1; tier <= thresholds.size() + 1; tier++) {
+            MobsConfig.Tier stats = config.tier(tier);
             plugin.messages().send(sender, "mobtiers-line",
                     "tier", tier,
                     "range", range(tier, thresholds),
-                    "health", formatFactor(MobTierMath.healthFactor(tier, config.healthPerTier())),
-                    "damage", formatFactor(MobTierMath.damageFactor(tier, config.damagePerTier())),
-                    "reward", MobTierMath.rewardDiamonds(tier, config.rewardPerTier()));
+                    "health", formatFactor(stats.health()),
+                    "damage", formatFactor(stats.damage()),
+                    "reward", stats.reward(),
+                    "abilities", stats.abilitiesMin() + "–" + stats.abilitiesMax(),
+                    "loot", stats.lootMin() + "–" + stats.lootMax());
         }
         plugin.messages().send(sender, "mobtiers-progression",
                 "health", percent(config.progression().healthPer100()),
@@ -44,8 +47,14 @@ final class MobTierCommand implements CommandExecutor, TabCompleter {
                 "chance", String.format(Locale.ROOT, "%.1f", config.elite().chance() * 100),
                 "health", formatFactor(config.elite().healthMultiplier()),
                 "damage", formatFactor(config.elite().damageMultiplier()),
-                "abilities", config.elite().abilitiesMin() + "–" + config.elite().abilitiesMax(),
                 "reward", config.elite().rewardTiers());
+        plugin.messages().send(sender, "mobtiers-variants",
+                "chance", String.format(Locale.ROOT, "%.1f", config.variants().chance() * 100),
+                "health", formatFactor(config.variants().healthMultiplier()),
+                "damage", formatFactor(config.variants().damageMultiplier()));
+        plugin.messages().send(sender, "mobtiers-loot",
+                "essence", config.loot().essenceXp(),
+                "variant", config.loot().variantXp());
         return true;
     }
 

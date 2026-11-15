@@ -1,16 +1,20 @@
 package ru.cherdakmd.chrdkmobs;
 
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.logging.Logger;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Контракт ресурсов модуля: конфиг тиров, тексты и plugin.yml.
+ * Контракт ресурсов модуля: таблица тиров, лут, варианты, тексты и plugin.yml.
  */
 class MobTierConfigTest {
 
@@ -19,49 +23,80 @@ class MobTierConfigTest {
     }
 
     @Test
-    void tierSettingsAreNamedAndDocumented() throws IOException {
+    void tierTableIsTenRowsAndDocumented() throws IOException {
         String config = read("src/main/resources/config.yml");
-        assertTrue(config.contains("distances: [1000, 3000, 7000, 15000]"),
-                "границы тиров по умолчанию");
-        assertTrue(config.contains("health-per-tier: 0.5"));
-        assertTrue(config.contains("damage-per-tier: 0.25"));
+        assertTrue(config.contains("distances: [500, 1200, 2200, 3500, 5200, 7200, 9600, 12500, 16000]"),
+                "девять границ = десять тиров");
+        assertTrue(config.contains("table:"), "свойства каждого тира");
         assertTrue(config.contains("name-prefix: true"));
-        assertTrue(config.contains("reward-per-tier: 1"));
-        assertTrue(config.contains("NATURAL/PATROL"),
-                "фермы спавнеров исключены документированно");
+        assertTrue(config.contains("NATURAL/PATROL"), "фермы спавнеров исключены документированно");
+        assertTrue(config.contains("reward-tiers: 2"));
+        assertTrue(config.contains("loot-bonus: 1"));
+        assertTrue(config.contains("epithets:"), "имена элит настраиваются");
     }
 
     @Test
-    void progressionAndEliteSettingsAreNamed() throws IOException {
+    void progressionVariantAndLootSettingsAreNamed() throws IOException {
         String config = read("src/main/resources/config.yml");
         assertTrue(config.contains("progression:"));
         assertTrue(config.contains("health-per-100: 0.10"));
         assertTrue(config.contains("damage-per-100: 0.05"));
         assertTrue(config.contains("prestige-weight: 5"));
         assertTrue(config.contains("max-bonus: 1.5"));
-        assertTrue(config.contains("elite:"));
-        assertTrue(config.contains("chance: 0.03"));
-        assertTrue(config.contains("health-multiplier: 2.0"));
-        assertTrue(config.contains("damage-multiplier: 1.5"));
-        assertTrue(config.contains("abilities-min: 2"));
-        assertTrue(config.contains("abilities-max: 3"));
-        assertTrue(config.contains("reward-tiers: 2"));
-        assertTrue(config.contains("epithets:"), "имена элит настраиваются");
+        assertTrue(config.contains("variants:"), "проклятые, тлеющие, всратые и кринжовые");
+        assertTrue(config.contains("chance: 0.012"));
+        assertTrue(config.contains("loot:"));
+        assertTrue(config.contains("essence-xp: 40"));
+        assertTrue(config.contains("variant-xp: 60"));
+        assertTrue(config.contains("прогрессией НЕ"), "награда не масштабируется прогрессией");
+    }
+
+    @Test
+    void parsedTableCarriesPerTierProperties() throws IOException {
+        YamlConfiguration cfg = YamlConfiguration.loadConfiguration(
+                new StringReader(read("src/main/resources/config.yml")));
+        MobsConfig config = MobsConfig.parse(cfg, Logger.getLogger("test"));
+        assertTrue(config.enabled());
+        assertEquals(9, config.thresholds().size(), "девять границ");
+        assertEquals(10, config.table().size(), "десять строк свойств");
+        MobsConfig.Tier first = config.tier(1);
+        assertEquals(1.0, first.health());
+        assertEquals(0, first.reward(), "первый тир без денег");
+        MobsConfig.Tier last = config.tier(10);
+        assertEquals(10.0, last.health());
+        assertEquals(3.8, last.damage());
+        assertEquals(5, last.reward());
+        assertEquals(4, last.abilitiesMin());
+        assertEquals(5, last.abilitiesMax());
+        assertEquals(3, last.lootMin());
+        assertEquals(4, last.lootMax());
+        assertEquals(last.health(), config.tier(99).health(),
+                "тиры выше последней строки наследуют её");
     }
 
     @Test
     void textsAndPluginContract() throws IOException {
         String messages = read("src/main/resources/messages.yml");
+        assertTrue(messages.contains("mob-names:"), "русские названия мобов");
+        assertTrue(messages.contains("PILLAGER: Разбойник"), "имена мобов — на русском");
+        assertTrue(messages.contains("ZOMBIE: Зомби"));
         assertTrue(messages.contains("mob-name-prefix"));
         assertTrue(messages.contains("mob-reward"));
         assertTrue(messages.contains("mobtiers-header"));
         assertTrue(messages.contains("elite-name"), "имя элиты");
         assertTrue(messages.contains("elite-reward"), "награда за элиту");
+        assertTrue(messages.contains("variant-reward"), "награда за вариант");
+        assertTrue(messages.contains("variant-cursed: "), "проклятые");
+        assertTrue(messages.contains("variant-smoldering: "), "тлеющие");
+        assertTrue(messages.contains("variant-gross: "), "всрaтые");
+        assertTrue(messages.contains("variant-cringe: "), "кринжовые");
+        assertTrue(messages.contains("loot.essence-combat.name"), "эссенции навыков");
+        assertTrue(messages.contains("loot.variant-gross.name"), "сущности вариантов");
+        assertTrue(messages.contains("loot-used"));
         assertTrue(messages.contains("mobtiers-progression"));
         assertTrue(messages.contains("mobtiers-elite"));
-        assertTrue(messages.contains("mob-names:"), "русские названия мобов");
-        assertTrue(messages.contains("PILLAGER: Разбойник"), "имена мобов — на русском");
-        assertTrue(messages.contains("ZOMBIE: Зомби"));
+        assertTrue(messages.contains("mobtiers-variants"));
+        assertTrue(messages.contains("mobtiers-loot"));
         String plugin = read("src/main/resources/plugin.yml");
         assertTrue(plugin.contains("name: CHRDK_Mobs"));
         assertTrue(plugin.contains("main: ru.cherdakmd.chrdkmobs.MobsPlugin"));

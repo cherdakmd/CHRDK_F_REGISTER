@@ -7,23 +7,26 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * Математика тиров мобов: границы расстояний, надбавки и награды.
+ * Математика тиров мобов: границы расстояний и прокачка. Свойства тиров
+ * (здоровье, урон, награда, лут) живут в таблице конфига {@code tiers.table}
+ * и проверяются {@link MobTierConfigTest}.
  *
- * <p>Границы по умолчанию 1000/3000/7000/15000 дают тиры 1..5; надбавки
- * 0.5 здоровья и 0.25 урона за тир, награда 1 алмаз за тир выше первого.</p>
+ * <p>Границы по умолчанию дают 10 тиров; прокачка добавляет до max-bonus
+ * здоровья и урона за 100 очков прогресса.</p>
  */
 class MobTierMathTest {
 
-    private static final List<Integer> DEFAULT = List.of(1000, 3000, 7000, 15000);
+    private static final List<Integer> DEFAULT = List.of(500, 1200, 2200, 3500, 5200,
+            7200, 9600, 12500, 16000);
 
     @Test
     void tierFollowsDistanceBoundaries() {
         assertEquals(1, MobTierMath.tierFor(0, DEFAULT));
-        assertEquals(1, MobTierMath.tierFor(999.9, DEFAULT));
-        assertEquals(2, MobTierMath.tierFor(1000, DEFAULT), "граница включительно — следующий тир");
-        assertEquals(2, MobTierMath.tierFor(2999, DEFAULT));
-        assertEquals(3, MobTierMath.tierFor(3000, DEFAULT));
-        assertEquals(5, MobTierMath.tierFor(99_999, DEFAULT), "дальше последней границы — последний тир");
+        assertEquals(1, MobTierMath.tierFor(499.9, DEFAULT));
+        assertEquals(2, MobTierMath.tierFor(500, DEFAULT), "граница включительно — следующий тир");
+        assertEquals(3, MobTierMath.tierFor(1200, DEFAULT));
+        assertEquals(10, MobTierMath.tierFor(16000, DEFAULT), "девятая граница открывает десятый тир");
+        assertEquals(10, MobTierMath.tierFor(99_999, DEFAULT), "дальше последней границы — последний тир");
     }
 
     @Test
@@ -31,26 +34,6 @@ class MobTierMathTest {
         assertEquals(1, MobTierMath.tierFor(123_456, List.of()));
         assertEquals(1, MobTierMath.tierFor(123_456, null));
         assertEquals(1, MobTierMath.tierFor(-5, DEFAULT), "отрицательное расстояние не даёт тира");
-    }
-
-    @Test
-    void factorsGrowPerTierAndClamp() {
-        assertEquals(1.0, MobTierMath.healthFactor(1, 0.5));
-        assertEquals(1.5, MobTierMath.healthFactor(2, 0.5));
-        assertEquals(2.5, MobTierMath.healthFactor(4, 0.5));
-        assertEquals(1.25, MobTierMath.damageFactor(2, 0.25));
-        assertEquals(1.0, MobTierMath.damageFactor(3, -1.0), "отрицательная надбавка прижимается к нулю");
-        assertEquals(31.0, MobTierMath.healthFactor(4, 99.0), "потолок надбавки — 10 за тир");
-    }
-
-    @Test
-    void rewardGrowsByTierAboveFirst() {
-        assertEquals(0, MobTierMath.rewardDiamonds(1, 1));
-        assertEquals(1, MobTierMath.rewardDiamonds(2, 1));
-        assertEquals(4, MobTierMath.rewardDiamonds(5, 1));
-        assertEquals(8, MobTierMath.rewardDiamonds(5, 2), "награда масштабируется настройкой");
-        assertEquals(0, MobTierMath.rewardDiamonds(2, 0), "нулевая ставка — без наград");
-        assertEquals(0, MobTierMath.rewardDiamonds(2, -5), "отрицательная ставка не платит");
     }
 
     @Test
@@ -70,13 +53,5 @@ class MobTierMathTest {
         assertEquals(2.5, MobTierMath.progressFactor(600, 0.25, 1.5), "потолок надбавки — max-bonus");
         assertEquals(11.0, MobTierMath.progressFactor(100_000, 10.0, 99.0), "потолок надбавки — 10");
         assertEquals(1.0, MobTierMath.progressFactor(1000, -1.0, 1.5), "отрицательный шаг не работает");
-    }
-
-    @Test
-    void eliteRewardPaysLikeHigherTiers() {
-        assertEquals(2, MobTierMath.eliteRewardDiamonds(1, 1, 2), "элита тира 1 платит тоже");
-        assertEquals(6, MobTierMath.eliteRewardDiamonds(5, 1, 2));
-        assertEquals(4, MobTierMath.eliteRewardDiamonds(3, 2, 0), "нулевые ступени — обычная награда");
-        assertEquals(0, MobTierMath.eliteRewardDiamonds(1, 0, 2), "нулевая ставка — без наград");
     }
 }

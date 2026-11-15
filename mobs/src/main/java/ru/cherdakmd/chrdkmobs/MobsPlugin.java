@@ -19,6 +19,7 @@ public final class MobsPlugin extends JavaPlugin {
     private volatile Messages messages;
     private volatile MobsConfig config;
     private volatile MoneyLoot loot;
+    private volatile MobLootItems lootItems;
 
     @Override
     public void onEnable() {
@@ -32,8 +33,10 @@ public final class MobsPlugin extends JavaPlugin {
                 getLogger().warning("Награды за тиры мобов отключены: " + error.getMessage());
             }
         }
+        this.lootItems = new MobLootItems(this);
         Bukkit.getPluginManager().registerEvents(new MobTierListener(this), this);
         Bukkit.getPluginManager().registerEvents(new EliteAbilityListener(this), this);
+        Bukkit.getPluginManager().registerEvents(lootItems, this);
         // Имена мобов не видны сквозь блоки: видимость табличек пересчитывается
         // каждые полсекунды для всех мобов с именем.
         Bukkit.getScheduler().runTaskTimer(this, new NameplateVisibility(), 20L, 10L);
@@ -76,5 +79,9 @@ public final class MobsPlugin extends JavaPlugin {
 
     public MoneyLoot loot() {
         return loot;
+    }
+
+    public MobLootItems lootItems() {
+        return lootItems;
     }
 }

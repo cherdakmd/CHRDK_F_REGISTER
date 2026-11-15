@@ -40,4 +40,25 @@ final class SkillsHook {
             return 0;
         }
     }
+
+    /**
+     * Фиксированный опыт навыка за использование лута ({@code addXp} без
+     * множителей). Нет навыков или аддон несовместим — {@code false}.
+     */
+    static boolean addXp(Logger log, Player player, String skillId, long xp) {
+        if (player == null || !Bukkit.getPluginManager().isPluginEnabled(PLUGIN)) {
+            return false;
+        }
+        try {
+            var registration = Bukkit.getServicesManager().getRegistration(ChrdkSkillsApi.class);
+            if (registration == null) {
+                return false;
+            }
+            return registration.getProvider().addXp(player, skillId, xp);
+        } catch (LinkageError | RuntimeException error) {
+            log.log(Level.WARNING,
+                    "[CHRDK_Mobs] CHRDK_Skills несовместим: опыт лута не начислен", error);
+            return false;
+        }
+    }
 }

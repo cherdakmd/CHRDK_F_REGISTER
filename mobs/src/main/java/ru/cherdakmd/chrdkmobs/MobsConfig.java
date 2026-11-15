@@ -1,20 +1,31 @@
 package ru.cherdakmd.chrdkmobs;
 
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.logging.Logger;
 
 /**
- * Настройки тиров мобов: границы, надбавки, награда, привязка к прокачке
- * и элитные мобы.
+ * Настройки тиров мобов: границы, свойства каждого тира, награда, лут,
+ * привязка к прокачке, элитные мобы и редкие варианты.
  */
-record MobsConfig(boolean enabled, List<Integer> thresholds,
-                  double healthPerTier, double damagePerTier,
-                  boolean namePrefix, long rewardPerTier,
-                  Progression progression, Elite elite) {
+record MobsConfig(boolean enabled, List<Integer> thresholds, Map<Integer, Tier> table,
+                  boolean namePrefix, Progression progression, Elite elite,
+                  Variants variants, Loot loot) {
+
+    /**
+     * Свойства одного тира: множители здоровья и урона, число способностей
+     * особых мобов (min..max), награда в {@code /bal} и число предметов лута
+     * (min..max).
+     */
+    record Tier(int tier, double health, double damage,
+                int abilitiesMin, int abilitiesMax,
+                long reward, int lootMin, int lootMax) { }
 
     /**
      * Привязка к прокачке: мощность моба закрепляется при появлении по
@@ -26,8 +37,29 @@ record MobsConfig(boolean enabled, List<Integer> thresholds,
 
     /** Элитные мобы: редкие усиленные враги со случайным набором способностей. */
     record Elite(double chance, double healthMultiplier, double damageMultiplier,
-                 int abilitiesMin, int abilitiesMax, long rewardTiers,
-                 List<String> epithets) { }
+                 long rewardTiers, int lootBonus, List<String> epithets) { }
+
+    /** Редкие варианты мобов (проклятые, тлеющие, всратые, кринжовые). */
+    record Variants(double chance, double healthMultiplier, double damageMultiplier) { }
+
+    /** Лут: опыт навыков за использование эссенций и сущностей вариантов. */
+    record Loot(long essenceXp, long variantXp) { }
+
+    /** Сколько всего тиров поддерживает таблица свойств. */
+    public static final int MAX_TIERS = 20;
+
+    /**
+     * Свойства тира: строка таблицы, тиры выше последней строки наследуют её,
+     * при пустой таблице — нейтральные значения.
+     */
+    Tier tier(int tier) {
+        Tier row = table.get(Math.max(1, tier));
+        if (row != null) {
+            return row;
+        }
+        int last = table.keySet().stream().mapToInt(Integer::intValue).max().orElse(1);
+        return table.getOrDefault(last, new Tier(Math.max(1, tier), 1.0, 1.0, 1, 1, 0L, 1, 1));
+    }
 
     static MobsConfig parse(FileConfiguration cfg, Logger log) {
         boolean enabled = cfg.getBoolean("general.enabled", true);
@@ -48,10 +80,8 @@ record MobsConfig(boolean enabled, List<Integer> thresholds,
             thresholds.add(value);
             previous = value;
         }
-        double healthPerTier = clampPercent(cfg.getDouble("tiers.health-per-tier", 0.5));
-        double damagePerTier = clampPercent(cfg.getDouble("tiers.damage-per-tier", 0.25));
         boolean namePrefix = cfg.getBoolean("tiers.name-prefix", true);
-        long rewardPerTier = Math.max(0L, cfg.getLong("tiers.reward-per-tier", 1L));
+        Map<Integer, Tier> table = parseTable(cfg.getConfigurationSection("tiers.table"), log);
         Progression progression = new Progression(
                 cfg.getBoolean("progression.enabled", true),
                 (int) Math.min(1000, Math.max(16, cfg.getInt("progression.radius", 128))),
@@ -70,19 +100,64 @@ record MobsConfig(boolean enabled, List<Integer> thresholds,
                     "Бешеный", "Стальной", "Костоломный", "Безжалостный", "Тёмный", "Хищный",
                     "Голодный", "Зловещий"));
         }
-        int abilitiesMin = (int) Math.min(EliteAbilities.values().length,
-                Math.max(1, cfg.getInt("elite.abilities-min", 2)));
-        int abilitiesMax = (int) Math.min(EliteAbilities.values().length,
-                Math.max(abilitiesMin, cfg.getInt("elite.abilities-max", 3)));
         Elite elite = new Elite(
                 Math.min(1.0, Math.max(0.0, cfg.getDouble("elite.chance", 0.03))),
                 Math.min(10.0, Math.max(1.0, cfg.getDouble("elite.health-multiplier", 2.0))),
                 Math.min(10.0, Math.max(1.0, cfg.getDouble("elite.damage-multiplier", 1.5))),
-                abilitiesMin, abilitiesMax,
                 Math.min(20L, Math.max(0L, cfg.getLong("elite.reward-tiers", 2L))),
+                (int) Math.min(20, Math.max(0, cfg.getInt("elite.loot-bonus", 1))),
                 List.copyOf(epithets));
-        return new MobsConfig(enabled, List.copyOf(thresholds), healthPerTier,
-                damagePerTier, namePrefix, rewardPerTier, progression, elite);
+        Variants variants = new Variants(
+                Math.min(1.0, Math.max(0.0, cfg.getDouble("variants.chance", 0.012))),
+                Math.min(10.0, Math.max(1.0, cfg.getDouble("variants.health-multiplier", 2.5))),
+                Math.min(10.0, Math.max(1.0, cfg.getDouble("variants.damage-multiplier", 1.75))));
+        Loot loot = new Loot(
+                Math.min(1_000_000L, Math.max(0L, cfg.getLong("loot.essence-xp", 40L))),
+                Math.min(1_000_000L, Math.max(0L, cfg.getLong("loot.variant-xp", 60L))));
+        return new MobsConfig(enabled, List.copyOf(thresholds), table, namePrefix,
+                progression, elite, variants, loot);
+    }
+
+    /** Таблица свойств тиров 1..N из конфига; пустая или кривая строка — нейтральные значения. */
+    private static Map<Integer, Tier> parseTable(ConfigurationSection section, Logger log) {
+        Map<Integer, Tier> table = new LinkedHashMap<>();
+        if (section == null) {
+            return table;
+        }
+        List<Integer> keys = new ArrayList<>();
+        for (String key : section.getKeys(false)) {
+            try {
+                keys.add(Integer.parseInt(key));
+            } catch (NumberFormatException ignored) {
+                log.warning("tiers.table: ключ '" + key + "' не номер тира; пропущен");
+            }
+        }
+        keys.sort(Integer::compareTo);
+        for (int tier : keys) {
+            if (tier < 1 || tier > MAX_TIERS) {
+                log.warning("tiers.table: тир " + tier + " вне 1.." + MAX_TIERS + "; пропущен");
+                continue;
+            }
+            ConfigurationSection row = section.getConfigurationSection(String.valueOf(tier));
+            if (row == null) {
+                continue;
+            }
+            List<Integer> abilities = row.getIntegerList("abilities");
+            List<Integer> lootRange = row.getIntegerList("loot");
+            table.put(tier, new Tier(tier,
+                    Math.min(20.0, Math.max(0.1, row.getDouble("health", 1.0))),
+                    Math.min(20.0, Math.max(0.1, row.getDouble("damage", 1.0))),
+                    clampCount(abilities.isEmpty() ? 1 : abilities.get(0)),
+                    clampCount(abilities.size() < 2 ? 2 : abilities.get(1)),
+                    Math.max(0L, row.getLong("reward", 0L)),
+                    clampCount(lootRange.isEmpty() ? 1 : lootRange.get(0)),
+                    clampCount(lootRange.size() < 2 ? 1 : lootRange.get(1))));
+        }
+        return table;
+    }
+
+    private static int clampCount(int value) {
+        return Math.min(64, Math.max(1, value));
     }
 
     private static double clampPercent(double value) {
@@ -91,15 +166,14 @@ record MobsConfig(boolean enabled, List<Integer> thresholds,
 
     String describe() {
         return String.format(Locale.ROOT,
-                "enabled=%s, tiers=%d (%s..%s), health +%,.0f%%/тир, damage +%,.0f%%/тир, "
-                        + "reward %d ⛁/тир, прогресс +%,.0f%%/100 очков (до +%,.0f%%), "
-                        + "элита %,.1f%% (×%s здоровья, ×%s урона, %d..%d способностей)",
+                "enabled=%s, tiers=%d (%s..%s), таблица %d тиров, прогресс +%,.0f%%/100 очков "
+                        + "(до +%,.0f%%), элита %,.1f%%, варианты %,.1f%%, лут %d/%d опыта",
                 enabled, thresholds.size() + 1,
-                thresholds.isEmpty() ? "1" : "2",
-                thresholds.size() + 1,
-                healthPerTier * 100, damagePerTier * 100, rewardPerTier,
+                thresholds.isEmpty() ? "?" : thresholds.get(0),
+                thresholds.isEmpty() ? "?" : thresholds.get(thresholds.size() - 1),
+                table.size(),
                 progression.healthPer100() * 100, progression.maxBonus() * 100,
-                elite.chance() * 100, elite.healthMultiplier(), elite.damageMultiplier(),
-                elite.abilitiesMin(), elite.abilitiesMax());
+                elite.chance() * 100, variants.chance() * 100,
+                loot.essenceXp(), loot.variantXp());
     }
 }

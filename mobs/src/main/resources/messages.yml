@@ -37,11 +37,49 @@ messages:
     ZOMBIE: Зомби
     ZOMBIE_VILLAGER: Зомби-житель
   mob-name-prefix: "<gold>Т%tier%</gold> <dark_gray>·</dark_gray> <white>%name%</white>"
-  mob-reward: "<gray>Тир %tier% · <white>%mob%</white>: <green>+%amount% ⛁</green> в /bal</gray>"
-  mobtiers-header: "<gold>Тиры мобов</gold> <gray>— дальше от спавна мира враги сильнее и щедрее</gray>"
-  mobtiers-line: "<gray>Тир %tier%: %range% · здоровье ×%health% · урон ×%damage% · награда %reward% ⛁</gray>"
-  mobtiers-off: "<yellow>Тиры мобов выключены в конфиге.</yellow>"
   elite-name: "<gold>Т%tier%</gold> <dark_gray>·</dark_gray> <gold>★</gold> <red>%title%</red> <dark_gray>·</dark_gray> <white>%name%</white>"
+  mob-reward: "<gray>Тир %tier% · <white>%mob%</white>: <green>+%amount% ⛁</green> в /bal</gray>"
   elite-reward: "<gray>★ Элита Т%tier% · <white>%mob%</white>: <green>+%amount% ⛁</green> в /bal</gray>"
+  variant-reward: "<gray>★ %title% Т%tier% · <white>%mob%</white>: <green>+%amount% ⛁</green> в /bal</gray>"
+  # Имена вариантов (с разметкой) для «★ <имя> · Имя».
+  variant-cursed: "<dark_purple>Проклятый</dark_purple>"
+  variant-smoldering: "<gold>Тлеющий</gold>"
+  variant-gross: "<green>Всрaтый</green>"
+  variant-cringe: "<light_purple>Кринжовый</light_purple>"
+  # Лут мобов: эссенции навыков и тематические сущности вариантов.
+  loot.essence-combat.name: "<gold>Эссенция боя</gold>"
+  loot.essence-combat.lore:
+    - "<gray>Использование: <green>+%amount% опыта</green> случайного навыка боя</gray>"
+    - "<gray>Падает с мобов всех тиров</gray>"
+  loot.essence-gather.name: "<aqua>Эссенция добычи</aqua>"
+  loot.essence-gather.lore:
+    - "<gray>Использование: <green>+%amount% опыта</green> случайного навыка добычи</gray>"
+    - "<gray>Падает с мобов всех тиров</gray>"
+  loot.essence-craft.name: "<yellow>Эссенция ремесла</yellow>"
+  loot.essence-craft.lore:
+    - "<gray>Использование: <green>+%amount% опыта</green> случайного навыка ремесла</gray>"
+    - "<gray>Падает с мобов всех тиров</gray>"
+  loot.variant-cursed.name: "<dark_purple>Проклятая сущность</dark_purple>"
+  loot.variant-cursed.lore:
+    - "<gray>Использование: <green>+%amount% опыта</green> и сопротивление на 90 секунд</gray>"
+    - "<dark_purple>Падает с проклятых мобов</dark_purple>"
+  loot.variant-smoldering.name: "<gold>Уголёк тления</gold>"
+  loot.variant-smoldering.lore:
+    - "<gray>Использование: <green>+%amount% опыта</green> и огнестойкость на 3 минуты</gray>"
+    - "<gold>Падает с тлеющих мобов</gold>"
+  loot.variant-gross.name: "<green>Жижа</green>"
+  loot.variant-gross.lore:
+    - "<gray>Использование: <green>+%amount% опыта</green> и регенерация II</gray>"
+    - "<green>Падает со всратых мобов</green>"
+  loot.variant-cringe.name: "<light_purple>Кринж-фрагмент</light_purple>"
+  loot.variant-cringe.lore:
+    - "<gray>Использование: <green>+%amount% опыта</green> и скорость II на минуту</gray>"
+    - "<light_purple>Падает с кринжовых мобов</light_purple>"
+  loot-used: "<gray>Лут: <green>+%amount% опыта навыка</green></gray>"
+  mobtiers-header: "<gold>Тиры мобов</gold> <gray>— дальше от спавна мира враги сильнее и щедрее</gray>"
+  mobtiers-line: "<gray>Тир %tier%: %range% · здоровье ×%health% · урон ×%damage% · награда %reward% ⛁ · навыков %abilities% · лут %loot%</gray>"
+  mobtiers-off: "<yellow>Тиры мобов выключены в конфиге.</yellow>"
   mobtiers-progression: "<gray>Прокачка: +%health%% здоровья и +%damage%% урона за 100 очков (уровни навыков + престиж ×%prestige%, до +%cap%%), игрок в %radius% блоках</gray>"
-  mobtiers-elite: "<gray>Элита: шанс %chance%%, здоровья ×%health%, урона ×%damage%, %abilities% способностей, награда +%reward% тиров</gray>"
+  mobtiers-elite: "<gray>Элита: шанс %chance%%, здоровья ×%health%, урон ×%damage%, награда как за тир +%reward%</gray>"
+  mobtiers-variants: "<gray>Варианты (проклятые, тлеющие, всратые, кринжовые): шанс %chance%%, здоровья ×%health%, урон ×%damage%</gray>"
+  mobtiers-loot: "<gray>Лут: эссенции навыков +%essence% опыта, сущности вариантов +%variant% опыта и полезный эффект</gray>"
