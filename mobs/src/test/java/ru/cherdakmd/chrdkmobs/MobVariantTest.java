@@ -19,12 +19,26 @@ class MobVariantTest {
     void everyVariantHasThemedPool() {
         assertTrue(MobVariant.CURSED.pool().contains(EliteAbilities.LIFESTEAL),
                 "проклятые тянутся к жизни");
+        assertTrue(MobVariant.CURSED.pool().contains(EliteAbilities.WITHER_TOUCH),
+                "проклятые усушают");
+        assertTrue(MobVariant.CURSED.pool().contains(EliteAbilities.EXPLOSIVE_DEATH),
+                "проклятые взрываются смертью");
         assertTrue(MobVariant.SMOLDERING.pool().contains(EliteAbilities.FIRE_TOUCH),
                 "тлеющие жгут");
+        assertTrue(MobVariant.SMOLDERING.pool().contains(EliteAbilities.EXPLOSIVE_DEATH),
+                "тлеющие взрываются смертью");
         assertTrue(MobVariant.GROSS.pool().contains(EliteAbilities.VENOM),
                 "всрaтые травят ядом");
+        assertTrue(MobVariant.GROSS.pool().contains(EliteAbilities.WEB_TOUCH),
+                "всрaтые плетут паутину");
         assertTrue(MobVariant.CRINGE.pool().contains(EliteAbilities.BLINK),
                 "кринжовые хаотичны");
+        assertTrue(MobVariant.CRINGE.pool().contains(EliteAbilities.PULL),
+                "кринжовые притягивают");
+        assertTrue(MobVariant.CRINGE.pool().contains(EliteAbilities.LAUNCH),
+                "кринжовые подбрасывают");
+        assertTrue(MobVariant.CRINGE.pool().contains(EliteAbilities.LIGHTNING_TOUCH),
+                "кринжовые бьют разрядом");
         for (MobVariant variant : MobVariant.values()) {
             assertTrue(variant.pool().size() >= 3, variant + ": пула хватает на набор");
         }

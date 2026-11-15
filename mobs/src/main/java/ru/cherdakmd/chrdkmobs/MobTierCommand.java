@@ -35,7 +35,8 @@ final class MobTierCommand implements CommandExecutor, TabCompleter {
                     "damage", formatFactor(stats.damage()),
                     "reward", stats.reward(),
                     "abilities", stats.abilitiesMin() + "–" + stats.abilitiesMax(),
-                    "loot", stats.lootMin() + "–" + stats.lootMax());
+                    "loot", stats.lootMin() + "–" + stats.lootMax(),
+                    "chance", percent(stats.lootChance()));
         }
         plugin.messages().send(sender, "mobtiers-progression",
                 "health", percent(config.progression().healthPer100()),

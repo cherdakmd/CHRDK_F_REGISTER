@@ -199,8 +199,14 @@ final class MobTierListener implements Listener {
         }
         // Лут: эссенции навыков для прокачки или тематика варианта; количество
         // задаёт тир, элита берёт сверху loot-bonus. Прогрессией не масштабируется.
+        // Шанс дропа задан в таблице тиров (loot-chance); особым мобам
+        // (вариантам) тематический лут падает всегда.
         MobLootItems.Kind kind = variant != null
                 ? MobLootItems.forVariant(variant) : MobLootItems.randomEssence();
+        if (variant == null
+                && ThreadLocalRandom.current().nextDouble() >= stats.lootChance()) {
+            return;
+        }
         int count = MobLootItems.count(stats.lootMin(), stats.lootMax())
                 + (elite ? config.elite().lootBonus() : 0);
         event.getDrops().add(plugin.lootItems().create(kind, count));
