@@ -43,6 +43,7 @@ class BranchMathTest {
     void cooldownShrinksButNeverBelowFloor() {
         assertEquals(30, BranchMath.cooldown(30, 1));
         assertEquals(22, BranchMath.cooldown(30, 5));
-        assertEquals(8, BranchMath.cooldown(30, 100), "кулдаун не уходит в ноль");
+        assertEquals(12, BranchMath.cooldown(30, 100), "ранг престижа зажимается десяткой");
+        assertEquals(8, BranchMath.cooldown(10, 100), "кулдаун не уходит в ноль");
     }
 }
