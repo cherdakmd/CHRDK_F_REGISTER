@@ -54,4 +54,17 @@ class MobTierMathTest {
         assertEquals(11.0, MobTierMath.progressFactor(100_000, 10.0, 99.0), "потолок надбавки — 10");
         assertEquals(1.0, MobTierMath.progressFactor(1000, -1.0, 1.5), "отрицательный шаг не работает");
     }
+
+    @Test
+    void mitigationCapFallsWithTierButKeepsFloor() {
+        assertEquals(0.5, MobTierMath.mitigationCap(1, 0.5, 0.04, 0.3), 1e-9);
+        assertEquals(0.5, MobTierMath.mitigationCap(5, 0.5, 0.04, 0.3), 1e-9, "до тира 5 потолок полный");
+        assertEquals(0.46, MobTierMath.mitigationCap(6, 0.5, 0.04, 0.3), 1e-9);
+        assertEquals(0.38, MobTierMath.mitigationCap(8, 0.5, 0.04, 0.3), 1e-9, "т8 пробивает больше защиты");
+        assertEquals(0.3, MobTierMath.mitigationCap(10, 0.5, 0.04, 0.3), 1e-9);
+        assertEquals(0.3, MobTierMath.mitigationCap(20, 0.5, 0.04, 0.3), 1e-9, "пол ниже не опускается");
+        assertEquals(0.4, MobTierMath.mitigationCap(8, 0.5, 0.2, 0.4), 1e-9, "пол не выше потолка");
+        assertEquals(0.0, MobTierMath.mitigationCap(8, Double.NaN, 0.04, 0.3), 1e-9,
+                "кривые значения не ломают формулу");
+    }
 }

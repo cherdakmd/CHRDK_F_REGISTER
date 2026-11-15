@@ -65,15 +65,15 @@ class SkillsLayoutTest {
     }
 
     @Test
-    void prestigeTabIsWiredIntoTheSameInventory() throws IOException {
+    void rebirthTabIsWiredIntoTheSameInventory() throws IOException {
         String source = source();
-        assertTrue(source.contains("TAB_PRESTIGE = 5"));
-        assertTrue(source.contains("case PRESTIGE -> renderPrestige"));
-        assertTrue(source.contains("Tab.PRESTIGE"));
+        assertTrue(source.contains("TAB_REBIRTH = 5"));
+        assertTrue(source.contains("case REBIRTH -> renderRebirth"));
+        assertTrue(source.contains("Tab.REBIRTH"));
         String api = Files.readString(
                 Path.of("src/main/java/ru/cherdakmd/chrdkskills/SkillsMenuApi.java"),
                 StandardCharsets.UTF_8);
-        assertTrue(api.contains("PRESTIGE"), "вкладка должна быть в публичном контракте");
+        assertTrue(api.contains("REBIRTH"), "вкладка должна быть в публичном контракте");
     }
 
     @Test
@@ -107,7 +107,7 @@ class SkillsLayoutTest {
                     "вкладка " + name + " не переключается по клику");
             found++;
         }
-        assertTrue(found >= 5, "вкладки верхнего ряда должны существовать");
+        assertTrue(found >= 4, "вкладки верхнего ряда должны существовать");
     }
 
     @Test

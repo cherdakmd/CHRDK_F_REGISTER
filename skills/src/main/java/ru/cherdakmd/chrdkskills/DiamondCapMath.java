@@ -25,7 +25,7 @@ public final class DiamondCapMath {
 
     /** Максимум суммарного уровня: 10 навыков по 100. */
     public static final int MAX_TOTAL_LEVEL = 1000;
-    /** Максимум суммы ступеней престижа (см. PrestigeMath.MAX_TOTAL). */
+    /** Максимум шкалы ступеней: перерождение = 10 ступеней (см. RebirthMath). */
     public static final int MAX_PRESTIGE = 100;
 
     private DiamondCapMath() {

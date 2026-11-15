@@ -26,7 +26,8 @@ public interface ChrdkSkillsApi {
     int totalLevel(Player player);
 
     /**
-     * Суммарная ступень престижа по всем навыкам (0..100).
+     * Суммарная ступень престижа по всем навыкам: старая шкала, перерождение
+     * равно 10 ступеням (0 и выше, потолок 100 в контрактах аддонов).
      *
      * <p>Добавлено 7 ноября 2026 как {@code default}-метод: аддоны читают престиж
      * мягко, без поднятия {@code API_VERSION} и без обязательной пересборки
@@ -49,4 +50,25 @@ public interface ChrdkSkillsApi {
 
     /** Суммарная величина активного эффекта навыка (0, если перк не открыт). */
     double perk(Player player, String skillId, String kind);
+
+    /**
+     * Сумма распределённых очков атрибутов (ранг атрибутов для порогов тиров).
+     * Дефолт — 0: старые реализации API совместимы без пересборки.
+     */
+    default int attributeSum(Player player) {
+        return 0;
+    }
+
+    /** Очки стойкости: компенсируют пробивание защиты высшими тирами. */
+    default int stamina(Player player) {
+        return 0;
+    }
+
+    /**
+     * Уровень ветки билда ({@code warrior}, {@code archer}, {@code mage},
+     * {@code cleric}, {@code priest}, {@code rogue}). Без поддержки — 0.
+     */
+    default int branchLevel(Player player, String branchId) {
+        return 0;
+    }
 }

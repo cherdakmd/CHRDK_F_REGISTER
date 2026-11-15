@@ -34,7 +34,6 @@ include 'quests'
 
 
 include 'guilds'
-include 'classes'
 include 'vk'
 
 include 'disasters'

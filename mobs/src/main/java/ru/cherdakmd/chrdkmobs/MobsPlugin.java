@@ -36,6 +36,7 @@ public final class MobsPlugin extends JavaPlugin {
         this.lootItems = new MobLootItems(this);
         Bukkit.getPluginManager().registerEvents(new MobTierListener(this), this);
         Bukkit.getPluginManager().registerEvents(new EliteAbilityListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new MobMitigationGuard(this), this);
         Bukkit.getPluginManager().registerEvents(lootItems, this);
         // Имена мобов не видны сквозь блоки: видимость табличек пересчитывается
         // каждые полсекунды для всех мобов с именем; элиты и варианты

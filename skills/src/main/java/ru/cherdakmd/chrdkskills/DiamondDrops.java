@@ -102,7 +102,7 @@ public final class DiamondDrops {
      *
      * @param level          уровень профильного навыка (1..maxLevel)
      * @param maxLevel       потолок кривой (100)
-     * @param prestige       ступени престижа этого навыка
+     * @param prestige       перерождения игрока (клампятся потолком контракта)
      * @param rankLevel      ступень платного ранга (0..5)
      * @param rankXpPercent  {@code RankBonus.xpPercent()} — влияет на шанс
      * @param rankDropPercent {@code RankBonus.dropPercent()} — влияет на количество

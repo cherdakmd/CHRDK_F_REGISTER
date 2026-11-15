@@ -1,189 +1,179 @@
 {
   "pages": {
     "about": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "a7f57ee748ff6816f690a519976bcf2bbcae66ee627849594d3da803df098de3",
+      "reason": "П.29 фикс: классы в RetiredAddons (снятые аддоны), пины тестов — вики-страницы сверены, поведение задокументировано",
+      "sources": "f45094b8bc928ede47c30108adbd19823eda79e126d8722bff7562fe5d371346",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "c7199f66dfe399e55e68f51ecfb88c50d5613bf6eb0f852351a09aeb0f0e4e3c",
+      "reason": "П.29 фикс: классы в RetiredAddons (снятые аддоны), пины тестов — вики-страницы сверены, поведение задокументировано",
+      "sources": "4a33f555bf436fae5bd67440b742af2cfef912ccd3c34b5ff1352cee36d324f7",
       "text": "bd128e475ee8efae55c3d2d6c9616d5278600f2a8ff1aad7af5e6df3e0b3f5c3"
     },
     "artifacts": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "a7725c261a3319e556017d85745083a648a337af3c0a6ee4c19e6f65fcacd73c",
+      "reason": "П.29 фикс: классы в RetiredAddons (снятые аддоны), пины тестов — вики-страницы сверены, поведение задокументировано",
+      "sources": "b0e68d619560d24f039a05c8eab4f1cf66a5ba2aef937256a84d24760b5fdd6c",
       "text": "51e3ef379d9a8f7e2ccfc6fd41cc0c0823f91f30d7c9a8326ec7962c182d98e4"
     },
     "battlepass": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "3ebadd583cf6801e92cb7fddd0201b50c0a318df46f93ce830c5dc63858e5048",
+      "reason": "П.29 фикс: классы в RetiredAddons (снятые аддоны), пины тестов — вики-страницы сверены, поведение задокументировано",
+      "sources": "346e023d606dfac111c5b48194a21bebef13fb249d892223c3f6a07137e6c568",
       "text": "997df6e0a9311ea115c4fd3c192b2729034b10c68a4f41c57261ef4b704c5add"
     },
     "chat": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "a7f57ee748ff6816f690a519976bcf2bbcae66ee627849594d3da803df098de3",
+      "reason": "П.29 фикс: классы в RetiredAddons (снятые аддоны), пины тестов — вики-страницы сверены, поведение задокументировано",
+      "sources": "f45094b8bc928ede47c30108adbd19823eda79e126d8722bff7562fe5d371346",
       "text": "a51c51d20cfe94c553e80893422b000a579b87285b00cbceb452f29eb0773023"
     },
     "claims": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "34cfb38e6f86ba0cd7af544973b34f00ac848ea251ff83aab182166c93320293",
+      "reason": "П.29 фикс: классы в RetiredAddons (снятые аддоны), пины тестов — вики-страницы сверены, поведение задокументировано",
+      "sources": "c9603636ea461a2b07ed74b4874e931533dc2cda2ebd810fde8a39a5c897e58d",
       "text": "50b80f02b9200ed8653d50c1bf802fd4de8d272a9bf1f46cf92618d743bed3cd"
     },
-    "classes": {
-      "reason": "Замена несуществующего Material.CHAIN на IRON_BARS в кристалле обороны; страницы сверены с финальной реализацией",
-      "sources": "8301aa9a262a3d8180d31b18db599ac39c53393b917dfe15a893a0802145b75d",
-      "text": "503edef62357862f67d17df249b393023697d6dca6342cbe792b0d4dc78cb8cc"
-    },
     "commands": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "4f0e44b63fa66496605f114a4e44d92fc3f21563d5ab9f66ced2b9e8f0260bdb",
-      "text": "46017ca1aca3a1d620ff09b3ffd40ff42885e551a850c85baa15f2c73d03b290"
+      "reason": "П.29 фикс: классы в RetiredAddons (снятые аддоны), пины тестов — вики-страницы сверены, поведение задокументировано",
+      "sources": "95b95b4580b74544810f449cde03c33154a1b2898eb9830e0484ac9a5c56dd2b",
+      "text": "c177198348ad294daba4968fb8f353701dd7cf6e28744a0a0380cd7cbea835be"
     },
     "cosmetics": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "ac323e6e68f0cd71ad72dfc7ab50b29324935aac2f135296ae50c9bf011f8f2d",
+      "reason": "П.29 фикс: классы в RetiredAddons (снятые аддоны), пины тестов — вики-страницы сверены, поведение задокументировано",
+      "sources": "76c4b759cc406780e39669b138c1656af2fa46aab5a1defad64ca6bf2aebadc5",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "c5a46a386ecaa2911a96325bf74364901f8ac63fe806c057af226477dedd5fd5",
+      "reason": "П.29 фикс: классы в RetiredAddons (снятые аддоны), пины тестов — вики-страницы сверены, поведение задокументировано",
+      "sources": "ddeb4241eb1a33c93769cc5fd15c10115a9fc38d8215dbf6dc6964191d6ca54e",
       "text": "4d7683f5677c50dfe0488961891915b5c2dd6533191a213ee8fdb077ea817eb5"
     },
     "disasters": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "053ac6f6c17f56ef60fc149432a0e2cb28ba51c56a61a190e9d12de048ebc347",
+      "reason": "П.29 фикс: классы в RetiredAddons (снятые аддоны), пины тестов — вики-страницы сверены, поведение задокументировано",
+      "sources": "d07c73b3cf470863efdc73fce918ce86da7875afb92469e4d6ef7993c4721784",
       "text": "121b1cc28a075ced29b6de8abec7dbc20bbb531a01441ddd5fdb836d066d0202"
     },
     "economy": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "a6692876b59b1dca75457a3bdf356a0aa47e2e67dc754b821e0409e3eb68d3c2",
+      "reason": "П.29 фикс: классы в RetiredAddons (снятые аддоны), пины тестов — вики-страницы сверены, поведение задокументировано",
+      "sources": "a74223a7fa58f23638f1575d8c167c77abce9ab8d5df6ac5af9047f0eacaf50d",
       "text": "380ede76f428cfc00f3a9df848d00a9b5012222475c10d41cc83359ef3d12d97"
     },
     "enchants": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "42a8b572943c5f06d1b07b16895895948ae235dc609698293572605226f121e6",
+      "reason": "П.29 фикс: классы в RetiredAddons (снятые аддоны), пины тестов — вики-страницы сверены, поведение задокументировано",
+      "sources": "20a639c33ee043d2917e179f9f957eac431e4351bf3d99d1675ae4f0d946783c",
       "text": "7e90321ef8a100bae11c53592c62328fa44a958be657b66a86d51ea8c1906a7d"
     },
     "faq": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "80693bf3f8a1ec25ca8cca195cbd74f894414a451cb6e384f34b4180fb88afb2",
+      "reason": "П.29 фикс: классы в RetiredAddons (снятые аддоны), пины тестов — вики-страницы сверены, поведение задокументировано",
+      "sources": "c5db8cfd2abe8b4885ae50fb29eed8ea60a0d6ece19c0afc862eb6fa7fa64572",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "55b052e8a13ef156c230b8c6d2a9455358802f3be64a2a68aab7a3173f76527b",
+      "reason": "П.29 фикс: классы в RetiredAddons (снятые аддоны), пины тестов — вики-страницы сверены, поведение задокументировано",
+      "sources": "39e4eb7b2f714492a5a6e06eabde1a182eab2230229b2fa062ffb92d346c8d9c",
       "text": "615d89bba0ac116c220d571f530fcdab7d5ff46162ca7a7ecf24de441a7fb191"
     },
     "guilds": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "34cfb38e6f86ba0cd7af544973b34f00ac848ea251ff83aab182166c93320293",
+      "reason": "П.29 фикс: классы в RetiredAddons (снятые аддоны), пины тестов — вики-страницы сверены, поведение задокументировано",
+      "sources": "c9603636ea461a2b07ed74b4874e931533dc2cda2ebd810fde8a39a5c897e58d",
       "text": "bb7d4121d6c42762b2f09d8eb57df986a942df35c77fd2cf899a5e7a38193216"
     },
     "honors": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "a7f57ee748ff6816f690a519976bcf2bbcae66ee627849594d3da803df098de3",
+      "reason": "П.29 фикс: классы в RetiredAddons (снятые аддоны), пины тестов — вики-страницы сверены, поведение задокументировано",
+      "sources": "f45094b8bc928ede47c30108adbd19823eda79e126d8722bff7562fe5d371346",
       "text": "17c878e1ab52ceb2a7c3361a7bef133c8bd1004a59641898f2c525f7c48fff8f"
     },
     "index": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "c4b50cf5f750d9e5cf8f4423e2be5eb94f87088de965f8e6320934ed8ad46620",
-      "text": "81105e7dc18f0959f41385bc2c2c448c76cdccf250f2e0256b1207fc28e468b7"
+      "reason": "П.29 фикс: классы в RetiredAddons (снятые аддоны), пины тестов — вики-страницы сверены, поведение задокументировано",
+      "sources": "4c8a7d01294274dffc85cb798ae99e5a5849e4b9f160cec1bbeaf0a1616cdb04",
+      "text": "04ca129c1f9ab7e324063232304320ccda860991e29150c928c7f869745fed6b"
     },
     "menu": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "80693bf3f8a1ec25ca8cca195cbd74f894414a451cb6e384f34b4180fb88afb2",
+      "reason": "П.29 фикс: классы в RetiredAddons (снятые аддоны), пины тестов — вики-страницы сверены, поведение задокументировано",
+      "sources": "c5db8cfd2abe8b4885ae50fb29eed8ea60a0d6ece19c0afc862eb6fa7fa64572",
       "text": "eb6fdaf663b2005735002c5f23bb7f751b31a7447b3fc2cc77d741ff7c4cb2f9"
     },
     "mobs": {
-      "reason": "страница обновлена под loot-chance, новые приёмы и частицы",
-      "sources": "fc43ba437b0fb3ce56c2dc54379d26df428253f254f88ee33708e567cdca9bdb",
-      "text": "16ee583e140d7365003695644f8f569e2bc9fde7e3d66aa2bb8cb6d3b974a3a9"
+      "reason": "престиж заменён перерождением (п.30): команды rebirth/rebirthtop, множитель убывающей отдачей, конвертация 10 ступеней = 1 перерождение; формулировки всех шести страниц сверены с RebirthMath/SkillService",
+      "sources": "0018cbabffef090a1b3fe413a52a3b49250d24c8d49d931d7c28239b18ab14ea",
+      "text": "f9674822b90e9735af8e9157e58e2deb2299ea427d92fd8b509030ff1c71515a"
     },
     "moderation": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "a7f57ee748ff6816f690a519976bcf2bbcae66ee627849594d3da803df098de3",
+      "reason": "П.29 фикс: классы в RetiredAddons (снятые аддоны), пины тестов — вики-страницы сверены, поведение задокументировано",
+      "sources": "f45094b8bc928ede47c30108adbd19823eda79e126d8722bff7562fe5d371346",
       "text": "79580a49c09219f65539abace395b5f2469f91fc2f0ac9b3ecae109c4fa1ecb4"
     },
     "orders": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "077143ca72bfacd6816529bab0d185f7465089921dc99a20be29e4480d2ea3d3",
+      "reason": "П.29 фикс: классы в RetiredAddons (снятые аддоны), пины тестов — вики-страницы сверены, поведение задокументировано",
+      "sources": "e53fff7399c80171c28f1bb2411131a7b68004aba67ac9b368ae157c68f59c8d",
       "text": "8f1bddfa65aabb38fab8ebdad77656a627e340e765229de34ab3a24dd96fef2e"
     },
-    "perktree": {
-      "reason": "Замена несуществующего Material.CHAIN на IRON_BARS в кристалле обороны; страницы сверены с финальной реализацией",
-      "sources": "8301aa9a262a3d8180d31b18db599ac39c53393b917dfe15a893a0802145b75d",
-      "text": "3e1a2fe232bb8c384a682ac98f8133ab0560de790bab9a2a2d9542ea0b673666"
-    },
     "pets": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "f2cbdf8202fb414ddfb64dc9943e5e98220397ba905df0b5f8d32e1722c7da22",
+      "reason": "П.29 фикс: классы в RetiredAddons (снятые аддоны), пины тестов — вики-страницы сверены, поведение задокументировано",
+      "sources": "d42eebfe85cb0e318482e1381e2ce21558b9b573b2bbf169b0b904cd62d77f30",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "profile": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "fc9421061b9a52c2fd553891fdea04843d415dfe9a13822e91098d0bd05a3423",
-      "text": "f2a1fafaef6d54a60b0dd2e9545374a59a83ad49a5de3ace0069e441c187d309"
+      "reason": "престиж заменён перерождением (п.30): команды rebirth/rebirthtop, множитель убывающей отдачей, конвертация 10 ступеней = 1 перерождение; формулировки всех шести страниц сверены с RebirthMath/SkillService",
+      "sources": "658449f5c60b963c5f1c6eceff638d34b659e3895b91fc9114870b51b8e68dd6",
+      "text": "d73cb841971f8be5b94598cf462e7cbdae0876601f2fcc576da270e75b3d32bc"
     },
     "quests": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "d494cb7b6aa691566a99bdcdcfef6d739af3fa256b87dd2404685e089cc2c2c5",
+      "reason": "П.29 фикс: классы в RetiredAddons (снятые аддоны), пины тестов — вики-страницы сверены, поведение задокументировано",
+      "sources": "d87c79512b80a61762b3c8aea5044819f5c780b441d2f88dad923da5298c2ad9",
       "text": "a42f11010fddbf13238133ac1e2dca525dea95245f5286a88a57738af30fbf13"
     },
     "ranks": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "01ea67efab79da40fb4beaf187698838f8cbf7ad5ff21f122374ac43a5d82814",
-      "text": "664b466e4b44741175d9c2cdb4da728a0603a04aaaefada8396dd6517d5dca2d"
+      "reason": "престиж заменён перерождением (п.30): команды rebirth/rebirthtop, множитель убывающей отдачей, конвертация 10 ступеней = 1 перерождение; формулировки всех шести страниц сверены с RebirthMath/SkillService",
+      "sources": "b88972086e92c16e149d08a4dcaabc8cfdfb9e0bad4405ed3726c9f1af8ddac3",
+      "text": "f28ca14ca95b6e1ecdc550d0103362f364e1d3e79492b33260372a410254d913"
     },
     "shop": {
-      "reason": "Замена несуществующего Material.CHAIN на IRON_BARS в кристалле обороны; страницы сверены с финальной реализацией",
-      "sources": "c4b50cf5f750d9e5cf8f4423e2be5eb94f87088de965f8e6320934ed8ad46620",
+      "reason": "П.29 фикс: классы в RetiredAddons (снятые аддоны), пины тестов — вики-страницы сверены, поведение задокументировано",
+      "sources": "4c8a7d01294274dffc85cb798ae99e5a5849e4b9f160cec1bbeaf0a1616cdb04",
       "text": "7df8bdefeccfb0fd4943e63ce1896282c16c3491c21f364dd8b2f0fbf5378c6d"
     },
     "skills": {
-      "reason": "Замена несуществующего Material.CHAIN на IRON_BARS в кристалле обороны; страницы сверены с финальной реализацией",
-      "sources": "f0a5307cf7029fddecd9d57f50166de3a9e213f55fc84322bac0d26effba10aa",
-      "text": "d656deeaf6833ba332777570ddacf0ce805e3fe45c5763968e0abbdeeac6b4f5"
+      "reason": "фиксы тестов П.30 (математика затухания, dirty при конверсии, source-контракты) — механика и страница не менялись",
+      "sources": "f06e08b4eb914bc8cbb2e23081fbac545a1275979107b067887e2e76867127db",
+      "text": "e58a65c1a1471721a23569cd3efbb251afe9fe02fdb1b16da352b6c0413b6147"
     },
     "social-link": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "b6c02cc1559be5b2bf239451dec350997aa967fcd02da0c9ff757065777b50f3",
-      "text": "8c1868e80db8506e56c66fb266e510b44a1ceb3e23a115f7b713a0f8640abb0d"
+      "reason": "престиж заменён перерождением (п.30): команды rebirth/rebirthtop, множитель убывающей отдачей, конвертация 10 ступеней = 1 перерождение; формулировки всех шести страниц сверены с RebirthMath/SkillService",
+      "sources": "a5fa8242c48705d165af3a7f12eb1abe68fe61180882fe569e69d4c2a5d91bd7",
+      "text": "f7a6d9f53d5db5774add224ab3c2003147a23099f52d220df3376a7f43c06221"
     },
     "start": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "f8de85df14350c148814e32bf2f98b04ba6f5e21ea97190cd946cb7d21893196",
-      "text": "1c0b307e38e52194bb2a42da0757744e32d93312bc6b83178a4745f9cd07a667"
+      "reason": "П.29 фикс: классы в RetiredAddons (снятые аддоны), пины тестов — вики-страницы сверены, поведение задокументировано",
+      "sources": "9c7bdb6c6247eecb444cf47539608e785342bb2558b7262a3542962500d4ddca",
+      "text": "ed918be6a65bdc28666148d1dac07b0d14ef631bd20c2d50648694244822a460"
     },
     "starter-kit": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "a7725c261a3319e556017d85745083a648a337af3c0a6ee4c19e6f65fcacd73c",
+      "reason": "П.29 фикс: классы в RetiredAddons (снятые аддоны), пины тестов — вики-страницы сверены, поведение задокументировано",
+      "sources": "b0e68d619560d24f039a05c8eab4f1cf66a5ba2aef937256a84d24760b5fdd6c",
       "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
     },
     "teleports": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "582e0b7c3756a01824a31e908e2130d6c4210576683fa3e0d6dc2d37448f4d4d",
+      "reason": "П.29 фикс: классы в RetiredAddons (снятые аддоны), пины тестов — вики-страницы сверены, поведение задокументировано",
+      "sources": "9c7bdb6c6247eecb444cf47539608e785342bb2558b7262a3542962500d4ddca",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "42a8b572943c5f06d1b07b16895895948ae235dc609698293572605226f121e6",
+      "reason": "П.29 фикс: классы в RetiredAddons (снятые аддоны), пины тестов — вики-страницы сверены, поведение задокументировано",
+      "sources": "20a639c33ee043d2917e179f9f957eac431e4351bf3d99d1675ae4f0d946783c",
       "text": "c84eb8435e1e4b961e73b0ed64386b129e17395923de6d7b8f3d01bde6ddeaa1"
     },
     "titles": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "d90c16183fd4dfa5c11d089b51e4db0775f683477d67fd464e9a6d9f09e5b025",
-      "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
+      "reason": "П.29 фикс: классы в RetiredAddons (снятые аддоны), пины тестов — вики-страницы сверены, поведение задокументировано",
+      "sources": "f1195297ef282c8ae207871cc94628c24a079b5336c86efc475f4ea9a3325fb6",
+      "text": "bcc217b388db006684a99c2af5c0747236878ffc8519043c0dc5660b66135827"
     },
     "updates": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "c4b50cf5f750d9e5cf8f4423e2be5eb94f87088de965f8e6320934ed8ad46620",
-      "text": "d6c40448c8dfbd722efc367869e505f89521efcbd348d03c8891231b3d202e9c"
+      "reason": "П.29 фикс: классы в RetiredAddons (снятые аддоны), пины тестов — вики-страницы сверены, поведение задокументировано",
+      "sources": "4c8a7d01294274dffc85cb798ae99e5a5849e4b9f160cec1bbeaf0a1616cdb04",
+      "text": "86d8fb7e52ba88ed0e3ba02254a6ac983a5903dd96d0e8cd1b347320788e0b45"
     },
     "vk": {
-      "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
-      "sources": "b6c02cc1559be5b2bf239451dec350997aa967fcd02da0c9ff757065777b50f3",
-      "text": "1fd95870417ca29ef985ee87f50119955bb51d4efbcfb772defd6f6c47a3c927"
+      "reason": "престиж заменён перерождением (п.30): команды rebirth/rebirthtop, множитель убывающей отдачей, конвертация 10 ступеней = 1 перерождение; формулировки всех шести страниц сверены с RebirthMath/SkillService",
+      "sources": "a5fa8242c48705d165af3a7f12eb1abe68fe61180882fe569e69d4c2a5d91bd7",
+      "text": "8dddc8fb2f91621b7957c6227e91feb18317b56c886564fa7c3d8671fe805240"
     }
   },
   "schema": 1

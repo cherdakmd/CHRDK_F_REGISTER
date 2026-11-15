@@ -22,7 +22,7 @@ class SkillAbilityTest {
 
     @Test void catalogHasTenPrestigeAbilitiesAndStrictToolMatching() {
         assertEquals(10, SkillAbility.values().length);
-        assertEquals(1, SkillAbility.UNLOCK_PRESTIGE);
+        assertEquals(1, SkillAbility.UNLOCK_REBIRTH);
         assertNotNull(SkillAbility.of(SkillType.ALCHEMY));
         assertNull(SkillAbility.of(null));
         assertTrue(SkillAbility.WOODCUTTING.acceptsTool("DIAMOND_AXE"));
@@ -43,7 +43,8 @@ class SkillAbilityTest {
                 assertTrue(ability.cost(prestige) < ability.cost(prestige - 1), ability + " cost");
                 assertTrue(ability.seconds(prestige) > ability.seconds(prestige - 1), ability + " window");
                 assertTrue(ability.cooldown(prestige) <= ability.cooldown(prestige - 1), ability + " cooldown");
-                assertEquals(64 + 16 * (prestige - 1), ability.gatherLimit(prestige));
+                assertEquals(8 + 2 * prestige * prestige, ability.gatherLimit(prestige),
+                        "лимит сбора растёт квадратично: на I ступени слабый, на верхних — максимум");
             }
             assertEquals(0, ability.cost(10));
             assertEquals(14, ability.seconds(10));

@@ -38,6 +38,7 @@ public final class SkillsPlugin extends JavaPlugin {
     private SkillsGui gui;
     private SkillAbilityStore abilityStore;
     private SkillAbilities abilities;
+    private BranchAbilities branchAbilities;
     private SkillXpStore xpStore;
     private SkillXpItems xpItems;
     private SkillXpShop xpShop;
@@ -64,10 +65,15 @@ public final class SkillsPlugin extends JavaPlugin {
             Bukkit.getPluginManager().disablePlugin(this); return;
         }
         this.store.load();
+        // П.29: классовый прогресс из вырезанного модуля classes конвертируется
+        // в очки пула. classes.json читается только на чтение.
+        ClassProgressMigrator.run(this.store, getDataFolder().getAbsoluteFile().getParentFile().toPath(),
+                getLogger());
         this.service = new SkillService(this, store);
         this.abilityStore = new SkillAbilityStore(getDataFolder().toPath(), getLogger());
         abilityStore.load();
         this.abilities = new SkillAbilities(this, abilityStore);
+        this.branchAbilities = new BranchAbilities(this, abilityStore);
         this.xpStore = new SkillXpStore(getDataFolder().toPath(), getLogger());
         xpStore.load();
         this.xpItems = new SkillXpItems(this, xpStore);
@@ -83,6 +89,7 @@ public final class SkillsPlugin extends JavaPlugin {
 
         Bukkit.getPluginManager().registerEvents(listener, this);
         Bukkit.getPluginManager().registerEvents(abilities, this);
+        Bukkit.getPluginManager().registerEvents(new PveContributionListener(this), this);
         Bukkit.getPluginManager().registerEvents(xpItems, this);
         Bukkit.getPluginManager().registerEvents(gui, this);
 
@@ -223,7 +230,7 @@ public final class SkillsPlugin extends JavaPlugin {
     public void registerApi() {
         Bukkit.getServicesManager().register(ChrdkSkillsApi.class,
                 new SkillsApiImpl(service), this, ServicePriority.Normal);
-        // Единое меню: /perktree из CHRDK_Classes открывает тот же инвентарь.
+        // Публичный контракт меню «Навыки» — ServicesManager.
         Bukkit.getServicesManager().register(SkillsMenuApi.class, gui,
                 this, ServicePriority.Normal);
     }
@@ -249,6 +256,7 @@ public final class SkillsPlugin extends JavaPlugin {
     }
 
     SkillAbilities abilities() { return abilities; }
+    BranchAbilities branchAbilities() { return branchAbilities; }
     SkillXpItems xpItems() { return xpItems; }
     SkillXpShop xpShop() { return xpShop; }
 
@@ -334,6 +342,21 @@ public final class SkillsPlugin extends JavaPlugin {
         @Override
         public int totalPrestige(Player player) {
             return service.totalPrestige(player);
+        }
+
+        @Override
+        public int attributeSum(Player player) {
+            return service.attributeSum(player);
+        }
+
+        @Override
+        public int stamina(Player player) {
+            return service.stamina(player);
+        }
+
+        @Override
+        public int branchLevel(Player player, String branchId) {
+            return service.branchLevel(player, branchId);
         }
 
         @Override

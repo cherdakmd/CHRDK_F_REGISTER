@@ -137,8 +137,6 @@ public final class Messages {
         migrateStockOverrides(defaults, overrides, readResource(plugin,
                 "removal-messages-legacy-1.4.270.yml", logger));
         migrateStockOverrides(defaults, overrides, readResource(plugin,
-                "classes-messages-legacy-1.4.255.yml", logger));
-        migrateStockOverrides(defaults, overrides, readResource(plugin,
                 "vk-messages-legacy-1.4.268.yml", logger));
         migrateStockOverrides(defaults, overrides, readResource(plugin,
                 "guild-admission-messages-legacy-1.4.279.yml", logger));

@@ -32,14 +32,9 @@ public final class SkillsConfig {
     public record Milestone(int level, int diamonds) {
     }
 
-    /** Дефолты баланса престижа: база 2, аддитивка по рангу, стоп с 8. */
-    public static final int DEFAULT_BALANCE_BASE_MAX_LEAD = 2;
-    public static final List<Integer> DEFAULT_BALANCE_RANK_MAX_LEAD =
-            List.of(0, 1, 1, 2, 2, 3);
-    public static final int DEFAULT_BALANCE_HARD_CAP = 8;
-    public static final double DEFAULT_BALANCE_SOFT_STEP = 0.25;
-    public static final double DEFAULT_BALANCE_MIN_XP_FACTOR = 0.25;
-    public static final int DEFAULT_BALANCE_NOTICE_SECONDS = 5;
+    /** Уникальный предмет из пула наград перерождений (rebirth.unique-items). */
+    public record UniqueItem(String id, String material, String name, List<String> lore) {
+    }
 
     private final boolean enabled;
     private final boolean abilitiesEnabled, abilitiesHud;
@@ -56,19 +51,14 @@ public final class SkillsConfig {
     private final long placedBlockTtlSeconds;
     private final int placedBlockMaxEntries;
     private final int leaderboardSize;
-    private final boolean prestigeEnabled;
-    private final double prestigeXpPerStep;
-    private final double prestigePerkPerStep;
-    private final int prestigeDiamondsPerStep;
-    private final boolean prestigeAnnounceTiers;
-    /** 1.5.2: баланс прокачки — база + ранг, мягкая зона и жёсткий потолок. */
-    private final boolean prestigeBalanceEnabled;
-    private final int prestigeBalanceBaseMaxLead;
-    private final List<Integer> prestigeBalanceRankMaxLead;
-    private final int prestigeBalanceHardCap;
-    private final double prestigeBalanceSoftStep;
-    private final double prestigeBalanceMinXpFactor;
-    private final int prestigeBalanceNoticeSeconds;
+    private final boolean rebirthEnabled;
+    private final double rebirthXpPercentPerRebirth;
+    private final double rebirthXpDecay;
+    private final double rebirthXpBonusCapPercent;
+    private final int rebirthDiamondsPerRebirth;
+    private final int rebirthMilestoneDiamonds;
+    private final boolean rebirthAnnounceMilestones;
+    private final List<UniqueItem> rebirthUniqueItems;
     private final DiamondDrops.Settings diamonds;
     private final DiamondCapMath.Settings diamondCap;
     private final Set<String> excludedDropMaterials;
@@ -79,13 +69,11 @@ public final class SkillsConfig {
                          Map<SkillType, SkillSettings> skills,
                          Map<Integer, Milestone> milestones, long placedBlockTtlSeconds,
                          int placedBlockMaxEntries, int leaderboardSize, boolean abilitiesEnabled,
-                         boolean abilitiesHud, boolean prestigeEnabled,
-                         double prestigeXpPerStep, double prestigePerkPerStep,
-                         int prestigeDiamondsPerStep, boolean prestigeAnnounceTiers,
-                         boolean prestigeBalanceEnabled, int prestigeBalanceBaseMaxLead,
-                         List<Integer> prestigeBalanceRankMaxLead, int prestigeBalanceHardCap,
-                         double prestigeBalanceSoftStep, double prestigeBalanceMinXpFactor,
-                         int prestigeBalanceNoticeSeconds,
+                         boolean abilitiesHud, boolean rebirthEnabled,
+                         double rebirthXpPercentPerRebirth, double rebirthXpDecay,
+                         double rebirthXpBonusCapPercent, int rebirthDiamondsPerRebirth,
+                         int rebirthMilestoneDiamonds, boolean rebirthAnnounceMilestones,
+                         List<UniqueItem> rebirthUniqueItems,
                          DiamondDrops.Settings diamonds, DiamondCapMath.Settings diamondCap,
                          Set<String> excludedDropMaterials) {
         this.abilitiesEnabled = abilitiesEnabled;
@@ -104,18 +92,14 @@ public final class SkillsConfig {
         this.placedBlockTtlSeconds = placedBlockTtlSeconds;
         this.placedBlockMaxEntries = placedBlockMaxEntries;
         this.leaderboardSize = leaderboardSize;
-        this.prestigeEnabled = prestigeEnabled;
-        this.prestigeXpPerStep = prestigeXpPerStep;
-        this.prestigePerkPerStep = prestigePerkPerStep;
-        this.prestigeDiamondsPerStep = prestigeDiamondsPerStep;
-        this.prestigeAnnounceTiers = prestigeAnnounceTiers;
-        this.prestigeBalanceEnabled = prestigeBalanceEnabled;
-        this.prestigeBalanceBaseMaxLead = prestigeBalanceBaseMaxLead;
-        this.prestigeBalanceRankMaxLead = List.copyOf(prestigeBalanceRankMaxLead);
-        this.prestigeBalanceHardCap = prestigeBalanceHardCap;
-        this.prestigeBalanceSoftStep = prestigeBalanceSoftStep;
-        this.prestigeBalanceMinXpFactor = prestigeBalanceMinXpFactor;
-        this.prestigeBalanceNoticeSeconds = prestigeBalanceNoticeSeconds;
+        this.rebirthEnabled = rebirthEnabled;
+        this.rebirthXpPercentPerRebirth = rebirthXpPercentPerRebirth;
+        this.rebirthXpDecay = rebirthXpDecay;
+        this.rebirthXpBonusCapPercent = rebirthXpBonusCapPercent;
+        this.rebirthDiamondsPerRebirth = rebirthDiamondsPerRebirth;
+        this.rebirthMilestoneDiamonds = rebirthMilestoneDiamonds;
+        this.rebirthAnnounceMilestones = rebirthAnnounceMilestones;
+        this.rebirthUniqueItems = List.copyOf(rebirthUniqueItems);
         this.diamonds = diamonds;
         this.diamondCap = diamondCap;
         this.excludedDropMaterials = excludedDropMaterials;
@@ -224,50 +208,22 @@ public final class SkillsConfig {
                 cfg.getString("diamonds.cap.entitlement-id", capDefaults.entitlementId()),
                 cfg.getInt("diamonds.cap.max", capDefaults.max()));
 
-        // Баланс престижа: новый ключ base-max-lead, старый max-lead остаётся
-        // фолбэком для владельческих config.yml (аддитивная миграция без bump
-        // схемы). Штатный 0 из rc.6 — это прежний строгий паритет, а не особая
-        // правка владельца: он НЕ отменяет новую базу 2, иначе обновление JAR
-        // не амнистировало бы профиль с отрывом 2. Ослабший (>0) старый порог
-        // сохраняем как фолбэк, чтобы чужая настройка не перезаписывалась.
-        long legacyMaxLead = cfg.getLong("prestige.balance.max-lead",
-                DEFAULT_BALANCE_BASE_MAX_LEAD);
-        long baseFallback = legacyMaxLead > 0 ? legacyMaxLead : DEFAULT_BALANCE_BASE_MAX_LEAD;
-        int balanceBase = PrestigeXpGate.clampLead((int) clamp(
-                cfg.getLong("prestige.balance.base-max-lead", baseFallback),
-                0L, (long) PrestigeMath.MAX_PER_SKILL));
-        List<Integer> rankMaxLead = parseRankMaxLead(
-                cfg.getIntegerList("prestige.balance.rank-max-lead"));
-        int balanceHardCap = (int) clamp(
-                cfg.getLong("prestige.balance.hard-cap", DEFAULT_BALANCE_HARD_CAP),
-                1L, (long) PrestigeMath.MAX_PER_SKILL);
-        double balanceSoftStep = clamp(cfg.getDouble("prestige.balance.soft-step",
-                DEFAULT_BALANCE_SOFT_STEP), 0.0, 1.0);
-        double balanceMinFactor = clamp(cfg.getDouble("prestige.balance.min-xp-factor",
-                DEFAULT_BALANCE_MIN_XP_FACTOR), 0.0, 1.0);
-        // 60 секунд были штатным кулдауном ЧАТА в rc.6. Теперь ключ управляет
-        // actionbar и по умолчанию равен 5; владельческие значения, отличные от
-        // старого штатного, сохраняются. Иначе смена JAR оставила бы полосу раз
-        // в минуту, хотя чат больше не повторяется.
-        long noticeRaw = cfg.getLong("prestige.balance.notice-seconds",
-                DEFAULT_BALANCE_NOTICE_SECONDS);
-        if (noticeRaw == 60L) {
-            noticeRaw = DEFAULT_BALANCE_NOTICE_SECONDS;
-        }
-        int balanceNotice = (int) clamp(noticeRaw, 1L, 3600L);
+        // Перерождение (п.30): престиж заменён перерождениями — старые ключи
+        // prestige.* и prestige.balance.* больше не читаются.
+        List<UniqueItem> uniqueItems = parseUniqueItems(cfg.getMapList("rebirth.unique-items"));
 
         return new SkillsConfig(enabled, announce, actionbar, sounds, countCreative,
                 refreshTicks, curve, xpRate, maxXp,
                 skills, Collections.unmodifiableMap(milestones), ttl, maxEntries, leaderboard,
                 cfg.getBoolean("abilities.enabled", true), cfg.getBoolean("abilities.hud", true),
-                cfg.getBoolean("prestige.enabled", true),
-                clamp(cfg.getDouble("prestige.xp-per-step", 0.03), 0.0, 0.10),
-                clamp(cfg.getDouble("prestige.perk-per-step", 0.01), 0.0, 0.05),
-                (int) clamp(cfg.getLong("prestige.diamonds-per-step", 4L), 0L, 32L),
-                cfg.getBoolean("prestige.announce-tiers", true),
-                cfg.getBoolean("prestige.balance.enabled", true),
-                balanceBase, rankMaxLead, balanceHardCap, balanceSoftStep, balanceMinFactor,
-                balanceNotice, diamonds, diamondCap,
+                cfg.getBoolean("rebirth.enabled", true),
+                clamp(cfg.getDouble("rebirth.xp-percent-per-rebirth", 5.0), 0.0, 25.0),
+                clamp(cfg.getDouble("rebirth.xp-decay", 0.9), 0.5, 0.99),
+                clamp(cfg.getDouble("rebirth.xp-bonus-cap-percent", 50.0), 0.0, 200.0),
+                (int) clamp(cfg.getLong("rebirth.diamonds-per-rebirth", 32L), 0L, 256L),
+                (int) clamp(cfg.getLong("rebirth.milestone-diamonds", 128L), 0L, 2048L),
+                cfg.getBoolean("rebirth.announce-milestones", true),
+                uniqueItems, diamonds, diamondCap,
                 Collections.unmodifiableSet(excluded));
     }
 
@@ -370,64 +326,44 @@ public final class SkillsConfig {
         return leaderboardSize;
     }
 
-    /** Добровольный сброс навыка после 100-го уровня. */
-    public boolean prestigeEnabled() {
-        return prestigeEnabled;
+    /** Перерождение доступно (сброс всех навыков с 100-го уровня). */
+    public boolean rebirthEnabled() {
+        return rebirthEnabled;
     }
 
-    /** Прибавка к множителю опыта за каждую ступень престижа навыка. */
-    public double prestigeXpPerStep() {
-        return prestigeXpPerStep;
+    /** Процент опыта за первое перерождение (далее убывает по xp-decay). */
+    public double rebirthXpPercentPerRebirth() {
+        return rebirthXpPercentPerRebirth;
     }
 
-    /** Прибавка к профильному перку за каждую ступень. */
-    public double prestigePerkPerStep() {
-        return prestigePerkPerStep;
+    /** Затухание прироста за каждое следующее перерождение, 0.5..0.99. */
+    public double rebirthXpDecay() {
+        return rebirthXpDecay;
     }
 
-    /** Физические алмазы за каждую новую ступень. */
-    public int prestigeDiamondsPerStep() {
-        return prestigeDiamondsPerStep;
+    /** Потолок суммарного бонуса опыта за перерождения, %. */
+    public double rebirthXpBonusCapPercent() {
+        return rebirthXpBonusCapPercent;
     }
 
-    /** Объявлять ли новое звание в общий чат. */
-    public boolean prestigeAnnounceTiers() {
-        return prestigeAnnounceTiers;
+    /** Алмазы предметом за каждое перерождение. */
+    public int rebirthDiamondsPerRebirth() {
+        return rebirthDiamondsPerRebirth;
     }
 
-    /** Включён ли баланс прокачки престижа (по умолчанию да). */
-    public boolean prestigeBalanceEnabled() {
-        return prestigeBalanceEnabled;
+    /** Доплата алмазами за веху перерождения (5, 10, 25, 50, далее каждые 25). */
+    public int rebirthMilestoneDiamonds() {
+        return rebirthMilestoneDiamonds;
     }
 
-    /** База разрешённого отрыва для всех игроков, 0..10. */
-    public int prestigeBalanceBaseMaxLead() {
-        return prestigeBalanceBaseMaxLead;
+    /** Объявлять ли веху перерождения в общий чат. */
+    public boolean rebirthAnnounceMilestones() {
+        return rebirthAnnounceMilestones;
     }
 
-    /** Аддитивка разрешённого отрыва по ступеням ранга 0..5 (неизменяемый список). */
-    public List<Integer> prestigeBalanceRankMaxLead() {
-        return prestigeBalanceRankMaxLead;
-    }
-
-    /** Отрыв, начиная с которого опыт останавливается у всех, 1..10. */
-    public int prestigeBalanceHardCap() {
-        return prestigeBalanceHardCap;
-    }
-
-    /** Падение множителя XP за каждую ступень сверх разрешённой, 0..1. */
-    public double prestigeBalanceSoftStep() {
-        return prestigeBalanceSoftStep;
-    }
-
-    /** Пол множителя XP в мягкой зоне, 0..1. */
-    public double prestigeBalanceMinXpFactor() {
-        return prestigeBalanceMinXpFactor;
-    }
-
-    /** Кулдаун actionbar-подсказки, секунды. Чат пишется только при смене состояния. */
-    public int prestigeBalanceNoticeSeconds() {
-        return prestigeBalanceNoticeSeconds;
+    /** Пул уникальных предметов наград (неизменяемый список). */
+    public List<UniqueItem> rebirthUniqueItems() {
+        return rebirthUniqueItems;
     }
 
     /** Формула физического дропа алмазов (потолки уже закламплены). */
@@ -445,21 +381,37 @@ public final class SkillsConfig {
         return excludedDropMaterials;
     }
 
-    /**
-     * Ровно {@link PrestigeXpGate#RANK_LEVELS} значений, индекс = ступень ранга.
-     * Короткий список дополняется дефолтами, лишние элементы отбрасываются,
-     * отрицательные и {@code null} прижимаются к нулю.
-     */
-    private static List<Integer> parseRankMaxLead(List<Integer> raw) {
-        List<Integer> result = new ArrayList<>(DEFAULT_BALANCE_RANK_MAX_LEAD);
-        if (raw == null) {
-            return List.copyOf(result);
-        }
-        for (int index = 0; index < Math.min(raw.size(), PrestigeXpGate.RANK_LEVELS); index++) {
-            Integer value = raw.get(index);
-            result.set(index, PrestigeXpGate.clampLead(value == null ? 0 : value));
+    /** Пул уникальных предметов: id обязателен, пустые строки пропускаются. */
+    private static List<UniqueItem> parseUniqueItems(List<Map<?, ?>> raw) {
+        List<UniqueItem> result = new ArrayList<>();
+        for (Map<?, ?> row : raw) {
+            String id = text(row.get("id"));
+            String material = text(row.get("material"));
+            if (material.isEmpty()) {
+                material = "NETHER_STAR";
+            }
+            String name = text(row.get("name"));
+            if (name.isEmpty()) {
+                name = id;
+            }
+            List<String> lore = new ArrayList<>();
+            if (row.get("lore") instanceof List<?> lines) {
+                for (Object line : lines) {
+                    String value = text(line);
+                    if (!value.isEmpty()) {
+                        lore.add(value);
+                    }
+                }
+            }
+            if (!id.isEmpty()) {
+                result.add(new UniqueItem(id, material, name, List.copyOf(lore)));
+            }
         }
         return List.copyOf(result);
+    }
+
+    private static String text(Object value) {
+        return value == null ? "" : String.valueOf(value).trim();
     }
 
     private static Integer parseInt(String value) {

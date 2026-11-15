@@ -11,7 +11,7 @@ package ru.cherdakmd.chrdkregister.pve;
  */
 public enum PveRecipient {
 
-    /** Собственный XP класса ({@code classes}). */
+    /** Собственный XP класса (модуль {@code classes} вырезан; значение живёт для старых квитанций). */
     CLASS_XP,
     /** Опыт боевых навыков ({@code skills}). */
     SKILL_XP,
@@ -19,6 +19,6 @@ public enum PveRecipient {
     COMMON_GOALS,
     /** Сезонные задания ({@code battlepass}). */
     BATTLEPASS,
-    /** Пыль деревьев перков ({@code skills}, каркас tree). QoL-only. */
+    /** Пыль деревьев перков (дерево вырезано; значение живёт для старых квитанций). */
     PERK_POWDER
 }

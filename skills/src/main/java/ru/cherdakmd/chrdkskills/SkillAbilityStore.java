@@ -34,9 +34,13 @@ final class SkillAbilityStore {
         return !available ? 0 : state == null ? SkillAbility.MAX_ENERGY : state.energy;
     }
     synchronized long cooldownLeft(UUID id, SkillAbility ability, long now) {
+        return cooldownLeft(id, ability == null ? null : ability.id(), now);
+    }
+    /** Общий ключ для приёмов навыков и активных приёмов веток. */
+    synchronized long cooldownLeft(UUID id, String abilityId, long now) {
         State state = players.get(id);
-        if (state == null || ability == null) return 0;
-        long until = state.cooldowns.getOrDefault(ability.id(), 0L);
+        if (state == null || abilityId == null) return 0;
+        long until = state.cooldowns.getOrDefault(abilityId, 0L);
         return until <= now ? 0 : (until - Math.max(0L, now) - 1) / 1000 + 1;
     }
     /** Атомарное списание. Неуспешный запрос не создаёт запись и не меняет таймер. */
@@ -44,15 +48,19 @@ final class SkillAbilityStore {
         return activate(id, ability, ability == null ? 0 : ability.cost(), ability == null ? 0 : ability.cooldown(), now);
     }
     synchronized String activate(UUID id, SkillAbility ability, int cost, int cooldownSeconds, long now) {
-        if (!available || id == null || ability == null || cost < 0 || cost > SkillAbility.MAX_ENERGY
+        return activate(id, ability == null ? null : ability.id(), cost, cooldownSeconds, now);
+    }
+    /** Атомарное списание для любого приёма с общим ключом; ошибка — ключ сообщения. */
+    synchronized String activate(UUID id, String abilityId, int cost, int cooldownSeconds, long now) {
+        if (!available || id == null || abilityId == null || cost < 0 || cost > SkillAbility.MAX_ENERGY
                 || cooldownSeconds < 1 || cooldownSeconds > 600 || now < 0 || now > Long.MAX_VALUE - 600_000)
             return "ability-unavailable";
         if (!players.containsKey(id) && players.size() >= MAX_PLAYERS) return "ability-unavailable";
-        if (cooldownLeft(id, ability, now) > 0) return "ability-cooldown";
+        if (cooldownLeft(id, abilityId, now) > 0) return "ability-cooldown";
         if (energy(id) < cost) return "ability-energy-low";
         State state = players.computeIfAbsent(id, ignored -> new State());
         state.energy -= cost;
-        state.cooldowns.put(ability.id(), now + cooldownSeconds * 1000L);
+        state.cooldowns.put(abilityId, now + cooldownSeconds * 1000L);
         dirty = true;
         return "";
     }
@@ -80,10 +88,12 @@ final class SkillAbilityStore {
                 if (!row.has("cooldowns") || !row.get("cooldowns").isJsonObject()) throw new IllegalArgumentException("missing cooldowns");
                 if (row.has("cooldowns")) {
                     for (var cooldown : row.getAsJsonObject("cooldowns").entrySet()) {
-                        SkillAbility ability = SkillAbility.of(SkillType.byId(cooldown.getKey()));
+                        String abilityId = cooldown.getKey();
+                        boolean known = SkillAbility.of(SkillType.byId(abilityId)) != null
+                                || BranchAbility.byId(abilityId) != null;
                         long until = cooldown.getValue().getAsBigDecimal().longValueExact();
-                        if (ability == null || until < 0) throw new IllegalArgumentException("bad ability cooldown");
-                        state.cooldowns.put(ability.id(), until);
+                        if (!known || until < 0) throw new IllegalArgumentException("bad ability cooldown");
+                        state.cooldowns.put(abilityId, until);
                     }
                 }
                 if (loaded.put(id, state) != null) throw new IllegalArgumentException("duplicate ability player");

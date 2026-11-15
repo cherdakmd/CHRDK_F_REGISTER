@@ -26,7 +26,7 @@ public final class SkillEffects {
         this.plugin = plugin;
     }
 
-    /** Применяет (или снимает) атрибутные перки по текущим уровням. */
+    /** Применяет (или снимает) атрибутные перки и очки атрибутов по текущим уровням. */
     public void apply(Player player) {
         if (player == null || !player.isOnline()) {
             return;
@@ -39,6 +39,20 @@ public final class SkillEffects {
         applyModifier(player, Attribute.ARMOR, "chrdkskills_defense_armor",
                 defense.value(SkillPerk.Kind.ARMOR),
                 AttributeModifier.Operation.ADD_NUMBER);
+        int agility = plugin.skills().attribute(player, PlayerAttribute.AGILITY);
+        int stamina = plugin.skills().attribute(player, PlayerAttribute.STAMINA);
+        // Разбойник ускоряет атаку, Жрец добавляет здоровье — пассивы веток.
+        applyModifier(player, Attribute.ATTACK_SPEED, "chrdkskills_attr_attack_speed",
+                AttributeMath.attackSpeed(agility)
+                        + BranchMath.rogueAttackSpeed(plugin.skills().branchLevel(player, BuildBranch.ROGUE)),
+                AttributeModifier.Operation.MULTIPLY_SCALAR_1);
+        applyModifier(player, Attribute.MOVEMENT_SPEED, "chrdkskills_attr_move_speed",
+                AttributeMath.moveSpeed(agility),
+                AttributeModifier.Operation.MULTIPLY_SCALAR_1);
+        applyModifier(player, Attribute.MAX_HEALTH, "chrdkskills_attr_health",
+                AttributeMath.bonusHealth(stamina)
+                        + BranchMath.priestHealth(plugin.skills().branchLevel(player, BuildBranch.PRIEST)),
+                AttributeModifier.Operation.ADD_NUMBER);
     }
 
     /** Снимает все модификаторы навыков (выключение, потеря прав). */
@@ -48,6 +62,9 @@ public final class SkillEffects {
         }
         removeModifier(player, Attribute.BLOCK_BREAK_SPEED, "chrdkskills_mining_speed");
         removeModifier(player, Attribute.ARMOR, "chrdkskills_defense_armor");
+        removeModifier(player, Attribute.ATTACK_SPEED, "chrdkskills_attr_attack_speed");
+        removeModifier(player, Attribute.MOVEMENT_SPEED, "chrdkskills_attr_move_speed");
+        removeModifier(player, Attribute.MAX_HEALTH, "chrdkskills_attr_health");
     }
 
     private void applyModifier(Player player, Attribute attribute, String key,

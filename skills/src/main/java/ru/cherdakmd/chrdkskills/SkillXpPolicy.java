@@ -17,10 +17,13 @@ final class SkillXpPolicy {
 
     private SkillXpPolicy() { }
 
-    static long xp(int totalPrestige, RankBonus rank) {
+    static long xp(int rebirths, RankBonus rank) {
         RankBonus safe = rank == null ? RankBonus.NONE : rank;
-        double prestigeFactor = 1.0 + Math.min(0.50, Math.max(0, totalPrestige) * 0.01);
-        return Math.max(1L, Math.round(BASE_XP * prestigeFactor * safe.xpFactor()));
+        double rebirthFactor = RebirthMath.xpFactor(rebirths,
+                RebirthMath.DEFAULT_XP_PERCENT_PER_REBIRTH,
+                RebirthMath.DEFAULT_XP_DECAY,
+                RebirthMath.DEFAULT_XP_BONUS_CAP_PERCENT);
+        return Math.max(1L, Math.round(BASE_XP * rebirthFactor * safe.xpFactor()));
     }
 
     /** Серия без дропа достигла жёсткого pity — зелье гарантировано. */

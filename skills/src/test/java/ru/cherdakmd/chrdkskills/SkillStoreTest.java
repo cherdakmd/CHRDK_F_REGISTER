@@ -49,6 +49,46 @@ class SkillStoreTest {
     }
 
     @Test
+    void attributesSurviveRestartAndReset() {
+        SkillStore store = new SkillStore(folder, LOGGER);
+        assertTrue(store.addAttribute(PLAYER, PlayerAttribute.STRENGTH, 12));
+        assertTrue(store.addAttribute(PLAYER, PlayerAttribute.STAMINA, 8));
+        assertEquals(12, store.attribute(PLAYER, PlayerAttribute.STRENGTH));
+        assertEquals(20, store.spentAttributes(PLAYER));
+        store.flush();
+        SkillStore restored = new SkillStore(folder, LOGGER);
+        restored.load();
+        assertEquals(12, restored.attribute(PLAYER, PlayerAttribute.STRENGTH),
+                "атрибуты переживают перезапуск");
+        assertEquals(8, restored.attribute(PLAYER, PlayerAttribute.STAMINA));
+        assertEquals(20, restored.spentAttributes(PLAYER));
+        restored.resetAttributes(PLAYER);
+        assertEquals(0, restored.spentAttributes(PLAYER), "сброс возвращает очки в свободный пул");
+        assertFalse(restored.addAttribute(PLAYER, null, 1), "неизвестный атрибут отклоняется");
+    }
+
+    @Test
+    void branchesBonusAndPveSurviveRestart() {
+        SkillStore store = new SkillStore(folder, LOGGER);
+        assertTrue(store.setBranch(PLAYER, BuildBranch.WARRIOR, 3));
+        assertTrue(store.setBranch(PLAYER, BuildBranch.PRIEST, 6));
+        assertEquals(3, store.branch(PLAYER, BuildBranch.WARRIOR));
+        assertEquals(9, store.spentBranches(PLAYER), "уровни веток тратят очки общего пула");
+        store.addBonusPoints(PLAYER, 4);
+        store.addPve(PLAYER, 1_250L);
+        store.flush();
+        SkillStore restored = new SkillStore(folder, LOGGER);
+        restored.load();
+        assertEquals(6, restored.branch(PLAYER, BuildBranch.PRIEST), "ветки переживают перезапуск");
+        assertEquals(4, restored.bonusPoints(PLAYER), "бонусные очки за вклад сохраняются");
+        assertEquals(1_250L, restored.pve(PLAYER), "журнал вклада сохраняется");
+        restored.resetBranches(PLAYER);
+        assertEquals(0, restored.spentBranches(PLAYER), "сброс веток возвращает очки в пул");
+        assertFalse(restored.setBranch(PLAYER, BuildBranch.MAGE, BuildBranch.MAX_LEVEL + 1),
+                "уровень ветки ограничен потолком");
+    }
+
+    @Test
     void setXpNeverGoesBelowZero() {
         SkillStore store = new SkillStore(folder, LOGGER);
         store.setXp(PLAYER, SkillType.MINING, 100);

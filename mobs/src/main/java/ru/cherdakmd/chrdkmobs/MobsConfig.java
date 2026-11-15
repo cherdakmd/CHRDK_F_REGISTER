@@ -16,7 +16,7 @@ import java.util.logging.Logger;
  */
 record MobsConfig(boolean enabled, List<Integer> thresholds, Map<Integer, Tier> table,
                   boolean namePrefix, boolean particles, Progression progression, Elite elite,
-                  Variants variants, Loot loot) {
+                  Variants variants, Loot loot, Mitigation mitigation) {
 
     /**
      * Свойства одного тира: множители здоровья и урона, число способностей
@@ -44,6 +44,13 @@ record MobsConfig(boolean enabled, List<Integer> thresholds, Map<Integer, Tier> 
 
     /** Лут: опыт навыков за использование эссенций и сущностей вариантов. */
     record Loot(long essenceXp, long variantXp) { }
+
+    /**
+     * Потолок суммарного снижения входящего урона плагинами: мобы всегда
+     * опасны. С тира 6 потолок падает на {@code perTierStep} за тир
+     * (высшие тиры пробивают больше защиты), но не ниже {@code floor}.
+     */
+    record Mitigation(double cap, double perTierStep, double floor) { }
 
     /** Сколько всего тиров поддерживает таблица свойств. */
     public static final int MAX_TIERS = 20;
@@ -116,8 +123,12 @@ record MobsConfig(boolean enabled, List<Integer> thresholds, Map<Integer, Tier> 
                 Math.min(1_000_000L, Math.max(0L, cfg.getLong("loot.essence-xp", 40L))),
                 Math.min(1_000_000L, Math.max(0L, cfg.getLong("loot.variant-xp", 60L))));
         boolean particles = cfg.getBoolean("effects.particles", true);
+        Mitigation mitigation = new Mitigation(
+                Math.min(1.0, Math.max(0.0, cfg.getDouble("mitigation.cap", 0.5))),
+                Math.min(1.0, Math.max(0.0, cfg.getDouble("mitigation.per-tier-step", 0.04))),
+                Math.min(1.0, Math.max(0.0, cfg.getDouble("mitigation.floor", 0.3))));
         return new MobsConfig(enabled, List.copyOf(thresholds), table, namePrefix, particles,
-                progression, elite, variants, loot);
+                progression, elite, variants, loot, mitigation);
     }
 
     /** Таблица свойств тиров 1..N из конфига; пустая или кривая строка — нейтральные значения. */
@@ -171,7 +182,7 @@ record MobsConfig(boolean enabled, List<Integer> thresholds, Map<Integer, Tier> 
         return String.format(Locale.ROOT,
                 "enabled=%s, tiers=%d (%s..%s), таблица %d тиров, прогресс +%,.0f%%/100 очков "
                         + "(до +%,.0f%%), элита %,.1f%%, варианты %,.1f%%, лут %d/%d опыта, "
-                        + "частицы %s",
+                        + "потолок защиты %,.0f%%, частицы %s",
                 enabled, thresholds.size() + 1,
                 thresholds.isEmpty() ? "?" : thresholds.get(0),
                 thresholds.isEmpty() ? "?" : thresholds.get(thresholds.size() - 1),
@@ -179,6 +190,7 @@ record MobsConfig(boolean enabled, List<Integer> thresholds, Map<Integer, Tier> 
                 progression.healthPer100() * 100, progression.maxBonus() * 100,
                 elite.chance() * 100, variants.chance() * 100,
                 loot.essenceXp(), loot.variantXp(),
+                mitigation.cap() * 100,
                 particles ? "вкл" : "выкл");
     }
 }

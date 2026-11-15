@@ -58,7 +58,7 @@ final class SkillAbilities implements Listener {
         if (value == null) return null;
         if (value.until <= System.currentTimeMillis() || !eligible(player)
                 || !value.world.equals(player.getWorld().getUID()) || !plugin.config().skill(value.ability.skill()).enabled()
-                || plugin.skills().prestigeLevel(player, value.ability.skill()) < SkillAbility.UNLOCK_PRESTIGE) {
+                || plugin.skills().rebirths(player) < SkillAbility.UNLOCK_REBIRTH) {
             forget(player.getUniqueId()); return null;
         }
         return value;
@@ -78,12 +78,12 @@ final class SkillAbilities implements Listener {
         if (!eligible(player)) { plugin.messages().send(player, "ability-unavailable"); return; }
         if (ability == null) { plugin.messages().send(player, "ability-no-skill"); return; }
         if (!plugin.config().skill(ability.skill()).enabled()
-                || plugin.skills().prestigeLevel(player, ability.skill()) < SkillAbility.UNLOCK_PRESTIGE) {
-            plugin.messages().send(player, "ability-locked", "level", SkillAbility.UNLOCK_PRESTIGE); return;
+                || plugin.skills().rebirths(player) < SkillAbility.UNLOCK_REBIRTH) {
+            plugin.messages().send(player, "ability-locked", "level", SkillAbility.UNLOCK_REBIRTH); return;
         }
         if (active(player) != null) { plugin.messages().send(player, "ability-already-active"); return; }
         if (!holds(player, ability)) { plugin.messages().send(player, "ability-tool"); return; }
-        int prestige = plugin.skills().prestigeLevel(player, ability.skill());
+        int prestige = plugin.skills().rebirths(player);
         int cost = ability.cost(prestige), seconds = ability.seconds(prestige);
         long now = System.currentTimeMillis();
         String error = store.activate(player.getUniqueId(), ability, cost, ability.cooldown(prestige), now);
@@ -142,7 +142,7 @@ final class SkillAbilities implements Listener {
         Player player = event.getPlayer();
         String held = player.getInventory().getItemInMainHand().getType().name();
         for (SkillAbility ability : SkillAbility.values()) {
-            if (ability.acceptsTool(held) && plugin.skills().prestigeLevel(player, ability.skill()) >= SkillAbility.UNLOCK_PRESTIGE) {
+            if (ability.acceptsTool(held) && plugin.skills().rebirths(player) >= SkillAbility.UNLOCK_REBIRTH) {
                 activate(player, ability);
                 return;
             }

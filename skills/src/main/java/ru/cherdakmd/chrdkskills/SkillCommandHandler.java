@@ -59,21 +59,15 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
             plugin.messages().send(sender, "player-only");
             return true;
         }
-        if (args[0].equalsIgnoreCase("tree") || args[0].equalsIgnoreCase("perktree")
-                || args[0].equalsIgnoreCase("perks")) {
-            gui.open(player, SkillsMenuApi.Tab.TREE, args.length > 1 ? args[1] : null, 0);
-            return true;
-        }
         if (args[0].equalsIgnoreCase("rating")) {
-            gui.open(player, SkillsMenuApi.Tab.TOP, null, 0);
+            gui.open(player, SkillsMenuApi.Tab.TOP, 0);
             return true;
         }
         if (args[0].equalsIgnoreCase("energy")) {
             plugin.abilities().status(player); return true;
         }
         if (args[0].equalsIgnoreCase("use")) {
-            if (args.length != 2) { plugin.messages().send(player, "ability-usage"); return true; }
-            plugin.abilities().activate(player, SkillAbility.of(SkillType.byId(args[1]))); return true;
+            return handleUse(player, args);
         }
         if (args[0].equalsIgnoreCase("list")) {
             return handleList(player);
@@ -81,14 +75,17 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
         if (args[0].equalsIgnoreCase("top")) {
             return handleTop(player);
         }
-        if (args[0].equalsIgnoreCase("prestige")) {
-            return handlePrestige(player, args);
+        if (args[0].equalsIgnoreCase("rebirth")) {
+            return handleRebirth(player, args);
         }
-        if (args[0].equalsIgnoreCase("prestigetop")) {
-            return handlePrestigeTop(player);
+        if (args[0].equalsIgnoreCase("rebirthtop")) {
+            return handleRebirthTop(player);
         }
-        if (args[0].equalsIgnoreCase("balance")) {
-            return handleBalance(player);
+        if (args[0].equalsIgnoreCase("attrs") || args[0].equalsIgnoreCase("атрибуты")) {
+            return handleAttributes(player, args);
+        }
+        if (args[0].equalsIgnoreCase("build") || args[0].equalsIgnoreCase("ветки")) {
+            return handleBuild(player, args);
         }
         SkillType skill = SkillType.byId(args[0]);
         if (skill == null) {
@@ -96,6 +93,141 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
             return true;
         }
         return handleCard(player, skill);
+    }
+
+    /** {@code /skills attrs [сила|ловкость|стойкость|мудрость|хитрость] [N] | reset} — очки атрибутов. */
+    private boolean handleAttributes(Player player, String[] args) {
+        if (args.length == 1) {
+            plugin.messages().send(player, "attrs-view",
+                    "strength", service.attribute(player, PlayerAttribute.STRENGTH),
+                    "agility", service.attribute(player, PlayerAttribute.AGILITY),
+                    "stamina", service.attribute(player, PlayerAttribute.STAMINA),
+                    "wisdom", service.attribute(player, PlayerAttribute.WISDOM),
+                    "cunning", service.attribute(player, PlayerAttribute.CUNNING));
+            plugin.messages().send(player, "attrs-points",
+                    "points", service.freeAttributePoints(player),
+                    "total", service.attributePoints(player));
+            return true;
+        }
+        if (args[1].equalsIgnoreCase("reset")) {
+            service.resetAttributes(player);
+            plugin.effects().apply(player);
+            plugin.messages().send(player, "attrs-reset-done",
+                    "points", service.freeAttributePoints(player));
+            return true;
+        }
+        PlayerAttribute attribute = PlayerAttribute.byId(args[1]);
+        int points = args.length >= 3 ? parsePoints(args[2]) : 1;
+        if (attribute == null || points <= 0) {
+            plugin.messages().send(player, "attrs-error");
+            return true;
+        }
+        if (!service.spendAttribute(player, attribute, points)) {
+            plugin.messages().send(player, "attrs-short",
+                    "points", service.freeAttributePoints(player));
+            return true;
+        }
+        plugin.effects().apply(player);
+        plugin.messages().send(player, "attrs-added",
+                "points", points,
+                "attribute", attribute.displayName(),
+                "value", service.attribute(player, attribute));
+        return true;
+    }
+
+    private static int parsePoints(String raw) {
+        try {
+            return Integer.parseInt(raw.trim());
+        } catch (NumberFormatException error) {
+            return -1;
+        }
+    }
+
+    /** {@code /skills use <приём>} — активный приём навыка или ветки билда. */
+    private boolean handleUse(Player player, String[] args) {
+        if (args.length != 2) {
+            plugin.messages().send(player, "ability-usage");
+            return true;
+        }
+        SkillAbility skillAbility = SkillAbility.of(SkillType.byId(args[1]));
+        if (skillAbility != null) {
+            plugin.abilities().activate(player, skillAbility);
+            return true;
+        }
+        BranchAbility branchAbility = BranchAbility.byId(args[1]);
+        if (branchAbility == null) {
+            plugin.messages().send(player, "ability-usage");
+            return true;
+        }
+        String error = plugin.branchAbilities().use(player, branchAbility);
+        if (!error.isEmpty()) {
+            plugin.messages().send(player, error,
+                    "time", plugin.branchAbilities().cooldownLeft(player, branchAbility),
+                    "cost", branchAbility.cost(),
+                    "level", branchAbility.unlockLevel());
+            return true;
+        }
+        plugin.messages().send(player, "branch-used",
+                "name", branchAbility.displayName(),
+                "energy", plugin.branchAbilities().energy(player));
+        return true;
+    }
+
+    /**
+     * {@code /skills build [ветка] [N] | reset} — ветки билда. Очки веток и
+     * атрибутов делят один общий пул; сброс веток платный.
+     */
+    private boolean handleBuild(Player player, String[] args) {
+        if (args.length == 1) {
+            plugin.messages().send(player, "build-view",
+                    "points", service.freeAttributePoints(player),
+                    "total", service.attributePoints(player) + service.bonusPoints(player),
+                    "pve", service.pveContribution(player));
+            for (BuildBranch branch : BuildBranch.values()) {
+                plugin.messages().send(player, "build-branch",
+                        "name", branch.displayName(),
+                        "level", service.branchLevel(player, branch),
+                        "max", BuildBranch.MAX_LEVEL);
+            }
+            return true;
+        }
+        if (args[1].equalsIgnoreCase("reset")) {
+            boolean paid = plugin.xpShop() != null && plugin.xpShop().payments().perform(player, player,
+                    (int) BranchMath.RESPEC_PRICE, "skill-branch-respec", "reset",
+                    () -> {
+                        service.resetBranches(player);
+                        plugin.effects().apply(player);
+                        return true;
+                    });
+            if (paid) {
+                plugin.messages().send(player, "build-reset-done",
+                        "points", service.freeAttributePoints(player));
+            } else {
+                plugin.messages().send(player, "build-reset-fail", "price", BranchMath.RESPEC_PRICE);
+            }
+            return true;
+        }
+        BuildBranch branch = BuildBranch.byId(args[1]);
+        int points = args.length >= 3 ? parsePoints(args[2]) : 1;
+        if (branch == null || points <= 0) {
+            plugin.messages().send(player, "build-error");
+            return true;
+        }
+        if (service.branchLevel(player, branch) >= BuildBranch.MAX_LEVEL) {
+            plugin.messages().send(player, "build-max", "name", branch.displayName());
+            return true;
+        }
+        if (!service.spendBranch(player, branch, points)) {
+            plugin.messages().send(player, "build-short",
+                    "points", service.freeAttributePoints(player));
+            return true;
+        }
+        plugin.effects().apply(player);
+        plugin.messages().send(player, "build-added",
+                "points", points,
+                "name", branch.displayName(),
+                "level", service.branchLevel(player, branch));
+        return true;
     }
 
     private boolean handleList(Player player) {
@@ -127,107 +259,44 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
         return true;
     }
 
-    /** Без аргумента — витрина престижа; с аргументом — двухшаговый сброс. */
-    private boolean handlePrestige(Player player, String[] args) {
+    /** Без аргумента — витрина перерождения; с confirm — двухшаговый сброс. */
+    private boolean handleRebirth(Player player, String[] args) {
         if (args.length == 1) {
-            gui.open(player, SkillsMenuApi.Tab.PRESTIGE, null, 0);
+            gui.open(player, SkillsMenuApi.Tab.REBIRTH, 0);
             return true;
         }
-        if (args.length != 2) {
-            plugin.messages().send(player, "prestige-usage");
+        if (args.length != 2 || !args[1].equalsIgnoreCase("confirm")) {
+            plugin.messages().send(player, "rebirth-usage");
             return true;
         }
-        SkillService.PrestigeResult result;
-        if (args[1].equalsIgnoreCase("all")) {
-            result = service.requestPrestigeAll(player);
-        } else {
-            SkillType skill = SkillType.byId(args[1]);
-            if (skill == null) {
-                plugin.messages().send(player, "unknown-skill");
-                return true;
-            }
-            result = service.requestPrestige(player, skill);
-        }
-        switch (result) {
-            case DISABLED -> plugin.messages().send(player, "prestige-disabled");
-            case AT_CAP -> plugin.messages().send(player, "prestige-at-cap",
-                    "cap", String.valueOf(PrestigeMath.MAX_PER_SKILL));
-            case NOT_MAX -> plugin.messages().send(player, "prestige-not-max",
+        switch (service.requestRebirth(player)) {
+            case DISABLED -> plugin.messages().send(player, "rebirth-disabled");
+            case NOT_READY -> plugin.messages().send(player, "rebirth-not-ready",
                     "level", String.valueOf(plugin.config().curve().maxLevel()));
-            case PENDING -> plugin.messages().send(player, "prestige-confirm");
-            case DONE -> {
-                plugin.messages().send(player, "prestige-done",
-                        "total", String.valueOf(service.totalPrestige(player)),
-                        "title", Messages.trusted(service.prestigeTier(player).title()));
-                plugin.getLogger().info("[CHRDK_Skills] " + player.getName()
-                        + " подтвердил престиж, серверный уровень "
-                        + service.totalPrestige(player));
-            }
+            case PENDING -> plugin.messages().send(player, "rebirth-confirm");
+            case DONE -> plugin.getLogger().info("[CHRDK_Skills] " + player.getName()
+                    + " переродился, счётчик " + service.rebirths(player));
         }
         return true;
     }
 
-    /** Топ престижа в чат — та же выборка, что и на вкладке меню. */
-    private boolean handlePrestigeTop(Player player) {
-        plugin.messages().send(player, "prestige-top-header");
+    /** Топ перерождений в чат — та же выборка, что и на вкладке меню. */
+    private boolean handleRebirthTop(Player player) {
+        plugin.messages().send(player, "rebirth-top-header");
         int place = 1;
-        for (SkillService.PrestigeEntry entry : service.prestigeTop()) {
-            plugin.messages().send(player, "prestige-top-line",
+        for (SkillService.RebirthEntry entry : service.rebirthTop()) {
+            plugin.messages().send(player, "rebirth-top-line",
                     "place", String.valueOf(place++),
                     "name", entry.name(),
-                    "total", String.valueOf(entry.total()));
+                    "count", String.valueOf(entry.count()));
         }
         if (place == 1) {
-            plugin.messages().send(player, "prestige-top-empty");
+            plugin.messages().send(player, "rebirth-top-empty");
         }
         return true;
     }
 
-    /** Таблица «навык → ступень → уровень → множитель» и что делать дальше. */
-    private boolean handleBalance(Player player) {
-        if (!plugin.config().prestigeEnabled() || !plugin.config().prestigeBalanceEnabled()) {
-            plugin.messages().send(player, "prestige-disabled");
-            return true;
-        }
-        SkillService.BalanceReport report = service.balanceReport(player);
-        if (report == null) {
-            plugin.messages().send(player, "prestige-disabled");
-            return true;
-        }
-        plugin.messages().send(player, "balance-header",
-                "allowance", String.valueOf(report.allowance()),
-                "base", String.valueOf(report.baseMaxLead()),
-                "rank_bonus", String.valueOf(report.rankBonus()),
-                "rank", String.valueOf(report.rankLevel()),
-                "hard_cap", String.valueOf(report.hardCap()));
-        for (SkillService.BalanceRow row : report.rows()) {
-            String name = plugin.messages().raw("skill." + row.skill().id() + ".name");
-            if (!row.tracked()) {
-                plugin.messages().send(player, "balance-line-off", "name", Messages.trusted(name));
-            } else if (row.factor() <= 0.0) {
-                plugin.messages().send(player, "balance-line-stop",
-                        "name", Messages.trusted(name),
-                        "step", String.valueOf(row.step()),
-                        "level", String.valueOf(row.level()),
-                        "lead", String.valueOf(row.lead()));
-            } else if (row.factor() >= 1.0) {
-                plugin.messages().send(player, "balance-line-full",
-                        "name", Messages.trusted(name),
-                        "step", String.valueOf(row.step()),
-                        "level", String.valueOf(row.level()));
-            } else {
-                plugin.messages().send(player, "balance-line",
-                        "name", Messages.trusted(name),
-                        "step", String.valueOf(row.step()),
-                        "level", String.valueOf(row.level()),
-                        "lead", String.valueOf(row.lead()),
-                        "factor", PrestigeXpGate.factorText(row.factor()));
-            }
-        }
-        plugin.messages().send(player, "balance-footer",
-                "minimum", String.valueOf(report.minimum()));
-        return true;
-    }
+
 
     private boolean handleTop(Player player) {
         List<SkillService.Entry> top = service.top();
@@ -363,20 +432,33 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
         if (command.getName().equalsIgnoreCase("skills")) {
             if (args.length == 1) {
                 List<String> options = new ArrayList<>(List.of(
-                        "list", "top", "rating", "menu", "tree", "perks", "perktree",
-                        "use", "energy", "prestige", "prestigetop", "balance"));
+                        "list", "top", "rating", "menu",
+                        "use", "energy", "rebirth", "rebirthtop", "attrs", "build"));
                 for (SkillType skill : SkillRegistry.all()) {
                     options.add(skill.id());
                 }
                 return filter(options, args[0]);
             }
-            if (args.length == 2 && args[0].equalsIgnoreCase("use"))
-                return filter(java.util.Arrays.stream(SkillAbility.values()).map(SkillAbility::id).toList(), args[1]);
-            if (args.length == 2 && args[0].equalsIgnoreCase("prestige")) {
-                List<String> ids = new ArrayList<>(SkillRegistry.all().stream()
-                        .map(SkillType::id).toList());
-                ids.add("all");
-                return filter(ids, args[1]);
+            if (args.length == 2 && args[0].equalsIgnoreCase("use")) {
+                List<String> abilityIds = new ArrayList<>(
+                        java.util.Arrays.stream(SkillAbility.values()).map(SkillAbility::id).toList());
+                for (BranchAbility ability : BranchAbility.values()) {
+                    abilityIds.add(ability.id());
+                }
+                return filter(abilityIds, args[1]);
+            }
+            if (args.length == 2 && args[0].equalsIgnoreCase("attrs"))
+                return filter(List.of("сила", "ловкость", "стойкость", "мудрость", "хитрость",
+                        "strength", "agility", "stamina", "wisdom", "cunning", "reset"), args[1]);
+            if (args.length == 2 && args[0].equalsIgnoreCase("build")) {
+                List<String> branchIds = new ArrayList<>(List.of("reset"));
+                for (BuildBranch branch : BuildBranch.values()) {
+                    branchIds.add(branch.id());
+                }
+                return filter(branchIds, args[1]);
+            }
+            if (args.length == 2 && args[0].equalsIgnoreCase("rebirth")) {
+                return filter(List.of("confirm"), args[1]);
             }
             return List.of();
         }

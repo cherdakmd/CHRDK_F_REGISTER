@@ -36,11 +36,9 @@ groups:
   - orders
 - id: progress
   title: Развитие
-  description: Ремесло, навыки, таланты и награды за игру.
+  description: Ремесло, навыки и награды за игру.
   pages:
   - skills
-  - classes
-  - perktree
   - quests
   - battlepass
   - achievements

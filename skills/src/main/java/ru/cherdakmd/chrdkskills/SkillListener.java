@@ -158,7 +158,7 @@ public final class SkillListener implements Listener {
         DiamondDrops.Result result = DiamondDrops.roll(
                 service.level(player, skill),
                 plugin.config().curve().maxLevel(),
-                service.prestigeLevel(player, skill),
+                service.rebirths(player),
                 bonus.level(), bonus.xpPercent(), bonus.dropPercent(),
                 service.diamondDropsToday(player), mob,
                 random.nextDouble(), personal);
@@ -264,6 +264,18 @@ public final class SkillListener implements Listener {
         if (bonus > 0.0) {
             event.setDamage(event.getDamage() * (1.0 + bonus));
         }
+        // Атрибуты: сила и хитрость, с бонусом против мобов выше своего ранга
+        // и штрафом давления тира за недобор атрибутов зоны.
+        int mobTier = mobTier(victim);
+        double factor = AttributeMath.meleeFactor(
+                service.attribute(player, PlayerAttribute.STRENGTH),
+                service.attribute(player, PlayerAttribute.CUNNING),
+                mobTier, service.attributeSum(player));
+        factor *= 1.0 - AttributeMath.pressure(mobTier, service.attributeSum(player));
+        // Ветки билда: Воин усиливает ближний бой, Разбойник — урон в целом.
+        factor *= BranchMath.meleeMult(service.branchLevel(player, BuildBranch.WARRIOR));
+        factor *= BranchMath.rogueDamageMult(service.branchLevel(player, BuildBranch.ROGUE));
+        event.setDamage(event.getDamage() * factor);
         long units = Math.min(MAX_COMBAT_UNITS, Math.max(1L, (long) Math.ceil(event.getFinalDamage())));
         if (!ru.cherdakmd.chrdkregister.api.MobRewardPolicy.temporary(victim)) service.award(player, SkillType.COMBAT, units);
         double lifesteal = perks.value(SkillPerk.Kind.LIFESTEAL);
@@ -287,8 +299,26 @@ public final class SkillListener implements Listener {
         if (bonus > 0.0) {
             event.setDamage(event.getDamage() * (1.0 + bonus));
         }
+        // Атрибуты: хитрость в дальнем бою, с бонусом против сильных и давлением тира.
+        int mobTier = mobTier(victim);
+        double factor = AttributeMath.rangedFactor(
+                service.attribute(player, PlayerAttribute.CUNNING),
+                mobTier, service.attributeSum(player));
+        factor *= 1.0 - AttributeMath.pressure(mobTier, service.attributeSum(player));
+        // Ветки билда: Стрелок усиливает дальний бой, Разбойник — урон в целом.
+        factor *= BranchMath.rangedMult(service.branchLevel(player, BuildBranch.ARCHER));
+        factor *= BranchMath.rogueDamageMult(service.branchLevel(player, BuildBranch.ROGUE));
+        event.setDamage(event.getDamage() * factor);
         long units = Math.min(MAX_COMBAT_UNITS, Math.max(1L, (long) Math.ceil(event.getFinalDamage())));
         if (!ru.cherdakmd.chrdkregister.api.MobRewardPolicy.temporary(victim)) service.award(player, SkillType.ARCHERY, units);
+    }
+
+    /** Тир моба из метки CHRDK_Mobs ({@code tier-v1}); без метки — первый тир. */
+    private static int mobTier(LivingEntity mob) {
+        Integer tier = mob.getPersistentDataContainer().get(
+                new org.bukkit.NamespacedKey("chrdkmobs", "tier-v1"),
+                org.bukkit.persistence.PersistentDataType.INTEGER);
+        return tier == null ? 1 : Math.max(1, tier);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
