@@ -41,7 +41,7 @@ gh workflow run release.yml --ref main -f version=1.5.2
 ```
 
 Ручной запуск выполняет тот же Gradle build и тесты; для полного комплекта
-проверяет ровно 19 общих JAR, отдельно `CHRDK_VK`/`CHRDK_Disasters` и Mine Treasure,
+проверяет ровно 20 общих JAR, отдельно `CHRDK_VK`/`CHRDK_Disasters` и Mine Treasure,
 ZIP CRC, plugin.yml, версии, manifest и SHA-256, но
 **не создает тег, Release и не загружает публичные ассеты**. Результат сохраняется как временный artifact
 `release-candidate-<версия>-<sha>`.
@@ -53,7 +53,7 @@ sha256sum -c chrdk-1.5.2-SHA256SUMS.txt
 unzip -t chrdk-plugins-1.5.2.zip
 ```
 
-Архив должен содержать ровно 19 JAR одной версии и `ОБНОВЛЕНИЕ.txt`.
+Архив должен содержать ровно 20 JAR одной версии и `ОБНОВЛЕНИЕ.txt`.
 `chrdk-vk-<версия>.jar`, `chrdk-disasters-<версия>.jar` и
 `mine-treasure-1.6.5-ru.zip` остаются отдельными файлами.
 
