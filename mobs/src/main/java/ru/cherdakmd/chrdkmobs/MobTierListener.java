@@ -113,8 +113,9 @@ final class MobTierListener implements Listener {
         if (config.namePrefix() && plugin.messages() != null && (elite || tiered)) {
             // Базовое имя для награды: имя с бирки игрока, иначе русское название
             // из mob-names; после переименования getName() вернул бы префикс.
+            Component tag = mob.customName();
             String base = resolveBaseName(plugin.messages(), mob.getType().name(),
-                    mob.hasCustomName() ? plain(mob.customName()) : null, mob.getName());
+                    tag == null ? null : plain(tag), mob.getName());
             mob.getPersistentDataContainer().set(nameKey, PersistentDataType.STRING, base);
             if (elite) {
                 mob.customName(plugin.messages().get("elite-name",
