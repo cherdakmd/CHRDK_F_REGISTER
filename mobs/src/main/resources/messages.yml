@@ -1,5 +1,41 @@
 # CHRDK_Mobs — тексты тиров мобов.
 messages:
+  # Русские названия враждебных мобов для подписи тира и наград (Java Edition,
+  # официальная локализация). Ключ — имя org.bukkit.entity.EntityType. Мобы вне
+  # списка и переименованные игроком (биркой) сохраняют своё имя.
+  mob-names:
+    BLAZE: Ифрит
+    BOGGED: Болотник
+    BREEZE: Вихрь
+    CAVE_SPIDER: Пещерный паук
+    CREAKING: Скрипун
+    CREEPER: Крипер
+    DROWNED: Утопленник
+    ELDER_GUARDIAN: Древний страж
+    ENDERMITE: Чешуйница Края
+    EVOKER: Вызыватель
+    GHAST: Гаст
+    GUARDIAN: Страж
+    HUSK: Кадавр
+    MAGMA_CUBE: Лавовый куб
+    PHANTOM: Фантом
+    PILLAGER: Разбойник
+    PIGLIN_BRUTE: Брутальный пиглин
+    RAVAGER: Разоритель
+    SHULKER: Шалкер
+    SILVERFISH: Чешуйница
+    SKELETON: Скелет
+    SLIME: Слизень
+    SPIDER: Паук
+    STRAY: Зимогор
+    VEX: Вредина
+    VINDICATOR: Поборник
+    WARDEN: Хранитель
+    WITCH: Ведьма
+    WITHER_SKELETON: Скелет-иссушитель
+    ZOGLIN: Зоглин
+    ZOMBIE: Зомби
+    ZOMBIE_VILLAGER: Зомби-житель
   mob-name-prefix: "<gold>Т%tier%</gold> <dark_gray>·</dark_gray> <white>%name%</white>"
   mob-reward: "<gray>Тир %tier% · <white>%mob%</white>: <green>+%amount% ⛁</green> в /bal</gray>"
   mobtiers-header: "<gold>Тиры мобов</gold> <gray>— дальше от спавна мира враги сильнее и щедрее</gray>"

@@ -59,6 +59,9 @@ class MobTierConfigTest {
         assertTrue(messages.contains("elite-reward"), "награда за элиту");
         assertTrue(messages.contains("mobtiers-progression"));
         assertTrue(messages.contains("mobtiers-elite"));
+        assertTrue(messages.contains("mob-names:"), "русские названия мобов");
+        assertTrue(messages.contains("PILLAGER: Разбойник"), "имена мобов — на русском");
+        assertTrue(messages.contains("ZOMBIE: Зомби"));
         String plugin = read("src/main/resources/plugin.yml");
         assertTrue(plugin.contains("name: CHRDK_Mobs"));
         assertTrue(plugin.contains("main: ru.cherdakmd.chrdkmobs.MobsPlugin"));

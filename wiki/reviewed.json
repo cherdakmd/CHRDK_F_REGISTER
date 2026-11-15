@@ -96,9 +96,9 @@
       "text": "eb6fdaf663b2005735002c5f23bb7f751b31a7447b3fc2cc77d741ff7c4cb2f9"
     },
     "mobs": {
-      "reason": "Аудит: упрощён фильтр игроков-источников прогресса (GameMode вместо isSpectator)",
-      "sources": "88c685ffc0349da695f7f7102c24d418e9d51bd0c7514d79bb9ece5c9d967495",
-      "text": "8385bf71a6a66e7a86ae54d9e5dbaa24c070920d14ddf03cedb3f91772485f64"
+      "reason": "Проверены русские имена мобов (mob-names, бирка игрока) и видимость табличек только при прямой видимости",
+      "sources": "b77e56b1ecff2320279b7664307ef497af8a965083b80611881c305d3b443d10",
+      "text": "93916c5f1e51ba1d4dfdc4ce2773e85c4d3a0bc041174e9ce2745f680e45635d"
     },
     "moderation": {
       "reason": "CHRDK_Mobs: регистрация аддона (MODULES, меню, рассылка, /mobtiers) — страницы и контракты сверены",
