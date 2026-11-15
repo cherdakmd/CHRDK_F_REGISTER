@@ -173,9 +173,8 @@ final class MobTierListener implements Listener {
         Player best = null;
         double bestDistance = radius * (double) radius;
         for (Player player : mob.getWorld().getPlayers()) {
-            if (player.isDead() || player.isSpectator()
-                    || (player.getGameMode() != GameMode.SURVIVAL
-                            && player.getGameMode() != GameMode.ADVENTURE)) {
+            GameMode mode = player.getGameMode();
+            if (player.isDead() || (mode != GameMode.SURVIVAL && mode != GameMode.ADVENTURE)) {
                 continue;
             }
             double distance = player.getLocation().distanceSquared(location);
