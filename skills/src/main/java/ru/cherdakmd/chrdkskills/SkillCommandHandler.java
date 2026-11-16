@@ -98,15 +98,7 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
     /** {@code /skills attrs [сила|ловкость|стойкость|мудрость|хитрость] [N] | reset} — очки атрибутов. */
     private boolean handleAttributes(Player player, String[] args) {
         if (args.length == 1) {
-            plugin.messages().send(player, "attrs-view",
-                    "strength", service.attribute(player, PlayerAttribute.STRENGTH),
-                    "agility", service.attribute(player, PlayerAttribute.AGILITY),
-                    "stamina", service.attribute(player, PlayerAttribute.STAMINA),
-                    "wisdom", service.attribute(player, PlayerAttribute.WISDOM),
-                    "cunning", service.attribute(player, PlayerAttribute.CUNNING));
-            plugin.messages().send(player, "attrs-points",
-                    "points", service.freeAttributePoints(player),
-                    "total", service.attributePoints(player));
+            gui.open(player, SkillsMenuApi.Tab.ATTRIBUTES, 0);
             return true;
         }
         if (args[1].equalsIgnoreCase("reset")) {
@@ -179,16 +171,7 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
      */
     private boolean handleBuild(Player player, String[] args) {
         if (args.length == 1) {
-            plugin.messages().send(player, "build-view",
-                    "points", service.freeAttributePoints(player),
-                    "total", service.attributePoints(player) + service.bonusPoints(player),
-                    "pve", service.pveContribution(player));
-            for (BuildBranch branch : BuildBranch.values()) {
-                plugin.messages().send(player, "build-branch",
-                        "name", branch.displayName(),
-                        "level", service.branchLevel(player, branch),
-                        "max", BuildBranch.MAX_LEVEL);
-            }
+            gui.open(player, SkillsMenuApi.Tab.BUILDS, 0);
             return true;
         }
         if (args[1].equalsIgnoreCase("reset")) {

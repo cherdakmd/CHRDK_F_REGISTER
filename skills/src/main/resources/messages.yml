@@ -40,7 +40,9 @@ messages:
   # ---------------------------------- вкладки ------------------------------------
   # Один инвентарь /skills: верхний ряд переключает разделы без второго окна.
   menu-tab-skills: "<gold>Навыки</gold>"
+  menu-tab-attrs: "<gold>Атрибуты</gold>"
   menu-tab-potions: "<light_purple>Кристаллы опыта</light_purple>"
+  menu-tab-builds: "<gold>Ветки билда</gold>"
   menu-tab-selected: "<green>▸ Открытая вкладка</green>"
   menu-tab-hint: "<gray>Клик — переключить раздел</gray>"
   menu-guide-button: "<yellow>Как прокачивать навыки</yellow>"
@@ -452,6 +454,23 @@ messages:
   attrs-reset-done: "<green>Атрибуты сброшены, свободно %points% очков.</green>"
   attrs-short: "<red>Не хватает свободных очков: есть %points%.</red>"
   attrs-error: "<red>Использование: /skills attrs [сила|ловкость|стойкость|мудрость|хитрость] [N] | reset.</red>"
+  # Панель «Атрибуты» (/skills attrs или вкладка меню): вложение кликами и сброс.
+  attrs-gui-item: "<gold>%name%</gold><gray>: <white>%value%</white> оч.</gray>"
+  attrs-gui-desc-strength: "<gray>Ближний урон +0.5% за очко</gray>"
+  attrs-gui-desc-agility: "<gray>Скорость атаки +0.25% и передвижения +0.1% за очко</gray>"
+  attrs-gui-desc-stamina: "<gray>Здоровье +0.25 и кап митигации +0.5% за очко</gray>"
+  attrs-gui-desc-wisdom: "<gray>Опыт навыков +0.5% за очко</gray>"
+  attrs-gui-desc-cunning: "<gray>Урон в бою +0.3% за очко</gray>"
+  attrs-gui-summary-name: "<gold>Очки атрибутов</gold>"
+  attrs-gui-sum: "<gray>Сумма атрибутов: <white>%sum%</white> (ранг %rank%)</gray>"
+  attrs-gui-bonus: "<gray>Бонусных очков за PvE: <white>%points%</white></gray>"
+  attrs-gui-reset: "<red>Сбросить атрибуты</red>"
+  attrs-gui-reset-hint: "<gray>Клик — бесплатный сброс распределения</gray>"
+  attrs-gui-reset-confirm: "<red>Ещё клик — подтвердить сброс</red>"
+  # Общий пул очков атрибутов и веток (подсказки панелей).
+  points-gui-free: "<gray>Свободно очков: <white>%points%</white> из <white>%total%</white></gray>"
+  points-gui-hint-add: "<gray>ЛКМ — вложить 1 очко</gray>"
+  points-gui-hint-add5: "<gray>Шифт + ЛКМ — вложить 5 очков</gray>"
 
   # --------------------------- ветки билда (п.28) --------------------------------
   # Очки веток и атрибутов делят один общий пул; сброс веток платный.
@@ -463,6 +482,21 @@ messages:
   build-error: "<red>Использование: /skills build [воин|стрелок|маг|клирик|жрец|разбойник] [N] | reset.</red>"
   build-reset-done: "<green>Ветки сброшены, очки вернулись в пул: свободно %points%.</green>"
   build-reset-fail: "<red>Сброс веток стоит %price% — оплата не прошла.</red>"
+  # Панель «Ветки билда» (/skills build или вкладка меню): вложение кликами и
+  # платный сброс с подтверждением.
+  build-gui-item: "<yellow>%name%</yellow><gray>: уровень</gray> <white>%level%</white><gray>/</gray><white>%max%</white>"
+  build-gui-desc-warrior: "<gray>Ближний урон +2% за уровень</gray>"
+  build-gui-desc-archer: "<gray>Дальний урон +2% за уровень</gray>"
+  build-gui-desc-mage: "<gray>Опыт навыков +2% за уровень</gray>"
+  build-gui-desc-cleric: "<gray>Смягчение урона +0.5% за уровень</gray>"
+  build-gui-desc-priest: "<gray>Здоровье +1 за уровень</gray>"
+  build-gui-desc-rogue: "<gray>Урон +1% и скорость атаки +0.2% за уровень</gray>"
+  build-gui-ability: "<gray>Приём (ур. %level%): <white>%name%</white></gray>"
+  build-gui-summary-name: "<gold>Ветки билда</gold>"
+  build-gui-pve: "<gray>Честный PvE-вклад: <white>%pve%</white></gray>"
+  build-gui-reset: "<red>Сбросить ветки</red>"
+  build-gui-reset-hint: "<gray>Клик — сброс всех веток за %price% (штраф)</gray>"
+  build-gui-reset-confirm: "<red>Ещё клик — подтвердить платный сброс</red>"
   branch-used: "<green>Приём «%name%» применён, выносливость %energy%.</green>"
   branch-locked: "<red>Приём закрыт: нужен уровень ветки %level%.</red>"
   pve-award: "<green>Честный PvE-вклад:</green> <white>+%points%</white><green> оч. веток (всего вклада %pve%).</green>"
