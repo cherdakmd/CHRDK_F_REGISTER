@@ -41,7 +41,7 @@ class MobTierMathTest {
         assertEquals(0, MobTierMath.progressMetric(0, 0, 5));
         assertEquals(500, MobTierMath.progressMetric(500, 0, 5));
         assertEquals(750, MobTierMath.progressMetric(500, 50, 5));
-        assertEquals(1500, MobTierMath.progressMetric(1000, 100, 5), "максимум прокачки");
+        assertEquals(2000, MobTierMath.progressMetric(1500, 100, 5), "максимум прокачки при навыках 150");
         assertEquals(1000, MobTierMath.progressMetric(1000, 100, 0), "вес 0 — престиж не считается");
         assertEquals(0, MobTierMath.progressMetric(-5, -5, -5), "отрицательное зажимается к нулю");
     }

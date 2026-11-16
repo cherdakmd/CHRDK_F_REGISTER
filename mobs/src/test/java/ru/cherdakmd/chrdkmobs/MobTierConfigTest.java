@@ -40,10 +40,10 @@ class MobTierConfigTest {
     void progressionVariantAndLootSettingsAreNamed() throws IOException {
         String config = read("src/main/resources/config.yml");
         assertTrue(config.contains("progression:"));
-        assertTrue(config.contains("health-per-100: 0.10"));
-        assertTrue(config.contains("damage-per-100: 0.05"));
+        assertTrue(config.contains("health-per-100: 0.15"));
+        assertTrue(config.contains("damage-per-100: 0.10"));
         assertTrue(config.contains("prestige-weight: 5"));
-        assertTrue(config.contains("max-bonus: 1.5"));
+        assertTrue(config.contains("max-bonus: 2.5"));
         assertTrue(config.contains("variants:"), "проклятые, тлеющие, всратые и кринжовые");
         assertTrue(config.contains("chance: 0.012"));
         assertTrue(config.contains("loot:"));
@@ -59,6 +59,17 @@ class MobTierConfigTest {
     }
 
     @Test
+    void schemaForcesRecalculatedBalanceOnUpgrade() throws IOException {
+        String schema = read("src/main/resources/config-schema.yml");
+        assertTrue(schema.contains("config-version: 2"), "версия схемы баланса");
+        assertTrue(schema.contains("messages-version: 1"));
+        assertTrue(schema.contains("progression.health-per-100"),
+                "прогрессия переписывается эталоном при обновлении");
+        assertTrue(schema.contains("tiers.table"),
+                "таблица тиров переписывается эталоном при обновлении");
+    }
+
+    @Test
     void parsedTableCarriesPerTierProperties() throws IOException {
         YamlConfiguration cfg = YamlConfiguration.loadConfiguration(
                 new StringReader(read("src/main/resources/config.yml")));
@@ -71,8 +82,8 @@ class MobTierConfigTest {
         assertEquals(0, first.reward(), "первый тир без денег");
         assertEquals(0.15, first.lootChance(), "шанс дропа лута тира 1");
         MobsConfig.Tier last = config.tier(10);
-        assertEquals(10.0, last.health());
-        assertEquals(3.8, last.damage());
+        assertEquals(12.0, last.health());
+        assertEquals(4.5, last.damage());
         assertEquals(5, last.reward());
         assertEquals(4, last.abilitiesMin());
         assertEquals(5, last.abilitiesMax());

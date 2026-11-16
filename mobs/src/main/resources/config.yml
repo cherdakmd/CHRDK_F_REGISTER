@@ -43,12 +43,12 @@ tiers:
     2:  {health: 1.4,  damage: 1.15, abilities: [2, 2], reward: 1, loot: [1, 1], loot-chance: 0.15}
     3:  {health: 1.9,  damage: 1.3,  abilities: [2, 2], reward: 1, loot: [1, 1], loot-chance: 0.13}
     4:  {health: 2.5,  damage: 1.5,  abilities: [2, 3], reward: 2, loot: [1, 2], loot-chance: 0.13}
-    5:  {health: 3.2,  damage: 1.75, abilities: [2, 3], reward: 2, loot: [1, 2], loot-chance: 0.11}
-    6:  {health: 4.1,  damage: 2.0,  abilities: [3, 3], reward: 3, loot: [2, 2], loot-chance: 0.11}
-    7:  {health: 5.2,  damage: 2.3,  abilities: [3, 3], reward: 3, loot: [2, 2], loot-chance: 0.09}
-    8:  {health: 6.5,  damage: 2.7,  abilities: [3, 4], reward: 4, loot: [2, 3], loot-chance: 0.09}
-    9:  {health: 8.0,  damage: 3.2,  abilities: [3, 4], reward: 4, loot: [3, 3], loot-chance: 0.08}
-    10: {health: 10.0, damage: 3.8,  abilities: [4, 5], reward: 5, loot: [3, 3], loot-chance: 0.08}
+    5:  {health: 3.8,  damage: 2.0,  abilities: [2, 3], reward: 2, loot: [1, 2], loot-chance: 0.11}
+    6:  {health: 4.9,  damage: 2.3,  abilities: [3, 3], reward: 3, loot: [2, 2], loot-chance: 0.11}
+    7:  {health: 6.2,  damage: 2.7,  abilities: [3, 3], reward: 3, loot: [2, 2], loot-chance: 0.09}
+    8:  {health: 7.8,  damage: 3.2,  abilities: [3, 4], reward: 4, loot: [2, 3], loot-chance: 0.09}
+    9:  {health: 9.6,  damage: 3.8,  abilities: [3, 4], reward: 4, loot: [3, 3], loot-chance: 0.08}
+    10: {health: 12.0, damage: 4.5,  abilities: [4, 5], reward: 5, loot: [3, 3], loot-chance: 0.08}
 
 progression:
   # Привязка к прокачке игрока: мощность моба закрепляется при появлении по
@@ -61,11 +61,11 @@ progression:
   radius: 128
   # Надбавка за каждые 100 очков прогресса: здоровье ×(1 + health-per-100×очки/100),
   # урон ×(1 + damage-per-100×очки/100), общий потолок надбавки — max-bonus.
-  health-per-100: 0.10
-  damage-per-100: 0.05
+  health-per-100: 0.15
+  damage-per-100: 0.10
   # Сколько уровней навыков «стоит» ступень престижа в очках прогресса.
   prestige-weight: 5
-  max-bonus: 1.5
+  max-bonus: 2.5
 
 elite:
   # Изредка естественные мобы появляются элитными: усилены, с индивидуальным

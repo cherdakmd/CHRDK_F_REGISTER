@@ -436,7 +436,7 @@ messages:
   xp-potion-unavailable: "<yellow>Кристалл опыта сейчас недоступен: требуется вход, выживание и исправное хранилище.</yellow>"
   xp-potion-cooldown: "<yellow>Следующий кристалл опыта можно использовать через %time% сек.</yellow>"
   xp-potion-used: "<green>%skill%: +%xp% XP.</green>"
-  xp-potion-vanilla: "<green>Кристалл опыта:</green> %skill%<gray> на максимуме —</gray> <green>+1 уровень</green><gray> шкалы опыта Minecraft.</gray>"
+  xp-potion-money: "<green>Кристалл опыта:</green> %skill%<gray> на максимуме —</gray> <green>+%amount% ⛁</green><gray> в /bal.</gray>"
 
   # ------------------------------- кристаллы ------------------------------------
   # Покупка в меню /skills: единственный платный источник, дроп с мобов бесплатен.

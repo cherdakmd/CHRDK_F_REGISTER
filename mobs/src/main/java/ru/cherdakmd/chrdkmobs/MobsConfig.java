@@ -93,10 +93,10 @@ record MobsConfig(boolean enabled, List<Integer> thresholds, Map<Integer, Tier> 
         Progression progression = new Progression(
                 cfg.getBoolean("progression.enabled", true),
                 (int) Math.min(1000, Math.max(16, cfg.getInt("progression.radius", 128))),
-                clampPercent(cfg.getDouble("progression.health-per-100", 0.10)),
-                clampPercent(cfg.getDouble("progression.damage-per-100", 0.05)),
+                clampPercent(cfg.getDouble("progression.health-per-100", 0.15)),
+                clampPercent(cfg.getDouble("progression.damage-per-100", 0.10)),
                 (int) Math.min(100, Math.max(0, cfg.getInt("progression.prestige-weight", 5))),
-                clampPercent(cfg.getDouble("progression.max-bonus", 1.5)));
+                clampPercent(cfg.getDouble("progression.max-bonus", 2.5)));
         List<String> epithets = new ArrayList<>();
         for (String epithet : cfg.getStringList("elite.epithets")) {
             if (!epithet.isBlank()) {

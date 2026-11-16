@@ -49,6 +49,9 @@ public final class SkillsPlugin extends JavaPlugin {
     private ru.cherdakmd.chrdkregister.api.MilestoneAwards awards;
     public ru.cherdakmd.chrdkregister.api.MilestoneAwards awards() { return awards; }
 
+    private ru.cherdakmd.chrdkregister.api.MoneyLoot moneyLoot;
+    public ru.cherdakmd.chrdkregister.api.MoneyLoot moneyLoot() { return moneyLoot; }
+
     @Override
     public void onEnable() {
         saveDefaultConfig();
@@ -59,6 +62,7 @@ public final class SkillsPlugin extends JavaPlugin {
         try {
             if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 38) throw new IllegalStateException("Нужен Core API 38+");
             this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"skills-awards",ru.cherdakmd.chrdkregister.api.MilestoneMigration.json(getDataFolder().toPath().resolve("skills.json"),ru.cherdakmd.chrdkregister.api.MilestoneMigration.Kind.SKILLS));
+            this.moneyLoot = new ru.cherdakmd.chrdkregister.api.MoneyLoot(this, this::coreApi, this::messages, "skill-crystals");
         } catch (Exception | LinkageError error) {
             getLogger().log(java.util.logging.Level.SEVERE,"Модуль остановлен без сброса прогресса/наград",error);
             this.store = null;
@@ -141,6 +145,7 @@ public final class SkillsPlugin extends JavaPlugin {
             Bukkit.getServicesManager().unregister(SkillsMenuApi.class, gui);
         }
         if (awards != null) awards.close();
+        if (moneyLoot != null) moneyLoot.close();
         if (xpShop != null) {
             try {
                 xpShop.payments().flushRefunds();
