@@ -104,7 +104,9 @@ final class SkillXpItems implements Listener {
                         .decoration(TextDecoration.ITALIC, false),
                 Component.text("Сила зависит от престижа и ранга", NamedTextColor.DARK_GRAY)
                         .decoration(TextDecoration.ITALIC, false),
-                Component.text("На максимуме навыка: +" + moneyReward() + " ⛁ в /bal", NamedTextColor.DARK_GRAY)
+                Component.text(moneyReward() > 0
+                        ? "На максимуме навыка: +1 уровень Minecraft и +" + moneyReward() + " ⛁ в /bal"
+                        : "На максимуме навыка: +1 уровень шкалы опыта Minecraft", NamedTextColor.DARK_GRAY)
                         .decoration(TextDecoration.ITALIC, false),
                 Component.text("ПКМ — использовать", NamedTextColor.GREEN)
                         .decoration(TextDecoration.ITALIC, false)));
@@ -175,11 +177,11 @@ final class SkillXpItems implements Listener {
             plugin.messages().send(player, "xp-potion-unavailable");
             return;
         }
-        // Навык на потолке: кристалл не копит мёртвый опыт навыка, а приносит
-        // деньги в /bal (настройка xp-potions.money-reward).
+        // Навык на потолке: кристалл не копит мёртвый опыт навыка, а даёт
+        // уровень шкалы опыта Minecraft и деньги в /bal (money-reward).
         if (plugin.skills().level(player, skill) >= plugin.config().curve().maxLevel()) {
             int reward = moneyReward();
-            if (reward <= 0 || !plugin.moneyLoot().accept(
+            if (reward > 0 && !plugin.moneyLoot().accept(
                     player, "skill-crystal-" + UUID.randomUUID(), reward)) {
                 plugin.messages().send(player, "xp-potion-unavailable");
                 return;
@@ -188,8 +190,14 @@ final class SkillXpItems implements Listener {
             if (held != null && held.getAmount() > 0) {
                 held.setAmount(held.getAmount() - 1);
             }
-            plugin.messages().send(player, "xp-potion-money",
-                    "skill", plugin.messages().mini("skill." + skill.id() + ".name"), "amount", reward);
+            player.giveExpLevels(1);
+            if (reward > 0) {
+                plugin.messages().send(player, "xp-potion-money",
+                        "skill", plugin.messages().mini("skill." + skill.id() + ".name"), "amount", reward);
+            } else {
+                plugin.messages().send(player, "xp-potion-vanilla",
+                        "skill", plugin.messages().mini("skill." + skill.id() + ".name"));
+            }
             return;
         }
         var award = plugin.skills().grantXp(player, skill, xp);

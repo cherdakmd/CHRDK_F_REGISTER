@@ -173,7 +173,7 @@ final class SkillRebirthServiceTest {
         assertFalse(config.contains("balance:"), "правило баланса удалено из конфига");
 
         String schema = read("src/main/resources/config-schema.yml");
-        assertTrue(schema.contains("messages-version: 8"));
+        assertTrue(schema.contains("messages-version: 9"));
         assertTrue(schema.contains("remove: [leveling.max-level]"),
                 "потолок навыка переписывается эталоном при обновлении");
     }
