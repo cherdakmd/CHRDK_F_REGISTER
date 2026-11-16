@@ -9,7 +9,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -51,24 +50,24 @@ class SkillXpItemsTest {
     }
 
     /**
-     * Навык на потолке: кристалл не копит мёртвый опыт, а приносит деньги
-     * в /bal (настройка xp-potions.money-reward).
+     * Навык на потолке: кристалл не копит мёртвый опыт, а даёт уровень шкалы
+     * опыта Minecraft и деньги в /bal (оба бонуса, money-reward).
      */
     @Test
-    void maxedSkillCrystalPaysMoneyInsteadOfDeadSkillXp() throws IOException {
+    void maxedSkillCrystalPaysMoneyAndVanillaLevelInsteadOfDeadSkillXp() throws IOException {
         String source = Files.readString(
                 Path.of("src/main/java/ru/cherdakmd/chrdkskills/SkillXpItems.java"), StandardCharsets.UTF_8);
+        assertTrue(source.contains("giveExpLevels(1)"),
+                "кристалл на максимуме даёт уровень шкалы опыта Minecraft");
         assertTrue(source.contains("moneyLoot().accept("),
                 "кристалл на максимуме платит деньги через общий денежный источник");
-        assertTrue(source.contains("xp-potion-money"),
-                "отдельный текст про деньги в /bal");
+        assertTrue(source.contains("xp-potion-money") && source.contains("xp-potion-vanilla"),
+                "тексты про деньги и про ванильный уровень");
         assertTrue(source.contains("xp-potions.money-reward"),
                 "награда настраивается конфигом");
         assertTrue(source.contains("На максимуме навыка: +"),
                 "лор предмета предупреждает о награде");
-        assertFalse(source.contains("giveExpLevels"),
-                "ванильные уровни больше не начисляются");
-        assertTrue(source.indexOf("moneyLoot().accept(") < source.indexOf("grantXp(player, skill, xp)"),
+        assertTrue(source.indexOf("giveExpLevels(1)") < source.indexOf("grantXp(player, skill, xp)"),
                 "ветка максимума обрабатывается до начисления опыта навыка");
     }
 }

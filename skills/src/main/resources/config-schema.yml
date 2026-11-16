@@ -33,11 +33,15 @@
 #     Новый ключ xp-potions.money-reward дописывается эталоном, текст
 #     xp-potion-vanilla вычищается remove-миграцией, на его место
 #     дописывается xp-potion-money (backup, повторный старт идемпотентен).
+# v9: кристалл на максимуме навыка даёт И уровень шкалы опыта Minecraft, И
+#     деньги в /bal (оба бонуса). Текст xp-potion-money переписывается
+#     эталоном (remove + дописывание), xp-potion-vanilla дописывается для
+#     отключённых денег (money-reward: 0).
 # Удалён только устаревший xp-potions.mob-drop-chance (замён на три новых
 # ключа дропа); владельческие значения и комментарии остальных ключей
 # сохраняются, перед записью создаётся backup.
 config-version: 6
-messages-version: 8
+messages-version: 9
 migrations:
   config:
     5:
@@ -79,3 +83,5 @@ migrations:
       remove: [messages.menu-guide]
     8:
       remove: [messages.xp-potion-vanilla]
+    9:
+      remove: [messages.xp-potion-money]
