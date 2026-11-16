@@ -192,4 +192,43 @@ class MilestoneFinanceTest {
         assertTrue(load().registered());
     }
 
+    @Test void twoSourcesInOnePluginFolderKeepSeparateJournals() throws Exception {
+        var skills=MilestoneStore.openIn(dir,"skills-awards"); skills.initialize(Map.of());
+        skills.reserve(owner,"level:25",17);
+        var crystals=MilestoneStore.openIn(dir,"skill-crystals"); crystals.initialize(Map.of());
+        String crystalKey="skill-crystal:"+UUID.randomUUID();
+        crystals.reserve(owner,crystalKey,9);
+        var reopened=MilestoneStore.openIn(dir,"skills-awards");
+        assertEquals(17,reopened.totals().get(owner));
+        assertFalse(reopened.claimed(owner).contains(crystalKey));
+        assertEquals(9,MilestoneStore.openIn(dir,"skill-crystals").totals().get(owner));
+    }
+
+    @Test void legacyJournalIsClaimedCopyByItsSourceAndLeftInPlace() throws Exception {
+        var legacy=new MilestoneStore(dir,SOURCE); legacy.initialize(Map.of(owner,Set.of("level:10")));
+        legacy.reserve(owner,"level:25",17);
+        String bytes=Files.readString(dir.resolve("milestone-awards.json"));
+        var claimed=MilestoneStore.openIn(dir,SOURCE);
+        assertEquals(17,claimed.totals().get(owner));
+        assertTrue(claimed.claimed(owner).contains("level:10"));
+        assertEquals(bytes,Files.readString(dir.resolve("milestone-awards.json")));
+        claimed.reserve(owner,"level:50",3);
+        assertEquals(20,MilestoneStore.openIn(dir,SOURCE).totals().get(owner));
+        assertEquals(17,new MilestoneStore(dir,SOURCE).totals().get(owner));
+    }
+
+    @Test void foreignLegacyJournalIsLeftUntouchedAndCannotBeClaimed() throws Exception {
+        var legacy=new MilestoneStore(dir,SOURCE); legacy.initialize(Map.of());
+        legacy.reserve(owner,"level:25",17);
+        String bytes=Files.readString(dir.resolve("milestone-awards.json"));
+        var crystals=MilestoneStore.openIn(dir,"skill-crystals"); crystals.initialize(Map.of());
+        assertTrue(crystals.totals().isEmpty());
+        assertEquals(bytes,Files.readString(dir.resolve("milestone-awards.json")));
+    }
+
+    @Test void corruptLegacyJournalStillFailsLoudBeforeAnyClaim() throws Exception {
+        Files.writeString(dir.resolve("milestone-awards.json"),"{не json");
+        assertThrows(IOException.class,()->MilestoneStore.openIn(dir,SOURCE));
+    }
+
 }

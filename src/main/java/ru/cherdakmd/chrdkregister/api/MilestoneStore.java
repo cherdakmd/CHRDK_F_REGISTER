@@ -24,6 +24,40 @@ public final class MilestoneStore {
     private Data data;
     private boolean healthy=true;
     public MilestoneStore(Path folder,String source) throws IOException { this(folder,source,()->{}); }
+    /**
+     * Открывает журнал источника в его собственной подпапке dataFolder/source:
+     * два источника одного плагина больше не спорят за один файл (регресс
+     * 2.0.11–2.0.12 — CHRDK_Skills не мог включиться: «skill-crystals» и
+     * «skills-awards» делили milestone-awards.json). Легаси-файл
+     * dataFolder/milestone-awards.json при первом открытии копируется в подпапку,
+     * если его source совпадает; файл с чужим source не трогается. Старый файл
+     * остаётся на месте — на него можно откатиться прежними сборками, поэтому
+     * не удаляйте его.
+     */
+    public static MilestoneStore openIn(Path dataFolder,String source) throws IOException {
+        if(source==null||!source.matches("[a-z][a-z0-9-]{0,47}")) throw new IllegalArgumentException("award namespace");
+        Path folder=dataFolder.resolve(source);
+        Path target=folder.resolve("milestone-awards.json");
+        Path legacy=dataFolder.resolve("milestone-awards.json");
+        if(!Files.exists(target)&&Files.exists(legacy)) {
+            if(Files.size(legacy)>32L*1024*1024) throw new IllegalArgumentException("award capacity");
+            String legacySource;
+            try {
+                legacySource=JsonParser.parseString(Files.readString(legacy)).getAsJsonObject().get("source").getAsString();
+            } catch(RuntimeException error) {
+                throw new IOException("Повреждён milestone-awards.json; не сбрасывайте журнал наград",error);
+            }
+            if(source.equals(legacySource)) {
+                byte[] bytes=Files.readAllBytes(legacy);
+                Files.createDirectories(folder);
+                var temp=target.resolveSibling("milestone-awards.json.tmp"); Files.write(temp,bytes);
+                try(var c=FileChannel.open(temp,StandardOpenOption.WRITE)) { c.force(true); }
+                Files.move(temp,target,StandardCopyOption.ATOMIC_MOVE,StandardCopyOption.REPLACE_EXISTING);
+                try(var c=FileChannel.open(folder,StandardOpenOption.READ)) { c.force(true); }
+            }
+        }
+        return new MilestoneStore(folder,source);
+    }
     public MilestoneStore(Path folder,String source,ChargeJournal.WriteCheckpoint checkpoint) throws IOException {
         if(source==null||!source.matches("[a-z][a-z0-9-]{0,47}")) throw new IllegalArgumentException("award namespace");
         this.source=source; file=folder.resolve("milestone-awards.json"); this.checkpoint=Objects.requireNonNull(checkpoint);
