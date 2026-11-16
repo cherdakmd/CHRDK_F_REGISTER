@@ -90,9 +90,11 @@ class SkillsMenuTextTest {
     void progressIsMaxedOnlyOnLastLevel() {
         SkillCurve.Params params = SkillCurve.Params.DEFAULT;
         assertFalse(SkillCurve.progress(150, params).maxed());
-        assertFalse(SkillCurve.progress(523_661, params).maxed());
-        assertTrue(SkillCurve.progress(523_662, params).maxed());
-        assertTrue(SkillCurve.progress(999_999, params).maxed());
+        assertFalse(SkillCurve.progress(523_662, params).maxed(),
+                "100-й уровень — не потолок при max-level 150");
+        assertFalse(SkillCurve.progress(1_644_104, params).maxed());
+        assertTrue(SkillCurve.progress(1_644_105, params).maxed(), "путь до потолка пройден");
+        assertTrue(SkillCurve.progress(99_999_999, params).maxed());
     }
 
     @Test

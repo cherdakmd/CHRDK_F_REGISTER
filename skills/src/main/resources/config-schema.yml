@@ -22,12 +22,21 @@
 #     /skills rebirthtop, вкладка «Перерождение». Старые тексты престижа,
 #     баланса прокачки и /skills balance вычищаются remove-миграцией из
 #     файлов владельцев (backup, повторный старт идемпотентен).
+# v7 (config v5): потолок навыка поднят до 150 уровней. leveling.max-level
+#     переписывается эталоном (remove + дописывание): файлы владельцев со
+#     старым значением 100 получают 150 автоматически. Кристаллы опыта на
+#     максимуме навыка дают +1 уровень шкалы опыта Minecraft вместо мёртвого
+#     опыта навыка (новый текст xp-potion-vanilla дописывается). menu-guide
+#     переписывается эталоном — правила уровней и перерождения изменились.
 # Удалён только устаревший xp-potions.mob-drop-chance (замён на три новых
 # ключа дропа); владельческие значения и комментарии остальных ключей
 # сохраняются, перед записью создаётся backup.
-config-version: 4
-messages-version: 6
+config-version: 5
+messages-version: 7
 migrations:
+  config:
+    5:
+      remove: [leveling.max-level]
   messages:
     4:
       remove: [messages.xp-potion-daily-limit, messages.xp-potion-used]
@@ -59,3 +68,5 @@ migrations:
                messages.menu-prestige-back, messages.menu-prestige-line,
                messages.prestige-ability-upgraded, messages.prestige-ability-master,
                messages.prestige-master-title, messages.prestige-master-subtitle]
+    7:
+      remove: [messages.menu-guide]

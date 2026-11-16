@@ -29,7 +29,7 @@ public final class SkillCurve {
             tierStep = Math.min(10.0, Math.max(0.0, tierStep));
         }
 
-        public static final Params DEFAULT = new Params(100, 100, 25.0, 0.5);
+        public static final Params DEFAULT = new Params(150, 100, 25.0, 0.5);
     }
 
     private SkillCurve() {

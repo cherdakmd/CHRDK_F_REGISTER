@@ -113,7 +113,7 @@ public final class SkillsConfig {
         boolean countCreative = cfg.getBoolean("limits.count-creative", false);
         int refreshTicks = (int) clamp(cfg.getLong("general.refresh-ticks", 40L), 10L, 200L);
         SkillCurve.Params curve = new SkillCurve.Params(
-                cfg.getInt("leveling.max-level", 100),
+                cfg.getInt("leveling.max-level", 150),
                 cfg.getLong("leveling.base-xp", 100L),
                 cfg.getDouble("leveling.xp-growth", 25.0),
                 cfg.getDouble("leveling.xp-tier-step", 0.5));

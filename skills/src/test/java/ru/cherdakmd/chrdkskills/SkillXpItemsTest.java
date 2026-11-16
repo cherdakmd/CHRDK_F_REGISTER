@@ -48,4 +48,22 @@ class SkillXpItemsTest {
         assertTrue(source.contains("Material.POTION ? skill(item) : null"),
                 "только PDC-зелья конвертируются: чужие зелья не трогаются");
     }
+
+    /**
+     * Навык на потолке: кристалл не копит мёртвый опыт, а даёт +1 уровень
+     * шкалы опыта Minecraft (пользовательское правило «просто уровень»).
+     */
+    @Test
+    void maxedSkillCrystalGivesVanillaXpLevelInsteadOfDeadSkillXp() throws IOException {
+        String source = Files.readString(
+                Path.of("src/main/java/ru/cherdakmd/chrdkskills/SkillXpItems.java"), StandardCharsets.UTF_8);
+        assertTrue(source.contains("giveExpLevels(1)"),
+                "кристалл на максимуме даёт уровень шкалы опыта Minecraft");
+        assertTrue(source.contains("xp-potion-vanilla"),
+                "отдельный текст про ванильный уровень");
+        assertTrue(source.contains("На максимуме навыка: +1 уровень опыта Minecraft"),
+                "лор предмета предупреждает о правиле");
+        assertTrue(source.indexOf("giveExpLevels(1)") < source.indexOf("grantXp(player, skill, xp)"),
+                "ветка максимума обрабатывается до начисления опыта навыка");
+    }
 }
