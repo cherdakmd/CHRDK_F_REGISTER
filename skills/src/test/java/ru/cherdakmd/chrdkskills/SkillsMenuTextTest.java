@@ -90,9 +90,11 @@ class SkillsMenuTextTest {
     void progressIsMaxedOnlyOnLastLevel() {
         SkillCurve.Params params = SkillCurve.Params.DEFAULT;
         assertFalse(SkillCurve.progress(150, params).maxed());
-        assertFalse(SkillCurve.progress(523_661, params).maxed());
-        assertTrue(SkillCurve.progress(523_662, params).maxed());
-        assertTrue(SkillCurve.progress(999_999, params).maxed());
+        assertFalse(SkillCurve.progress(523_662, params).maxed(),
+                "100-й уровень — не потолок при max-level 150");
+        assertFalse(SkillCurve.progress(1_644_104, params).maxed());
+        assertTrue(SkillCurve.progress(1_644_105, params).maxed(), "путь до потолка пройден");
+        assertTrue(SkillCurve.progress(99_999_999, params).maxed());
     }
 
     @Test
@@ -139,5 +141,30 @@ class SkillsMenuTextTest {
         }
         assertTrue(line.contains("100"));
         assertEquals(11, SkillRegistry.THRESHOLDS.size());
+    }
+
+    /** Ключи панелей «Атрибуты» и «Ветки билда»: имена, описания, подсказки. */
+    @Test
+    void attributesAndBuildsGuiKeysExist() {
+        Messages messages = messages();
+        for (String key : new String[]{
+                "menu-tab-attrs", "menu-tab-builds",
+                "attrs-gui-item", "attrs-gui-summary-name", "attrs-gui-sum",
+                "attrs-gui-bonus", "attrs-gui-reset", "attrs-gui-reset-hint",
+                "attrs-gui-reset-confirm", "points-gui-free",
+                "points-gui-hint-add", "points-gui-hint-add5",
+                "build-gui-item", "build-gui-ability", "build-gui-summary-name",
+                "build-gui-pve", "build-gui-reset", "build-gui-reset-hint",
+                "build-gui-reset-confirm"}) {
+            assertTrue(messages.has(key), "нет ключа панели " + key);
+        }
+        for (PlayerAttribute attribute : PlayerAttribute.values()) {
+            assertTrue(messages.has("attrs-gui-desc-" + attribute.id()),
+                    "нет описания атрибута " + attribute.id());
+        }
+        for (BuildBranch branch : BuildBranch.values()) {
+            assertTrue(messages.has("build-gui-desc-" + branch.id()),
+                    "нет описания ветки " + branch.id());
+        }
     }
 }

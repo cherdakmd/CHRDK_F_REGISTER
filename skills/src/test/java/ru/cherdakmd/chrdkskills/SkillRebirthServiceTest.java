@@ -165,14 +165,17 @@ final class SkillRebirthServiceTest {
         for (String key : new String[]{"rebirth:", "xp-percent-per-rebirth: 5.0",
                 "xp-decay: 0.9", "xp-bonus-cap-percent: 50.0",
                 "diamonds-per-rebirth: 32", "milestone-diamonds: 128",
-                "announce-milestones: true", "unique-items:"}) {
+                "announce-milestones: true", "unique-items:",
+                "max-level: 150"}) {
             assertTrue(config.contains(key), "нет ключа/значения " + key);
         }
         assertFalse(config.contains("xp-per-step"), "старый множитель ступеней удалён");
         assertFalse(config.contains("balance:"), "правило баланса удалено из конфига");
 
         String schema = read("src/main/resources/config-schema.yml");
-        assertTrue(schema.contains("messages-version: 6"));
+        assertTrue(schema.contains("messages-version: 7"));
+        assertTrue(schema.contains("remove: [leveling.max-level]"),
+                "потолок навыка переписывается эталоном при обновлении");
     }
 
     @Test

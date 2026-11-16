@@ -62,6 +62,41 @@ class SkillsLayoutTest {
         assertSymmetric("SKILL_SLOTS", slots(source, "SKILL_SLOTS"), 2, 5);
         assertSymmetric("TOP_SLOTS", slots(source, "TOP_SLOTS"), 2, 5);
         assertSymmetric("PERK_SLOTS", slots(source, "PERK_SLOTS"), 2, 6);
+        assertSymmetric("ATTR_SLOTS", slots(source, "ATTR_SLOTS"), 1, 5);
+        assertSymmetric("BRANCH_SLOTS", slots(source, "BRANCH_SLOTS"), 2, 3);
+    }
+
+    /** Панели атрибутов и веток — вкладки того же инвентаря, с кликами и сбросом. */
+    @Test
+    void attributesAndBuildsTabsAreWiredIntoTheSameInventory() throws IOException {
+        String source = source();
+        assertTrue(source.contains("TAB_ATTRIBUTES = 1"));
+        assertTrue(source.contains("TAB_BUILDS = 7"));
+        assertTrue(source.contains("case ATTRIBUTES -> renderAttributes"));
+        assertTrue(source.contains("case BUILDS -> renderBuilds"));
+        assertTrue(source.contains("case ATTRIBUTES -> onAttributesClick"));
+        assertTrue(source.contains("case BUILDS -> onBuildsClick"));
+        assertTrue(source.contains("Tab.ATTRIBUTES"));
+        assertTrue(source.contains("Tab.BUILDS"));
+        assertTrue(source.contains("resetArmed"),
+                "сброс очков требует двух кликов (подтверждение)");
+        String api = Files.readString(
+                Path.of("src/main/java/ru/cherdakmd/chrdkskills/SkillsMenuApi.java"),
+                StandardCharsets.UTF_8);
+        assertTrue(api.contains("ATTRIBUTES"), "вкладка должна быть в публичном контракте");
+        assertTrue(api.contains("BUILDS"), "вкладка должна быть в публичном контракте");
+    }
+
+    /** Без аргументов команды открывают панели меню, а не текстовую сводку. */
+    @Test
+    void bareAttrsAndBuildCommandsOpenGuiPanels() throws IOException {
+        String source = Files.readString(
+                Path.of("src/main/java/ru/cherdakmd/chrdkskills/SkillCommandHandler.java"),
+                StandardCharsets.UTF_8);
+        assertTrue(source.contains("gui.open(player, SkillsMenuApi.Tab.ATTRIBUTES, 0)"),
+                "/skills attrs без аргументов открывает панель атрибутов");
+        assertTrue(source.contains("gui.open(player, SkillsMenuApi.Tab.BUILDS, 0)"),
+                "/skills build без аргументов открывает панель веток");
     }
 
     @Test

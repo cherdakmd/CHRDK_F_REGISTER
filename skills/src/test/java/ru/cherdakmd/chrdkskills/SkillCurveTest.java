@@ -54,6 +54,8 @@ class SkillCurveTest {
         assertEquals(100, SkillCurve.totalForLevel(2, DEFAULT));
         assertEquals(225, SkillCurve.totalForLevel(3, DEFAULT));
         assertEquals(523_662, SkillCurve.totalForLevel(100, DEFAULT));
+        assertEquals(1_644_105, SkillCurve.totalForLevel(150, DEFAULT),
+                "путь до 150-го уровня при потолке 150");
     }
 
     @Test
@@ -66,7 +68,7 @@ class SkillCurveTest {
         assertEquals(3, SkillCurve.levelFor(225, DEFAULT));
         assertEquals(60, SkillCurve.levelFor(131_175, DEFAULT), "прежний полный путь — теперь 60-й уровень");
         assertEquals(100, SkillCurve.levelFor(523_662, DEFAULT));
-        assertEquals(100, SkillCurve.levelFor(999_999_999, DEFAULT), "потолок не пробивается");
+        assertEquals(150, SkillCurve.levelFor(999_999_999, DEFAULT), "потолок не пробивается");
     }
 
     @Test
@@ -77,10 +79,14 @@ class SkillCurveTest {
         assertEquals(125, progress.need());
         assertEquals(40, progress.percent());
 
-        SkillCurve.LevelProgress max = SkillCurve.progress(523_662, DEFAULT);
-        assertEquals(100, max.level());
+        SkillCurve.LevelProgress mid = SkillCurve.progress(523_662, DEFAULT);
+        assertEquals(100, mid.level());
+        assertFalse(mid.maxed(), "100-й уровень — не потолок при max-level 150");
+
+        SkillCurve.LevelProgress max = SkillCurve.progress(1_644_105, DEFAULT);
+        assertEquals(150, max.level());
         assertEquals(100, max.percent(), "на максимуме полоса полная");
-        assertEquals(0, max.need(), "после 100-го уровня опыт не нужен");
+        assertEquals(0, max.need(), "после потолка опыт не нужен");
         assertTrue(max.maxed(), "МАКС вместо «305332/0 (100%)»");
         assertFalse(progress.maxed(), "на 2-м уровне опыт до следующего ещё нужен");
 
@@ -120,7 +126,7 @@ class SkillCurveTest {
     @Test
     void fullPathTableMatchesLevelFormula() {
         long[] table = SkillCurve.table(DEFAULT);
-        assertEquals(100, table.length);
+        assertEquals(150, table.length, "таблица накоплений — на все уровни до потолка");
         assertEquals(0, table[0]);
         assertEquals(SkillCurve.totalForLevel(50, DEFAULT), table[49]);
     }

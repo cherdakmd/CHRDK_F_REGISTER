@@ -104,6 +104,8 @@ final class SkillXpItems implements Listener {
                         .decoration(TextDecoration.ITALIC, false),
                 Component.text("Сила зависит от престижа и ранга", NamedTextColor.DARK_GRAY)
                         .decoration(TextDecoration.ITALIC, false),
+                Component.text("На максимуме навыка: +1 уровень опыта Minecraft", NamedTextColor.DARK_GRAY)
+                        .decoration(TextDecoration.ITALIC, false),
                 Component.text("ПКМ — использовать", NamedTextColor.GREEN)
                         .decoration(TextDecoration.ITALIC, false)));
         meta.getPersistentDataContainer().set(token, PersistentDataType.STRING, skill.id());
@@ -166,6 +168,18 @@ final class SkillXpItems implements Listener {
         long cooldownMillis = Math.max(0, plugin.getConfig().getInt("xp-potions.cooldown-seconds", 0)) * 1000L;
         if (!store.consume(player.getUniqueId(), now, cooldownMillis)) {
             plugin.messages().send(player, "xp-potion-unavailable");
+            return;
+        }
+        // Навык на потолке: кристалл не копит мёртвый опыт навыка, а даёт
+        // уровень шкалы опыта Minecraft.
+        if (plugin.skills().level(player, skill) >= plugin.config().curve().maxLevel()) {
+            ItemStack held = player.getInventory().getItem(hand);
+            if (held != null && held.getAmount() > 0) {
+                held.setAmount(held.getAmount() - 1);
+            }
+            player.giveExpLevels(1);
+            plugin.messages().send(player, "xp-potion-vanilla",
+                    "skill", plugin.messages().mini("skill." + skill.id() + ".name"));
             return;
         }
         var award = plugin.skills().grantXp(player, skill, xp);

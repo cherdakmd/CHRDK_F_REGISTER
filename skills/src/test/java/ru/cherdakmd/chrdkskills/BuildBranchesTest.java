@@ -26,6 +26,7 @@ class BuildBranchesTest {
                 "боевые ветки на месте");
         assertTrue(branch.contains("CLERIC") && branch.contains("PRIEST") && branch.contains("ROGUE"),
                 "ветки поддержки и скорости на месте");
+        assertTrue(branch.contains("MAX_LEVEL = 150"), "потолок ветки — 150 уровней");
         String service = read("src/main/java/ru/cherdakmd/chrdkskills/SkillService.java");
         assertTrue(service.contains("store.spentBranches"),
                 "очки веток и атрибутов делят один общий пул");

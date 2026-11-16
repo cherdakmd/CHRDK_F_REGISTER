@@ -23,12 +23,13 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Единое меню {@code /skills}: один инвентарь на 54 слота, три вкладки.
+ * Единое меню {@code /skills}: один инвентарь на 54 слота, шесть вкладок.
  *
- * <p>Вкладки «Навыки», «Дерево перков» и «Топ» переключаются кликом по верхнему
- * ряду: {@link #render} просто очищает слоты и рисует их заново, не создавая
- * второго инвентаря и не вызывая {@code openInventory} повторно. Карточка
- * навыка — тоже состояние вкладки «Навыки», а не отдельное окно на 27 слотов.</p>
+ * <p>Вкладки «Навыки», «Атрибуты», «Топ», «Перерождение», «Кристаллы опыта» и
+ * «Ветки билда» переключаются кликом по верхнему ряду: {@link #render} просто
+ * очищает слоты и рисует их заново, не создавая второго инвентаря и не вызывая
+ * {@code openInventory} повторно. Карточка навыка — тоже состояние вкладки
+ * «Навыки», а не отдельное окно на 27 слотов.</p>
  *
  * <p>Иконки не показывают чужие данные и не позволяют таскать предметы: все
  * клики по верхнему инвентарю отменяются, драг запрещён.</p>
@@ -37,11 +38,13 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
 
     /** Верхний ряд — вкладки и общие кнопки. */
     private static final int TAB_SKILLS = 0;
+    private static final int TAB_ATTRIBUTES = 1;
     private static final int TAB_TOP = 2;
     private static final int SLOT_GUIDE = 3;
     private static final int TAB_REBIRTH = 5;
     private static final int SLOT_CONTEXT = 4;
     private static final int TAB_POTIONS = 6;
+    private static final int TAB_BUILDS = 7;
     private static final int SLOT_CLOSE = 8;
 
     /**
@@ -60,6 +63,15 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
 
     /** Содержимое вкладки «Топ»: та же сетка 5/5, что и у навыков. */
     private static final int[] TOP_SLOTS = {11, 12, 13, 14, 15, 20, 21, 22, 23, 24};
+
+    /** Пять атрибутов — один ряд по пять. */
+    private static final int[] ATTR_SLOTS = {11, 12, 13, 14, 15};
+
+    /** Шесть веток билда — два ряда по три. */
+    private static final int[] BRANCH_SLOTS = {12, 13, 14, 21, 22, 23};
+
+    /** Кнопка сброса распределения очков (правый нижний угол). */
+    private static final int SLOT_RESET = 53;
 
     private final SkillsPlugin plugin;
     private final SkillService service;
@@ -127,12 +139,16 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         inventory.clear();
         inventory.setItem(TAB_SKILLS, tabItem(holder, Tab.SKILLS, Material.IRON_PICKAXE,
                 "menu-tab-skills"));
+        inventory.setItem(TAB_ATTRIBUTES, tabItem(holder, Tab.ATTRIBUTES,
+                Material.REDSTONE, "menu-tab-attrs"));
         inventory.setItem(TAB_TOP, tabItem(holder, Tab.TOP, Material.GOLD_INGOT,
                 "menu-top"));
         inventory.setItem(TAB_REBIRTH, tabItem(holder, Tab.REBIRTH,
                 Material.NETHERITE_INGOT, "menu-tab-rebirth"));
         inventory.setItem(TAB_POTIONS, tabItem(holder, Tab.POTIONS,
                 Material.AMETHYST_SHARD, "menu-tab-potions"));
+        inventory.setItem(TAB_BUILDS, tabItem(holder, Tab.BUILDS,
+                Material.CRAFTING_TABLE, "menu-tab-builds"));
         inventory.setItem(SLOT_GUIDE, button(Material.BOOK, "menu-guide-button",
                 guideLore(player)));
         inventory.setItem(SLOT_CLOSE, button(Material.BARRIER, "menu-close"));
@@ -141,6 +157,8 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
             case TOP -> renderTop(player, holder);
             case REBIRTH -> renderRebirth(player, holder);
             case POTIONS -> renderPotions(player, holder);
+            case ATTRIBUTES -> renderAttributes(player, holder);
+            case BUILDS -> renderBuilds(player, holder);
         }
         fillEmpty(inventory);
     }
@@ -534,6 +552,10 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
             switchTab(player, holder, Tab.SKILLS);
             return;
         }
+        if (slot == TAB_ATTRIBUTES) {
+            switchTab(player, holder, Tab.ATTRIBUTES);
+            return;
+        }
         if (slot == TAB_TOP) {
             switchTab(player, holder, Tab.TOP);
             return;
@@ -546,6 +568,10 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
             switchTab(player, holder, Tab.POTIONS);
             return;
         }
+        if (slot == TAB_BUILDS) {
+            switchTab(player, holder, Tab.BUILDS);
+            return;
+        }
         if (slot == SLOT_GUIDE) {
             sendGuide(player);
             return;
@@ -554,6 +580,8 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
             case SKILLS -> onSkillsClick(player, holder, slot);
             case REBIRTH -> onRebirthClick(player, holder, slot);
             case POTIONS -> onPotionsClick(player, holder, slot);
+            case ATTRIBUTES -> onAttributesClick(player, holder, slot, event.isShiftClick());
+            case BUILDS -> onBuildsClick(player, holder, slot, event.isShiftClick());
             case TOP -> { /* рейтинг только для чтения */ }
         }
     }
@@ -562,6 +590,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         holder.tab = tab;
         holder.skill = null;
         holder.page = 0;
+        holder.resetArmed = false;
         render(player, holder);
     }
 
@@ -646,6 +675,240 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         }
     }
 
+    /* --------------------------- атрибуты и ветки --------------------------- */
+
+    /** Панель атрибутов: пять иконок, сводка общего пула и бесплатный сброс. */
+    private void renderAttributes(Player player, Holder holder) {
+        Inventory inventory = holder.inventory;
+        PlayerAttribute[] attributes = PlayerAttribute.values();
+        for (int index = 0; index < Math.min(ATTR_SLOTS.length, attributes.length); index++) {
+            inventory.setItem(ATTR_SLOTS[index], attributeIcon(player, attributes[index]));
+        }
+        inventory.setItem(SLOT_SUMMARY, pointsSummary(player, "attrs-gui-summary-name",
+                List.of(plugin.messages().get("attrs-gui-sum",
+                        "sum", String.valueOf(service.attributeSum(player)),
+                        "rank", String.valueOf(AttributeMath.attrRank(service.attributeSum(player)))),
+                        plugin.messages().get("attrs-gui-bonus",
+                                "points", String.valueOf(service.bonusPoints(player))))));
+        inventory.setItem(SLOT_CONTEXT, stepsBook());
+        inventory.setItem(SLOT_RESET, resetButton(holder,
+                "attrs-gui-reset", "attrs-gui-reset-confirm",
+                plugin.messages().get("attrs-gui-reset-hint")));
+        inventory.setItem(DETAIL_BACK, button(Material.ARROW, "detail-back"));
+    }
+
+    /** Панель веток билда: шесть иконок, сводка пула и платный сброс. */
+    private void renderBuilds(Player player, Holder holder) {
+        Inventory inventory = holder.inventory;
+        BuildBranch[] branches = BuildBranch.values();
+        for (int index = 0; index < Math.min(BRANCH_SLOTS.length, branches.length); index++) {
+            inventory.setItem(BRANCH_SLOTS[index], branchIcon(player, branches[index]));
+        }
+        inventory.setItem(SLOT_SUMMARY, pointsSummary(player, "build-gui-summary-name",
+                List.of(plugin.messages().get("build-gui-pve",
+                        "pve", String.valueOf(service.pveContribution(player))))));
+        inventory.setItem(SLOT_CONTEXT, stepsBook());
+        inventory.setItem(SLOT_RESET, resetButton(holder,
+                "build-gui-reset", "build-gui-reset-confirm",
+                plugin.messages().get("build-gui-reset-hint",
+                        "price", String.valueOf(BranchMath.RESPEC_PRICE))));
+        inventory.setItem(DETAIL_BACK, button(Material.ARROW, "detail-back"));
+    }
+
+    /** Сводка общего пула очков: свободно/всего плюс строки конкретной панели. */
+    private ItemStack pointsSummary(Player player, String nameKey, List<Component> extra) {
+        ItemStack item = new ItemStack(Material.PAPER);
+        ItemMeta meta = item.getItemMeta();
+        meta.displayName(plugin.messages().get(nameKey));
+        List<Component> lore = new ArrayList<>();
+        lore.add(plugin.messages().get("points-gui-free",
+                "points", String.valueOf(service.freeAttributePoints(player)),
+                "total", String.valueOf(service.attributePoints(player) + service.bonusPoints(player))));
+        lore.addAll(extra);
+        meta.lore(lore);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private ItemStack attributeIcon(Player player, PlayerAttribute attribute) {
+        int value = service.attribute(player, attribute);
+        ItemStack item = new ItemStack(attributeMaterial(attribute));
+        ItemMeta meta = item.getItemMeta();
+        meta.displayName(plugin.messages().get("attrs-gui-item",
+                "name", attribute.displayName(), "value", String.valueOf(value)));
+        meta.lore(List.of(
+                plugin.messages().get("attrs-gui-desc-" + attribute.id()),
+                plugin.messages().get("points-gui-free",
+                        "points", String.valueOf(service.freeAttributePoints(player)),
+                        "total", String.valueOf(service.attributePoints(player) + service.bonusPoints(player))),
+                plugin.messages().get("points-gui-hint-add"),
+                plugin.messages().get("points-gui-hint-add5")));
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private ItemStack branchIcon(Player player, BuildBranch branch) {
+        int level = service.branchLevel(player, branch);
+        ItemStack item = new ItemStack(branchMaterial(branch));
+        ItemMeta meta = item.getItemMeta();
+        meta.displayName(plugin.messages().get("build-gui-item",
+                "name", branch.displayName(),
+                "level", String.valueOf(level),
+                "max", String.valueOf(BuildBranch.MAX_LEVEL)));
+        List<Component> lore = new ArrayList<>();
+        lore.add(plugin.messages().get("build-gui-desc-" + branch.id()));
+        for (BranchAbility ability : BranchAbility.values()) {
+            if (ability.branch() != branch) {
+                continue;
+            }
+            lore.add(plugin.messages().get("build-gui-ability",
+                    "level", String.valueOf(ability.unlockLevel()),
+                    "name", Messages.trusted(plugin.messages().raw(ability.nameKey()))));
+        }
+        lore.add(plugin.messages().get("points-gui-free",
+                "points", String.valueOf(service.freeAttributePoints(player)),
+                "total", String.valueOf(service.attributePoints(player) + service.bonusPoints(player))));
+        lore.add(plugin.messages().get("points-gui-hint-add"));
+        lore.add(plugin.messages().get("points-gui-hint-add5"));
+        meta.lore(lore);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /**
+     * Кнопка сброса распределения: первый клик взводит подтверждение, второй —
+     * выполняет. Взводится одна кнопка на открытую вкладку и гасится сменой
+     * вкладки, поэтому случайный двойной клик не сбрасывает очки.
+     */
+    private ItemStack resetButton(Holder holder, String nameKey, String confirmKey, Component hint) {
+        ItemStack item = new ItemStack(holder.resetArmed ? Material.REDSTONE_BLOCK : Material.TNT);
+        ItemMeta meta = item.getItemMeta();
+        meta.displayName(plugin.messages().get(holder.resetArmed ? confirmKey : nameKey));
+        meta.lore(List.of(hint));
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private void onAttributesClick(Player player, Holder holder, int slot, boolean shift) {
+        if (slot == DETAIL_BACK) {
+            switchTab(player, holder, Tab.SKILLS);
+            return;
+        }
+        if (slot == SLOT_RESET) {
+            if (!holder.resetArmed) {
+                holder.resetArmed = true;
+                render(player, holder);
+                return;
+            }
+            holder.resetArmed = false;
+            service.resetAttributes(player);
+            plugin.effects().apply(player);
+            plugin.messages().send(player, "attrs-reset-done",
+                    "points", service.freeAttributePoints(player));
+            render(player, holder);
+            return;
+        }
+        holder.resetArmed = false;
+        PlayerAttribute[] attributes = PlayerAttribute.values();
+        for (int index = 0; index < Math.min(ATTR_SLOTS.length, attributes.length); index++) {
+            if (slot != ATTR_SLOTS[index]) {
+                continue;
+            }
+            PlayerAttribute attribute = attributes[index];
+            int free = service.freeAttributePoints(player);
+            int points = Math.min(shift ? 5 : 1, free);
+            if (points <= 0 || !service.spendAttribute(player, attribute, points)) {
+                plugin.messages().send(player, "attrs-short", "points", free);
+                return;
+            }
+            plugin.effects().apply(player);
+            plugin.messages().send(player, "attrs-added",
+                    "points", points,
+                    "attribute", attribute.displayName(),
+                    "value", service.attribute(player, attribute));
+            render(player, holder);
+            return;
+        }
+    }
+
+    private void onBuildsClick(Player player, Holder holder, int slot, boolean shift) {
+        if (slot == DETAIL_BACK) {
+            switchTab(player, holder, Tab.SKILLS);
+            return;
+        }
+        if (slot == SLOT_RESET) {
+            if (!holder.resetArmed) {
+                holder.resetArmed = true;
+                render(player, holder);
+                return;
+            }
+            holder.resetArmed = false;
+            boolean paid = plugin.xpShop() != null && plugin.xpShop().payments().perform(player, player,
+                    (int) BranchMath.RESPEC_PRICE, "skill-branch-respec", "reset",
+                    () -> {
+                        service.resetBranches(player);
+                        plugin.effects().apply(player);
+                        return true;
+                    });
+            if (paid) {
+                plugin.messages().send(player, "build-reset-done",
+                        "points", service.freeAttributePoints(player));
+            } else {
+                plugin.messages().send(player, "build-reset-fail",
+                        "price", BranchMath.RESPEC_PRICE);
+            }
+            render(player, holder);
+            return;
+        }
+        holder.resetArmed = false;
+        BuildBranch[] branches = BuildBranch.values();
+        for (int index = 0; index < Math.min(BRANCH_SLOTS.length, branches.length); index++) {
+            if (slot != BRANCH_SLOTS[index]) {
+                continue;
+            }
+            BuildBranch branch = branches[index];
+            int level = service.branchLevel(player, branch);
+            if (level >= BuildBranch.MAX_LEVEL) {
+                plugin.messages().send(player, "build-max", "name", branch.displayName());
+                return;
+            }
+            int free = service.freeAttributePoints(player);
+            int points = Math.min(shift ? 5 : 1, Math.min(free, BuildBranch.MAX_LEVEL - level));
+            if (points <= 0 || !service.spendBranch(player, branch, points)) {
+                plugin.messages().send(player, "build-short", "points", free);
+                return;
+            }
+            plugin.effects().apply(player);
+            plugin.messages().send(player, "build-added",
+                    "points", points,
+                    "name", branch.displayName(),
+                    "level", service.branchLevel(player, branch));
+            render(player, holder);
+            return;
+        }
+    }
+
+    static Material attributeMaterial(PlayerAttribute attribute) {
+        return switch (attribute) {
+            case STRENGTH -> Material.IRON_SWORD;
+            case AGILITY -> Material.FEATHER;
+            case STAMINA -> Material.SHIELD;
+            case WISDOM -> Material.ENCHANTING_TABLE;
+            case CUNNING -> Material.SPIDER_EYE;
+        };
+    }
+
+    static Material branchMaterial(BuildBranch branch) {
+        return switch (branch) {
+            case WARRIOR -> Material.IRON_SWORD;
+            case ARCHER -> Material.BOW;
+            case MAGE -> Material.BLAZE_ROD;
+            case CLERIC -> Material.SHIELD;
+            case PRIEST -> Material.TOTEM_OF_UNDYING;
+            case ROGUE -> Material.ENDER_PEARL;
+        };
+    }
+
     /** Состояние живёт в Holder инвентаря: после закрытия карта не нужна. */
     private static final class Holder implements InventoryHolder {
 
@@ -655,6 +918,9 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         private SkillType skill;
 
         private int page;
+
+        /** Взведённое подтверждение сброса распределения очков. */
+        private boolean resetArmed;
 
         private Holder(UUID owner) {
             this.owner = owner;
