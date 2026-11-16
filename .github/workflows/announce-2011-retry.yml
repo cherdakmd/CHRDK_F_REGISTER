@@ -78,7 +78,8 @@ jobs:
           MAX_BOT_TOKEN: ${{ secrets.MAX_BOT_TOKEN }}
           MAX_NEWS_CHAT_ID: ${{ vars.MAX_NEWS_CHAT_ID }}
         run: |
-          python3 - <<'PY'
+          for attempt in 1 2 3; do
+            if python3 - <<'PY'
           import os, runpy, sys
           sys.path.insert(0, 'tools/social')
           os.environ['GITHUB_EVENT_NAME'] = 'workflow_dispatch'
@@ -86,6 +87,13 @@ jobs:
           sys.argv = ['run.py', '--publish', '--kind', 'news', '--release-tag', 'v2.0.11']
           runpy.run_path('tools/social/run.py', run_name='__main__')
           PY
+            then
+              exit 0
+            fi
+            echo "::warning title=VK publication::попытка $attempt не удалась; журнал и маркер в беседе делают повтор безопасным"
+            if [ "$attempt" != 3 ]; then sleep 90; fi
+          done
+          exit 1
 
       - name: Save text and PNG preview (no tokens or API responses)
         if: always()
