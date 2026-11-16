@@ -15,7 +15,8 @@ class BranchMathTest {
     void branchLevelsCostOnePointEach() {
         assertEquals(0, BranchMath.spent(new int[0]));
         assertEquals(5, BranchMath.spent(new int[]{2, 0, 3, 0, 0, 0}));
-        assertEquals(BuildBranch.MAX_LEVEL, BranchMath.spent(new int[]{15, 0, 0, 0, 0, 0}),
+        assertEquals(BuildBranch.MAX_LEVEL,
+                BranchMath.spent(new int[]{BuildBranch.MAX_LEVEL + 5, 0, 0, 0, 0, 0}),
                 "лишние уровни зажимаются потолком ветки");
     }
 
@@ -23,7 +24,9 @@ class BranchMathTest {
     void passivesScaleWithBranchLevel() {
         assertEquals(1.0, BranchMath.meleeMult(0), 1e-9);
         assertEquals(1.10, BranchMath.meleeMult(5), 1e-9, "воин: +2% ближнего урона за уровень");
-        assertEquals(1.20, BranchMath.meleeMult(50), 1e-9, "ветка не растёт выше потолка");
+        assertEquals(1.0 + 0.02 * BuildBranch.MAX_LEVEL,
+                BranchMath.meleeMult(BuildBranch.MAX_LEVEL + 250), 1e-9,
+                "ветка не растёт выше потолка");
         assertEquals(1.06, BranchMath.xpMult(3), 1e-9, "маг: интеллект ускоряет опыт");
         assertEquals(1.05, BranchMath.rogueDamageMult(5), 1e-9);
         assertEquals(5.0, BranchMath.priestHealth(5), 1e-9, "жрец добавляет здоровье");

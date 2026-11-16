@@ -15,8 +15,8 @@ public enum BuildBranch {
     PRIEST("priest", "Жрец"),
     ROGUE("rogue", "Разбойник");
 
-    /** Потолок уровня ветки: полная специализация — десять очков в одну ветку. */
-    public static final int MAX_LEVEL = 10;
+    /** Потолок уровня ветки: полная специализация — 150 очков в одну ветку. */
+    public static final int MAX_LEVEL = 150;
 
     private final String id;
     private final String name;
