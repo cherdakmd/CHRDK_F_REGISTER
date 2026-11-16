@@ -268,7 +268,13 @@ class VK:
                 or not isinstance(uploaded.get('photo'), str) or not uploaded['photo']
                 or not isinstance(uploaded.get('hash'), str) or not uploaded['hash']
                 or not (type(server) is int or (isinstance(server, str) and server.isdigit()))):
-            raise SafetyError('VK не подтвердил загрузку карточки: сохранение фото не вызывалось')
+            # Форма ответа (ключи и типы, без значений) помогает отличить
+            # смену формата VK от пустого ответа загрузчика.
+            shape = (', '.join(f'{key}={type(value).__name__}'
+                               for key, value in uploaded.items())
+                     if isinstance(uploaded, dict) else type(uploaded).__name__)
+            raise SafetyError('VK не подтвердил загрузку карточки: сохранение фото '
+                              'не вызывалось (форма ответа: ' + (shape or 'пусто') + ')')
         photo = self.call('photos.saveMessagesPhoto', {'photo': uploaded['photo'],
                                                       'server': server, 'hash': uploaded['hash']})
         if (not isinstance(photo, list) or len(photo) != 1 or type(photo[0].get('owner_id')) is not int
