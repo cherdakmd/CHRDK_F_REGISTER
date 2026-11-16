@@ -126,7 +126,7 @@ class SkillCurveTest {
     @Test
     void fullPathTableMatchesLevelFormula() {
         long[] table = SkillCurve.table(DEFAULT);
-        assertEquals(100, table.length);
+        assertEquals(150, table.length, "таблица накоплений — на все уровни до потолка");
         assertEquals(0, table[0]);
         assertEquals(SkillCurve.totalForLevel(50, DEFAULT), table[49]);
     }
