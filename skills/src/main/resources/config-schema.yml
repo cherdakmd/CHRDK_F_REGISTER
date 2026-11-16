@@ -28,15 +28,22 @@
 #     максимуме навыка дают +1 уровень шкалы опыта Minecraft вместо мёртвого
 #     опыта навыка (новый текст xp-potion-vanilla дописывается). menu-guide
 #     переписывается эталоном — правила уровней и перерождения изменились.
+# v8 (config v6): кристалл на максимуме навыка приносит деньги в /bal, а не
+#     ванильный уровень (ванильные уровни на высоких цифрах бесполезны).
+#     Новый ключ xp-potions.money-reward дописывается эталоном, текст
+#     xp-potion-vanilla вычищается remove-миграцией, на его место
+#     дописывается xp-potion-money (backup, повторный старт идемпотентен).
 # Удалён только устаревший xp-potions.mob-drop-chance (замён на три новых
 # ключа дропа); владельческие значения и комментарии остальных ключей
 # сохраняются, перед записью создаётся backup.
-config-version: 5
-messages-version: 7
+config-version: 6
+messages-version: 8
 migrations:
   config:
     5:
       remove: [leveling.max-level]
+    6:
+      remove: [xp-potions.money-reward]
   messages:
     4:
       remove: [messages.xp-potion-daily-limit, messages.xp-potion-used]
@@ -70,3 +77,5 @@ migrations:
                messages.prestige-master-title, messages.prestige-master-subtitle]
     7:
       remove: [messages.menu-guide]
+    8:
+      remove: [messages.xp-potion-vanilla]
