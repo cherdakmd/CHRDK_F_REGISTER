@@ -11,11 +11,12 @@ class GeneratorProductionTest {
     private static final long BUDGET_MS = 8 * 3_600_000L;
 
     @Test void onlineTicksAccumulateFractionalCycles() {
-        // 15 с из 30-секундного цикла — единиц нет, остаток цикла сохраняется.
+        // 15 с из 30-секундного цикла — единиц нет, оплаченного времени нет:
+        // метка расчёта не двигается, остаток достраивается следующим тиком.
         GeneratorProduction.Settle warm = GeneratorProduction.settle(
                 15_000, CYCLE_MS, 1, 0, false, 1, BUDGET_MS, 1_000);
         assertEquals(0, warm.units());
-        assertEquals(15_000, warm.advanceMillis());
+        assertEquals(0, warm.advanceMillis());
 
         // Полный цикл — одна единица (база 1 ед/цикл).
         GeneratorProduction.Settle done = GeneratorProduction.settle(
