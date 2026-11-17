@@ -66,8 +66,8 @@
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "generator": {
-      "reason": "Техническая правка: usage команды в plugin.yml отражает /gen upgrade (строка в wiki уже описывает эти подкоманды). Поведение не менялось.",
-      "sources": "b46c15eaf8e292bc7d4f14bb6a8d8c1619666363a6158bdd7a53e628ca000350",
+      "reason": "Техническая правка после CI: asMap для MemorySection-секций конфига (upgrades.chunk); тест роллов — один поток ГСЧ. Поведение не менялось.",
+      "sources": "94d21344015939bdee507ba6a593541438eee0677b5bef600647bced91913af8",
       "text": "7ace1e23d43366996cfd07624539c96389b3f9a169c087bbb845c8d3d0500bc2"
     },
     "goals": {

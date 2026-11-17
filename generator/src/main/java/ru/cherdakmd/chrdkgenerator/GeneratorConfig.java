@@ -289,7 +289,8 @@ public final class GeneratorConfig {
             }
             GeneratorDrops.Money money = null;
             if (row.get("money") != null) {
-                if (!(row.get("money") instanceof Map<?, ?> moneyRow)) {
+                Map<?, ?> moneyRow = asMap(row.get("money"));
+                if (moneyRow == null) {
                     throw new IllegalArgumentException("generator.tiers[" + i + "].money: ждём карту");
                 }
                 Object rawChance = moneyRow.get("chance");
@@ -309,7 +310,8 @@ public final class GeneratorConfig {
             }
             List<GeneratorDrops.Drop> drops = new ArrayList<>();
             for (int j = 0; j < dropRows.size(); j++) {
-                if (!(dropRows.get(j) instanceof Map<?, ?> drop)) {
+                Map<?, ?> drop = asMap(dropRows.get(j));
+                if (drop == null) {
                     throw new IllegalArgumentException("generator.tiers[" + i + "].drops[" + j + "]: ждём карту");
                 }
                 String material = material(drop.get("material"));
@@ -337,7 +339,8 @@ public final class GeneratorConfig {
     }
 
     private static Cost parseCost(Object raw, String path) {
-        if (!(raw instanceof Map<?, ?> row)) {
+        Map<?, ?> row = asMap(raw);
+        if (row == null) {
             throw new IllegalArgumentException("generator." + path + ": ждём карту");
         }
         Object rawMoney = row.get("money");
@@ -351,7 +354,8 @@ public final class GeneratorConfig {
                 throw new IllegalArgumentException("generator." + path + ".resources: ждём список");
             }
             for (int i = 0; i < resourceRows.size(); i++) {
-                if (!(resourceRows.get(i) instanceof Map<?, ?> resource)) {
+                Map<?, ?> resource = asMap(resourceRows.get(i));
+                if (resource == null) {
                     throw new IllegalArgumentException("generator." + path + ".resources[" + i + "]: ждём карту");
                 }
                 String material = material(resource.get("material"));
@@ -385,5 +389,16 @@ public final class GeneratorConfig {
 
     private static String string(Object raw) {
         return raw == null ? "" : String.valueOf(raw).trim();
+    }
+
+    /** Bukkit отдаёт вложенные секции как MemorySection — приводим к карте значений. */
+    private static Map<?, ?> asMap(Object raw) {
+        if (raw instanceof Map<?, ?> map) {
+            return map;
+        }
+        if (raw instanceof ConfigurationSection section) {
+            return section.getValues(false);
+        }
+        return null;
     }
 }

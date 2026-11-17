@@ -49,11 +49,12 @@ class GeneratorDropsTest {
 
     @Test void moneyRollsByChanceAndLuckScalesPortion() {
         GeneratorDrops.Money money = new GeneratorDrops.Money(0.5, 2);
+        Random stream = new Random(42);
         long total = 0;
         for (int i = 0; i < 1_000; i++) {
-            total += GeneratorDrops.money(money, 1, 0, new Random(i));
+            total += GeneratorDrops.money(money, 1, 0, stream);
         }
-        // Шанс 0.5, порция 2: в среднем ≈ 1000 ₽ за 1000 бросков.
+        // Шанс 0.5, порция 2: в среднем ≈ 1000 ₽ за 1000 бросков (один поток ГСЧ).
         assertTrue(total > 800 && total < 1_200, "шанс и порция соблюдаются: " + total);
 
         long lucky = GeneratorDrops.money(new GeneratorDrops.Money(1.0, 3), 10, 5, new Random(1));
