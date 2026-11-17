@@ -1,7 +1,10 @@
 package ru.cherdakmd.chrdkgenerator;
 
 import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.cherdakmd.chrdkregister.ConfigUpgrader;
 import ru.cherdakmd.chrdkregister.Messages;
@@ -11,9 +14,10 @@ import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
  * CHRDK_Generator — личный генератор ресурсов (п.31): физическая камера с
  * лавой и водой, тиры производства и модули улучшений.
  *
- * <p>Скелет модуля: каркас, конфигурация, математика (циклы, бункер, лимиты
- * выдачи, множитель перерождений) и хранилище {@code generator.json}.
- * Механика мира (ядро, ячейки, GUI) — следующими шагами по дизайну
+ * <p>Ядро-предмет: крафтится на верстаке из конфигурации, ставится в свой
+ * приват CHRDK_Claims, снимается владельцем. Камера: два источника — лава и
+ * вода — рядом с ядром; цикл производства, бункер офлайн-накопления и
+ * настраиваемое топливо. GUI и экономика — следующими шагами по дизайну
  * {@code docs/design/GENERATOR.md}.</p>
  */
 public final class GeneratorPlugin extends JavaPlugin {
@@ -21,6 +25,10 @@ public final class GeneratorPlugin extends JavaPlugin {
     private Messages messages;
     private ChrdkRegisterApi coreApi;
     private GeneratorStore store;
+    private GeneratorConfig config;
+    private GeneratorCoreItem coreItem;
+    private NamespacedKey recipeKey;
+    private GeneratorTicker ticker;
 
     @Override
     public void onEnable() {
@@ -33,6 +41,13 @@ public final class GeneratorPlugin extends JavaPlugin {
             Bukkit.getPluginManager().disablePlugin(this);
             return;
         }
+        try {
+            this.config = GeneratorConfig.load(getConfig());
+        } catch (IllegalArgumentException exception) {
+            getLogger().severe("конфигурация генератора не принята: " + exception.getMessage());
+            Bukkit.getPluginManager().disablePlugin(this);
+            return;
+        }
         this.store = new GeneratorStore(getDataFolder().toPath(), getLogger());
         this.store.load();
         try {
@@ -40,6 +55,10 @@ public final class GeneratorPlugin extends JavaPlugin {
         } catch (Exception exception) {
             getLogger().severe("CHRDK_Generator: generator.json не принят диском: " + exception.getMessage());
         }
+        this.coreItem = new GeneratorCoreItem(this);
+        this.recipeKey = new NamespacedKey(this, "core");
+        registerCraft();
+        Bukkit.getPluginManager().registerEvents(new GeneratorWorldListener(this), this);
         PluginCommand command = getCommand("generator");
         if (command != null) {
             GeneratorCommand handler = new GeneratorCommand(this);
@@ -52,17 +71,41 @@ public final class GeneratorPlugin extends JavaPlugin {
             admin.setExecutor(handler);
             admin.setTabCompleter(handler);
         }
-        getLogger().info("CHRDK_Generator включён: скелет п.31 (математика, конфигурация, generator.json).");
+        this.ticker = new GeneratorTicker(this);
+        this.ticker.start();
+        getLogger().info("CHRDK_Generator включён: ядро, камера, производство (п.31).");
+    }
+
+    /** Рецепт ядра на верстаке; результат — шаблон, идентификатор штампует крафт. */
+    private void registerCraft() {
+        GeneratorConfig.Craft craft = config.craft();
+        if (!craft.enabled()) {
+            return;
+        }
+        ItemStack template = coreItem.build(null);
+        ShapedRecipe recipe = new ShapedRecipe(recipeKey, template);
+        recipe.shape(craft.shape().toArray(new String[0]));
+        for (var row : craft.ingredients().entrySet()) {
+            recipe.setIngredient(row.getKey(), org.bukkit.Material.matchMaterial(row.getValue()));
+        }
+        Bukkit.addRecipe(recipe);
     }
 
     @Override
     public void onDisable() {
+        if (this.ticker != null) {
+            this.ticker.stop();
+            this.ticker = null;
+        }
         if (this.store != null) {
             this.store.saveNow();
             this.store = null;
         }
         this.messages = null;
         this.coreApi = null;
+        this.config = null;
+        this.coreItem = null;
+        this.recipeKey = null;
     }
 
     public Messages messages() {
@@ -75,5 +118,17 @@ public final class GeneratorPlugin extends JavaPlugin {
 
     public GeneratorStore store() {
         return store;
+    }
+
+    public GeneratorConfig config() {
+        return config;
+    }
+
+    public GeneratorCoreItem coreItem() {
+        return coreItem;
+    }
+
+    public NamespacedKey recipeKey() {
+        return recipeKey;
     }
 }

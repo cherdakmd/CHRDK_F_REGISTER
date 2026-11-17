@@ -45,3 +45,60 @@ generator:
   rebirth-percent-per-rebirth: 5.0
   rebirth-decay: 0.9
   rebirth-bonus-cap-percent: 50.0
+
+  # Крафт ядра на верстаке: форма 3×3 (каждая строка — до 3 символов)
+  # и ингредиенты-материалы. Выключено — ядро не крафтится вовсе.
+  craft:
+    enabled: true
+    shape: [ABA, BCB, ABA]
+    ingredients:
+      A: IRON_INGOT
+      B: COBBLESTONE
+      C: DIAMOND
+
+  # Тиры производства (ровно 7): название в меню, единиц за цикл и таблица
+  # продукции — чем тир выше, тем больше ценностей и редкостей.
+  tiers:
+    - name: Исток
+      units-per-cycle: 1
+      drops:
+        - {material: COBBLESTONE, weight: 6}
+        - {material: CLAY_BALL, weight: 2}
+        - {material: NETHERRACK, weight: 1}
+    - name: Смесь
+      units-per-cycle: 1
+      drops:
+        - {material: COBBLESTONE, weight: 4}
+        - {material: CLAY_BALL, weight: 2}
+        - {material: GRAVEL, weight: 1}
+    - name: Руда
+      units-per-cycle: 2
+      drops:
+        - {material: RAW_IRON, weight: 2}
+        - {material: RAW_COPPER, weight: 2}
+        - {material: COAL, weight: 1}
+    - name: Жила
+      units-per-cycle: 2
+      drops:
+        - {material: RAW_IRON, weight: 3}
+        - {material: RAW_GOLD, weight: 2}
+        - {material: REDSTONE, weight: 1}
+    - name: Глубина
+      units-per-cycle: 3
+      drops:
+        - {material: RAW_GOLD, weight: 3}
+        - {material: LAPIS_LAZULI, weight: 1}
+        - {material: AMETHYST_SHARD, weight: 1}
+    - name: Пучина
+      units-per-cycle: 3
+      drops:
+        - {material: DIAMOND, weight: 2}
+        - {material: EMERALD, weight: 2}
+        - {material: QUARTZ, weight: 1}
+    - name: Сердце
+      units-per-cycle: 4
+      drops:
+        - {material: DIAMOND, weight: 3}
+        - {material: NETHERITE_INGOT, weight: 2}
+        - {material: NETHER_STAR, weight: 1, rare: true}
+        - {material: END_CRYSTAL, weight: 1, rare: true}

@@ -58,7 +58,8 @@ public final class GeneratorStore {
 
     /** Неизменяемый снимок записи для чтения (GUI, PAPI, команды). */
     public record Entry(UUID owner, UUID coreItem, String world, int x, int y, int z,
-                        int tier, Map<String, Integer> modules, long bunker, long lastCalcMillis) {
+                        int tier, Map<String, Integer> modules, long bunker, long lastCalcMillis,
+                        int rebirths, long fuelUsedMs) {
         public Entry {
             modules = Map.copyOf(modules);
         }
@@ -88,6 +89,8 @@ public final class GeneratorStore {
         Map<String, Integer> modules = new LinkedHashMap<>();
         long bunker;
         long lastCalcMillis;
+        int rebirths;
+        long fuelUsedMs;
     }
 
     private static final Gson JSON = new GsonBuilder().setPrettyPrinting().create();
@@ -146,6 +149,11 @@ public final class GeneratorStore {
                 for (String key : List.of("tier", "bunker", "lastCalcMillis", "x", "y", "z")) {
                     number(player.get(key));
                 }
+                for (String key : List.of("rebirths", "fuelUsedMs")) {
+                    if (player.has(key) && !player.get(key).isJsonNull()) {
+                        number(player.get(key));
+                    }
+                }
                 if (!player.get("modules").isJsonObject()) {
                     throw new IOException("generator modules");
                 }
@@ -191,7 +199,8 @@ public final class GeneratorStore {
             UUID owner = entry.getKey();
             Row row = entry.getValue();
             if (owner == null || row == null || row.tier < 1 || row.tier > MAX_TIER
-                    || row.bunker < 0 || row.lastCalcMillis < 0 || row.modules == null) {
+                    || row.bunker < 0 || row.lastCalcMillis < 0 || row.modules == null
+                    || row.rebirths < 0 || row.fuelUsedMs < 0) {
                 throw new IllegalArgumentException("generator entry");
             }
             for (var module : row.modules.entrySet()) {
@@ -278,7 +287,7 @@ public final class GeneratorStore {
 
     private static Entry snapshot(UUID owner, Row row) {
         return new Entry(owner, row.coreItem, row.world, row.x, row.y, row.z,
-                row.tier, row.modules, row.bunker, row.lastCalcMillis);
+                row.tier, row.modules, row.bunker, row.lastCalcMillis, row.rebirths, row.fuelUsedMs);
     }
 
     /**
@@ -428,8 +437,27 @@ public final class GeneratorStore {
         row.bunker = 0L;
         row.tier = 1;
         row.modules.clear();
+        if (row.rebirths < Integer.MAX_VALUE) {
+            row.rebirths++;
+        }
         dirty = true;
         return handed;
+    }
+
+    /** Расход топлива текущего ведра, миллисекунд работы (сбрасывается при замене лавы). */
+    public synchronized void setFuelUsedMs(UUID owner, long fuelUsedMs) {
+        writable();
+        if (fuelUsedMs < 0) {
+            throw new IllegalArgumentException("generator fuel: " + fuelUsedMs);
+        }
+        Row row = row(owner);
+        if (row == null) {
+            throw new IllegalStateException("generator missing row");
+        }
+        if (row.fuelUsedMs != fuelUsedMs) {
+            row.fuelUsedMs = fuelUsedMs;
+            dirty = true;
+        }
     }
 
     public synchronized boolean isDirty() {
