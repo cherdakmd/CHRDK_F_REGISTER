@@ -1,18 +1,18 @@
 package ru.cherdakmd.chrdkgenerator;
 
-import net.kyori.adventure.text.Component;
-import org.bukkit.Bukkit;
-import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
-import ru.cherdakmd.chrdkregister.Messages;
 
 import java.util.List;
+import java.util.Locale;
 
-/** Команда /generator (alias /gen): статус личного генератора, снятие бункера. */
+/**
+ * Команда /generator (alias /gen): единое окно генератора, снятие ядра
+ * с подтверждением, покупка улучшений (п.31, §9).
+ */
 public final class GeneratorCommand implements CommandExecutor, TabCompleter {
 
     private final GeneratorPlugin plugin;
@@ -31,56 +31,35 @@ public final class GeneratorCommand implements CommandExecutor, TabCompleter {
             plugin.messages().send(player, "no-permission");
             return true;
         }
-        if (args.length > 0 && "take".equalsIgnoreCase(args[0])) {
-            // Снятие с подтверждением — шаг 5 (EconomyConfirmations TTL 30s).
-            plugin.messages().send(player, "take-not-ready");
+        if (args.length == 0) {
+            plugin.gui().open(player);
             return true;
         }
-        if (args.length > 0 && "upgrade".equalsIgnoreCase(args[0])) {
-            if (args.length != 2) {
-                plugin.messages().send(player, "usage");
-                return true;
+        switch (args[0].toLowerCase(Locale.ROOT)) {
+            case "take" -> {
+                GeneratorTake.Result result = plugin.take().request(player);
+                switch (result.status()) {
+                    case NO_GENERATOR -> plugin.messages().send(player, "take-none");
+                    case PENDING -> plugin.messages().send(player, "take-confirm");
+                    case DONE -> plugin.messages().send(player, "take-ok",
+                            "bunker", String.valueOf(result.units()));
+                }
             }
-            switch (args[1].toLowerCase(java.util.Locale.ROOT)) {
-                case "tier" -> plugin.upgrades().upgradeTier(player);
-                case "speed", "capacity", "luck" -> plugin.upgrades().upgradeModule(player, args[1].toLowerCase(java.util.Locale.ROOT));
-                case "chunk" -> plugin.upgrades().buyChunk(player);
-                default -> plugin.messages().send(player, "usage");
+            case "upgrade" -> {
+                if (args.length != 2) {
+                    plugin.messages().send(player, "usage");
+                    return true;
+                }
+                switch (args[1].toLowerCase(Locale.ROOT)) {
+                    case "tier" -> plugin.upgrades().upgradeTier(player);
+                    case "speed", "capacity", "luck" ->
+                            plugin.upgrades().upgradeModule(player, args[1].toLowerCase(Locale.ROOT));
+                    case "chunk" -> plugin.upgrades().buyChunk(player);
+                    default -> plugin.messages().send(player, "usage");
+                }
             }
-            return true;
+            default -> plugin.messages().send(player, "usage");
         }
-        if (args.length > 0) {
-            plugin.messages().send(player, "usage");
-            return true;
-        }
-        GeneratorStore.Entry entry = plugin.store().entry(player.getUniqueId());
-        if (entry == null) {
-            plugin.messages().send(player, "status-none");
-            return true;
-        }
-        if (!entry.installed()) {
-            plugin.messages().send(player, "status-carried");
-            return true;
-        }
-        String state = "state-working";
-        World world = Bukkit.getWorld(entry.world());
-        if (world == null || !world.isChunkLoaded(entry.x() >> 4, entry.z() >> 4)) {
-            state = "state-unloaded";
-        } else {
-            state = GeneratorCells.stateKey(GeneratorChamber.scan(
-                    GeneratorCells.scan(world, entry.x(), entry.y(), entry.z())).state());
-        }
-        long capacity = (long) GeneratorMath.bunkerCapacity(plugin.config().bunkerBase(),
-                entry.modules().getOrDefault("capacity", 0)) * plugin.config().offlineHours();
-        int speed = entry.modules().getOrDefault("speed", 0);
-        Component line = plugin.messages().get("status-line",
-                "tier", String.valueOf(entry.tier()),
-                "tier_name", plugin.config().tier(entry.tier()).name(),
-                "bunker", String.valueOf(entry.bunker()),
-                "capacity", String.valueOf(capacity),
-                "rate", String.valueOf(GeneratorMath.cycleSeconds(plugin.config().cycleSeconds(), speed)),
-                "state", Messages.trusted(plugin.messages().raw(state)));
-        player.sendMessage(line);
         return true;
     }
 
@@ -91,11 +70,11 @@ public final class GeneratorCommand implements CommandExecutor, TabCompleter {
         }
         if (args.length == 1) {
             return List.of("take", "upgrade").stream()
-                    .filter(s -> s.startsWith(args[0].toLowerCase(java.util.Locale.ROOT))).toList();
+                    .filter(s -> s.startsWith(args[0].toLowerCase(Locale.ROOT))).toList();
         }
         if (args.length == 2 && "upgrade".equalsIgnoreCase(args[0])) {
             return List.of("tier", "speed", "capacity", "luck", "chunk").stream()
-                    .filter(s -> s.startsWith(args[1].toLowerCase(java.util.Locale.ROOT))).toList();
+                    .filter(s -> s.startsWith(args[1].toLowerCase(Locale.ROOT))).toList();
         }
         return List.of();
     }

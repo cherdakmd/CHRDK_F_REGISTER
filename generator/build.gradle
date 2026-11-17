@@ -19,6 +19,10 @@ repositories {
         name = 'papermc'
         url = 'https://repo.papermc.io/repository/maven-public/'
     }
+    maven {
+        name = 'placeholderapi'
+        url = 'https://repo.extendedclip.com/content/repositories/placeholderapi/'
+    }
 }
 
 dependencies {
@@ -28,6 +32,11 @@ dependencies {
     // Приваты CHRDK_Claims: установка ядра только в свой чанк (soft-dep).
     compileOnly project(':claims')
     compileOnly "com.google.code.gson:gson:2.11.0"
+    // PlaceholderAPI — мягкая интеграция: в рантайме плагина может не быть.
+    // CI: официальный GitHub release той же версии, проверенный prepare_papi.py (compileOnly, не упаковка).
+    compileOnly(rootProject.findProperty('chrdk.papiJar')
+            ? files(rootProject.file(rootProject.property('chrdk.papiJar')))
+            : "me.clip:placeholderapi:2.12.3")
 
     testImplementation "org.purpurmc.purpur:purpur-api:${project.purpur_api_version}"
     // Классы ядра нужно и тестам: хранилища пишут файлы через SafeJsonWriter.

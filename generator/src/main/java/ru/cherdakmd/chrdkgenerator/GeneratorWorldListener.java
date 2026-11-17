@@ -1,9 +1,11 @@
 package ru.cherdakmd.chrdkgenerator;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Keyed;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -156,39 +158,29 @@ public final class GeneratorWorldListener implements Listener {
         }
         GeneratorStore.Entry before = plugin.store().entry(owner);
         long units = plugin.store().remove(owner, System.currentTimeMillis());
-        coreAt.remove(key(event.getBlock()));
-        event.getBlock().setType(Material.AIR, false);
-        player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 0.6f);
-        if (before != null && before.coreItem() != null) {
-            player.getInventory().addItem(plugin.coreItem().build(before.coreItem()));
-            giveBunker(player, before, Math.max(0L, units));
-        }
+        removeCore(player, before, Math.max(0L, units));
         plugin.messages().send(player, "break-ok", "bunker", String.valueOf(Math.max(0L, units)));
     }
 
-    /** Бункер — предметами по таблице тира; излишек — под ноги (принцип выдачи). */
-    private void giveBunker(Player player, GeneratorStore.Entry before, long units) {
-        if (units <= 0) {
+    /**
+     * Снятие ядра владельцем (слом, {@code /gen take}, меню): блок убирается,
+     * бинд снимается, бункер и ядро выдаются предметами.
+     */
+    void removeCore(Player player, GeneratorStore.Entry before, long units) {
+        if (before == null || !before.installed()) {
             return;
         }
-        GeneratorConfig.Tier tier = plugin.config().tier(before.tier());
-        int luck = before.modules().getOrDefault("luck", 0);
-        Map<String, Integer> items = GeneratorDrops.materialize(units, tier.drops(), luck, random);
-        for (var row : items.entrySet()) {
-            Material material = Material.matchMaterial(row.getKey());
-            if (material == null || material.isAir()) {
-                continue;
-            }
-            int remaining = row.getValue();
-            while (remaining > 0) {
-                int take = Math.min(remaining, material.getMaxStackSize());
-                var leftover = player.getInventory().addItem(new ItemStack(material, take));
-                for (ItemStack drop : leftover.values()) {
-                    player.getWorld().dropItemNaturally(player.getLocation(), drop);
-                }
-                remaining -= take;
+        coreAt.remove(new BlockKey(before.world(), before.x(), before.y(), before.z()));
+        World world = Bukkit.getWorld(before.world());
+        if (world != null) {
+            Block block = world.getBlockAt(before.x(), before.y(), before.z());
+            if (block.getType() == Material.LODESTONE) {
+                block.setType(Material.AIR, false);
             }
         }
+        player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 0.6f);
+        GeneratorHandouts.giveCore(player, plugin.coreItem(), before.coreItem());
+        GeneratorHandouts.giveBunker(player, plugin.config(), before, units, random);
     }
 
     /** Взрывы ядро не трогают. */

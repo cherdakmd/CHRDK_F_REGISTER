@@ -12,6 +12,8 @@ import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 import ru.cherdakmd.chrdkregister.api.MoneyLoot;
 import ru.cherdakmd.chrdkregister.api.PaidActions;
 
+import java.util.UUID;
+
 /**
  * CHRDK_Generator — личный генератор ресурсов (п.31): физическая камера с
  * лавой и водой, тиры производства и модули улучшений.
@@ -34,6 +36,11 @@ public final class GeneratorPlugin extends JavaPlugin {
     private MoneyLoot moneyLoot;
     private PaidActions payments;
     private GeneratorUpgrades upgrades;
+    private GeneratorWorldListener worldListener;
+    private GeneratorGui gui;
+    private GeneratorTake take;
+    private GeneratorPlaceholders placeholders;
+    private final java.util.Map<UUID, String> states = new java.util.concurrent.ConcurrentHashMap<>();
 
     @Override
     public void onEnable() {
@@ -79,8 +86,13 @@ public final class GeneratorPlugin extends JavaPlugin {
             return;
         }
         this.upgrades = new GeneratorUpgrades(this);
+        this.take = new GeneratorTake(this);
+        this.gui = new GeneratorGui(this);
+        this.worldListener = new GeneratorWorldListener(this);
         registerCraft();
-        Bukkit.getPluginManager().registerEvents(new GeneratorWorldListener(this), this);
+        Bukkit.getPluginManager().registerEvents(this.worldListener, this);
+        Bukkit.getPluginManager().registerEvents(this.gui, this);
+        Bukkit.getPluginManager().registerEvents(new GeneratorRebirthListener(this), this);
         PluginCommand command = getCommand("generator");
         if (command != null) {
             GeneratorCommand handler = new GeneratorCommand(this);
@@ -95,7 +107,33 @@ public final class GeneratorPlugin extends JavaPlugin {
         }
         this.ticker = new GeneratorTicker(this);
         this.ticker.start();
+        registerPlaceholders();
         getLogger().info("CHRDK_Generator включён: ядро, камера, производство (п.31).");
+    }
+
+    /**
+     * PlaceholderAPI — мягкая зависимость: без плагина аддон работает как
+     * обычно, а с ним отдаёт %chrdkgenerator_tier% и соседние значения.
+     */
+    private void registerPlaceholders() {
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") == null) {
+            return;
+        }
+        try {
+            this.placeholders = new GeneratorPlaceholders(this);
+            this.placeholders.register();
+            getLogger().info("CHRDK_Generator: PlaceholderAPI — доступны %chrdkgenerator_tier|fill|rate|status%.");
+        } catch (RuntimeException | LinkageError error) {
+            getLogger().warning("CHRDK_Generator: PlaceholderAPI не подключился — " + error.getMessage());
+            if (this.placeholders != null) {
+                try {
+                    this.placeholders.unregister();
+                } catch (RuntimeException ignored) {
+                    // Регистрация не удалась — снимать нечего.
+                }
+                this.placeholders = null;
+            }
+        }
     }
 
     /** Рецепт ядра на верстаке; результат — шаблон, идентификатор штампует крафт. */
@@ -119,6 +157,14 @@ public final class GeneratorPlugin extends JavaPlugin {
             this.ticker.stop();
             this.ticker = null;
         }
+        if (this.placeholders != null) {
+            try {
+                this.placeholders.unregister();
+            } catch (RuntimeException ignored) {
+                // Пока выключаемся — не мешаем остановке.
+            }
+            this.placeholders = null;
+        }
         if (this.moneyLoot != null) {
             this.moneyLoot.close();
             this.moneyLoot = null;
@@ -134,6 +180,9 @@ public final class GeneratorPlugin extends JavaPlugin {
         this.recipeKey = null;
         this.payments = null;
         this.upgrades = null;
+        this.worldListener = null;
+        this.gui = null;
+        this.take = null;
     }
 
     public Messages messages() {
@@ -170,5 +219,26 @@ public final class GeneratorPlugin extends JavaPlugin {
 
     public GeneratorUpgrades upgrades() {
         return upgrades;
+    }
+
+    public GeneratorWorldListener worldListener() {
+        return worldListener;
+    }
+
+    public GeneratorGui gui() {
+        return gui;
+    }
+
+    public GeneratorTake take() {
+        return take;
+    }
+
+    /** Кэш состояния камеры: тикер пишет, меню и PAPI читают без чтений мира. */
+    public void publishState(UUID owner, String state) {
+        states.put(owner, state);
+    }
+
+    public String stateOf(UUID owner) {
+        return states.getOrDefault(owner, "state-unloaded");
     }
 }

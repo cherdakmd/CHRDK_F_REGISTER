@@ -71,6 +71,8 @@ final class GeneratorTicker {
                 }
                 if (entry.installed()) {
                     tickOne(owner, entry, now);
+                } else {
+                    plugin.publishState(owner, "state-carried");
                 }
             } catch (RuntimeException exception) {
                 plugin.getLogger().warning("[CHRDK_Generator] сбой цикла для " + owner
@@ -103,6 +105,7 @@ final class GeneratorTicker {
         World world = Bukkit.getWorld(entry.world());
         if (world == null || !world.isChunkLoaded(entry.x() >> 4, entry.z() >> 4)) {
             // Чанк выгружен: время доберёт офлайн-расчёт при следующем входе.
+            plugin.publishState(owner, "state-unloaded");
             return;
         }
         Block core = world.getBlockAt(entry.x(), entry.y(), entry.z());
@@ -111,6 +114,7 @@ final class GeneratorTicker {
         }
         List<GeneratorChamber.Cell> cells = GeneratorCells.scan(world, entry.x(), entry.y(), entry.z());
         GeneratorChamber.Result chamber = GeneratorChamber.scan(cells);
+        plugin.publishState(owner, GeneratorCells.stateKey(chamber.state()));
         if (!chamber.working()) {
             // Простой сгорает: метка расчёта — сейчас, без начисления.
             plugin.store().addBunker(owner, 0, now);
