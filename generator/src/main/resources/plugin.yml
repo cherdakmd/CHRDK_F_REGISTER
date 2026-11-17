@@ -1,0 +1,24 @@
+name: CHRDK_Generator
+version: ${version}
+main: ru.cherdakmd.chrdkgenerator.GeneratorPlugin
+api-version: '26.3'
+description: "Личный генератор ресурсов: камера с лавой и водой, тиры производства и модули"
+author: cherdakmd
+depend: [CHRDK_Core]
+softdepend: [CHRDK_Skills, CHRDK_Claims]
+commands:
+  generator:
+    description: "Статус и управление личным генератором"
+    aliases: [gen]
+    usage: "/generator [take]"
+  generatoradmin:
+    description: "Администрирование генератора"
+    permission: chrdkgenerator.admin
+    usage: "/generatoradmin <reload>"
+permissions:
+  chrdkgenerator.use:
+    description: "Просмотр статуса и управление своим генератором"
+    default: true
+  chrdkgenerator.admin:
+    description: "Перезагрузка конфига и диагностика"
+    default: op

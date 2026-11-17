@@ -1,0 +1,14 @@
+# CHRDK_Generator — сообщения модуля. Разметка MiniMessage, подстановки — %имя%.
+#
+# Файл обёрнут в секцию messages: — так модуль читается через общий Messages
+# ядра (одна верхняя секция разворачивается в плоские ключи).
+messages:
+  # --- общее ---
+  player-only: "<red>Эта команда доступна только игрокам.</red>"
+  no-permission: "<red>Недостаточно прав.</red>"
+  usage: "<yellow>/generator [take]</yellow>"
+  admin-usage: "<yellow>/generatoradmin <reload></yellow>"
+  reloaded: "<green>Конфиг CHRDK_Generator перезагружен.</green>"
+
+  # --- генератор ---
+  not-ready: "<yellow>Механика генератора появится в следующем релизе: ядро, камера с лавой и водой, тиры и бункер.</yellow>"
