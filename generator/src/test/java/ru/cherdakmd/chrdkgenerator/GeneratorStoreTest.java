@@ -343,4 +343,53 @@ class GeneratorStoreTest {
         store.load();
         assertFalse(store.healthy(), "отрицательный счётчик — карантин");
     }
+
+    @Test
+    void moneyAccumulatesAndPayoutIsAtomic(@TempDir Path dir) throws Exception {
+        GeneratorStore store = ready(dir);
+        UUID owner = UUID.randomUUID();
+        store.install(owner, UUID.randomUUID(), "world", 0, 0, 0, 0L);
+
+        assertEquals(120L, store.addMoney(owner, 120L));
+        assertTrue(store.takePayout(owner, 100L, 20_000L), "выплата списывает и фиксирует день");
+        assertEquals(20L, store.entry(owner).money());
+        assertEquals(20_000L, store.entry(owner).payoutDay());
+        assertFalse(store.takePayout(owner, 10L, 20_000L), "повтор в тот же день запрещён");
+        assertFalse(store.takePayout(owner, 500L, 20_001L), "больше копилки не снять");
+        assertTrue(store.takePayout(owner, 20L, 20_001L), "следующий день — можно");
+        assertThrows(IllegalArgumentException.class, () -> store.addMoney(owner, -1L),
+                "минус в копилке недопустим");
+
+        store.saveNow();
+        GeneratorStore reloaded = newStore(dir);
+        reloaded.load();
+        assertTrue(reloaded.healthy());
+        assertEquals(0L, reloaded.entry(owner).money());
+        assertEquals(20_001L, reloaded.entry(owner).payoutDay());
+    }
+
+    @Test
+    void legacyRowWithoutMoneyLoadsAsZero(@TempDir Path dir) throws Exception {
+        UUID owner = UUID.randomUUID();
+        Files.writeString(dir.resolve("generator.json"), "{\n"
+                + "  \"schema\": 1,\n"
+                + "  \"lineage\": \"" + UUID.randomUUID() + "\",\n"
+                + "  \"registered\": true,\n"
+                + "  \"players\": {\n"
+                + "    \"" + owner + "\": {\n"
+                + "      \"coreItem\": \"" + UUID.randomUUID() + "\",\n"
+                + "      \"world\": \"world\", \"x\": 1, \"y\": 64, \"z\": -1,\n"
+                + "      \"tier\": 2,\n"
+                + "      \"modules\": {},\n"
+                + "      \"bunker\": 5,\n"
+                + "      \"lastCalcMillis\": 1000\n"
+                + "    }\n"
+                + "  }\n"
+                + "}", StandardCharsets.UTF_8);
+        GeneratorStore store = newStore(dir);
+        store.load();
+        assertTrue(store.healthy(), "файлы без денежных полей читаются");
+        assertEquals(0L, store.entry(owner).money());
+        assertEquals(0L, store.entry(owner).payoutDay());
+    }
 }

@@ -59,7 +59,7 @@ public final class GeneratorStore {
     /** Неизменяемый снимок записи для чтения (GUI, PAPI, команды). */
     public record Entry(UUID owner, UUID coreItem, String world, int x, int y, int z,
                         int tier, Map<String, Integer> modules, long bunker, long lastCalcMillis,
-                        int rebirths, long fuelUsedMs) {
+                        int rebirths, long fuelUsedMs, long money, long payoutDay) {
         public Entry {
             modules = Map.copyOf(modules);
         }
@@ -91,6 +91,8 @@ public final class GeneratorStore {
         long lastCalcMillis;
         int rebirths;
         long fuelUsedMs;
+        long money;
+        long payoutDay;
     }
 
     private static final Gson JSON = new GsonBuilder().setPrettyPrinting().create();
@@ -149,7 +151,7 @@ public final class GeneratorStore {
                 for (String key : List.of("tier", "bunker", "lastCalcMillis", "x", "y", "z")) {
                     number(player.get(key));
                 }
-                for (String key : List.of("rebirths", "fuelUsedMs")) {
+                for (String key : List.of("rebirths", "fuelUsedMs", "money", "payoutDay")) {
                     if (player.has(key) && !player.get(key).isJsonNull()) {
                         number(player.get(key));
                     }
@@ -200,7 +202,7 @@ public final class GeneratorStore {
             Row row = entry.getValue();
             if (owner == null || row == null || row.tier < 1 || row.tier > MAX_TIER
                     || row.bunker < 0 || row.lastCalcMillis < 0 || row.modules == null
-                    || row.rebirths < 0 || row.fuelUsedMs < 0) {
+                    || row.rebirths < 0 || row.fuelUsedMs < 0 || row.money < 0 || row.payoutDay < 0) {
                 throw new IllegalArgumentException("generator entry");
             }
             for (var module : row.modules.entrySet()) {
@@ -287,7 +289,8 @@ public final class GeneratorStore {
 
     private static Entry snapshot(UUID owner, Row row) {
         return new Entry(owner, row.coreItem, row.world, row.x, row.y, row.z,
-                row.tier, row.modules, row.bunker, row.lastCalcMillis, row.rebirths, row.fuelUsedMs);
+                row.tier, row.modules, row.bunker, row.lastCalcMillis,
+                row.rebirths, row.fuelUsedMs, row.money, row.payoutDay);
     }
 
     /**
@@ -458,6 +461,59 @@ public final class GeneratorStore {
             row.fuelUsedMs = fuelUsedMs;
             dirty = true;
         }
+    }
+
+    /** Приход/расход денег генератора (дельта может быть отрицательной — выплата). */
+    public synchronized long addMoney(UUID owner, long delta) {
+        writable();
+        Row row = row(owner);
+        if (row == null) {
+            return -1L;
+        }
+        long value = row.money + delta;
+        if (value < 0) {
+            throw new IllegalArgumentException("generator money: " + value);
+        }
+        if (row.money != value) {
+            row.money = value;
+            dirty = true;
+        }
+        return value;
+    }
+
+    /** День последней идемпотентной выплаты (0 — ещё не платили). */
+    public synchronized void setPayoutDay(UUID owner, long payoutDay) {
+        writable();
+        if (payoutDay < 0) {
+            throw new IllegalArgumentException("generator payout day: " + payoutDay);
+        }
+        Row row = row(owner);
+        if (row == null) {
+            throw new IllegalStateException("generator missing row");
+        }
+        if (row.payoutDay != payoutDay) {
+            row.payoutDay = payoutDay;
+            dirty = true;
+        }
+    }
+
+    /**
+     * Итог успешной выплаты: деньги списываются и день фиксируется одной
+     * записью — рестарт между списанием и отметкой дня невозможен.
+     */
+    public synchronized boolean takePayout(UUID owner, long amount, long day) {
+        writable();
+        if (amount < 0 || day < 0) {
+            throw new IllegalArgumentException("generator payout: " + amount + "/" + day);
+        }
+        Row row = row(owner);
+        if (row == null || row.money < amount || row.payoutDay >= day) {
+            return false;
+        }
+        row.money -= amount;
+        row.payoutDay = day;
+        dirty = true;
+        return true;
     }
 
     public synchronized boolean isDirty() {

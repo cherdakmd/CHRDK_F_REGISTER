@@ -20,6 +20,13 @@ final class GeneratorDrops {
     record Drop(String material, int weight, boolean rare) {
     }
 
+    /**
+     * Денежная порция тира: шанс на единицу продукции и кратность (₽).
+     * Отсутствие секции {@code money} у тира — денег нет (тиры 1–4).
+     */
+    record Money(double chance, int portion) {
+    }
+
     private GeneratorDrops() {
     }
 
@@ -67,5 +74,26 @@ final class GeneratorDrops {
             out.merge(roll(drops, luckLevel, random), 1, Integer::sum);
         }
         return out;
+    }
+
+    /**
+     * Денежная выдача за {@code units} единиц продукции: на каждую — независимый
+     * бросок шанса; удача умножает кратность порции (+10% за уровень).
+     */
+    static long money(Money money, int units, int luckLevel, Random random) {
+        if (units < 0) {
+            throw new IllegalArgumentException("generator units: " + units);
+        }
+        if (money == null || money.chance() <= 0 || money.portion() <= 0) {
+            return 0L;
+        }
+        long total = 0;
+        int portion = Math.max(1, (int) Math.round(money.portion() * (1.0 + Math.max(0, luckLevel) / 10.0)));
+        for (int i = 0; i < units; i++) {
+            if (random.nextDouble() < money.chance()) {
+                total += portion;
+            }
+        }
+        return total;
     }
 }

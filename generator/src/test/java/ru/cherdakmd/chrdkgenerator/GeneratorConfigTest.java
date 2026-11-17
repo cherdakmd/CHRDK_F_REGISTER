@@ -50,6 +50,27 @@ class GeneratorConfigTest {
                 config.tiers().stream().map(GeneratorConfig.Tier::unitsPerCycle).toList());
         assertEquals(4, config.tier(7).drops().size());
         assertTrue(config.tier(7).drops().stream().filter(GeneratorDrops.Drop::rare).count() == 2);
+
+        assertEquals(null, config.tier(4).money(), "деньги только с тира 5");
+        assertEquals(0.15, config.tier(5).money().chance());
+        assertEquals(1.0, config.tier(7).money().chance(), "тир 7 — деньги регулярно");
+        assertEquals(4, config.tier(7).money().portion());
+
+        assertEquals(384, config.payoutBase());
+        assertEquals(64, config.payoutPerTier());
+        assertEquals(32, config.payoutPerRankStep());
+        assertEquals(4096, config.payoutHardMax());
+
+        assertEquals(GeneratorConfig.TIERS - 1, config.tierCosts().size());
+        assertEquals(5_000, config.tierCosts().get(0).money());
+        assertEquals(25_000, config.tierCosts().get(1).money());
+        assertEquals("IRON_INGOT", config.tierCosts().get(1).resources().get(0).material());
+        assertEquals(256, config.tierCosts().get(1).resources().get(0).amount());
+        assertEquals(120_000, config.tierCosts().get(3).money());
+        assertEquals(GeneratorStore.MAX_LEVEL, config.moduleCosts().size());
+        assertEquals(0, config.moduleCosts().get(0).money(), "низкие уровни — ресурсы");
+        assertEquals(75_000, config.moduleCosts().get(4).money(), "высшие уровни — деньги");
+        assertEquals(50_000, config.chunkCost().money());
     }
 
     @Test void malformedGeneratorSectionIsRejected() {
@@ -76,6 +97,21 @@ class GeneratorConfigTest {
 
         YamlConfiguration missing = new YamlConfiguration();
         assertThrows(IllegalArgumentException.class, () -> GeneratorConfig.load(missing), "нет секции generator");
+
+        YamlConfiguration shortTiers = resource();
+        shortTiers.set("generator.upgrades.tiers", List.of(Map.of("money", 1)));
+        assertThrows(IllegalArgumentException.class, () -> GeneratorConfig.load(shortTiers), "мало цен тиров");
+
+        YamlConfiguration emptyCost = resource();
+        emptyCost.set("generator.upgrades.chunk", Map.of("money", 0, "resources", List.of()));
+        assertThrows(IllegalArgumentException.class, () -> GeneratorConfig.load(emptyCost), "пустая цена");
+
+        YamlConfiguration badMoney = resource();
+        badMoney.set("generator.upgrades.modules",
+                List.of(Map.of("money", -5, "resources", List.of()), Map.of("money", 1, "resources", List.of()),
+                        Map.of("money", 1, "resources", List.of()), Map.of("money", 1, "resources", List.of()),
+                        Map.of("money", 1, "resources", List.of())));
+        assertThrows(IllegalArgumentException.class, () -> GeneratorConfig.load(badMoney), "отрицательная цена");
     }
 
     private static List<Object> tiersWithFirstDrop(String material) {

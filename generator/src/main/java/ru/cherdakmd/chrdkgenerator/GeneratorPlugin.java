@@ -9,6 +9,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import ru.cherdakmd.chrdkregister.ConfigUpgrader;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
+import ru.cherdakmd.chrdkregister.api.MoneyLoot;
+import ru.cherdakmd.chrdkregister.api.PaidActions;
 
 /**
  * CHRDK_Generator — личный генератор ресурсов (п.31): физическая камера с
@@ -29,6 +31,9 @@ public final class GeneratorPlugin extends JavaPlugin {
     private GeneratorCoreItem coreItem;
     private NamespacedKey recipeKey;
     private GeneratorTicker ticker;
+    private MoneyLoot moneyLoot;
+    private PaidActions payments;
+    private GeneratorUpgrades upgrades;
 
     @Override
     public void onEnable() {
@@ -57,6 +62,23 @@ public final class GeneratorPlugin extends JavaPlugin {
         }
         this.coreItem = new GeneratorCoreItem(this);
         this.recipeKey = new NamespacedKey(this, "core");
+        try {
+            this.moneyLoot = new MoneyLoot(this, this::coreApi, this::messages, "generator-payouts");
+        } catch (RuntimeException error) {
+            getLogger().severe("денежный источник generator-payouts недоступен; данные не сброшены: "
+                    + error.getMessage());
+            Bukkit.getPluginManager().disablePlugin(this);
+            return;
+        }
+        try {
+            this.payments = new PaidActions(this, this::coreApi, this::messages, "generator-upgrades", true);
+        } catch (Exception error) {
+            getLogger().severe("платёжный протокол generator-upgrades недоступен; данные не сброшены: "
+                    + error.getMessage());
+            Bukkit.getPluginManager().disablePlugin(this);
+            return;
+        }
+        this.upgrades = new GeneratorUpgrades(this);
         registerCraft();
         Bukkit.getPluginManager().registerEvents(new GeneratorWorldListener(this), this);
         PluginCommand command = getCommand("generator");
@@ -97,6 +119,10 @@ public final class GeneratorPlugin extends JavaPlugin {
             this.ticker.stop();
             this.ticker = null;
         }
+        if (this.moneyLoot != null) {
+            this.moneyLoot.close();
+            this.moneyLoot = null;
+        }
         if (this.store != null) {
             this.store.saveNow();
             this.store = null;
@@ -106,6 +132,8 @@ public final class GeneratorPlugin extends JavaPlugin {
         this.config = null;
         this.coreItem = null;
         this.recipeKey = null;
+        this.payments = null;
+        this.upgrades = null;
     }
 
     public Messages messages() {
@@ -130,5 +158,17 @@ public final class GeneratorPlugin extends JavaPlugin {
 
     public NamespacedKey recipeKey() {
         return recipeKey;
+    }
+
+    public MoneyLoot moneyLoot() {
+        return moneyLoot;
+    }
+
+    public PaidActions payments() {
+        return payments;
+    }
+
+    public GeneratorUpgrades upgrades() {
+        return upgrades;
     }
 }
