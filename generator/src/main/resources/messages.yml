@@ -27,14 +27,56 @@ messages:
   break-protected: "<red>Ядро может сломать только владелец.</red>"
   break-ok: "<green>Ядро снято. Выдано из бункера: %bunker%.</green>"
   status-none: "<yellow>У вас нет генератора. Скрафтите ядро на верстаке.</yellow>"
-  status-carried: "<yellow>Ядро у вас в руках — поставьте в свой приват.</yellow>"
-  status-line: "<green>Генератор</green> <yellow>%tier_name%</yellow> <gray>(тир %tier%)</gray> <dark_gray>|</dark_gray> бункер <white>%bunker%</white>/<white>%capacity%</white> <dark_gray>|</dark_gray> цикл <white>%rate%</white>с <dark_gray>|</dark_gray> %state%"
   state-working: "<green>работает</green>"
   state-no-lava: "<red>нет лавы</red>"
   state-no-water: "<red>нет воды</red>"
   state-no-cells: "<red>нет ячеек</red>"
   state-unloaded: "<gray>чанк не загружен</gray>"
-  take-not-ready: "<yellow>Снятие с подтверждением появится позже; пока снимите ядро, сломав его.</yellow>"
+  state-carried: "<yellow>ядро переносится</yellow>"
+
+  # --- меню /gen ---
+  menu-title: "<dark_gray><bold>Генератор</bold>"
+  menu-status: "<green>Статус: %state%"
+  menu-status-lore:
+    - "<gray>Камера: лава- и водоисточники по соседству с ядром.</gray>"
+    - "<gray>Продукция капает в бункер; забор — кнопкой бункера.</gray>"
+  menu-tier: "<yellow>Тир %tier%: %tier_name%"
+  menu-tier-lore:
+    - "<gray>Единиц за цикл: %units%.</gray>"
+    - "<gray>С тира 5 шансуют деньги, с тира 7 — регулярно.</gray>"
+  menu-bunker: "<gold>Бункер: %bunker% / %capacity% (%fill%%)"
+  menu-bunker-lore:
+    - "<gray>ЛКМ — забрать всё предметами.</gray>"
+    - "<gray>Лишнее сгорает: забирайте вовремя.</gray>"
+  menu-rebirth: "<light_purple>Перерождений: %count% <gray>(бонус +%bonus%%)</gray>"
+  menu-rebirth-lore:
+    - "<gray>Перерождение персонажа сбрасывает тиры и модули,</gray>"
+    - "<gray>ядро остаётся, бункер выдаётся. Бонус растёт до +50%.</gray>"
+  menu-upgrade-tier: "<green>Улучшить тир"
+  menu-upgrade-lore:
+    - "<gray>Цена: %cost%</gray>"
+    - "<gray>ЛКМ — купить (деньги сжигаются).</gray>"
+  menu-module: "<green>%module%: уровень %level%"
+  menu-module-lore:
+    - "<gray>Цена следующего: %cost%</gray>"
+    - "<gray>Потолок: %max%. ЛКМ — купить.</gray>"
+  menu-chunk: "<green>Модуль «Чанк»"
+  menu-chunk-lore:
+    - "<gray>Цена: %cost%</gray>"
+    - "<gray>Чанк с ядром грузится всегда. ЛКМ — купить.</gray>"
+  menu-take: "<red>Снять генератор"
+  menu-take-lore:
+    - "<gray>Ядро вернётся предметом, бункер выдастся.</gray>"
+    - "<gray>ЛКМ дважды: подтверждение живёт 30 секунд.</gray>"
+  menu-close: "<gray>Закрыть</gray>"
+
+  # --- снятие и выдачи ---
+  take-none: "<yellow>Генератор не установлен — снимать нечего.</yellow>"
+  take-confirm: "<yellow>Повторите снятие в течение 30 секунд, чтобы снять генератор.</yellow>"
+  take-ok: "<green>Генератор снят: выдано из бункера %bunker%, ядро возвращено.</green>"
+  bunker-empty: "<yellow>Бункер пуст.</yellow>"
+  bunker-withdrawn: "<green>Выдано из бункера: %bunker%.</green>"
+  rebirth-done: "<light_purple>Генератор переродился (№%count%): выдано %bunker%, тиры и модули сброшены. Бонус производства: +%bonus%%.</light_purple>"
 
   # --- улучшения ---
   upgrade-name-tier: "Тир"

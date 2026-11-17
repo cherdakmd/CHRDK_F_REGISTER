@@ -5,7 +5,7 @@ api-version: '26.3'
 description: "Личный генератор ресурсов: камера с лавой и водой, тиры производства и модули"
 author: cherdakmd
 depend: [CHRDK_Core]
-softdepend: [CHRDK_Skills, CHRDK_Claims]
+softdepend: [CHRDK_Skills, CHRDK_Claims, PlaceholderAPI]
 commands:
   generator:
     description: "Статус и управление личным генератором"

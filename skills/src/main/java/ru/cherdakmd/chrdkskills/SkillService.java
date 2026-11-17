@@ -311,6 +311,9 @@ public final class SkillService {
         player.getWorld().spawnParticle(org.bukkit.Particle.TOTEM_OF_UNDYING, location, 160, 1.0, 1.2, 1.0, 0.18);
         player.getWorld().playSound(location, org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.5f);
         grantMilestoneRewards(player, count);
+        // Аддоны со своим «перерождением» (генератор п.31) сбрасываются по событию.
+        Bukkit.getPluginManager().callEvent(
+                new ru.cherdakmd.chrdkregister.api.events.RebirthEvent(player, count));
         return RebirthResult.DONE;
     }
 
