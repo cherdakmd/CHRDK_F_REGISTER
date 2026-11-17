@@ -66,8 +66,8 @@
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "generator": {
-      "reason": "Проверено шаг 5: единое окно /gen (54 слота: статус камеры, тир, бункер с «забрать всё», улучшения ЛКМ, снятие ядра), /gen take с подтверждением EconomyConfirmations TTL 30с, PAPI %chrdkgenerator_tier|fill|rate|status% (ответы из памяти), перерождение через RebirthEvent навыков (сброс тиров/модулей, бункер выдаётся, бонус растёт).",
-      "sources": "6e7f37a147ca7c710c20f18cb04041a35752409f51647f5a015e57f7b4059f5e",
+      "reason": "Проверено шаг 5 (правки теста/сборки): окно /gen (54 слота: статус камеры, тир, бункер «забрать всё», улучшения ЛКМ, снятие ядра), /gen take с подтверждением 30с (EconomyConfirmations, сессия gen-take), PAPI %chrdkgenerator_tier|fill|rate|status% из памяти, перерождение через RebirthEvent навыков (сброс тиров/модулей, бункер выдаётся, бонус растёт).",
+      "sources": "f882e5161dba5fd87346f74def979f93e7708b85ca005237a0523d377ca45e7a",
       "text": "d14beadde0fb92682a31cdc2d8c31377768e6d942117fb1b6cd414f828c29fd7"
     },
     "goals": {

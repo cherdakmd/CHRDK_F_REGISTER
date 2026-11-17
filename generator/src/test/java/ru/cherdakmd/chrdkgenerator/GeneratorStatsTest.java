@@ -31,8 +31,8 @@ class GeneratorStatsTest {
         assertEquals(0, GeneratorStats.tier(null));
         assertEquals(3, GeneratorStats.tier(entry(3, Map.of(), 0)));
         assertEquals(30, GeneratorStats.cycleSeconds(entry(1, Map.of(), 0), config));
-        assertEquals(24, GeneratorStats.cycleSeconds(entry(1, Map.of("speed", 5), 0), config),
-                "скорость 5: 30×(1−0.4) = 24 с");
+        assertEquals(18, GeneratorStats.cycleSeconds(entry(1, Map.of("speed", 5), 0), config),
+                "скорость 5: 30×(1−0.40) = 18 с");
     }
 
     @Test void fillPercentUsesCapacityTimesOfflineHours() {
