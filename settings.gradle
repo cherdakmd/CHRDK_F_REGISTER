@@ -38,3 +38,4 @@ include 'vk'
 
 include 'disasters'
 include 'mobs'
+include 'generator'

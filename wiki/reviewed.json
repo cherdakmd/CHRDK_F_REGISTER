@@ -65,6 +65,11 @@
       "sources": "f99d0b9ff1904ee36908410cfa07efc5b77726816ffbe284e54dd1769733ba6c",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
+    "generator": {
+      "reason": "Новая страница генератора (п.31): скелет модуля сверен с дизайном docs/design/GENERATOR.md, формулы и правила описаны верно",
+      "sources": "caca078b2d7267c22d09f737815857aca0aee2853d89f81b4192827a7b439a6e",
+      "text": "70386ea5be44f4877cc028a8523e885d6d8f3e550660a2f9f9ba374eea26dabd"
+    },
     "goals": {
       "reason": "2.0.13 hotfix: журнал наград изолирован по источникам (внутреннее хранение core) — тексты страниц сверены, поведение для игроков не менялось",
       "sources": "45c1a01e0e4009d6fac03b3db77f3bc891ce4ca8d6a40b7473f3779b3da300bb",
