@@ -66,8 +66,8 @@
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "generator": {
-      "reason": "Сверка после правки core (п.31): пункт меню и авто-сообщение «Генератор», реестр модулей PluginUpdateService 19→20. Правки presentation-слоя и реестра архивов не меняют факты страниц; содержание страниц остаётся верным.",
-      "sources": "50112ceb5aee12016fa14b15a332e856bf7b1b858d2b207b85427a9451a38a02",
+      "reason": "Хранилище generator.json: schema=1/lineage/registered, бинд ядра и анти-дюп, тиры 1-7 и модули (speed/capacity/luck 0-5, chunk 0-1), бункер и метка расчёта, карантин повреждённого файла; факты страницы сверены с дизайном §3/§5/§8.",
+      "sources": "8aebf61d1a9f251c10a50d89f9867f3f372f8f3cabda0e173c693b186b41ba1a",
       "text": "70386ea5be44f4877cc028a8523e885d6d8f3e550660a2f9f9ba374eea26dabd"
     },
     "goals": {
