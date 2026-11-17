@@ -55,7 +55,7 @@ public final class GeneratorGui implements Listener {
     private static final int SLOT_CHUNK = 24;
     private static final int SLOT_TAKE = 49;
 
-    private static final int[] TIER_ICONS = {
+    private static final Material[] TIER_ICONS = {
             Material.COBBLESTONE, Material.CLAY_BALL, Material.RAW_IRON, Material.RAW_GOLD,
             Material.DIAMOND, Material.NETHERITE_INGOT, Material.NETHER_STAR
     };
