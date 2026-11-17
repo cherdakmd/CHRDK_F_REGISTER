@@ -25,11 +25,14 @@ dependencies {
     compileOnly "org.purpurmc.purpur:purpur-api:${project.purpur_api_version}"
     // Ядро CHRDK_F_REGISTER: публичный API и Messages.
     compileOnly project(':')
+    // Приваты CHRDK_Claims: установка ядра только в свой чанк (soft-dep).
+    compileOnly project(':claims')
     compileOnly "com.google.code.gson:gson:2.11.0"
 
     testImplementation "org.purpurmc.purpur:purpur-api:${project.purpur_api_version}"
     // Классы ядра нужно и тестам: хранилища пишут файлы через SafeJsonWriter.
     testImplementation project(':')
+    testImplementation project(':claims')
     testImplementation "com.google.code.gson:gson:2.11.0"
     testImplementation "org.junit.jupiter:junit-jupiter:5.11.3"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"

@@ -274,4 +274,73 @@ class GeneratorStoreTest {
         assertEquals(4, entry.tier());
         assertEquals(3, entry.modules().get("capacity").intValue());
     }
+
+    @Test
+    void rebirthsAndFuelUsedMsSurviveReload(@TempDir Path dir) throws Exception {
+        GeneratorStore store = ready(dir);
+        UUID owner = UUID.randomUUID();
+        store.install(owner, UUID.randomUUID(), "world", 0, 0, 0, 0L);
+        store.rebirth(owner);
+        store.rebirth(owner);
+        store.setFuelUsedMs(owner, 123_456L);
+        store.saveNow();
+
+        GeneratorStore reloaded = newStore(dir);
+        reloaded.load();
+        assertTrue(reloaded.healthy());
+        GeneratorStore.Entry entry = reloaded.entry(owner);
+        assertEquals(2, entry.rebirths(), "перерождения считаются");
+        assertEquals(123_456L, entry.fuelUsedMs(), "топливный счётчик сохраняется");
+        assertThrows(IllegalArgumentException.class, () -> reloaded.setFuelUsedMs(owner, -1L));
+    }
+
+    @Test
+    void legacyRowWithoutNewCountersLoadsAsZero(@TempDir Path dir) throws Exception {
+        UUID owner = UUID.randomUUID();
+        Files.writeString(dir.resolve("generator.json"), "{\n"
+                + "  \"schema\": 1,\n"
+                + "  \"lineage\": \"" + UUID.randomUUID() + "\",\n"
+                + "  \"registered\": true,\n"
+                + "  \"players\": {\n"
+                + "    \"" + owner + "\": {\n"
+                + "      \"coreItem\": \"" + UUID.randomUUID() + "\",\n"
+                + "      \"world\": \"world\", \"x\": 1, \"y\": 64, \"z\": -1,\n"
+                + "      \"tier\": 3,\n"
+                + "      \"modules\": {\"speed\": 2},\n"
+                + "      \"bunker\": 55,\n"
+                + "      \"lastCalcMillis\": 1000\n"
+                + "    }\n"
+                + "  }\n"
+                + "}", StandardCharsets.UTF_8);
+        GeneratorStore store = newStore(dir);
+        store.load();
+        assertTrue(store.healthy(), "старые файлы без счётчиков читаются");
+        GeneratorStore.Entry entry = store.entry(owner);
+        assertEquals(0, entry.rebirths());
+        assertEquals(0L, entry.fuelUsedMs());
+    }
+
+    @Test
+    void negativeCountersQuarantineTheFile(@TempDir Path dir) throws Exception {
+        UUID owner = UUID.randomUUID();
+        Files.writeString(dir.resolve("generator.json"), "{\n"
+                + "  \"schema\": 1,\n"
+                + "  \"lineage\": \"" + UUID.randomUUID() + "\",\n"
+                + "  \"registered\": true,\n"
+                + "  \"players\": {\n"
+                + "    \"" + owner + "\": {\n"
+                + "      \"coreItem\": \"" + UUID.randomUUID() + "\",\n"
+                + "      \"world\": \"world\", \"x\": 1, \"y\": 64, \"z\": -1,\n"
+                + "      \"tier\": 1,\n"
+                + "      \"modules\": {},\n"
+                + "      \"bunker\": 0,\n"
+                + "      \"lastCalcMillis\": 0,\n"
+                + "      \"rebirths\": -1\n"
+                + "    }\n"
+                + "  }\n"
+                + "}", StandardCharsets.UTF_8);
+        GeneratorStore store = newStore(dir);
+        store.load();
+        assertFalse(store.healthy(), "отрицательный счётчик — карантин");
+    }
 }

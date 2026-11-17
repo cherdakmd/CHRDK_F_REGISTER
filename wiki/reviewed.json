@@ -66,9 +66,9 @@
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "generator": {
-      "reason": "Техническая правка компиляции (getDataFolder().toPath()) без изменения поведения и фактов страницы; содержание сверено в предыдущей ревизии.",
-      "sources": "c09c1ec03b4cdd5ad55478e401ba9dcffc1ecdf41d164088140c01b9ebba91ce",
-      "text": "70386ea5be44f4877cc028a8523e885d6d8f3e550660a2f9f9ba374eea26dabd"
+      "reason": "Техническая правка после сверки: isReplaceable() — метод Block; зависимость claims в build.gradle. Поведение не менялось.",
+      "sources": "0d5db4bd023a0d5804654687cf9a28116c10bc55bac5064651b4cb1b817d4eb2",
+      "text": "2b903a100b603b5e9127e8b6541dbe800fa18a05304d20c3bd0ad3e566ddb231"
     },
     "goals": {
       "reason": "Сверка после правки core (п.31): пункт меню и авто-сообщение «Генератор», реестр модулей PluginUpdateService 19→20. Правки presentation-слоя и реестра архивов не меняют факты страниц; содержание страниц остаётся верным.",
