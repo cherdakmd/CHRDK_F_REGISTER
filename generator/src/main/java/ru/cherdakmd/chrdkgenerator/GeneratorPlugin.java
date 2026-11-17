@@ -33,7 +33,7 @@ public final class GeneratorPlugin extends JavaPlugin {
             Bukkit.getPluginManager().disablePlugin(this);
             return;
         }
-        this.store = new GeneratorStore(getDataFolder(), getLogger());
+        this.store = new GeneratorStore(getDataFolder().toPath(), getLogger());
         this.store.load();
         try {
             this.store.markRegistered();
