@@ -11,15 +11,16 @@ import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
  * CHRDK_Generator — личный генератор ресурсов (п.31): физическая камера с
  * лавой и водой, тиры производства и модули улучшений.
  *
- * <p>Скелет модуля: каркас, конфигурация и математика (циклы, бункер, лимиты
- * выдачи, множитель перерождений). Механика мира (ядро, ячейки, GUI) и
- * хранение прогресса — следующими шагами по дизайну
+ * <p>Скелет модуля: каркас, конфигурация, математика (циклы, бункер, лимиты
+ * выдачи, множитель перерождений) и хранилище {@code generator.json}.
+ * Механика мира (ядро, ячейки, GUI) — следующими шагами по дизайну
  * {@code docs/design/GENERATOR.md}.</p>
  */
 public final class GeneratorPlugin extends JavaPlugin {
 
     private Messages messages;
     private ChrdkRegisterApi coreApi;
+    private GeneratorStore store;
 
     @Override
     public void onEnable() {
@@ -31,6 +32,13 @@ public final class GeneratorPlugin extends JavaPlugin {
             getLogger().severe("CHRDK_Core не найден: модуль остановлен без данных");
             Bukkit.getPluginManager().disablePlugin(this);
             return;
+        }
+        this.store = new GeneratorStore(getDataFolder().toPath(), getLogger());
+        this.store.load();
+        try {
+            this.store.markRegistered();
+        } catch (Exception exception) {
+            getLogger().severe("CHRDK_Generator: generator.json не принят диском: " + exception.getMessage());
         }
         PluginCommand command = getCommand("generator");
         if (command != null) {
@@ -44,11 +52,15 @@ public final class GeneratorPlugin extends JavaPlugin {
             admin.setExecutor(handler);
             admin.setTabCompleter(handler);
         }
-        getLogger().info("CHRDK_Generator включён: скелет п.31 (математика и конфигурация).");
+        getLogger().info("CHRDK_Generator включён: скелет п.31 (математика, конфигурация, generator.json).");
     }
 
     @Override
     public void onDisable() {
+        if (this.store != null) {
+            this.store.saveNow();
+            this.store = null;
+        }
         this.messages = null;
         this.coreApi = null;
     }
@@ -59,5 +71,9 @@ public final class GeneratorPlugin extends JavaPlugin {
 
     public ChrdkRegisterApi coreApi() {
         return coreApi;
+    }
+
+    public GeneratorStore store() {
+        return store;
     }
 }
