@@ -36,6 +36,19 @@ public final class GeneratorCommand implements CommandExecutor, TabCompleter {
             plugin.messages().send(player, "take-not-ready");
             return true;
         }
+        if (args.length > 0 && "upgrade".equalsIgnoreCase(args[0])) {
+            if (args.length != 2) {
+                plugin.messages().send(player, "usage");
+                return true;
+            }
+            switch (args[1].toLowerCase(java.util.Locale.ROOT)) {
+                case "tier" -> plugin.upgrades().upgradeTier(player);
+                case "speed", "capacity", "luck" -> plugin.upgrades().upgradeModule(player, args[1].toLowerCase(java.util.Locale.ROOT));
+                case "chunk" -> plugin.upgrades().buyChunk(player);
+                default -> plugin.messages().send(player, "usage");
+            }
+            return true;
+        }
         if (args.length > 0) {
             plugin.messages().send(player, "usage");
             return true;
@@ -73,8 +86,16 @@ public final class GeneratorCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        if (args.length == 1 && sender.hasPermission("chrdkgenerator.use")) {
-            return List.of("take").stream().filter(s -> s.startsWith(args[0].toLowerCase())).toList();
+        if (!sender.hasPermission("chrdkgenerator.use")) {
+            return List.of();
+        }
+        if (args.length == 1) {
+            return List.of("take", "upgrade").stream()
+                    .filter(s -> s.startsWith(args[0].toLowerCase(java.util.Locale.ROOT))).toList();
+        }
+        if (args.length == 2 && "upgrade".equalsIgnoreCase(args[0])) {
+            return List.of("tier", "speed", "capacity", "luck", "chunk").stream()
+                    .filter(s -> s.startsWith(args[1].toLowerCase(java.util.Locale.ROOT))).toList();
         }
         return List.of();
     }

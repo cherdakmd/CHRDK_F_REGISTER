@@ -6,7 +6,7 @@ messages:
   # --- общее ---
   player-only: "<red>Эта команда доступна только игрокам.</red>"
   no-permission: "<red>Недостаточно прав.</red>"
-  usage: "<yellow>/generator [take]</yellow>"
+  usage: "<yellow>/generator [take | upgrade <tier|speed|capacity|luck|chunk>]</yellow>"
   admin-usage: "<yellow>/generatoradmin <reload></yellow>"
   reloaded: "<green>Конфиг CHRDK_Generator перезагружен.</green>"
 
@@ -35,3 +35,21 @@ messages:
   state-no-cells: "<red>нет ячеек</red>"
   state-unloaded: "<gray>чанк не загружен</gray>"
   take-not-ready: "<yellow>Снятие с подтверждением появится позже; пока снимите ядро, сломав его.</yellow>"
+
+  # --- улучшения ---
+  upgrade-name-tier: "Тир"
+  upgrade-name-speed: "Скорость"
+  upgrade-name-capacity: "Ёмкость"
+  upgrade-name-luck: "Удача"
+  upgrade-name-chunk: "Чанк"
+  upgrade-none: "<red>Сначала установите генератор.</red>"
+  upgrade-max: "<yellow>%what%: максимальный уровень.</yellow>"
+  upgrade-no-resources: "<red>Не хватает ресурсов: %need%.</red>"
+  upgrade-ok: "<green>%what% улучшен до уровня %level%.</green>"
+
+  # --- платёжный протокол (PaidActions) ---
+  finance.service-mode: "<red>Оплата требует авторизации, живого игрока в Survival/Adventure; NPC не допускаются.</red>"
+  finance.service-wait: "<yellow>Платёж ожидает сверки. Новые сделки приостановлены. Администратору: /generatoradmin recover.</yellow>"
+  finance.service-insufficient: "<red>Нужно %cost% в банке: сначала /bal. Улучшения оплачиваются только банком.</red>"
+  finance.service-refused: "<red>Операция отклонена. Новое списание/возврат не выполнены.</red>"
+  finance.service-refunding: "<yellow>Улучшение не куплено. Возврат %cost% учтён для /bal; при недоступном банке непогашенная часть сохранена.</yellow>"

@@ -66,9 +66,9 @@
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "generator": {
-      "reason": "Техническая правка после сверки: isReplaceable() — метод Block; зависимость claims в build.gradle. Поведение не менялось.",
-      "sources": "0d5db4bd023a0d5804654687cf9a28116c10bc55bac5064651b4cb1b817d4eb2",
-      "text": "2b903a100b603b5e9127e8b6541dbe800fa18a05304d20c3bd0ad3e566ddb231"
+      "reason": "Техническая правка: usage команды в plugin.yml отражает /gen upgrade (строка в wiki уже описывает эти подкоманды). Поведение не менялось.",
+      "sources": "b46c15eaf8e292bc7d4f14bb6a8d8c1619666363a6158bdd7a53e628ca000350",
+      "text": "7ace1e23d43366996cfd07624539c96389b3f9a169c087bbb845c8d3d0500bc2"
     },
     "goals": {
       "reason": "Сверка после правки core (п.31): пункт меню и авто-сообщение «Генератор», реестр модулей PluginUpdateService 19→20. Правки presentation-слоя и реестра архивов не меняют факты страниц; содержание страниц остаётся верным.",

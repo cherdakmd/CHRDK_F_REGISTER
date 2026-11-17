@@ -7,11 +7,13 @@ import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
 
 /**
@@ -28,6 +30,7 @@ final class GeneratorTicker {
 
     private final GeneratorPlugin plugin;
     private final Map<UUID, Long> lastFx = new HashMap<>();
+    private final Random random = new Random();
     private BukkitTask tickTask;
     private BukkitTask saveTask;
 
@@ -54,18 +57,46 @@ final class GeneratorTicker {
 
     private void tick() {
         long now = System.currentTimeMillis();
+        long day = GeneratorPayouts.epochDay(now);
         for (UUID owner : plugin.store().owners()) {
             GeneratorStore.Entry entry = plugin.store().entry(owner);
-            if (entry == null || !entry.installed()) {
+            if (entry == null) {
                 continue;
             }
             try {
-                tickOne(owner, entry, now);
+                // Выплата денег — до производства: сумма дня детерминирована
+                // при рестарте (повтор ключа payout:<UUID>:<день> безопасен).
+                if (entry.money() > 0 && entry.payoutDay() < day) {
+                    tryPayout(owner, entry, day);
+                }
+                if (entry.installed()) {
+                    tickOne(owner, entry, now);
+                }
             } catch (RuntimeException exception) {
                 plugin.getLogger().warning("[CHRDK_Generator] сбой цикла для " + owner
                         + ": " + exception.getMessage());
             }
         }
+    }
+
+    /** Идемпотентная выплата накопленных денег на /bal, раз в игровой день. */
+    private void tryPayout(UUID owner, GeneratorStore.Entry entry, long day) {
+        Player player = Bukkit.getPlayer(owner);
+        if (player == null || !player.isOnline()) {
+            return;
+        }
+        GeneratorConfig config = plugin.config();
+        int rankStep = plugin.coreApi() == null ? 0 : plugin.coreApi().rankLevel(player.getName());
+        int cap = GeneratorMath.payoutDailyCap(config.payoutBase(), config.payoutPerTier(),
+                entry.tier(), config.payoutPerRankStep(), rankStep, config.payoutHardMax());
+        long amount = GeneratorPayouts.payAmount(entry.money(), cap);
+        if (amount <= 0) {
+            return;
+        }
+        if (!plugin.moneyLoot().accept(player, GeneratorPayouts.eventKey(owner, day), amount)) {
+            return;
+        }
+        plugin.store().takePayout(owner, amount, day);
     }
 
     private void tickOne(UUID owner, GeneratorStore.Entry entry, long now) {
@@ -102,6 +133,17 @@ final class GeneratorTicker {
                 config.offlineHours() * 3_600_000L, room);
         if (settle.units() > 0 || settle.advanceMillis() > 0) {
             plugin.store().addBunker(owner, settle.units(), entry.lastCalcMillis() + settle.advanceMillis());
+        }
+        if (settle.units() > 0) {
+            // Деньги тиров 5–7: мелкие порции по шансу, удача множит кратность.
+            GeneratorDrops.Money moneySpec = config.tier(entry.tier()).money();
+            if (moneySpec != null) {
+                long money = GeneratorDrops.money(moneySpec, (int) settle.units(),
+                        entry.modules().getOrDefault("luck", 0), random);
+                if (money > 0) {
+                    plugin.store().addMoney(owner, money);
+                }
+            }
         }
         if (config.fuelEnabled() && settle.advanceMillis() > 0) {
             long used = entry.fuelUsedMs() + settle.advanceMillis();

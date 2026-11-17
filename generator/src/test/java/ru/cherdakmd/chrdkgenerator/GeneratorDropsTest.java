@@ -46,4 +46,20 @@ class GeneratorDropsTest {
         assertTrue(items.keySet().stream().allMatch(TIER.stream()
                 .map(GeneratorDrops.Drop::material).toList()::contains));
     }
+
+    @Test void moneyRollsByChanceAndLuckScalesPortion() {
+        GeneratorDrops.Money money = new GeneratorDrops.Money(0.5, 2);
+        long total = 0;
+        for (int i = 0; i < 1_000; i++) {
+            total += GeneratorDrops.money(money, 1, 0, new Random(i));
+        }
+        // Шанс 0.5, порция 2: в среднем ≈ 1000 ₽ за 1000 бросков.
+        assertTrue(total > 800 && total < 1_200, "шанс и порция соблюдаются: " + total);
+
+        long lucky = GeneratorDrops.money(new GeneratorDrops.Money(1.0, 3), 10, 5, new Random(1));
+        assertEquals(50, lucky, "удача 5: порция round(3×1.5) = 5 ₽ × 10 единиц");
+
+        assertEquals(0, GeneratorDrops.money(null, 10, 0, new Random(1)), "без money-секции — 0");
+        assertEquals(0, GeneratorDrops.money(money, 0, 0, new Random(1)), "без единиц — 0");
+    }
 }

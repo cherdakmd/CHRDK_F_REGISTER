@@ -27,8 +27,20 @@ public final class GeneratorConfig {
     public record Craft(boolean enabled, List<String> shape, Map<Character, String> ingredients) {
     }
 
-    /** Один тир: название, темп производства и таблица продукции. */
-    public record Tier(String name, int unitsPerCycle, List<GeneratorDrops.Drop> drops) {
+    /** Один тир: название, темп производства, денежная порция и таблица продукции. */
+    public record Tier(String name, int unitsPerCycle, GeneratorDrops.Money money,
+                       List<GeneratorDrops.Drop> drops) {
+    }
+
+    /** Позиция цены улучшения: материал и количество. */
+    public record Resource(String material, int amount) {
+    }
+
+    /** Цена улучшения: деньги (сжигаются) и ресурсы из инвентаря. */
+    public record Cost(long money, List<Resource> resources) {
+        public Cost {
+            resources = List.copyOf(resources);
+        }
     }
 
     private final int cycleSeconds;
@@ -40,13 +52,23 @@ public final class GeneratorConfig {
     private final double rebirthPercentPerRebirth;
     private final double rebirthDecay;
     private final double rebirthBonusCapPercent;
+    private final int payoutBase;
+    private final int payoutPerTier;
+    private final int payoutPerRankStep;
+    private final int payoutHardMax;
     private final Craft craft;
     private final List<Tier> tiers;
+    private final List<Cost> tierCosts;
+    private final List<Cost> moduleCosts;
+    private final Cost chunkCost;
 
     private GeneratorConfig(int cycleSeconds, int bunkerBase, int offlineHours,
                             double offlineEfficiency, boolean fuelEnabled, int cyclesPerBucket,
                             double rebirthPercentPerRebirth, double rebirthDecay,
-                            double rebirthBonusCapPercent, Craft craft, List<Tier> tiers) {
+                            double rebirthBonusCapPercent,
+                            int payoutBase, int payoutPerTier, int payoutPerRankStep, int payoutHardMax,
+                            Craft craft, List<Tier> tiers,
+                            List<Cost> tierCosts, List<Cost> moduleCosts, Cost chunkCost) {
         this.cycleSeconds = cycleSeconds;
         this.bunkerBase = bunkerBase;
         this.offlineHours = offlineHours;
@@ -56,8 +78,15 @@ public final class GeneratorConfig {
         this.rebirthPercentPerRebirth = rebirthPercentPerRebirth;
         this.rebirthDecay = rebirthDecay;
         this.rebirthBonusCapPercent = rebirthBonusCapPercent;
+        this.payoutBase = payoutBase;
+        this.payoutPerTier = payoutPerTier;
+        this.payoutPerRankStep = payoutPerRankStep;
+        this.payoutHardMax = payoutHardMax;
         this.craft = craft;
         this.tiers = List.copyOf(tiers);
+        this.tierCosts = List.copyOf(tierCosts);
+        this.moduleCosts = List.copyOf(moduleCosts);
+        this.chunkCost = chunkCost;
     }
 
     /** Базовый цикл производства, секунды (модуль «Скорость» короче). */
@@ -98,6 +127,22 @@ public final class GeneratorConfig {
         return rebirthBonusCapPercent;
     }
 
+    public int payoutBase() {
+        return payoutBase;
+    }
+
+    public int payoutPerTier() {
+        return payoutPerTier;
+    }
+
+    public int payoutPerRankStep() {
+        return payoutPerRankStep;
+    }
+
+    public int payoutHardMax() {
+        return payoutHardMax;
+    }
+
     public Craft craft() {
         return craft;
     }
@@ -110,6 +155,21 @@ public final class GeneratorConfig {
     /** Тир по номеру 1…7. */
     public Tier tier(int tier) {
         return tiers.get(tier - 1);
+    }
+
+    /** Цены шагов тира (индекс 0 — переход 1→2). */
+    public List<Cost> tierCosts() {
+        return tierCosts;
+    }
+
+    /** Цены уровней модуля (индекс 0 — покупка уровня 1). */
+    public List<Cost> moduleCosts() {
+        return moduleCosts;
+    }
+
+    /** Цена модуля «Чанк» (разовая). */
+    public Cost chunkCost() {
+        return chunkCost;
     }
 
     /** Читает секцию {@code generator:}; любая пустота или мусор — IllegalArgumentException. */
@@ -130,11 +190,29 @@ public final class GeneratorConfig {
         double percentPerRebirth = fraction(root, "rebirth-percent-per-rebirth", 0, Double.MAX_VALUE);
         double decay = fraction(root, "rebirth-decay", 0, 1);
         double bonusCap = fraction(root, "rebirth-bonus-cap-percent", 0, Double.MAX_VALUE);
+        ConfigurationSection payouts = root.getConfigurationSection("payouts");
+        if (payouts == null) {
+            throw new IllegalArgumentException("нет секции generator.payouts");
+        }
+        int payoutBase = positive(payouts, "daily-cap-base");
+        int payoutPerTier = positive(payouts, "daily-cap-per-tier");
+        int payoutPerRankStep = positive(payouts, "daily-cap-per-rank-step");
+        int payoutHardMax = positive(payouts, "daily-cap-hard-max");
         Craft craft = parseCraft(root.getConfigurationSection("craft"));
         List<Tier> tiers = parseTiers(root.getMapList("tiers"));
+        ConfigurationSection upgrades = root.getConfigurationSection("upgrades");
+        if (upgrades == null) {
+            throw new IllegalArgumentException("нет секции generator.upgrades");
+        }
+        List<Cost> tierCosts = parseCosts(upgrades.getMapList("tiers"), "upgrades.tiers", TIERS - 1);
+        List<Cost> moduleCosts = parseCosts(upgrades.getMapList("modules"), "upgrades.modules",
+                GeneratorStore.MAX_LEVEL);
+        Cost chunkCost = parseCost(upgrades.get("chunk"), "upgrades.chunk");
         return new GeneratorConfig(cycleSeconds, bunkerBase, offlineHours,
                 offlineEfficiency, fuelEnabled, cyclesPerBucket,
-                percentPerRebirth, decay, bonusCap, craft, tiers);
+                percentPerRebirth, decay, bonusCap,
+                payoutBase, payoutPerTier, payoutPerRankStep, payoutHardMax,
+                craft, tiers, tierCosts, moduleCosts, chunkCost);
     }
 
     private static double fraction(ConfigurationSection root, String path, double min, double max) {
@@ -209,6 +287,23 @@ public final class GeneratorConfig {
             if (unitsPerCycle <= 0) {
                 throw new IllegalArgumentException("generator.tiers[" + i + "].units-per-cycle: ждём > 0");
             }
+            GeneratorDrops.Money money = null;
+            if (row.get("money") != null) {
+                if (!(row.get("money") instanceof Map<?, ?> moneyRow)) {
+                    throw new IllegalArgumentException("generator.tiers[" + i + "].money: ждём карту");
+                }
+                Object rawChance = moneyRow.get("chance");
+                double chance = rawChance instanceof Number number
+                        ? number.doubleValue() : Double.NaN;
+                if (Double.isNaN(chance) || chance <= 0 || chance > 1) {
+                    throw new IllegalArgumentException("generator.tiers[" + i + "].money.chance: ждём 0..1");
+                }
+                int portion = integer(moneyRow.get("portion"), "tiers[" + i + "].money.portion");
+                if (portion <= 0) {
+                    throw new IllegalArgumentException("generator.tiers[" + i + "].money.portion: ждём > 0");
+                }
+                money = new GeneratorDrops.Money(chance, portion);
+            }
             if (!(row.get("drops") instanceof List<?> dropRows) || dropRows.isEmpty()) {
                 throw new IllegalArgumentException("generator.tiers[" + i + "].drops: пустая таблица");
             }
@@ -225,9 +320,52 @@ public final class GeneratorConfig {
                 boolean rare = Boolean.TRUE.equals(drop.get("rare"));
                 drops.add(new GeneratorDrops.Drop(material, weight, rare));
             }
-            tiers.add(new Tier(name, unitsPerCycle, List.copyOf(drops)));
+            tiers.add(new Tier(name, unitsPerCycle, money, List.copyOf(drops)));
         }
         return tiers;
+    }
+
+    private static List<Cost> parseCosts(List<?> rows, String path, int expected) {
+        if (rows.size() != expected) {
+            throw new IllegalArgumentException("generator." + path + ": ждём ровно " + expected + " цен");
+        }
+        List<Cost> costs = new ArrayList<>();
+        for (int i = 0; i < rows.size(); i++) {
+            costs.add(parseCost(rows.get(i), path + "[" + i + "]"));
+        }
+        return costs;
+    }
+
+    private static Cost parseCost(Object raw, String path) {
+        if (!(raw instanceof Map<?, ?> row)) {
+            throw new IllegalArgumentException("generator." + path + ": ждём карту");
+        }
+        Object rawMoney = row.get("money");
+        long money = rawMoney == null ? 0 : integer(rawMoney, path + ".money");
+        if (money < 0 || money > 1_000_000) {
+            throw new IllegalArgumentException("generator." + path + ".money: ждём 0…1000000");
+        }
+        List<Resource> resources = new ArrayList<>();
+        if (row.get("resources") != null) {
+            if (!(row.get("resources") instanceof List<?> resourceRows)) {
+                throw new IllegalArgumentException("generator." + path + ".resources: ждём список");
+            }
+            for (int i = 0; i < resourceRows.size(); i++) {
+                if (!(resourceRows.get(i) instanceof Map<?, ?> resource)) {
+                    throw new IllegalArgumentException("generator." + path + ".resources[" + i + "]: ждём карту");
+                }
+                String material = material(resource.get("material"));
+                int amount = integer(resource.get("amount"), path + ".resources[" + i + "].amount");
+                if (amount <= 0 || amount > 64 * 36) {
+                    throw new IllegalArgumentException("generator." + path + ".resources[" + i + "].amount: ждём 1…2304");
+                }
+                resources.add(new Resource(material, amount));
+            }
+        }
+        if (money <= 0 && resources.isEmpty()) {
+            throw new IllegalArgumentException("generator." + path + ": цена пуста");
+        }
+        return new Cost(money, resources);
     }
 
     private static String material(Object raw) {
