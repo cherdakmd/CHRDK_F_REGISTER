@@ -108,7 +108,7 @@ public final class GeneratorWorldListener implements Listener {
             return;
         }
         Block target = event.getClickedBlock().getRelative(event.getBlockFace());
-        if (!target.getType().isReplaceable()) {
+        if (!target.isReplaceable()) {
             plugin.messages().send(player, "place-blocked");
             return;
         }
