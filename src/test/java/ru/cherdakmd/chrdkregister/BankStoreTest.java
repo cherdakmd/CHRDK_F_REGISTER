@@ -3,12 +3,17 @@ package ru.cherdakmd.chrdkregister;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+
+import ru.cherdakmd.chrdkregister.storage.StorageIo;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -147,5 +152,62 @@ class BankStoreTest {
         assertEquals(-1L, BankService.parseAmount(null));
         assertNotNull(BankService.format(1_234L));
         assertTrue(BankService.format(1_234L).contains("234"));
+    }
+
+    @Test
+    void saveNowStallKeepsBankAvailableAndRetries(@TempDir Path dir) throws Exception {
+        CountDownLatch gate = new CountDownLatch(1);
+        CountDownLatch started = new CountDownLatch(1);
+        BankStore store = new BankStore(dir, LOGGER, () -> {
+            started.countDown();
+            try {
+                gate.await();
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+            }
+        }, new StorageIo(250L));
+        store.load();
+        UUID steve = UUID.randomUUID();
+        assertEquals(5L, store.deposit(steve, "Steve", 5L));
+        store.saveNow();
+        assertTrue(started.await(5, TimeUnit.SECONDS), "снимок начал записываться");
+        assertTrue(store.available(), "задержка диска на снимке не останавливает банк");
+        assertTrue(store.isDirty(), "снимок остаётся несохранённым и повторится");
+        gate.countDown();
+        store.saveNow();
+        assertFalse(store.isDirty(), "повторный снимок записан");
+    }
+
+    @Test
+    void barrierStallStopsBankInsteadOfFreezingServer(@TempDir Path dir) throws Exception {
+        StorageIo io = new StorageIo(100L);
+        CountDownLatch gate = new CountDownLatch(1);
+        CountDownLatch started = new CountDownLatch(1);
+        Thread blocker = new Thread(() -> {
+            try {
+                io.run(() -> {
+                    started.countDown();
+                    try {
+                        gate.await();
+                    } catch (InterruptedException interrupted) {
+                        Thread.currentThread().interrupt();
+                        throw new IOException("прервано");
+                    }
+                });
+            } catch (IOException ignored) {
+                // таймаут ожидания не прерывает занятую задачу
+            }
+        }, "test-blocker");
+        blocker.setDaemon(true);
+        blocker.start();
+        assertTrue(started.await(5, TimeUnit.SECONDS));
+        BankStore store = new BankStore(dir, LOGGER, () -> { }, io);
+        store.load();
+        UUID owner = UUID.randomUUID();
+        assertFalse(store.importLegacyAuction(UUID.randomUUID(), owner, 5L), "финансовая операция отклоняется");
+        assertFalse(store.available(), "банк остановлен по fail-closed сценарию, а не зависает");
+        gate.countDown();
+        BankStore fresh = store(dir);
+        assertEquals(0L, fresh.balance(owner), "отклонённая запись не попала в файл");
     }
 }

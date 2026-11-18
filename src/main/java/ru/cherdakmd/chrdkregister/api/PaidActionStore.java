@@ -1,6 +1,7 @@
 package ru.cherdakmd.chrdkregister.api;
 
 import com.google.gson.*;
+import ru.cherdakmd.chrdkregister.storage.StorageIo;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
@@ -9,7 +10,10 @@ import java.util.*;
 import java.util.function.BooleanSupplier;
 
 /** API 18. Durable-резерв услуги: READY ещё не вызывался, EXECUTING — исход требует доказательства.
- * Известный отказ увеличивает cumulative refund, а не делает blind deposit/выдачу предметов. */
+ * Известный отказ увеличивает cumulative refund, а не делает blind deposit/выдачу предметов.
+ * Барьер записи (force+atomic replace) выполняется потоком {@link StorageIo} с ограничением
+ * ожидания: диск не ответил за таймаут — операция отклоняется и источник карантинится
+ * (fail-closed до перезапуска), а главный поток сервера продолжает работать. */
 public final class PaidActionStore implements ChargeInventory.Source {
     public enum Phase { READY, EXECUTING }
     public record Action(UUID id, UUID payer, UUID actor, int price, String kind, String payload, Phase phase) { }
@@ -26,12 +30,14 @@ public final class PaidActionStore implements ChargeInventory.Source {
     }
     private final Path file;
     private final ChargeJournal.WriteCheckpoint checkpoint;
+    private final StorageIo io;
     private Data data;
     private boolean healthy = true;
     private BooleanSupplier busy = () -> false;
     public PaidActionStore(Path folder) throws IOException { this(folder, () -> { }); }
-    public PaidActionStore(Path folder, ChargeJournal.WriteCheckpoint checkpoint) throws IOException {
-        file = folder.resolve("paid-actions.json"); this.checkpoint = Objects.requireNonNull(checkpoint);
+    public PaidActionStore(Path folder, ChargeJournal.WriteCheckpoint checkpoint) throws IOException { this(folder, checkpoint, StorageIo.shared()); }
+    public PaidActionStore(Path folder, ChargeJournal.WriteCheckpoint checkpoint, StorageIo io) throws IOException {
+        file = folder.resolve("paid-actions.json"); this.checkpoint = Objects.requireNonNull(checkpoint); this.io = Objects.requireNonNull(io, "io");
         if (!Files.exists(file)) { write(new Data()); return; }
         try {
             if (Files.size(file) > 32L*1024*1024) throw new IllegalArgumentException("source capacity");
@@ -83,16 +89,20 @@ public final class PaidActionStore implements ChargeInventory.Source {
     private void write(Data next) throws IOException {
         if (!healthy) throw new IOException("paid actions quarantined"); validate(next);
         try {
-            Files.createDirectories(file.getParent()); var temp=file.resolveSibling("paid-actions.json.tmp");
             byte[] bytes=JSON.toJson(next).getBytes(StandardCharsets.UTF_8);
             if (bytes.length>32*1024*1024) throw new IllegalArgumentException("source capacity");
-            Files.write(temp,bytes);
-            try (var c=FileChannel.open(temp,StandardOpenOption.WRITE)) { c.force(true); }
-            Files.move(temp,file,StandardCopyOption.ATOMIC_MOVE,StandardCopyOption.REPLACE_EXISTING);
-            checkpoint.afterReplace();
-            try (var c=FileChannel.open(file.getParent(),StandardOpenOption.READ)) { c.force(true); }
+            io.run(() -> writeTo(file, bytes, checkpoint));
             data=next;
         } catch (IOException | RuntimeException error) { healthy=false; throw error; }
+    }
+    /** Durable-замена (временный файл, force, атомарная замена, force каталога); выполняется потоком StorageIo. */
+    private static void writeTo(Path file, byte[] bytes, ChargeJournal.WriteCheckpoint checkpoint) throws IOException {
+        Files.createDirectories(file.getParent()); var temp=file.resolveSibling("paid-actions.json.tmp");
+        Files.write(temp,bytes);
+        try (var c=FileChannel.open(temp,StandardOpenOption.WRITE)) { c.force(true); }
+        Files.move(temp,file,StandardCopyOption.ATOMIC_MOVE,StandardCopyOption.REPLACE_EXISTING);
+        checkpoint.afterReplace();
+        try (var c=FileChannel.open(file.getParent(),StandardOpenOption.READ)) { c.force(true); }
     }
     public synchronized void markRegistered() throws IOException { writable(); var n=copy(); n.registered=true; write(n); }
     public synchronized boolean valuesInitialized() { return data.valuesInitialized; }

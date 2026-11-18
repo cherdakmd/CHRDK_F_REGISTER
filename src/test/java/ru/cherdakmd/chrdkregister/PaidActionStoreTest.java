@@ -6,7 +6,10 @@ import java.nio.file.*;
 import java.io.IOException;
 import java.lang.reflect.Proxy;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+import ru.cherdakmd.chrdkregister.storage.StorageIo;
 import static org.junit.jupiter.api.Assertions.*;
 class PaidActionStoreTest {
     @TempDir Path dir;
@@ -49,6 +52,28 @@ class PaidActionStoreTest {
         var s=registered(); var a=action(); publish(s,a);
         var ambiguous=new PaidActionStore(dir,()->{throw new IOException("after source rename");});
         assertThrows(IOException.class,()->ambiguous.begin(a.id())); assertFalse(ambiguous.healthy());
+        assertEquals(PaidActionStore.Phase.EXECUTING,load().actions().getFirst().phase()); assertFalse(load().refundReady(a.id()));
+    }
+    private static void awaitGate(CountDownLatch gate) throws IOException {
+        try { gate.await(); } catch (InterruptedException e) { Thread.currentThread().interrupt(); throw new IOException("прервано"); }
+    }
+    @Test void diskStallBeforeWriteQuarantinesAndKeepsReservationReady() throws Exception {
+        var s=registered(); var a=action(); publish(s,a);
+        var io=new StorageIo(100L); var gate=new CountDownLatch(1); var started=new CountDownLatch(1);
+        var blocker=new Thread(()->{ try { io.run(()->{ started.countDown(); awaitGate(gate); }); } catch (IOException ignored) { } });
+        blocker.setDaemon(true); blocker.start();
+        assertTrue(started.await(5, TimeUnit.SECONDS));
+        var stalled=new PaidActionStore(dir,()->{ },io);
+        assertThrows(StorageIo.StallException.class,()->stalled.begin(a.id()));
+        assertFalse(stalled.healthy());
+        gate.countDown();
+        assertEquals(PaidActionStore.Phase.READY,load().actions().getFirst().phase());
+    }
+    @Test void stalledBarrierAfterRenameIsAmbiguousAndNotAutoRefunded() throws Exception {
+        var s=registered(); var a=action(); publish(s,a);
+        var slow=new PaidActionStore(dir,()->{ try { Thread.sleep(1_500); } catch (InterruptedException e) { Thread.currentThread().interrupt(); } },new StorageIo(250L));
+        assertThrows(StorageIo.StallException.class,()->slow.begin(a.id()));
+        assertFalse(slow.healthy());
         assertEquals(PaidActionStore.Phase.EXECUTING,load().actions().getFirst().phase()); assertFalse(load().refundReady(a.id()));
     }
     @Test void corruptionMissingTablesAndFractionalMoneyDoNotBecomeEmptySource() throws Exception {

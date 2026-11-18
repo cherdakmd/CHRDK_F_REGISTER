@@ -1,13 +1,16 @@
 package ru.cherdakmd.chrdkregister.api;
 
 import com.google.gson.*;
+import ru.cherdakmd.chrdkregister.storage.StorageIo;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 
-/** Один pending на модуль. Публикация source.next разрешена только после авторитетной банковской квитанции. */
+/** Один pending на модуль. Публикация source.next разрешена только после авторитетной банковской квитанции.
+ *  Барьер записи (force+atomic replace) выполняется потоком {@link StorageIo} с ограничением ожидания:
+ *  диск не ответил за таймаут — операция отклоняется и журнал карантинится (fail-closed), а не висит. */
 public final class ChargeJournal {
     private static final Gson JSON = new GsonBuilder().setPrettyPrinting().create();
     private static final int MAX_STATE = 16 * 1024 * 1024, MAX_INVENTORY = 4 * 1024 * 1024;
@@ -22,11 +25,13 @@ public final class ChargeJournal {
     @FunctionalInterface public interface WriteCheckpoint { void afterReplace() throws IOException; }
     private final Path file;
     private final WriteCheckpoint checkpoint;
+    private final StorageIo io;
     private Data data;
     private boolean healthy = true;
     public ChargeJournal(Path folder, String source, UUID lineage) throws IOException { this(folder, source, lineage, () -> { }); }
-    public ChargeJournal(Path folder, String source, UUID lineage, WriteCheckpoint checkpoint) throws IOException {
-        file = folder.resolve("bank-charge.json"); this.checkpoint = Objects.requireNonNull(checkpoint);
+    public ChargeJournal(Path folder, String source, UUID lineage, WriteCheckpoint checkpoint) throws IOException { this(folder, source, lineage, checkpoint, StorageIo.shared()); }
+    public ChargeJournal(Path folder, String source, UUID lineage, WriteCheckpoint checkpoint, StorageIo io) throws IOException {
+        file = folder.resolve("bank-charge.json"); this.checkpoint = Objects.requireNonNull(checkpoint); this.io = Objects.requireNonNull(io, "io");
         if (source == null || !source.matches("[a-z][a-z0-9-]{0,47}") || lineage == null) throw new IllegalArgumentException("source identity");
         if (Files.exists(file)) {
             try {
@@ -57,7 +62,7 @@ public final class ChargeJournal {
         if (!source.equals(existing.source) || existing.pending != null || existing.sequence != 0) return false;
         if (external.equals(existing.lineage)) return true;
         existing.lineage = external;
-        writeTo(folder.resolve("bank-charge.json"), existing, () -> { });
+        StorageIo.shared().run(() -> writeTo(folder.resolve("bank-charge.json"), existing, () -> { }));
         return true;
     }
 
@@ -94,7 +99,7 @@ public final class ChargeJournal {
     private void write(Data next) throws IOException {
         validate(next); // валидация намерения не карантинирует журнал
         try {
-            writeTo(file, next, checkpoint);
+            io.run(() -> writeTo(file, next, checkpoint));
             data = next;
         } catch (IOException | RuntimeException error) { healthy = false; throw error; }
     }
