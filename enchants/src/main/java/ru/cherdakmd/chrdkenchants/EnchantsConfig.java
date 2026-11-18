@@ -24,6 +24,7 @@ public record EnchantsConfig(
         int maxPerItem,
         int maxLegendaryPerItem,
         boolean cursesEnabled,
+        int vanillaLevelCap,
         List<EnchantDef> enabledEnchants) {
 
     public boolean isEnabled(String id) {
@@ -53,6 +54,10 @@ public record EnchantsConfig(
         int maxLegendary = clamp(config.getInt("rules.max-legendary-per-item", 1), 0, maxPerItem,
                 logger, "rules.max-legendary-per-item");
         boolean curses = clampBool(config, "rules.curses-enabled", true);
+        // Потолок уровней ванильных чар при слиянии: равные уровни дают +1 вплоть
+        // до этого значения (2.0.16 — больше ванильных максимумов, но с пределом).
+        int vanillaLevelCap = clamp(config.getInt("rules.vanilla-level-cap", 10), 1, 30,
+                logger, "rules.vanilla-level-cap");
         List<EnchantDef> enabled = new ArrayList<>();
         boolean utility = clampBool(config, "utility-effects.enabled", true);
         boolean pve = clampBool(config, "pve-effects.enabled", true);
@@ -67,7 +72,7 @@ public record EnchantsConfig(
             }
         }
         return new EnchantsConfig(table, tableChance, curseChance, villager, villagerChance,
-                maxPerItem, maxLegendary, curses, List.copyOf(enabled));
+                maxPerItem, maxLegendary, curses, vanillaLevelCap, List.copyOf(enabled));
     }
 
     private static boolean clampBool(FileConfiguration config, String key, boolean fallback) {

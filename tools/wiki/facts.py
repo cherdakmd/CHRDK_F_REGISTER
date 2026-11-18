@@ -40,6 +40,7 @@ FIELDS = {
     "vk_donut_bonus": ("vk", "rewards.donut-shop-bonus-percent"),
     "enchant_max": ("enchants", "rules.max-per-item"),
     "legendary_max": ("enchants", "rules.max-legendary-per-item"),
+    "vanilla_level_cap": ("enchants", "rules.vanilla-level-cap"),
     "artifact_pulse": ("artifacts", "general.passive-refresh-ticks"),
     "artifact_traits_max": ("artifacts", "traits.max-per-item"),
     "artifact_trait_chance": ("artifacts", "traits.chance-percent"),

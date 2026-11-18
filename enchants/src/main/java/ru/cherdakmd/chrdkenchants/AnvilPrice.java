@@ -6,9 +6,36 @@ import java.util.Map;
 final class AnvilPrice {
     private AnvilPrice() { }
 
+    /**
+     * Слияние уровней одной чары: равные уровни дают +1, иначе берётся максимум —
+     * как в ванильной наковальне. Потолок {@code maximum} ограничивает прирост,
+     * но входные уровни никогда не режутся (2.0.16): надванильные значения
+     * переживают слияние, а выше потолка не растут.
+     */
     static int merge(int existing, int incoming, int maximum) {
-        return existing > 0 && existing == incoming
-                ? Math.min(maximum, incoming + 1) : Math.max(existing, incoming);
+        int merged = existing > 0 && existing == incoming
+                ? incoming + 1 : Math.max(existing, incoming);
+        return Math.max(Math.min(merged, maximum), Math.max(existing, incoming));
+    }
+
+    /** Слияние карт уровней по каждой чаре отдельно; порядок — сначала левая карта. */
+    static <K> Map<K, Integer> merge(Map<K, Integer> left, Map<K, Integer> right,
+                                     java.util.function.ToIntFunction<K> maximum) {
+        Map<K, Integer> result = new java.util.LinkedHashMap<>(left);
+        for (var entry : right.entrySet()) {
+            int before = result.getOrDefault(entry.getKey(), 0);
+            result.put(entry.getKey(),
+                    merge(before, entry.getValue(), maximum.applyAsInt(entry.getKey())));
+        }
+        return result;
+    }
+
+    /** Слияние усиливает предмет, если хотя бы одна чара выросла относительно левой стороны. */
+    static <K> boolean strengthens(Map<K, Integer> merged, Map<K, Integer> left) {
+        for (var entry : merged.entrySet()) {
+            if (entry.getValue() > left.getOrDefault(entry.getKey(), 0)) return true;
+        }
+        return false;
     }
 
     /** Платим за каждую реально усиленную чару, по её итоговому уровню. */

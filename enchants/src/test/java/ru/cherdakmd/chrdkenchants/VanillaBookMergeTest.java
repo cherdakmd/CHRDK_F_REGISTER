@@ -30,8 +30,12 @@ class VanillaBookMergeTest {
         assertTrue(merge.contains("enchantment.canEnchantItem(result)"));
         assertTrue(merge.contains("existing.conflictsWith(enchantment)"));
         assertTrue(merge.contains("enchantment.conflictsWith(existing)"));
-        assertTrue(merge.contains("enchantment.getMaxLevel()"));
-        assertTrue(merge.contains("meta.addEnchant(enchantment, merged.get(enchantment), false)"));
+        assertTrue(merge.contains("Math.max(levelCap, enchantment.getMaxLevel())"),
+                "потолок слияния — rules.vanilla-level-cap, но не ниже ванильного максимума");
+        assertTrue(merge.contains("addStoredEnchant(enchantment, merged.get(enchantment), true)"),
+                "надванильные уровни допустимы: потолок уже применён в merge");
+        assertTrue(merge.contains("meta.addEnchant(enchantment, merged.get(enchantment), true)"),
+                "то же для цели-вещи");
         assertTrue(merge.contains("source.clone()"));
     }
 

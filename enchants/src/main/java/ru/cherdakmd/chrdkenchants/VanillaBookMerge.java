@@ -22,7 +22,11 @@ final class VanillaBookMerge {
     private VanillaBookMerge() {
     }
 
-    static Result merge(ItemStack source, EnchantmentStorageMeta book) {
+    /**
+     * @param levelCap потолок уровней ванильных чар ({@code rules.vanilla-level-cap}):
+     *                 равные уровни сливаются в +1 вплоть до него, входные уровни не режутся
+     */
+    static Result merge(ItemStack source, EnchantmentStorageMeta book, int levelCap) {
         if (source == null || book == null || !book.hasStoredEnchants()) {
             return null;
         }
@@ -53,16 +57,19 @@ final class VanillaBookMerge {
                 }
             }
             int before = merged.getOrDefault(enchantment, 0);
-            int after = AnvilPrice.merge(before, incoming, enchantment.getMaxLevel());
+            int after = AnvilPrice.merge(before, incoming,
+                    Math.max(levelCap, enchantment.getMaxLevel()));
             if (after > before) {
                 nativeCost += after;
             }
             merged.put(enchantment, after);
         }
         for (Enchantment enchantment : book.getStoredEnchants().keySet()) {
+            // true — уровни выше ванильного максимума допустимы: потолок уже
+            // применён в merge, ограничение платформы только мешало бы.
             boolean added = storage != null
-                    ? storage.addStoredEnchant(enchantment, merged.get(enchantment), false)
-                    : meta.addEnchant(enchantment, merged.get(enchantment), false);
+                    ? storage.addStoredEnchant(enchantment, merged.get(enchantment), true)
+                    : meta.addEnchant(enchantment, merged.get(enchantment), true);
             if (!added) {
                 return null;
             }
