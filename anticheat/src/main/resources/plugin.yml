@@ -14,6 +14,9 @@ commands:
     description: "Служебная команда моста античита (только консоль)"
     usage: "/chrdkac flag <игрок> <чек> <vl> [verbose...]"
 permissions:
+  chrdkanticheat.use:
+    description: "Публичная справка об античите (меню и новости)"
+    default: true
   chrdkanticheat.alerts:
     description: "Алерты о срабатываниях античита"
     default: false

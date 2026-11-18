@@ -478,7 +478,7 @@ class PluginUpdateServiceTest {
         }
         CommandSender generic = (CommandSender) Proxy.newProxyInstance(CommandSender.class.getClassLoader(), new Class<?>[]{CommandSender.class}, (p, m, a) -> null);
         assertFalse(RegisterCommandHandler.canDownloadUpdates(generic));
-        assertEquals(20, PluginUpdateService.MODULES.size());
+        assertEquals(21, PluginUpdateService.MODULES.size());
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_VK"),
                 "CHRDK_VK публикуется отдельным JAR рядом с общим архивом, а не внутри ZIP");
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_Disasters"),

@@ -5,6 +5,7 @@ messages:
   chrdkac-usage: "<gray>Форма: <white>chrdkac flag <игрок> <чек> <vl> [verbose…]</white></gray>"
   alert: "<prefix>Сработал античит: <white><player></white>, <aqua><check></aqua> ×<yellow><vl></yellow>, пинг <yellow><ping></yellow> мс <dark_gray>(/ac history <player>)</dark_gray>"
   usage: "<gray>/ac history <игрок> — карточка нарушителя; /ac top — топ суток; /ac alerts — личные алерты; /ac reload — перезагрузка</gray>"
+  about: "<gray>Античит ловит все классы читов: движение, бой, пакеты и чат под наблюдением. Срабатывания попадают в журнал доказательств, запрет выносит человек — исключений ни у кого.</gray>"
   no-permission: "<red>Недостаточно прав.</red>"
   card-empty: "<gray>По игроку <white><player></white> срабатываний нет.</gray>"
   card-header: "<prefix>Карточка нарушителя: <white><player></white>"

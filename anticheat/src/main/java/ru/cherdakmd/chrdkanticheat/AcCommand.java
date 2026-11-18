@@ -31,7 +31,9 @@ final class AcCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 0) {
-            plugin.messages().send(sender, "usage");
+            // Игрокам без модераторского права — публичная справка (пункт меню «Античит»).
+            plugin.messages().send(sender,
+                    sender.hasPermission("chrdkanticheat.mod") ? "usage" : "about");
             return true;
         }
         switch (args[0].toLowerCase(java.util.Locale.ROOT)) {

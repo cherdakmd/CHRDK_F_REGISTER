@@ -1,103 +1,103 @@
 {
   "pages": {
     "about": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "6862599d66aa6a4641c175b63e0f8fffa9fffa8fd843630d03652b6b0ef6db1f",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "47c5f418bc351e59714a8d74202a0afb2f9cfc95e11babfbbb748e0ea7b3ad37",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "e61e14b2f466ad4c7561f8c266b1054fed5f20d1db1d9f0daf14232a94237954",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "b1c5cb0d931ae3caf0972bd4338bdf63dc52e7b8d84d2656daf22462645bfcf0",
       "text": "bd128e475ee8efae55c3d2d6c9616d5278600f2a8ff1aad7af5e6df3e0b3f5c3"
     },
     "anticheat": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "0898c040c84f73a4ce5f573c2611f251ef36b01360568f105ed5fe65518afd51",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "57a460c56894c66bd5111030d61cae97efda84f5976a1e12c54ebd8a8836a3c1",
       "text": "51b63277043ce6c1160efb4e4df51b63a25f083191e5bbae1aeffc7207a997cc"
     },
     "artifacts": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "35fe17ddf70d233a421f331df734935c6d1ca0fce6584f122d4111067e5bad76",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "6f269e0e40c959634d730336dac6628215eca2f49afe776d7a6f63f465ee1faf",
       "text": "51e3ef379d9a8f7e2ccfc6fd41cc0c0823f91f30d7c9a8326ec7962c182d98e4"
     },
     "battlepass": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "a141716db0dfeca62346ab1b12c85e380414911efaf2e312d5c352956255ead9",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "06c05cc066438d12185cd09f3b7eefcd5acdcb0494b95c65ee7bfe2ca92612e4",
       "text": "997df6e0a9311ea115c4fd3c192b2729034b10c68a4f41c57261ef4b704c5add"
     },
     "chat": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "6862599d66aa6a4641c175b63e0f8fffa9fffa8fd843630d03652b6b0ef6db1f",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "47c5f418bc351e59714a8d74202a0afb2f9cfc95e11babfbbb748e0ea7b3ad37",
       "text": "a51c51d20cfe94c553e80893422b000a579b87285b00cbceb452f29eb0773023"
     },
     "claims": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "05bed89a919bd1071c4975d168f6be5bd68eaaa34320893c14538a050eb48b80",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "0ca87a3ad5eafea8de6a4f847ba8f6f22945e54509354bc8bc888eb06cd1f25a",
       "text": "50b80f02b9200ed8653d50c1bf802fd4de8d272a9bf1f46cf92618d743bed3cd"
     },
     "commands": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "b19e0ae57b956889db215bb963800ded4c037746edb17529a356da79b533f820",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "e4df0958b1f5beb587930b9f8dcf10195ec0067dc99ac254810aff599d3e5090",
       "text": "c177198348ad294daba4968fb8f353701dd7cf6e28744a0a0380cd7cbea835be"
     },
     "cosmetics": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "a76239cb8e1ad6a8c2bdb4394fc8720ff40742b53da74effd00a49de1ef913bd",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "a28e9b17214d43e6c1f9fc3df2fa3e86fe79fee34e831765d88a7794ae7ac422",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "dedb193c3743c730af5bb6e19e130a8a60770476daffae68e53067fafc48f64f",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "19d5ba47811c7b058e493ddfad65a6116c5ffee77d8655e77bedc6d038a09cca",
       "text": "4d7683f5677c50dfe0488961891915b5c2dd6533191a213ee8fdb077ea817eb5"
     },
     "disasters": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "576323dcc8abe2c622b940c13ffa00c090f791ac93fb84fa471a5571960497e9",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "95fa354bb17f906ef9c3c53d78963938de59f04946b64591d447f0655f1726e6",
       "text": "121b1cc28a075ced29b6de8abec7dbc20bbb531a01441ddd5fdb836d066d0202"
     },
     "economy": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "0e0783f3c0531c7ba0987581c8856fed5160e45f483f04942d36f74d1ba64fb5",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "b8628f2c5d51150763a05e649db821829e2add10f896bbfdfca66cd82f94cac9",
       "text": "380ede76f428cfc00f3a9df848d00a9b5012222475c10d41cc83359ef3d12d97"
     },
     "enchants": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "4eeef35f027411e99feb7cc5481a4e3049afbfc7953e083ba9da12e868f5c144",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "82878e2f0786a5210863c2087cb5e9b35eae76f854a309258bdd54e0ddb02a4f",
       "text": "7e90321ef8a100bae11c53592c62328fa44a958be657b66a86d51ea8c1906a7d"
     },
     "faq": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "aa6acf54edfb737eef6779c7453225a719513b0cc29dc8bd4aa8c6239c6e6fae",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "45388c365a4d945be6b860cff865fe0cfca7e33fce0176341a3ed7497124d530",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "generator": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "516a51c82071683a438004d46815388579700e1c13df75e71795f53074f5f30e",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "d35864eadf5692c199c1bea5bc9f8190ef5b9ba5b1faffcf0e4cc3b40167247f",
       "text": "8332b8ee24dac7ccaca2e464bfc77e9a93ece93707960f9f416671032b3863b2"
     },
     "goals": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "6f53129ec677efcbcdaeb5a5d5a9ca60a0db5ab6f431cfaa55feeac69f559329",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "b5a8018e2bf48b082a6eeadff6f55af576f850627d5855ac1cd7fc5fd626d5a1",
       "text": "615d89bba0ac116c220d571f530fcdab7d5ff46162ca7a7ecf24de441a7fb191"
     },
     "guilds": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "05bed89a919bd1071c4975d168f6be5bd68eaaa34320893c14538a050eb48b80",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "0ca87a3ad5eafea8de6a4f847ba8f6f22945e54509354bc8bc888eb06cd1f25a",
       "text": "bb7d4121d6c42762b2f09d8eb57df986a942df35c77fd2cf899a5e7a38193216"
     },
     "honors": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "6862599d66aa6a4641c175b63e0f8fffa9fffa8fd843630d03652b6b0ef6db1f",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "47c5f418bc351e59714a8d74202a0afb2f9cfc95e11babfbbb748e0ea7b3ad37",
       "text": "17c878e1ab52ceb2a7c3361a7bef133c8bd1004a59641898f2c525f7c48fff8f"
     },
     "index": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "bfb42ed14fb9c42ea398ba06189ea9e8d0dded521df3d17f778560e373be081e",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "ac4fa2dfedf50f212fdca4b73463d52f809079bdde0c0c270542e11f8fd056a6",
       "text": "04ca129c1f9ab7e324063232304320ccda860991e29150c928c7f869745fed6b"
     },
     "menu": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "aa6acf54edfb737eef6779c7453225a719513b0cc29dc8bd4aa8c6239c6e6fae",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "45388c365a4d945be6b860cff865fe0cfca7e33fce0176341a3ed7497124d530",
       "text": "eb6fdaf663b2005735002c5f23bb7f751b31a7447b3fc2cc77d741ff7c4cb2f9"
     },
     "mobs": {
@@ -106,83 +106,83 @@
       "text": "187eac200aa4af9e5234ed07b868fae886b4ce2f85ebb218b43ebec87c221cee"
     },
     "moderation": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "6862599d66aa6a4641c175b63e0f8fffa9fffa8fd843630d03652b6b0ef6db1f",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "47c5f418bc351e59714a8d74202a0afb2f9cfc95e11babfbbb748e0ea7b3ad37",
       "text": "79580a49c09219f65539abace395b5f2469f91fc2f0ac9b3ecae109c4fa1ecb4"
     },
     "orders": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "f7b92f640d769526d9c5fa8c593c93c4a050b03ea84d4e4d09dbdd2be1091804",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "cf476a48d8ee4817e1b15bf83ff78b93f7c9d1a5cd2f3024160301d1f2c82327",
       "text": "f09da1b7a44d72866a7d5139dcbfee8269e75ca658757a164b84ead3674d68f5"
     },
     "pets": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "bbb0dc80be28761e5bc28067712d71586b9b866038ddf8648baf2914009c9b53",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "0be78454895eee72d0a235d4806884aa40943d9bdb222bbb39e4e7835ba91473",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "profile": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "d72125184eec4b0b11e168b0c7b97a36632b842e32f2a635ee2131ba961bfd9a",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "84f584e55094b8ae272a573097620a00c4ebac405e1fab90b1eac8ddd5b95a82",
       "text": "d73cb841971f8be5b94598cf462e7cbdae0876601f2fcc576da270e75b3d32bc"
     },
     "quests": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "49c3a8a447813945a5962e6de956f526782517fc460d5202f9b16ffb54505f20",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "31e7dc09903538f3492670a93929aa4757b0bbd41c789049f8e0b1b6a93a60ef",
       "text": "a42f11010fddbf13238133ac1e2dca525dea95245f5286a88a57738af30fbf13"
     },
     "ranks": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "7607f21dca52722134b756dbac414f9bd7b7ca44917de9231ccc2efb54535438",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "1b9ecf01c1dbba3199e769bbbeecb8da7f338a423ada8d28f1f60561b0ad3c11",
       "text": "f28ca14ca95b6e1ecdc550d0103362f364e1d3e79492b33260372a410254d913"
     },
     "shop": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "bfb42ed14fb9c42ea398ba06189ea9e8d0dded521df3d17f778560e373be081e",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "ac4fa2dfedf50f212fdca4b73463d52f809079bdde0c0c270542e11f8fd056a6",
       "text": "7df8bdefeccfb0fd4943e63ce1896282c16c3491c21f364dd8b2f0fbf5378c6d"
     },
     "skills": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "def572082f46a96f06c9973caf62d6b48f8272097e66e1c4a36bcd6a6e97c6b7",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "e9a2aa3fd9ad093e64df89b84ff3840e2ab7db06c144abd9cc05b61fba5a8653",
       "text": "1ad8e214915943cde042da531c0be729ef41cc45f9ae8cc6f97f256d0f96c8e9"
     },
     "social-link": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "d299e75873c04a94da133d36f5360cdf52663684759acb7c3575609f55b8bc45",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "c58c97a3a1e5cc527959620cb63fede37145528a4f2a6ca9b8f7024b88565a52",
       "text": "f7a6d9f53d5db5774add224ab3c2003147a23099f52d220df3376a7f43c06221"
     },
     "start": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "be0d09d1b4e89c6c127a3b9944362d04033e5c96e0fa42359f137b216f981457",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "3efc235db81c7a4187ce01905e09e2f6520f34bfc117fba851e633c26407c9ac",
       "text": "ed918be6a65bdc28666148d1dac07b0d14ef631bd20c2d50648694244822a460"
     },
     "starter-kit": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "35fe17ddf70d233a421f331df734935c6d1ca0fce6584f122d4111067e5bad76",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "6f269e0e40c959634d730336dac6628215eca2f49afe776d7a6f63f465ee1faf",
       "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
     },
     "teleports": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "be0d09d1b4e89c6c127a3b9944362d04033e5c96e0fa42359f137b216f981457",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "3efc235db81c7a4187ce01905e09e2f6520f34bfc117fba851e633c26407c9ac",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "4eeef35f027411e99feb7cc5481a4e3049afbfc7953e083ba9da12e868f5c144",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "82878e2f0786a5210863c2087cb5e9b35eae76f854a309258bdd54e0ddb02a4f",
       "text": "c84eb8435e1e4b961e73b0ed64386b129e17395923de6d7b8f3d01bde6ddeaa1"
     },
     "titles": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "f2139923cb97432062e7df10b91e3ac495cf2115957eac3d06a1253c0d78a4ba",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "5de8062ea021abbde879dc40e77af22205ecfa8cb2753218d807400a33c02679",
       "text": "bcc217b388db006684a99c2af5c0747236878ffc8519043c0dc5660b66135827"
     },
     "updates": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "bfb42ed14fb9c42ea398ba06189ea9e8d0dded521df3d17f778560e373be081e",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "ac4fa2dfedf50f212fdca4b73463d52f809079bdde0c0c270542e11f8fd056a6",
       "text": "86d8fb7e52ba88ed0e3ba02254a6ac983a5903dd96d0e8cd1b347320788e0b45"
     },
     "vk": {
-      "reason": "проверено: шаг 2 античита (мост chrdkac, модуль anticheat) не меняет содержание страницы",
-      "sources": "d299e75873c04a94da133d36f5360cdf52663684759acb7c3575609f55b8bc45",
+      "reason": "проверено: модуль anticheat в меню и рассылке ядра не меняет содержание страницы",
+      "sources": "c58c97a3a1e5cc527959620cb63fede37145528a4f2a6ca9b8f7024b88565a52",
       "text": "8dddc8fb2f91621b7957c6227e91feb18317b56c886564fa7c3d8671fe805240"
     }
   },
