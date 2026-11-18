@@ -151,8 +151,8 @@ class PluginUpdateServiceTest {
         try (var updater = fixture.service()) {
             var result = updater.execute(true, "1.4.72");
             assertTrue(result.staged());
-            assertEquals(20, result.count());
-            try (var files = Files.list(result.updateDirectory())) { assertEquals(20, files.count()); }
+            assertEquals(19, result.count());
+            try (var files = Files.list(result.updateDirectory())) { assertEquals(19, files.count()); }
             for (var entry : originals.entrySet()) {
                 assertArrayEquals(entry.getValue(), Files.readAllBytes(entry.getKey()));
                 assertArrayEquals(entry.getValue(), Files.readAllBytes(result.backup().resolve(entry.getKey().getFileName())));
@@ -478,7 +478,7 @@ class PluginUpdateServiceTest {
         }
         CommandSender generic = (CommandSender) Proxy.newProxyInstance(CommandSender.class.getClassLoader(), new Class<?>[]{CommandSender.class}, (p, m, a) -> null);
         assertFalse(RegisterCommandHandler.canDownloadUpdates(generic));
-        assertEquals(20, PluginUpdateService.MODULES.size());
+        assertEquals(19, PluginUpdateService.MODULES.size());
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_VK"),
                 "CHRDK_VK публикуется отдельным JAR рядом с общим архивом, а не внутри ZIP");
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_Disasters"),

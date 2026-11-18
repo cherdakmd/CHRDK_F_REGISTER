@@ -362,7 +362,6 @@ public final class PluginUpdateService implements AutoCloseable {
         result.put("CHRDK_Enchants", "chrdk-enchants");
         result.put("CHRDK_Generator", "chrdk-generator");
         result.put("CHRDK_Mobs", "chrdk-mobs");
-        result.put("CHRDK_Orders", "chrdk-orders");
         result.put("CHRDK_Quests", "chrdk-quests");
 
         result.put("CHRDK_Ranks", "chrdk-ranks");

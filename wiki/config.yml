@@ -33,7 +33,6 @@ groups:
   pages:
   - economy
   - shop
-  - orders
 - id: progress
   title: Развитие
   description: Ремесло, навыки и награды за игру.
