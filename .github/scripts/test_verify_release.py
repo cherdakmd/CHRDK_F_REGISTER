@@ -117,6 +117,9 @@ class ReleaseValidationTest(unittest.TestCase):
             "2.0.14": ("21 JAR одной версии", "chrdk-vk-2.0.14.jar",
                        "chrdk-disasters-2.0.14.jar", "Mine Treasure", "CHRDK_Generator",
                        "Плавильщик Жар", "generator.json", "Перерождение сбрасывает"),
+            "2.0.15": ("22 JAR одной версии", "chrdk-vk-2.0.15.jar",
+                       "chrdk-disasters-2.0.15.jar", "Mine Treasure", "CHRDK_Anticheat",
+                       "chrdk-grim-configs-2.0.15.zip", "flags.jsonl", "punishments.yml"),
         }
         if version in current_kits:
             self.assertIn(f"CHRDK {version}", current)
@@ -255,6 +258,19 @@ class ReleaseWorkflowContractTest(unittest.TestCase):
             script = section.split("\n      - name:", 1)[0]
             self.assertLess(len(script), 21000)
         self.assertTrue((root / "docs/releases/update-memo.txt").read_text().startswith("CHRDK"))
+
+    def test_grim_configs_are_release_assets(self):
+        root = Path(__file__).resolve().parents[2]
+        source = (root / ".github/workflows/release.yml").read_text()
+        self.assertIn('python3 .github/scripts/pack_grim_configs.py anticheat/grim "chrdk-grim-configs-${version}.zip"', source)
+        self.assertIn('"chrdk-grim-configs-${version}.zip" > "$checksums"', source)
+        self.assertIn('"${{ env.grim_configs }}"', source)
+        self.assertIn("${{ env.grim_configs }}", source.split("Upload full dry-run release candidate", 1)[1])
+        self.assertIn('"${{ env.grim_configs }}"', source.split("name: Attach manifest-verified release assets", 1)[1])
+        grim = root / "anticheat" / "grim"
+        self.assertEqual({"config.yml", "punishments.yml", "README.md"},
+                         {path.name for path in grim.iterdir() if path.is_file()},
+                         "к релизу прикладываются все файлы эталона Grim-конфигов")
 
     def test_release_has_dry_run_checksums_and_publish_gate(self):
         root = Path(__file__).resolve().parents[2]
