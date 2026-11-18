@@ -643,8 +643,7 @@ public final class TabListService implements Listener {
         if (accessManager.config().serverMenu().enabled() && player.hasPermission("chrdkregister.menu")) links.add("/menu");
         if (player.hasPermission("chrdkregister.bal")) links.add("/bal");
         if (player.hasPermission("chrdkregister.labels")) links.add("/labels");
-        for (String[] addon : new String[][]{{"CHRDK_DiamondShop", "chrdkshop.use", "/shop"}, {"CHRDK_DailyRewards", "chrdkdaily.use", "/daily"},
-                {"CHRDK_Orders", "chrdkorders.use", "/orders"}}) {
+        for (String[] addon : new String[][]{{"CHRDK_DiamondShop", "chrdkshop.use", "/shop"}, {"CHRDK_DailyRewards", "chrdkdaily.use", "/daily"}}) {
             if (Bukkit.getPluginManager().isPluginEnabled(addon[0]) && player.hasPermission(addon[1])) links.add(addon[2]);
         }
         return String.join(" • ", links);

@@ -5,7 +5,7 @@ import java.util.Set;
 
 /** Только совместимость сохранённых настроек после удаления аддонов в 1.4.239–1.4.271. */
 final class RetiredAddons {
-    private static final Set<String> SOURCES = Set.of("bosses", "treasures", "streams", "events", "queue", "lottery", "party", "referrals", "hunt", "professions", "auction", "classes", "pets");
+    private static final Set<String> SOURCES = Set.of("bosses", "treasures", "streams", "events", "queue", "lottery", "party", "referrals", "hunt", "professions", "auction", "classes", "pets", "orders");
     private static final Set<String> COMMANDS = Set.of("boss", "bosses", "bossy", "bosss", "bossadmin",
             "bossesadmin", "treasures", "treasuresadmin", "stream", "streams", "strimer", "events", "event", "sobytiya", "eventsadmin", "queue", "qjoin", "ochered",
             "lottery", "lot", "loto", "lotteryadmin", "lotadmin",
@@ -16,7 +16,8 @@ final class RetiredAddons {
             "auction", "auctions", "ah", "auct", "auctionadmin", "ahadmin",
             "class", "classes", "klass", "klassy", "perktree", "ability", "sposobnost", "umenie",
             "classadmin", "classesadmin", "clsadmin",
-            "pet", "pets", "petadmin", "petsadmin", "pitomec", "pitomcy");
+            "pet", "pets", "petadmin", "petsadmin", "pitomec", "pitomcy",
+            "order", "orders", "orderadmin", "ordersadmin", "zakaz", "zakazy");
     private static final java.util.regex.Pattern ANNOUNCEMENT = java.util.regex.Pattern.compile(
             "(?i)(?:^|[^a-z0-9_])/+(?:[a-z0-9_.-]+:)?(?:" + String.join("|", COMMANDS) + ")(?![a-z0-9_/-])");
     // Только реклама снятой программы, а не общий совет о безопасном входе при записи экрана.

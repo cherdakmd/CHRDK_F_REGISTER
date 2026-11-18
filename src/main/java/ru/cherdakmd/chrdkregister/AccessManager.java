@@ -1688,9 +1688,6 @@ public final class AccessManager {
         if (source.startsWith("tierforge")) {
             return "наградой за коллекцию кузни";
         }
-        if (source.startsWith("orders")) {
-            return "бонусом заказа";
-        }
         return "администратором";
     }
 

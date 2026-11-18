@@ -27,13 +27,13 @@ class PetsRemovalTest {
     @Test void removedModuleIsAbsentFromDistributionStockMenuAndAnnouncements() throws Exception {
         assertFalse(Files.exists(Path.of("pets")));
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_Pets"));
-        assertEquals(20, PluginUpdateService.MODULES.size());
+        assertEquals(19, PluginUpdateService.MODULES.size());
         var stock = yaml("config.yml"); var items = stock.getMapList("server-menu.items");
-        assertEquals(46, items.size());
+        assertEquals(45, items.size());
         assertFalse(items.stream().anyMatch(item -> RetiredAddons.plugin(String.valueOf(item.get("plugin")))
                 || RetiredAddons.command(String.valueOf(item.get("command")))));
         assertFalse(items.stream().anyMatch(item -> String.valueOf(item.get("command")).startsWith("pet")));
-        assertEquals(39, stock.getList("auto-messages.messages").size());
+        assertEquals(38, stock.getList("auto-messages.messages").size());
         assertEquals(stock.getList("auto-messages.messages").size(), ChatConfig.fromBukkitConfig(stock).autoMessageEntries().size());
         for (Object raw : stock.getList("auto-messages.messages"))
             assertFalse(RetiredAddons.announcement(raw instanceof Map<?, ?> map ? String.valueOf(map.get("text")) : String.valueOf(raw)));
@@ -70,7 +70,7 @@ class PetsRemovalTest {
                 .anyMatch(item -> String.valueOf(item.get("command")).startsWith("pet")));
         assertFalse(live.getList("auto-messages.messages").stream()
                 .anyMatch(raw -> String.valueOf(raw).contains("/pet list")));
-        assertEquals(46, live.getMapList("server-menu.items").size());
-        assertEquals(39, live.getList("auto-messages.messages").size());
+        assertEquals(45, live.getMapList("server-menu.items").size());
+        assertEquals(38, live.getList("auto-messages.messages").size());
     }
 }
