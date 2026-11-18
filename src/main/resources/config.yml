@@ -1558,10 +1558,10 @@ auto-messages:
     - {"text": "<gray>Хотите поддержать CHERDAK? <click:run_command:'/donate'><white>/donate</white></click> даст официальную ссылку. Не переводите деньги по реквизитам из чужих личных сообщений.</gray>", "permission": "chrdkregister.donate"}
     - {"text": "<gray>CHERDAK рядом и вне игры: <white>/vk link</white> выдаёт код для личных сообщений сообщества. Входы и самозащита — в ЛС; беседа — для общения и новостей. Пароли и коды 2FA боту не отправляйте.</gray>", "plugin": "CHRDK_VK", "permission": "chrdkvk.use"}
     - {"text": "<gray>Свой угол производства: <white>/generator</white> — личный генератор из лавы и воды, тиры ресурсов и модули.</gray>", "plugin": "CHRDK_Generator", "permission": "chrdkgenerator.use"}
+    - {"text": "<gray>Читы на CHERDAK ловит античит: движение, бой, пакеты и чат под наблюдением. Срабатывания попадают в журнал доказательств, запрет выносит человек — исключений ни у кого.</gray>", "plugin": "CHRDK_Anticheat", "permission": "chrdkanticheat.use"}
     - {"text": "<gray>На CHERDAK работает <white>Plasmo Voice</white>: голосовой чат с учётом расстояния между игроками. Нужен клиентский мод Plasmo Voice и настроенный микрофон; текстовые каналы и правила общения остаются прежними.</gray>"}
     - {"text": "<gray>Катастрофы CHERDAK не задевают приваты и спавн: <white>/disasters</white> покажет, когда ждать следующую. Изменённые блоки возвращаются по таймеру, опыта и алмазов с них нет.</gray>", "plugin": "CHRDK_Disasters", "permission": "chrdkdisasters.use"}
     - {"text": "<gray>Чем дальше от спавна мира, тем опаснее мобы: подпись «Т3 · Зомби» — это тир врага, а убийство сильных приносит деньги на счёт. Границы тиров и награды: <white>/mobtiers</white>.</gray>", "plugin": "CHRDK_Mobs", "permission": "chrdkmobs.use"}
-    - {"text": "<gray>Читы на CHERDAK ловит античит: движение, бой, пакеты и чат под наблюдением. Срабатывания попадают в журнал доказательств, запрет выносит человек — исключений ни у кого.</gray>", "plugin": "CHRDK_Anticheat", "permission": "chrdkanticheat.use"}
 
 # ================================================================
 # Админ-панель аудита игроков (/adminpanel). Варны и зеркало банов лежат в

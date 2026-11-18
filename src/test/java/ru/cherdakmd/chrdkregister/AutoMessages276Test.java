@@ -21,14 +21,14 @@ class AutoMessages276Test {
         var before = old.getMapList("auto-messages.messages");
         var after = fresh.getMapList("auto-messages.messages");
         assertEquals(41, before.size(), "сток 275 остаётся эталоном");
-        assertEquals(39, after.size(), "1.4.282 добавила Plasmo Voice, CHRDK_Disasters — подсказку о /disasters; CHRDK_Mobs — подсказку о /mobtiers; п.29 убрал подсказку о /classes; п.31 — подсказку о /generator");
+        assertEquals(40, after.size(), "1.4.282 добавила Plasmo Voice, CHRDK_Disasters — подсказку о /disasters; CHRDK_Mobs — подсказку о /mobtiers; п.29 убрал подсказку о /classes; п.31 — подсказку о /generator; шаг 2 античита — подсказку об античите");
         var removedAudience = java.util.Set.of("CHRDK_Hunt", "CHRDK_Professions", "CHRDK_Classes");
         var retained = before.stream().filter(item -> !removedAudience.contains(String.valueOf(item.get("plugin")))
                 && !RetiredAddons.announcement(String.valueOf(item.get("text")))).toList();
         var retainedFresh=after.stream().filter(item->{
-            String text=String.valueOf(item.get("text"));return !text.contains("Plasmo Voice")&&!text.contains("/disasters")&&!text.contains("/mobtiers")&&!text.contains("/generator");
+            String text=String.valueOf(item.get("text"));return !text.contains("Plasmo Voice")&&!text.contains("/disasters")&&!text.contains("/mobtiers")&&!text.contains("/generator")&&!text.contains("античит");
         }).toList();
-        assertEquals(retained.size()+4,after.size());
+        assertEquals(retained.size()+5,after.size());
         assertEquals(retained.size(), retainedFresh.size());
         for (int i = 0; i < retained.size(); i++) {
             var a = new LinkedHashMap<>(retained.get(i));
