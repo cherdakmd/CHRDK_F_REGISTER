@@ -8,6 +8,7 @@ import ru.cherdakmd.chrdkregister.api.ShopExchange;
 import ru.cherdakmd.chrdkregister.api.ClaimExchange;
 import ru.cherdakmd.chrdkregister.api.DiamondMoney;
 import ru.cherdakmd.chrdkregister.api.DiamondExchangePolicy;
+import ru.cherdakmd.chrdkregister.storage.StorageIo;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -23,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -38,7 +40,11 @@ import java.util.logging.Logger;
  * только с главного потока; запись — дебаунс: {@link #saveNow()} вызывает
  * периодическая асинхронная задача, {@link #flush()} — выключение плагина.
  * Финансовые intents/receipts сохраняются синхронно force+atomic replace.
- * Обычные счётчики без финансового протокола сохраняются штатным autosave.</p>
+ * Обычные счётчики без финансового протокола сохраняются штатным autosave.
+ * Барьер записи выполняется потоком {@link StorageIo} с ограничением
+ * ожидания: диск не ответил за таймаут — операция отклоняется и банк
+ * останавливается по fail-closed сценарию (карантин до restart), а главный
+ * поток сервера продолжает работать.</p>
  *
  * <p>Ник — не ключ: игрок может сменить имя, счёт остаётся. Индекс ников нужен
  * только для {@code /pay <ник>} офлайн-игроку и {@code /bal <ник>}; он
@@ -304,6 +310,7 @@ public final class BankStore {
 
     @FunctionalInterface interface WriteCheckpoint { void afterReplace() throws IOException; }
     private final WriteCheckpoint checkpoint;
+    private final StorageIo io;
     private final Path file;
     private final Logger logger;
     private final Map<UUID, Account> accounts = new LinkedHashMap<>();
@@ -316,7 +323,11 @@ public final class BankStore {
         this(dataFolder, logger, () -> { });
     }
     BankStore(Path dataFolder, Logger logger, WriteCheckpoint checkpoint) {
+        this(dataFolder, logger, checkpoint, StorageIo.shared());
+    }
+    BankStore(Path dataFolder, Logger logger, WriteCheckpoint checkpoint, StorageIo io) {
         this.file = dataFolder.resolve("bank.json"); this.logger = logger; this.checkpoint = checkpoint;
+        this.io = Objects.requireNonNull(io, "io");
     }
 
     public Path file() {
@@ -1153,6 +1164,11 @@ public final class BankStore {
         return envelope;
     }
     private void writeStrict(Envelope envelope) throws IOException {
+        io.run(() -> writeStrictNow(envelope));
+    }
+
+    /** Durable-замена (временный файл, force, атомарная замена, force каталога); выполняется потоком StorageIo. */
+    private void writeStrictNow(Envelope envelope) throws IOException {
         Files.createDirectories(file.getParent());
         Path temp = file.resolveSibling("bank.json.tmp");
         String json=GSON.toJson(envelope); if(json.getBytes(StandardCharsets.UTF_8).length>64*1024*1024) throw new IOException("bank capacity");
@@ -1162,10 +1178,14 @@ public final class BankStore {
         checkpoint.afterReplace();
         try (var directory = java.nio.channels.FileChannel.open(file.getParent(), java.nio.file.StandardOpenOption.READ)) { directory.force(true); }
     }
-    /** Синхронизировано с durable-платежами: устаревший async-снимок не перезапишет квитанцию. */
+    /** Синхронизировано с durable-платежами: устаревший async-снимок не перезапишет квитанцию.
+     *  Задержка диска не останавливает банк: снимок остаётся dirty и повторится следующим циклом. */
     public synchronized void saveNow() {
         if (!available || !dirty) return;
         try { writeStrict(envelope()); dirty = false; }
+        catch (StorageIo.StallException stall) {
+            logger.warning("[bank] Диск не ответил вовремя, снимок отложен: " + stall.getMessage());
+        }
         catch (IOException | RuntimeException error) { available = false; logger.severe("[bank] Запись остановлена: " + error.getMessage()); }
     }
     public synchronized String snapshotJson() { return GSON.toJson(envelope()); }
