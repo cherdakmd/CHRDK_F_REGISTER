@@ -1,5 +1,6 @@
 package ru.cherdakmd.chrdkenchants;
 
+import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
@@ -25,13 +26,24 @@ final class VanillaBookMerge {
         if (source == null || book == null || !book.hasStoredEnchants()) {
             return null;
         }
+        // Книга-цель держит хранёные чары в EnchantmentStorageMeta: переносим их
+        // туда и не требуем применимости к материалу (ванильное слияние книг).
+        boolean bookTarget = source.getType() == Material.ENCHANTED_BOOK;
         ItemStack result = source.clone();
-        Map<Enchantment, Integer> merged = new LinkedHashMap<>(result.getEnchants());
+        ItemMeta meta = result.getItemMeta();
+        if (meta == null) {
+            return null;
+        }
+        EnchantmentStorageMeta storage = bookTarget && meta instanceof EnchantmentStorageMeta
+                ? (EnchantmentStorageMeta) meta : null;
+        Map<Enchantment, Integer> merged = new LinkedHashMap<>(storage != null
+                ? storage.getStoredEnchants() : result.getEnchants());
         int nativeCost = 0;
         for (Map.Entry<Enchantment, Integer> entry : book.getStoredEnchants().entrySet()) {
             Enchantment enchantment = entry.getKey();
             int incoming = entry.getValue();
-            if (enchantment == null || incoming < 1 || !enchantment.canEnchantItem(result)) {
+            if (enchantment == null || incoming < 1
+                    || (!bookTarget && !enchantment.canEnchantItem(result))) {
                 return null;
             }
             for (Enchantment existing : merged.keySet()) {
@@ -47,12 +59,11 @@ final class VanillaBookMerge {
             }
             merged.put(enchantment, after);
         }
-        ItemMeta meta = result.getItemMeta();
-        if (meta == null) {
-            return null;
-        }
         for (Enchantment enchantment : book.getStoredEnchants().keySet()) {
-            if (!meta.addEnchant(enchantment, merged.get(enchantment), false)) {
+            boolean added = storage != null
+                    ? storage.addStoredEnchant(enchantment, merged.get(enchantment), false)
+                    : meta.addEnchant(enchantment, merged.get(enchantment), false);
+            if (!added) {
                 return null;
             }
         }

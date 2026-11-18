@@ -18,6 +18,9 @@ public final class EnchantRoller {
      * Отбирает из {@code enabled} чары, которые можно ДОБАВИТЬ на предмет
      * ({@code materialName}) с уже наложенными {@code present} чарами при лимитах.
      * Ключи present — id чар текущего предмета (enabled = разрешённые к выпадению).
+     * {@code materialName == null} — книга-контейнер: применимость к материалу
+     * не проверяется (книга хранит любые чары, как ванильная), лимиты и группы
+     * несовместимости действуют в полном объёме.
      */
     public static List<EnchantDef> applicable(List<EnchantDef> enabled, String materialName,
                                               Map<String, Integer> present,
@@ -36,7 +39,7 @@ public final class EnchantRoller {
             // группы не проскакивали ни в одном источнике выдачи.
             if (EnchantConflicts.conflictsWith(present, def.id())) continue;
             if (def.rarity() == EnchantDef.Rarity.LEGENDARY && legendary >= maxLegendaryPerItem) continue;
-            if (!def.supports(materialName)) continue;
+            if (materialName != null && !def.supports(materialName)) continue;
             result.add(def);
         }
         return result;

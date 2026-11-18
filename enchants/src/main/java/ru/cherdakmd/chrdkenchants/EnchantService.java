@@ -114,6 +114,11 @@ public final class EnchantService {
         if (!items.isEnchantBook(book)) {
             return "not-book";
         }
+        // Книга-цель хранит любые чары (как ванильная книга): совмещение книг на
+        // наковальне не проверяет применимость к материалу. Лимиты, группы
+        // несовместимостей и потолки уровней действуют в полном объёме — иначе
+        // «логика чар» расходилась бы с наложением на вещь.
+        boolean bookTarget = item.getType() == Material.ENCHANTED_BOOK;
         Map<String, Integer> bookEnchants = items.read(book);
         Map<String, Integer> itemEnchants = new java.util.LinkedHashMap<>(items.read(item));
         // 1.4.282: книга-«мутант» и уже испорченный предмет не проходят проверку
@@ -131,13 +136,13 @@ public final class EnchantService {
             if (def == null || !plugin.config().isEnabled(id)) {
                 return "disabled";
             }
-            if (!def.supports(item.getType().name())) {
+            if (!bookTarget && !def.supports(item.getType().name())) {
                 return "mismatch";
             }
             Map<String, Integer> hypothetical = new java.util.HashMap<>(itemEnchants);
             hypothetical.remove(id);
             List<EnchantDef> rest = EnchantRoller.applicable(List.of(def),
-                    item.getType().name(), hypothetical,
+                    bookTarget ? null : item.getType().name(), hypothetical,
                     plugin.config().maxPerItem(), plugin.config().maxLegendaryPerItem());
             if (rest.isEmpty()) {
                 return "blocked";

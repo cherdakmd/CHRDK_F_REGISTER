@@ -41,14 +41,14 @@ public final class AnvilApplyListener implements Listener {
         ItemStack right = event.getInventory().getItem(1);
         if (!(view.getPlayer() instanceof Player viewer)) return;
         var playerId = viewer.getUniqueId();
-        if (!customBook(right)) {
+        if (!ourPair(left, right)) {
             quotes.remove(playerId);
-            return; // Починка/переименование без кастомной книги полностью остаются ванильными.
+            return; // Починка/переименование без нашей книги полностью остаются ванильными.
         }
         if (left == null || left.getAmount() != 1 || right.getAmount() != 1
                 || !viewer.hasPermission("chrdkenchants.use") || plugin.coreApi() == null
                 || !plugin.coreApi().isAuthenticated(viewer) || view.canBypassCost()
-                || plugin.service().canApplyFromBook(left, right) != null) {
+                || transferBlocked(left, right)) {
             reject(event, viewer);
             return;
         }
@@ -96,7 +96,7 @@ public final class AnvilApplyListener implements Listener {
         ItemStack result = manualVanilla != null ? manualVanilla.item()
                 : vanilla == null ? left.clone() : vanilla.clone();
         if (result.getType() != left.getType() || result.getAmount() != 1
-                || plugin.service().canApplyFromBook(result, right) != null) {
+                || transferBlocked(result, right)) {
             reject(event, viewer);
             return;
         }
@@ -108,7 +108,9 @@ public final class AnvilApplyListener implements Listener {
         // PrepareResult — сбрасываем его чары к состоянию левого слота, иначе merge книги
         // удвоил бы уровень (дошёл бы до +1 поверх уже слитого).
         plugin.items().write(result, before);
-        plugin.service().applyFromBook(result, right);
+        if (!plugin.items().read(right).isEmpty()) {
+            plugin.service().applyFromBook(result, right); // кастомная часть есть только у нашей книги
+        }
         Map<String, Integer> weights = new HashMap<>();
         for (String id : plugin.items().read(right).keySet()) {
             EnchantDef def = EnchantRegistry.byId(id);
@@ -120,8 +122,11 @@ public final class AnvilApplyListener implements Listener {
             });
         }
         long surcharge = AnvilPrice.surcharge(before, plugin.items().read(result), weights);
-        if (pureBook && surcharge == 0) {
-            reject(event, viewer); // Не сжигаем книгу ради отсутствующего улучшения.
+        // Не сжигаем книгу ради отсутствующего улучшения: наша книга без новых
+        // чар и вспомогательное слияние без единого усиления отклоняются —
+        // ванильная наковальня тоже не выдаёт результат, где ничего не изменилось.
+        if ((pureBook || (manualVanilla != null && manualVanilla.nativeCost() == 0)) && surcharge == 0) {
+            reject(event, viewer);
             return;
         }
         int leftWork = work(left), bookWork = work(right);
@@ -164,7 +169,7 @@ public final class AnvilApplyListener implements Listener {
                 || !quote.output(view.getTopInventory().getItem(2), ru.cherdakmd.chrdkregister.api.AnvilCosts.actual(view), view.getRepairItemCountCost(),
                     view.getMaximumRepairCost(), plugin.sourceGeneration(), cumulativeCost(), player.getGameMode() == GameMode.CREATIVE)
                 || view.canBypassCost() || !player.hasPermission("chrdkenchants.use") || plugin.coreApi() == null
-                || !plugin.coreApi().isAuthenticated(player) || plugin.service().canApplyFromBook(left, right) != null) {
+                || !plugin.coreApi().isAuthenticated(player) || transferBlocked(left, right)) {
             plugin.messages().send(player, "preview-unavailable"); return;
         }
         plugin.messages().send(player, "preview-price", "total", quote.cost(), "custom", quote.surcharge(),
@@ -188,6 +193,27 @@ public final class AnvilApplyListener implements Listener {
 
     private boolean customBook(ItemStack right) {
         return right != null && right.getType() == Material.ENCHANTED_BOOK && plugin.items().marked(right);
+    }
+
+    /**
+     * Пара слотов под нашим присмотром: наша книга справа (перенос на вещь или
+     * книгу) либо книжное слияние с нашей книгой слева и ванильной справа.
+     */
+    private boolean ourPair(ItemStack left, ItemStack right) {
+        if (customBook(right)) return true;
+        return customBook(left) && right != null && right.getType() == Material.ENCHANTED_BOOK;
+    }
+
+    /**
+     * Кастомная часть переноса: наша книга справа проходит все правила
+     * canApplyFromBook; ванильная книга справа несёт только хранёные чары —
+     * достаточно валидной PDC слева (совмещение книг).
+     */
+    private boolean transferBlocked(ItemStack left, ItemStack right) {
+        if (right == null) return true;
+        return plugin.items().read(right).isEmpty()
+                ? plugin.items().validated(left) == null
+                : plugin.service().canApplyFromBook(left, right) != null;
     }
 
     private static int work(ItemStack item) {
@@ -223,8 +249,8 @@ public final class AnvilApplyListener implements Listener {
         ItemStack result = event.getCurrentItem();
         ItemStack left = event.getInventory().getItem(0);
         var quote = quotes.get(player.getUniqueId());
-        if (customBook(right) || quote != null && quote.view() == view) {
-            if (!customBook(right) || left == null || result == null || quote == null
+        if (ourPair(left, right) || quote != null && quote.view() == view) {
+            if (!ourPair(left, right) || left == null || result == null || quote == null
                     || !quote.source(view, left, right, view.getRenameText())
                     || !quote.output(result, ru.cherdakmd.chrdkregister.api.AnvilCosts.actual(view), view.getRepairItemCountCost(),
                         view.getMaximumRepairCost(), plugin.sourceGeneration(), cumulativeCost(),
@@ -233,7 +259,7 @@ public final class AnvilApplyListener implements Listener {
                         player.getGameMode() == GameMode.CREATIVE)
                     || view.canBypassCost() || !player.hasPermission("chrdkenchants.use")
                     || plugin.coreApi() == null || !plugin.coreApi().isAuthenticated(player)
-                    || plugin.service().canApplyFromBook(left, right) != null) {
+                    || transferBlocked(left, right)) {
                 event.setCancelled(true);
                 return;
             }
