@@ -114,6 +114,9 @@ class ReleaseValidationTest(unittest.TestCase):
                        "chrdk-disasters-2.0.13.jar", "Mine Treasure", "skill-crystals",
                        "milestone-awards.json", "копируется при первом запуске",
                        "могут выдаться повторно"),
+            "2.0.14": ("21 JAR одной версии", "chrdk-vk-2.0.14.jar",
+                       "chrdk-disasters-2.0.14.jar", "Mine Treasure", "CHRDK_Generator",
+                       "Плавильщик Жар", "generator.json", "Перерождение сбрасывает"),
         }
         if version in current_kits:
             self.assertIn(f"CHRDK {version}", current)
