@@ -198,6 +198,8 @@ security:
     - tpadmin
     - tiersadmin
     - vkadmin
+    # Служебная команда моста античита (см. docs/design/ANTICHEAT.md).
+    - chrdkac
 
 donatepay:
   # 1.4.167: продажи идут только через TradeMC (trademc.enabled: true), поэтому
@@ -1156,6 +1158,7 @@ server-menu:
     # 1.4.183: свой ник — что видно в табе и чате. 1.4.186: каждое звание отдельно.
     # Настройка личная, права и прогресс не меняет.
     - {"category": "social", "icon": "NAME_TAG", "name": "<gold><bold>Оформление ника</bold></gold>", "lore": "<gray>Ранг, титул, звание, класс, гильдия</gray>\n<gray>и шапка таба — каждое включается отдельно</gray>\n<dark_gray>Клик: /labels</dark_gray>", "command": "labels", "permission": "chrdkregister.labels"}
+    - {"category": "social", "icon": "SHIELD", "name": "<gold><bold>Античит</bold></gold>", "lore": "<gray>Все классы читов под наблюдением</gray>\\n<gray>Журнал доказательств, запрет выносит человек</gray>\\n<dark_gray>Клик — как это работает</dark_gray>", "command": "ac", "plugin": "CHRDK_Anticheat", "permission": "chrdkanticheat.use"}
 
 # Алмазный банк: /bal, /pay, /baltop (1.4.138).
 # Валюта — алмазы: предметы в инвентаре и счёт в банке. Курс фиксированный,
@@ -1555,6 +1558,7 @@ auto-messages:
     - {"text": "<gray>Хотите поддержать CHERDAK? <click:run_command:'/donate'><white>/donate</white></click> даст официальную ссылку. Не переводите деньги по реквизитам из чужих личных сообщений.</gray>", "permission": "chrdkregister.donate"}
     - {"text": "<gray>CHERDAK рядом и вне игры: <white>/vk link</white> выдаёт код для личных сообщений сообщества. Входы и самозащита — в ЛС; беседа — для общения и новостей. Пароли и коды 2FA боту не отправляйте.</gray>", "plugin": "CHRDK_VK", "permission": "chrdkvk.use"}
     - {"text": "<gray>Свой угол производства: <white>/generator</white> — личный генератор из лавы и воды, тиры ресурсов и модули.</gray>", "plugin": "CHRDK_Generator", "permission": "chrdkgenerator.use"}
+    - {"text": "<gray>Читы на CHERDAK ловит античит: движение, бой, пакеты и чат под наблюдением. Срабатывания попадают в журнал доказательств, запрет выносит человек — исключений ни у кого.</gray>", "plugin": "CHRDK_Anticheat", "permission": "chrdkanticheat.use"}
     - {"text": "<gray>На CHERDAK работает <white>Plasmo Voice</white>: голосовой чат с учётом расстояния между игроками. Нужен клиентский мод Plasmo Voice и настроенный микрофон; текстовые каналы и правила общения остаются прежними.</gray>"}
     - {"text": "<gray>Катастрофы CHERDAK не задевают приваты и спавн: <white>/disasters</white> покажет, когда ждать следующую. Изменённые блоки возвращаются по таймеру, опыта и алмазов с них нет.</gray>", "plugin": "CHRDK_Disasters", "permission": "chrdkdisasters.use"}
     - {"text": "<gray>Чем дальше от спавна мира, тем опаснее мобы: подпись «Т3 · Зомби» — это тир врага, а убийство сильных приносит деньги на счёт. Границы тиров и награды: <white>/mobtiers</white>.</gray>", "plugin": "CHRDK_Mobs", "permission": "chrdkmobs.use"}

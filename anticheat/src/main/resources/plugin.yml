@@ -1,0 +1,28 @@
+name: CHRDK_Anticheat
+version: ${version}
+main: ru.cherdakmd.chrdkanticheat.AnticheatPlugin
+api-version: '26.3'
+description: "Мост античита: журнал доказательств, алерты модераторам и карточка нарушителя"
+author: cherdakmd
+depend: [CHRDK_Core]
+commands:
+  ac:
+    description: "Античит: журнал срабатываний и алерты"
+    aliases: [anticheat]
+    usage: "/ac [history <игрок> | top | alerts | reload]"
+  chrdkac:
+    description: "Служебная команда моста античита (только консоль)"
+    usage: "/chrdkac flag <игрок> <чек> <vl> [verbose...]"
+permissions:
+  chrdkanticheat.use:
+    description: "Публичная справка об античите (меню и новости)"
+    default: true
+  chrdkanticheat.alerts:
+    description: "Алерты о срабатываниях античита"
+    default: false
+  chrdkanticheat.mod:
+    description: "Просмотр журнала срабатываний"
+    default: op
+  chrdkanticheat.admin:
+    description: "Перезагрузка конфига моста"
+    default: op
