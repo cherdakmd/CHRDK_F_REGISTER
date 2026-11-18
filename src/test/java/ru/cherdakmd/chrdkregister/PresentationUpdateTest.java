@@ -297,7 +297,7 @@ class PresentationUpdateTest {
     }
 
     @Test void menuAvailabilityRequiresBothAddonAndPermission() {
-        var entry=new ServerMenuSettings.Entry(10,org.bukkit.Material.PAPER,"a","","orders","CHRDK_Orders","chrdkorders.use");
+        var entry=new ServerMenuSettings.Entry(10,org.bukkit.Material.PAPER,"a","","shop","CHRDK_DiamondShop","chrdkshop.use");
         assertFalse(entry.available(p->false,p->true));assertFalse(entry.available(p->true,p->false));
         assertTrue(entry.available(p->true,p->true));
     }

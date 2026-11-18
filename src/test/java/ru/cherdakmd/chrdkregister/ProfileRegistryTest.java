@@ -61,7 +61,7 @@ class ProfileRegistryTest {
     @Test
     void sectionsAreSortedByOrderThenId() {
         ProfileRegistry registry = new ProfileRegistry(LOGGER);
-        registry.register("orders", provider(20, sectionOf("Заказы", Material.PAPER, "1")));
+        registry.register("guilds", provider(20, sectionOf("Гильдии", Material.PAPER, "1")));
         registry.register("quests", provider(10, sectionOf("Охота", Material.BONE, "2")));
         registry.register("achievements", provider(20, sectionOf("Достижения", Material.BOOK, "3")));
 
@@ -69,8 +69,8 @@ class ProfileRegistryTest {
         assertEquals(3, sections.size());
         assertEquals("Охота", sections.get(0).title());
         assertEquals("Достижения", sections.get(1).title(), "при равенстве order — по id");
-        assertEquals("Заказы", sections.get(2).title());
-        assertEquals(List.of("quests", "achievements", "orders"), registry.ids(),
+        assertEquals("Гильдии", sections.get(2).title());
+        assertEquals(List.of("quests", "achievements", "guilds"), registry.ids(),
                 "порядок разделов: order(), затем id");
     }
 
