@@ -89,6 +89,7 @@ public final class EnchantsPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(workshop, this);
         anvil = new AnvilApplyListener(this);
         Bukkit.getPluginManager().registerEvents(anvil, this);
+        Bukkit.getPluginManager().registerEvents(new GrindstoneListener(this), this);
         Bukkit.getPluginManager().registerEvents(new MeleeEffectsListener(this), this);
         this.bowEffects = new BowEffectsListener(this);
         Bukkit.getPluginManager().registerEvents(bowEffects, this);

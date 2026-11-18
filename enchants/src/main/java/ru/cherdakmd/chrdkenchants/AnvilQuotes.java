@@ -26,6 +26,17 @@ final class AnvilQuotes<V, I> {
                     && this.maximum == maximum && this.generation == generation
                     && this.cumulative == cumulative && this.creative == creative;
         }
+        /**
+         * Всё сверяется как в {@link #output}, кроме расхода материала: повторный
+         * native-пересчёт легитимно сбрасывает расход книги в 0 (см. {@link #couldBeRepeat}),
+         * и это состояние чинится восстановлением расхода, а не отказом операции.
+         */
+        boolean sameOutput(I result, int cost, int maximum, long generation,
+                           boolean cumulative, boolean creative) {
+            return Objects.equals(this.result, result) && this.cost == cost
+                    && this.maximum == maximum && this.generation == generation
+                    && this.cumulative == cumulative && this.creative == creative;
+        }
     }
 
     Quote<V, I> get(UUID player) { return entries.get(player); }

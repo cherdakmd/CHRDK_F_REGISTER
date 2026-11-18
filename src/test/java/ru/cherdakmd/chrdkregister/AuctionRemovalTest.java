@@ -11,7 +11,7 @@ class AuctionRemovalTest {
         assertFalse(Files.exists(Path.of("auction")));
         assertFalse(Files.exists(Path.of("wiki/auction.md")));
         assertFalse(Files.readString(Path.of("settings.gradle")).contains("include 'auction'"));
-        assertEquals(21,PluginUpdateService.MODULES.size());
+        assertEquals(20,PluginUpdateService.MODULES.size());
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_Auction"));
         for(String command:new String[]{"ah","auction","auctionadmin","chrdkauction:ah"})assertTrue(RetiredAddons.command(command),command);
         assertTrue(RetiredAddons.plugin("CHRDK_Auction"));

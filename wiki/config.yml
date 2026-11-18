@@ -53,7 +53,6 @@ groups:
   - enchants
   - tierforge
   - artifacts
-  - pets
   - cosmetics
 - id: ranks
   title: Ранги и доступ

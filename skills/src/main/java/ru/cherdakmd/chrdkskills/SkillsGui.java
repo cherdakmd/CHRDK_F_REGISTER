@@ -579,7 +579,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         switch (holder.tab) {
             case SKILLS -> onSkillsClick(player, holder, slot);
             case REBIRTH -> onRebirthClick(player, holder, slot);
-            case POTIONS -> onPotionsClick(player, holder, slot);
+            case POTIONS -> onPotionsClick(player, holder, slot, event.isShiftClick());
             case ATTRIBUTES -> onAttributesClick(player, holder, slot, event.isShiftClick());
             case BUILDS -> onBuildsClick(player, holder, slot, event.isShiftClick());
             case TOP -> { /* рейтинг только для чтения */ }
@@ -639,7 +639,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         List<Component> lore = meta.lore() == null ? new ArrayList<>() : new ArrayList<>(meta.lore());
         if (shop != null && shop.shopEnabled()) {
             lore.add(plugin.messages().get("potion-buy", "cost", String.valueOf(shop.price())));
-            lore.add(plugin.messages().get("potion-buy-hint"));
+            lore.add(plugin.messages().get("potion-buy-hint", "stack", String.valueOf(shop.stackSize())));
         } else {
             lore.add(plugin.messages().get("potion-shop-closed", "cost", "0"));
         }
@@ -648,7 +648,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         return potion;
     }
 
-    private void onPotionsClick(Player player, Holder holder, int slot) {
+    private void onPotionsClick(Player player, Holder holder, int slot, boolean shift) {
         SkillXpShop shop = plugin.xpShop();
         if (shop == null || !shop.shopEnabled()) {
             plugin.messages().send(player, "potion-shop-closed", "cost", "0");
@@ -658,10 +658,13 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         for (int index = 0; index < Math.min(SKILL_SLOTS.length, skills.size()); index++) {
             if (slot != SKILL_SLOTS[index]) continue;
             SkillType skill = skills.get(index);
-            if (shop.buy(player, skill)) {
+            // Shift+клик — стак: одним durable-намерением и одной оплатой.
+            int count = shift ? shop.stackSize() : 1;
+            if (shop.buy(player, skill, count)) {
                 plugin.messages().send(player, "potion-bought",
                         "skill", Messages.trusted(plugin.messages().raw("skill." + skill.id() + ".name")),
-                        "cost", String.valueOf(shop.price()));
+                        "count", String.valueOf(count),
+                        "cost", String.valueOf((long) shop.price() * count));
             }
             // Отказ/возврат уже объявлены движком оплаты (finance.service-*).
             return;

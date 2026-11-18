@@ -175,9 +175,9 @@ class ReleaseValidationTest(unittest.TestCase):
         self.assertNotIn("CHRDK_Professions", names)
         self.assertNotIn("CHRDK_Hunt", names)
         self.assertNotIn("CHRDK_Classes", names, "модуль классов вырезан в п.29")
-        self.assertEqual(21, len(names))
+        self.assertEqual(20, len(names), "питомцы полностью сняты: модулей в общем ZIP на один меньше")
         self.assertNotIn("CHRDK_VK", names, "CHRDK_VK публикуется отдельно, а не внутри общего ZIP")
-        self.assertNotIn("CHRDK_Disasters", names, "CHRDK_Disasters публикуется отдельно, а не внутри общего ZIP")
+        self.assertNotIn("CHRDK_Disasters", names, "CHRDK_Disasters не входит в общий ZIP и больше не прикрепляется к релизам")
         self.assertEqual({"CHRDK_VK": "vk", "CHRDK_Disasters": "disasters"}, standalone_plugins(root))
         self.assertNotIn("CHRDK_Bosses", names)
         self.assertNotIn("CHRDK_Treasures", names)
@@ -247,12 +247,14 @@ class ReleaseWorkflowContractTest(unittest.TestCase):
         self.assertIn('unzip -t "chrdk-plugins-${version}.zip"', source)
         self.assertIn('python3 .github/scripts/pack_release.py release "$version" "chrdk-plugins-${version}.zip"', source)
         self.assertIn('--standalone "chrdk-vk-${version}.jar" CHRDK_VK "$version"', source)
-        self.assertIn('--standalone "chrdk-disasters-${version}.jar" CHRDK_Disasters "$version"', source)
+        self.assertNotIn('--standalone "chrdk-disasters-${version}.jar" CHRDK_Disasters "$version"', source,
+                         "chrdk-disasters не развивается и не прикрепляется к релизам")
         self.assertNotIn("zip -j -9", source)
         self.assertNotIn("--zip", source)
         self.assertIn("Attach manifest-verified release assets", source)
         self.assertIn('"${{ env.zip }}" "${{ env.vk_jar }}"', source)
-        self.assertIn('"${{ env.disasters_jar }}" "${{ env.datapack }}" "${{ env.checksums }}" --clobber', source)
+        self.assertNotIn("${{ env.disasters_jar }}", source,
+                         "chrdk-disasters не входит ни в dry-run комплект, ни в приложенные ассеты")
         # GitHub limits each run script to 21000 characters. Avoid parsing YAML/dependencies.
         for section in source.split("run: |\n")[1:]:
             script = section.split("\n      - name:", 1)[0]

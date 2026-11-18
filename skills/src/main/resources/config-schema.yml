@@ -40,14 +40,22 @@
 # Удалён только устаревший xp-potions.mob-drop-chance (замён на три новых
 # ключа дропа); владельческие значения и комментарии остальных ключей
 # сохраняются, перед записью создаётся backup.
-config-version: 6
-messages-version: 9
+# v7 / v10: покупка кристаллов стаками (Shift+клик) и задержка между кликами
+# магазина. Новые ключи xp-potions.shop-stack-size и
+# xp-potions.shop-click-cooldown-ms дописываются эталоном (remove-запись
+# вычищает ручные эксперименты). Тексты xp-potion-used (прогресс-бар уровня),
+# potion-shop-price, potion-buy-hint и potion-bought переписываются эталоном,
+# новый xp-potion-used-max дописывается (backup, повторный старт идемпотентен).
+config-version: 7
+messages-version: 10
 migrations:
   config:
     5:
       remove: [leveling.max-level]
     6:
       remove: [xp-potions.money-reward]
+    7:
+      remove: [xp-potions.shop-stack-size, xp-potions.shop-click-cooldown-ms]
   messages:
     4:
       remove: [messages.xp-potion-daily-limit, messages.xp-potion-used]
@@ -85,3 +93,7 @@ migrations:
       remove: [messages.xp-potion-vanilla]
     9:
       remove: [messages.xp-potion-money]
+    10:
+      remove: [messages.xp-potion-used, messages.xp-potion-used-max,
+               messages.potion-shop-price, messages.potion-buy-hint,
+               messages.potion-bought]

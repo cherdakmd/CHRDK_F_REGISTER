@@ -61,7 +61,16 @@ public final class AnvilApplyListener implements Listener {
                 && previous.couldBeRepeat(ru.cherdakmd.chrdkregister.api.AnvilCosts.actual(view,event.getResult()), view.getRepairItemCountCost())) {
             if (!previous.output(event.getResult(), ru.cherdakmd.chrdkregister.api.AnvilCosts.actual(view,event.getResult()), view.getRepairItemCountCost(),
                     view.getMaximumRepairCost(), plugin.sourceGeneration(), cumulative, creative)) {
-                reject(event, viewer); // Изменённый сторонним обработчиком или устаревший preview.
+                // Единственный легитимный сдвиг — сброшенный native-пересчётом расход книги:
+                // восстанавливаем расход и цену, а не отказываем в операции. Всё остальное —
+                // изменение сторонним обработчиком или устаревший preview: отказ.
+                if (previous.sameOutput(event.getResult(), previous.cost(), view.getMaximumRepairCost(),
+                        plugin.sourceGeneration(), cumulative, creative)) {
+                    view.setRepairItemCountCost(1);
+                    ru.cherdakmd.chrdkregister.api.AnvilCosts.price(view, previous.cost());
+                } else {
+                    reject(event, viewer);
+                }
             }
             return;
         }
@@ -95,6 +104,10 @@ public final class AnvilApplyListener implements Listener {
                 ? renamePlain(result, view.getRenameText())
                 : Objects.equals(left.getItemMeta().displayName(), result.getItemMeta().displayName()) ? 0 : 1;
         Map<String, Integer> before = plugin.items().read(left);
+        // Идемпотентность пересборки: Paper может вернуть наш прежний результат повторным
+        // PrepareResult — сбрасываем его чары к состоянию левого слота, иначе merge книги
+        // удвоил бы уровень (дошёл бы до +1 поверх уже слитого).
+        plugin.items().write(result, before);
         plugin.service().applyFromBook(result, right);
         Map<String, Integer> weights = new HashMap<>();
         for (String id : plugin.items().read(right).keySet()) {
@@ -271,6 +284,9 @@ public final class AnvilApplyListener implements Listener {
             quotes.remove(viewer.getUniqueId());
             return;
         }
+        // Native-пересчёт легитимно гасит расход книги в 0, а наша операция всегда тратит
+        // ровно одну книгу: восстанавливаем расход до сверки quote при клике.
+        if (event.getView().getRepairItemCountCost() != 1) event.getView().setRepairItemCountCost(1);
         if (Objects.equals(quote.result(), result)) return;
         quotes.put(viewer.getUniqueId(), new AnvilQuotes.Quote<AnvilView, ItemStack>(
                 quote.view(), quote.left(), quote.right(), quote.rename(), result.clone(),

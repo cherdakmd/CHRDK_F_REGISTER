@@ -435,18 +435,19 @@ messages:
 
   xp-potion-unavailable: "<yellow>Кристалл опыта сейчас недоступен: требуется вход, выживание и исправное хранилище.</yellow>"
   xp-potion-cooldown: "<yellow>Следующий кристалл опыта можно использовать через %time% сек.</yellow>"
-  xp-potion-used: "<green>%skill%: +%xp% XP.</green>"
+  xp-potion-used: "<green>%skill%: +%xp% XP.</green> <gray>Ур.</gray> <white>%level%</white> <gray>%bar%</gray> <dark_gray>%current%/%need%</dark_gray> <gray>— осталось</gray> <white>%missing%</white> <gray>XP до следующего уровня.</gray>"
+  xp-potion-used-max: "<green>%skill%: +%xp% XP.</green> <gray>%bar%</gray> <green>МАКСИМУМ.</green>"
   xp-potion-money: "<green>Кристалл опыта:</green> %skill%<gray> на максимуме —</gray> <green>+1 уровень</green><gray> опыта Minecraft и</gray> <green>+%amount% ⛁</green><gray> в /bal.</gray>"
   xp-potion-vanilla: "<green>Кристалл опыта:</green> %skill%<gray> на максимуме —</gray> <green>+1 уровень</green><gray> шкалы опыта Minecraft.</gray>"
 
   # ------------------------------- кристаллы ------------------------------------
   # Покупка в меню /skills: единственный платный источник, дроп с мобов бесплатен.
   potion-shop-info: "<light_purple>Кристаллы опыта</light_purple>"
-  potion-shop-price: "<gray>Цена кристалла: </gray><white>%cost%</white> 💠. Клик по кристаллу — купить один."
+  potion-shop-price: "<gray>Цена кристалла: </gray><white>%cost%</white> 💠. Клик — один, Shift+клик — стак."
   potion-shop-closed: "<red>Покупка кристаллов закрыта.</red>"
   potion-buy: "<gray>Цена: </gray><white>%cost%</white> 💠"
-  potion-buy-hint: "<yellow>Клик — купить один кристалл</yellow>"
-  potion-bought: "<green>Куплен кристалл навыка</green> <white>%skill%</white><green> за</green> <white>%cost%</white> 💠."
+  potion-buy-hint: "<yellow>Клик — один; Shift+клик — стак (%stack%)</yellow>"
+  potion-bought: "<green>Куплено:</green> <white>%skill%</white> <green>×%count% за</green> <white>%cost%</white> 💠."
 
   # ------------------------------- атрибуты --------------------------------------
   # Очки за уровни навыков: игрок распределяет их сам (/skills attrs).
