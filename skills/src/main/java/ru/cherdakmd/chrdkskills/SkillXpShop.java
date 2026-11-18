@@ -55,12 +55,12 @@ final class SkillXpShop {
     boolean buy(Player player, SkillType skill, int count) {
         if (player == null || skill == null || !shopEnabled()) return false;
         if (!acceptClick(player.getUniqueId())) return false;
-        count = Math.max(1, Math.min(stackSize(), count));
-        long total = (long) price() * count;
+        final int amount = Math.max(1, Math.min(stackSize(), count));
+        long total = (long) price() * amount;
         if (total < 1L || total > Integer.MAX_VALUE) return false;
         int price = (int) total;
         return payments.perform(player, player, price, "skill-xp-potion", skill.id(),
-                () -> give(player, skill, count));
+                () -> give(player, skill, amount));
     }
 
     /** Выдача count кристаллов одним стаком; {@code false} — нет места, оплата вернётся игроку. */
