@@ -2,42 +2,56 @@ plugins {
     id 'java'
 }
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
+group = project.maven_group
+version = project.plugin_version
+
+base {
+    archivesName = 'chrdk-anticheat'
 }
 
 repositories {
     mavenCentral()
-    maven { url = 'https://repo.purpurmc.org/snapshots' }
+    maven {
+        name = 'purpurmc'
+        url = 'https://repo.purpurmc.org/snapshots'
+    }
 }
 
 dependencies {
-    compileOnly 'org.purpurmc.purpur:purpur-api:1.21.11-R0.1-SNAPSHOT'
-    implementation project(':')
-    implementation 'com.google.code.gson:gson:2.13.1'
-    testImplementation 'org.purpurmc.purpur:purpur-api:1.21.11-R0.1-SNAPSHOT'
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.3'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    compileOnly "org.purpurmc.purpur:purpur-api:${project.purpur_api_version}"
+    // Ядро CHRDK_F_REGISTER: Messages и ConfigUpgrader (plugin.yml: depend CHRDK_Core).
+    compileOnly project(':')
+    compileOnly "com.google.code.gson:gson:2.11.0"
+
+    testImplementation "org.purpurmc.purpur:purpur-api:${project.purpur_api_version}"
+    // Журнал пишет JSON через Gson — нужен и тестам.
+    testImplementation "com.google.code.gson:gson:2.11.0"
+    testImplementation "org.junit.jupiter:junit-jupiter:5.11.3"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
 
 processResources {
-    def props = [version: project.version]
-    inputs.properties props
-    filesMatching('plugin.yml') {
-        expand props
+    def pluginVersion = project.version
+    inputs.property "version", pluginVersion
+    filteringCharset = 'UTF-8'
+    filesMatching("plugin.yml") {
+        expand "version": pluginVersion
     }
 }
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
+    options.release = 25
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
 }
 
 test {
     useJUnitPlatform()
-}
-
-jar {
-    archiveBaseName = 'chrdk-anticheat'
+    testLogging {
+        events "failed"
+    }
 }
