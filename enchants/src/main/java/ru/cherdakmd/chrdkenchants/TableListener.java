@@ -10,7 +10,7 @@ import org.bukkit.event.enchantment.EnchantItemEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 
-/** Стол: финальная отмена и точное сравнение результата ванильной операции до добавления бонуса. */
+/** Стол: финальная отмена и сверка результата ванильной операции до добавления бонуса. */
 public final class TableListener implements Listener {
     private final EnchantsPlugin plugin;
     private static final int LIMIT = 4096;
@@ -24,6 +24,17 @@ public final class TableListener implements Listener {
         return entries != null && !entries.isEmpty() && entries.size() <= 256
                 && entries.entrySet().stream().allMatch(entry -> entry.getKey() != null && entry.getValue() != null
                         && entry.getValue() >= 1 && entry.getValue() <= 255);
+    }
+
+    /** Каждая ванильная чара операции присутствует в результате (стол может добавить свои метаданные/лишние чары). */
+    static boolean carriesOffered(ItemStack current, java.util.Map<org.bukkit.enchantments.Enchantment, Integer> offered, boolean book) {
+        if (current == null || offered == null || offered.isEmpty()) return false;
+        java.util.Map<org.bukkit.enchantments.Enchantment, Integer> actual = book
+                ? (current.getItemMeta() instanceof EnchantmentStorageMeta storage ? storage.getStoredEnchants() : java.util.Map.of())
+                : current.getEnchants();
+        for (var entry : offered.entrySet())
+            if (actual.getOrDefault(entry.getKey(), 0) < entry.getValue()) return false;
+        return true;
     }
     public TableListener(EnchantsPlugin plugin) { this.plugin = plugin; }
 
@@ -54,7 +65,15 @@ public final class TableListener implements Listener {
                 expected.setItemMeta(storage);
             } else expected.addUnsafeEnchantments(event.getEnchantsToAdd());
             ItemStack current = inventory.getItem(0);
-            if (current == null || !current.equals(expected)) return;
+            if (current == null || current.getType() != expected.getType() || current.getAmount() != expected.getAmount()) return;
+            // Точное совпадение — штатный путь. Если платформа добавила к результату стола
+            // свои метаданные (точное equals ломается, но ванильная операция честна),
+            // принимаем семантически: тот же предмет с полным набором ванильных чар операции
+            // и без наших меток. Иначе книга со стола навсегда остаётся без наших чар и не
+            // является кастомной книгой для наковальни.
+            if (!current.equals(expected)
+                    && !( !plugin.items().marked(current)
+                        && carriesOffered(current, event.getEnchantsToAdd(), before.getType() == Material.BOOK))) return;
             ItemStack result = current.clone();
             EnchantDef.Polarity polarity = plugin.config().cursesEnabled()
                     && plugin.service().random().nextInt(100) < plugin.config().tableCurseChancePercent()

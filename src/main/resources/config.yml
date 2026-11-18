@@ -191,7 +191,6 @@ security:
     - clansadmin
     - ga
     - ordersadmin
-    - petsadmin
     - questsadmin
     - ranksadmin
     - skillsadmin
@@ -1097,7 +1096,7 @@ server-menu:
     - {"id": "progress", "slot": 11, "icon": "EXPERIENCE_BOTTLE", "name": "<gold><bold>Прогресс и награды</bold></gold>", "lore": "<gray>Сезон, задания, навыки, класс и достижения</gray>"}
     - {"id": "economy", "slot": 12, "icon": "DIAMOND", "name": "<gold><bold>Экономика</bold></gold>", "lore": "<gray>Банк, магазин и заказы</gray>"}
     - {"id": "world", "slot": 13, "icon": "GRASS_BLOCK", "name": "<gold><bold>Мир и территории</bold></gold>", "lore": "<gray>Приваты, дома и телепорты</gray>"}
-    - {"id": "gear", "slot": 14, "icon": "ANVIL", "name": "<gold><bold>Снаряжение и питомцы</bold></gold>", "lore": "<gray>Чары, тиры, артефакты, косметика и питомцы</gray>"}
+    - {"id": "gear", "slot": 14, "icon": "ANVIL", "name": "<gold><bold>Снаряжение</bold></gold>", "lore": "<gray>Чары, тиры, артефакты и косметика</gray>"}
     - {"id": "social", "slot": 16, "icon": "BELL", "name": "<gold><bold>Общество</bold></gold>", "lore": "<gray>Чат, гильдия, оформление</gray>"}
   # Пункты. category — id раздела; без category пункт живёт на главной странице.
   # Без command — подсказка (клик игнорируется).
@@ -1150,7 +1149,6 @@ server-menu:
     - {"category": "gear", "icon": "TOTEM_OF_UNDYING", "name": "<gold><bold>Артефакты</bold></gold>", "lore": "<gray>Каталог, носимые артефакты и источники</gray>\n<dark_gray>Добывайте их в мире</dark_gray>", "command": "artifacts", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
     - {"category": "gear", "icon": "ITEM_FRAME", "name": "<gold><bold>Коллекция артефактов</bold></gold>", "lore": "<gray>Собранное, прогресс и награды</gray>", "command": "artifacts collection", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
     - {"category": "gear", "icon": "FIREWORK_ROCKET", "name": "<gold><bold>Косметика</bold></gold>", "lore": "<gray>Эффекты, шлейфы и оформление</gray>", "command": "cosmetics list", "plugin": "CHRDK_Cosmetics", "permission": "chrdkcosmetics.use"}
-    - {"category": "gear", "icon": "BONE", "name": "<gold><bold>Питомцы</bold></gold>", "lore": "<gray>Кошки и волки: уровни и трюки</gray>", "command": "pet list", "plugin": "CHRDK_Pets", "permission": "chrdkpets.use"}
     # ------------------------------ охота ------------------------------
     # ------------------------------ общество ------------------------------
     - {"category": "social", "icon": "FEATHER", "name": "<gold><bold>Чат</bold></gold>", "lore": "<gray>Клик — переключить канал</gray>\n<dark_gray>Локальный слышат рядом, глобальный — все</dark_gray>", "command": "chat"}
@@ -1552,7 +1550,6 @@ auto-messages:
     - {"text": "<gray>Сильная чара начинается с подходящей книги: <white>/enchants sources</white> — источники, <white>/enchants info id</white> — условия. Книга не отменяет конфликты и ограничения наковальни.</gray>", "plugin": "CHRDK_Enchants", "permission": "chrdkenchants.use"}
     - {"text": "<gray>Смотрите не только на цвет вещи: <white>/tiers info</white> раскрывает свойства, <white>/tiers collection</white> — коллекцию. Высокий тир не отменяет отрицательные аффиксы.</gray>", "plugin": "CHRDK_TierForge", "permission": "chrdktierforge.use"}
     - {"text": "<gray>У каждой находки две стороны: <white>/artifacts collection</white>. Полезный эффект может требовать опыт, иметь перезарядку или сочетаться с недостатком — читайте всю карточку.</gray>", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
-    - {"text": "<gray>Спутники растут рядом с вами: <white>/pet list</white> показывает приручённых ванильных кошек и волков. Опыт зависит от действий и близости владельца; уровень не даёт бессмертия.</gray>", "plugin": "CHRDK_Pets", "permission": "chrdkpets.use"}
     - {"text": "<gray>Мирный или боевой клан? <white>/clan gui</white>. Казна отдельна от <white>/bal</white>; ежедневный взнос — не меньше 10 алмазов с участника. У мирного клана есть дополнительная плата; условия читайте до вступления.</gray>", "plugin": "CHRDK_Guilds", "permission": "chrdkguilds.use"}
     - {"text": "<gray>Последний штрих к образу: <white>/cosmetics trails</white> — доступные шлейфы, <white>/cosmetics off</white> — отключение. Открытый каталог не означает владение; у права может быть срок.</gray>", "plugin": "CHRDK_Cosmetics", "permission": "chrdkcosmetics.use"}
     - {"text": "<gray>Хотите поддержать CHERDAK? <click:run_command:'/donate'><white>/donate</white></click> даст официальную ссылку. Не переводите деньги по реквизитам из чужих личных сообщений.</gray>", "permission": "chrdkregister.donate"}

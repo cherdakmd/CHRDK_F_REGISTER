@@ -37,8 +37,6 @@ FIELDS = {
     "skills_max": ("skills", "leveling.max-level"),
     "quest_daily": ("quests", "general.claims-per-day"),
     "guild_create": ("guilds", "general.creation-cost"),
-    "pet_level": ("pets", "levels.max-level"),
-    "pet_radius": ("pets", "general.owner-radius"),
     "daily_rank": ("daily-rewards", "vip.min-rank"),
     "vk_link_boost": ("vk", "rewards.link-boost-hours"),
     "vk_member_boost": ("vk", "rewards.member-boost-hours"),

@@ -209,8 +209,20 @@ final class SkillXpItems implements Listener {
         if (held != null && held.getAmount() > 0) {
             held.setAmount(held.getAmount() - 1);
         }
-        plugin.messages().send(player, "xp-potion-used",
-                "skill", plugin.messages().mini("skill." + skill.id() + ".name"), "xp", xp);
+        var progress = plugin.skills().progress(player, skill);
+        var name = plugin.messages().mini("skill." + skill.id() + ".name");
+        if (progress.maxed()) {
+            plugin.messages().send(player, "xp-potion-used-max",
+                    "skill", name, "xp", xp, "bar", SkillCurve.bar(100, 10));
+        } else {
+            plugin.messages().send(player, "xp-potion-used",
+                    "skill", name, "xp", xp,
+                    "level", String.valueOf(progress.level()),
+                    "bar", SkillCurve.bar(progress.percent(), 10),
+                    "current", String.valueOf(progress.into()),
+                    "need", String.valueOf(progress.need()),
+                    "missing", String.valueOf(Math.max(0L, progress.need() - progress.into())));
+        }
     }
 
     /**

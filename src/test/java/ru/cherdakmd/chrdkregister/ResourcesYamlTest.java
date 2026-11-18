@@ -23,7 +23,7 @@ class ResourcesYamlTest {
     private static final List<String> MODULES = List.of(
             "", "achievements", "artifacts", "battlepass", "claims", "common-goals",
             "classes", "cosmetics", "daily-rewards", "diamond-shop", "enchants", "guilds",
-            "orders", "pets", "quests",
+            "orders", "quests",
             "ranks", "skills", "teleports", "tier-forge", "vk");
 
     @Test

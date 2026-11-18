@@ -46,6 +46,25 @@ class AnvilQuotesTest {
         assertFalse(q.output("result", 19, 1, 40, 5, false, false));
         assertFalse(q.output("result", 19, 1, 40, 5, true, true));
     }
+
+    @Test void materialDriftIsRepairableButAnyOtherDriftIsNot() {
+        var q = quote("result");
+        assertTrue(q.sameOutput("result", 19, 40, 5, true, false));
+        assertFalse(q.sameOutput("modified", 19, 40, 5, true, false));
+        assertFalse(q.sameOutput("result", 20, 40, 5, true, false));
+        assertFalse(q.sameOutput("result", 19, 100, 5, true, false));
+        assertFalse(q.sameOutput("result", 19, 40, 6, true, false));
+        assertFalse(q.sameOutput("result", 19, 40, 5, false, false));
+        assertFalse(q.sameOutput("result", 19, 40, 5, true, true));
+    }
+
+    @Test void echoRepairRestoresBookConsumptionInsteadOfKillingTheOperation() throws Exception {
+        String source = source("AnvilApplyListener");
+        assertTrue(source.contains("previous.sameOutput(event.getResult(), previous.cost()"));
+        assertTrue(source.contains("ru.cherdakmd.chrdkregister.api.AnvilCosts.price(view, previous.cost())"));
+        assertTrue(source.contains("plugin.items().write(result, before)"));
+        assertTrue(source.contains("if (event.getView().getRepairItemCountCost() != 1) event.getView().setRepairItemCountCost(1)"));
+    }
     @Test void boundedStoreAllowsReplacementButRejectsOverflowWithoutEviction() {
         var store = new AnvilQuotes<Object, String>();
         for (int i = 0; i < AnvilQuotes.LIMIT; i++) assertTrue(store.put(new UUID(0, i), quote("result")));

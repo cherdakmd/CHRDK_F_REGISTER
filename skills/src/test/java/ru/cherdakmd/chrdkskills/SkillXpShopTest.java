@@ -75,15 +75,50 @@ class SkillXpShopTest {
     @Test
     void stalePotionTextsAreMigratedFromOwnerFiles() throws IOException {
         String messages = read("src/main/resources/messages.yml");
-        assertTrue(messages.contains("xp-potion-used: \"<green>%skill%: +%xp% XP.</green>\""),
-                "текст без %left%: суточного остатка зелий больше нет");
+        assertTrue(messages.contains("%missing%"),
+                "остаток до уровня навыка показывается после каждого кристалла");
+        assertFalse(messages.contains("%left%"),
+                "старый суточный остаток зелий (%left%) не возвращается");
         assertFalse(messages.contains("xp-potion-daily-limit"),
                 "суточный лимит зелий удалён вместе с текстом");
         String schema = read("src/main/resources/config-schema.yml");
-        assertTrue(schema.contains("messages-version: 9"));
+        assertTrue(schema.contains("messages-version: 10"));
         assertTrue(schema.contains("remove: [messages.xp-potion-daily-limit, messages.xp-potion-used]"),
                 "старые значения с %left% вычищаются из файлов владельцев миграцией");
         assertTrue(schema.contains("remove: [messages.menu-tab-potions, messages.xp-potion-unavailable,"),
                 "v5 переписывает тексты магазина и вкладки: старые формулировки про зелья вычищены");
+    }
+
+    @Test
+    void stackPurchaseClickCooldownAndProgressFeedbackArePinned() throws IOException {
+        String shop = read("src/main/java/ru/cherdakmd/chrdkskills/SkillXpShop.java");
+        assertTrue(shop.contains("boolean buy(Player player, SkillType skill, int count)"),
+                "покупка принимает количество: обычный клик — один, Shift — стак");
+        assertTrue(shop.contains("xp-potions.shop-stack-size"));
+        assertTrue(shop.contains("xp-potions.shop-click-cooldown-ms"),
+                "задержка между кликами покупки настраивается");
+        assertTrue(shop.contains("Math.max(1, Math.min(stackSize(), count))"),
+                "количество ограничено стаком и не может быть нулём");
+        assertTrue(shop.contains("addItem(crystal).isEmpty()"),
+                "выдача остаётся проверяемой и включает полный refund");
+        assertTrue(shop.contains("if (!fits(player.getInventory(), crystal, count)) return false;"),
+                "место проверяется до выдачи: частичный стак не выдаётся и не дублирует оплату");
+        assertTrue(shop.contains("payments.perform(player, player, price, \"skill-xp-potion\", skill.id()"),
+                "оплата стака — одно durable-намерение на полную сумму");
+        String gui = read("src/main/java/ru/cherdakmd/chrdkskills/SkillsGui.java");
+        assertTrue(gui.contains("onPotionsClick(player, holder, slot, event.isShiftClick())"));
+        assertTrue(gui.contains("shop.buy(player, skill, count)"));
+        String items = read("src/main/java/ru/cherdakmd/chrdkskills/SkillXpItems.java");
+        assertTrue(items.contains("SkillCurve.bar(progress.percent(), 10)"),
+                "после кристалла показывается полоса прогресса уровня навыка");
+        assertTrue(items.contains("xp-potion-used-max"));
+        assertTrue(items.contains("\"missing\", String.valueOf(Math.max(0L, progress.need() - progress.into()))"),
+                "сообщение показывает остаток XP до следующего уровня");
+        String config = read("src/main/resources/config.yml");
+        assertTrue(config.contains("shop-stack-size: 64"));
+        assertTrue(config.contains("shop-click-cooldown-ms: 750"));
+        String schema = read("src/main/resources/config-schema.yml");
+        assertTrue(schema.contains("config-version: 7"));
+        assertTrue(schema.contains("messages-version: 10"));
     }
 }

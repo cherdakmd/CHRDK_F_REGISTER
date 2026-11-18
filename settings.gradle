@@ -22,9 +22,6 @@ include 'cosmetics'
 include 'battlepass'
 
 
-include 'pets'
-
-
 include 'orders'
 
 
