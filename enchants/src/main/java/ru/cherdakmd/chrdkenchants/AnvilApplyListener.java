@@ -122,8 +122,11 @@ public final class AnvilApplyListener implements Listener {
             });
         }
         long surcharge = AnvilPrice.surcharge(before, plugin.items().read(result), weights);
-        if (pureBook && surcharge == 0) {
-            reject(event, viewer); // Не сжигаем книгу ради отсутствующего улучшения.
+        // Не сжигаем книгу ради отсутствующего улучшения: наша книга без новых
+        // чар и вспомогательное слияние без единого усиления отклоняются —
+        // ванильная наковальня тоже не выдаёт результат, где ничего не изменилось.
+        if ((pureBook || (manualVanilla != null && manualVanilla.nativeCost() == 0)) && surcharge == 0) {
+            reject(event, viewer);
             return;
         }
         int leftWork = work(left), bookWork = work(right);

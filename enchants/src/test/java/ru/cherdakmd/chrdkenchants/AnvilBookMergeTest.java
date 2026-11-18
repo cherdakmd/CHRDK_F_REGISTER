@@ -34,6 +34,8 @@ class AnvilBookMergeTest {
                 "без кастомной части книги applyFromBook не вызывается");
         assertTrue(anvil.contains("plugin.items().write(result, before)"),
                 "кастомные чары левой стороны восстанавливаются на результате");
+        assertTrue(anvil.contains("if ((pureBook || (manualVanilla != null && manualVanilla.nativeCost() == 0)) && surcharge == 0)"),
+                "слияние без единого усиления не выдаёт результат — как ванильная наковальня");
     }
 
     @Test
