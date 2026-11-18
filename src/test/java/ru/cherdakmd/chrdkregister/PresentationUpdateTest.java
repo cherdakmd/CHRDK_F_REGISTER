@@ -46,7 +46,7 @@ class PresentationUpdateTest {
         assertTrue(changes.contains("server-menu.items"),changes.toString());
         var oldItems=live.getMapList("server-menu.items");
         var newItems=fresh.getMapList("server-menu.items");
-        assertEquals(oldItems.size()-3,newItems.size(),"кнопки ядра, доната, экономики, CHRDK_VK, катастроф, тиры мобов, генератор и античит вместо четырёх снятых аддонов; п.29 вырезал пункт классов");
+        assertEquals(oldItems.size()-4,newItems.size(),"кнопки ядра, доната, экономики, CHRDK_VK, катастроф, тиры мобов, генератор и античит вместо четырёх снятых аддонов; п.29 вырезал пункт классов; питомцы удалены");
         assertTrue(newItems.containsAll(oldItems.stream().filter(item -> !RetiredAddons.plugin(String.valueOf(item.get("plugin"))) && !"pass donate".equals(item.get("command")) && !"shop".equals(item.get("command")) && !"bal".equals(item.get("command")) && !"claim balance".equals(item.get("command"))).toList()),"пункты остальных аддонов не переписаны");
         var added=newItems.stream().filter(item -> !oldItems.contains(item)).filter(item -> !"shop".equals(item.get("command"))).toList();
         assertEquals(13,added.size(),added.toString());
@@ -72,7 +72,7 @@ class PresentationUpdateTest {
         assertTrue(changes.contains("server-menu.items"),changes.toString());
         var oldItems=live.getMapList("server-menu.items");
         var newItems=fresh.getMapList("server-menu.items");
-        assertEquals(oldItems.size()-4,newItems.size(),"кнопки ника/доната, экономики, CHRDK_VK, катастроф, тиры мобов, генератор и античит добавлены, пять снятых аддонов удалены; п.29 вырезал пункт классов");
+        assertEquals(oldItems.size()-5,newItems.size(),"кнопки ника/доната, экономики, CHRDK_VK, катастроф, тиры мобов, генератор и античит добавлены, пять снятых аддонов удалены; п.29 вырезал пункт классов; питомцы удалены");
         var added=newItems.stream().filter(item -> !oldItems.contains(item)).filter(item -> !"shop".equals(item.get("command"))).toList();
         assertEquals(12,added.size(),added.toString());
         assertEquals(1,added.stream().filter(item -> "labels".equals(item.get("command"))).count());
@@ -99,7 +99,7 @@ class PresentationUpdateTest {
         assertTrue(changes.contains("server-menu.items"),changes.toString());
         var oldItems=live.getMapList("server-menu.items");
         var newItems=fresh.getMapList("server-menu.items");
-        assertEquals(oldItems.size()-5,newItems.size(),"снятые аддоны удалены, добавлены донат, два просмотра экономики, CHRDK_VK, катастрофы, тиры мобов, генератор и античит; п.29 вырезал пункт классов");
+        assertEquals(oldItems.size()-6,newItems.size(),"снятые аддоны удалены, добавлены донат, два просмотра экономики, CHRDK_VK, катастрофы, тиры мобов, генератор и античит; п.29 вырезал пункт классов; питомцы удалены");
         var changed=newItems.stream().filter(item -> !oldItems.contains(item)).filter(item -> !"shop".equals(item.get("command"))).toList();
         assertEquals(12,changed.size(),changed.toString());
         assertEquals(1,changed.stream().filter(item -> "labels".equals(item.get("command"))).count());
@@ -116,7 +116,7 @@ class PresentationUpdateTest {
         var changes=PresentationMigration.replacements(live,List.of(legacy),fresh);
         assertTrue(changes.contains("server-menu.items"));
         assertTrue(changes.contains("auto-messages.messages"));
-        assertEquals(live.getMapList("server-menu.items").size()-5, fresh.getMapList("server-menu.items").size());
+        assertEquals(live.getMapList("server-menu.items").size()-6, fresh.getMapList("server-menu.items").size());
         for (var entry:fresh.getMapList("server-menu.items")) {
             assertFalse(RetiredAddons.plugin(String.valueOf(entry.get("plugin"))));
             assertFalse(RetiredAddons.command(String.valueOf(entry.get("command"))));
