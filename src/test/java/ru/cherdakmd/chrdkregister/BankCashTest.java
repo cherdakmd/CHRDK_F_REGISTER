@@ -160,15 +160,22 @@ class BankCashTest {
         bad=root.deepCopy(); bad.getAsJsonObject("cashReceipts").getAsJsonObject(owner.toString()).remove("transaction"); refuse(bad.toString());
     }
     @Test void oldAsyncSaveAndNewCashIntentUseTheSameMonitor() throws Exception {
-        funded(100); var ref=new java.util.concurrent.atomic.AtomicReference<BankStore>(); var held=new java.util.concurrent.atomic.AtomicBoolean();
+        funded(100);
         var entered=new java.util.concurrent.CountDownLatch(1); var release=new java.util.concurrent.CountDownLatch(1); var started=new java.util.concurrent.CountDownLatch(1);
         var error=new java.util.concurrent.atomic.AtomicReference<Throwable>(); var result=new java.util.concurrent.atomic.AtomicReference<BankCash.Intent>();
-        var b=new BankStore(dir,log,()->{if(Thread.currentThread().getName().equals("old-bank-save")) {
-            held.set(Thread.holdsLock(ref.get())); entered.countDown();
+        var b=new BankStore(dir,log,()->{if(Thread.currentThread().getName().equals("chrdk-io")) {
+            entered.countDown();
             try { if(!release.await(5,java.util.concurrent.TimeUnit.SECONDS)) throw new IOException("timeout"); } catch(InterruptedException e) { Thread.currentThread().interrupt(); throw new IOException(e); }
-        }}); ref.set(b); b.load(); b.deposit(other,"Alex",1);
+        }}); b.load(); b.deposit(other,"Alex",1);
         var writer=new Thread(b::saveNow,"old-bank-save"); var transaction=new Thread(()->{started.countDown();try {result.set(intent(b,BankCash.Kind.DEPOSIT,9));}catch(Throwable e){error.set(e);}}); writer.start();
-        try {assertTrue(entered.await(5,java.util.concurrent.TimeUnit.SECONDS)); assertTrue(held.get()); transaction.start(); assertTrue(started.await(5,java.util.concurrent.TimeUnit.SECONDS));} finally {release.countDown();}
+        try {
+            assertTrue(entered.await(5,java.util.concurrent.TimeUnit.SECONDS));
+            transaction.start(); assertTrue(started.await(5,java.util.concurrent.TimeUnit.SECONDS));
+            boolean blocked=false;
+            for (long deadline=System.nanoTime()+2_000_000_000L; !blocked && System.nanoTime()<deadline; ) { blocked=transaction.getState()==Thread.State.BLOCKED; if(!blocked) Thread.sleep(10); }
+            assertTrue(blocked,"новая операция ждёт тот же монитор, что и старый снимок");
+            assertNull(result.get(),"пока снимок пишется, новая операция не выполняется");
+        } finally {release.countDown();}
         writer.join(5000); transaction.join(5000); assertFalse(writer.isAlive()); assertFalse(transaction.isAlive()); assertNull(error.get()); assertNotNull(result.get()); assertNotNull(load().cashPending(owner)); assertEquals(100,load().balance(owner)); assertEquals(1,load().balance(other));
     }
 
