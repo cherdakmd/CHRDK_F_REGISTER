@@ -18,6 +18,28 @@ class AnvilPriceTest {
         assertEquals(4, AnvilPrice.merge(1, 4, 5));
         assertEquals(1, AnvilPrice.merge(0, 1, 5));
     }
+    @Test void overVanillaLevelsSurviveMergeAndGrowUpToTheCap() {
+        // «Защита X» не превращается в IV при совмещении двух предметов.
+        assertEquals(10, AnvilPrice.merge(10, 3, 10));
+        assertEquals(10, AnvilPrice.merge(3, 10, 10));
+        assertEquals(10, AnvilPrice.merge(10, 10, 10), "на потолке равные уровни не растут");
+        assertEquals(6, AnvilPrice.merge(5, 5, 10), "равные → +1 вплоть до потолка");
+        assertEquals(11, AnvilPrice.merge(10, 10, 12), "ниже потолка слияние идёт дальше");
+        assertEquals(15, AnvilPrice.merge(15, 3, 10), "входные уровни не режутся");
+        assertEquals(2, AnvilPrice.merge(2, 2, 2), "потолок ограничивает прирост: +1 не прыгает выше");
+    }
+    @Test void mergeMapsStrengthenEntriesIndependently() {
+        Map<String, Integer> merged = AnvilPrice.merge(Map.of("prot", 10, "thorns", 3),
+                Map.of("prot", 4, "unbreaking", 3), key -> 10);
+        assertEquals(10, merged.get("prot"));
+        assertEquals(3, merged.get("thorns"));
+        assertEquals(3, merged.get("unbreaking"));
+        assertTrue(AnvilPrice.strengthens(merged, Map.of("prot", 10, "thorns", 3)));
+        assertFalse(AnvilPrice.strengthens(merged, merged));
+        assertFalse(AnvilPrice.strengthens(
+                AnvilPrice.merge(Map.of("prot", 10), Map.of("prot", 3), key -> 10),
+                Map.of("prot", 10)), "без единого усиления слияние ничего не даёт");
+    }
     @Test void chargeEachImprovedEnchantAtItsOwnRarityAndMergedLevel() {
         assertEquals(9, AnvilPrice.surcharge(Map.of("a", 2), Map.of("a", 3), Map.of("a", 2)));
         // Не max rarity * max level: редкая I и обычная V имеют разные цены; обе учитываются.

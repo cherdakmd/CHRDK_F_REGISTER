@@ -58,9 +58,10 @@ class AnvilBookMergeTest {
         String merge = source("VanillaBookMerge");
         assertTrue(merge.contains("boolean bookTarget = source.getType() == Material.ENCHANTED_BOOK"));
         assertTrue(merge.contains("storage.getStoredEnchants()"));
-        assertTrue(merge.contains("storage.addStoredEnchant(enchantment, merged.get(enchantment), false)"));
-        assertTrue(merge.contains("meta.addEnchant(enchantment, merged.get(enchantment), false)"),
-                "перенос на вещь остаётся прежним");
+        assertTrue(merge.contains("storage.addStoredEnchant(enchantment, merged.get(enchantment), true)"),
+                "надванильные уровни допустимы: потолок уже применён в merge");
+        assertTrue(merge.contains("meta.addEnchant(enchantment, merged.get(enchantment), true)"),
+                "перенос на вещь тоже принимает надванильные уровни");
         assertTrue(merge.contains("(!bookTarget && !enchantment.canEnchantItem(result))"),
                 "книга принимает любые хранёные чары, вещь — только применимые");
         assertTrue(merge.contains("existing.conflictsWith(enchantment)"),

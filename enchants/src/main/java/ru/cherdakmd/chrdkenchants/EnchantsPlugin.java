@@ -87,6 +87,9 @@ public final class EnchantsPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new VillagerListener(this), this);
         workshop = new EnchantWorkshop(this);
         Bukkit.getPluginManager().registerEvents(workshop, this);
+        // 2.0.16: надванильные уровни ванильных чар — ДО AnvilApplyListener (HIGH):
+        // наша пара живёт там, этот слушатель трогает только ванильные слияния.
+        Bukkit.getPluginManager().registerEvents(new VanillaMergeListener(this), this);
         anvil = new AnvilApplyListener(this);
         Bukkit.getPluginManager().registerEvents(anvil, this);
         Bukkit.getPluginManager().registerEvents(new GrindstoneListener(this), this);

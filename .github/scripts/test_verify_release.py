@@ -120,6 +120,11 @@ class ReleaseValidationTest(unittest.TestCase):
             "2.0.15": ("22 JAR одной версии", "chrdk-vk-2.0.15.jar",
                        "chrdk-disasters-2.0.15.jar", "Mine Treasure", "CHRDK_Anticheat",
                        "chrdk-grim-configs-2.0.15.zip", "flags.jsonl", "punishments.yml"),
+            # Питомцы и доска заказов сняты: в общем ZIP 19 JAR (expected_plugins),
+            # chrdk-disasters больше не прикрепляется к релизам.
+            "2.0.16": ("19 JAR одной версии", "chrdk-vk-2.0.16.jar",
+                       "Mine Treasure", "chrdk-grim-configs-2.0.16.zip", "Слияние титанов",
+                       "vanilla-level-cap", "не режутся", "до потолка 10"),
         }
         if version in current_kits:
             self.assertIn(f"CHRDK {version}", current)

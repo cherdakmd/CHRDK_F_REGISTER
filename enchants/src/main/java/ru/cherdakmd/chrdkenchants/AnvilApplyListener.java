@@ -83,7 +83,8 @@ public final class AnvilApplyListener implements Listener {
         // Не оживляем native Too Expensive (40+). При обычном null проверяем
         // vanilla-перенос сами: кастомный тир-предмет не должен мешать книге.
         if (vanilla == null && !pureBook && vanillaCost < 40) {
-            manualVanilla = VanillaBookMerge.merge(left, bookMeta);
+            manualVanilla = VanillaBookMerge.merge(left, bookMeta,
+                    plugin.config() == null ? 10 : plugin.config().vanillaLevelCap());
             if (manualVanilla == null) {
                 reject(event, viewer);
                 return;
@@ -103,6 +104,9 @@ public final class AnvilApplyListener implements Listener {
         int renameCost = (pureBook || manualVanilla != null) && vanilla == null
                 ? renamePlain(result, view.getRenameText())
                 : Objects.equals(left.getItemMeta().displayName(), result.getItemMeta().displayName()) ? 0 : 1;
+        // 2.0.16: надванильные уровни ванильных чар не режутся ванильным зажимом.
+        VanillaLevels.restore(result, left, right,
+                plugin.config() == null ? 10 : plugin.config().vanillaLevelCap());
         Map<String, Integer> before = plugin.items().read(left);
         // Идемпотентность пересборки: Paper может вернуть наш прежний результат повторным
         // PrepareResult — сбрасываем его чары к состоянию левого слота, иначе merge книги
