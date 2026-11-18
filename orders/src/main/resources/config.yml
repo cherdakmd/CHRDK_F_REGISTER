@@ -111,10 +111,16 @@ bots:
       - "Крутится! Спасибо, друг."
   mirra:
     name: "Скупщица Мирра"
-    categories: [hunt, fishing, deep]
+    categories: [hunt, fishing, deep, generator]
     thanks:
       - "Товар принят. Плата — как договаривались."
       - "Хорошая партия. Приходи ещё."
+  zhar:
+    name: "Плавильщик Жар"
+    categories: [generator]
+    thanks:
+      - "Смесь годная. Из такого и слиток выйдет, и камень крепкий."
+      - "Принимаю всё, что из генератора: и камень, и редкость."
 
 # Категории заказов.
 #   weight            — вес при случайном выборе (не проценты: нормализуется);
@@ -327,3 +333,81 @@ categories:
         amount-min: 24
         amount-max: 48
         reward-per-item: 0.25
+  # Продукция генератора (CHRDK_Generator, п.31): NPC-боты закупают всё, что
+  # производят тиры генератора. Свои лоты на доску игрокам ставить нельзя:
+  # доска живёт только заказами ботов, продукция продаётся им.
+  generator:
+    weight: 20
+    min-reputation: 0
+    reputation: 1
+    boost-hours-chance: 0
+    boost-hours: 0
+    items:
+      COBBLESTONE:
+        amount-min: 48
+        amount-max: 64
+        reward-per-item: 0.01
+      CLAY_BALL:
+        amount-min: 32
+        amount-max: 64
+        reward-per-item: 0.01
+      NETHERRACK:
+        amount-min: 48
+        amount-max: 64
+        reward-per-item: 0.01
+      GRAVEL:
+        amount-min: 32
+        amount-max: 64
+        reward-per-item: 0.02
+      RAW_IRON:
+        amount-min: 24
+        amount-max: 48
+        reward-per-item: 0.10
+      RAW_COPPER:
+        amount-min: 32
+        amount-max: 64
+        reward-per-item: 0.03
+      COAL:
+        amount-min: 48
+        amount-max: 64
+        reward-per-item: 0.02
+      RAW_GOLD:
+        amount-min: 16
+        amount-max: 32
+        reward-per-item: 0.20
+      REDSTONE:
+        amount-min: 32
+        amount-max: 64
+        reward-per-item: 0.05
+      LAPIS_LAZULI:
+        amount-min: 16
+        amount-max: 32
+        reward-per-item: 0.10
+      AMETHYST_SHARD:
+        amount-min: 12
+        amount-max: 24
+        reward-per-item: 0.12
+      DIAMOND:
+        amount-min: 8
+        amount-max: 16
+        reward-per-item: 1.00
+      EMERALD:
+        amount-min: 4
+        amount-max: 8
+        reward-per-item: 0.90
+      QUARTZ:
+        amount-min: 24
+        amount-max: 48
+        reward-per-item: 0.05
+      NETHERITE_INGOT:
+        amount-min: 2
+        amount-max: 4
+        reward-per-item: 12.00
+      NETHER_STAR:
+        amount-min: 1
+        amount-max: 2
+        reward-per-item: 25.00
+      END_CRYSTAL:
+        amount-min: 2
+        amount-max: 4
+        reward-per-item: 12.00
