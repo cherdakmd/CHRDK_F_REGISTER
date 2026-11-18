@@ -65,6 +65,12 @@ class SkillXpItemsTest {
                 "тексты про деньги и про ванильный уровень");
         assertTrue(source.contains("xp-potions.money-reward"),
                 "награда настраивается конфигом");
+        assertTrue(source.contains("xp-potion-awards-paused"),
+                "приостановленный источник наград — своя причина отказа с подсказкой администрации");
+        assertTrue(source.contains("xp-potion-storage-broken"),
+                "повреждённое хранилище расходников — своя причина отказа");
+        assertTrue(source.contains("failStamps"),
+                "повторяющиеся отказы не спамят в чат: одинаковое сообщение не чаще раза в 3 секунды");
         assertTrue(source.contains("На максимуме навыка: +"),
                 "лор предмета предупреждает о награде");
         assertTrue(source.indexOf("giveExpLevels(1)") < source.indexOf("grantXp(player, skill, xp)"),
