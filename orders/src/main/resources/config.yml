@@ -411,3 +411,23 @@ categories:
         amount-min: 2
         amount-max: 4
         reward-per-item: 12.00
+      ANCIENT_DEBRIS:
+        amount-min: 3
+        amount-max: 6
+        reward-per-item: 4.00
+      GHAST_TEAR:
+        amount-min: 3
+        amount-max: 6
+        reward-per-item: 0.90
+      PHANTOM_MEMBRANE:
+        amount-min: 4
+        amount-max: 8
+        reward-per-item: 0.45
+      PRISMARINE_CRYSTALS:
+        amount-min: 8
+        amount-max: 16
+        reward-per-item: 0.30
+      HEART_OF_THE_SEA:
+        amount-min: 1
+        amount-max: 2
+        reward-per-item: 20.00

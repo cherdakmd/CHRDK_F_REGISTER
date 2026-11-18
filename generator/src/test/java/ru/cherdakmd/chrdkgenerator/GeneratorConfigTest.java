@@ -48,8 +48,8 @@ class GeneratorConfigTest {
         assertEquals("Сердце", config.tier(7).name());
         assertEquals(List.of(1, 1, 2, 2, 3, 3, 4),
                 config.tiers().stream().map(GeneratorConfig.Tier::unitsPerCycle).toList());
-        assertEquals(4, config.tier(7).drops().size());
-        assertTrue(config.tier(7).drops().stream().filter(GeneratorDrops.Drop::rare).count() == 2);
+        assertEquals(10, config.tier(7).drops().size(), "тир 7 — микс материалов кузни и сердечных");
+        assertTrue(config.tier(7).drops().stream().filter(GeneratorDrops.Drop::rare).count() == 3);
 
         assertEquals(null, config.tier(4).money(), "деньги только с тира 5");
         assertEquals(0.15, config.tier(5).money().chance());

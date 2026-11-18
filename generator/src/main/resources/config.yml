@@ -101,8 +101,18 @@ generator:
       units-per-cycle: 4
       money: {chance: 1.0, portion: 4}
       drops:
+        # Микс материалов мастерской tier-forge (кузни) и «сердечных» (§12.3):
+        # кузня — оплата улучшений и катализатор переката; сердечные — редкие
+        # позиции тира «Сердце», пул согласован с механиками кузни (не материалы
+        # починки в роли сердечных, все имена валидны для ItemKind/кузницы).
         - {material: DIAMOND, weight: 3}
         - {material: NETHERITE_INGOT, weight: 2}
+        - {material: AMETHYST_SHARD, weight: 2}
+        - {material: ANCIENT_DEBRIS, weight: 1}
+        - {material: GHAST_TEAR, weight: 1}
+        - {material: PHANTOM_MEMBRANE, weight: 1}
+        - {material: PRISMARINE_CRYSTALS, weight: 1}
+        - {material: HEART_OF_THE_SEA, weight: 1, rare: true}
         - {material: NETHER_STAR, weight: 1, rare: true}
         - {material: END_CRYSTAL, weight: 1, rare: true}
 
