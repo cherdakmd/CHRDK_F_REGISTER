@@ -26,7 +26,7 @@ class AnvilPriceTest {
         assertEquals(6, AnvilPrice.merge(5, 5, 10), "равные → +1 вплоть до потолка");
         assertEquals(11, AnvilPrice.merge(10, 10, 12), "ниже потолка слияние идёт дальше");
         assertEquals(15, AnvilPrice.merge(15, 3, 10), "входные уровни не режутся");
-        assertEquals(3, AnvilPrice.merge(2, 2, 2), "потолок ограничивает прирост");
+        assertEquals(2, AnvilPrice.merge(2, 2, 2), "потолок ограничивает прирост: +1 не прыгает выше");
     }
     @Test void mergeMapsStrengthenEntriesIndependently() {
         Map<String, Integer> merged = AnvilPrice.merge(Map.of("prot", 10, "thorns", 3),
