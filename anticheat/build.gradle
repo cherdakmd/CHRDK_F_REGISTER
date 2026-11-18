@@ -1,0 +1,43 @@
+plugins {
+    id 'java'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://repo.purpurmc.org/snapshots' }
+}
+
+dependencies {
+    compileOnly 'org.purpurmc.purpur:purpur-api:1.21.11-R0.1-SNAPSHOT'
+    implementation project(':')
+    implementation 'com.google.code.gson:gson:2.13.1'
+    testImplementation 'org.purpurmc.purpur:purpur-api:1.21.11-R0.1-SNAPSHOT'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.3'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+processResources {
+    def props = [version: project.version]
+    inputs.properties props
+    filesMatching('plugin.yml') {
+        expand props
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+jar {
+    archiveBaseName = 'chrdk-anticheat'
+}

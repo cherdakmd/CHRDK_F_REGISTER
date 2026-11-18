@@ -1,0 +1,19 @@
+# Контракт конфига CHRDK_Anticheat v1 (см. docs/design/ANTICHEAT.md).
+version: 1
+fields:
+  general.enabled:
+    type: boolean
+    default: true
+  general.locale:
+    type: string
+    default: ru
+  alerts.throttle-seconds:
+    type: int
+    default: 10
+    min: 1
+    max: 3600
+  journal.keep-days:
+    type: int
+    default: 30
+    min: 1
+    max: 365

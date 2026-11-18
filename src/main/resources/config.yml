@@ -198,6 +198,8 @@ security:
     - tpadmin
     - tiersadmin
     - vkadmin
+    # Служебная команда моста античита (см. docs/design/ANTICHEAT.md).
+    - chrdkac
 
 donatepay:
   # 1.4.167: продажи идут только через TradeMC (trademc.enabled: true), поэтому
