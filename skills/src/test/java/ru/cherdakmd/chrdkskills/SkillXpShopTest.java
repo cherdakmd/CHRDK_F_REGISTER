@@ -82,7 +82,7 @@ class SkillXpShopTest {
         assertFalse(messages.contains("xp-potion-daily-limit"),
                 "суточный лимит зелий удалён вместе с текстом");
         String schema = read("src/main/resources/config-schema.yml");
-        assertTrue(schema.contains("messages-version: 10"));
+        assertTrue(schema.contains("messages-version: 11"));
         assertTrue(schema.contains("remove: [messages.xp-potion-daily-limit, messages.xp-potion-used]"),
                 "старые значения с %left% вычищаются из файлов владельцев миграцией");
         assertTrue(schema.contains("remove: [messages.menu-tab-potions, messages.xp-potion-unavailable,"),
@@ -119,6 +119,6 @@ class SkillXpShopTest {
         assertTrue(config.contains("shop-click-cooldown-ms: 750"));
         String schema = read("src/main/resources/config-schema.yml");
         assertTrue(schema.contains("config-version: 7"));
-        assertTrue(schema.contains("messages-version: 10"));
+        assertTrue(schema.contains("messages-version: 11"));
     }
 }
