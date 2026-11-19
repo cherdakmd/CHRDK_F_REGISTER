@@ -46,7 +46,6 @@ public final class LuckPermsBootstrap {
             "chrdkenchants.use",
             "chrdkranks.use",
             "chrdktele.use",
-            "chrdktierforge.use",
             "chrdkvk.use",
             "chrdksocial.use"
     );
@@ -74,7 +73,6 @@ public final class LuckPermsBootstrap {
             "chrdkenchants.admin",
             "chrdkranks.admin",
             "chrdktele.admin",
-            "chrdktierforge.admin",
             "chrdkvk.admin",
             "chrdksocial.admin"
     );

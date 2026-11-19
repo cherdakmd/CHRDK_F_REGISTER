@@ -30,7 +30,7 @@ class AddonRetirement271Test {
         }
         for(String plugin:List.of("CHRDK_Events","CHRDK_Lottery","CHRDK_Party","CHRDK_Referrals"))
             assertFalse(PluginUpdateService.MODULES.containsKey(plugin));
-        assertEquals(19,PluginUpdateService.MODULES.size());assertNull(BankCharge.permission("lottery"));
+        assertEquals(18,PluginUpdateService.MODULES.size());assertNull(BankCharge.permission("lottery"));
     }
     @Test void everyOldCommandAliasIsFilteredIncludingNamespacesAndExtraSlashes() {
         for(String alias:List.of("lottery","lot","loto","lotteryadmin","lotadmin","party","pt","group","gruppa",
@@ -107,8 +107,8 @@ class AddonRetirement271Test {
         }
         assertEquals(300, ((Number) fresh.getMapList("shop.products").stream()
                 .filter(p -> "rank-wanderer".equals(p.get("id"))).findFirst().orElseThrow().get("price")).intValue());
-        assertEquals(45,fresh.getMapList("server-menu.items").size());
-        assertEquals(38,fresh.getMapList("auto-messages.messages").size());
+        assertEquals(44,fresh.getMapList("server-menu.items").size());
+        assertEquals(37,fresh.getMapList("auto-messages.messages").size());
         for(String key:changes)old.set(key,fresh.get(key));
         assertTrue(PresentationMigration.replacements(old,List.of(yaml("presentation-legacy-1.4.270.yml")),fresh).isEmpty());
         assertEquals(777,old.getInt("auto-messages.interval-seconds"));assertEquals(List.of("Admin"),old.getStringList("tablist.pinned-names"));
@@ -128,9 +128,10 @@ class AddonRetirement271Test {
         Messages.migrateStockOverrides(fresh,overrides,legacy);
         assertFalse(overrides.values().stream().anyMatch(v->v.contains("/lottery")));
         // Новые ключи (например, ВК-2FA) берутся из defaults, а не обязаны попасть в overrides.
-        var migratedExisting = new LinkedHashMap<>(fresh);
-        migratedExisting.keySet().retainAll(legacy.keySet());
-        assertEquals(migratedExisting,overrides);
+        // Ключи, вырезанные из стока вместе с модулем (лейбл кузни), у владельца остаются как есть.
+        var expected = new LinkedHashMap<String,String>();
+        for (var e : legacy.entrySet()) expected.put(e.getKey(), fresh.getOrDefault(e.getKey(), e.getValue()));
+        assertEquals(expected,overrides);
         assertTrue(fresh.containsKey("vk-factor.prompt"));
         overrides.put("guide.pages","Собственный путеводитель администратора");
         Messages.migrateStockOverrides(fresh,overrides,legacy);
@@ -147,7 +148,7 @@ class AddonRetirement271Test {
         assertNull(BankCharge.permission("lottery"));
     }
     @Test void sharedCoreBukkitAndBankContractsStillExist() {
-        assertEquals(45,ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
+        assertEquals(46,ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
         assertTrue(org.bukkit.event.Event.class.isAssignableFrom(ru.cherdakmd.chrdkregister.api.events.PassGrantedEvent.class));
         assertNotNull(ru.cherdakmd.chrdkregister.api.ChargeRecovery.class);
         assertNotNull(ru.cherdakmd.chrdkregister.api.MilestoneAwards.class);

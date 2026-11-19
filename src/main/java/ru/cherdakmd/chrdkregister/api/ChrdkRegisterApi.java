@@ -24,9 +24,9 @@ import java.util.UUID;
  * завершение авторизации). Контракт: интерфейс расширяется только добавлением методов,
  * {@link #API_VERSION} растёт на каждое такое расширение.</p>
  *
- * <p>API45 добавляет lineage и sequence-сверку Claims. API42 добавляет замороженный
- * грант Кузни ({@link ShopExchange}, {@link ForgeMarketCatalog}) и мягкий мост к
- * производителю расходников ({@link ForgeMaterialSource}).</p>
+ * <p>API45 добавляет lineage и sequence-сверку Claims. API42 добавлял замороженный
+ * грант Кузни ({@link ShopExchange}, {@link ForgeMarketCatalog}); API46 снимает
+ * мост к производителю расходников Кузни — модуль тиров и кузни вырезан.</p>
  *
  * <p>Методы {@link #economy()}, {@link #permissions()} и {@link #luckPerms()} возвращают
  * {@link Optional#empty()}, когда соответствующий плагин не установлен; типы Vault и
@@ -35,8 +35,8 @@ import java.util.UUID;
  */
 public interface ChrdkRegisterApi {
 
-    /** Версия контракта API. API45: Claims source lineage и durable high-water для безопасной сверки; API44: точная minor-экономика; API42: восемь PDC-расходников Кузни, ForgeMarketCatalog, nullable frozen grant в ShopExchange и ForgeMaterialSource; API41: уведомление AnvilPaidResultEvent после ручной полной оплаты; API40: AnvilCosts/AnvilUse — полная цена без клиентского запрета 40; API39: денежная награда BP once и накопление буста без игрового потолка; API38: MobRewardPolicy временных мобов; API37: общие helpers ExplorationCatalog/ExplorationStore/ExplorationAtlas; API 33: мосты внешних интеграций (слушатели безопасности, уведомлений и глобального чата с фильтром получателей, бонус длительности покупок, заморозка входа и сброс сессий без смены пароля); API 32: общий владелец непрерывных пассивных зелий PassivePotions; API 30: общий helper одноразового согласия с котировкой; API 29: точный остаток выручки магазина; API 28: индекс членства кланов; API 27: снят источник оформления удалённого аддона; API 26: сняты контракты удалённых аддонов; API 25: durable checkpoint игровых наград; API 24 — Claims domain settlement. */
-    int API_VERSION = 45;
+    /** Версия контракта API. API46: снят мост производителя расходников Кузни — модуль тиров вырезан; API45: Claims source lineage и durable high-water для безопасной сверки; API44: точная minor-экономика; API42: восемь PDC-расходников Кузни, ForgeMarketCatalog, nullable frozen grant в ShopExchange; API41: уведомление AnvilPaidResultEvent после ручной полной оплаты; API40: AnvilCosts/AnvilUse — полная цена без клиентского запрета 40; API39: денежная награда BP once и накопление буста без игрового потолка; API38: MobRewardPolicy временных мобов; API37: общие helpers ExplorationCatalog/ExplorationStore/ExplorationAtlas; API 33: мосты внешних интеграций (слушатели безопасности, уведомлений и глобального чата с фильтром получателей, бонус длительности покупок, заморозка входа и сброс сессий без смены пароля); API 32: общий владелец непрерывных пассивных зелий PassivePotions; API 30: общий helper одноразового согласия с котировкой; API 29: точный остаток выручки магазина; API 28: индекс членства кланов; API 27: снят источник оформления удалённого аддона; API 26: сняты контракты удалённых аддонов; API 25: durable checkpoint игровых наград; API 24 — Claims domain settlement. */
+    int API_VERSION = 46;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -252,10 +252,6 @@ public interface ChrdkRegisterApi {
     default boolean registerShop(java.util.UUID market) { return false; }
     default ShopExchange.Status shopExchangeStatus(ShopExchange trade) { return ShopExchange.Status.UNAVAILABLE; }
     default ShopExchange.Status commitShopExchange(Player player,ShopExchange trade) { return ShopExchange.Status.UNAVAILABLE; }
-
-    /** API42: мягкий мост к живому производителю расходников Кузни; null — производитель не загружен.
-     * Принятые сделки от этого моста не зависят. */
-    default ForgeMaterialSource forgeMaterialSource() { return null; }
 
     default boolean exchangeDiamonds(Player player, long debit, long credit,
                                      org.bukkit.inventory.ItemStack[] expected, org.bukkit.inventory.ItemStack[] replacement) { return false; }

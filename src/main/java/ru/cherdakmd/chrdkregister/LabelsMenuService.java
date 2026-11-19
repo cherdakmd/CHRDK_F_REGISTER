@@ -47,7 +47,7 @@ public final class LabelsMenuService implements Listener {
     /** Как ник выглядит для остальных — ровно та строка, что уходит в чат и таб. */
     static final int PREVIEW_SLOT = 8;
     /** Переключатели источников под выбранными местами; шапка TAB отдельно. */
-    static final int[] ENTRY_SLOTS = {28, 29, 30, 31, 32, 33, 34, 35, 37};
+    static final int[] ENTRY_SLOTS = {28, 29, 30, 31, 32, 33, 34, 35};
     static final int[] PLACE_SLOTS = {19, 20, 21, 22, 23, 24, 25, 26};
     static final int ENABLE_ALL_SLOT = 45;
     static final int DISABLE_ALL_SLOT = 47;
@@ -303,7 +303,6 @@ public final class LabelsMenuService implements Listener {
     static Messages.Trusted nameOf(Messages messages, LabelPreferences.Label label) {
         return switch (label) {
             case RANK -> messages.mini("labels.name-rank");
-            case TIERFORGE -> messages.mini("labels.name-tierforge");
             case CLASSES -> messages.mini("labels.name-classes");
             case GUILDS -> messages.mini("labels.name-guilds");
             case QUESTS -> messages.mini("labels.name-quests");
@@ -318,7 +317,6 @@ public final class LabelsMenuService implements Listener {
     private Component descOf(LabelPreferences.Label label) {
         return switch (label) {
             case RANK -> plugin.messages().get("labels.desc-rank");
-            case TIERFORGE -> plugin.messages().get("labels.desc-tierforge");
             case CLASSES -> plugin.messages().get("labels.desc-classes");
             case GUILDS -> plugin.messages().get("labels.desc-guilds");
             case QUESTS -> plugin.messages().get("labels.desc-quests");
@@ -333,7 +331,6 @@ public final class LabelsMenuService implements Listener {
     private static Material icon(LabelPreferences.Label label) {
         return switch (label) {
             case RANK -> Material.NETHER_STAR;
-            case TIERFORGE -> Material.ANVIL;
             case CLASSES -> Material.IRON_SWORD;
             case GUILDS -> Material.WHITE_BANNER;
             case QUESTS -> Material.WRITABLE_BOOK;

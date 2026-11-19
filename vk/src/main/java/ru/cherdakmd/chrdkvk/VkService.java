@@ -324,7 +324,7 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
     static DailyCardsConfig testCardConfig() {
         DailyCardsConfig base = DailyCardsConfig.DEFAULT;
         return new DailyCardsConfig(base.enabled(), base.zone(), false,
-                base.richestHour(), base.tiersHour(), base.prestigeHour(), base.progressHour(),
+                base.richestHour(), base.prestigeHour(), base.progressHour(),
                 base.minerHour(), base.collectorHour(), base.hunterHour(), base.serverHour(),
                 base.retryMinutes(), "ТЕСТ CHRDK_VK · НЕ ИГРОВАЯ НОВОСТЬ", base.contact());
     }

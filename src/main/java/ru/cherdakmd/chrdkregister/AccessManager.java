@@ -1685,9 +1685,6 @@ public final class AccessManager {
         if (source.startsWith("artifacts")) {
             return "наградой за коллекцию артефактов";
         }
-        if (source.startsWith("tierforge")) {
-            return "наградой за коллекцию кузни";
-        }
         return "администратором";
     }
 

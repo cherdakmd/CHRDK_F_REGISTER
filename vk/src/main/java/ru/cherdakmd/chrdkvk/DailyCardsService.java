@@ -240,7 +240,6 @@ public final class DailyCardsService {
     private DailyNomination nomination(DailyCardKind kind) {
         return switch (kind) {
             case RICHEST -> richest();
-            case TIERS -> tiers();
             case PRESTIGE -> fromLeader(kind, digest.collector().topPrestige());
             case PROGRESS -> fromLeader(kind, digest.collector().topLevelGain());
             case MINER -> miner();
@@ -248,16 +247,6 @@ public final class DailyCardsService {
             case HUNTER -> fromLeader(kind, digest.collector().topMobKills());
             case SERVER -> null; // агрегаты собираются отдельно — см. checkDueServer
         };
-    }
-
-    /** Мастер тиров: лучший тир за сутки, имя тира едет строкой величины. */
-    private DailyNomination tiers() {
-        WallDigestCollector.Leader leader = digest.collector().topTier();
-        if (leader == null) {
-            return null;
-        }
-        return new DailyNomination(DailyCardKind.TIERS, leader.name(), leader.value(), 0L,
-                digest.collector().tierNameOf(leader.name()));
     }
 
     /** Самый богатый: обезличенный баланс из CHRDK_Core по всем известным никам. */

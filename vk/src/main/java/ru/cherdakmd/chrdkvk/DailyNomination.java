@@ -2,25 +2,17 @@ package ru.cherdakmd.chrdkvk;
 
 /**
  * Победитель одной номинации суток. {@code value} — основная величина,
- * {@code secondary} — уточнение (например, алмазы при подсчёте блоков),
- * {@code note} — короткая подпись величины (название тира для «Мастера тиров»).
+ * {@code secondary} — уточнение (например, алмазы при подсчёте блоков).
  * Ники приходят из Bukkit и режутся по длине, UUID/IP/суммы платежей не несутся.
  */
-public record DailyNomination(DailyCardKind kind, String playerName, long value, long secondary,
-                              String note) {
+public record DailyNomination(DailyCardKind kind, String playerName, long value, long secondary) {
 
     public static final int MAX_NICK_LENGTH = 24;
-    public static final int MAX_NOTE_LENGTH = 32;
-
-    public DailyNomination(DailyCardKind kind, String playerName, long value, long secondary) {
-        this(kind, playerName, value, secondary, "");
-    }
 
     public DailyNomination {
         playerName = safeNick(playerName);
         if (value < 0) value = 0;
         if (secondary < 0) secondary = 0;
-        note = safeNote(note);
     }
 
     /** Оставляем буквы/цифры/подчёркивание/дефис, режем длину, без управления. */
@@ -38,21 +30,6 @@ public record DailyNomination(DailyCardKind kind, String playerName, long value,
         return out.toString();
     }
 
-    /** Подпись величины: буквы/цифры/пробел/дефис, без управления и разметки. */
-    public static String safeNote(String raw) {
-        if (raw == null) {
-            return "";
-        }
-        StringBuilder out = new StringBuilder();
-        for (int i = 0; i < raw.length() && out.length() < MAX_NOTE_LENGTH; i++) {
-            char c = raw.charAt(i);
-            if (Character.isLetterOrDigit(c) || c == ' ' || c == '-' || c == '×') {
-                out.append(c);
-            }
-        }
-        return out.toString().trim();
-    }
-
     public boolean valid() {
         return !playerName.isBlank();
     }
@@ -68,7 +45,6 @@ public record DailyNomination(DailyCardKind kind, String playerName, long value,
             case MINER -> value + " " + plural(value, "блок", "блока", "блоков")
                     + " · " + secondary + " " + plural(secondary, "алмаз", "алмаза", "алмазов");
             case HUNTER -> value + " " + plural(value, "победа", "победы", "побед") + " над монстрами";
-            case TIERS -> note.isEmpty() ? "лучший тир предмета" : "лучший тир — " + note;
             case PROGRESS -> "+" + value + " "
                     + plural(value, "уровень", "уровня", "уровней") + " навыков за сутки";
             case COLLECTOR -> value + " "

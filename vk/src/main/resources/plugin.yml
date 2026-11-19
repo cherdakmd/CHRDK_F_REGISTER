@@ -10,7 +10,6 @@ depend:
 softdepend:
   - PlaceholderAPI
   - CHRDK_Skills
-  - CHRDK_TierForge
   - CHRDK_Achievements
 description: "Единый социальный плагин: обязательная привязка через ВКонтакте или MAX, защита сессий, мосты чата и новости релизов"
 commands:

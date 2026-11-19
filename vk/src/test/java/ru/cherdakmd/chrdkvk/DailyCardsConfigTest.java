@@ -20,7 +20,6 @@ class DailyCardsConfigTest {
         assertTrue(cfg.showValues());
         assertNotNull(cfg.footer());
         assertEquals(9, cfg.hour(DailyCardKind.RICHEST));
-        assertEquals(10, cfg.hour(DailyCardKind.TIERS));
         assertEquals(12, cfg.hour(DailyCardKind.PRESTIGE));
         assertEquals(13, cfg.hour(DailyCardKind.PROGRESS));
         assertEquals(15, cfg.hour(DailyCardKind.MINER));
@@ -61,11 +60,10 @@ class DailyCardsConfigTest {
     }
 
     @Test
-    void eightSlotsAndRetryUseOwnerTimezone() {
+    void sevenSlotsAndRetryUseOwnerTimezone() {
         DailyCardsConfig cfg = DailyCardsConfig.DEFAULT;
         // 06:00Z = 09:00 МСК, 07:00Z = 10:00 МСК и т.д.
         assertTrue(cfg.isSlotTime(DailyCardKind.RICHEST, Instant.parse("2026-11-03T06:00:00Z")));
-        assertTrue(cfg.isSlotTime(DailyCardKind.TIERS, Instant.parse("2026-11-03T07:00:00Z")));
         assertTrue(cfg.isSlotTime(DailyCardKind.PRESTIGE, Instant.parse("2026-11-03T09:00:00Z")));
         assertTrue(cfg.isSlotTime(DailyCardKind.PROGRESS, Instant.parse("2026-11-03T10:00:00Z")));
         assertTrue(cfg.isSlotTime(DailyCardKind.MINER, Instant.parse("2026-11-03T12:00:00Z")));

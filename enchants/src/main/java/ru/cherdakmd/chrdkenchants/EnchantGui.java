@@ -126,11 +126,6 @@ public final class EnchantGui implements Listener {
     String conflictsLabel(EnchantDef def) {
         List<String> names = new ArrayList<>(EnchantCatalog.conflicts(def).stream()
                 .map(id -> plugin.messages().raw("en." + id + ".name")).toList());
-        // 1.5.2: у режимов массовой добычи есть ещё и внешний конфликт —
-        // колонна тир-предмета: «Карьер» или «Забойщик». Показываем в карточке.
-        if (ForgeMiningCompat.isMegaMining(def.id())) {
-            names.add("Карьер / Забойщик (тир)");
-        }
         return String.join(", ", names);
     }
     void stop() { stopped = true; closeAll(); }

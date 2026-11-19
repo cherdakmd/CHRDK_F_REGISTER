@@ -1,178 +1,173 @@
 {
   "pages": {
     "about": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "837b9d2b604c6912a12b8a2aca736261cc6cba7c0ebb3f058ccbf8afaf1dbc30",
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "4d387695faa2ef3056b77b88676cc245a4514b3c37d853c233bfdd7c54b0e63b",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "85bd99f4370157f84bed882a97728724bd7c06b80124807162dfcadebebde689",
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "0a89509531c8a3bceb7032a8cb53b93c4d60115a74a5fd40ad623f70fed0814a",
       "text": "bd128e475ee8efae55c3d2d6c9616d5278600f2a8ff1aad7af5e6df3e0b3f5c3"
     },
     "anticheat": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "eaacbb087525ada5779432fa101a624a108123551b7e00ff83168113a1d776e1",
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "c19c54f74acbbe3f704af98db3564b1f03b2cec771f4c2954560830c350a507c",
       "text": "51b63277043ce6c1160efb4e4df51b63a25f083191e5bbae1aeffc7207a997cc"
     },
     "artifacts": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "489a851bb3ff880cdca9724b5ec597e735a30abf7833ca5fe26fa87363eb2b36",
-      "text": "51e3ef379d9a8f7e2ccfc6fd41cc0c0823f91f30d7c9a8326ec7962c182d98e4"
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "3bfa2b17aa4411c56e3397e031a8b06bd694c0853d7c7447218f41887c733fc8",
+      "text": "03a2e3b0e6a713611dcafb3b641f172aaf3a4ac0aff7efffd491cff818d63d0b"
     },
     "battlepass": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "65ce9eb097e3b45740040d3b4e76fbc6f508be87c777cf4e1d6f316a647d025a",
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "41491abaabe0f82daed2a6d282286e57f036c14badc99102a0a8af6b61cbbfb6",
       "text": "997df6e0a9311ea115c4fd3c192b2729034b10c68a4f41c57261ef4b704c5add"
     },
     "chat": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "837b9d2b604c6912a12b8a2aca736261cc6cba7c0ebb3f058ccbf8afaf1dbc30",
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "4d387695faa2ef3056b77b88676cc245a4514b3c37d853c233bfdd7c54b0e63b",
       "text": "a51c51d20cfe94c553e80893422b000a579b87285b00cbceb452f29eb0773023"
     },
     "claims": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "540c8d639d93b06b20c8cb44f5f13161ff984889312c6daddcdad0e9c74a8317",
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "2887cc9a01ee909611c2d65cb8e672031dbb5fee7a6da04712bc358b5ad7ff5f",
       "text": "50b80f02b9200ed8653d50c1bf802fd4de8d272a9bf1f46cf92618d743bed3cd"
     },
     "commands": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "a8b4265128e70eee255c2ab170626a18d13a5df3df8623911a81b575872a6063",
-      "text": "c177198348ad294daba4968fb8f353701dd7cf6e28744a0a0380cd7cbea835be"
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "bbd1800b42e652d4012befe47c98d4222ad20413dabae3ce0eb7bf0141d9b142",
+      "text": "e2e379de307f1868030538d968283fee136defbdccd9c93d46f9d74d3ee8b04a"
     },
     "cosmetics": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "fd63c07f482cf7c1dffd74809687ed7eba1be0143221b83fadd19894bf9a7b0a",
-      "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "14a095af09387a4b27be589653a56e19d2d3038db7cde6381934ea7742994444",
+      "text": "50a9a056b0f984435fea5d8a4c255b262334ef0dde7ca94a75b71942bbe73811"
     },
     "dailies": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "b7da01fe37a09bee4ed13e50d00e3618a21359a55faed8350d7217376cb63814",
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "23a6aa409ec25f3d4224cf218fdcfbfe257dddd7d1b6df8c6a3eb7d0da165f23",
       "text": "4d7683f5677c50dfe0488961891915b5c2dd6533191a213ee8fdb077ea817eb5"
     },
     "disasters": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "2879e5646e0a66742e8a51c6a5f22d1d852f23ad570aa36899a1576d957c4172",
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "c091b88935b8124762acd157e703eb6215d443d2749a9f61dbdd8a1ed31123ca",
       "text": "121b1cc28a075ced29b6de8abec7dbc20bbb531a01441ddd5fdb836d066d0202"
     },
     "economy": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "ff15cfdc1ba78ed6dc620ae8dac94036629fbaae52cb477c821590f44e21f79c",
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "6b02abbe41797e0b47493f5779d5de626d798dd10b98cf787dd6cec70c4eb830",
       "text": "0532455c098ebf6e5d7d9ff103d31244752dd661b394d2538b02c02785dfe851"
     },
     "enchants": {
-      "reason": "Точило спиливает все чары (включая проклятия); книга после точила — ванильная и стакается с обычными",
-      "sources": "17e5c2278e44aeb1c5ef9940ae2824d5fc91d1e83e91743a22a0cd97f617889c",
-      "text": "0318909327f55cfc83c9a74101bf2c25ad570ea275a8172bb43dbc180b723020"
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "c23959ad49082343eda8551be85c45346a4e7a81782a4028b90ab21d80262aff",
+      "text": "867cb7afd20a592f2c8284cd779b9fddd1e521545a9aacb9ad60e4b28200fde5"
     },
     "faq": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "acc0ab80b68d7cbbebd7601945fa3a6d10d305bc45754d4fde212b1eac3792d7",
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "bbd1800b42e652d4012befe47c98d4222ad20413dabae3ce0eb7bf0141d9b142",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "generator": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "6ae99884eeb995a60c7c44c061aded07da2b4e0c82a8418ae82b0a1a28f9d737",
-      "text": "bae6034b6606086f09dda4f08b35973b0900c1f7c472a6158c0ab95a84e82137"
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "fcfbc70ac333af8b54d6497c26cefb7ee0d3bb6bbc5c2eaa6e44b82587925284",
+      "text": "8110d4a28c1f0ed98c549a1010b8e809a9cfbf6645bf466aa73504e99b698516"
     },
     "goals": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "438c0cbed8b4ca175d151575f34554f7c0018982b427d27c13fe54675d3f9c6e",
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "00c565bc348443e51305befa3ce07a956a9e75fcc53125a9055c9b1dd3f22b8e",
       "text": "615d89bba0ac116c220d571f530fcdab7d5ff46162ca7a7ecf24de441a7fb191"
     },
     "guilds": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "540c8d639d93b06b20c8cb44f5f13161ff984889312c6daddcdad0e9c74a8317",
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "2887cc9a01ee909611c2d65cb8e672031dbb5fee7a6da04712bc358b5ad7ff5f",
       "text": "793a5d21e3e43d5b4c542ea34a3c4b80a11e957da7875e3111ae20d7da2c5623"
     },
     "honors": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "837b9d2b604c6912a12b8a2aca736261cc6cba7c0ebb3f058ccbf8afaf1dbc30",
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "4d387695faa2ef3056b77b88676cc245a4514b3c37d853c233bfdd7c54b0e63b",
       "text": "17c878e1ab52ceb2a7c3361a7bef133c8bd1004a59641898f2c525f7c48fff8f"
     },
     "index": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "c17436b8e6ee7ca1fcb41501b702e4437c6ec98d1c9c50695c8061ea926ade8d",
-      "text": "e81f8a53862774106bc6121f771a7a9a743d9fe3e2cdbb51fbe9db3e95a561e8"
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "eff2a5ca1aaf5e8867dc0791c9996dd0edb5d1ed045beae5b899d3cd744d71ee",
+      "text": "b2b180afd00144150fea5f232f2ef769caff392cf900f2ee18b0a9c492309425"
     },
     "menu": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "acc0ab80b68d7cbbebd7601945fa3a6d10d305bc45754d4fde212b1eac3792d7",
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "bbd1800b42e652d4012befe47c98d4222ad20413dabae3ce0eb7bf0141d9b142",
       "text": "e15957dfe1e03322c3eac3605586bbf5ed49a6bab2b8cb7664e2119000ef0d17"
     },
     "mobs": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "c231a5fdb1ffc66839600fbcb51acda02bd6bfc054c6cae973b8a9dd8a73847c",
+      "reason": "Сверено после вырезки модуля тиров и кузни: содержание страницы не затронуто, гейт остатков подтверждает отсутствие ссылок и команд снятого модуля",
+      "sources": "589f3a4b8d267a0f4911c63f2dc8682e13a0b436a6bcd4f307af38dd3aa25d5b",
       "text": "187eac200aa4af9e5234ed07b868fae886b4ce2f85ebb218b43ebec87c221cee"
     },
     "moderation": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "837b9d2b604c6912a12b8a2aca736261cc6cba7c0ebb3f058ccbf8afaf1dbc30",
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "4d387695faa2ef3056b77b88676cc245a4514b3c37d853c233bfdd7c54b0e63b",
       "text": "79580a49c09219f65539abace395b5f2469f91fc2f0ac9b3ecae109c4fa1ecb4"
     },
     "profile": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "40ef607afea9e8a4a49f3e99c2f2feab468e38c6eb8afd242a41c3bfcd77e4a5",
-      "text": "d73cb841971f8be5b94598cf462e7cbdae0876601f2fcc576da270e75b3d32bc"
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "a964a5d62e54ac566569eee9ecceef140f308dcff6c903f9647fc218cd44e03f",
+      "text": "e684bb56e03eab853c5d3536fab7d270a298b45cff8332fc28e837a41fa3f085"
     },
     "quests": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "a60050b18fd4ccdbaa9f38628ddcf260db9f260cc49522609be5d7cd88233c7a",
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "22f4448e3c729935edfa20c77fe067ac9426accfb9e860dcff243e08f73d6ed5",
       "text": "48f52b93517c605386ee043308cb27e5b95c6d104bb6d12fa3e5bc9c4ebf9d5b"
     },
     "ranks": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "939bcecbf36456729eb3222f23e4e61a001dbff453478829bc68cf375da41538",
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "ac2d033aa1e283177040bce06a94e83d4e21b9c851313d2dbb22916f6b985aad",
       "text": "f28ca14ca95b6e1ecdc550d0103362f364e1d3e79492b33260372a410254d913"
     },
     "shop": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "c17436b8e6ee7ca1fcb41501b702e4437c6ec98d1c9c50695c8061ea926ade8d",
-      "text": "7df8bdefeccfb0fd4943e63ce1896282c16c3491c21f364dd8b2f0fbf5378c6d"
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "eff2a5ca1aaf5e8867dc0791c9996dd0edb5d1ed045beae5b899d3cd744d71ee",
+      "text": "882a8635a22302ace2308ff10b95db85becae06894adf29e73c4c5eb03b00bf7"
     },
     "skills": {
-      "reason": "Прокачка и отклики кристалла показываются в акшнбаре (feedback.actionbar); чат — фолбэк, отказы и вехи наград остаются в чате",
-      "sources": "2ffe12fa5e9c13d5c81599d02d69c6bb7b294e22002669f0df5b1e0aac7e9171",
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "91250ea03a8d68e51a58ab5c0fc4dbca2861a5e6d84fe2188d6588e2b1d2674e",
       "text": "11b1364c86785a37a36d1f67f75926430f31a407dc6d4aa11c41dffa77ba2a72"
     },
     "social-link": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "caa84b18f6767d8aba2949fa7818b0cee63d2b43fe2469ae4b6416a8d4b1f984",
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "6c04b8db3f8c9cfbbc9ad124649b233fade9a92539f6aee8e388470444693965",
       "text": "f7a6d9f53d5db5774add224ab3c2003147a23099f52d220df3376a7f43c06221"
     },
     "start": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "dcf9a0ec98f021df38ee51f910ad93d0039988b540a14e1ae0d2259e20b5c260",
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "787192d4f1f21932370da3847cce81fe1610306ca887fdec3779d815c639aa8d",
       "text": "ed918be6a65bdc28666148d1dac07b0d14ef631bd20c2d50648694244822a460"
     },
     "starter-kit": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "489a851bb3ff880cdca9724b5ec597e735a30abf7833ca5fe26fa87363eb2b36",
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "3bfa2b17aa4411c56e3397e031a8b06bd694c0853d7c7447218f41887c733fc8",
       "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
     },
     "teleports": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "dcf9a0ec98f021df38ee51f910ad93d0039988b540a14e1ae0d2259e20b5c260",
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "787192d4f1f21932370da3847cce81fe1610306ca887fdec3779d815c639aa8d",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
-    "tierforge": {
-      "reason": "Точило спиливает все чары (включая проклятия); книга после точила — ванильная и стакается с обычными",
-      "sources": "17e5c2278e44aeb1c5ef9940ae2824d5fc91d1e83e91743a22a0cd97f617889c",
-      "text": "f1865c4ec15241384d05aae3da8ae9b866b6bec43a604e423fdf2fce8ad643e6"
-    },
     "titles": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "7a78c14bf34587dc238570e9a907fea636b7ef4759cc8cceeb0301249c7e6b96",
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "8b8ae15e547af025b0763b0f1bded1c28c8584d07e779b88fda06cbffca13b94",
       "text": "bcc217b388db006684a99c2af5c0747236878ffc8519043c0dc5660b66135827"
     },
     "updates": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "c17436b8e6ee7ca1fcb41501b702e4437c6ec98d1c9c50695c8061ea926ade8d",
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "eff2a5ca1aaf5e8867dc0791c9996dd0edb5d1ed045beae5b899d3cd744d71ee",
       "text": "86d8fb7e52ba88ed0e3ba02254a6ac983a5903dd96d0e8cd1b347320788e0b45"
     },
     "vk": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "caa84b18f6767d8aba2949fa7818b0cee63d2b43fe2469ae4b6416a8d4b1f984",
+      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
+      "sources": "6c04b8db3f8c9cfbbc9ad124649b233fade9a92539f6aee8e388470444693965",
       "text": "8dddc8fb2f91621b7957c6227e91feb18317b56c886564fa7c3d8671fe805240"
     }
   },

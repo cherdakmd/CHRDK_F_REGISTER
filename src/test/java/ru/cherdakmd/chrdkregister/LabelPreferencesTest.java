@@ -56,7 +56,7 @@ class LabelPreferencesTest {
         // 1.4.186: раньше все метки прятались одной группой — теперь сосед не задет.
         assertTrue(preferences.visible("Steve", LabelPreferences.Label.QUESTS),
                 "метка квестов не задета рангом");
-        assertTrue(preferences.visible("Steve", LabelPreferences.Label.TIERFORGE));
+        assertTrue(preferences.visible("Steve", LabelPreferences.Label.CLASSES));
         assertTrue(preferences.visible("Steve", LabelPreferences.Label.HEADER));
         assertTrue(preferences.anyHidden("Steve"));
         assertEquals(List.of(LabelPreferences.Label.RANK), preferences.hiddenLabels("Steve"));
@@ -141,11 +141,10 @@ class LabelPreferencesTest {
         assertTrue(preferences.visible("Steve", LabelPreferences.Label.RANK),
                 "группа меток не трогает ранг");
         assertFalse(preferences.visible("Steve", LabelPreferences.Label.QUESTS));
-        assertFalse(preferences.visible("Steve", LabelPreferences.Label.TIERFORGE));
         assertFalse(preferences.visible("Steve", LabelPreferences.Label.ACHIEVEMENTS));
         assertTrue(preferences.visible("Steve", LabelPreferences.Label.HEADER),
                 "шапка таба — отдельный переключатель");
-        assertEquals(7, LabelPreferences.badgeLabels().size(),
+        assertEquals(6, LabelPreferences.badgeLabels().size(),
                 "все NAME-надписи, кроме ранга");
 
         preferences.setGroup("Steve", LabelPreferences.badgeLabels(), true);
@@ -350,7 +349,7 @@ class LabelPreferencesTest {
         assertTrue(preferences.setAll("", false));
         assertEquals(0, preferences.size());
         assertNull(LabelPreferences.Label.byId("хедер"), "неизвестный ид — null");
-        assertEquals(8, LabelPreferences.Label.nameTags().size(),
-                "восемь надписей рядом с ником + шапка таба отдельно");
+        assertEquals(7, LabelPreferences.Label.nameTags().size(),
+                "семь надписей рядом с ником + шапка таба отдельно");
     }
 }

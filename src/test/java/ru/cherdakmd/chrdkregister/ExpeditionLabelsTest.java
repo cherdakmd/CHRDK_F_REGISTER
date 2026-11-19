@@ -31,8 +31,8 @@ class ExpeditionLabelsTest {
         assertEquals(LabelStyleService.AssignmentResult.LOCKED, styles.assign("Steve", oldLimit, label));
     }
     @Test void legacyOrdinalBitsAndSlotsArePreserved(@TempDir Path dir) {
-        assertEquals(7, LabelPreferences.Label.HEADER.ordinal());
-        assertEquals(8, LabelPreferences.Label.EXPEDITIONS.ordinal());
+        assertEquals(6, LabelPreferences.Label.HEADER.ordinal());
+        assertEquals(7, LabelPreferences.Label.EXPEDITIONS.ordinal());
         var prefs = new LabelPreferences(dir, Logger.getAnonymousLogger()); prefs.load();
         prefs.setSlots("Steve", List.of("classes", "achievements"));
         var before = prefs.slots("Steve");

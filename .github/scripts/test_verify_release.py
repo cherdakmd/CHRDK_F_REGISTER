@@ -128,6 +128,9 @@ class ReleaseValidationTest(unittest.TestCase):
             "2.0.17": ("19 JAR одной версии", "chrdk-vk-2.0.17.jar",
                        "Mine Treasure", "chrdk-grim-configs-2.0.17.zip", "Пробуждение кристаллов",
                        "skill-consumables.json", "improve.max-per-item", "только название и уровень"),
+            "2.0.18": ("18 JAR одной версии", "chrdk-vk-2.0.18.jar",
+                       "Mine Treasure", "chrdk-grim-configs-2.0.18.zip", "CHRDK Treasure Addon",
+                       "Сокровища Бесплодных земель", "Редкости снаряжения", "акшнбаре"),
         }
         if version in current_kits:
             self.assertIn(f"CHRDK {version}", current)
@@ -183,7 +186,8 @@ class ReleaseValidationTest(unittest.TestCase):
         self.assertNotIn("CHRDK_Professions", names)
         self.assertNotIn("CHRDK_Hunt", names)
         self.assertNotIn("CHRDK_Classes", names, "модуль классов вырезан в п.29")
-        self.assertEqual(19, len(names), "питомцы и доска заказов полностью сняты: модулей в общем ZIP на два меньше")
+        self.assertNotIn("CHRDK_TierForge", names, "модуль тиров и кузни полностью вырезан")
+        self.assertEqual(18, len(names), "питомцы, доска заказов и тиры сняты: модулей в общем ZIP на три меньше")
         self.assertNotIn("CHRDK_Orders", names, "доска заказов полностью снята")
         self.assertNotIn("CHRDK_VK", names, "CHRDK_VK публикуется отдельно, а не внутри общего ZIP")
         self.assertNotIn("CHRDK_Disasters", names, "CHRDK_Disasters не входит в общий ZIP и больше не прикрепляется к релизам")

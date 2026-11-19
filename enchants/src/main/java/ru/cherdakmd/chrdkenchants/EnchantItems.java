@@ -92,19 +92,14 @@ public final class EnchantItems {
     }
 
     /**
-     * Записывает карту чар в PDC и перерисовывает лор. 1.5.2: последняя
-     * граница перед PDC — колонна тир-предмета и чары {@code megamine} не
-     * окажутся в одном наборе, даже если вызывающий обошёл {@link #apply} и
-     * {@code canApplyFromBook} (мастерская, purify, внешний copy). Уже выданный
-     * предмет чинится только при следующей записи, без silent-переписывания
-     * PDC при простом чтении.
+     * Записывает карту чар в PDC и перерисовывает лор.
      */
     public void write(ItemStack item, Map<String, Integer> enchants) {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) {
             return;
         }
-        Map<String, Integer> safe = ForgeMiningCompat.stripMegaMining(enchants, item);
+        Map<String, Integer> safe = enchants;
         String encoded = EnchantCodec.encode(safe);
         if (encoded.isEmpty()) {
             meta.getPersistentDataContainer().remove(key);
@@ -159,11 +154,8 @@ public final class EnchantItems {
      * Добавляет чару с уровнем. 1.4.282: даже низкоуровневый вызов больше не
      * может поставить две чары одной conflictGroup на один предмет — это
      * последняя граница перед записью PDC (стол, API, админ-выдача, мастерская).
-     * С 1.5.2 здесь же отсекается колонна CHRDK_TierForge («Карьер» или
-     * «Забойщик»): чара массовой добычи не встаёт на такой тир-предмет
-     * (см. {@link ForgeMiningCompat}).
      *
-     * @return {@code false}, если чара conflicts с уже стоящими или с колонной
+     * @return {@code false}, если чара conflicts с уже стоящими
      *         (PDC не тронут)
      */
     public boolean apply(ItemStack item, EnchantDef def, int level) {
@@ -171,8 +163,7 @@ public final class EnchantItems {
             return false;
         }
         Map<String, Integer> enchants = new LinkedHashMap<>(read(item));
-        if (ForgeMiningCompat.blocked(item, def.id())
-                || !enchants.containsKey(def.id()) && EnchantConflicts.conflictsWith(enchants, def.id())) {
+        if (!enchants.containsKey(def.id()) && EnchantConflicts.conflictsWith(enchants, def.id())) {
             return false;
         }
         enchants.put(def.id(), Math.min(def.maxLevel(), Math.max(1, level)));

@@ -55,13 +55,8 @@ public final class ToolEffectsListener implements Listener {
     public void onBlockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer(); ItemStack tool = player.getInventory().getItemInMainHand();
         if (!eligible(player) || tool.getAmount() != 1 || sources.size() >= 4096) return;
-        // 1.5.2: колонна CHRDK_TierForge («Карьер» или «Забойщик») имеет
-        // приоритет. У уже выданного предмета PDC не переписываем, но ветки
-        // veinminer/excavator не пускаем — иначе колонна и площадь/жила
-        // запускались бы за один удар.
-        boolean quarry = ForgeMiningCompat.hasColumnMining(tool);
         if (level(tool, "midas") + level(tool, "fortunate") + level(tool, "autosmelt")
-                + (quarry ? 0 : level(tool, "veinminer") + level(tool, "excavator")) == 0) return;
+                + level(tool, "veinminer") + level(tool, "excavator") == 0) return;
         Block block = event.getBlock(); Key key = key(block, player);
         Source source = new Source(event, block.getType(), tool.clone(), plugin.sourceGeneration(),
                 secondary.contains(player.getUniqueId()), player.isSneaking(), MiningPolicy.ore(block.getType().name()) && !origin.denied(block), player.getInventory().getHeldItemSlot(), player.getLocation().getDirection().clone());
@@ -71,8 +66,8 @@ public final class ToolEffectsListener implements Listener {
             if (source.secondary || !valid(source) || !source.sneaking || (!block.getType().isAir() && !block.isLiquid())
                     || player.getInventory().getHeldItemSlot() != source.slot
                     || !PveEquipment.same(source.tool, player.getInventory().getItemInMainHand())) return;
-            int vein = quarry ? 0 : level(source.tool, "veinminer");
-            int area = quarry ? 0 : level(source.tool, "excavator");
+            int vein = level(source.tool, "veinminer");
+            int area = level(source.tool, "excavator");
             if (vein > 0 && MiningPolicy.ore(source.type.name())) vein(player, block, source, EnchantParams.value("veinminer", vein));
             else if (area > 0) area(player, block, source, area);
         })) sources.remove(key, source);

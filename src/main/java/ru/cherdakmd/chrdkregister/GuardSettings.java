@@ -35,7 +35,7 @@ record GuardSettings(boolean enabled, int ipBurst, int ipRefillSeconds, int glob
             "shopadmin", "dshopadmin", "marketadmin", "disastersadmin", "enchantsadmin",
             "guildadmin", "guildsadmin", "clanadmin", "clansadmin", "ga",
             "questsadmin", "ranksadmin",
-            "skillsadmin", "tpadmin", "tiersadmin", "vkadmin",
+            "skillsadmin", "tpadmin", "vkadmin",
             // Служебная команда моста античита (см. docs/design/ANTICHEAT.md).
             "chrdkac");
 

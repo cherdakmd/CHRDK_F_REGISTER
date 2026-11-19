@@ -31,14 +31,9 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
     /** Прогресс дневных акций живёт отдельным файлом и переживает /shopadmin reload. */
     private ShopPromoStore promoStore;
     private ShopWelcomeGift welcomeGift;
-    private ForgeShopPrices forgePrices;
-    private ForgeShopService forgeShop;
-    private ForgeShopGui forgeShopGui;
     public ShopQuantityGui quantities(){return quantities;}
     public ShopAdminGui shopAdminGui(){return adminGui;}
     public ShopOverrides overrides(){return overrides;}
-    public ForgeShopService forgeShop(){return forgeShop;}
-    public ForgeShopGui forgeShopGui(){return forgeShopGui;}
     /** Принять черновик GUI: записать shop-overrides.json и перечитать каталог. */
     public void applyOverrides(ShopOverrides draft) {
         overrides.replaceWith(draft);
@@ -68,7 +63,6 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
         getServer().getPluginManager().registerEvents(quantities,this);
         Bukkit.getPluginManager().registerEvents(gui, this);
         Bukkit.getPluginManager().registerEvents(adminGui, this);
-        Bukkit.getPluginManager().registerEvents(forgeShopGui, this);
 
         ShopCommandHandler commands = new ShopCommandHandler(this);
         for (String name : List.of("shop", "shopadmin")) {
@@ -167,9 +161,6 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
         this.welcomeGift = new ShopWelcomeGift(getDataFolder().toPath(),getLogger(),
                 getConfig().getBoolean("welcome-gift.enabled",true),getConfig().getLong("welcome-gift.amount",10000));
         this.shopService = new ShopService(data, store, this::coreApi, this::skillsApi, promos);
-        this.forgePrices = ForgeShopPrices.parse(getConfig(), getLogger());
-        if (this.forgeShopGui == null) this.forgeShopGui = new ForgeShopGui(this);
-        this.forgeShop = new ForgeShopService(this, forgePrices);
     }
 
     /** API ядра; {@code null}, если основной плагин не загружен (очередь загрузки). */

@@ -8,9 +8,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Реализация {@link ChrdkEnchantsApi} (1.4.128): другие аддоны — прежде всего
- * CHRDK_TierForge — могут спросить каталог чар и наложить их на предмет, не
- * зная ничего о внутренностях модуля.
+ * Реализация {@link ChrdkEnchantsApi} (1.4.128): другие аддоны могут спросить
+ * каталог чар и наложить их на предмет, не зная ничего о внутренностях модуля.
  *
  * <p>Правила те же, что у стола и наковальни: вид предмета, лимит чар,
  * конфликтные группы, включённость в конфиге и мастер-выключатель проклятий.
@@ -126,9 +125,8 @@ public final class EnchantsApiBridge implements ChrdkEnchantsApi {
         }
         // 1.4.282: незеритовый апгрейд переносит чары, но не может склеить
         // «Жилодробитель» с «Дробителем» (или любую другую conflictGroup).
-        // 1.5.2: на предмете с колонной режимы массовой добычи не переносятся.
         Map<String, Integer> merged = EnchantConflicts.merge(source, plugin.items().read(to));
-        plugin.items().write(to, ForgeMiningCompat.stripMegaMining(merged, to));
+        plugin.items().write(to, merged);
     }
 
     @Override

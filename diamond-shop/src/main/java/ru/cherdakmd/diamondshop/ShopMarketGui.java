@@ -48,7 +48,6 @@ public final class ShopMarketGui implements Listener {
             inventory.setItem(HOME_SECTIONS[i],sectionCard(category,ShopCatalog.filter(service.config().items(),category).size()));
         }
         inventory.setItem(HOME_ALL,button(Material.CHEST,"market.home.all",List.of(plugin.messages().get("market.home.all-lore"))));
-        inventory.setItem(ShopLayout.SLOT_FORGE,button(Material.ANVIL,"market.home.forge",List.of(plugin.messages().get("market.home.forge-lore"))));
         inventory.setItem(HOME_SELL_ALL,button(Material.HOPPER,"market.home.sellall",List.of(plugin.messages().get("market.home.sellall-lore"))));
         inventory.setItem(ShopLayout.SLOT_BALANCE,balanceIcon(player));
         inventory.setItem(HOME_GUIDE,button(Material.KNOWLEDGE_BOOK,"market.home.guide",List.of(
@@ -89,7 +88,6 @@ public final class ShopMarketGui implements Listener {
             ShopCategory tab=tabs.get(i); inventory.setItem(i,tabIcon(tab,tab==current,ShopCatalog.filter(all,tab).size()));
         }
         inventory.setItem(ShopLayout.SLOT_CLOSE,button(Material.BARRIER,"trading.gui.close-name",List.of()));
-        inventory.setItem(ShopLayout.SLOT_FORGE,button(Material.ANVIL,"market.home.forge",List.of()));
         int from=safePage*ShopLayout.ITEMS_PER_PAGE;
         for(int i=0;i<ShopLayout.ITEMS_PER_PAGE&&from+i<view.size();i++) {
             ShopConfig.ShopItem item=view.get(from+i);
@@ -170,7 +168,6 @@ public final class ShopMarketGui implements Listener {
         int slot=event.getRawSlot();
         if(slot==ShopLayout.SLOT_CLOSE){player.closeInventory();return;}
         if(slot==ShopAdminGui.SHOP_EDIT_SLOT){if(player.hasPermission("chrdkshop.admin")&&plugin.shopAdminGui()!=null)plugin.shopAdminGui().open(player,0);return;}
-        if(slot==ShopLayout.SLOT_FORGE){plugin.forgeShopGui().open(player);return;}
         if(holder.home) {
             if(slot==HOME_GIFT){claimGift(player);return;}
             List<ShopCategory> sections=ShopCatalog.tabs(plugin.shopService().config().items()).stream().filter(c->c!=ShopCategory.ALL).toList();

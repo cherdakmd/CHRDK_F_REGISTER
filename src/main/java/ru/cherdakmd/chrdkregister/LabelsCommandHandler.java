@@ -31,7 +31,7 @@ public final class LabelsCommandHandler implements CommandExecutor, TabCompleter
 
     /** Текстовые ключи в порядке подсказки: сначала одиночные, потом группы. */
     private static final List<String> OPTIONS = List.of(
-            "rank", "tierforge", "classes", "guilds",
+            "rank", "classes", "guilds",
             "quests", "achievements", "header",
             "badges", "all", "on", "off", "reset", "status", "menu",
             "color", "order", "preset");
@@ -114,7 +114,6 @@ public final class LabelsCommandHandler implements CommandExecutor, TabCompleter
         String key = raw == null ? "" : raw.trim().toLowerCase(Locale.ROOT);
         return switch (key) {
             case "ранг", "ранги" -> LabelPreferences.Label.RANK;
-            case "кузня", "титул", "кузни" -> LabelPreferences.Label.TIERFORGE;
             case "класс", "классы" -> LabelPreferences.Label.CLASSES;
             case "гильдия", "гильдии" -> LabelPreferences.Label.GUILDS;
             case "квесты", "квест" -> LabelPreferences.Label.QUESTS;
