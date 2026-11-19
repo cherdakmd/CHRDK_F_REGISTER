@@ -128,9 +128,10 @@ class AddonRetirement271Test {
         Messages.migrateStockOverrides(fresh,overrides,legacy);
         assertFalse(overrides.values().stream().anyMatch(v->v.contains("/lottery")));
         // Новые ключи (например, ВК-2FA) берутся из defaults, а не обязаны попасть в overrides.
-        var migratedExisting = new LinkedHashMap<>(fresh);
-        migratedExisting.keySet().retainAll(legacy.keySet());
-        assertEquals(migratedExisting,overrides);
+        // Ключи, вырезанные из стока вместе с модулем (лейбл кузни), у владельца остаются как есть.
+        var expected = new LinkedHashMap<String,String>();
+        for (var e : legacy.entrySet()) expected.put(e.getKey(), fresh.getOrDefault(e.getKey(), e.getValue()));
+        assertEquals(expected,overrides);
         assertTrue(fresh.containsKey("vk-factor.prompt"));
         overrides.put("guide.pages","Собственный путеводитель администратора");
         Messages.migrateStockOverrides(fresh,overrides,legacy);
