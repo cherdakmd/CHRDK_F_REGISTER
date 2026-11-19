@@ -80,6 +80,15 @@ public final class SkillsPlugin extends JavaPlugin {
         this.branchAbilities = new BranchAbilities(this, abilityStore);
         this.xpStore = new SkillXpStore(getDataFolder().toPath(), getLogger());
         xpStore.load();
+        // Одна строка состояния кристаллов в консоли: «не работает» должно быть
+        // диагнозом, а не гаданием (дроп и использование смотрят на один выключатель).
+        if (!config().enabled()) {
+            getLogger().warning("Кристаллы опыта выключены: general.enabled=false — дроп и использование не работают.");
+        } else if (!getConfig().getBoolean("xp-potions.enabled", true)) {
+            getLogger().warning("Кристаллы опыта выключены: xp-potions.enabled=false — дроп и использование не работают.");
+        } else {
+            getLogger().info("Кристаллы опыта: работают (дроп, использование, магазин).");
+        }
         this.xpItems = new SkillXpItems(this, xpStore);
         try {
             this.xpShop = new SkillXpShop(this);

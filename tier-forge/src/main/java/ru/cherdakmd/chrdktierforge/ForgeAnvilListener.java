@@ -56,6 +56,7 @@ final class ForgeAnvilListener implements Listener {
                 .filter(e -> !megaMining || !MiningCompatPolicy.isColumnMiningUpgrade(e.getKey().id()))
                 .map(e -> e.getKey().id()).sorted().toList();
         if (material==ForgeMaterial.INSCRIBE) {
+            if (inscribeCapReached(left)) return List.of();
             var kind=ItemKind.classify(left.getType().name());
             return ForgeUpgrade.ALL.stream().filter(d -> d.fits(kind) && plugin.items().upgradeLevel(left,d.id())==0)
                     .filter(d -> !megaMining || !MiningCompatPolicy.isColumnMiningUpgrade(d.id()))
@@ -64,6 +65,10 @@ final class ForgeAnvilListener implements Listener {
         if (material==ForgeMaterial.REMOVE) return plugin.items().upgradesOf(left).keySet().stream()
                 .map(ForgeUpgrade.Def::id).sorted().toList();
         return plugin.items().propertiesOf(left).stream().map(TierProperty::id).sorted().toList();
+    }
+    /** Потолок разных свойств ковки на предмете (новые не вписываются). */
+    private boolean inscribeCapReached(ItemStack left) {
+        return plugin.items().upgradesOf(left).size() >= plugin.config().improveMaxPerItem();
     }
     private boolean hasMegaMiningEnchant(ItemStack left) {
         var api = plugin.enchantsApi();
@@ -103,9 +108,13 @@ final class ForgeAnvilListener implements Listener {
         }
         state.plan=null; state.display=null;
         if (state.choices.isEmpty()) {
-            if (notices.shouldNotify(player.getUniqueId(),"empty:"+material.id)) plugin.messages().send(player,
-                    material==ForgeMaterial.TEMPER||material==ForgeMaterial.INSCRIBE||material==ForgeMaterial.REMOVE
-                            ?"forge-upgrade-invalid":"forge-property-invalid");
+            if (notices.shouldNotify(player.getUniqueId(),"empty:"+material.id)) {
+                if (material==ForgeMaterial.INSCRIBE && inscribeCapReached(left)) {
+                    plugin.messages().send(player,"forge-upgrade-cap","max",plugin.config().improveMaxPerItem());
+                } else plugin.messages().send(player,
+                        material==ForgeMaterial.TEMPER||material==ForgeMaterial.INSCRIBE||material==ForgeMaterial.REMOVE
+                                ?"forge-upgrade-invalid":"forge-property-invalid");
+            }
             return;
         }
         try {

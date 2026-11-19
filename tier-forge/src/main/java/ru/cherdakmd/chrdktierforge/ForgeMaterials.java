@@ -221,6 +221,12 @@ final class ForgeMaterials implements Listener {
                     || megaMining && MiningCompatPolicy.isColumnMiningUpgrade(upgrade.id())) {
                 fail("forge-upgrade-invalid"); return null;
             }
+            // Потолок разных свойств на предмете. Уже накрученные сверх лимита
+            // остаются, но новые не вписываются: собери снимание лишнего (REMOVE).
+            int maxPerItem = plugin.config().improveMaxPerItem();
+            if (plugin.items().upgradesOf(main).size() >= maxPerItem) {
+                fail("forge-upgrade-cap", "max", maxPerItem); return null;
+            }
             String id = upgrade.id();
             mutation = meta -> plugin.items().setUpgradeLevel(meta, id, 1);
             xp = ForgeMaterial.INSCRIBE_XP;

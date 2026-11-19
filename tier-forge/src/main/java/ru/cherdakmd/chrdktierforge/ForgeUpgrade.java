@@ -17,6 +17,11 @@ public final class ForgeUpgrade {
     private ForgeUpgrade() {
     }
 
+    /** Сколько разных улучшений помещается на один предмет по умолчанию. */
+    public static final int DEFAULT_MAX_PER_ITEM = 7;
+    /** Потолок настройки max-per-item в конфиге. */
+    public static final int MAX_PER_ITEM_LIMIT = 15;
+
     /** На какие предметы ставится улучшение. */
     public enum Target {
         WEAPON, ARMOR, TOOL, ANY;

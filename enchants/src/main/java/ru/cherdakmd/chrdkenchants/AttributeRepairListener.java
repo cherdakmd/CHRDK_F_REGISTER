@@ -37,7 +37,8 @@ public final class AttributeRepairListener implements Listener {
     @EventHandler
     public void onHeld(PlayerItemHeldEvent event) {
         Player player = event.getPlayer();
-        if (plugin.items().repairAttributes(player.getInventory().getItem(event.getNewSlot()))) {
+        ItemStack stack = player.getInventory().getItem(event.getNewSlot());
+        if (plugin.items().repairAttributes(stack) || plugin.items().refreshBookDescription(stack)) {
             player.updateInventory();
         }
     }
@@ -46,7 +47,7 @@ public final class AttributeRepairListener implements Listener {
     void repair(Player player) {
         boolean changed = false;
         for (ItemStack stack : player.getInventory().getContents()) {
-            if (plugin.items().repairAttributes(stack)) {
+            if (plugin.items().repairAttributes(stack) || plugin.items().refreshBookDescription(stack)) {
                 changed = true;
             }
         }

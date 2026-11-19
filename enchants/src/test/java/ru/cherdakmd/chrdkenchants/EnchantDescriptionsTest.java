@@ -127,7 +127,14 @@ class EnchantDescriptionsTest {
         assertTrue(refresh.contains("validated(book) == null")); assertTrue(refresh.contains("refreshLore(meta, read(book))"));
         assertFalse(refresh.contains("applyAttributes(")); assertFalse(refresh.contains("stampBook(")); assertFalse(refresh.contains("write("));
         assertTrue(commands.contains("refreshBookDescription(described)"));
-        assertTrue(items.contains("get(\"book-level\"")); assertTrue(items.contains("get(\"book-preview\""));
+        // Контракт лора книги: только название и уровень, без ID/редкости/описаний.
+        assertFalse(items.contains("get(\"book-level\""), "книга не показывает ID и уровень/максимум строкой");
+        assertFalse(items.contains("get(\"book-preview\""), "книга не показывает подсказки и описание");
+        assertFalse(items.contains("get(\"book-rarity\"")); assertFalse(items.contains("get(\"book-apply\""));
+        assertTrue(items.contains("\"lore-line\""), "строка книги — название и уровень");
+        String repairListener = source("AttributeRepairListener");
+        assertTrue(repairListener.contains("refreshBookDescription(stack)"),
+                "старые книги укорачиваются сами при входе и смене слота");
     }
     @Test void catalogDetailsUseServerSnapshotAndRetainDeferredAuthGenerationAndViewChecks() throws Exception {
         String gui = source("EnchantGui");

@@ -51,6 +51,7 @@ public record TierForgeConfig(
         boolean rerollNoDowngrade,
         boolean improveEnabled,
         int improveBaseXp,
+        int improveMaxPerItem,
         int statsBackupCopies,
         java.util.Map<String, String> improveMaterials,
         boolean namesEnabled,
@@ -154,6 +155,11 @@ public record TierForgeConfig(
         boolean improve = config.getBoolean("improve.enabled", true);
         int improveXp = clamp(config.getInt("improve.base-xp-cost", 3), 1, 38, logger,
                 "improve.base-xp-cost");
+        // Сколько разных свойств ковки помещается на один предмет. Уже
+        // накрученные сверх лимита не срезаются — новые не вписываются.
+        int improveMaxPerItem = clamp(
+                config.getInt("improve.max-per-item", ForgeUpgrade.DEFAULT_MAX_PER_ITEM),
+                1, ForgeUpgrade.MAX_PER_ITEM_LIMIT, logger, "improve.max-per-item");
         // 1.4.95: сколько резервных копий stats.yml хранить перед перезаписью.
         int statsBackups = config.getInt("stats.backup-copies", 3);
         int statsBackupCopies = StatsBackup.clampKeep(statsBackups);
@@ -231,7 +237,8 @@ public record TierForgeConfig(
                 blacklist,
                 bossMultiplier,
                 config.getBoolean("reroll.no-downgrade", true),
-                improve, improveXp, statsBackupCopies, improveMaterials, naming,
+                improve, improveXp, improveMaxPerItem, statsBackupCopies,
+                improveMaterials, naming,
                 readNames(config, "names.weapons", ForgeNamePool.DEFAULT_WEAPONS),
                 readNames(config, "names.armor", ForgeNamePool.DEFAULT_ARMOR),
                 readNames(config, "names.tools", ForgeNamePool.DEFAULT_TOOLS),
