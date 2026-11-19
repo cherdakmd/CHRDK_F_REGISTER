@@ -53,8 +53,15 @@
 # вычищает ручные эксперименты). Тексты xp-potion-used (прогресс-бар уровня),
 # potion-shop-price, potion-buy-hint и potion-bought переписываются эталоном,
 # новый xp-potion-used-max дописывается (backup, повторный старт идемпотентен).
+# v12: повторная зачистка эпохи суточного остатка зелий. Скриншот с сервера
+#     снова показал «Сегодня осталось зелий: %left%» в xp-potion-used: remove
+#     исполняется только на переходе через номер шага, и файлы владельцев,
+#     штампованные до ретро-правок старых шагов, их не переигрывают. v12 —
+#     новый шаг (не правка v4): remove + дописывание эталоном вычищает %left%
+#     у всех файлов ниже 12. Правило: remove-списки старых шагов никогда не
+#     редактировать — только новый шаг с новой версией.
 config-version: 7
-messages-version: 11
+messages-version: 12
 migrations:
   config:
     5:
@@ -64,6 +71,8 @@ migrations:
     7:
       remove: [xp-potions.shop-stack-size, xp-potions.shop-click-cooldown-ms]
   messages:
+    12:
+      remove: [messages.xp-potion-daily-limit, messages.xp-potion-used]
     11:
       remove: [messages.xp-potion-unavailable]
     4:
