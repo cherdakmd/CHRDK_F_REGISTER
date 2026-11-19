@@ -28,6 +28,14 @@ class ChargeInventoryBankOnlyTest {
         assertTrue(withPhysical.valid(),"legacy pending receipts must remain parseable so recovery can reconcile them");
     }
 
+    @Test void generatorUpgradesAreBankOnlyWithUsePermission() {
+        assertEquals("chrdkgenerator.use", BankCharge.permission("generator-upgrades"),
+                "payment source of CHRDK_Generator must be whitelisted with its use permission");
+        assertTrue(BankCharge.bankOnlySource("generator-upgrades"),
+                "upgrades burn bank money only; inventory tender must never apply");
+        assertNull(BankCharge.permission("lottery"), "unknown sources stay blocked");
+    }
+
     @Test void bankOnlyPlansNeverTenderPhysicalDiamonds() {
         // Пустой storage: план обязан работать только со счётом и не изымать предметы.
         ItemStack[] inventory=new ItemStack[36];

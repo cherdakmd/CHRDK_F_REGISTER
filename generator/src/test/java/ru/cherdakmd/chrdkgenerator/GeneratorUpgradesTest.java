@@ -3,14 +3,18 @@ package ru.cherdakmd.chrdkgenerator;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Цены улучшений: шаги тира, уровни модулей, описания для сообщений. */
 class GeneratorUpgradesTest {
@@ -59,5 +63,12 @@ class GeneratorUpgradesTest {
                 GeneratorUpgrades.describe(GeneratorUpgrades.moduleCost(config, 5)));
         assertEquals("IRON_INGOT × 32",
                 GeneratorUpgrades.describe(GeneratorUpgrades.moduleCost(config, 1)));
+    }
+
+    @Test void paymentsUseWhitelistedSourceWithBankOnlyBurn() throws IOException {
+        String plugin = Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkgenerator/GeneratorPlugin.java"));
+        assertTrue(plugin.contains(
+                        "new PaidActions(this, this::coreApi, this::messages, \"generator-upgrades\", true)"),
+                "покупки платят источником generator-upgrades и только банком (касса не участвует)");
     }
 }
