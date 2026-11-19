@@ -1,0 +1,143 @@
+{
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:leather_boots",
+          "modifier": [
+            {
+              "type": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_name": {
+                  "text": "Пружинные сапоги",
+                  "type": "text",
+                  "color": "aqua",
+                  "italic": false
+                },
+                "minecraft:lore": [
+                  {
+                    "text": "Сокровище Бесплодных земель",
+                    "color": "dark_gray",
+                    "italic": false
+                  },
+                  {
+                    "text": " "
+                  },
+                  {
+                    "text": "Способность:",
+                    "color": "green",
+                    "italic": false
+                  },
+                  {
+                    "text": "Броня +2 и +3% скорости бега.",
+                    "color": "gray",
+                    "italic": false
+                  },
+                  {
+                    "text": " "
+                  },
+                  {
+                    "text": "Не ломаются.",
+                    "color": "dark_gray",
+                    "italic": false
+                  }
+                ],
+                "minecraft:custom_data": {
+                  "cht_item": "spring_boots",
+                  "PublicBukkitValues": {
+                    "chrdk:mine_treasure_item": "1"
+                  }
+                },
+                "minecraft:repair_cost": 99999,
+                "minecraft:unbreakable": {},
+                "minecraft:dyed_color": 3050327,
+                "minecraft:tooltip_display": {
+                  "hidden_components": [
+                    "minecraft:dyed_color"
+                  ]
+                }
+              }
+            },
+            {
+              "type": "minecraft:set_attributes",
+              "modifiers": [
+                {
+                  "id": "chrdk_spring_boots_armor",
+                  "attribute": "minecraft:armor",
+                  "amount": 2.0,
+                  "operation": "add_value",
+                  "slot": "feet"
+                },
+                {
+                  "id": "chrdk_spring_boots_speed",
+                  "attribute": "minecraft:movement_speed",
+                  "amount": 0.03,
+                  "operation": "add_value",
+                  "slot": "feet"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:slime_ball",
+          "modifier": [
+            {
+              "type": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_name": {
+                  "text": "Дымовая шашка",
+                  "type": "text",
+                  "color": "aqua",
+                  "italic": false
+                },
+                "minecraft:lore": [
+                  {
+                    "text": "Сокровище Бесплодных земель",
+                    "color": "dark_gray",
+                    "italic": false
+                  },
+                  {
+                    "text": " "
+                  },
+                  {
+                    "text": "Способность:",
+                    "color": "green",
+                    "italic": false
+                  },
+                  {
+                    "text": "ПКМ по блоку: ядовитое облако",
+                    "color": "gray",
+                    "italic": false
+                  },
+                  {
+                    "text": "радиусом 4 метра. Расходуется.",
+                    "color": "gray",
+                    "italic": false
+                  },
+                  {
+                    "text": " "
+                  },
+                  {
+                    "text": "Одноразовая.",
+                    "color": "dark_gray",
+                    "italic": false
+                  }
+                ],
+                "minecraft:custom_data": {
+                  "cht_item": "smoke_bomb",
+                  "PublicBukkitValues": {
+                    "chrdk:mine_treasure_item": "1"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

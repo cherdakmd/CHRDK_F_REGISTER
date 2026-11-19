@@ -1,0 +1,23 @@
+{
+  "criteria": {
+    "requirement": {
+      "trigger": "minecraft:item_used_on_block",
+      "conditions": {
+        "location": {
+          "type": "minecraft:match_tool",
+          "predicate": {
+            "items": [
+              "minecraft:slime_ball"
+            ],
+            "predicates": {
+              "minecraft:custom_data": "{cht_item:\"smoke_bomb\"}"
+            }
+          }
+        }
+      }
+    }
+  },
+  "rewards": {
+    "function": "chrdk_treasure:items/smoke_bomb"
+  }
+}

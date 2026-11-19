@@ -1,0 +1,139 @@
+{
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:gold_nugget",
+          "modifier": [
+            {
+              "type": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_name": {
+                  "text": "Счастливая монета",
+                  "type": "text",
+                  "color": "green",
+                  "italic": false
+                },
+                "minecraft:lore": [
+                  {
+                    "text": "Сокровище Бесплодных земель",
+                    "color": "dark_gray",
+                    "italic": false
+                  },
+                  {
+                    "text": " "
+                  },
+                  {
+                    "text": "Способность:",
+                    "color": "green",
+                    "italic": false
+                  },
+                  {
+                    "text": "+1 удача, пока предмет в руке.",
+                    "color": "gray",
+                    "italic": false
+                  },
+                  {
+                    "text": " "
+                  },
+                  {
+                    "text": "Копится в стак.",
+                    "color": "dark_gray",
+                    "italic": false
+                  }
+                ],
+                "minecraft:custom_data": {
+                  "cht_item": "lucky_coin",
+                  "PublicBukkitValues": {
+                    "chrdk:mine_treasure_item": "1"
+                  }
+                },
+                "minecraft:repair_cost": 99999,
+                "minecraft:unbreakable": {}
+              }
+            },
+            {
+              "type": "minecraft:set_attributes",
+              "modifiers": [
+                {
+                  "id": "chrdk_lucky_coin",
+                  "attribute": "minecraft:luck",
+                  "amount": 1.0,
+                  "operation": "add_value",
+                  "slot": "mainhand"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:iron_nugget",
+          "modifier": [
+            {
+              "type": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_name": {
+                  "text": "Тяжёлая перчатка",
+                  "type": "text",
+                  "color": "green",
+                  "italic": false
+                },
+                "minecraft:lore": [
+                  {
+                    "text": "Сокровище Бесплодных земель",
+                    "color": "dark_gray",
+                    "italic": false
+                  },
+                  {
+                    "text": " "
+                  },
+                  {
+                    "text": "Способность:",
+                    "color": "green",
+                    "italic": false
+                  },
+                  {
+                    "text": "+1.5 к силе атаки, пока предмет в руке.",
+                    "color": "gray",
+                    "italic": false
+                  },
+                  {
+                    "text": " "
+                  },
+                  {
+                    "text": "Копится в стак.",
+                    "color": "dark_gray",
+                    "italic": false
+                  }
+                ],
+                "minecraft:custom_data": {
+                  "cht_item": "heavy_glove",
+                  "PublicBukkitValues": {
+                    "chrdk:mine_treasure_item": "1"
+                  }
+                },
+                "minecraft:repair_cost": 99999,
+                "minecraft:unbreakable": {}
+              }
+            },
+            {
+              "type": "minecraft:set_attributes",
+              "modifiers": [
+                {
+                  "id": "chrdk_heavy_glove",
+                  "attribute": "minecraft:attack_damage",
+                  "amount": 1.5,
+                  "operation": "add_value",
+                  "slot": "mainhand"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
