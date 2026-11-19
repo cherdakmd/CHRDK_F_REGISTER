@@ -160,7 +160,7 @@ public final class GeneratorConfig {
         return tiers;
     }
 
-    /** Тир по номеру 1…7. */
+    /** Тир по номеру 1…9. */
     public Tier tier(int tier) {
         return tiers.get(tier - 1);
     }

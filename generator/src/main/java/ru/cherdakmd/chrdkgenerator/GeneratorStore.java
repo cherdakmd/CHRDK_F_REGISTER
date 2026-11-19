@@ -39,7 +39,7 @@ import ru.cherdakmd.chrdkregister.storage.SafeJsonWriter;
 public final class GeneratorStore {
 
     /** Максимальный тир ядра (п.31, §4). */
-    public static final int MAX_TIER = 7;
+    public static final int MAX_TIER = 9;
 
     /** Модули с уровнями: скорость, ёмкость, удача — до 5 уровней (п.31, §5). */
     public static final int MAX_LEVEL = 5;

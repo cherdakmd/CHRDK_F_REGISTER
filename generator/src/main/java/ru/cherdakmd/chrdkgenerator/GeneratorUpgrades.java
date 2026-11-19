@@ -24,7 +24,7 @@ final class GeneratorUpgrades {
         this.plugin = plugin;
     }
 
-    /** Цена шага тира: {@code nextTier} 2…7 (индекс 0 — переход 1→2). */
+    /** Цена шага тира: {@code nextTier} 2…9 (индекс 0 — переход 1→2). */
     static GeneratorConfig.Cost tierCost(GeneratorConfig config, int nextTier) {
         return config.tierCosts().get(nextTier - 2);
     }
@@ -91,7 +91,7 @@ final class GeneratorUpgrades {
         }
     }
 
-    /** Повышение тира: деньги + ресурсы, тир растёт на 1 (до 7). */
+    /** Повышение тира: деньги + ресурсы, тир растёт на 1 (до 9). */
     void upgradeTier(Player player) {
         GeneratorStore.Entry entry = plugin.store().entry(player.getUniqueId());
         if (entry == null) {
