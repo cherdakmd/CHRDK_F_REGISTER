@@ -433,7 +433,9 @@ messages:
   ability.defense.name: "<gold>Сдерживание</gold>"
   ability.defense.desc: "<gray>Следующий полученный удар враждебного моба: Замедление I атакующему на 3 секунды. Нужен щит. Урон не отменяется. Только PvE.</gray>"
 
-  xp-potion-unavailable: "<yellow>Кристалл опыта сейчас недоступен: требуется вход, выживание и исправное хранилище.</yellow>"
+  xp-potion-unavailable: "<yellow>Кристалл опыта сейчас недоступен: требуется вход, режим выживания и включённые кристаллы опыта.</yellow>"
+  xp-potion-storage-broken: "<red>Кристаллы опыта заблокированы: хранилище расходников повреждено.</red> <yellow>Администрации: восстановите skill-consumables.json из backup (см. консоль).</yellow>"
+  xp-potion-awards-paused: "<yellow>Кристалл не потрачен. Награда за кристалл сейчас недоступна: источник наград приостановлен.</yellow> <gray>Администрации: сверьте журнал наград и bank.json (см. консоль).</gray>"
   xp-potion-cooldown: "<yellow>Следующий кристалл опыта можно использовать через %time% сек.</yellow>"
   xp-potion-used: "<green>%skill%: +%xp% XP.</green> <gray>Ур.</gray> <white>%level%</white> <gray>%bar%</gray> <dark_gray>%current%/%need%</dark_gray> <gray>— осталось</gray> <white>%missing%</white> <gray>XP до следующего уровня.</gray>"
   xp-potion-used-max: "<green>%skill%: +%xp% XP.</green> <gray>%bar%</gray> <green>МАКСИМУМ.</green>"

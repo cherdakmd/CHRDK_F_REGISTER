@@ -26,6 +26,7 @@ import ru.cherdakmd.chrdkregister.api.RankBonus;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -158,9 +159,18 @@ final class SkillXpItems implements Listener {
 
     /** Общий расход: проверки, пауза, опыт и списание одной штуки из руки. */
     private void use(Player player, SkillType skill, EquipmentSlot hand) {
-        if (!enabled() || player.getGameMode() != GameMode.SURVIVAL
-                || plugin.coreApi() == null || !plugin.coreApi().isAuthenticated(player)) {
-            plugin.messages().send(player, "xp-potion-unavailable");
+        if (!plugin.config().enabled() || player.getGameMode() != GameMode.SURVIVAL
+                || plugin.coreApi() == null || !plugin.coreApi().isAuthenticated(player)
+                || !plugin.getConfig().getBoolean("xp-potions.enabled", true)) {
+            fail(player, "xp-potion-unavailable");
+            return;
+        }
+        // Повреждённое хранилище расходников — своя причина: она лечится
+        // восстановлением skill-consumables.json из backup (адресат — администрация).
+        if (!store.available()) {
+            warn("Кристаллы опыта закрыты: skill-consumables.json повреждён или не "
+                    + "прошёл проверку — восстановите его из backup.");
+            fail(player, "xp-potion-storage-broken");
             return;
         }
         RankBonus rank = rank(player);
@@ -174,7 +184,13 @@ final class SkillXpItems implements Listener {
                 * AttributeMath.xpFactor(plugin.skills().attribute(player, PlayerAttribute.WISDOM)));
         long cooldownMillis = Math.max(0, plugin.getConfig().getInt("xp-potions.cooldown-seconds", 0)) * 1000L;
         if (!store.consume(player.getUniqueId(), now, cooldownMillis)) {
-            plugin.messages().send(player, "xp-potion-unavailable");
+            // Единственная реальная причина здесь — гонка двойного клика по паузе.
+            long left = store.cooldownLeft(player.getUniqueId(), now);
+            if (left > 0) {
+                plugin.messages().send(player, "xp-potion-cooldown", "time", left);
+            } else {
+                fail(player, "xp-potion-storage-broken");
+            }
             return;
         }
         // Навык на потолке: кристалл не копит мёртвый опыт навыка, а даёт
@@ -183,7 +199,11 @@ final class SkillXpItems implements Listener {
             int reward = moneyReward();
             if (reward > 0 && !plugin.moneyLoot().accept(
                     player, "skill-crystal-" + UUID.randomUUID(), reward)) {
-                plugin.messages().send(player, "xp-potion-unavailable");
+                warn("Кристалл на максимуме навыка не выдал награду: источник наград "
+                        + "skill-crystals приостановлен. Сверьте журнал наград "
+                        + "plugins/CHRDK_Skills/skill-crystals/milestone-awards.json и bank.json; "
+                        + "журнал наград не удаляйте.");
+                fail(player, "xp-potion-awards-paused");
                 return;
             }
             ItemStack held = player.getInventory().getItem(hand);
@@ -202,7 +222,9 @@ final class SkillXpItems implements Listener {
         }
         var award = plugin.skills().grantXp(player, skill, xp);
         if (award.xp() <= 0L) {
-            plugin.messages().send(player, "xp-potion-unavailable");
+            warn("Кристалл не начислил опыт навыка: резерв наград skills-awards "
+                    + "отклонён — источник наград приостановлен (см. предупреждения выше).");
+            fail(player, "xp-potion-awards-paused");
             return;
         }
         ItemStack held = player.getInventory().getItem(hand);
@@ -310,6 +332,31 @@ final class SkillXpItems implements Listener {
         var health = entity.getAttribute(Attribute.MAX_HEALTH);
         double hp = health == null ? 20.0 : health.getValue();
         return hp > 60.0 ? 2.0 : hp > 20.0 ? 1.5 : 1.0;
+    }
+
+    /** Повторяющиеся отказы не спамят в чат: одинаковое сообщение не чаще раза в 3 секунды. */
+    private final Map<String, Long> failStamps = new HashMap<>();
+    private long warnStamp;
+
+    private void fail(Player player, String key) {
+        long now = System.currentTimeMillis();
+        String stamp = player.getUniqueId() + ":" + key;
+        Long last = failStamps.get(stamp);
+        if (last != null && now - last < 3_000L) {
+            return;
+        }
+        failStamps.put(stamp, now);
+        plugin.messages().send(player, key);
+    }
+
+    /** Причина отказа для администрации в консоль — не чаще раза в минуту. */
+    private void warn(String text) {
+        long now = System.currentTimeMillis();
+        if (now - warnStamp < 60_000L) {
+            return;
+        }
+        warnStamp = now;
+        plugin.getLogger().warning(text);
     }
 
     private RankBonus rank(Player player) {

@@ -65,7 +65,7 @@ final class DiamondCapConfigTest {
     void schemaBumpedToSecondVersion() throws Exception {
         String schema = Files.readString(Path.of("src/main/resources/config-schema.yml"));
         assertTrue(schema.contains("config-version: 7"));
-        assertTrue(schema.contains("messages-version: 10"));
+        assertTrue(schema.contains("messages-version: 11"));
         assertTrue(schema.contains("diamonds.cap.*"));
     }
 }

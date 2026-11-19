@@ -57,7 +57,9 @@ final class SkillXpStore {
         String day = today();
         if (!day.equals(row.day)) { row.day = day; row.used = 0; }
         if (row.cooldownUntil > now) return false;
-        row.used++;
+        // Писатель не выходит за потолок, который требует load(): иначе после
+        // перезапуска файл с завышенным счётчиком закроет все расходники.
+        if (row.used < MAX_USED_PER_DAY) row.used++;
         row.cooldownUntil = now + cooldownMillis;
         dirty = true;
         return true;
