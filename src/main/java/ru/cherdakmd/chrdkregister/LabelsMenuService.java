@@ -47,7 +47,7 @@ public final class LabelsMenuService implements Listener {
     /** Как ник выглядит для остальных — ровно та строка, что уходит в чат и таб. */
     static final int PREVIEW_SLOT = 8;
     /** Переключатели источников под выбранными местами; шапка TAB отдельно. */
-    static final int[] ENTRY_SLOTS = {28, 29, 30, 31, 32, 33, 34, 35, 37};
+    static final int[] ENTRY_SLOTS = {28, 29, 30, 31, 32, 33, 34, 35};
     static final int[] PLACE_SLOTS = {19, 20, 21, 22, 23, 24, 25, 26};
     static final int ENABLE_ALL_SLOT = 45;
     static final int DISABLE_ALL_SLOT = 47;

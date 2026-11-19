@@ -349,7 +349,7 @@ class LabelPreferencesTest {
         assertTrue(preferences.setAll("", false));
         assertEquals(0, preferences.size());
         assertNull(LabelPreferences.Label.byId("хедер"), "неизвестный ид — null");
-        assertEquals(8, LabelPreferences.Label.nameTags().size(),
-                "восемь надписей рядом с ником + шапка таба отдельно");
+        assertEquals(7, LabelPreferences.Label.nameTags().size(),
+                "семь надписей рядом с ником + шапка таба отдельно");
     }
 }

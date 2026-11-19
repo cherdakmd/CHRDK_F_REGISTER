@@ -38,8 +38,8 @@ class StreamsRemovalTest {
         assertNull(LabelPreferences.Label.byId("streams"));
         assertNull(LabelsCommandHandler.singleOf("streams"));
         assertNull(LabelsCommandHandler.singleOf("стример"));
-        assertEquals(8, LabelPreferences.Label.nameTags().size());
-        assertEquals(9, LabelPreferences.Label.values().length);
+        assertEquals(7, LabelPreferences.Label.nameTags().size());
+        assertEquals(8, LabelPreferences.Label.values().length);
         var current = yaml("config.yml");
         var items = current.getMapList("server-menu.items");
         assertEquals(44, items.size());
