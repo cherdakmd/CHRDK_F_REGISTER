@@ -50,7 +50,6 @@ groups:
   description: Свойства находок и мастерская.
   pages:
   - enchants
-  - tierforge
   - artifacts
   - cosmetics
 - id: ranks

@@ -61,8 +61,6 @@ public final class LabelPreferences {
     public enum Label {
         /** Название и знак донатного ранга («· Покровитель», ❋). */
         RANK("rank", Group.NAME),
-        /** Титул за закрытые разделы коллекции кузни. */
-        TIERFORGE("tierforge", Group.NAME),
         /** Метка выбранного класса. */
         CLASSES("classes", Group.NAME),
         /** Метка гильдии. */

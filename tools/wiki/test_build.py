@@ -30,36 +30,6 @@ class WikiBuildTest(unittest.TestCase):
         cls.root = HERE.parents[1]
         cls.book = FactBook(cls.root)
 
-    def test_forge_consumables_share_game_instructions_and_exact_prices(self):
-        book = FactBook()
-        cards = book.render_table("forge_materials")
-        self.assertEqual(8, cards.count("### "))
-        for name in ("Кристалл возвышения", "Кузнечное ядро", "Печать перековки",
-                     "Искра первого тира", "Кузнечный лом", "Резец ковки",
-                     "Смывка ковки", "Чернила клички"):
-            self.assertIn(name, cards)
-        for sku in ("ascend", "temper", "reforge", "seed", "repair", "inscribe", "remove", "name"):
-            self.assertIn("`" + sku + "`", cards)
-        self.assertEqual(8, cards.count("В наковальне"))
-        self.assertNotIn("/tiers forge confirm", cards)
-        self.assertEqual(8, cards.count("ЛКМ с пустым курсором"))
-        self.assertIn("Легендарный | 16 | 24", book.render_table("forge_costs"))
-        shop = book.render_table("forge_shop")
-        for row in ("ascend | ECHO_SHARD | 128", "temper | NAUTILUS_SHELL | 96",
-                    "reforge | PAPER | 160", "seed | NETHER_STAR | 64",
-                    "repair | IRON_INGOT | 24", "inscribe | GOLD_NUGGET | 192",
-                    "remove | GUNPOWDER | 32", "name | INK_SAC | 16"):
-            self.assertIn(row, shop)
-        self.assertEqual(8, shop.count("| /shop forge |"))
-
-    def test_forge_missing_item_instruction_fails_closed(self):
-        book = FactBook()
-        data = yaml.safe_load((self.root / "tier-forge/src/main/resources/messages.yml").read_text())
-        data["tiers"].pop("forge.temper.details")
-        with patch("facts.yaml.safe_load", return_value=data):
-            with self.assertRaisesRegex(ValueError, "Нет инструкции расходника"):
-                book.render_table("forge_materials")
-
     def test_artifact_catalog_has_all_65_shared_details_and_live_config_costs(self):
         book = FactBook()
         cards = book.artifact_catalog()

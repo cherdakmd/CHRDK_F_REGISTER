@@ -15,15 +15,13 @@ class ForgeMarketContractTest {
         return Files.readString(Path.of(path));
     }
 
-    @Test void api45KeepsClaimLineageAndApi44CatalogContracts() throws Exception {
+    @Test void api46KeepsClaimLineageAndApi44CatalogContracts() throws Exception {
         String api = read("src/main/java/ru/cherdakmd/chrdkregister/api/ChrdkRegisterApi.java");
-        assertTrue(api.contains("int API_VERSION = 45;"));
+        assertTrue(api.contains("int API_VERSION = 46;"));
         assertTrue(api.contains("UUID claimSourceLineage()"));
         assertTrue(api.contains("long claimExchangeSequence(UUID lineage)"));
-        assertTrue(api.contains("ForgeMaterialSource forgeMaterialSource()"));
-        String impl = read("src/main/java/ru/cherdakmd/chrdkregister/ChrdkRegisterApiImpl.java");
-        assertTrue(impl.contains("public ru.cherdakmd.chrdkregister.api.ForgeMaterialSource forgeMaterialSource()"));
-        assertTrue(impl.contains("getServicesManager().load"));
+        assertFalse(api.contains("forgeMaterialSource()"),
+                "API46: мост Кузни снят вместе с модулем CHRDK_TierForge");
     }
 
     @Test void catalogHasExactlyEightWhitelistedSkusAndValidatesCanonicalSeed() throws Exception {
@@ -75,48 +73,18 @@ class ForgeMarketContractTest {
         assertTrue(bank.contains("ChargeInventory.matches(replayed,t.after())"));
     }
 
-    @Test void shopServiceNeverUsesAddItemOrSeparateGiveCommand() throws Exception {
-        String code = read("diamond-shop/src/main/java/ru/cherdakmd/diamondshop/ForgeShopService.java");
-        assertFalse(code.contains("addItem("));
-        assertFalse(code.contains("dispatchCommand"));
-        assertTrue(code.contains("WholeTrades.take(amounts, values, needed)"));
-        assertTrue(code.contains("WholeTrades.payment(money, wallet, Math.multiplyExact(spent,physicalMinor))"));
-        assertTrue(code.contains("ShopInventory.insertExact(after, offer.prototype(), units)"));
-        assertTrue(code.contains("service.recoverPending()"));
-        assertTrue(code.contains("prepareForge(trade, now"));
-    }
-
     @Test void previousWalIsUsedAndRecoveryNeedsNoLiveProducer() throws Exception {
         String store = read("diamond-shop/src/main/java/ru/cherdakmd/diamondshop/ShopStore.java");
         String journal = read("diamond-shop/src/main/java/ru/cherdakmd/diamondshop/ShopJournal.java");
-        assertTrue(store.contains("synchronized boolean prepareForge("));
-        assertTrue(store.contains("if(!p.forge())"));
+        assertFalse(store.contains("prepareForge("),
+                "новые forge-квитанции не создаются: Кузня вырезана");
+        assertTrue(store.contains("if(!p.forge())"),
+                "зависшие forge-квитанции довершаются без вмешательства в склад");
         assertTrue(journal.contains("boolean forge"));
         assertTrue(journal.contains("if(forge) return valid()"));
         assertTrue(journal.contains("this(trade,stock,sold,bought,time,day,used,turnover,price,historyPoints,historyInterval,false)"));
         assertTrue(journal.contains("ShopJournal.recover(store,new ShopJournal.Bank()")
                 || journal.contains("static boolean recover(ShopStore store,Bank bank)"));
-    }
-
-    @Test void tierForgeKeepsSeedEligibilityAndMigrationOnlyLore() throws Exception {
-        String materials = read("tier-forge/src/main/java/ru/cherdakmd/chrdktierforge/ForgeMaterials.java");
-        assertFalse(materials.contains("QualifiedHuntKillEvent"));
-        assertFalse(materials.contains("import org.bukkit.event.entity.EntityDeathEvent"));
-        assertFalse(materials.contains("EntityDeathEvent event"));
-        // 7 ноября 2026: искра отклоняет вещь С тиром отдельным ключом, а не общим
-        // forge-input (тот текст ошибочно требовал тир-вещь как раз у искры).
-        assertTrue(materials.contains("if (tierId != null) { fail(ForgeInputDiagnostics.SEED_TIERED); return null; }"));
-        assertTrue(materials.contains("ForgeMaterial.seedUid(canonical)"));
-        assertTrue(materials.contains("TierModifierIds.validUid(uidValue)"));
-        String items = read("tier-forge/src/main/java/ru/cherdakmd/chrdktierforge/TierItems.java");
-        assertTrue(items.contains("ItemStack forgeMaterialCopy("));
-        assertTrue(items.contains("refreshTierModifiers(copy); // migration-only"));
-        int start = items.indexOf("private ItemStack assemble");
-        int end = items.indexOf("public void bumpUpgrade(", start);
-        assertTrue(start >= 0 && end > start);
-        assertEquals(1, count(items.substring(start, end), "lore.add(tierLine(tier, kind));"));
-        String lore = read("tier-forge/src/main/java/ru/cherdakmd/chrdktierforge/TierLore.java");
-        assertTrue(lore.contains("if (!recognized) return before;"));
     }
 
     private static int count(String text, String needle) {

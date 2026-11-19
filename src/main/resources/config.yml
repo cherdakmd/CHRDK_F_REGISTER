@@ -194,7 +194,6 @@ security:
     - ranksadmin
     - skillsadmin
     - tpadmin
-    - tiersadmin
     - vkadmin
     # Служебная команда моста античита (см. docs/design/ANTICHEAT.md).
     - chrdkac
@@ -1143,7 +1142,6 @@ server-menu:
     - {"category": "world", "icon": "SPIDER_EYE", "name": "<gold><bold>Тиры мобов</bold></gold>", "lore": "<gray>Чем дальше от спавна, тем сильнее враги</gray>\\n<dark_gray>Клик: /mobtiers — границы и награды</dark_gray>", "command": "mobtiers", "plugin": "CHRDK_Mobs", "permission": "chrdkmobs.use"}
     # ------------------------------ снаряжение ------------------------------
     - {"category": "gear", "icon": "ENCHANTED_BOOK", "name": "<gold><bold>Кастомные чары</bold></gold>", "lore": "<gray>Каталог чар и описания</gray>\n<dark_gray>Получение — через игровую механику</dark_gray>", "command": "enchants", "plugin": "CHRDK_Enchants", "permission": "chrdkenchants.use"}
-    - {"category": "gear", "icon": "SMITHING_TABLE", "name": "<gold><bold>Редкости снаряжения</bold></gold>", "lore": "<gray>Тиры крафта и характеристики</gray>", "command": "tiers", "plugin": "CHRDK_TierForge", "permission": "chrdktierforge.use"}
     - {"category": "gear", "icon": "TOTEM_OF_UNDYING", "name": "<gold><bold>Артефакты</bold></gold>", "lore": "<gray>Каталог, носимые артефакты и источники</gray>\n<dark_gray>Добывайте их в мире</dark_gray>", "command": "artifacts", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
     - {"category": "gear", "icon": "ITEM_FRAME", "name": "<gold><bold>Коллекция артефактов</bold></gold>", "lore": "<gray>Собранное, прогресс и награды</gray>", "command": "artifacts collection", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
     - {"category": "gear", "icon": "FIREWORK_ROCKET", "name": "<gold><bold>Косметика</bold></gold>", "lore": "<gray>Эффекты, шлейфы и оформление</gray>", "command": "cosmetics list", "plugin": "CHRDK_Cosmetics", "permission": "chrdkcosmetics.use"}
@@ -1545,7 +1543,6 @@ auto-messages:
     - {"text": "<gray>Нужен участок на время? <white>/claim rent</white>. Продление оплачивается с личного <white>/bal</white> арендатора, содержание — со счёта владельца. Нехватка средств прекращает аренду; оплаченный срок защищён, собственность не переходит.</gray>", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
     - {"text": "<gray>Вернуться домой — <white>/homes</white>, проверить цены — <white>/homes prices</white>. Платный <white>/sethome имя</white> сначала показывает стоимость; <white>/sethome имя confirm</white> — в той же точке и с тем же взглядом за 30 секунд. Перемещения платные.</gray>", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
     - {"text": "<gray>Сильная чара начинается с подходящей книги: <white>/enchants sources</white> — источники, <white>/enchants info id</white> — условия. Книга не отменяет конфликты и ограничения наковальни.</gray>", "plugin": "CHRDK_Enchants", "permission": "chrdkenchants.use"}
-    - {"text": "<gray>Смотрите не только на цвет вещи: <white>/tiers info</white> раскрывает свойства, <white>/tiers collection</white> — коллекцию. Высокий тир не отменяет отрицательные аффиксы.</gray>", "plugin": "CHRDK_TierForge", "permission": "chrdktierforge.use"}
     - {"text": "<gray>У каждой находки две стороны: <white>/artifacts collection</white>. Полезный эффект может требовать опыт, иметь перезарядку или сочетаться с недостатком — читайте всю карточку.</gray>", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
     - {"text": "<gray>Мирный или боевой клан? <white>/clan gui</white>. Казна отдельна от <white>/bal</white>; ежедневный взнос — не меньше 10 алмазов с участника. У мирного клана есть дополнительная плата; условия читайте до вступления.</gray>", "plugin": "CHRDK_Guilds", "permission": "chrdkguilds.use"}
     - {"text": "<gray>Последний штрих к образу: <white>/cosmetics trails</white> — доступные шлейфы, <white>/cosmetics off</white> — отключение. Открытый каталог не означает владение; у права может быть срок.</gray>", "plugin": "CHRDK_Cosmetics", "permission": "chrdkcosmetics.use"}

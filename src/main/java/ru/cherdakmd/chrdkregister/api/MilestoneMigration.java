@@ -70,40 +70,5 @@ public final class MilestoneMigration {
             }
         }
     }
-    public static Map<UUID,Set<String>> tierForge(Path file) throws IOException {
-        if(!Files.exists(file)) return Map.of();
-        try {
-            if(!Files.isRegularFile(file)||Files.size(file)>32L*1024*1024) throw new IllegalArgumentException("legacy capacity/type");
-            var yaml=new YamlConfiguration(); yaml.load(file.toFile());
-            if(yaml.contains("players")) {
-                var players=yaml.getConfigurationSection("players"); if(players==null) throw new IllegalArgumentException("invalid stats players");
-                for(String player:players.getKeys(false)) {
-                    uuid(player); var row=players.getConfigurationSection(player); if(row==null) throw new IllegalArgumentException("invalid stats profile");
-                    for(Object value:row.getValues(false).values()) {
-                        if(!(value instanceof Number)||new java.math.BigDecimal(value.toString()).longValueExact()<0||new java.math.BigDecimal(value.toString()).longValueExact()>Integer.MAX_VALUE) throw new IllegalArgumentException("invalid stats counter");
-                    }
-                }
-            }
-            if(!yaml.contains("collection")) return Map.of();
-            var root=yaml.getConfigurationSection("collection"); if(root==null) throw new IllegalArgumentException("collection section");
-            var out=new LinkedHashMap<UUID,Set<String>>();
-            for(String raw:root.getKeys(false)) {
-                UUID owner=uuid(raw); var row=root.getConfigurationSection(raw);
-                if(row==null||!row.isList("claimed")) throw new IllegalArgumentException("legacy collection claims");
-                for(String field:List.of("tiers","properties","affixes")) {
-                    if(!row.isList(field)) throw new IllegalArgumentException("invalid collection progress");
-                    for(Object value:Objects.requireNonNull(row.getList(field))) if(!(value instanceof String id)||id.isBlank()) throw new IllegalArgumentException("invalid collection id");
-                }
-                if(row.contains("title")&&!(row.get("title") instanceof String)) throw new IllegalArgumentException("invalid title");
-                var claims=new LinkedHashSet<String>();
-                for(Object value:Objects.requireNonNull(row.getList("claimed"))) {
-                    if(!(value instanceof String key)) throw new IllegalArgumentException("legacy claim key");
-                    MilestoneStore.validKey(key); if(!claims.add(key)) throw new IllegalArgumentException("duplicate claim");
-                }
-                out.put(owner,Set.copyOf(claims));
-            }
-            return Map.copyOf(out);
-        } catch(Exception error) { throw new IOException("Неоднозначный stats.yml: источник наград не сбрасывается",error); }
-    }
     private MilestoneMigration() { }
 }

@@ -45,7 +45,7 @@ class DailyServerCardTest {
     @Test
     void valuesCanBeHiddenAndEmptyDayHasNoData() {
         var hidden = new DailyCardsConfig(true,
-                java.time.ZoneId.of("Europe/Moscow"), false, 9, 10, 12, 13, 15, 16, 18, 19, 5,
+                java.time.ZoneId.of("Europe/Moscow"), false, 9, 12, 13, 15, 16, 18, 19, 5,
                 "ТВОЙ МИР. ТВОЯ ИСТОРИЯ.", DailyCardsConfig.DEFAULT_CONTACT);
         var stats = new DailyServerCard.Stats(12, 3, 842L, 12482L);
         String text = DailyServerCard.message(stats, hidden, DAY, "");

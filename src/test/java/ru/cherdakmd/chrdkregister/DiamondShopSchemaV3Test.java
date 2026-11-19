@@ -41,12 +41,12 @@ final class DiamondShopSchemaV3Test {
 
     private static ConfigSchemaEngine.Spec configSpec() {
         return new ConfigSchemaEngine.Spec("config.yml", CONFIG_MARKER,
-                ConfigSchemaEngine.MarkerMode.KEY, 5, Map.of());
+                ConfigSchemaEngine.MarkerMode.KEY, 6, Map.of());
     }
 
     private static ConfigSchemaEngine.Spec messagesSpec() {
         return new ConfigSchemaEngine.Spec("messages.yml", MESSAGES_MARKER,
-                ConfigSchemaEngine.MarkerMode.COMMENT, 4, Map.of());
+                ConfigSchemaEngine.MarkerMode.COMMENT, 5, Map.of());
     }
 
     /** Убирает только корневую секцию promotions:, сохраняя соседние разделы. */
@@ -102,15 +102,23 @@ final class DiamondShopSchemaV3Test {
     @Test
     void schemaDeclaresV3ForBothFiles() throws IOException {
         YamlConfiguration schema = yaml(read("config-schema.yml"));
-        assertEquals(5, schema.getInt(CONFIG_MARKER),
-                "актуальная схема включает вывод книг из продажи (v5)");
-        assertEquals(4, schema.getInt(MESSAGES_MARKER),
-                "актуальная схема включает тексты акций и подарка");
+        assertEquals(6, schema.getInt(CONFIG_MARKER),
+                "актуальная схема включает вырезку раздела Кузня (v6)");
+        assertEquals(5, schema.getInt(MESSAGES_MARKER),
+                "актуальная схема включает вырезку текстов Кузни");
         assertEquals(
                 List.of("books", "pricing.purchase-multipliers.books-custom",
                         "pricing.purchase-multipliers.books-vanilla"),
                 schema.getStringList("migrations.config.5.remove"),
                 "v5 удаляет books: и тарифы книг из файла владельца");
+        assertEquals(
+                List.of("forge-shop"),
+                schema.getStringList("migrations.config.6.remove"),
+                "v6 удаляет forge-shop: из файла владельца");
+        assertEquals(
+                List.of("market.home.forge", "market.home.forge-lore", "forge.shop"),
+                schema.getStringList("migrations.messages.5.remove"),
+                "v6 удаляет тексты Кузни из файла владельца");
     }
 
     @Test
@@ -121,7 +129,7 @@ final class DiamondShopSchemaV3Test {
         ConfigSchemaEngine.Result result = ConfigSchemaEngine.apply(reference, owner, configSpec());
 
         assertTrue(result.changed(), "переход v2 → v3 обязан дописать новый раздел");
-        assertTrue(result.text().contains(CONFIG_MARKER + ": 5"));
+        assertTrue(result.text().contains(CONFIG_MARKER + ": 6"));
         assertTrue(result.text().contains("owner-note: \"моя правка\""));
         assertTrue(result.text().contains("Ежедневная горячая скупка"),
                 "комментарии эталона переносятся вместе с блоком");
@@ -209,7 +217,7 @@ final class DiamondShopSchemaV3Test {
         ConfigSchemaEngine.Result result = ConfigSchemaEngine.apply(reference, owner, messagesSpec());
 
         assertTrue(result.changed());
-        assertTrue(result.text().startsWith("# " + MESSAGES_MARKER + ": 4"));
+        assertTrue(result.text().startsWith("# " + MESSAGES_MARKER + ": 5"));
         YamlConfiguration live = yaml(result.text());
         assertEquals(Set.of("messages"), new HashSet<>(live.getKeys(false)),
                 "маркер остаётся комментарием, новый корневой ключ не появляется");

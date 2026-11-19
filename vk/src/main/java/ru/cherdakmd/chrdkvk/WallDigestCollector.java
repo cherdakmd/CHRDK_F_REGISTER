@@ -73,8 +73,6 @@ public final class WallDigestCollector {
         state.diamondsByPlayer.clear();
         state.mobKillsByPlayer.clear();
         state.prestigeGains.clear();
-        state.tierByPlayer.clear();
-        state.tierNameByPlayer.clear();
         state.levelGainByPlayer.clear();
         state.levelBaselineByPlayer.clear();
         state.achievementsByPlayer.clear();
@@ -193,27 +191,6 @@ public final class WallDigestCollector {
         return best;
     }
 
-    /** Лучший замеченный тир за сутки; имя тира несёт {@link #tierNameOf}. */
-    public synchronized Leader topTier() {
-        Leader best = null;
-        for (Map.Entry<String, Integer> row : state.tierByPlayer.entrySet()) {
-            int value = row.getValue() == null ? 0 : row.getValue();
-            if (row.getKey() == null || row.getKey().isBlank()) {
-                continue;
-            }
-            if (best == null || value > best.value()
-                    || (value == best.value() && row.getKey().compareToIgnoreCase(best.name()) < 0)) {
-                best = new Leader(row.getKey(), value);
-            }
-        }
-        return best;
-    }
-
-    /** Отображаемое имя тира игрока («Легендарный») или пустая строка. */
-    public synchronized String tierNameOf(String playerName) {
-        return playerName == null ? "" : state.tierNameByPlayer.getOrDefault(playerName, "");
-    }
-
     /** Лидер по приросту суммарного уровня навыков за сутки. */
     public synchronized Leader topLevelGain() {
         return topInt(state.levelGainByPlayer);
@@ -222,19 +199,6 @@ public final class WallDigestCollector {
     /** Лидер по числу открытых достижений. */
     public synchronized Leader topAchievements() {
         return topInt(state.achievementsByPlayer);
-    }
-
-    /** Опрос тиров: сохраняем максимум за сутки вместе с отображаемым именем. */
-    public synchronized void observeTier(String playerName, int ladderIndex, String displayName) {
-        String name = SocialEventText.safePlayer(playerName);
-        if (name.isEmpty() || ladderIndex < 0) {
-            return;
-        }
-        Integer known = state.tierByPlayer.get(name);
-        if (known == null || ladderIndex > known) {
-            state.tierByPlayer.put(name, ladderIndex);
-            state.tierNameByPlayer.put(name, DailyNomination.safeNote(displayName));
-        }
     }
 
     /** Опрос уровней навыков: прирост от первого наблюдения суток. */

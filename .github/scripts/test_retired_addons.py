@@ -37,13 +37,14 @@ class RetiredAddonsGuardTest(unittest.TestCase):
                        "chrdk-bosses-1.4.238.jar", "ChrdkTreasureBookInfo", "CHRDK_Streams",
                        "chrdk-streams-1.4.240.jar", "ru.cherdakmd.chrdkstreams", "CHRDK_Events", "chrdk-events-1.4.241.jar",
                        "ru.cherdakmd.chrdkevents", "CHRDK_Queue", "chrdk-queue-1.4.247.jar", "ru.cherdakmd.chrdkqueue", "CHRDK_Lottery", "CHRDK_Party", "CHRDK_Referrals",
-                       "ru.cherdakmd.chrdkparty", "chrdk-lottery-1.4.270.jar", "chrdk-referrals-1.4.270.jar", "CHRDK_Hunt", "chrdk-hunt-1.5.5.jar", "CHRDK_Professions", "chrdk-professions-1.5.5.jar"):
+                       "ru.cherdakmd.chrdkparty", "chrdk-lottery-1.4.270.jar", "chrdk-referrals-1.4.270.jar", "CHRDK_Hunt", "chrdk-hunt-1.5.5.jar", "CHRDK_Professions", "chrdk-professions-1.5.5.jar",
+                       "CHRDK_TierForge", "chrdk-tier-forge-2.0.17.jar", "ru.cherdakmd.chrdktierforge", "ChrdkTierApi", "ForgeMaterialSource", "ForgeMiningCompat", "chrdktierforge.use", "chrdktierforge.admin"):
             with self.subTest(symbol=symbol):
                 self.write("enchants/src/main/java/Source.java", f"import {symbol};")
                 self.assertTrue(check(self.root))
 
     def test_retired_pages_are_rejected_even_without_commands(self):
-        for page in ("bosses", "treasures", "streams", "events", "queue", "lottery", "party", "referrals", "hunt", "professions"):
+        for page in ("bosses", "treasures", "streams", "events", "queue", "lottery", "party", "referrals", "hunt", "professions", "tierforge"):
             with self.subTest(page=page):
                 self.write("tools/wiki/assets/app.js", f'const href = "{page}.html";')
                 self.assertTrue(check(self.root))

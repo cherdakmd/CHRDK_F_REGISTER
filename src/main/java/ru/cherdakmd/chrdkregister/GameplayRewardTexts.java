@@ -6,7 +6,7 @@ import java.util.Set;
 /** Совместимость старых пользовательских messages.yml без перезаписи владельческих файлов. */
 final class GameplayRewardTexts {
     private static final Set<String> MODULES = Set.of("chrdk_achievements", "chrdk_artifacts", "chrdk_battlepass",
-            "chrdk_dailyrewards", "chrdk_tierforge");
+            "chrdk_dailyrewards");
     private GameplayRewardTexts() { }
 
     static String reward(String text) {
@@ -24,9 +24,9 @@ final class GameplayRewardTexts {
     static String message(String module, String key, String text) {
         // Старый пользовательский файл не переписываем, но снятый источник не рекламируем.
         if ("CHRDK_Core".equalsIgnoreCase(module) && "labels.usage".equals(key) && text != null)
-            return text.replaceAll("(?i)\\|(?:treasures|streams)(?=\\||\\])", "")
-                    .replaceAll("(?i)(\\[)(?:treasures|streams)\\|", "$1")
-                    .replaceAll("(?i)\\[(?:treasures|streams)\\]", "[]");
+            return text.replaceAll("(?i)\\|(?:treasures|streams|tierforge)(?=\\||\\])", "")
+                    .replaceAll("(?i)(\\[)(?:treasures|streams|tierforge)\\|", "$1")
+                    .replaceAll("(?i)\\[(?:treasures|streams|tierforge)\\]", "[]");
         if (MODULES.contains(module.toLowerCase(Locale.ROOT))) return reward(text);
         return text;
     }

@@ -23,8 +23,7 @@ import java.util.List;
  * (скорость/зрение/лава/регенерация/проклятая кровь).</p>
  *
  * <p>С 1.4.128 модуль публикует {@link ChrdkEnchantsApi} в {@code ServicesManager}:
- * CHRDK_TierForge накладывает кастомные чары на тир-предметы, не завися от
- * внутренних классов.</p>
+ * другие аддоны накладывают чары, не завися от внутренних классов.</p>
  */
 public final class EnchantsPlugin extends JavaPlugin {
 

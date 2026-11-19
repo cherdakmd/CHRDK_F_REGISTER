@@ -303,7 +303,6 @@ public final class LabelsMenuService implements Listener {
     static Messages.Trusted nameOf(Messages messages, LabelPreferences.Label label) {
         return switch (label) {
             case RANK -> messages.mini("labels.name-rank");
-            case TIERFORGE -> messages.mini("labels.name-tierforge");
             case CLASSES -> messages.mini("labels.name-classes");
             case GUILDS -> messages.mini("labels.name-guilds");
             case QUESTS -> messages.mini("labels.name-quests");
@@ -318,7 +317,6 @@ public final class LabelsMenuService implements Listener {
     private Component descOf(LabelPreferences.Label label) {
         return switch (label) {
             case RANK -> plugin.messages().get("labels.desc-rank");
-            case TIERFORGE -> plugin.messages().get("labels.desc-tierforge");
             case CLASSES -> plugin.messages().get("labels.desc-classes");
             case GUILDS -> plugin.messages().get("labels.desc-guilds");
             case QUESTS -> plugin.messages().get("labels.desc-quests");
@@ -333,7 +331,6 @@ public final class LabelsMenuService implements Listener {
     private static Material icon(LabelPreferences.Label label) {
         return switch (label) {
             case RANK -> Material.NETHER_STAR;
-            case TIERFORGE -> Material.ANVIL;
             case CLASSES -> Material.IRON_SWORD;
             case GUILDS -> Material.WHITE_BANNER;
             case QUESTS -> Material.WRITABLE_BOOK;

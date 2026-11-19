@@ -396,21 +396,6 @@ public final class ShopStore {
             pending=p; dirty=false; return true;
         } catch(ArithmeticException e) { return false; }
     }
-    /** RC16: тот же WAL, но без виртуального склада/истории цены — грант заморожен в сделке.
-     *  RC16.1: заморозка идёт в целых алмазах ({@code turnoverWhole}) — ровно как штатный prepare
-     *  и как {@code matches()}; прежняя запись через {@code t.money()} (сотые алмаза) вела к
-     *  «Не совпадает frozen effect рынка» и карантину всего магазина после первой купли в Кузне. */
-    synchronized boolean prepareForge(ru.cherdakmd.chrdkregister.api.ShopExchange t,long now,double limit) {
-        if(!legacyAvailable||!registered||pending!=null||!market.equals(t.market())||t.sequence()!=sequence+1
-                ||!t.valid()||!t.buy()||!t.carriesGrant()||!canRecordTurnover(t.owner(),t.turnoverWhole(),limit,now)) return false;
-        var p=new ShopJournal.Pending(t,1,0,0,now,now-Math.floorMod(now,86400000L),
-                limit==0?-1:PriceEngine.round(usedToday(t.owner(),now)+t.turnoverWhole()),
-                PriceEngine.round(turnover+t.turnoverWhole()),1.0,4,0L,true);
-        if(!p.valid()||!exactIncrease(turnover,p.turnover(),t.turnoverWhole())||p.used()!=-1&&!exactIncrease(usedToday(t.owner(),now),p.used(),t.turnoverWhole())) return false;
-        var json=com.google.gson.JsonParser.parseString(snapshotJson()).getAsJsonObject(); json.add("pending",GSON.toJsonTree(p));
-        if(!writeJson(GSON.toJson(json))) return false;
-        pending=p; dirty=false; return true;
-    }
     /** Caller has just received authoritative MISSING from healthy Core; no item/money effect exists. */
     synchronized boolean cancelUnaccepted(ShopJournal.Pending p) {
         if(!legacyAvailable||!p.equals(pending)) return false;

@@ -17,7 +17,6 @@ public record DailyCardsConfig(
         ZoneId zone,
         boolean showValues,
         int richestHour,
-        int tiersHour,
         int prestigeHour,
         int progressHour,
         int minerHour,
@@ -37,7 +36,7 @@ public record DailyCardsConfig(
 
     public static final DailyCardsConfig DEFAULT = new DailyCardsConfig(
             true, ZoneId.of("Europe/Moscow"), true,
-            DailyCardKind.RICHEST.defaultHour(), DailyCardKind.TIERS.defaultHour(),
+            DailyCardKind.RICHEST.defaultHour(),
             DailyCardKind.PRESTIGE.defaultHour(), DailyCardKind.PROGRESS.defaultHour(),
             DailyCardKind.MINER.defaultHour(), DailyCardKind.COLLECTOR.defaultHour(),
             DailyCardKind.HUNTER.defaultHour(), DailyCardKind.SERVER.defaultHour(),
@@ -45,7 +44,6 @@ public record DailyCardsConfig(
 
     public DailyCardsConfig {
         richestHour = Math.clamp(richestHour, 0, 23);
-        tiersHour = Math.clamp(tiersHour, 0, 23);
         prestigeHour = Math.clamp(prestigeHour, 0, 23);
         progressHour = Math.clamp(progressHour, 0, 23);
         minerHour = Math.clamp(minerHour, 0, 23);
@@ -73,7 +71,6 @@ public record DailyCardsConfig(
                 zone,
                 cfg.getBoolean(PREFIX + "show-values", DEFAULT.showValues()),
                 cfg.getInt(PREFIX + DailyCardKind.RICHEST.hourKey(), DEFAULT.richestHour()),
-                cfg.getInt(PREFIX + DailyCardKind.TIERS.hourKey(), DEFAULT.tiersHour()),
                 cfg.getInt(PREFIX + DailyCardKind.PRESTIGE.hourKey(), DEFAULT.prestigeHour()),
                 cfg.getInt(PREFIX + DailyCardKind.PROGRESS.hourKey(), DEFAULT.progressHour()),
                 cfg.getInt(PREFIX + DailyCardKind.MINER.hourKey(), DEFAULT.minerHour()),
@@ -93,7 +90,6 @@ public record DailyCardsConfig(
     public int hour(DailyCardKind kind) {
         return switch (kind) {
             case RICHEST -> richestHour;
-            case TIERS -> tiersHour;
             case PRESTIGE -> prestigeHour;
             case PROGRESS -> progressHour;
             case MINER -> minerHour;
@@ -118,9 +114,9 @@ public record DailyCardsConfig(
     }
 
     public String scheduleLabel() {
-        return ("%02d:00 / %02d:00 / %02d:00 / %02d:00 / %02d:00 / %02d:00 / %02d:00 / %02d:00"
+        return ("%02d:00 / %02d:00 / %02d:00 / %02d:00 / %02d:00 / %02d:00 / %02d:00"
                 + " + дайджест 21:00 %s").formatted(
-                richestHour, tiersHour, prestigeHour, progressHour,
+                richestHour, prestigeHour, progressHour,
                 minerHour, collectorHour, hunterHour, serverHour, zone.getId());
     }
 }

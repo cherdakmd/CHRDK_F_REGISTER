@@ -9,8 +9,8 @@ import java.util.Map;
  * Мост «CHRDK_Enchants → другие аддоны» (1.4.128).
  *
  * <p>Реализацию регистрирует <b>CHRDK_Enchants</b> через {@code ServicesManager};
- * потребители (например, <b>CHRDK_TierForge</b>) спрашивают её мягко и без
- * аддона чар просто не нанаградывают кастомные чары.</p>
+ * потребители спрашивают её мягко и без аддона чар просто не нанаградывают
+ * кастомные чары.</p>
  *
  * <pre>{@code
  * Bukkit.getServicesManager().register(ChrdkEnchantsApi.class, new EnchantsApiBridge(this),

@@ -48,8 +48,6 @@ public final class WallDigestStore {
         /** Последние известные значения престижа (переживают рестарт). */
         Map<String, Integer> prestigeSnapshot = new LinkedHashMap<>();
         /** Лучший замеченный тир за сутки (индекс лестницы) и его отображаемое имя. */
-        Map<String, Integer> tierByPlayer = new LinkedHashMap<>();
-        Map<String, String> tierNameByPlayer = new LinkedHashMap<>();
         /** Прирост суммарного уровня навыков за сутки и база первого наблюдения. */
         Map<String, Integer> levelGainByPlayer = new LinkedHashMap<>();
         Map<String, Integer> levelBaselineByPlayer = new LinkedHashMap<>();
@@ -87,8 +85,6 @@ public final class WallDigestStore {
             if (loaded.blocksByPlayer == null) loaded.blocksByPlayer = new LinkedHashMap<>();
             if (loaded.diamondsByPlayer == null) loaded.diamondsByPlayer = new LinkedHashMap<>();
             if (loaded.mobKillsByPlayer == null) loaded.mobKillsByPlayer = new LinkedHashMap<>();
-            if (loaded.tierByPlayer == null) loaded.tierByPlayer = new LinkedHashMap<>();
-            if (loaded.tierNameByPlayer == null) loaded.tierNameByPlayer = new LinkedHashMap<>();
             if (loaded.levelGainByPlayer == null) loaded.levelGainByPlayer = new LinkedHashMap<>();
             if (loaded.levelBaselineByPlayer == null) loaded.levelBaselineByPlayer = new LinkedHashMap<>();
             if (loaded.achievementsByPlayer == null) loaded.achievementsByPlayer = new LinkedHashMap<>();

@@ -58,16 +58,8 @@ class WallDigestCollectorTest {
     }
 
     @Test
-    void tierLevelAndAchievementTopsAreTracked() {
+    void levelAndAchievementTopsAreTracked() {
         WallDigestCollector collector = fresh(WallDigestConfig.DEFAULT);
-        collector.observeTier("Steve", 4, "Редкий");
-        collector.observeTier("Steve", 6, "Легендарный");
-        collector.observeTier("Alex", 2, "Простой");
-        collector.observeTier("Steve", 3, "Хороший"); // хуже прежнего — не перекрывает
-        assertEquals("Steve", collector.topTier().name());
-        assertEquals(6, collector.topTier().value());
-        assertEquals("Легендарный", collector.tierNameOf("Steve"));
-
         collector.observeLevelGain("Alex", 10);
         collector.observeLevelGain("Alex", 10); // база первого наблюдения без прироста
         collector.observeLevelGain("Alex", 14);
@@ -83,9 +75,8 @@ class WallDigestCollectorTest {
         assertEquals("Alex", collector.topAchievements().name());
         assertEquals(15, collector.topAchievements().value());
 
-        // Смена суток обнуляет все три топа.
+        // Смена суток обнуляет оба топа.
         collector.snapshot("2026-11-04");
-        assertNull(collector.topTier());
         assertNull(collector.topLevelGain());
         assertNull(collector.topAchievements());
     }

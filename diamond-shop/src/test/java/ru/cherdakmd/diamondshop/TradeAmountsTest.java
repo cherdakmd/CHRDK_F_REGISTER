@@ -22,10 +22,7 @@ class TradeAmountsTest {
     @Test void quantityAdjustmentsCannotWrapOrEscapeTheLimit(){assertEquals(1,TradeAmounts.adjust(1,-64));assertEquals(2304,TradeAmounts.adjust(2304,64));assertEquals(2304,TradeAmounts.adjust(Integer.MAX_VALUE,Integer.MAX_VALUE));assertEquals(1,TradeAmounts.adjust(Integer.MIN_VALUE,Integer.MIN_VALUE));assertEquals(17,TradeAmounts.adjust(16,1));}
     @Test void zeroQuoteIsRejectedBeforeAnyInventoryPlanOrJournal()throws Exception{String s=Files.readString(Path.of("src/main/java/ru/cherdakmd/diamondshop/ShopService.java"));assertTrue(s.indexOf("if(money==0)")<s.indexOf("var before = copy("));assertTrue(s.indexOf("if(money==0)")<s.indexOf("store.prepare(t,item"));assertTrue(s.contains("TradeAmounts.selectSale(batch,bid"));assertFalse(s.contains("long units = batches * batch"));}
     @Test void selectionUsesFrozenQuoteExplicitConfirmationAndViewIdentity()throws Exception{String s=Files.readString(Path.of("src/main/java/ru/cherdakmd/diamondshop/ShopQuantityGui.java"));for(String guard:new String[]{"h.service==s","h.owner.equals(player.getUniqueId())","h.batch==s.batchSize(h.item)","h.price==","if(!h.session.submit(player.getUniqueId()))return;int units=h.units","h.service.quoted(player,h.item,units,h.buy,h.batch,h.price)","getTopInventory()==h.inventory","event.setCancelled(true)","e.setCancelled(true)"})assertTrue(s.contains(guard),guard);assertTrue(s.contains("if(slot!=40)return"));assertFalse(s.contains("showDialog"));}
-    @Test void forgeQuantityChecksTheSameMarketScaledPriceAsItsOfferAndPurchase()throws Exception{
-        String s=Files.readString(Path.of("src/main/java/ru/cherdakmd/diamondshop/ShopQuantityGui.java"));
-        assertTrue(s.contains("plugin.coreApi().diamondRate().scaleMinor(plugin.forgeShop().prices().price(h.forge.sku()))==h.price"));
-        assertFalse(s.contains("&&plugin.forgeShop().prices().price(h.forge.sku())==h.price"));
+    @Test void marketQuoteScalesMinorAmountsWithTheAcceptedMarketRate(){
         var quote=new ru.cherdakmd.chrdkregister.api.DiamondExchangePolicy.Quote(12345,10000,0,0,0,0);
         assertEquals(75,quote.scaleMinor(61));
         assertNotEquals(61,quote.scaleMinor(61),"Regression must use a non-base market rate");

@@ -197,7 +197,6 @@ wall-daily-cards:
   # самый прокачанный / прорыв дня / шахтёр / коллекционер / охотник /
   # день сервера.
   richest-hour: 9
-  tiers-hour: 10
   prestige-hour: 12
   progress-hour: 13
   miner-hour: 15

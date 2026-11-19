@@ -115,11 +115,11 @@ class LabelStyleServiceTest {
         LabelStyleService styles = new LabelStyleService((id, player, name) -> switch (id) {
             case "classes" -> "<aqua>[КЛ]</aqua> " + name;
             case "guilds" -> name + " <green>[ГИ]</green>";
-            case "tierforge" -> "<bold>" + name + "</bold> <red>[КЗ]</red>";
+            case "quests" -> "<bold>" + name + "</bold> <red>[КЗ]</red>";
             default -> name;
         }, fresh(dir), LOOKUP);
         String result = styles.compose("Имя", "<gold>Имя</gold>",
-                List.of(C, G, LabelPreferences.Label.TIERFORGE), "", "");
+                List.of(C, G, LabelPreferences.Label.QUESTS), "", "");
         assertEquals("Имя · [КЛ] · [ГИ] · [КЗ]", text(result));
         assertFalse(result.contains("ANCHOR"));
         assertTrue(result.contains("<aqua>"));
@@ -251,7 +251,7 @@ class LabelStyleServiceTest {
 
     @Test
     void defaultOrderIsStableAndRankHasPriority(@TempDir Path dir) {
-        assertEquals(List.of(R, C, G, LabelPreferences.Label.TIERFORGE,
+        assertEquals(List.of(R, C, G,
                 LabelPreferences.Label.QUESTS, LabelPreferences.Label.ACHIEVEMENTS,
                 LabelPreferences.Label.VK),
                 with(fresh(dir)).defaultOrder());
@@ -277,11 +277,11 @@ class LabelStyleServiceTest {
     @Test
     void newLabelsAreAppendedWithoutChangingSavedPriority(@TempDir Path dir) {
         LabelPreferences preferences = fresh(dir);
-        // Порядок настроен до появления новой метки (например, титула кузни).
+        // Порядок настроен до появления новой метки (например, метки квестов).
         preferences.setOrder("Steve", List.of(G, R));
         List<LabelPreferences.Label> order = with(preferences).order("Steve");
         assertEquals(List.of(G, R), order.subList(0, 2));
-        assertTrue(order.indexOf(LabelPreferences.Label.TIERFORGE) > order.indexOf(R));
+        assertTrue(order.indexOf(LabelPreferences.Label.QUESTS) > order.indexOf(R));
     }
 
     @Test

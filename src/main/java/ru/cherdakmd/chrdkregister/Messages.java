@@ -148,10 +148,6 @@ public final class Messages {
                 "battlepass-messages-legacy-1.4.282.yml", logger));
         migrateStockOverrides(defaults, overrides, readResource(plugin,
                 "artifacts-messages-legacy-1.4.282-rc7.yml", logger));
-        migrateStockOverrides(defaults, overrides, readResource(plugin,
-                "tierforge-messages-legacy-1.4.282-rc8.yml", logger));
-        migrateStockOverrides(defaults, overrides, readResource(plugin,
-                "tierforge-messages-legacy-1.4.282-rc9.yml", logger));
         overrides.replaceAll((key, text) -> GameplayRewardTexts.message(moduleName, key, text));
         Messages messages = new Messages(defaults, overrides, logger);
         messages.logMissingKeys(fileName);

@@ -1,4 +1,8 @@
 # CHRDK_DiamondShop — версии схемы эталонных YAML.
+# v6 (10 ноября 2026): раздел «Кузня» (/shop forge) вырезан вместе с модулем
+#     тиров и кузни. Секция forge-shop: и сообщения forge.shop/* удаляются из
+#     файлов владельцев миграцией remove; остатки старых сделок сверяются без
+#     изменений (ShopJournal помнит forge-квитанции).
 # v5 (13 ноября 2026): книги чар сняты с продажи. Секция books: и тарифы
 #     pricing.purchase-multipliers.books-* удалены из эталона и вычищаются из
 #     файлов владельцев миграцией remove (с backup, повторный старт идемпотентен).
@@ -22,9 +26,14 @@
 # значения, каталог и комментарии сохраняются, перед записью создаётся backup.
 # pricing.daily-turnover-limit: 0 теперь означает «жёсткий ручной потолок не
 # задан», а не «без лимита»; выключается лимит ключом daily-cap.enabled.
-config-version: 5
-messages-version: 4
+config-version: 6
+messages-version: 5
 migrations:
   config:
     5:
       remove: [books, pricing.purchase-multipliers.books-custom, pricing.purchase-multipliers.books-vanilla]
+    6:
+      remove: [forge-shop]
+  messages:
+    5:
+      remove: [market.home.forge, market.home.forge-lore, forge.shop]

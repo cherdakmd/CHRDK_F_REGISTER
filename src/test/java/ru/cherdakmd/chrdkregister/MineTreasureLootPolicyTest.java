@@ -49,12 +49,6 @@ final class MineTreasureLootPolicyTest {
         String enchants = source("enchants/src/main/java/ru/cherdakmd/chrdkenchants/ToolEffectsListener.java");
         assertTrue(enchants.contains("MineTreasureLootPolicy.isForeignDrop(stack)"));
 
-        String forge = source("tier-forge/src/main/java/ru/cherdakmd/chrdktierforge/ForgeUpgradeListener.java");
-        assertTrue(forge.contains("MineTreasureLootPolicy.isForeignDrop(stack)"));
-
-        String world = source("tier-forge/src/main/java/ru/cherdakmd/chrdktierforge/TierWorldListener.java");
-        assertTrue(world.contains("MineTreasureLootPolicy.isMineTreasureTable(event.getLootTable())"));
-
         String artifacts = source("artifacts/src/main/java/ru/cherdakmd/chrdkartifacts/ArtifactLootListener.java");
         assertTrue(artifacts.contains("mt:chests/..."));
         assertTrue(artifacts.contains("chestChancePercent(table.getKey().toString())"));

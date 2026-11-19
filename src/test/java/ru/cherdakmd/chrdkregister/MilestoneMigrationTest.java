@@ -33,13 +33,6 @@ class MilestoneMigrationTest {
             Files.writeString(file(),data(list)); assertThrows(IOException.class,()->MilestoneMigration.json(file(),MilestoneMigration.Kind.ARTIFACTS));
         }
     }
-    @Test void tierForgeClaimsReadFromActualCollectionSectionAndInvalidYamlIsFatal() throws Exception {
-        var path=dir.resolve("stats.yml"); Files.writeString(path,"players: {}\ncollection:\n  "+owner+":\n    claimed: ['properties:10', 'section:tiers']\n    tiers: []\n    properties: []\n    affixes: []\n");
-        assertEquals(Set.of("properties:10","section:tiers"),MilestoneMigration.tierForge(path).get(owner));
-        for(String bad:List.of("collection: [oops]","collection:\n  "+owner+": {claimed: [1]}","collection:\n  "+owner+": {claimed: ['section:tiers', 'section:tiers']}","collection: [")) {
-            Files.writeString(path,bad); assertThrows(IOException.class,()->MilestoneMigration.tierForge(path)); assertEquals(bad,Files.readString(path));
-        }
-    }
     @Test void malformedProgressCannotPassFinancialPreflightThenBeSavedEmpty() throws Exception {
         for(var kind:MilestoneMigration.Kind.values()) {
             String good=data("[]");

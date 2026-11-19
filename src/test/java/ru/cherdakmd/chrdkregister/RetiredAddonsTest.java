@@ -52,7 +52,7 @@ class RetiredAddonsTest {
     }
     @Test void oldCustomLabelsUsageLosesOnlyTheRetiredTokenWithoutRewritingTheFile() {
         String old = "<yellow>/labels [rank|tierforge|treasures|classes]</yellow>";
-        assertEquals("<yellow>/labels [rank|tierforge|classes]</yellow>",
+        assertEquals("<yellow>/labels [rank|classes]</yellow>",
                 GameplayRewardTexts.message("CHRDK_Core", "labels.usage", old));
         assertEquals("<yellow>/labels [rank]</yellow>", GameplayRewardTexts.message(
                 "CHRDK_Core", "labels.usage", "<yellow>/labels [rank|TREASURES]</yellow>"));
