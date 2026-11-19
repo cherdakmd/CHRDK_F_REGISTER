@@ -91,7 +91,12 @@ class BookProgressionTest {
         assertTrue(items.contains("if (!data.has(bookSource)) return \"book-source-legacy\""));
         assertTrue(items.contains("\"book-source-unknown\""));
         String renderer=items.substring(items.indexOf("private void refreshLore"),items.indexOf("private void applyAttributes"));
-        assertFalse(renderer.contains("data.set(")); assertTrue(renderer.contains("sourceKey(meta)"));
+        assertFalse(renderer.contains("data.set("));
+        // Лор книги — только название и уровень: источник остаётся в PDC и
+        // выдаётся командой, старые книги без метки валидны и не чинятся в лор.
+        assertFalse(renderer.contains("sourceKey("), "источник не пишется в лор книги");
+        assertTrue(items.contains("private String sourceKey("), "источник по-прежнему читается для команды");
+        assertTrue(items.contains("book-source-legacy"));
     }
     @Test void everyNewBookSourceIsStampedAtItsOwnCommitBoundary() throws Exception {
         assertTrue(source("TableListener").contains("stampBook(result, ru.cherdakmd.chrdkregister.api.EnchantBookSource.TABLE)"));
