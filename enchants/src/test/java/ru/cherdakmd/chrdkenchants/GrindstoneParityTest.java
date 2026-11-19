@@ -10,7 +10,7 @@ class GrindstoneParityTest {
         String source = Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkenchants/GrindstoneListener.java"));
         assertTrue(source.contains("PrepareGrindstoneEvent"));
         assertTrue(source.contains("EventPriority.HIGH"));
-        assertTrue(source.contains("event.setResult(result)"));
+        assertTrue(source.contains("event.setResult(strip(result))"));
         assertTrue(source.contains("new ItemStack(Material.BOOK"),
                 "книга после спиливания — чисто ванильная, без имени и PDC");
         assertTrue(source.contains("plugin.items().write(result, Map.of())"),
