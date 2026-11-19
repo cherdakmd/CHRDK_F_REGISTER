@@ -1,103 +1,103 @@
 {
   "pages": {
     "about": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "361cdd4cf56bd5dae0c89bac70ca72f96edecf0a494b0803031b59e7ba261f5f",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "837b9d2b604c6912a12b8a2aca736261cc6cba7c0ebb3f058ccbf8afaf1dbc30",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "c1510f0809c753427271588956630d5d45f1e52a4267c58a9e30c1b02c5331e0",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "85bd99f4370157f84bed882a97728724bd7c06b80124807162dfcadebebde689",
       "text": "bd128e475ee8efae55c3d2d6c9616d5278600f2a8ff1aad7af5e6df3e0b3f5c3"
     },
     "anticheat": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "3623862d1a99e9f037c882d0ed1dcee40bf02c012b5d12ec8bb2208840c7112c",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "eaacbb087525ada5779432fa101a624a108123551b7e00ff83168113a1d776e1",
       "text": "51b63277043ce6c1160efb4e4df51b63a25f083191e5bbae1aeffc7207a997cc"
     },
     "artifacts": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "399010ceee441224aa243c77d48cd84df420a741e69036c37aea24b573b2c0bd",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "489a851bb3ff880cdca9724b5ec597e735a30abf7833ca5fe26fa87363eb2b36",
       "text": "51e3ef379d9a8f7e2ccfc6fd41cc0c0823f91f30d7c9a8326ec7962c182d98e4"
     },
     "battlepass": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "56ef6df68c5fe1f85832a3aed70967ac588864fd8914ff2e014afd6d3d0df408",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "65ce9eb097e3b45740040d3b4e76fbc6f508be87c777cf4e1d6f316a647d025a",
       "text": "997df6e0a9311ea115c4fd3c192b2729034b10c68a4f41c57261ef4b704c5add"
     },
     "chat": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "361cdd4cf56bd5dae0c89bac70ca72f96edecf0a494b0803031b59e7ba261f5f",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "837b9d2b604c6912a12b8a2aca736261cc6cba7c0ebb3f058ccbf8afaf1dbc30",
       "text": "a51c51d20cfe94c553e80893422b000a579b87285b00cbceb452f29eb0773023"
     },
     "claims": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "1c6c876e232b459d156ff9aa78da943f8454971938e75b98804033f0e410a9cc",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "540c8d639d93b06b20c8cb44f5f13161ff984889312c6daddcdad0e9c74a8317",
       "text": "50b80f02b9200ed8653d50c1bf802fd4de8d272a9bf1f46cf92618d743bed3cd"
     },
     "commands": {
-      "reason": "После правки YAML-цитирования пересверены формулировки страниц, расхождений нет",
-      "sources": "eef7655aaddea8fcc9588bdf7f859094a433a43c919cf4aa37237668fab0daf1",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "a8b4265128e70eee255c2ab170626a18d13a5df3df8623911a81b575872a6063",
       "text": "c177198348ad294daba4968fb8f353701dd7cf6e28744a0a0380cd7cbea835be"
     },
     "cosmetics": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "6ad54d507e9de1968a108150a0055c752f551e8b1308a974938264232080f3d0",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "fd63c07f482cf7c1dffd74809687ed7eba1be0143221b83fadd19894bf9a7b0a",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "5aa8e4b69363f12d8911351df8d38de4c6c82d43302ebcbb4cce28799ccd8f5a",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "b7da01fe37a09bee4ed13e50d00e3618a21359a55faed8350d7217376cb63814",
       "text": "4d7683f5677c50dfe0488961891915b5c2dd6533191a213ee8fdb077ea817eb5"
     },
     "disasters": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "6446e5f522f107c1ae12bf5c62c55e5e83e98fbd779da2cc129b02dc9490513e",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "2879e5646e0a66742e8a51c6a5f22d1d852f23ad570aa36899a1576d957c4172",
       "text": "121b1cc28a075ced29b6de8abec7dbc20bbb531a01441ddd5fdb836d066d0202"
     },
     "economy": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "7f0ce399d36791f986909e0173c69af14e6bb33727bd4e3cd25691771932f99c",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "ff15cfdc1ba78ed6dc620ae8dac94036629fbaae52cb477c821590f44e21f79c",
       "text": "0532455c098ebf6e5d7d9ff103d31244752dd661b394d2538b02c02785dfe851"
     },
     "enchants": {
-      "reason": "После правки YAML-цитирования пересверены формулировки страниц, расхождений нет",
-      "sources": "a980b7328bd030a23d47995a70257923bf93a2cb1898c3d2161afd92c5bb2a4a",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "3e9d7de0094f89e62e1eba9fc992a38a60580757da6dad6370f7b0407cf5ae9e",
       "text": "df2ddede1e6e4ae8b4d95a0c9c7e8d396207bc485e303bcf0d710dc365893d34"
     },
     "faq": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "5815ef19c9de65b972f6e15cf3a996594655063daff43e54262f968b9dde95de",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "acc0ab80b68d7cbbebd7601945fa3a6d10d305bc45754d4fde212b1eac3792d7",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "generator": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "292fd24c46c4dd6b1acac3ce4001d66f70f7c26475d64053f6dc8267c4bff934",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "6ae99884eeb995a60c7c44c061aded07da2b4e0c82a8418ae82b0a1a28f9d737",
       "text": "bae6034b6606086f09dda4f08b35973b0900c1f7c472a6158c0ab95a84e82137"
     },
     "goals": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "5c52988c3d648d20c13bea0f46bed018cdbebcaba8a602f9516d5a29a3785401",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "438c0cbed8b4ca175d151575f34554f7c0018982b427d27c13fe54675d3f9c6e",
       "text": "615d89bba0ac116c220d571f530fcdab7d5ff46162ca7a7ecf24de441a7fb191"
     },
     "guilds": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "1c6c876e232b459d156ff9aa78da943f8454971938e75b98804033f0e410a9cc",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "540c8d639d93b06b20c8cb44f5f13161ff984889312c6daddcdad0e9c74a8317",
       "text": "793a5d21e3e43d5b4c542ea34a3c4b80a11e957da7875e3111ae20d7da2c5623"
     },
     "honors": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "361cdd4cf56bd5dae0c89bac70ca72f96edecf0a494b0803031b59e7ba261f5f",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "837b9d2b604c6912a12b8a2aca736261cc6cba7c0ebb3f058ccbf8afaf1dbc30",
       "text": "17c878e1ab52ceb2a7c3361a7bef133c8bd1004a59641898f2c525f7c48fff8f"
     },
     "index": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "5888a4c27eb50d1bc0244423c917839a31a60aac82fca2b3fe55ada5fb60758a",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "c17436b8e6ee7ca1fcb41501b702e4437c6ec98d1c9c50695c8061ea926ade8d",
       "text": "e81f8a53862774106bc6121f771a7a9a743d9fe3e2cdbb51fbe9db3e95a561e8"
     },
     "menu": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "5815ef19c9de65b972f6e15cf3a996594655063daff43e54262f968b9dde95de",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "acc0ab80b68d7cbbebd7601945fa3a6d10d305bc45754d4fde212b1eac3792d7",
       "text": "e15957dfe1e03322c3eac3605586bbf5ed49a6bab2b8cb7664e2119000ef0d17"
     },
     "mobs": {
@@ -106,73 +106,73 @@
       "text": "187eac200aa4af9e5234ed07b868fae886b4ce2f85ebb218b43ebec87c221cee"
     },
     "moderation": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "361cdd4cf56bd5dae0c89bac70ca72f96edecf0a494b0803031b59e7ba261f5f",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "837b9d2b604c6912a12b8a2aca736261cc6cba7c0ebb3f058ccbf8afaf1dbc30",
       "text": "79580a49c09219f65539abace395b5f2469f91fc2f0ac9b3ecae109c4fa1ecb4"
     },
     "profile": {
-      "reason": "После правки YAML-цитирования пересверены формулировки страниц, расхождений нет",
-      "sources": "e67b491c92c90acff88a1faff96a78b137623f19c934516947c598aa51d6011e",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "40ef607afea9e8a4a49f3e99c2f2feab468e38c6eb8afd242a41c3bfcd77e4a5",
       "text": "d73cb841971f8be5b94598cf462e7cbdae0876601f2fcc576da270e75b3d32bc"
     },
     "quests": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "bf3d497d7c2bf3e8c459f0525f64a12772d99e9081271547b458754ceddb640d",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "a60050b18fd4ccdbaa9f38628ddcf260db9f260cc49522609be5d7cd88233c7a",
       "text": "48f52b93517c605386ee043308cb27e5b95c6d104bb6d12fa3e5bc9c4ebf9d5b"
     },
     "ranks": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "63e9dcd9a74a76fc3c752ba5265916d3b848e5c74cc559ec7e5c9f02b7321e2b",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "939bcecbf36456729eb3222f23e4e61a001dbff453478829bc68cf375da41538",
       "text": "f28ca14ca95b6e1ecdc550d0103362f364e1d3e79492b33260372a410254d913"
     },
     "shop": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "5888a4c27eb50d1bc0244423c917839a31a60aac82fca2b3fe55ada5fb60758a",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "c17436b8e6ee7ca1fcb41501b702e4437c6ec98d1c9c50695c8061ea926ade8d",
       "text": "7df8bdefeccfb0fd4943e63ce1896282c16c3491c21f364dd8b2f0fbf5378c6d"
     },
     "skills": {
-      "reason": "Добавлен шаг миграции messages v12 (зачистка %left% в xp-potion-used); текст страницы не менялся",
-      "sources": "9fdeae7691044716eb26409b557e1f7cd44fb1f9abb917762ade2915be0cb8c6",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "04a4fa588f5acfd9c631928e22da0514f88f33160469ab0a8850131d11a95e08",
       "text": "162a2a3327115f33e8df6e08c181a185d1c753d6d0df2963f1300bdc3411cd16"
     },
     "social-link": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "b22e966a38a50806a9f04f32483df6427c25f1436caf75681bf901cec0447d5e",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "caa84b18f6767d8aba2949fa7818b0cee63d2b43fe2469ae4b6416a8d4b1f984",
       "text": "f7a6d9f53d5db5774add224ab3c2003147a23099f52d220df3376a7f43c06221"
     },
     "start": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "80913265c5d5fc607b1102eb263ad94f14e4ae9418e1ca74f889dbd2b8c16dc7",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "dcf9a0ec98f021df38ee51f910ad93d0039988b540a14e1ae0d2259e20b5c260",
       "text": "ed918be6a65bdc28666148d1dac07b0d14ef631bd20c2d50648694244822a460"
     },
     "starter-kit": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "399010ceee441224aa243c77d48cd84df420a741e69036c37aea24b573b2c0bd",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "489a851bb3ff880cdca9724b5ec597e735a30abf7833ca5fe26fa87363eb2b36",
       "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
     },
     "teleports": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "80913265c5d5fc607b1102eb263ad94f14e4ae9418e1ca74f889dbd2b8c16dc7",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "dcf9a0ec98f021df38ee51f910ad93d0039988b540a14e1ae0d2259e20b5c260",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "После правки YAML-цитирования пересверены формулировки страниц, расхождений нет",
-      "sources": "a980b7328bd030a23d47995a70257923bf93a2cb1898c3d2161afd92c5bb2a4a",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "3e9d7de0094f89e62e1eba9fc992a38a60580757da6dad6370f7b0407cf5ae9e",
       "text": "f1865c4ec15241384d05aae3da8ae9b866b6bec43a604e423fdf2fce8ad643e6"
     },
     "titles": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "77ebef3a355abce2adeb12141e8d07b10bc99892be860df7d5d0c1ab96c84899",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "7a78c14bf34587dc238570e9a907fea636b7ef4759cc8cceeb0301249c7e6b96",
       "text": "bcc217b388db006684a99c2af5c0747236878ffc8519043c0dc5660b66135827"
     },
     "updates": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "5888a4c27eb50d1bc0244423c917839a31a60aac82fca2b3fe55ada5fb60758a",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "c17436b8e6ee7ca1fcb41501b702e4437c6ec98d1c9c50695c8061ea926ade8d",
       "text": "86d8fb7e52ba88ed0e3ba02254a6ac983a5903dd96d0e8cd1b347320788e0b45"
     },
     "vk": {
-      "reason": "Надванильные уровни ванильных чар: предел rules.vanilla-level-cap (факт vanilla_level_cap) влит в механику слияний наковальни; страница enchants переписана под новое правило, значения остальных фактов не изменились; сверено с кодом.",
-      "sources": "b22e966a38a50806a9f04f32483df6427c25f1436caf75681bf901cec0447d5e",
+      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
+      "sources": "caa84b18f6767d8aba2949fa7818b0cee63d2b43fe2469ae4b6416a8d4b1f984",
       "text": "8dddc8fb2f91621b7957c6227e91feb18317b56c886564fa7c3d8671fe805240"
     }
   },
