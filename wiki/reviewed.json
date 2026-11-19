@@ -61,9 +61,9 @@
       "text": "0532455c098ebf6e5d7d9ff103d31244752dd661b394d2538b02c02785dfe851"
     },
     "enchants": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "3e9d7de0094f89e62e1eba9fc992a38a60580757da6dad6370f7b0407cf5ae9e",
-      "text": "df2ddede1e6e4ae8b4d95a0c9c7e8d396207bc485e303bcf0d710dc365893d34"
+      "reason": "Точило спиливает все чары (включая проклятия); книга после точила — ванильная и стакается с обычными",
+      "sources": "17e5c2278e44aeb1c5ef9940ae2824d5fc91d1e83e91743a22a0cd97f617889c",
+      "text": "0318909327f55cfc83c9a74101bf2c25ad570ea275a8172bb43dbc180b723020"
     },
     "faq": {
       "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
@@ -156,8 +156,8 @@
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "tierforge": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "3e9d7de0094f89e62e1eba9fc992a38a60580757da6dad6370f7b0407cf5ae9e",
+      "reason": "Точило спиливает все чары (включая проклятия); книга после точила — ванильная и стакается с обычными",
+      "sources": "17e5c2278e44aeb1c5ef9940ae2824d5fc91d1e83e91743a22a0cd97f617889c",
       "text": "f1865c4ec15241384d05aae3da8ae9b866b6bec43a604e423fdf2fce8ad643e6"
     },
     "titles": {
