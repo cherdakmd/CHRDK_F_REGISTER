@@ -74,8 +74,9 @@ public final class GeneratorGui implements Listener {
             plugin.messages().send(player, "status-none");
             return;
         }
-        if (entry.installed() && !nearCore(player, entry)) {
-            plugin.messages().send(player, "menu-too-far");
+        if (entry.installed() && !plugin.nearCore(player, entry)) {
+            plugin.messages().send(player, "menu-too-far",
+                    "range", String.valueOf(plugin.config().menuRange()));
             return;
         }
         Holder holder = currentHolder(player);
@@ -97,17 +98,6 @@ public final class GeneratorGui implements Listener {
             return holder;
         }
         return null;
-    }
-
-    /** Владелец у своего ядра: тот же чанк или в пределах радиуса доступа. */
-    private boolean nearCore(Player player, GeneratorStore.Entry entry) {
-        if (!player.getWorld().getName().equals(entry.world())) {
-            return false;
-        }
-        var location = player.getLocation();
-        return GeneratorMath.withinMenuRange(location.getBlockX() >> 4, location.getBlockZ() >> 4,
-                location.getX(), location.getY(), location.getZ(),
-                entry.x(), entry.y(), entry.z());
     }
 
     /* --------------------------------- отрисовка -------------------------------- */
@@ -307,6 +297,8 @@ public final class GeneratorGui implements Listener {
         GeneratorTake.Result result = plugin.take().request(player);
         switch (result.status()) {
             case NO_GENERATOR -> plugin.messages().send(player, "take-none");
+            case TOO_FAR -> plugin.messages().send(player, "command-too-far",
+                    "range", String.valueOf(plugin.config().menuRange()));
             case PENDING -> {
                 plugin.messages().send(player, "take-confirm");
                 render(player, holder);

@@ -47,6 +47,7 @@ public final class GeneratorConfig {
     private final int bunkerBase;
     private final int offlineHours;
     private final double offlineEfficiency;
+    private final int menuRange;
     private final boolean fuelEnabled;
     private final int cyclesPerBucket;
     private final double rebirthPercentPerRebirth;
@@ -63,7 +64,8 @@ public final class GeneratorConfig {
     private final Cost chunkCost;
 
     private GeneratorConfig(int cycleSeconds, int bunkerBase, int offlineHours,
-                            double offlineEfficiency, boolean fuelEnabled, int cyclesPerBucket,
+                            double offlineEfficiency, int menuRange,
+                            boolean fuelEnabled, int cyclesPerBucket,
                             double rebirthPercentPerRebirth, double rebirthDecay,
                             double rebirthBonusCapPercent,
                             int payoutBase, int payoutPerTier, int payoutPerRankStep, int payoutHardMax,
@@ -73,6 +75,7 @@ public final class GeneratorConfig {
         this.bunkerBase = bunkerBase;
         this.offlineHours = offlineHours;
         this.offlineEfficiency = offlineEfficiency;
+        this.menuRange = menuRange;
         this.fuelEnabled = fuelEnabled;
         this.cyclesPerBucket = cyclesPerBucket;
         this.rebirthPercentPerRebirth = rebirthPercentPerRebirth;
@@ -105,6 +108,11 @@ public final class GeneratorConfig {
 
     public double offlineEfficiency() {
         return offlineEfficiency;
+    }
+
+    /** Радиус доступа к управлению генератором от ядра, блоков (чанк ядра доступен всегда). */
+    public int menuRange() {
+        return menuRange;
     }
 
     public boolean fuelEnabled() {
@@ -185,6 +193,10 @@ public final class GeneratorConfig {
         if (offlineEfficiency < 0 || offlineEfficiency > 1) {
             throw new IllegalArgumentException("generator.offline-efficiency: ждём 0.0–1.0");
         }
+        int menuRange = root.getInt("menu-range", 16);
+        if (menuRange < 1 || menuRange > 64) {
+            throw new IllegalArgumentException("generator.menu-range: ждём 1…64");
+        }
         boolean fuelEnabled = root.getBoolean("fuel.enabled", false);
         int cyclesPerBucket = positive(root, "fuel.cycles-per-bucket");
         double percentPerRebirth = fraction(root, "rebirth-percent-per-rebirth", 0, Double.MAX_VALUE);
@@ -209,7 +221,7 @@ public final class GeneratorConfig {
                 GeneratorStore.MAX_LEVEL);
         Cost chunkCost = parseCost(upgrades.get("chunk"), "upgrades.chunk");
         return new GeneratorConfig(cycleSeconds, bunkerBase, offlineHours,
-                offlineEfficiency, fuelEnabled, cyclesPerBucket,
+                offlineEfficiency, menuRange, fuelEnabled, cyclesPerBucket,
                 percentPerRebirth, decay, bonusCap,
                 payoutBase, payoutPerTier, payoutPerRankStep, payoutHardMax,
                 craft, tiers, tierCosts, moduleCosts, chunkCost);

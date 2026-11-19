@@ -98,6 +98,11 @@ final class GeneratorUpgrades {
             plugin.messages().send(player, "upgrade-none");
             return;
         }
+        if (!plugin.nearCore(player, entry)) {
+            plugin.messages().send(player, "command-too-far",
+                    "range", String.valueOf(plugin.config().menuRange()));
+            return;
+        }
         int next = entry.tier() + 1;
         if (next > GeneratorConfig.TIERS) {
             plugin.messages().send(player, "upgrade-max", "what", plugin.messages().plain("upgrade-name-tier"));
@@ -114,6 +119,11 @@ final class GeneratorUpgrades {
         GeneratorStore.Entry entry = plugin.store().entry(player.getUniqueId());
         if (entry == null) {
             plugin.messages().send(player, "upgrade-none");
+            return;
+        }
+        if (!plugin.nearCore(player, entry)) {
+            plugin.messages().send(player, "command-too-far",
+                    "range", String.valueOf(plugin.config().menuRange()));
             return;
         }
         int level = entry.modules().getOrDefault(name, 0);
@@ -133,6 +143,11 @@ final class GeneratorUpgrades {
         GeneratorStore.Entry entry = plugin.store().entry(player.getUniqueId());
         if (entry == null) {
             plugin.messages().send(player, "upgrade-none");
+            return;
+        }
+        if (!plugin.nearCore(player, entry)) {
+            plugin.messages().send(player, "command-too-far",
+                    "range", String.valueOf(plugin.config().menuRange()));
             return;
         }
         if (entry.modules().getOrDefault("chunk", 0) > 0) {

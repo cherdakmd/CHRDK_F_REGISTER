@@ -3,6 +3,7 @@ package ru.cherdakmd.chrdkgenerator;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -199,6 +200,24 @@ public final class GeneratorPlugin extends JavaPlugin {
 
     public GeneratorConfig config() {
         return config;
+    }
+
+    /**
+     * Владелец у установленного ядра генератора: тот же чанк или в радиусе
+     * {@code generator.menu-range} блоков. Без установленного ядра (запись
+     * снята) управление не привязано к месту — гейт не действует.
+     */
+    public boolean nearCore(Player player, GeneratorStore.Entry entry) {
+        if (entry == null || !entry.installed()) {
+            return false;
+        }
+        if (!player.getWorld().getName().equals(entry.world())) {
+            return false;
+        }
+        var location = player.getLocation();
+        return GeneratorMath.withinMenuRange(location.getBlockX() >> 4, location.getBlockZ() >> 4,
+                location.getX(), location.getY(), location.getZ(),
+                entry.x(), entry.y(), entry.z(), config.menuRange());
     }
 
     public GeneratorCoreItem coreItem() {

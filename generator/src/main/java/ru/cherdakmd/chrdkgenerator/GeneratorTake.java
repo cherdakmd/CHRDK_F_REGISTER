@@ -16,6 +16,7 @@ final class GeneratorTake {
     record Result(Status status, long units) {
         enum Status {
             NO_GENERATOR,
+            TOO_FAR,
             PENDING,
             DONE
         }
@@ -35,6 +36,9 @@ final class GeneratorTake {
         GeneratorStore.Entry entry = plugin.store().entry(player.getUniqueId());
         if (entry == null || !entry.installed()) {
             return new Result(Result.Status.NO_GENERATOR, 0L);
+        }
+        if (!plugin.nearCore(player, entry)) {
+            return new Result(Result.Status.TOO_FAR, 0L);
         }
         long now = System.nanoTime();
         if (!confirmations.consume(player.getUniqueId(), SESSION, QUOTE, now)) {
