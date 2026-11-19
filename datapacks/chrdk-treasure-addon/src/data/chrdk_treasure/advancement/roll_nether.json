@@ -1,0 +1,16 @@
+{
+  "criteria": {
+    "requirement": {
+      "trigger": "minecraft:mined_block",
+      "conditions": {
+        "location": {
+          "type": "minecraft:match_block",
+          "blocks": "#minecraft:base_stone_nether"
+        }
+      }
+    }
+  },
+  "rewards": {
+    "function": "chrdk_treasure:roll"
+  }
+}

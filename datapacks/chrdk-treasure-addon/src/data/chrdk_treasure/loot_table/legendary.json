@@ -1,0 +1,121 @@
+{
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:feather",
+          "modifier": [
+            {
+              "type": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_name": {
+                  "text": "Крыло Феникса",
+                  "type": "text",
+                  "color": "light_purple",
+                  "italic": false
+                },
+                "minecraft:lore": [
+                  {
+                    "text": "Сокровище Бесплодных земель",
+                    "color": "dark_gray",
+                    "italic": false
+                  },
+                  {
+                    "text": " "
+                  },
+                  {
+                    "text": "Способность:",
+                    "color": "green",
+                    "italic": false
+                  },
+                  {
+                    "text": "ПКМ по блоку: огнестойкость 60 сек",
+                    "color": "gray",
+                    "italic": false
+                  },
+                  {
+                    "text": "и регенерация II 10 сек. Расходуется.",
+                    "color": "gray",
+                    "italic": false
+                  },
+                  {
+                    "text": " "
+                  },
+                  {
+                    "text": "Одноразовое.",
+                    "color": "dark_gray",
+                    "italic": false
+                  }
+                ],
+                "minecraft:custom_data": {
+                  "cht_item": "phoenix_wing",
+                  "PublicBukkitValues": {
+                    "chrdk:mine_treasure_item": "1"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:tripwire_hook",
+          "modifier": [
+            {
+              "type": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_name": {
+                  "text": "Звёздный ключ",
+                  "type": "text",
+                  "color": "light_purple",
+                  "italic": false
+                },
+                "minecraft:lore": [
+                  {
+                    "text": "Сокровище Бесплодных земель",
+                    "color": "dark_gray",
+                    "italic": false
+                  },
+                  {
+                    "text": " "
+                  },
+                  {
+                    "text": "Способность:",
+                    "color": "green",
+                    "italic": false
+                  },
+                  {
+                    "text": "ПКМ по блоку: открывает тайник",
+                    "color": "gray",
+                    "italic": false
+                  },
+                  {
+                    "text": "с редким сокровищем. Расходуется.",
+                    "color": "gray",
+                    "italic": false
+                  },
+                  {
+                    "text": " "
+                  },
+                  {
+                    "text": "Одноразовый.",
+                    "color": "dark_gray",
+                    "italic": false
+                  }
+                ],
+                "minecraft:custom_data": {
+                  "cht_item": "star_key",
+                  "PublicBukkitValues": {
+                    "chrdk:mine_treasure_item": "1"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

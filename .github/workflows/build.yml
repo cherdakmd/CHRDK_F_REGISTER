@@ -73,6 +73,7 @@ jobs:
           python3 -m pip install -r tools/datapacks/requirements.txt
           python3 tools/datapacks/build_mine_treasure.py --check
           python3 tools/datapacks/check_incendium.py
+          python3 tools/datapacks/build_chrdk_treasure_addon.py --check
           python3 -m unittest discover -s tools/datapacks -p 'test_*.py' -v
 
       - name: Build plugin

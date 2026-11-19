@@ -1,0 +1,23 @@
+{
+  "criteria": {
+    "requirement": {
+      "trigger": "minecraft:item_used_on_block",
+      "conditions": {
+        "location": {
+          "type": "minecraft:match_tool",
+          "predicate": {
+            "items": [
+              "minecraft:tripwire_hook"
+            ],
+            "predicates": {
+              "minecraft:custom_data": "{cht_item:\"star_key\"}"
+            }
+          }
+        }
+      }
+    }
+  },
+  "rewards": {
+    "function": "chrdk_treasure:items/star_key"
+  }
+}

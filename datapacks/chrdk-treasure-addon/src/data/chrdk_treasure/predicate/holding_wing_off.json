@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:entity_properties",
+  "entity": "this",
+  "predicate": {
+    "entity_type": "minecraft:player",
+    "equipment": {
+      "offhand": {
+        "predicates": {
+          "minecraft:custom_data": "{cht_item:\"phoenix_wing\"}"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "criteria": {
+    "requirement": {
+      "trigger": "minecraft:item_used_on_block",
+      "conditions": {
+        "location": {
+          "type": "minecraft:match_tool",
+          "predicate": {
+            "items": [
+              "minecraft:feather"
+            ],
+            "predicates": {
+              "minecraft:custom_data": "{cht_item:\"phoenix_wing\"}"
+            }
+          }
+        }
+      }
+    }
+  },
+  "rewards": {
+    "function": "chrdk_treasure:items/phoenix_wing"
+  }
+}

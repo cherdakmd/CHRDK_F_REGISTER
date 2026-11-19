@@ -1,0 +1,18 @@
+{
+  "pack": {
+    "description": [
+      {
+        "text": "CHRDK Treasure Addon 1.0\nсокровища Бесплодных земель",
+        "color": "gold"
+      }
+    ],
+    "min_format": [
+      121,
+      1
+    ],
+    "max_format": [
+      121,
+      1
+    ]
+  }
+}
