@@ -5,6 +5,27 @@ package ru.cherdakmd.chrdkgenerator;
 public final class GeneratorMath {
     private GeneratorMath() {}
 
+    /** Радиус доступа к меню генератора от ядра, блоков. */
+    public static final int MENU_RANGE_BLOCKS = 16;
+
+    /**
+     * Доступ к меню генератора: игрок на чанке ядра либо в пределах
+     * {@link #MENU_RANGE_BLOCKS} блоков от него. Координаты чанка — блочные
+     * координаты игрока, сдвинутые на 4 (арифметический сдвиг работает и для
+     * отрицательных координат). Мир сверяется вызывающей стороной.
+     */
+    public static boolean withinMenuRange(int playerChunkX, int playerChunkZ,
+                                          double playerX, double playerY, double playerZ,
+                                          int coreX, int coreY, int coreZ) {
+        if (playerChunkX == (coreX >> 4) && playerChunkZ == (coreZ >> 4)) {
+            return true;
+        }
+        double dx = playerX - (coreX + 0.5);
+        double dy = playerY - (coreY + 0.5);
+        double dz = playerZ - (coreZ + 0.5);
+        return dx * dx + dy * dy + dz * dz <= (double) MENU_RANGE_BLOCKS * MENU_RANGE_BLOCKS;
+    }
+
     /** Секунды производственного цикла: −8% за уровень модуля «Скорость»,
      * пол — 20% от базы. Минимум одна секунда. */
     public static int cycleSeconds(int baseSeconds, int speedLevel) {

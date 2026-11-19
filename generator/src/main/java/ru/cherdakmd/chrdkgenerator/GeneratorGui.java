@@ -74,6 +74,10 @@ public final class GeneratorGui implements Listener {
             plugin.messages().send(player, "status-none");
             return;
         }
+        if (entry.installed() && !nearCore(player, entry)) {
+            plugin.messages().send(player, "menu-too-far");
+            return;
+        }
         Holder holder = currentHolder(player);
         boolean fresh = holder == null;
         if (fresh) {
@@ -93,6 +97,17 @@ public final class GeneratorGui implements Listener {
             return holder;
         }
         return null;
+    }
+
+    /** Владелец у своего ядра: тот же чанк или в пределах радиуса доступа. */
+    private boolean nearCore(Player player, GeneratorStore.Entry entry) {
+        if (!player.getWorld().getName().equals(entry.world())) {
+            return false;
+        }
+        var location = player.getLocation();
+        return GeneratorMath.withinMenuRange(location.getBlockX() >> 4, location.getBlockZ() >> 4,
+                location.getX(), location.getY(), location.getZ(),
+                entry.x(), entry.y(), entry.z());
     }
 
     /* --------------------------------- отрисовка -------------------------------- */
