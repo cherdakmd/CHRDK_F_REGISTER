@@ -6,37 +6,28 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.PrepareGrindstoneEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.LinkedHashMap;
+import java.util.ArrayList;
 import java.util.Map;
 
 /**
- * Точило: кастомные чары спиливаются наравне с ванильными.
+ * Точило: спиливание чар — полное снятие всех чар с предмета.
  *
- * <p>Ванильное точило само снимает ванильные чары и оставляет проклятия; наши чары
- * живут в PDC и без этой обработки переживали бы спиливание. Здесь наши обычные
- * чары снимаются, а наши проклятия остаются — ровно как ванильные проклятия.
- * Опыт за наши чары не начисляется: у них нет ванильной стоимости чар.</p>
+ * <p>Точило — грубый инструмент: спиливает всё — светлые чары и проклятия,
+ * ванильные и наши (наши живут в PDC и без этой обработки переживали бы
+ * спиливание). Точечное снятие одного проклятия с сохранением остальных чар —
+ * мастерская {@code /enchants cleanse}. Опыт за наши чары не начисляется:
+ * у них нет ванильной стоимости чар.</p>
+ *
+ * <p>Книга после спиливания становится чистой ванильной книгой — без имени,
+ * лора и PDC, поэтому стакается с обычными книгами.</p>
  */
 public final class GrindstoneListener implements Listener {
     private final EnchantsPlugin plugin;
 
     public GrindstoneListener(EnchantsPlugin plugin) {
         this.plugin = plugin;
-    }
-
-    /**
-     * Какие наши чары переживают точило: только проклятия — паритет с ванильными
-     * проклятиями, которые точило не снимает.
-     */
-    static Map<String, Integer> survivors(Map<String, Integer> enchants) {
-        Map<String, Integer> kept = new LinkedHashMap<>();
-        if (enchants == null) return kept;
-        for (var entry : enchants.entrySet()) {
-            EnchantDef def = EnchantRegistry.byId(entry.getKey());
-            if (def != null && def.curse()) kept.put(entry.getKey(), entry.getValue());
-        }
-        return kept;
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -50,26 +41,27 @@ public final class GrindstoneListener implements Listener {
             result = build(left, right);
             if (result == null) return;
         }
-        Map<String, Integer> kept = survivors(plugin.items().read(result));
-        if (kept.equals(plugin.items().read(result))) return;
-        plugin.items().write(result, kept);
-        event.setResult(result);
+        event.setResult(strip(result));
     }
 
-    /** Результат спиливания без ванильной работы точила: одиночный вход, чары сняты. */
+    /** Результат спиливания без ванильной работы точила: одиночный вход. */
     private ItemStack build(ItemStack left, ItemStack right) {
-        if (left == null || right != null) return null;
-        Map<String, Integer> kept = survivors(plugin.items().read(left));
-        boolean plainBook = left.getType() == Material.ENCHANTED_BOOK
-                && !(left.getItemMeta() instanceof org.bukkit.inventory.meta.EnchantmentStorageMeta storage
-                     && storage.hasStoredEnchants());
-        ItemStack result = plainBook ? new ItemStack(Material.BOOK) : left.clone();
-        if (plainBook && left.hasItemMeta() && left.getItemMeta().hasDisplayName()) {
-            var meta = result.getItemMeta();
-            meta.displayName(left.getItemMeta().displayName());
+        return left == null || right != null ? null : left.clone();
+    }
+
+    /** Полное спиливание: наши и ванильные чары снимаются; книга становится ванильной. */
+    private ItemStack strip(ItemStack result) {
+        if (result.getType() == Material.BOOK || result.getType() == Material.ENCHANTED_BOOK) {
+            return new ItemStack(Material.BOOK, Math.max(1, result.getAmount()));
+        }
+        plugin.items().write(result, Map.of());
+        ItemMeta meta = result.getItemMeta();
+        if (meta != null) {
+            for (var enchantment : new ArrayList<>(meta.getEnchants().keySet())) {
+                meta.removeEnchant(enchantment);
+            }
             result.setItemMeta(meta);
         }
-        plugin.items().write(result, kept);
         return result;
     }
 }
