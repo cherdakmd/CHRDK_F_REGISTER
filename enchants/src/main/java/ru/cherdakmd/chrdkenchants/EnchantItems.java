@@ -283,31 +283,14 @@ public final class EnchantItems {
         for (Map.Entry<String, Integer> entry : new LinkedHashMap<>(enchants).entrySet()) {
             EnchantDef def = EnchantRegistry.byId(entry.getKey());
             if (def == null) continue;
+            // Книга и предмет показывают только название и уровень чары:
+            // полное описание (ID, редкость, цели, правила) — в /enchants info,
+            // иначе лор книги не влезает в экран.
             // 1.4.128: проклятия пишутся красным — по лору видно, что это минус
             lore.add(plugin.messages().get(def.curse() ? "lore-line-curse" : "lore-line",
                     "name", plugin.messages().mini("en." + def.id() + ".name"),
                     "levelroman", EnchantCodec.roman(entry.getValue())));
-            if (meta instanceof org.bukkit.inventory.meta.EnchantmentStorageMeta) {
-                lore.add(plugin.messages().get("book-level", "id", def.id(), "level", entry.getValue(), "maxlevel", def.maxLevel()));
-                lore.add(plugin.messages().get("book-rarity", "rarity", plugin.messages().mini(def.rarity().labelKey()),
-                        "maxlevel", def.maxLevel()));
-                String groups = plugin.gui().supportedLabel(def);
-                lore.add(plugin.messages().get("book-items", "items", ru.cherdakmd.chrdkregister.Messages.trusted(groups)));
-                for (Component description : plugin.messages().getList("en." + def.id() + ".lore"))
-                    lore.add(Component.text("✶ ").append(description));
-                if (def.conflictGroup() != null) {
-                    String conflicts = String.join(", ", EnchantRegistry.all().stream()
-                            .filter(other -> def.conflictGroup().equals(other.conflictGroup()) && !def.id().equals(other.id()))
-                            .map(other -> plugin.messages().raw("en." + other.id() + ".name")).toList());
-                    if (!conflicts.isEmpty()) lore.add(plugin.messages().get("book-conflicts", "conflicts", ru.cherdakmd.chrdkregister.Messages.trusted(conflicts)));
-                }
-                if (def.curse()) lore.add(plugin.messages().get("book-curse-warning", "id", def.id()));
-                lore.add(plugin.messages().get("book-apply"));
-                lore.add(plugin.messages().get("book-preview"));
-            }
         }
-        if (meta instanceof org.bukkit.inventory.meta.EnchantmentStorageMeta && !enchants.isEmpty())
-            lore.add(plugin.messages().get("book-source", "source", plugin.messages().mini(sourceKey(meta))));
         meta.lore(lore.isEmpty() ? null : lore);
     }
 

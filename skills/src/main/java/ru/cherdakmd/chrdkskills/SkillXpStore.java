@@ -16,7 +16,9 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
 
-/** Маленький durable-журнал применения зелий: пауза и счётчик суток; при повреждении расходники закрываются. */
+/** Маленький durable-журнал применения зелий: пауза и счётчик суток. Повреждённый
+ * файл уходит в карантин (.broken-<время>), журнал продолжается с нуля: паузы —
+ * не деньги, и блокировка всех кристаллов из-за счётчика несоразмерна ущербу. */
 final class SkillXpStore {
     private static final int MAX_PLAYERS = 200_000;
     /** Потолок здравого смысла для дневного счётчика (кулдаун 60 с → до 1440 в сутки). */
@@ -83,8 +85,22 @@ final class SkillXpStore {
             }
             rows.clear(); rows.putAll(loaded);
         } catch (Exception error) {
-            available = false;
-            if (logger != null) logger.severe("Зелья навыков заблокированы: восстановите skill-consumables.json из backup. " + error.getMessage());
+            // В файле только пауза и суточный счётчик: повреждение не должно
+            // закрывать все кристаллы и дроп навсегда. Файл откладывается как
+            // есть (по нему видно причину), журнал начинается заново.
+            try {
+                Path broken = file.resolveSibling(
+                        file.getFileName() + ".broken-" + System.currentTimeMillis());
+                java.nio.file.Files.move(file, broken,
+                        java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+                rows.clear();
+                if (logger != null) logger.severe("skill-consumables.json повреждён ("
+                        + error.getMessage() + ") — отложен в " + broken.getFileName()
+                        + ", журнал начат заново: паузы кристаллов сброшены.");
+            } catch (Exception moveError) {
+                available = false;
+                if (logger != null) logger.severe("Зелья навыков заблокированы: восстановите skill-consumables.json из backup. " + error.getMessage());
+            }
         }
     }
 
