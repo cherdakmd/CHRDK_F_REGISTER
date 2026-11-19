@@ -2,6 +2,11 @@
 
 ## 2026-11-10 · вырезка TIERFORGE (полная) · ветка arena/04a1bf63-chrdk-f-register
 
+### Статус
+**PR #158** (base main, MERGEABLE/CLEAN): коммиты `8338581` (вырезка, 215 файлов) + волны тестовых
+пинов `d4b1577`/`d8c3a04`/`9c56e44` + свежесть вики. **CI зелёный полностью** (Purpur 26.3/Java 25 +
+Build wiki + Social automation). Готов к вливанию в main по отдельному заказу.
+
 ### Что сделано
 Полностью вырезан модуль `CHRDK_TierForge` (тиры и кузня) и прекращена его разработка:
 - сборка: удалён каталог `tier-forge/` (119 файлов) и `include 'tier-forge'` из `settings.gradle`;
@@ -42,17 +47,48 @@
 - `LabelPreferences` legacy-списки (treasures/tierforge/streams) — чтение старых конфигов.
 
 ### Пины, которые поменяны
-`AddonRetirement271Test` (MODULES 18, server-menu 44, auto-messages 37, API 46),
+`AddonRetirement271Test` (MODULES 18, server-menu 44, auto-messages 37, API 46; миграция сообщений —
+ключи, вырезанные из стока, у владельца остаются как есть: `expected = fresh.getOrDefault(k, legacy)`),
 `ClanIntegrationContractTest`/`EventsRemovalTest` (API 46), `ResourcesYamlTest` (без tier-forge),
 `DiamondShopSchemaV3Test` (схема 6/5 + remove-листы v6), `TradeAmountsTest` (scaleMinor-регрессия
 без forge-пинов), `test_verify_release` (18 модулей, assertNotIn CHRDK_TierForge), `GuardPolicyTest`
 (без tiersadmin; пример игровой команды вместо /tiers forge), `LabelPreferences/LabelStyleService/
-RetiredAddonsTest` (без TIERFORGE; labels-usage чистит оба токена), vk-тесты (7 номинаций).
+RetiredAddonsTest` (без TIERFORGE; labels-usage чистит оба токена), vk-тесты (7 номинаций,
+`DailyCardsConfig` 13 арг.).
+
+Волны пинов после CI (семейство `*RemovalTest` пинит текущие сток-счётчики!):
+- `PluginUpdateService.MODULES.size()` 19→18 в 7 файлах (Auction/Events/Orders/Pets/Queue/Streams
+  Removal + PluginUpdateServiceTest); стейджинг JAR `result.count()`/`files.count()` 19→18;
+- сервер-меню 45→44: `items.size()`/`live.getMapList(...)`/`stock.getMapList(...)` +
+  `PresentationUpdateTest:214`; дельты legacy−stock: `PresentationUpdateTest` −5→−6/−6→−7/−7→−8
+  (в 2×), `DonateCommandHandlerTest:116` −5→−6, `StreamsRemovalTest` 6→7, `EventsRemovalTest` 5→6;
+  ВНИМАНИЕ: `PresentationMigration.replacements()` НЕ мутирует `live` — «oldItems/live» = сам
+  legacy-файл (дельты сдвигаются при вырезке пункта);
+- авто-сообщения 38→37: `AutoMessages276Test` (+5-дельта самоотрегулировалась — фильтр
+  `RetiredAddons.announcement` режет tiers с обеих сторон), `AutoMessagesUpdateTest` ×2,
+  `EconomyPresentation255Test` (+6 сохранилась — `previous` фильтрует `RetiredAddons.plugin`),
+  Orders/Pets/Queue Removal;
+- `API_VERSION` 45→46: `QueueRemovalTest:35`, `StreamsRemovalTest:37`, `VkCoreBridgeTest:34`,
+  `StarterKitContractTest:73` (исходник `int API_VERSION = 46;`);
+- ярлыки: `ExpeditionLabelsTest` ordinals HEADER=6/EXPEDITIONS=7 (форматы файлов именные —
+  маски не страдают), `LabelsMenuService.ENTRY_SLOTS` без слота 37 (позиционный маппинг
+  `labelAt`), `StreamsRemovalTest` nameTags 7/values 8, `LabelPreferencesTest:352` nameTags 7.
+
+### Диагностика CI (артефакты блокированы!)
+Логи/артефакты (`blob.core.windows.net`) не скачать, НО есть два рабочих канала:
+1. **`gh api repos/…/check-runs/<id>/annotations`** — до 10 падений тестов с точными assert-ошибками
+   (cap 10/уровень — за ними могут быть скрытые падения!);
+2. **fetch_page run-summary** `https://github.com/<owner>/<repo>/actions/runs/<id>` — аннотации в HTML
+   + «Gradle failure excerpt» (tail build.log) + имена шагов (`#step:N`).
+Упавший за 15 секунд job = pre-check (гейты), не тесты.
 
 ### Гейты (зелёные на момент коммита)
 `.github/scripts` pytest 70 ✓ · `tools/wiki/test_build.py` 26 ✓ (было 28 − 2 вырезанных) ·
 `check_retired_addons.py` ✓ · `freshness.py` ✓. Сборку компилирует только CI (services.gradle.org
 заблокирован): Java-пины сверены python-харнессом по исходникам до push.
+**Гейт ретайера сканирует `wiki/reviewed.json`** — причины сверки (`--reason`) должны быть нейтральными
+(без слов tier/tiers/tierforge/кузня латиницей), иначе «остатки» в самой причине валят pre-check.
+Freshness принимать ПОСЛЕДНИМ шагом; ЛЮБАЯ поздняя правка `src/` сдвигает отпечатки → повторный accept.
 
 ### Регламент на будущее (не делать без заказа)
 - **Релиз 2.0.18 — «Пока только фиксы»**: всё уходит в main, релизную проводку НЕ трогать
