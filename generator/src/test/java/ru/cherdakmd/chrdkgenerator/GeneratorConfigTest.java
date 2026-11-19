@@ -83,10 +83,10 @@ class GeneratorConfigTest {
         assertEquals("IRON_INGOT", config.tierCosts().get(1).resources().get(0).material());
         assertEquals(256, config.tierCosts().get(1).resources().get(0).amount());
         assertEquals(120_000, config.tierCosts().get(3).money());
-        assertEquals(750_000, config.tierCosts().get(5).money(), "переход 7→8 дорогой");
-        assertEquals(8, config.tierCosts().get(5).resources().get(0).amount());
-        assertEquals(1_000_000, config.tierCosts().get(6).money(), "переход 8→9 — вершина цен");
-        assertEquals(32, config.tierCosts().get(6).resources().get(0).amount());
+        assertEquals(750_000, config.tierCosts().get(6).money(), "переход 7→8 дорогой");
+        assertEquals(8, config.tierCosts().get(6).resources().get(0).amount());
+        assertEquals(1_000_000, config.tierCosts().get(7).money(), "переход 8→9 — вершина цен");
+        assertEquals(32, config.tierCosts().get(7).resources().get(0).amount());
         assertEquals(GeneratorStore.MAX_LEVEL, config.moduleCosts().size());
         assertEquals(0, config.moduleCosts().get(0).money(), "низкие уровни — ресурсы");
         assertEquals(75_000, config.moduleCosts().get(4).money(), "высшие уровни — деньги");
