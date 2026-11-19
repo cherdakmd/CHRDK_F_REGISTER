@@ -92,8 +92,8 @@ final class GeneratorUpgrades {
     }
 
     /** Повышение тира: деньги + ресурсы, тир растёт на 1 (до 9). */
-    void upgradeTier(Player player) {
-        GeneratorStore.Entry entry = plugin.store().entry(player.getUniqueId());
+    void upgradeTier(Player player, int slot) {
+        GeneratorStore.Entry entry = plugin.store().entry(player.getUniqueId(), slot);
         if (entry == null) {
             plugin.messages().send(player, "upgrade-none");
             return;
@@ -111,12 +111,12 @@ final class GeneratorUpgrades {
         GeneratorConfig.Cost cost = tierCost(plugin.config(), next);
         String what = plugin.config().tier(next).name();
         buy(player, what, String.valueOf(next), cost, "generator-tier", "tier:" + next,
-                () -> plugin.store().setTier(player.getUniqueId(), next));
+                () -> plugin.store().setTier(player.getUniqueId(), slot, next));
     }
 
     /** Покупка следующего уровня модуля «Скорость»/«Ёмкость»/«Удача». */
-    void upgradeModule(Player player, String name) {
-        GeneratorStore.Entry entry = plugin.store().entry(player.getUniqueId());
+    void upgradeModule(Player player, int slot, String name) {
+        GeneratorStore.Entry entry = plugin.store().entry(player.getUniqueId(), slot);
         if (entry == null) {
             plugin.messages().send(player, "upgrade-none");
             return;
@@ -135,12 +135,12 @@ final class GeneratorUpgrades {
         GeneratorConfig.Cost cost = moduleCost(plugin.config(), next);
         buy(player, moduleName(name), String.valueOf(next), cost,
                 "generator-module", name + ":" + next,
-                () -> plugin.store().setModuleLevel(player.getUniqueId(), name, next));
+                () -> plugin.store().setModuleLevel(player.getUniqueId(), slot, name, next));
     }
 
     /** Разовая покупка модуля «Чанк» (plugin-chunk-ticket). */
-    void buyChunk(Player player) {
-        GeneratorStore.Entry entry = plugin.store().entry(player.getUniqueId());
+    void buyChunk(Player player, int slot) {
+        GeneratorStore.Entry entry = plugin.store().entry(player.getUniqueId(), slot);
         if (entry == null) {
             plugin.messages().send(player, "upgrade-none");
             return;
@@ -156,7 +156,7 @@ final class GeneratorUpgrades {
         }
         buy(player, moduleName("chunk"), "1", plugin.config().chunkCost(),
                 "generator-module", "chunk:1",
-                () -> plugin.store().setModuleLevel(player.getUniqueId(), "chunk", 1));
+                () -> plugin.store().setModuleLevel(player.getUniqueId(), slot, "chunk", 1));
     }
 
     private String moduleName(String name) {

@@ -22,7 +22,7 @@ class GeneratorStatsTest {
     }
 
     private static GeneratorStore.Entry entry(int tier, Map<String, Integer> modules, long bunker) {
-        return new GeneratorStore.Entry(java.util.UUID.randomUUID(), java.util.UUID.randomUUID(),
+        return new GeneratorStore.Entry(java.util.UUID.randomUUID(), 0, java.util.UUID.randomUUID(),
                 "world", 0, 64, 0, tier, modules, bunker, 0L, 0, 0L, 0L, 0L);
     }
 

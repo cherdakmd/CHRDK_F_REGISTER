@@ -32,6 +32,8 @@ class GeneratorConfigTest {
         assertEquals(8, config.offlineHours());
         assertEquals(0.5, config.offlineEfficiency());
         assertEquals(16, config.menuRange());
+        assertEquals(1, config.slotsRebirthUnlockAt());
+        assertEquals(1, config.slotsPaidRankMinStep());
         assertEquals(false, config.fuelEnabled());
         assertEquals(256, config.cyclesPerBucket());
         assertEquals(5.0, config.rebirthPercentPerRebirth());

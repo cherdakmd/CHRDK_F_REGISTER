@@ -48,6 +48,8 @@ public final class GeneratorConfig {
     private final int offlineHours;
     private final double offlineEfficiency;
     private final int menuRange;
+    private final int slotsRebirthUnlockAt;
+    private final int slotsPaidRankMinStep;
     private final boolean fuelEnabled;
     private final int cyclesPerBucket;
     private final double rebirthPercentPerRebirth;
@@ -65,6 +67,7 @@ public final class GeneratorConfig {
 
     private GeneratorConfig(int cycleSeconds, int bunkerBase, int offlineHours,
                             double offlineEfficiency, int menuRange,
+                            int slotsRebirthUnlockAt, int slotsPaidRankMinStep,
                             boolean fuelEnabled, int cyclesPerBucket,
                             double rebirthPercentPerRebirth, double rebirthDecay,
                             double rebirthBonusCapPercent,
@@ -76,6 +79,8 @@ public final class GeneratorConfig {
         this.offlineHours = offlineHours;
         this.offlineEfficiency = offlineEfficiency;
         this.menuRange = menuRange;
+        this.slotsRebirthUnlockAt = slotsRebirthUnlockAt;
+        this.slotsPaidRankMinStep = slotsPaidRankMinStep;
         this.fuelEnabled = fuelEnabled;
         this.cyclesPerBucket = cyclesPerBucket;
         this.rebirthPercentPerRebirth = rebirthPercentPerRebirth;
@@ -113,6 +118,16 @@ public final class GeneratorConfig {
     /** Радиус доступа к управлению генератором от ядра, блоков (чанк ядра доступен всегда). */
     public int menuRange() {
         return menuRange;
+    }
+
+    /** Перерождений для второго слота генераторов; 0 — слот выключен. */
+    public int slotsRebirthUnlockAt() {
+        return slotsRebirthUnlockAt;
+    }
+
+    /** Ступень платного ранга для третьего слота; 0 — слот выключен. */
+    public int slotsPaidRankMinStep() {
+        return slotsPaidRankMinStep;
     }
 
     public boolean fuelEnabled() {
@@ -197,6 +212,14 @@ public final class GeneratorConfig {
         if (menuRange < 1 || menuRange > 64) {
             throw new IllegalArgumentException("generator.menu-range: ждём 1…64");
         }
+        int slotsRebirthUnlockAt = root.getInt("slots.rebirth-unlock-at", 1);
+        if (slotsRebirthUnlockAt < 0 || slotsRebirthUnlockAt > 1_000_000) {
+            throw new IllegalArgumentException("generator.slots.rebirth-unlock-at: ждём 0…1000000");
+        }
+        int slotsPaidRankMinStep = root.getInt("slots.paid-rank-min-step", 1);
+        if (slotsPaidRankMinStep < 0 || slotsPaidRankMinStep > 5) {
+            throw new IllegalArgumentException("generator.slots.paid-rank-min-step: ждём 0…5");
+        }
         boolean fuelEnabled = root.getBoolean("fuel.enabled", false);
         int cyclesPerBucket = positive(root, "fuel.cycles-per-bucket");
         double percentPerRebirth = fraction(root, "rebirth-percent-per-rebirth", 0, Double.MAX_VALUE);
@@ -221,7 +244,8 @@ public final class GeneratorConfig {
                 GeneratorStore.MAX_LEVEL);
         Cost chunkCost = parseCost(upgrades.get("chunk"), "upgrades.chunk");
         return new GeneratorConfig(cycleSeconds, bunkerBase, offlineHours,
-                offlineEfficiency, menuRange, fuelEnabled, cyclesPerBucket,
+                offlineEfficiency, menuRange, slotsRebirthUnlockAt, slotsPaidRankMinStep,
+                fuelEnabled, cyclesPerBucket,
                 percentPerRebirth, decay, bonusCap,
                 payoutBase, payoutPerTier, payoutPerRankStep, payoutHardMax,
                 craft, tiers, tierCosts, moduleCosts, chunkCost);

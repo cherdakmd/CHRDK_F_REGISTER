@@ -28,13 +28,15 @@ import java.util.UUID;
  */
 public final class GeneratorGui implements Listener {
 
-    /** Состояние окна: владелец и сам инвентарь. */
+    /** Состояние окна: владелец, слот генератора и сам инвентарь. */
     private static final class Holder implements InventoryHolder {
         private final UUID owner;
+        private final int slot;
         private Inventory inventory;
 
-        private Holder(UUID owner) {
+        private Holder(UUID owner, int slot) {
             this.owner = owner;
+            this.slot = slot;
         }
 
         @Override
@@ -57,7 +59,8 @@ public final class GeneratorGui implements Listener {
 
     private static final Material[] TIER_ICONS = {
             Material.COBBLESTONE, Material.CLAY_BALL, Material.RAW_IRON, Material.RAW_GOLD,
-            Material.DIAMOND, Material.NETHERITE_INGOT, Material.NETHER_STAR
+            Material.DIAMOND, Material.NETHERITE_INGOT, Material.NETHER_STAR,
+            Material.SHULKER_SHELL, Material.BEACON
     };
 
     private final GeneratorPlugin plugin;
@@ -69,7 +72,30 @@ public final class GeneratorGui implements Listener {
 
     /** Открыть окно; повторный вызов перерисовывает уже открытое. */
     public void open(Player player) {
-        GeneratorStore.Entry entry = plugin.store().entry(player.getUniqueId());
+        GeneratorStore.Entry target = plugin.nearbyEntry(player);
+        if (target == null) {
+            boolean anyInstalled = false;
+            var entries = plugin.store().entries(player.getUniqueId());
+            for (GeneratorStore.Entry entry : entries) {
+                anyInstalled |= entry.installed();
+            }
+            if (anyInstalled) {
+                plugin.messages().send(player, "menu-too-far",
+                        "range", String.valueOf(plugin.config().menuRange()));
+                return;
+            }
+            if (entries.isEmpty()) {
+                plugin.messages().send(player, "status-none");
+                return;
+            }
+            target = entries.get(0);
+        }
+        open(player, target.slot());
+    }
+
+    /** Открыть окно генератора в конкретном слоте (клик по ядру). */
+    public void open(Player player, int slot) {
+        GeneratorStore.Entry entry = plugin.store().entry(player.getUniqueId(), slot);
         if (entry == null) {
             plugin.messages().send(player, "status-none");
             return;
@@ -80,9 +106,9 @@ public final class GeneratorGui implements Listener {
             return;
         }
         Holder holder = currentHolder(player);
-        boolean fresh = holder == null;
+        boolean fresh = holder == null || holder.slot != slot;
         if (fresh) {
-            holder = new Holder(player.getUniqueId());
+            holder = new Holder(player.getUniqueId(), slot);
             holder.inventory = Bukkit.createInventory(holder, 54, plugin.messages().get("menu-title"));
         }
         render(player, holder);
@@ -103,7 +129,7 @@ public final class GeneratorGui implements Listener {
     /* --------------------------------- отрисовка -------------------------------- */
 
     private void render(Player player, Holder holder) {
-        GeneratorStore.Entry entry = plugin.store().entry(player.getUniqueId());
+        GeneratorStore.Entry entry = plugin.store().entry(player.getUniqueId(), holder.slot);
         Inventory inventory = holder.inventory;
         inventory.clear();
         if (entry != null) {
@@ -135,7 +161,7 @@ public final class GeneratorGui implements Listener {
     }
 
     private ItemStack statusItem(GeneratorStore.Entry entry) {
-        String state = entry.installed() ? plugin.stateOf(entry.owner()) : "state-carried";
+        String state = entry.installed() ? plugin.stateOf(entry.owner(), entry.slot()) : "state-carried";
         ItemStack item = new ItemStack(Material.LODESTONE);
         ItemMeta meta = item.getItemMeta();
         meta.displayName(plugin.messages().get("menu-status",
@@ -257,11 +283,11 @@ public final class GeneratorGui implements Listener {
         switch (slot) {
             case SLOT_CLOSE -> player.closeInventory();
             case SLOT_BUNKER -> withdrawBunker(player, holder);
-            case SLOT_UPGRADE_TIER -> buy(player, holder, () -> plugin.upgrades().upgradeTier(player));
-            case SLOT_SPEED -> buy(player, holder, () -> plugin.upgrades().upgradeModule(player, "speed"));
-            case SLOT_CAPACITY -> buy(player, holder, () -> plugin.upgrades().upgradeModule(player, "capacity"));
-            case SLOT_LUCK -> buy(player, holder, () -> plugin.upgrades().upgradeModule(player, "luck"));
-            case SLOT_CHUNK -> buy(player, holder, () -> plugin.upgrades().buyChunk(player));
+            case SLOT_UPGRADE_TIER -> buy(player, holder, () -> plugin.upgrades().upgradeTier(player, holder.slot));
+            case SLOT_SPEED -> buy(player, holder, () -> plugin.upgrades().upgradeModule(player, holder.slot, "speed"));
+            case SLOT_CAPACITY -> buy(player, holder, () -> plugin.upgrades().upgradeModule(player, holder.slot, "capacity"));
+            case SLOT_LUCK -> buy(player, holder, () -> plugin.upgrades().upgradeModule(player, holder.slot, "luck"));
+            case SLOT_CHUNK -> buy(player, holder, () -> plugin.upgrades().buyChunk(player, holder.slot));
             case SLOT_TAKE -> take(player, holder);
             default -> { }
         }
@@ -281,12 +307,12 @@ public final class GeneratorGui implements Listener {
 
     /** «Забрать всё»: бункер выдаётся предметами, излишек под ноги. */
     private void withdrawBunker(Player player, Holder holder) {
-        GeneratorStore.Entry entry = plugin.store().entry(player.getUniqueId());
+        GeneratorStore.Entry entry = plugin.store().entry(player.getUniqueId(), holder.slot);
         if (entry == null || entry.bunker() <= 0) {
             plugin.messages().send(player, "bunker-empty");
             return;
         }
-        long units = plugin.store().withdrawBunker(player.getUniqueId(), entry.bunker());
+        long units = plugin.store().withdrawBunker(player.getUniqueId(), holder.slot, entry.bunker());
         GeneratorHandouts.giveBunker(player, plugin.config(), entry, units, random);
         plugin.messages().send(player, "bunker-withdrawn", "bunker", String.valueOf(units));
         render(player, holder);
@@ -294,7 +320,7 @@ public final class GeneratorGui implements Listener {
 
     /** Снятие ядра с двухшаговым подтверждением (TTL 30 секунд). */
     private void take(Player player, Holder holder) {
-        GeneratorTake.Result result = plugin.take().request(player);
+        GeneratorTake.Result result = plugin.take().request(player, holder.slot);
         switch (result.status()) {
             case NO_GENERATOR -> plugin.messages().send(player, "take-none");
             case TOO_FAR -> plugin.messages().send(player, "command-too-far",

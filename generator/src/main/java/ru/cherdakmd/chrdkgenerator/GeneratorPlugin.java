@@ -41,7 +41,7 @@ public final class GeneratorPlugin extends JavaPlugin {
     private GeneratorGui gui;
     private GeneratorTake take;
     private GeneratorPlaceholders placeholders;
-    private final java.util.Map<UUID, String> states = new java.util.concurrent.ConcurrentHashMap<>();
+    private final java.util.Map<String, String> states = new java.util.concurrent.ConcurrentHashMap<>();
 
     @Override
     public void onEnable() {
@@ -220,6 +220,39 @@ public final class GeneratorPlugin extends JavaPlugin {
                 entry.x(), entry.y(), entry.z(), config.menuRange());
     }
 
+    /**
+     * Цель команд и кнопок меню: ближайшее установленное ядро игрока в
+     * радиусе доступа; {@code null} — рядом ничего нет.
+     */
+    public GeneratorStore.Entry nearbyEntry(Player player) {
+        GeneratorStore.Entry best = null;
+        double bestDistance = Double.MAX_VALUE;
+        var location = player.getLocation();
+        for (GeneratorStore.Entry entry : store.entries(player.getUniqueId())) {
+            if (!entry.installed() || !nearCore(player, entry)) {
+                continue;
+            }
+            double dx = location.getX() - (entry.x() + 0.5);
+            double dy = location.getY() - (entry.y() + 0.5);
+            double dz = location.getZ() - (entry.z() + 0.5);
+            double distance = dx * dx + dy * dy + dz * dz;
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                best = entry;
+            }
+        }
+        return best;
+    }
+
+    /** Доступные игроку слоты генераторов: базовый + перерождение + платный ранг. */
+    public int maxSlots(Player player) {
+        var primary = store.entry(player.getUniqueId());
+        int rebirths = primary == null ? 0 : primary.rebirths();
+        int rankStep = coreApi == null ? 0 : coreApi.rankLevel(player.getName());
+        return GeneratorSlots.maxSlots(rebirths, rankStep,
+                config.slotsRebirthUnlockAt(), config.slotsPaidRankMinStep());
+    }
+
     public GeneratorCoreItem coreItem() {
         return coreItem;
     }
@@ -254,10 +287,18 @@ public final class GeneratorPlugin extends JavaPlugin {
 
     /** Кэш состояния камеры: тикер пишет, меню и PAPI читают без чтений мира. */
     public void publishState(UUID owner, String state) {
-        states.put(owner, state);
+        publishState(owner, 0, state);
+    }
+
+    public void publishState(UUID owner, int slot, String state) {
+        states.put(owner + ":" + slot, state);
     }
 
     public String stateOf(UUID owner) {
-        return states.getOrDefault(owner, "state-unloaded");
+        return stateOf(owner, 0);
+    }
+
+    public String stateOf(UUID owner, int slot) {
+        return states.getOrDefault(owner + ":" + slot, "state-unloaded");
     }
 }
