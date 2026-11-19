@@ -131,9 +131,9 @@
       "text": "7df8bdefeccfb0fd4943e63ce1896282c16c3491c21f364dd8b2f0fbf5378c6d"
     },
     "skills": {
-      "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",
-      "sources": "04a4fa588f5acfd9c631928e22da0514f88f33160469ab0a8850131d11a95e08",
-      "text": "162a2a3327115f33e8df6e08c181a185d1c753d6d0df2963f1300bdc3411cd16"
+      "reason": "Прокачка и отклики кристалла показываются в акшнбаре (feedback.actionbar); чат — фолбэк, отказы и вехи наград остаются в чате",
+      "sources": "2ffe12fa5e9c13d5c81599d02d69c6bb7b294e22002669f0df5b1e0aac7e9171",
+      "text": "11b1364c86785a37a36d1f67f75926430f31a407dc6d4aa11c41dffa77ba2a72"
     },
     "social-link": {
       "reason": "BankCharge: источник generator-upgrades в белом списке прав (chrdkgenerator.use) и bankOnlySource — текст страниц не менялся",

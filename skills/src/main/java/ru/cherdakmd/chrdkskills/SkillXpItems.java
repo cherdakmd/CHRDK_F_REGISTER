@@ -177,7 +177,7 @@ final class SkillXpItems implements Listener {
         long now = System.currentTimeMillis();
         long cooldown = store.cooldownLeft(player.getUniqueId(), now);
         if (cooldown > 0) {
-            plugin.messages().send(player, "xp-potion-cooldown", "time", cooldown);
+            feedback(player, "xp-potion-cooldown", "time", cooldown);
             return;
         }
         long xp = Math.round(SkillXpPolicy.xp(plugin.skills().rebirths(player), rank)
@@ -187,7 +187,7 @@ final class SkillXpItems implements Listener {
             // Единственная реальная причина здесь — гонка двойного клика по паузе.
             long left = store.cooldownLeft(player.getUniqueId(), now);
             if (left > 0) {
-                plugin.messages().send(player, "xp-potion-cooldown", "time", left);
+                feedback(player, "xp-potion-cooldown", "time", left);
             } else {
                 fail(player, "xp-potion-storage-broken");
             }
@@ -212,10 +212,10 @@ final class SkillXpItems implements Listener {
             }
             player.giveExpLevels(1);
             if (reward > 0) {
-                plugin.messages().send(player, "xp-potion-money",
+                feedback(player, "xp-potion-money",
                         "skill", plugin.messages().mini("skill." + skill.id() + ".name"), "amount", reward);
             } else {
-                plugin.messages().send(player, "xp-potion-vanilla",
+                feedback(player, "xp-potion-vanilla",
                         "skill", plugin.messages().mini("skill." + skill.id() + ".name"));
             }
             return;
@@ -234,10 +234,10 @@ final class SkillXpItems implements Listener {
         var progress = plugin.skills().progress(player, skill);
         var name = plugin.messages().mini("skill." + skill.id() + ".name");
         if (progress.maxed()) {
-            plugin.messages().send(player, "xp-potion-used-max",
+            feedback(player, "xp-potion-used-max",
                     "skill", name, "xp", xp, "bar", SkillCurve.bar(100, 10));
         } else {
-            plugin.messages().send(player, "xp-potion-used",
+            feedback(player, "xp-potion-used",
                     "skill", name, "xp", xp,
                     "level", String.valueOf(progress.level()),
                     "bar", SkillCurve.bar(progress.percent(), 10),
@@ -332,6 +332,15 @@ final class SkillXpItems implements Listener {
         var health = entity.getAttribute(Attribute.MAX_HEALTH);
         double hp = health == null ? 20.0 : health.getValue();
         return hp > 60.0 ? 2.0 : hp > 20.0 ? 1.5 : 1.0;
+    }
+
+    /** Обычный отклик кристалла — в акшнбар, чтобы не спамить чат; чат — при выключенном акшнбаре. */
+    private void feedback(Player player, String key, Object... args) {
+        if (plugin.config().actionbar()) {
+            player.sendActionBar(plugin.messages().get(key, args));
+        } else {
+            plugin.messages().send(player, key, args);
+        }
     }
 
     /** Повторяющиеся отказы не спамят в чат: одинаковое сообщение не чаще раза в 3 секунды. */

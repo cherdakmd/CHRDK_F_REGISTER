@@ -507,23 +507,24 @@ public final class SkillService {
     }
 
     /**
-     * Поздравление с новым уровнем: чат, экшнбар и звук. Имя навыка берётся из
-     * messages.yml — цвет уже в шаблоне, поэтому подстановка идёт как trusted.
+     * Поздравление с новым уровнем: акшнбар (без спама в чате) и звук. Чат —
+     * запасной путь, когда акшнбар выключен (feedback.actionbar: false) и
+     * включён feedback.announce. Имя навыка берётся из messages.yml — цвет уже
+     * в шаблоне, поэтому подстановка идёт как trusted.
      */
     private void announceLevels(Player player, SkillType skill, int from, int to) {
         if (to <= from) {
             return;
         }
         String name = plugin.messages().raw("skill." + skill.id() + ".name");
-        if (plugin.config().announce()) {
-            plugin.messages().send(player, "level-up",
-                    "skill", Messages.trusted(name),
-                    "level", String.valueOf(to));
-        }
         if (plugin.config().actionbar()) {
             player.sendActionBar(plugin.messages().get("actionbar-level",
                     "skill", Messages.trusted(name),
                     "level", String.valueOf(to)));
+        } else if (plugin.config().announce()) {
+            plugin.messages().send(player, "level-up",
+                    "skill", Messages.trusted(name),
+                    "level", String.valueOf(to));
         }
         if (plugin.config().sounds()) {
             player.playSound(player.getLocation(),
