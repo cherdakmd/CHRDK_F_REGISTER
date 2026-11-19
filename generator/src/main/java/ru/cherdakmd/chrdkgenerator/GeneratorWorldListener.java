@@ -143,6 +143,39 @@ public final class GeneratorWorldListener implements Listener {
         plugin.messages().send(player, "place-ok");
     }
 
+    /**
+     * Правый клик по ядру: открыть окно генератора. Чужим — отказ; клик
+     * с ядром в руке обрабатывает установка, здесь только просмотр.
+     */
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onCoreClick(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK || event.getHand() != EquipmentSlot.HAND) {
+            return;
+        }
+        Block block = event.getClickedBlock();
+        if (block == null) {
+            return;
+        }
+        UUID owner = coreAt.get(key(block));
+        if (owner == null) {
+            return;
+        }
+        if (event.getItem() != null && plugin.coreItem().isCore(event.getItem())) {
+            return;
+        }
+        event.setCancelled(true);
+        Player player = event.getPlayer();
+        if (!owner.equals(player.getUniqueId())) {
+            plugin.messages().send(player, "core-foreign");
+            return;
+        }
+        if (!player.hasPermission("chrdkgenerator.use")) {
+            plugin.messages().send(player, "no-permission");
+            return;
+        }
+        plugin.gui().open(player);
+    }
+
     /** Ломают ядро: чужим — отказ, владелец снимает с выдачей бункера. */
     @EventHandler(ignoreCancelled = true)
     public void onBreak(BlockBreakEvent event) {

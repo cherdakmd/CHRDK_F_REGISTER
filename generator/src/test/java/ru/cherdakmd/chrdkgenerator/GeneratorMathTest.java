@@ -3,6 +3,8 @@ package ru.cherdakmd.chrdkgenerator;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class GeneratorMathTest {
 
@@ -36,5 +38,38 @@ class GeneratorMathTest {
         assertEquals(32.57, GeneratorMath.rebirthBonusPercent(5.0, 0.9, 50.0, 10), 0.01);
         assertEquals(50.0, GeneratorMath.rebirthBonusPercent(5.0, 0.9, 50.0, 500), 0.001);
         assertEquals(25.0, GeneratorMath.rebirthBonusPercent(5.0, 1.0, 50.0, 5), 0.001);
+    }
+
+    @Test
+    void menuRangeCoversCoreChunkAndSixteenBlockRadius() {
+        // Ядро в блоке (100, 64, 200): его чанк — x 96..111, z 192..207.
+        int coreX = 100, coreY = 64, coreZ = 200;
+        int coreChunkX = coreX >> 4, coreChunkZ = coreZ >> 4;
+        // Тот же чанк: доступен даже в дальнем углу и по высоте — дальше радиуса.
+        assertTrue(GeneratorMath.withinMenuRange(coreChunkX, coreChunkZ,
+                111.5, 110.5, 207.5, coreX, coreY, coreZ));
+        // Другой чанк, но ровно на границе радиуса 16 блоков от центра ядра.
+        assertTrue(GeneratorMath.withinMenuRange(coreChunkX + 1, coreChunkZ,
+                116.5, 64.5, 200.5, coreX, coreY, coreZ));
+        assertFalse(GeneratorMath.withinMenuRange(coreChunkX + 1, coreChunkZ,
+                116.51, 64.5, 200.5, coreX, coreY, coreZ));
+        // Другой чанк и дальше радиуса — отказ.
+        assertFalse(GeneratorMath.withinMenuRange(coreChunkX + 3, coreChunkZ,
+                160.5, 64.5, 200.5, coreX, coreY, coreZ));
+        // Высота участвует: смещение 12/6 ещё в радиусе, 12/12 — уже нет.
+        assertTrue(GeneratorMath.withinMenuRange(coreChunkX + 1, coreChunkZ,
+                112.5, 70.5, 200.5, coreX, coreY, coreZ));
+        assertFalse(GeneratorMath.withinMenuRange(coreChunkX + 1, coreChunkZ,
+                112.5, 76.5, 200.5, coreX, coreY, coreZ));
+    }
+
+    @Test
+    void menuRangeUsesArithmeticChunkShiftForNegativeCoordinates() {
+        // Ядро в блоке −1 (чанк −1): дальний угол того же чанка открыт без радиуса.
+        assertTrue(GeneratorMath.withinMenuRange(-1, -1,
+                -15.5, 64.5, -15.5, -1, 64, -1));
+        // Чанк 0 (блок 16) и расстояние 17 блоков — отказ.
+        assertFalse(GeneratorMath.withinMenuRange(0, -1,
+                16.5, 64.5, -0.5, -1, 64, -1));
     }
 }

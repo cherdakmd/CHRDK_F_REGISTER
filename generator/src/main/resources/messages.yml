@@ -15,8 +15,11 @@ messages:
   core-item-lore:
     - "<gray>Поставьте в свой приват CHRDK_Claims.</gray>"
     - "<gray>Рядом с ядром нужны лава и вода.</gray>"
+    - "<gray>Меню генератора — клик по ядру.</gray>"
     - "<gray>Снятие: сломайте ядро.</gray>"
   craft-one-by-one: "<red>Ядро крафтится только по одному.</red>"
+  core-foreign: "<red>Это чужой генератор.</red>"
+  menu-too-far: "<red>Меню генератора открывается рядом с ядром: на его чанке или в 16 блоках.</red>"
   place-no-id: "<red>У ядра нет идентификатора — оно не работает.</red>"
   place-already-installed: "<red>У вас уже стоит генератор.</red>"
   place-core-busy: "<red>Это ядро уже занято.</red>"

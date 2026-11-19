@@ -71,9 +71,9 @@
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "generator": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "fcfbc70ac333af8b54d6497c26cefb7ee0d3bb6bbc5c2eaa6e44b82587925284",
-      "text": "8110d4a28c1f0ed98c549a1010b8e809a9cfbf6645bf466aa73504e99b698516"
+      "reason": "Клик по ядру открывает меню; /gen работает только на чанке ядра или в 16 блоках — описано в шаге установки и разделе меню",
+      "sources": "2700cb8b20362b5efe7652e8228cfc9507f118acedded7e1ecd558e7b194203d",
+      "text": "422004a2f19d6c210873863a4ee380b984eb72210defc30e8ecaac6f35365f3b"
     },
     "goals": {
       "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
