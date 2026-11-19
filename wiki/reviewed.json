@@ -131,8 +131,8 @@
       "text": "7df8bdefeccfb0fd4943e63ce1896282c16c3491c21f364dd8b2f0fbf5378c6d"
     },
     "skills": {
-      "reason": "Книги показывают только название и уровень; у ковки потолок 7 свойств; кристаллы лечат хранилище сами",
-      "sources": "cd9ce3fbcff9762a4af6971f78e60df480a7eab5ff5c2635c7f47ca69a6f224b",
+      "reason": "Добавлен шаг миграции messages v12 (зачистка %left% в xp-potion-used); текст страницы не менялся",
+      "sources": "9fdeae7691044716eb26409b557e1f7cd44fb1f9abb917762ade2915be0cb8c6",
       "text": "162a2a3327115f33e8df6e08c181a185d1c753d6d0df2963f1300bdc3411cd16"
     },
     "social-link": {
