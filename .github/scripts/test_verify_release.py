@@ -128,6 +128,9 @@ class ReleaseValidationTest(unittest.TestCase):
             "2.0.17": ("19 JAR одной версии", "chrdk-vk-2.0.17.jar",
                        "Mine Treasure", "chrdk-grim-configs-2.0.17.zip", "Пробуждение кристаллов",
                        "skill-consumables.json", "improve.max-per-item", "только название и уровень"),
+            "2.0.18": ("18 JAR одной версии", "chrdk-vk-2.0.18.jar",
+                       "Mine Treasure", "chrdk-grim-configs-2.0.18.zip", "CHRDK Treasure Addon",
+                       "Сокровища Бесплодных земель", "Редкости снаряжения", "акшнбаре"),
         }
         if version in current_kits:
             self.assertIn(f"CHRDK {version}", current)
