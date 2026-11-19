@@ -47,8 +47,16 @@ public final class GeneratorConfig {
     private final int bunkerBase;
     private final int offlineHours;
     private final double offlineEfficiency;
+    private final int menuRange;
+    private final int bunkerNotifyCooldownMinutes;
+    private final int slotsRebirthUnlockAt;
+    private final int slotsPaidRankMinStep;
     private final boolean fuelEnabled;
     private final int cyclesPerBucket;
+    private final boolean fuelAutoRefuel;
+    private final int fuelAutoRefuelPrice;
+    private final boolean autoSellEnabled;
+    private final int autoSellFallbackPrice;
     private final double rebirthPercentPerRebirth;
     private final double rebirthDecay;
     private final double rebirthBonusCapPercent;
@@ -63,7 +71,12 @@ public final class GeneratorConfig {
     private final Cost chunkCost;
 
     private GeneratorConfig(int cycleSeconds, int bunkerBase, int offlineHours,
-                            double offlineEfficiency, boolean fuelEnabled, int cyclesPerBucket,
+                            double offlineEfficiency, int menuRange,
+                            int bunkerNotifyCooldownMinutes,
+                            int slotsRebirthUnlockAt, int slotsPaidRankMinStep,
+                            boolean fuelEnabled, int cyclesPerBucket,
+                            boolean fuelAutoRefuel, int fuelAutoRefuelPrice,
+                            boolean autoSellEnabled, int autoSellFallbackPrice,
                             double rebirthPercentPerRebirth, double rebirthDecay,
                             double rebirthBonusCapPercent,
                             int payoutBase, int payoutPerTier, int payoutPerRankStep, int payoutHardMax,
@@ -73,8 +86,16 @@ public final class GeneratorConfig {
         this.bunkerBase = bunkerBase;
         this.offlineHours = offlineHours;
         this.offlineEfficiency = offlineEfficiency;
+        this.menuRange = menuRange;
+        this.bunkerNotifyCooldownMinutes = bunkerNotifyCooldownMinutes;
+        this.slotsRebirthUnlockAt = slotsRebirthUnlockAt;
+        this.slotsPaidRankMinStep = slotsPaidRankMinStep;
         this.fuelEnabled = fuelEnabled;
         this.cyclesPerBucket = cyclesPerBucket;
+        this.fuelAutoRefuel = fuelAutoRefuel;
+        this.fuelAutoRefuelPrice = fuelAutoRefuelPrice;
+        this.autoSellEnabled = autoSellEnabled;
+        this.autoSellFallbackPrice = autoSellFallbackPrice;
         this.rebirthPercentPerRebirth = rebirthPercentPerRebirth;
         this.rebirthDecay = rebirthDecay;
         this.rebirthBonusCapPercent = rebirthBonusCapPercent;
@@ -107,12 +128,52 @@ public final class GeneratorConfig {
         return offlineEfficiency;
     }
 
+    /** Радиус доступа к управлению генератором от ядра, блоков (чанк ядра доступен всегда). */
+    public int menuRange() {
+        return menuRange;
+    }
+
+    /** Кулдаун живого оповещения о полном бункере, минуты; 0 — выключено. */
+    public int bunkerNotifyCooldownMinutes() {
+        return bunkerNotifyCooldownMinutes;
+    }
+
+    /** Перерождений для второго слота генераторов; 0 — слот выключен. */
+    public int slotsRebirthUnlockAt() {
+        return slotsRebirthUnlockAt;
+    }
+
+    /** Ступень платного ранга для третьего слота; 0 — слот выключен. */
+    public int slotsPaidRankMinStep() {
+        return slotsPaidRankMinStep;
+    }
+
     public boolean fuelEnabled() {
         return fuelEnabled;
     }
 
     public int cyclesPerBucket() {
         return cyclesPerBucket;
+    }
+
+    /** Автозакупка прогоревшего ведра лавы за деньги (при включённом топливе). */
+    public boolean fuelAutoRefuel() {
+        return fuelAutoRefuel;
+    }
+
+    /** Цена автозакупленного ведра лавы, единицы денег. */
+    public int fuelAutoRefuelPrice() {
+        return fuelAutoRefuelPrice;
+    }
+
+    /** Автопродажа заполненного бункера по ценам магазина. */
+    public boolean autoSellEnabled() {
+        return autoSellEnabled;
+    }
+
+    /** Fallback-цена предмета вне каталога магазина при автопродаже, minor. */
+    public int autoSellFallbackPrice() {
+        return autoSellFallbackPrice;
     }
 
     public double rebirthPercentPerRebirth() {
@@ -152,7 +213,7 @@ public final class GeneratorConfig {
         return tiers;
     }
 
-    /** Тир по номеру 1…7. */
+    /** Тир по номеру 1…9. */
     public Tier tier(int tier) {
         return tiers.get(tier - 1);
     }
@@ -185,8 +246,34 @@ public final class GeneratorConfig {
         if (offlineEfficiency < 0 || offlineEfficiency > 1) {
             throw new IllegalArgumentException("generator.offline-efficiency: ждём 0.0–1.0");
         }
+        int menuRange = root.getInt("menu-range", 16);
+        if (menuRange < 1 || menuRange > 64) {
+            throw new IllegalArgumentException("generator.menu-range: ждём 1…64");
+        }
+        int bunkerNotifyCooldownMinutes = root.getInt("bunker-notify-cooldown-minutes", 30);
+        if (bunkerNotifyCooldownMinutes < 0 || bunkerNotifyCooldownMinutes > 1440) {
+            throw new IllegalArgumentException("generator.bunker-notify-cooldown-minutes: ждём 0…1440");
+        }
+        int slotsRebirthUnlockAt = root.getInt("slots.rebirth-unlock-at", 1);
+        if (slotsRebirthUnlockAt < 0 || slotsRebirthUnlockAt > 1_000_000) {
+            throw new IllegalArgumentException("generator.slots.rebirth-unlock-at: ждём 0…1000000");
+        }
+        int slotsPaidRankMinStep = root.getInt("slots.paid-rank-min-step", 1);
+        if (slotsPaidRankMinStep < 0 || slotsPaidRankMinStep > 5) {
+            throw new IllegalArgumentException("generator.slots.paid-rank-min-step: ждём 0…5");
+        }
         boolean fuelEnabled = root.getBoolean("fuel.enabled", false);
         int cyclesPerBucket = positive(root, "fuel.cycles-per-bucket");
+        boolean fuelAutoRefuel = root.getBoolean("fuel.auto-refuel", true);
+        int fuelAutoRefuelPrice = root.getInt("fuel.auto-refuel-price", 256);
+        if (fuelAutoRefuelPrice <= 0 || fuelAutoRefuelPrice > 1_000_000) {
+            throw new IllegalArgumentException("generator.fuel.auto-refuel-price: ждём 1…1000000");
+        }
+        boolean autoSellEnabled = root.getBoolean("auto-sell.enabled", true);
+        int autoSellFallbackPrice = root.getInt("auto-sell.fallback-price-per-item", 250);
+        if (autoSellFallbackPrice < 0 || autoSellFallbackPrice > 1_000_000) {
+            throw new IllegalArgumentException("generator.auto-sell.fallback-price-per-item: ждём 0…1000000");
+        }
         double percentPerRebirth = fraction(root, "rebirth-percent-per-rebirth", 0, Double.MAX_VALUE);
         double decay = fraction(root, "rebirth-decay", 0, 1);
         double bonusCap = fraction(root, "rebirth-bonus-cap-percent", 0, Double.MAX_VALUE);
@@ -209,7 +296,10 @@ public final class GeneratorConfig {
                 GeneratorStore.MAX_LEVEL);
         Cost chunkCost = parseCost(upgrades.get("chunk"), "upgrades.chunk");
         return new GeneratorConfig(cycleSeconds, bunkerBase, offlineHours,
-                offlineEfficiency, fuelEnabled, cyclesPerBucket,
+                offlineEfficiency, menuRange, bunkerNotifyCooldownMinutes,
+                slotsRebirthUnlockAt, slotsPaidRankMinStep,
+                fuelEnabled, cyclesPerBucket, fuelAutoRefuel, fuelAutoRefuelPrice,
+                autoSellEnabled, autoSellFallbackPrice,
                 percentPerRebirth, decay, bonusCap,
                 payoutBase, payoutPerTier, payoutPerRankStep, payoutHardMax,
                 craft, tiers, tierCosts, moduleCosts, chunkCost);

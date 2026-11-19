@@ -37,9 +37,15 @@ public final class GeneratorCommand implements CommandExecutor, TabCompleter {
         }
         switch (args[0].toLowerCase(Locale.ROOT)) {
             case "take" -> {
-                GeneratorTake.Result result = plugin.take().request(player);
+                GeneratorStore.Entry target = requireNearby(player, "take-none");
+                if (target == null) {
+                    return true;
+                }
+                GeneratorTake.Result result = plugin.take().request(player, target.slot());
                 switch (result.status()) {
                     case NO_GENERATOR -> plugin.messages().send(player, "take-none");
+                    case TOO_FAR -> plugin.messages().send(player, "command-too-far",
+                            "range", String.valueOf(plugin.config().menuRange()));
                     case PENDING -> plugin.messages().send(player, "take-confirm");
                     case DONE -> plugin.messages().send(player, "take-ok",
                             "bunker", String.valueOf(result.units()));
@@ -50,17 +56,39 @@ public final class GeneratorCommand implements CommandExecutor, TabCompleter {
                     plugin.messages().send(player, "usage");
                     return true;
                 }
+                GeneratorStore.Entry target = requireNearby(player, "upgrade-none");
+                if (target == null) {
+                    return true;
+                }
                 switch (args[1].toLowerCase(Locale.ROOT)) {
-                    case "tier" -> plugin.upgrades().upgradeTier(player);
+                    case "tier" -> plugin.upgrades().upgradeTier(player, target.slot());
                     case "speed", "capacity", "luck" ->
-                            plugin.upgrades().upgradeModule(player, args[1].toLowerCase(Locale.ROOT));
-                    case "chunk" -> plugin.upgrades().buyChunk(player);
+                            plugin.upgrades().upgradeModule(player, target.slot(), args[1].toLowerCase(Locale.ROOT));
+                    case "chunk" -> plugin.upgrades().buyChunk(player, target.slot());
                     default -> plugin.messages().send(player, "usage");
                 }
             }
             default -> plugin.messages().send(player, "usage");
         }
         return true;
+    }
+
+    /**
+     * Цель take/upgrade — ближайшее установленное ядро в радиусе; иначе
+     * объясняет причину ({@code noneKey} — генераторов нет, иначе — далеко).
+     */
+    private GeneratorStore.Entry requireNearby(Player player, String noneKey) {
+        GeneratorStore.Entry target = plugin.nearbyEntry(player);
+        if (target != null) {
+            return target;
+        }
+        if (plugin.store().entries(player.getUniqueId()).isEmpty()) {
+            plugin.messages().send(player, noneKey);
+        } else {
+            plugin.messages().send(player, "command-too-far",
+                    "range", String.valueOf(plugin.config().menuRange()));
+        }
+        return null;
     }
 
     @Override

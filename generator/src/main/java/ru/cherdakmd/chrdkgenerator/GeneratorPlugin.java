@@ -3,6 +3,7 @@ package ru.cherdakmd.chrdkgenerator;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -39,8 +40,11 @@ public final class GeneratorPlugin extends JavaPlugin {
     private GeneratorWorldListener worldListener;
     private GeneratorGui gui;
     private GeneratorTake take;
+    private GeneratorHolograms holograms;
+    private GeneratorBunkerNotifier notifier;
+    private GeneratorAutoSell autoSell;
     private GeneratorPlaceholders placeholders;
-    private final java.util.Map<UUID, String> states = new java.util.concurrent.ConcurrentHashMap<>();
+    private final java.util.Map<String, String> states = new java.util.concurrent.ConcurrentHashMap<>();
 
     @Override
     public void onEnable() {
@@ -88,10 +92,14 @@ public final class GeneratorPlugin extends JavaPlugin {
         this.upgrades = new GeneratorUpgrades(this);
         this.take = new GeneratorTake(this);
         this.gui = new GeneratorGui(this);
+        this.holograms = new GeneratorHolograms(this);
+        this.notifier = new GeneratorBunkerNotifier(this);
+        this.autoSell = new GeneratorAutoSell(this);
         this.worldListener = new GeneratorWorldListener(this);
         registerCraft();
         Bukkit.getPluginManager().registerEvents(this.worldListener, this);
         Bukkit.getPluginManager().registerEvents(this.gui, this);
+        Bukkit.getPluginManager().registerEvents(this.notifier, this);
         Bukkit.getPluginManager().registerEvents(new GeneratorRebirthListener(this), this);
         PluginCommand command = getCommand("generator");
         if (command != null) {
@@ -201,6 +209,57 @@ public final class GeneratorPlugin extends JavaPlugin {
         return config;
     }
 
+    /**
+     * Владелец у установленного ядра генератора: тот же чанк или в радиусе
+     * {@code generator.menu-range} блоков. Без установленного ядра (запись
+     * снята) управление не привязано к месту — гейт не действует.
+     */
+    public boolean nearCore(Player player, GeneratorStore.Entry entry) {
+        if (entry == null || !entry.installed()) {
+            return false;
+        }
+        if (!player.getWorld().getName().equals(entry.world())) {
+            return false;
+        }
+        var location = player.getLocation();
+        return GeneratorMath.withinMenuRange(location.getBlockX() >> 4, location.getBlockZ() >> 4,
+                location.getX(), location.getY(), location.getZ(),
+                entry.x(), entry.y(), entry.z(), config.menuRange());
+    }
+
+    /**
+     * Цель команд и кнопок меню: ближайшее установленное ядро игрока в
+     * радиусе доступа; {@code null} — рядом ничего нет.
+     */
+    public GeneratorStore.Entry nearbyEntry(Player player) {
+        GeneratorStore.Entry best = null;
+        double bestDistance = Double.MAX_VALUE;
+        var location = player.getLocation();
+        for (GeneratorStore.Entry entry : store.entries(player.getUniqueId())) {
+            if (!entry.installed() || !nearCore(player, entry)) {
+                continue;
+            }
+            double dx = location.getX() - (entry.x() + 0.5);
+            double dy = location.getY() - (entry.y() + 0.5);
+            double dz = location.getZ() - (entry.z() + 0.5);
+            double distance = dx * dx + dy * dy + dz * dz;
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                best = entry;
+            }
+        }
+        return best;
+    }
+
+    /** Доступные игроку слоты генераторов: базовый + перерождение + платный ранг. */
+    public int maxSlots(Player player) {
+        var primary = store.entry(player.getUniqueId());
+        int rebirths = primary == null ? 0 : primary.rebirths();
+        int rankStep = coreApi == null ? 0 : coreApi.rankLevel(player.getName());
+        return GeneratorSlots.maxSlots(rebirths, rankStep,
+                config.slotsRebirthUnlockAt(), config.slotsPaidRankMinStep());
+    }
+
     public GeneratorCoreItem coreItem() {
         return coreItem;
     }
@@ -233,12 +292,32 @@ public final class GeneratorPlugin extends JavaPlugin {
         return take;
     }
 
+    public GeneratorHolograms holograms() {
+        return holograms;
+    }
+
+    public GeneratorBunkerNotifier notifier() {
+        return notifier;
+    }
+
+    public GeneratorAutoSell autoSell() {
+        return autoSell;
+    }
+
     /** Кэш состояния камеры: тикер пишет, меню и PAPI читают без чтений мира. */
     public void publishState(UUID owner, String state) {
-        states.put(owner, state);
+        publishState(owner, 0, state);
+    }
+
+    public void publishState(UUID owner, int slot, String state) {
+        states.put(owner + ":" + slot, state);
     }
 
     public String stateOf(UUID owner) {
-        return states.getOrDefault(owner, "state-unloaded");
+        return stateOf(owner, 0);
+    }
+
+    public String stateOf(UUID owner, int slot) {
+        return states.getOrDefault(owner + ":" + slot, "state-unloaded");
     }
 }

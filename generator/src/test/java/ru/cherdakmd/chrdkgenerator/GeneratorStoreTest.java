@@ -38,10 +38,11 @@ class GeneratorStoreTest {
         GeneratorStore store = ready(dir);
         UUID owner = UUID.randomUUID();
         UUID core = UUID.randomUUID();
-        assertTrue(store.install(owner, core, "world", 10, 64, -3, 1_000L));
-        store.setTier(owner, 3);
-        store.setModuleLevel(owner, "luck", 2);
-        assertEquals(450L, store.addBunker(owner, 450L, 1_500L));
+        assertEquals(GeneratorStore.InstallStatus.OK,
+                store.install(owner, core, "world", 10, 64, -3, 1_000L, 3).status());
+        store.setTier(owner, 0, 3);
+        store.setModuleLevel(owner, 0, "luck", 2);
+        assertEquals(450L, store.addBunker(owner, 0, 450L, 1_500L));
         store.saveNow();
 
         GeneratorStore reloaded = newStore(dir);
@@ -65,17 +66,17 @@ class GeneratorStoreTest {
         GeneratorStore store = ready(dir);
         UUID owner = UUID.randomUUID();
         UUID core = UUID.randomUUID();
-        store.install(owner, core, "world", 1, 2, 3, 100L);
-        store.setTier(owner, 5);
-        store.addBunker(owner, 120L, 200L);
-        assertEquals(120L, store.remove(owner, 300L));
+        store.install(owner, core, "world", 1, 2, 3, 100L, 3);
+        store.setTier(owner, 0, 5);
+        store.addBunker(owner, 0, 120L, 200L);
+        assertEquals(120L, store.remove(owner, 0, 300L));
         GeneratorStore.Entry entry = store.entry(owner);
         assertFalse(entry.installed());
         assertNull(entry.coreItem());
         assertNull(entry.world());
         assertEquals(0L, entry.bunker());
         assertEquals(5, entry.tier(), "снятие не сбрасывает тир — сбрасывает только перерождение");
-        assertEquals(-1L, store.remove(owner, 300L), "повторно снимать нечего");
+        assertEquals(-1L, store.remove(owner, 0, 300L), "повторно снимать нечего");
     }
 
     @Test
@@ -83,11 +84,11 @@ class GeneratorStoreTest {
         GeneratorStore store = ready(dir);
         UUID owner = UUID.randomUUID();
         UUID core = UUID.randomUUID();
-        store.install(owner, core, "world_nether", 0, 70, 0, 10L);
-        store.setTier(owner, 6);
-        store.setModuleLevel(owner, "speed", 5);
-        store.setModuleLevel(owner, "chunk", 1);
-        store.addBunker(owner, 700L, 20L);
+        store.install(owner, core, "world_nether", 0, 70, 0, 10L, 3);
+        store.setTier(owner, 0, 6);
+        store.setModuleLevel(owner, 0, "speed", 5);
+        store.setModuleLevel(owner, 0, "chunk", 1);
+        store.addBunker(owner, 0, 700L, 20L);
         assertEquals(700L, store.rebirth(owner), "бункер выдаётся при перерождении");
         GeneratorStore.Entry entry = store.entry(owner);
         assertTrue(entry.installed());
@@ -98,29 +99,34 @@ class GeneratorStoreTest {
     }
 
     @Test
-    void installTwiceFailsUntilRemoved(@TempDir Path dir) throws Exception {
+    void installHonorsSlotCapacityAndReusesFreedRows(@TempDir Path dir) throws Exception {
         GeneratorStore store = ready(dir);
         UUID owner = UUID.randomUUID();
-        assertTrue(store.install(owner, UUID.randomUUID(), "world", 0, 0, 0, 0L));
-        assertFalse(store.install(owner, UUID.randomUUID(), "world", 0, 0, 0, 0L),
-                "второе ядро без снятия первого — отказ");
-        store.remove(owner, 0L);
-        assertTrue(store.install(owner, UUID.randomUUID(), "world", 0, 0, 0, 0L));
+        assertEquals(GeneratorStore.InstallStatus.OK,
+                store.install(owner, UUID.randomUUID(), "world", 0, 0, 0, 0L, 1).status());
+        assertEquals(GeneratorStore.InstallStatus.SLOTS_FULL,
+                store.install(owner, UUID.randomUUID(), "world", 1, 0, 1, 0L, 1).status(),
+                "второе ядро при одном слоте — отказ");
+        store.remove(owner, 0, 0L);
+        assertEquals(GeneratorStore.InstallStatus.OK,
+                store.install(owner, UUID.randomUUID(), "world", 0, 0, 0, 0L, 1).status(),
+                "снятый слот переиспользуется");
     }
 
     @Test
     void moduleLevelAndTierBounds(@TempDir Path dir) throws Exception {
         GeneratorStore store = ready(dir);
         UUID owner = UUID.randomUUID();
-        store.install(owner, UUID.randomUUID(), "world", 0, 0, 0, 0L);
-        assertThrows(IllegalArgumentException.class, () -> store.setTier(owner, 0));
-        assertThrows(IllegalArgumentException.class, () -> store.setTier(owner, 8));
-        store.setTier(owner, GeneratorStore.MAX_TIER);
-        store.setModuleLevel(owner, "speed", 5);
-        assertThrows(IllegalArgumentException.class, () -> store.setModuleLevel(owner, "speed", 6));
-        store.setModuleLevel(owner, "chunk", 1);
-        assertThrows(IllegalArgumentException.class, () -> store.setModuleLevel(owner, "chunk", 2));
-        assertThrows(IllegalArgumentException.class, () -> store.setModuleLevel(owner, "durability", 1));
+        store.install(owner, UUID.randomUUID(), "world", 0, 0, 0, 0L, 3);
+        assertThrows(IllegalArgumentException.class, () -> store.setTier(owner, 0, 0));
+        assertThrows(IllegalArgumentException.class, () -> store.setTier(owner, 0, 10),
+                "за пределами девяти тиров рост невозможен");
+        store.setTier(owner, 0, GeneratorStore.MAX_TIER);
+        store.setModuleLevel(owner, 0, "speed", 5);
+        assertThrows(IllegalArgumentException.class, () -> store.setModuleLevel(owner, 0, "speed", 6));
+        store.setModuleLevel(owner, 0, "chunk", 1);
+        assertThrows(IllegalArgumentException.class, () -> store.setModuleLevel(owner, 0, "chunk", 2));
+        assertThrows(IllegalArgumentException.class, () -> store.setModuleLevel(owner, 0, "durability", 1));
         assertThrows(IllegalArgumentException.class, () -> GeneratorStore.maxLevel("durability"));
     }
 
@@ -128,14 +134,14 @@ class GeneratorStoreTest {
     void withdrawBunkerClampsAndSaturates(@TempDir Path dir) throws Exception {
         GeneratorStore store = ready(dir);
         UUID owner = UUID.randomUUID();
-        store.install(owner, UUID.randomUUID(), "world", 0, 0, 0, 0L);
-        store.addBunker(owner, 50L, 0L);
-        assertEquals(0L, store.withdrawBunker(owner, 0L));
-        assertEquals(50L, store.withdrawBunker(owner, 80L));
+        store.install(owner, UUID.randomUUID(), "world", 0, 0, 0, 0L, 3);
+        store.addBunker(owner, 0, 50L, 0L);
+        assertEquals(0L, store.withdrawBunker(owner, 0, 0L));
+        assertEquals(50L, store.withdrawBunker(owner, 0, 80L));
         assertEquals(0L, store.entry(owner).bunker());
-        assertEquals(0L, store.withdrawBunker(owner, 80L));
-        assertEquals(Long.MAX_VALUE, store.addBunker(owner, Long.MAX_VALUE, 0L));
-        assertEquals(Long.MAX_VALUE, store.addBunker(owner, 5L, 0L), "переполнение зажато, не отрицательно");
+        assertEquals(0L, store.withdrawBunker(owner, 0, 80L));
+        assertEquals(Long.MAX_VALUE, store.addBunker(owner, 0, Long.MAX_VALUE, 0L));
+        assertEquals(Long.MAX_VALUE, store.addBunker(owner, 0, 5L, 0L), "переполнение зажато, не отрицательно");
     }
 
     @Test
@@ -180,7 +186,7 @@ class GeneratorStoreTest {
         store.load();
         assertFalse(store.healthy());
         assertThrows(IllegalStateException.class,
-                () -> store.install(UUID.randomUUID(), UUID.randomUUID(), "world", 0, 0, 0, 0L));
+                () -> store.install(UUID.randomUUID(), UUID.randomUUID(), "world", 0, 0, 0, 0L, 3));
         store.saveNow();
         assertEquals("{не json", Files.readString(dir.resolve("generator.json")));
     }
@@ -260,10 +266,10 @@ class GeneratorStoreTest {
     void removedTierSurvivesReload(@TempDir Path dir) throws Exception {
         GeneratorStore store = ready(dir);
         UUID owner = UUID.randomUUID();
-        store.install(owner, UUID.randomUUID(), "world", 0, 0, 0, 0L);
-        store.setTier(owner, 4);
-        store.setModuleLevel(owner, "capacity", 3);
-        store.remove(owner, 0L);
+        store.install(owner, UUID.randomUUID(), "world", 0, 0, 0, 0L, 3);
+        store.setTier(owner, 0, 4);
+        store.setModuleLevel(owner, 0, "capacity", 3);
+        store.remove(owner, 0, 0L);
         store.saveNow();
 
         GeneratorStore reloaded = newStore(dir);
@@ -279,10 +285,10 @@ class GeneratorStoreTest {
     void rebirthsAndFuelUsedMsSurviveReload(@TempDir Path dir) throws Exception {
         GeneratorStore store = ready(dir);
         UUID owner = UUID.randomUUID();
-        store.install(owner, UUID.randomUUID(), "world", 0, 0, 0, 0L);
+        store.install(owner, UUID.randomUUID(), "world", 0, 0, 0, 0L, 3);
         store.rebirth(owner);
         store.rebirth(owner);
-        store.setFuelUsedMs(owner, 123_456L);
+        store.setFuelUsedMs(owner, 0, 123_456L);
         store.saveNow();
 
         GeneratorStore reloaded = newStore(dir);
@@ -291,7 +297,7 @@ class GeneratorStoreTest {
         GeneratorStore.Entry entry = reloaded.entry(owner);
         assertEquals(2, entry.rebirths(), "перерождения считаются");
         assertEquals(123_456L, entry.fuelUsedMs(), "топливный счётчик сохраняется");
-        assertThrows(IllegalArgumentException.class, () -> reloaded.setFuelUsedMs(owner, -1L));
+        assertThrows(IllegalArgumentException.class, () -> reloaded.setFuelUsedMs(owner, 0, -1L));
     }
 
     @Test
@@ -348,7 +354,7 @@ class GeneratorStoreTest {
     void moneyAccumulatesAndPayoutIsAtomic(@TempDir Path dir) throws Exception {
         GeneratorStore store = ready(dir);
         UUID owner = UUID.randomUUID();
-        store.install(owner, UUID.randomUUID(), "world", 0, 0, 0, 0L);
+        store.install(owner, UUID.randomUUID(), "world", 0, 0, 0, 0L, 3);
 
         assertEquals(120L, store.addMoney(owner, 120L));
         assertTrue(store.takePayout(owner, 100L, 20_000L), "выплата списывает и фиксирует день");
@@ -391,5 +397,87 @@ class GeneratorStoreTest {
         assertTrue(store.healthy(), "файлы без денежных полей читаются");
         assertEquals(0L, store.entry(owner).money());
         assertEquals(0L, store.entry(owner).payoutDay());
+    }
+
+    @Test
+    void secondSlotInstallsWithinCapacityAndPersists(@TempDir Path dir) throws Exception {
+        GeneratorStore store = ready(dir);
+        UUID owner = UUID.randomUUID();
+        UUID core1 = UUID.randomUUID();
+        UUID core2 = UUID.randomUUID();
+        assertEquals(0, store.install(owner, core1, "world", 1, 64, 1, 10L, 3).slot());
+        assertEquals(1, store.install(owner, core2, "world", 5, 64, 5, 20L, 3).slot(),
+                "второй генератор занимает слот 1");
+        assertEquals(GeneratorStore.InstallStatus.SLOTS_FULL,
+                store.install(owner, UUID.randomUUID(), "world", 9, 64, 9, 30L, 2).status(),
+                "сверх лимита слотов — отказ");
+        store.setTier(owner, 1, 7);
+        store.addBunker(owner, 1, 33L, 30L);
+        store.addMoney(owner, 12L);
+        store.saveNow();
+
+        GeneratorStore reloaded = newStore(dir);
+        reloaded.load();
+        assertTrue(reloaded.healthy());
+        java.util.List<GeneratorStore.Entry> entries = reloaded.entries(owner);
+        assertEquals(2, entries.size());
+        assertEquals(core1, entries.get(0).coreItem());
+        assertEquals(core2, entries.get(1).coreItem());
+        assertEquals(1, entries.get(1).slot());
+        assertEquals(7, entries.get(1).tier());
+        assertEquals(33L, entries.get(1).bunker());
+        assertEquals(12L, entries.get(1).money(), "копилка денег общая на игрока");
+        assertEquals(12L, entries.get(0).money());
+        assertEquals(12L, reloaded.entry(owner).money(), "основная запись видит копилку");
+    }
+
+    @Test
+    void rebirthResetsEverySlotAndSumsBunkers(@TempDir Path dir) throws Exception {
+        GeneratorStore store = ready(dir);
+        UUID owner = UUID.randomUUID();
+        store.install(owner, UUID.randomUUID(), "world", 0, 0, 0, 0L, 3);
+        store.install(owner, UUID.randomUUID(), "world", 3, 0, 3, 0L, 3);
+        store.setTier(owner, 0, 5);
+        store.setTier(owner, 1, 9);
+        store.setModuleLevel(owner, 1, "speed", 3);
+        store.addBunker(owner, 0, 100L, 0L);
+        store.addBunker(owner, 1, 50L, 0L);
+        assertEquals(150L, store.rebirth(owner), "бункеры всех слотов выдаются суммарно");
+        for (GeneratorStore.Entry entry : store.entries(owner)) {
+            assertEquals(1, entry.tier());
+            assertTrue(entry.modules().isEmpty());
+            assertEquals(0L, entry.bunker());
+            assertTrue(entry.installed(), "ядра и бинды остаются");
+        }
+        assertEquals(1, store.entry(owner).rebirths(), "счётчик перерождений общий");
+    }
+
+    @Test
+    void legacyArrayRowsShapeLoadsAsSlots(@TempDir Path dir) throws Exception {
+        UUID owner = UUID.randomUUID();
+        UUID core1 = UUID.randomUUID();
+        UUID core2 = UUID.randomUUID();
+        Files.writeString(dir.resolve("generator.json"), "{\n"
+                + "  \"schema\": 1,\n"
+                + "  \"lineage\": \"" + UUID.randomUUID() + "\",\n"
+                + "  \"registered\": true,\n"
+                + "  \"players\": {\n"
+                + "    \"" + owner + "\": [\n"
+                + "      {\"coreItem\": \"" + core1 + "\", \"world\": \"world\", \"x\": 1, \"y\": 64, \"z\": 1,"
+                + " \"tier\": 2, \"modules\": {}, \"bunker\": 5, \"lastCalcMillis\": 0},\n"
+                + "      {\"coreItem\": \"" + core2 + "\", \"world\": \"world\", \"x\": 5, \"y\": 64, \"z\": 5,"
+                + " \"tier\": 4, \"modules\": {\"speed\": 1}, \"bunker\": 7, \"lastCalcMillis\": 0}\n"
+                + "    ]\n"
+                + "  }\n"
+                + "}", StandardCharsets.UTF_8);
+        GeneratorStore store = newStore(dir);
+        store.load();
+        assertTrue(store.healthy(), "формат-массив строк читается как слоты");
+        java.util.List<GeneratorStore.Entry> entries = store.entries(owner);
+        assertEquals(2, entries.size());
+        assertEquals(0, entries.get(0).slot());
+        assertEquals(1, entries.get(1).slot());
+        assertEquals(4, entries.get(1).tier());
+        assertEquals(7L, entries.get(1).bunker());
     }
 }

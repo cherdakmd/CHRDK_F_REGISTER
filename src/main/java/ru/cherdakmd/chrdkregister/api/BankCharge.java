@@ -12,7 +12,8 @@ public record BankCharge(String source, UUID lineage, long sequence, UUID transa
     public enum Status { UNAVAILABLE, MISSING, COMMITTED, CONFLICT }
     /** Service namespaces whose currency contract forbids all inventory tender. */
     public static boolean bankOnlySource(String source) {
-        return "claim-teleports".equals(source) || "generator-upgrades".equals(source);
+        return "claim-teleports".equals(source) || "generator-upgrades".equals(source)
+                || "generator-fuel".equals(source);
     }
     public static String permission(String source) {
         if(source==null) return null;
@@ -23,6 +24,7 @@ public record BankCharge(String source, UUID lineage, long sequence, UUID transa
             case "guilds" -> "chrdkguilds.use";
             case "skill-xp" -> "chrdkskills.use";
             case "generator-upgrades" -> "chrdkgenerator.use";
+            case "generator-fuel" -> "chrdkgenerator.use";
             default -> null;
         };
     }

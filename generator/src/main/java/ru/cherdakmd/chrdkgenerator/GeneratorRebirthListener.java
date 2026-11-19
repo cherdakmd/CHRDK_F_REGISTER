@@ -25,17 +25,22 @@ public final class GeneratorRebirthListener implements Listener {
     @EventHandler
     public void onRebirth(RebirthEvent event) {
         Player player = event.getPlayer();
-        GeneratorStore.Entry before = plugin.store().entry(player.getUniqueId());
-        if (before == null) {
+        java.util.List<GeneratorStore.Entry> before = plugin.store().entries(player.getUniqueId());
+        if (before.isEmpty()) {
             return;
         }
-        long units = plugin.store().rebirth(player.getUniqueId());
-        if (units > 0) {
-            GeneratorHandouts.giveBunker(player, plugin.config(), before, units, random);
+        long units = 0L;
+        for (GeneratorStore.Entry entry : before) {
+            long held = plugin.store().withdrawBunker(player.getUniqueId(), entry.slot(), Long.MAX_VALUE);
+            if (held > 0) {
+                GeneratorHandouts.giveBunker(player, plugin.config(), entry, held, random);
+                units += held;
+            }
         }
+        plugin.store().rebirth(player.getUniqueId());
         double bonus = GeneratorMath.rebirthBonusPercent(
                 plugin.config().rebirthPercentPerRebirth(), plugin.config().rebirthDecay(),
-                plugin.config().rebirthBonusCapPercent(), before.rebirths() + 1);
+                plugin.config().rebirthBonusCapPercent(), before.get(0).rebirths() + 1);
         plugin.messages().send(player, "rebirth-done",
                 "bunker", String.valueOf(Math.max(0L, units)),
                 "count", String.valueOf(event.getCount()),

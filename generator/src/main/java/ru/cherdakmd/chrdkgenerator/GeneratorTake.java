@@ -16,13 +16,13 @@ final class GeneratorTake {
     record Result(Status status, long units) {
         enum Status {
             NO_GENERATOR,
+            TOO_FAR,
             PENDING,
             DONE
         }
     }
 
     private static final Object SESSION = "gen-take";
-    private static final Object QUOTE = "core";
 
     private final GeneratorPlugin plugin;
     private final EconomyConfirmations confirmations = new EconomyConfirmations();
@@ -31,17 +31,25 @@ final class GeneratorTake {
         this.plugin = plugin;
     }
 
-    Result request(Player player) {
-        GeneratorStore.Entry entry = plugin.store().entry(player.getUniqueId());
+    private static Object quote(int slot) {
+        return "core:" + slot;
+    }
+
+    Result request(Player player, int slot) {
+        GeneratorStore.Entry entry = plugin.store().entry(player.getUniqueId(), slot);
         if (entry == null || !entry.installed()) {
             return new Result(Result.Status.NO_GENERATOR, 0L);
         }
+        if (!plugin.nearCore(player, entry)) {
+            return new Result(Result.Status.TOO_FAR, 0L);
+        }
         long now = System.nanoTime();
-        if (!confirmations.consume(player.getUniqueId(), SESSION, QUOTE, now)) {
-            confirmations.offer(player.getUniqueId(), SESSION, QUOTE, now);
+        Object quote = quote(slot);
+        if (!confirmations.consume(player.getUniqueId(), SESSION, quote, now)) {
+            confirmations.offer(player.getUniqueId(), SESSION, quote, now);
             return new Result(Result.Status.PENDING, 0L);
         }
-        long units = plugin.store().remove(player.getUniqueId(), System.currentTimeMillis());
+        long units = plugin.store().remove(player.getUniqueId(), slot, System.currentTimeMillis());
         plugin.worldListener().removeCore(player, entry, Math.max(0L, units));
         return new Result(Result.Status.DONE, Math.max(0L, units));
     }

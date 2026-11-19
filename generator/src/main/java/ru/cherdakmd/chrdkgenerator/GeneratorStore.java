@@ -2,10 +2,13 @@ package ru.cherdakmd.chrdkgenerator;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -19,19 +22,24 @@ import ru.cherdakmd.chrdkregister.api.MilestoneMigration;
 import ru.cherdakmd.chrdkregister.storage.SafeJsonWriter;
 
 /**
- * Данные личного генератора ({@code plugins/CHRDK_Generator/generator.json}).
+ * Данные личных генераторов ({@code plugins/CHRDK_Generator/generator.json}).
  *
- * <p>Ключ записи — UUID игрока: один активный генератор на игрока (п.31, §3).
- * В записи лежат бинд ядра (UUID предмета), location установленного ядра, тир,
- * уровни модулей, бункер и метка последнего расчёта (п.31, §10). Снятие ядра
- * снимает бинд и выдаёт бункер, но сохраняет тир и модули; перерождение
- * сбрасывает тир и модули (ядро и бинд остаются, бункер выдаётся) — п.31, §8.</p>
+ * <p>Ключ записи — UUID игрока; у игрока до трёх генераторов (слоты 0…2):
+ * базовый, за перерождение и за платный ранг (п.31, §3). В каждой строке
+ * лежат бинд ядра (UUID предмета), location установленного ядра, тир, уровни
+ * модулей, бункер и метка последнего расчёта (п.31, §10). Снятие ядра снимает
+ * бинд и выдаёт бункер, но сохраняет тир и модули; перерождение сбрасывает
+ * тир и модули всех генераторов (ядра и бинды остаются, бункеры выдаются) —
+ * п.31, §8. Перерождения, копилка денег и день выплаты — общие на игрока
+ * (живут в строке слота 0).</p>
  *
  * <p>Формат версионирован ({@code schema = 1}) и проверяется до разбора:
  * целочисленность чисел, UUID-ключи, допустимые диапазоны тира и модулей,
- * единственный владелец каждого ядра (анти-дюп, п.31, §7). Повреждённый файл
- * переводит хранилище в карантин: выдачи останавливаются, файл больше не
- * перезаписывается — данные не затираются мусором.</p>
+ * единственный владелец каждого ядра (анти-дюп, п.31, §7). Значение игрока —
+ * список строк (слот 0, слот 1, …); старый формат «одна строка-объект»
+ * читается как один слот. Повреждённый файл переводит хранилище в карантин:
+ * выдачи останавливаются, файл больше не перезаписывается — данные не
+ * затираются мусором.</p>
  *
  * <p>Класс чистый (Gson + UUID + NIO): мутации на главном потоке, запись через
  * {@link SafeJsonWriter}; проверяется юнит-тестами без Bukkit.</p>
@@ -39,7 +47,7 @@ import ru.cherdakmd.chrdkregister.storage.SafeJsonWriter;
 public final class GeneratorStore {
 
     /** Максимальный тир ядра (п.31, §4). */
-    public static final int MAX_TIER = 7;
+    public static final int MAX_TIER = 9;
 
     /** Модули с уровнями: скорость, ёмкость, удача — до 5 уровней (п.31, §5). */
     public static final int MAX_LEVEL = 5;
@@ -54,10 +62,22 @@ public final class GeneratorStore {
     static final long MAX_FILE_BYTES = 32L * 1024 * 1024;
 
     /** Имя мира: скромный шаблон, чтобы мусор в JSON не доехал до Bukkit. */
-    private static final String WORLD_PATTERN = "[A-Za-z0-9_.\\-]{1,64}";
+    private static final String WORLD_PATTERN = "[A-Za-z0-9_.\\\\-]{1,64}";
+
+    /** Итог установки ядра. */
+    public enum InstallStatus {
+        /** Ядро принято и заняло слот. */
+        OK,
+        /** Все доступные слоты заняты. */
+        SLOTS_FULL
+    }
+
+    /** Результат установки: статус и занятый слот ({@code -1} — не принято). */
+    public record InstallResult(InstallStatus status, int slot) {
+    }
 
     /** Неизменяемый снимок записи для чтения (GUI, PAPI, команды). */
-    public record Entry(UUID owner, UUID coreItem, String world, int x, int y, int z,
+    public record Entry(UUID owner, int slot, UUID coreItem, String world, int x, int y, int z,
                         int tier, Map<String, Integer> modules, long bunker, long lastCalcMillis,
                         int rebirths, long fuelUsedMs, long money, long payoutDay) {
         public Entry {
@@ -75,10 +95,10 @@ public final class GeneratorStore {
         int schema = 1;
         UUID lineage = UUID.randomUUID();
         boolean registered;
-        Map<UUID, Row> players = new LinkedHashMap<>();
+        Map<UUID, List<Row>> players = new LinkedHashMap<>();
     }
 
-    /** Запись одного игрока; мутируется только методами хранилища. */
+    /** Запись одного генератора (слот = позиция в списке игрока). */
     private static final class Row {
         UUID coreItem;
         String world;
@@ -139,37 +159,54 @@ public final class GeneratorStore {
             MilestoneMigration.uuid(row.get("lineage").getAsString());
             for (var entry : row.getAsJsonObject("players").entrySet()) {
                 MilestoneMigration.uuid(entry.getKey());
-                if (!entry.getValue().isJsonObject()) {
+                JsonElement value = entry.getValue();
+                JsonArray rows;
+                if (value.isJsonObject()) {
+                    // Старый формат: одна строка-объект — читается как слот 0.
+                    rows = new JsonArray();
+                    rows.add(value);
+                } else if (value.isJsonArray()) {
+                    rows = value.getAsJsonArray();
+                } else {
                     throw new IOException("generator row");
                 }
-                var player = entry.getValue().getAsJsonObject();
-                for (String key : List.of("tier", "modules", "bunker", "lastCalcMillis", "x", "y", "z")) {
-                    if (!player.has(key) || player.get(key).isJsonNull()) {
-                        throw new IOException("missing generator " + key);
+                if (rows.isEmpty()) {
+                    throw new IOException("generator rows empty");
+                }
+                for (JsonElement element : rows) {
+                    if (!element.isJsonObject()) {
+                        throw new IOException("generator row");
                     }
-                }
-                for (String key : List.of("tier", "bunker", "lastCalcMillis", "x", "y", "z")) {
-                    number(player.get(key));
-                }
-                for (String key : List.of("rebirths", "fuelUsedMs", "money", "payoutDay")) {
-                    if (player.has(key) && !player.get(key).isJsonNull()) {
+                    var player = element.getAsJsonObject();
+                    for (String key : List.of("tier", "modules", "bunker", "lastCalcMillis", "x", "y", "z")) {
+                        if (!player.has(key) || player.get(key).isJsonNull()) {
+                            throw new IOException("missing generator " + key);
+                        }
+                    }
+                    for (String key : List.of("tier", "bunker", "lastCalcMillis", "x", "y", "z")) {
                         number(player.get(key));
                     }
+                    for (String key : List.of("rebirths", "fuelUsedMs", "money", "payoutDay")) {
+                        if (player.has(key) && !player.get(key).isJsonNull()) {
+                            number(player.get(key));
+                        }
+                    }
+                    if (!player.get("modules").isJsonObject()) {
+                        throw new IOException("generator modules");
+                    }
+                    for (var module : player.getAsJsonObject("modules").entrySet()) {
+                        number(module.getValue());
+                    }
+                    if (player.has("coreItem") && !player.get("coreItem").isJsonNull()) {
+                        MilestoneMigration.uuid(player.get("coreItem").getAsString());
+                    }
+                    if (player.has("world") && !player.get("world").isJsonNull()
+                            && (!player.get("world").isJsonPrimitive()
+                            || !player.get("world").getAsJsonPrimitive().isString())) {
+                        throw new IOException("generator world");
+                    }
                 }
-                if (!player.get("modules").isJsonObject()) {
-                    throw new IOException("generator modules");
-                }
-                for (var module : player.getAsJsonObject("modules").entrySet()) {
-                    number(module.getValue());
-                }
-                if (player.has("coreItem") && !player.get("coreItem").isJsonNull()) {
-                    MilestoneMigration.uuid(player.get("coreItem").getAsString());
-                }
-                if (player.has("world") && !player.get("world").isJsonNull()
-                        && (!player.get("world").isJsonPrimitive()
-                        || !player.get("world").getAsJsonPrimitive().isString())) {
-                    throw new IOException("generator world");
-                }
+                entry.setValue(rows);
             }
             Data parsed = JSON.fromJson(row, Data.class);
             validate(parsed);
@@ -199,31 +236,36 @@ public final class GeneratorStore {
         Set<UUID> cores = new HashSet<>();
         for (var entry : state.players.entrySet()) {
             UUID owner = entry.getKey();
-            Row row = entry.getValue();
-            if (owner == null || row == null || row.tier < 1 || row.tier > MAX_TIER
-                    || row.bunker < 0 || row.lastCalcMillis < 0 || row.modules == null
-                    || row.rebirths < 0 || row.fuelUsedMs < 0 || row.money < 0 || row.payoutDay < 0) {
+            List<Row> rows = entry.getValue();
+            if (owner == null || rows == null || rows.isEmpty()) {
                 throw new IllegalArgumentException("generator entry");
             }
-            for (var module : row.modules.entrySet()) {
-                Integer level = module.getValue();
-                if (module.getKey() == null || level == null || level < 0 || level > maxLevel(module.getKey())) {
-                    throw new IllegalArgumentException("generator module");
+            for (Row row : rows) {
+                if (row == null || row.tier < 1 || row.tier > MAX_TIER
+                        || row.bunker < 0 || row.lastCalcMillis < 0 || row.modules == null
+                        || row.rebirths < 0 || row.fuelUsedMs < 0 || row.money < 0 || row.payoutDay < 0) {
+                    throw new IllegalArgumentException("generator entry");
                 }
-            }
-            boolean bound = row.coreItem != null;
-            if (bound != (row.world != null)) {
-                throw new IllegalArgumentException("generator bind");
-            }
-            if (bound) {
-                if (!row.world.matches(WORLD_PATTERN)) {
-                    throw new IllegalArgumentException("generator world");
+                for (var module : row.modules.entrySet()) {
+                    Integer level = module.getValue();
+                    if (module.getKey() == null || level == null || level < 0 || level > maxLevel(module.getKey())) {
+                        throw new IllegalArgumentException("generator module");
+                    }
                 }
-                if (!cores.add(row.coreItem)) {
-                    throw new IllegalArgumentException("generator duplicated core");
+                boolean bound = row.coreItem != null;
+                if (bound != (row.world != null)) {
+                    throw new IllegalArgumentException("generator bind");
                 }
-            } else if (row.bunker != 0) {
-                throw new IllegalArgumentException("generator detached bunker");
+                if (bound) {
+                    if (!row.world.matches(WORLD_PATTERN)) {
+                        throw new IllegalArgumentException("generator world");
+                    }
+                    if (!cores.add(row.coreItem)) {
+                        throw new IllegalArgumentException("generator duplicated core");
+                    }
+                } else if (row.bunker != 0) {
+                    throw new IllegalArgumentException("generator detached bunker");
+                }
             }
         }
     }
@@ -245,8 +287,16 @@ public final class GeneratorStore {
         }
     }
 
-    private Row row(UUID owner) {
+    private List<Row> rows(UUID owner) {
         return data.players.get(owner);
+    }
+
+    private Row row(UUID owner, int slot) {
+        List<Row> rows = rows(owner);
+        if (rows == null || slot < 0 || slot >= rows.size()) {
+            return null;
+        }
+        return rows.get(slot);
     }
 
     public synchronized boolean healthy() {
@@ -272,10 +322,33 @@ public final class GeneratorStore {
         flush();
     }
 
-    /** Снимок записи; {@code null} — у игрока ещё нет генератора. */
+    /** Снимок основного (слот 0) генератора; {@code null} — записи нет. */
     public synchronized Entry entry(UUID owner) {
-        Row row = row(owner);
-        return row == null ? null : snapshot(owner, row);
+        return entry(owner, 0);
+    }
+
+    /** Снимок генератора в слоте; {@code null} — слота нет. */
+    public synchronized Entry entry(UUID owner, int slot) {
+        Row row = row(owner, slot);
+        if (row == null) {
+            return null;
+        }
+        Row primary = row(owner, 0);
+        return snapshot(owner, slot, row, primary != null ? primary : row);
+    }
+
+    /** Снимки всех генераторов игрока по порядку слотов. */
+    public synchronized List<Entry> entries(UUID owner) {
+        List<Row> rows = rows(owner);
+        if (rows == null) {
+            return List.of();
+        }
+        Row primary = rows.get(0);
+        List<Entry> out = new ArrayList<>(rows.size());
+        for (int slot = 0; slot < rows.size(); slot++) {
+            out.add(snapshot(owner, slot, rows.get(slot), primary));
+        }
+        return List.copyOf(out);
     }
 
     /** Все владельцы записей (диагностика, админские команды). */
@@ -287,36 +360,54 @@ public final class GeneratorStore {
         return data.players.size();
     }
 
-    private static Entry snapshot(UUID owner, Row row) {
-        return new Entry(owner, row.coreItem, row.world, row.x, row.y, row.z,
+    private static Entry snapshot(UUID owner, int slot, Row row, Row primary) {
+        return new Entry(owner, slot, row.coreItem, row.world, row.x, row.y, row.z,
                 row.tier, row.modules, row.bunker, row.lastCalcMillis,
-                row.rebirths, row.fuelUsedMs, row.money, row.payoutDay);
+                primary.rebirths, row.fuelUsedMs, primary.money, primary.payoutDay);
     }
 
     /**
-     * Устанавливает ядро: бинд на предмет и location, метка расчёта. Первая
-     * установка создаёт запись с тиром 1; повторная без снятия — отказ
-     * (один активный генератор на игрока, п.31, §3).
+     * Устанавливает ядро в первый свободный слот (или создаёт строку, пока
+     * слотов меньше {@code maxSlots}): бинд на предмет и location, метка
+     * расчёта. Первая установка создаёт запись с тиром 1. Повторная установка
+     * того же ядра без снятия — ошибка анти-дюпа (п.31, §3, §7).
      */
-    public synchronized boolean install(UUID owner, UUID coreItem, String world,
-                                        int x, int y, int z, long now) {
+    public synchronized InstallResult install(UUID owner, UUID coreItem, String world,
+                                              int x, int y, int z, long now, int maxSlots) {
         writable();
         if (owner == null || coreItem == null || world == null || !world.matches(WORLD_PATTERN)) {
             throw new IllegalArgumentException("generator install arguments");
         }
-        Row row = data.players.get(owner);
-        if (row != null && row.coreItem != null) {
-            return false;
+        if (maxSlots < 1) {
+            throw new IllegalArgumentException("generator max slots: " + maxSlots);
         }
-        for (Row other : data.players.values()) {
-            if (coreItem.equals(other.coreItem)) {
-                throw new IllegalArgumentException("generator duplicated core");
+        for (List<Row> otherRows : data.players.values()) {
+            for (Row other : otherRows) {
+                if (coreItem.equals(other.coreItem)) {
+                    throw new IllegalArgumentException("generator duplicated core");
+                }
             }
         }
-        if (row == null) {
-            row = new Row();
-            data.players.put(owner, row);
+        List<Row> rows = data.players.get(owner);
+        if (rows == null) {
+            rows = new ArrayList<>();
+            data.players.put(owner, rows);
         }
+        int slot = -1;
+        for (int i = 0; i < rows.size(); i++) {
+            if (rows.get(i).coreItem == null) {
+                slot = i;
+                break;
+            }
+        }
+        if (slot < 0) {
+            if (rows.size() >= maxSlots) {
+                return new InstallResult(InstallStatus.SLOTS_FULL, -1);
+            }
+            rows.add(new Row());
+            slot = rows.size() - 1;
+        }
+        Row row = rows.get(slot);
         row.coreItem = coreItem;
         row.world = world;
         row.x = x;
@@ -324,18 +415,18 @@ public final class GeneratorStore {
         row.z = z;
         row.lastCalcMillis = Math.max(0L, now);
         dirty = true;
-        return true;
+        return new InstallResult(InstallStatus.OK, slot);
     }
 
     /**
-     * Снимает ядро: бинд и location снимаются, бункер выдаётся игроку и
+     * Снимает ядро слота: бинд и location снимаются, бункер выдаётся игроку и
      * обнуляется. Тир и модули сохраняются (п.31, §3, §8).
      *
      * @return сколько единиц бункера выдать игроку; {@code -1} — снимать нечего
      */
-    public synchronized long remove(UUID owner, long now) {
+    public synchronized long remove(UUID owner, int slot, long now) {
         writable();
-        Row row = row(owner);
+        Row row = row(owner, slot);
         if (row == null || row.coreItem == null) {
             return -1L;
         }
@@ -349,9 +440,9 @@ public final class GeneratorStore {
     }
 
     /** Покупка/сброс тира; допустимы значения 1…{@value #MAX_TIER}. */
-    public synchronized void setTier(UUID owner, int tier) {
+    public synchronized void setTier(UUID owner, int slot, int tier) {
         writable();
-        Row row = row(owner);
+        Row row = row(owner, slot);
         if (row == null) {
             throw new IllegalStateException("generator missing row");
         }
@@ -365,9 +456,9 @@ public final class GeneratorStore {
     }
 
     /** Уровень модуля: скорость/ёмкость/удача 0…5, «Чанк» 0…1. */
-    public synchronized void setModuleLevel(UUID owner, String module, int level) {
+    public synchronized void setModuleLevel(UUID owner, int slot, String module, int level) {
         writable();
-        Row row = row(owner);
+        Row row = row(owner, slot);
         if (row == null) {
             throw new IllegalStateException("generator missing row");
         }
@@ -385,18 +476,18 @@ public final class GeneratorStore {
     }
 
     /**
-     * Начисляет продукцию в бункер (онлайн-цикл или офлайн-накопление) и
-     * обновляет метку последнего расчёта. Переполнение не копится: потолок
+     * Начисляет продукцию в бункер генератора (онлайн-цикл или офлайн-накопление)
+     * и обновляет метку последнего расчёта. Переполнение не копится: потолок
      * бункера считает вызывающая логика (п.31, §6).
      *
      * @return новый объём бункера
      */
-    public synchronized long addBunker(UUID owner, long units, long now) {
+    public synchronized long addBunker(UUID owner, int slot, long units, long now) {
         writable();
         if (units < 0) {
             throw new IllegalArgumentException("generator bunker units: " + units);
         }
-        Row row = row(owner);
+        Row row = row(owner, slot);
         if (row == null) {
             throw new IllegalStateException("generator missing row");
         }
@@ -406,13 +497,13 @@ public final class GeneratorStore {
         return row.bunker;
     }
 
-    /** Забирает продукцию из бункера («забрать всё»). */
-    public synchronized long withdrawBunker(UUID owner, long amount) {
+    /** Забирает продукцию из бункера генератора («забрать всё»). */
+    public synchronized long withdrawBunker(UUID owner, int slot, long amount) {
         writable();
         if (amount < 0) {
             throw new IllegalArgumentException("generator withdraw: " + amount);
         }
-        Row row = row(owner);
+        Row row = row(owner, slot);
         if (row == null || amount == 0) {
             return 0L;
         }
@@ -425,35 +516,39 @@ public final class GeneratorStore {
     }
 
     /**
-     * Перерождение: бункер выдаётся игроку, тир сбрасывается к 1, модули к
-     * нулю; ядро и бинд остаются (п.31, §8).
+     * Перерождение: бункеры всех генераторов выдаются игроку, тиры
+     * сбрасываются к 1, модули к нулю; ядра и бинды остаются (п.31, §8).
      *
-     * @return сколько единиц бункера выдать игроку; {@code -1} — записи нет
+     * @return сколько единиц бункера выдать игроку всего; {@code -1} — записей нет
      */
     public synchronized long rebirth(UUID owner) {
         writable();
-        Row row = row(owner);
-        if (row == null) {
+        List<Row> rows = rows(owner);
+        if (rows == null) {
             return -1L;
         }
-        long handed = row.bunker;
-        row.bunker = 0L;
-        row.tier = 1;
-        row.modules.clear();
-        if (row.rebirths < Integer.MAX_VALUE) {
-            row.rebirths++;
+        long handed = 0L;
+        for (Row row : rows) {
+            handed += row.bunker;
+            row.bunker = 0L;
+            row.tier = 1;
+            row.modules.clear();
+        }
+        Row primary = rows.get(0);
+        if (primary.rebirths < Integer.MAX_VALUE) {
+            primary.rebirths++;
         }
         dirty = true;
         return handed;
     }
 
-    /** Расход топлива текущего ведра, миллисекунд работы (сбрасывается при замене лавы). */
-    public synchronized void setFuelUsedMs(UUID owner, long fuelUsedMs) {
+    /** Расход топлива текущего ведра генератора, миллисекунд работы (сбрасывается при замене лавы). */
+    public synchronized void setFuelUsedMs(UUID owner, int slot, long fuelUsedMs) {
         writable();
         if (fuelUsedMs < 0) {
             throw new IllegalArgumentException("generator fuel: " + fuelUsedMs);
         }
-        Row row = row(owner);
+        Row row = row(owner, slot);
         if (row == null) {
             throw new IllegalStateException("generator missing row");
         }
@@ -463,10 +558,10 @@ public final class GeneratorStore {
         }
     }
 
-    /** Приход/расход денег генератора (дельта может быть отрицательной — выплата). */
+    /** Приход/расход денег генератора (дельта может быть отрицательной — выплата); копилка общая на игрока. */
     public synchronized long addMoney(UUID owner, long delta) {
         writable();
-        Row row = row(owner);
+        Row row = row(owner, 0);
         if (row == null) {
             return -1L;
         }
@@ -487,7 +582,7 @@ public final class GeneratorStore {
         if (payoutDay < 0) {
             throw new IllegalArgumentException("generator payout day: " + payoutDay);
         }
-        Row row = row(owner);
+        Row row = row(owner, 0);
         if (row == null) {
             throw new IllegalStateException("generator missing row");
         }
@@ -506,7 +601,7 @@ public final class GeneratorStore {
         if (amount < 0 || day < 0) {
             throw new IllegalArgumentException("generator payout: " + amount + "/" + day);
         }
-        Row row = row(owner);
+        Row row = row(owner, 0);
         if (row == null || row.money < amount || row.payoutDay >= day) {
             return false;
         }
@@ -543,7 +638,7 @@ public final class GeneratorStore {
         }
         if (!SafeJsonWriter.write(file, json, logger, "[CHRDK_Generator]")) {
             // Диск не принял данные — остаёмся «грязными», иначе следующее
-            // автосохранение решит, что писать нечего, и прогресс потеряется.
+            // saveNow() сочтёт файл записанным и данные потеряются.
             dirty = true;
         }
     }

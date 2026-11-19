@@ -33,6 +33,10 @@ class ChargeInventoryBankOnlyTest {
                 "payment source of CHRDK_Generator must be whitelisted with its use permission");
         assertTrue(BankCharge.bankOnlySource("generator-upgrades"),
                 "upgrades burn bank money only; inventory tender must never apply");
+        assertEquals("chrdkgenerator.use", BankCharge.permission("generator-fuel"),
+                "auto-refuel of CHRDK_Generator pays with the same use permission");
+        assertTrue(BankCharge.bankOnlySource("generator-fuel"),
+                "auto-refuel burns bank money only; inventory tender must never apply");
         assertNull(BankCharge.permission("lottery"), "unknown sources stay blocked");
     }
 

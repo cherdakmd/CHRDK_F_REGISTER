@@ -44,16 +44,22 @@ public final class GeneratorWorldListener implements Listener {
     private record BlockKey(String world, int x, int y, int z) {
     }
 
+    /** Привязка блока ядра: владелец и слот генератора. */
+    private record CoreRef(UUID owner, int slot) {
+    }
+
     private final GeneratorPlugin plugin;
-    private final Map<BlockKey, UUID> coreAt = new LinkedHashMap<>();
+    private final Map<BlockKey, CoreRef> coreAt = new LinkedHashMap<>();
     private final Random random = new Random();
 
     public GeneratorWorldListener(GeneratorPlugin plugin) {
         this.plugin = plugin;
         for (UUID owner : plugin.store().owners()) {
-            GeneratorStore.Entry entry = plugin.store().entry(owner);
-            if (entry != null && entry.installed()) {
-                coreAt.put(new BlockKey(entry.world(), entry.x(), entry.y(), entry.z()), owner);
+            for (GeneratorStore.Entry entry : plugin.store().entries(owner)) {
+                if (entry.installed()) {
+                    coreAt.put(new BlockKey(entry.world(), entry.x(), entry.y(), entry.z()),
+                            new CoreRef(owner, entry.slot()));
+                }
             }
         }
     }
@@ -104,11 +110,6 @@ public final class GeneratorWorldListener implements Listener {
             plugin.messages().send(player, "place-no-id");
             return;
         }
-        GeneratorStore.Entry entry = plugin.store().entry(player.getUniqueId());
-        if (entry != null && entry.installed()) {
-            plugin.messages().send(player, "place-already-installed");
-            return;
-        }
         Block target = event.getClickedBlock().getRelative(event.getBlockFace());
         if (!target.isReplaceable()) {
             plugin.messages().send(player, "place-blocked");
@@ -122,21 +123,22 @@ public final class GeneratorWorldListener implements Listener {
             plugin.messages().send(player, "place-not-your-claim");
             return;
         }
-        boolean installed;
+        GeneratorStore.InstallResult installed;
         try {
             installed = plugin.store().install(player.getUniqueId(), coreId,
                     target.getWorld().getName(), target.getX(), target.getY(), target.getZ(),
-                    System.currentTimeMillis());
+                    System.currentTimeMillis(), plugin.maxSlots(player));
         } catch (IllegalArgumentException exception) {
             plugin.messages().send(player, "place-core-busy");
             return;
         }
-        if (!installed) {
-            plugin.messages().send(player, "place-already-installed");
+        if (installed.status() != GeneratorStore.InstallStatus.OK) {
+            plugin.messages().send(player, "place-slots-full",
+                    "slots", String.valueOf(plugin.maxSlots(player)));
             return;
         }
         target.setType(Material.LODESTONE, false);
-        coreAt.put(key(target), player.getUniqueId());
+        coreAt.put(key(target), new CoreRef(player.getUniqueId(), installed.slot()));
         player.getInventory().getItemInMainHand()
                 .setAmount(Math.max(0, player.getInventory().getItemInMainHand().getAmount() - 1));
         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 0.8f);
@@ -156,8 +158,8 @@ public final class GeneratorWorldListener implements Listener {
         if (block == null) {
             return;
         }
-        UUID owner = coreAt.get(key(block));
-        if (owner == null) {
+        CoreRef core = coreAt.get(key(block));
+        if (core == null) {
             return;
         }
         if (event.getItem() != null && plugin.coreItem().isCore(event.getItem())) {
@@ -165,32 +167,34 @@ public final class GeneratorWorldListener implements Listener {
         }
         event.setCancelled(true);
         Player player = event.getPlayer();
-        if (!owner.equals(player.getUniqueId())) {
-            plugin.messages().send(player, "core-foreign");
+        if (!core.owner().equals(player.getUniqueId())) {
+            var offline = Bukkit.getOfflinePlayer(core.owner());
+            plugin.messages().send(player, "core-foreign",
+                    "owner", offline.getName() == null ? "???" : offline.getName());
             return;
         }
         if (!player.hasPermission("chrdkgenerator.use")) {
             plugin.messages().send(player, "no-permission");
             return;
         }
-        plugin.gui().open(player);
+        plugin.gui().open(player, core.slot());
     }
 
     /** Ломают ядро: чужим — отказ, владелец снимает с выдачей бункера. */
     @EventHandler(ignoreCancelled = true)
     public void onBreak(BlockBreakEvent event) {
-        UUID owner = coreAt.get(key(event.getBlock()));
-        if (owner == null) {
+        CoreRef core = coreAt.get(key(event.getBlock()));
+        if (core == null) {
             return;
         }
         event.setCancelled(true);
         Player player = event.getPlayer();
-        if (!owner.equals(player.getUniqueId())) {
+        if (!core.owner().equals(player.getUniqueId())) {
             plugin.messages().send(player, "break-protected");
             return;
         }
-        GeneratorStore.Entry before = plugin.store().entry(owner);
-        long units = plugin.store().remove(owner, System.currentTimeMillis());
+        GeneratorStore.Entry before = plugin.store().entry(core.owner(), core.slot());
+        long units = plugin.store().remove(core.owner(), core.slot(), System.currentTimeMillis());
         removeCore(player, before, Math.max(0L, units));
         plugin.messages().send(player, "break-ok", "bunker", String.valueOf(Math.max(0L, units)));
     }
@@ -211,6 +215,7 @@ public final class GeneratorWorldListener implements Listener {
                 block.setType(Material.AIR, false);
             }
         }
+        plugin.holograms().remove(before);
         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 0.6f);
         GeneratorHandouts.giveCore(player, plugin.coreItem(), before.coreItem());
         GeneratorHandouts.giveBunker(player, plugin.config(), before, units, random);

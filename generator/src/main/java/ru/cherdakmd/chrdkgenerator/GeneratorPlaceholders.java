@@ -12,10 +12,13 @@ import org.jetbrains.annotations.Nullable;
  * секунду, в том числе асинхронно. Состояние камеры кэшируется тикером.</p>
  *
  * <ul>
- *   <li>{@code %chrdkgenerator_tier%} — тир 1…7, 0 — генератора нет;</li>
+ *   <li>{@code %chrdkgenerator_tier%} — тир 1…9, 0 — генератора нет;</li>
  *   <li>{@code %chrdkgenerator_fill%} — заполненность бункера, % (0…100);</li>
  *   <li>{@code %chrdkgenerator_rate%} — цикл производства, секунд;</li>
- *   <li>{@code %chrdkgenerator_status%} — состояние камеры текстом.</li>
+ *   <li>{@code %chrdkgenerator_status%} — состояние камеры текстом;</li>
+ *   <li>{@code %chrdkgenerator_tier_progress%} — прогресс до следующего тира, %
+ *       (доля копилки от цены шага; 100 на максимуме);</li>
+ *   <li>{@code %chrdkgenerator_eta%} — время до полного бункера («3ч 20м», «—»).</li>
  * </ul>
  */
 public final class GeneratorPlaceholders extends PlaceholderExpansion {
@@ -58,6 +61,8 @@ public final class GeneratorPlaceholders extends PlaceholderExpansion {
             case "fill" -> String.valueOf(GeneratorStats.fillPercent(entry, plugin.config()));
             case "rate" -> String.valueOf(GeneratorStats.cycleSeconds(entry, plugin.config()));
             case "status" -> status(entry);
+            case "tier_progress" -> String.valueOf(GeneratorStats.tierProgressPercent(entry, plugin.config()));
+            case "eta" -> GeneratorStats.etaText(entry, plugin.config());
             default -> null;
         };
     }

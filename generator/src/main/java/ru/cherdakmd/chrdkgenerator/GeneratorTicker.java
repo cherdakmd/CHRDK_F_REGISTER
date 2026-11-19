@@ -59,20 +59,24 @@ final class GeneratorTicker {
         long now = System.currentTimeMillis();
         long day = GeneratorPayouts.epochDay(now);
         for (UUID owner : plugin.store().owners()) {
-            GeneratorStore.Entry entry = plugin.store().entry(owner);
-            if (entry == null) {
+            List<GeneratorStore.Entry> entries = plugin.store().entries(owner);
+            if (entries.isEmpty()) {
                 continue;
             }
             try {
                 // Выплата денег — до производства: сумма дня детерминирована
                 // при рестарте (повтор ключа payout:<UUID>:<день> безопасен).
-                if (entry.money() > 0 && entry.payoutDay() < day) {
-                    tryPayout(owner, entry, day);
+                // Копилка общая на игрока, лимит — по лучшему тиру генераторов.
+                GeneratorStore.Entry primary = entries.get(0);
+                if (primary.money() > 0 && primary.payoutDay() < day) {
+                    tryPayout(owner, entries, day);
                 }
-                if (entry.installed()) {
-                    tickOne(owner, entry, now);
-                } else {
-                    plugin.publishState(owner, "state-carried");
+                for (GeneratorStore.Entry entry : entries) {
+                    if (entry.installed()) {
+                        tickOne(owner, entry, now);
+                    } else {
+                        plugin.publishState(owner, entry.slot(), "state-carried");
+                    }
                 }
             } catch (RuntimeException exception) {
                 plugin.getLogger().warning("[CHRDK_Generator] сбой цикла для " + owner
@@ -82,16 +86,17 @@ final class GeneratorTicker {
     }
 
     /** Идемпотентная выплата накопленных денег на /bal, раз в игровой день. */
-    private void tryPayout(UUID owner, GeneratorStore.Entry entry, long day) {
+    private void tryPayout(UUID owner, List<GeneratorStore.Entry> entries, long day) {
         Player player = Bukkit.getPlayer(owner);
         if (player == null || !player.isOnline()) {
             return;
         }
         GeneratorConfig config = plugin.config();
         int rankStep = plugin.coreApi() == null ? 0 : plugin.coreApi().rankLevel(player.getName());
+        int tier = entries.stream().mapToInt(GeneratorStore.Entry::tier).max().orElse(1);
         int cap = GeneratorMath.payoutDailyCap(config.payoutBase(), config.payoutPerTier(),
-                entry.tier(), config.payoutPerRankStep(), rankStep, config.payoutHardMax());
-        long amount = GeneratorPayouts.payAmount(entry.money(), cap);
+                tier, config.payoutPerRankStep(), rankStep, config.payoutHardMax());
+        long amount = GeneratorPayouts.payAmount(entries.get(0).money(), cap);
         if (amount <= 0) {
             return;
         }
@@ -105,7 +110,7 @@ final class GeneratorTicker {
         World world = Bukkit.getWorld(entry.world());
         if (world == null || !world.isChunkLoaded(entry.x() >> 4, entry.z() >> 4)) {
             // Чанк выгружен: время доберёт офлайн-расчёт при следующем входе.
-            plugin.publishState(owner, "state-unloaded");
+            plugin.publishState(owner, entry.slot(), "state-unloaded");
             return;
         }
         Block core = world.getBlockAt(entry.x(), entry.y(), entry.z());
@@ -114,10 +119,10 @@ final class GeneratorTicker {
         }
         List<GeneratorChamber.Cell> cells = GeneratorCells.scan(world, entry.x(), entry.y(), entry.z());
         GeneratorChamber.Result chamber = GeneratorChamber.scan(cells);
-        plugin.publishState(owner, GeneratorCells.stateKey(chamber.state()));
+        plugin.publishState(owner, entry.slot(), GeneratorCells.stateKey(chamber.state()));
         if (!chamber.working()) {
             // Простой сгорает: метка расчёта — сейчас, без начисления.
-            plugin.store().addBunker(owner, 0, now);
+            plugin.store().addBunker(owner, entry.slot(), 0, now);
             return;
         }
         GeneratorConfig config = plugin.config();
@@ -136,10 +141,14 @@ final class GeneratorTicker {
                 chunkModule, config.offlineEfficiency(),
                 config.offlineHours() * 3_600_000L, room);
         if (settle.units() > 0 || settle.advanceMillis() > 0) {
-            plugin.store().addBunker(owner, settle.units(), entry.lastCalcMillis() + settle.advanceMillis());
+            long bunkerLevel = plugin.store().addBunker(owner, entry.slot(), settle.units(),
+                    entry.lastCalcMillis() + settle.advanceMillis());
+            if (!plugin.autoSell().trySell(owner, entry.slot(), bunkerLevel)) {
+                plugin.notifier().onProduction(entry, bunkerLevel);
+            }
         }
         if (settle.units() > 0) {
-            // Деньги тиров 5–7: мелкие порции по шансу, удача множит кратность.
+            // Деньги тиров 5+: мелкие порции по шансу, удача множит кратность.
             GeneratorDrops.Money moneySpec = config.tier(entry.tier()).money();
             if (moneySpec != null) {
                 long money = GeneratorDrops.money(moneySpec, (int) settle.units(),
@@ -153,16 +162,22 @@ final class GeneratorTicker {
             long used = entry.fuelUsedMs() + settle.advanceMillis();
             long budget = (long) config.cyclesPerBucket() * (long) cycleMs;
             if (used >= budget) {
-                burnLava(world, entry, cells, chamber);
-                used = 0;
+                if (config.fuelAutoRefuel() && tryAutoRefuel(owner, entry)) {
+                    // Ведро куплено: лава остаётся на месте, счётчик начинает новое.
+                    used = 0;
+                } else {
+                    burnLava(world, entry, cells, chamber);
+                    used = 0;
+                }
             }
-            plugin.store().setFuelUsedMs(owner, used);
+            plugin.store().setFuelUsedMs(owner, entry.slot(), used);
         }
         Long last = lastFx.get(owner);
         if (last == null || now - last >= (long) cycleMs) {
             lastFx.put(owner, now);
             fx(world, entry, cells, chamber);
         }
+        plugin.holograms().update(owner, entry.slot());
     }
 
     /** Ведро лавы выгорело: ячейка прогорает, пока её не доливят. */
@@ -174,6 +189,26 @@ final class GeneratorTicker {
         Block lava = GeneratorCells.candidates(world, entry.x(), entry.y(), entry.z())
                 .get(chamber.lavaIndex());
         lava.setType(Material.AIR, false);
+    }
+
+    /**
+     * Автозакупка прогоревшего ведра лавы за деньги владельца (sink, только
+     * банк). Владелец не в игре или средств нет — отказ, лава прогорает.
+     */
+    private boolean tryAutoRefuel(UUID owner, GeneratorStore.Entry entry) {
+        Player player = Bukkit.getPlayer(owner);
+        if (player == null || !player.isOnline()) {
+            return false;
+        }
+        int price = plugin.config().fuelAutoRefuelPrice();
+        boolean ok = plugin.payments().perform(player, player, price,
+                "generator-fuel", "auto:" + entry.slot(), () -> true);
+        if (ok) {
+            plugin.messages().send(player, "fuel-auto-refueled", "price", String.valueOf(price));
+        } else {
+            plugin.messages().send(player, "fuel-auto-failed", "price", String.valueOf(price));
+        }
+        return ok;
     }
 
     /** Работа видна: пар и искры на стыке лавы и воды, басовый щелчок цикла. */

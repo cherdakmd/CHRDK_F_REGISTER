@@ -24,11 +24,39 @@ generator:
   # КПД офлайн-накопления (0.0–1.0). С модулем «Чанк» чанк грузится всегда.
   offline-efficiency: 0.5
 
+  # Радиус доступа к управлению генератором от ядра в блоках (1…64):
+  # окно /gen, снятие и улучшения работают на чанке ядра или в этом радиусе.
+  menu-range: 16
+
+  # Живое оповещение о полном бункере в чат: не чаще раза в N минут (0 — выключено).
+  # При входе сообщение о полном бункере приходит всегда.
+  bunker-notify-cooldown-minutes: 30
+
+  # Слоты генераторов: базовый один; ещё один слот открывается перерождением
+  # (rebirth-unlock-at перерождений), ещё один — платным рангом (ступень не
+  # ниже paid-rank-min-step). Ноль в пороге — слот выключен. Итого до 3.
+  slots:
+    rebirth-unlock-at: 1
+    paid-rank-min-step: 1
+
   # Топливо: расход лавы. Выключено — лава и вода только условие работы.
   fuel:
     enabled: false
     # Сколько циклов даёт одно ведро лавы при включённом топливе.
     cycles-per-bucket: 256
+    # Автозаправка: прогоревшее ведро покупается за деньги автоматически
+    # (владельцу нужен баланс и вход в игру). Выключено — лаву льют вручную.
+    auto-refuel: true
+    # Цена одного автозакупленного ведра (единицы денег, как у улучшений).
+    auto-refuel-price: 256
+
+  # Автопродажа: заполненный бункер продаётся сам — по текущим ценам магазина
+  # алмазов (CHRDK_DiamondShop); позиции вне каталога — по fallback-цене.
+  # Выключено — ручной забор кнопкой.
+  auto-sell:
+    enabled: true
+    # Цена предмета вне каталога магазина (сотые алмаза, minor).
+    fallback-price-per-item: 250
 
   # Дневной лимит выдачи денег (источник наград generator-payouts):
   # итог = base + tier × per-tier + ступень ранга × per-rank-step,
@@ -56,7 +84,7 @@ generator:
       B: COBBLESTONE
       C: DIAMOND
 
-  # Тиры производства (ровно 7): название в меню, единиц за цикл и таблица
+  # Тиры производства (ровно 9): название в меню, единиц за цикл и таблица
   # продукции — чем тир выше, тем больше ценностей и редкостей.
   tiers:
     - name: Исток
@@ -113,9 +141,34 @@ generator:
         - {material: HEART_OF_THE_SEA, weight: 1, rare: true}
         - {material: NETHER_STAR, weight: 1, rare: true}
         - {material: END_CRYSTAL, weight: 1, rare: true}
+    - name: Пульс
+      units-per-cycle: 5
+      money: {chance: 1.0, portion: 5}
+      drops:
+        - {material: NETHERITE_INGOT, weight: 3}
+        - {material: DIAMOND, weight: 3}
+        - {material: ANCIENT_DEBRIS, weight: 2}
+        - {material: BLAZE_ROD, weight: 2}
+        - {material: GHAST_TEAR, weight: 2}
+        - {material: NETHER_STAR, weight: 1, rare: true}
+        - {material: HEART_OF_THE_SEA, weight: 1, rare: true}
+        - {material: SHULKER_SHELL, weight: 1, rare: true}
+    - name: Резонанс
+      units-per-cycle: 6
+      money: {chance: 1.0, portion: 6}
+      drops:
+        # Дорогая вершина: сигнатурные редкости с редким весом под удачу.
+        - {material: NETHERITE_INGOT, weight: 3}
+        - {material: DIAMOND, weight: 3}
+        - {material: ANCIENT_DEBRIS, weight: 2}
+        - {material: ECHO_SHARD, weight: 2}
+        - {material: SHULKER_SHELL, weight: 2}
+        - {material: BEACON, weight: 1, rare: true}
+        - {material: TOTEM_OF_UNDYING, weight: 1, rare: true}
+        - {material: ELYTRA, weight: 1, rare: true}
 
   # Улучшения: деньги сжигаются (sink, только банк), ресурсы списываются
-  # из инвентаря. Тиры — 6 шагов (переход 1→2 … 6→7): деньги растут
+  # из инвентаря. Тиры — 8 шагов (переход 1→2 … 8→9): деньги растут
   # ступенями, ресурсы — ключевой материал открываемого тира.
   # Модули — 5 уровней: низкие стоят ресурсов, высшие — денег.
   upgrades:
@@ -126,6 +179,8 @@ generator:
       - {money: 120000, resources: [{material: DIAMOND, amount: 64}]}
       - {money: 250000, resources: [{material: NETHERITE_INGOT, amount: 16}]}
       - {money: 500000, resources: [{material: NETHER_STAR, amount: 4}]}
+      - {money: 750000, resources: [{material: NETHER_STAR, amount: 8}]}
+      - {money: 1000000, resources: [{material: NETHERITE_INGOT, amount: 32}]}
     modules:
       - {money: 0, resources: [{material: IRON_INGOT, amount: 32}]}
       - {money: 0, resources: [{material: IRON_INGOT, amount: 64}]}

@@ -18,8 +18,10 @@ messages:
     - "<gray>Меню генератора — клик по ядру.</gray>"
     - "<gray>Снятие: сломайте ядро.</gray>"
   craft-one-by-one: "<red>Ядро крафтится только по одному.</red>"
-  core-foreign: "<red>Это чужой генератор.</red>"
-  menu-too-far: "<red>Меню генератора открывается рядом с ядром: на его чанке или в 16 блоках.</red>"
+  core-foreign: "<red>Это генератор игрока %owner%.</red>"
+  place-slots-full: "<red>Все слоты генераторов заняты (доступно: %slots%): следующий открывается перерождением или платным рангом.</red>"
+  menu-too-far: "<red>Меню генератора открывается рядом с ядром: на его чанке или в %range% блоках.</red>"
+  command-too-far: "<red>Управлять генератором можно только рядом с ядром: на его чанке или в %range% блоках.</red>"
   place-no-id: "<red>У ядра нет идентификатора — оно не работает.</red>"
   place-already-installed: "<red>У вас уже стоит генератор.</red>"
   place-core-busy: "<red>Это ядро уже занято.</red>"
@@ -57,10 +59,12 @@ messages:
     - "<gray>ядро остаётся, бункер выдаётся. Бонус растёт до +50%.</gray>"
   menu-upgrade-tier: "<green>Улучшить тир"
   menu-upgrade-lore:
+    - "<gray>Эффект: %effect%</gray>"
     - "<gray>Цена: %cost%</gray>"
     - "<gray>ЛКМ — купить (деньги сжигаются).</gray>"
   menu-module: "<green>%module%: уровень %level%"
   menu-module-lore:
+    - "<gray>Эффект: %effect%</gray>"
     - "<gray>Цена следующего: %cost%</gray>"
     - "<gray>Потолок: %max%. ЛКМ — купить.</gray>"
   menu-chunk: "<green>Модуль «Чанк»"
@@ -72,6 +76,16 @@ messages:
     - "<gray>Ядро вернётся предметом, бункер выдастся.</gray>"
     - "<gray>ЛКМ дважды: подтверждение живёт 30 секунд.</gray>"
   menu-close: "<gray>Закрыть</gray>"
+
+  hologram-text:
+    - "<yellow>Генератор: тир %tier% — %tier_name%</yellow>"
+    - "<gray>Бункер: %bunker%/%capacity% (%fill%%)</gray>"
+    - "%state%"
+  bunker-full: "<yellow>Бункер генератора заполнен (%bunker%/%capacity%): заберите продукцию.</yellow>"
+  bunker-full-join: "<yellow>Пока вас не было, бункер генератора заполнился (%bunker%/%capacity%): заберите продукцию.</yellow>"
+  auto-sold: "<green>Продукция продана автоматически: %units% ед. на %money% ₽.</green>"
+  fuel-auto-refueled: "<green>Топливо закуплено автоматически: %price% ₽ за ведро лавы.</green>"
+  fuel-auto-failed: "<red>Автозаправка не удалась (нужно %price% ₽): лава прогорела.</red>"
 
   # --- снятие и выдачи ---
   take-none: "<yellow>Генератор не установлен — снимать нечего.</yellow>"

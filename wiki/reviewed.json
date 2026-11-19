@@ -1,103 +1,103 @@
 {
   "pages": {
     "about": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "4d387695faa2ef3056b77b88676cc245a4514b3c37d853c233bfdd7c54b0e63b",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "4c73a4f84a1a3c9f065c1d2b3b3cab52746add91ce2e56c02fb40a8d074b0edb",
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "0a89509531c8a3bceb7032a8cb53b93c4d60115a74a5fd40ad623f70fed0814a",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "facde3a299bb0786cc7b476b6987f631c0852fe7342e6627630b2474ee54b5e0",
       "text": "bd128e475ee8efae55c3d2d6c9616d5278600f2a8ff1aad7af5e6df3e0b3f5c3"
     },
     "anticheat": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "c19c54f74acbbe3f704af98db3564b1f03b2cec771f4c2954560830c350a507c",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "f50585a616f0ba9d60a52f15b949a6fad025216e9762f7166f836a15b4392ad7",
       "text": "51b63277043ce6c1160efb4e4df51b63a25f083191e5bbae1aeffc7207a997cc"
     },
     "artifacts": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "3bfa2b17aa4411c56e3397e031a8b06bd694c0853d7c7447218f41887c733fc8",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "4b272407c5d92af87bb7909c1b8901e8cbf883fcd4d893c0634f3ddff12be8c7",
       "text": "03a2e3b0e6a713611dcafb3b641f172aaf3a4ac0aff7efffd491cff818d63d0b"
     },
     "battlepass": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "41491abaabe0f82daed2a6d282286e57f036c14badc99102a0a8af6b61cbbfb6",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "48f8ca68830b56caae90156a328393c5ab859934d93c63a63312e8f003ede355",
       "text": "997df6e0a9311ea115c4fd3c192b2729034b10c68a4f41c57261ef4b704c5add"
     },
     "chat": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "4d387695faa2ef3056b77b88676cc245a4514b3c37d853c233bfdd7c54b0e63b",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "4c73a4f84a1a3c9f065c1d2b3b3cab52746add91ce2e56c02fb40a8d074b0edb",
       "text": "a51c51d20cfe94c553e80893422b000a579b87285b00cbceb452f29eb0773023"
     },
     "claims": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "2887cc9a01ee909611c2d65cb8e672031dbb5fee7a6da04712bc358b5ad7ff5f",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "2022dfdbba688ffbcd570dc7f529983bdf540f368470d0b68dec3c3c46b1ffac",
       "text": "50b80f02b9200ed8653d50c1bf802fd4de8d272a9bf1f46cf92618d743bed3cd"
     },
     "commands": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "bbd1800b42e652d4012befe47c98d4222ad20413dabae3ce0eb7bf0141d9b142",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "5329f4ace75d3735975d9faeba2133dad8f6bad888b59e3c94750745b92e571e",
       "text": "e2e379de307f1868030538d968283fee136defbdccd9c93d46f9d74d3ee8b04a"
     },
     "cosmetics": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "14a095af09387a4b27be589653a56e19d2d3038db7cde6381934ea7742994444",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "5236871860fc8aa0c2f436da0bff4a2b9f17701264036d3f734fba04a36ffc0e",
       "text": "50a9a056b0f984435fea5d8a4c255b262334ef0dde7ca94a75b71942bbe73811"
     },
     "dailies": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "23a6aa409ec25f3d4224cf218fdcfbfe257dddd7d1b6df8c6a3eb7d0da165f23",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "5c47ac310931894bb562a7b981fcf4c267fe5863f03aa868605492b5d31c7749",
       "text": "4d7683f5677c50dfe0488961891915b5c2dd6533191a213ee8fdb077ea817eb5"
     },
     "disasters": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "c091b88935b8124762acd157e703eb6215d443d2749a9f61dbdd8a1ed31123ca",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "d46617b377931a427f048211e79ac8d5bad94145363391e01c47be36aebdd047",
       "text": "121b1cc28a075ced29b6de8abec7dbc20bbb531a01441ddd5fdb836d066d0202"
     },
     "economy": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "6b02abbe41797e0b47493f5779d5de626d798dd10b98cf787dd6cec70c4eb830",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "dc1aef5fe4991f3fbe91108450274dd164eacd5a5065a2bc84c92fae37c4fec5",
       "text": "0532455c098ebf6e5d7d9ff103d31244752dd661b394d2538b02c02785dfe851"
     },
     "enchants": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "c23959ad49082343eda8551be85c45346a4e7a81782a4028b90ab21d80262aff",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "d999281d95af0e48f834c22bd7ff957ce9194fa498e9fc4408b9fcf704b961e1",
       "text": "867cb7afd20a592f2c8284cd779b9fddd1e521545a9aacb9ad60e4b28200fde5"
     },
     "faq": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "bbd1800b42e652d4012befe47c98d4222ad20413dabae3ce0eb7bf0141d9b142",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "5329f4ace75d3735975d9faeba2133dad8f6bad888b59e3c94750745b92e571e",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "generator": {
-      "reason": "Клик по ядру открывает меню; /gen работает только на чанке ядра или в 16 блоках — описано в шаге установки и разделе меню",
-      "sources": "2700cb8b20362b5efe7652e8228cfc9507f118acedded7e1ecd558e7b194203d",
-      "text": "422004a2f19d6c210873863a4ee380b984eb72210defc30e8ecaac6f35365f3b"
+      "reason": "страница обновлена под волны 1-4: слоты генераторов, тиры 8-9, радиус доступа, голограф, оповещения бункера, автозаправка и автопродажа, tier_progress/eta, эффекты в лоре",
+      "sources": "99901da355f41237535ac74d02bd6e2fe6135d2dc287f94fdec6e0394ecf679a",
+      "text": "7404dace2e62413caa49302a2680b9e2b25964fdeb977178ebf247330a606668"
     },
     "goals": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "00c565bc348443e51305befa3ce07a956a9e75fcc53125a9055c9b1dd3f22b8e",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "5f72b9fd10993a722ce937ce18e52e683d8b80c27e39e62aca987e7dd88b4775",
       "text": "615d89bba0ac116c220d571f530fcdab7d5ff46162ca7a7ecf24de441a7fb191"
     },
     "guilds": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "2887cc9a01ee909611c2d65cb8e672031dbb5fee7a6da04712bc358b5ad7ff5f",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "2022dfdbba688ffbcd570dc7f529983bdf540f368470d0b68dec3c3c46b1ffac",
       "text": "793a5d21e3e43d5b4c542ea34a3c4b80a11e957da7875e3111ae20d7da2c5623"
     },
     "honors": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "4d387695faa2ef3056b77b88676cc245a4514b3c37d853c233bfdd7c54b0e63b",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "4c73a4f84a1a3c9f065c1d2b3b3cab52746add91ce2e56c02fb40a8d074b0edb",
       "text": "17c878e1ab52ceb2a7c3361a7bef133c8bd1004a59641898f2c525f7c48fff8f"
     },
     "index": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "eff2a5ca1aaf5e8867dc0791c9996dd0edb5d1ed045beae5b899d3cd744d71ee",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "9b21fde1c6104bece2a053f6b3e2187a331f6886fac6a5b14e119e9a10ef2653",
       "text": "b2b180afd00144150fea5f232f2ef769caff392cf900f2ee18b0a9c492309425"
     },
     "menu": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "bbd1800b42e652d4012befe47c98d4222ad20413dabae3ce0eb7bf0141d9b142",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "5329f4ace75d3735975d9faeba2133dad8f6bad888b59e3c94750745b92e571e",
       "text": "e15957dfe1e03322c3eac3605586bbf5ed49a6bab2b8cb7664e2119000ef0d17"
     },
     "mobs": {
@@ -106,68 +106,68 @@
       "text": "187eac200aa4af9e5234ed07b868fae886b4ce2f85ebb218b43ebec87c221cee"
     },
     "moderation": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "4d387695faa2ef3056b77b88676cc245a4514b3c37d853c233bfdd7c54b0e63b",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "4c73a4f84a1a3c9f065c1d2b3b3cab52746add91ce2e56c02fb40a8d074b0edb",
       "text": "79580a49c09219f65539abace395b5f2469f91fc2f0ac9b3ecae109c4fa1ecb4"
     },
     "profile": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "a964a5d62e54ac566569eee9ecceef140f308dcff6c903f9647fc218cd44e03f",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "c0509b4ef2edaa51b4d00fce9a18e0f370c861ddfd9d4687753e10769b0611a1",
       "text": "e684bb56e03eab853c5d3536fab7d270a298b45cff8332fc28e837a41fa3f085"
     },
     "quests": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "22f4448e3c729935edfa20c77fe067ac9426accfb9e860dcff243e08f73d6ed5",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "efd6b4e777b8c9b4a4cb0b408f2b38eeb86d97d99513ecd490826a7b21c92f3b",
       "text": "48f52b93517c605386ee043308cb27e5b95c6d104bb6d12fa3e5bc9c4ebf9d5b"
     },
     "ranks": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "ac2d033aa1e283177040bce06a94e83d4e21b9c851313d2dbb22916f6b985aad",
-      "text": "f28ca14ca95b6e1ecdc550d0103362f364e1d3e79492b33260372a410254d913"
+      "reason": "добавлен перк платной ступени: место под третий генератор (с 10 ноября 2026)",
+      "sources": "60464a812318bae16010538796453022637ea984e00ccdeb02273f96ecd424e2",
+      "text": "ec28c8e939964a22db957334d04a6f8a016179b44f323f4c7fa7cac50e709a6e"
     },
     "shop": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "eff2a5ca1aaf5e8867dc0791c9996dd0edb5d1ed045beae5b899d3cd744d71ee",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "9b21fde1c6104bece2a053f6b3e2187a331f6886fac6a5b14e119e9a10ef2653",
       "text": "882a8635a22302ace2308ff10b95db85becae06894adf29e73c4c5eb03b00bf7"
     },
     "skills": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "91250ea03a8d68e51a58ab5c0fc4dbca2861a5e6d84fe2188d6588e2b1d2674e",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "dcec76f4e47d09e7162aa8e1e85c43e1691334f0188a44c231423fb97ebfc3b8",
       "text": "11b1364c86785a37a36d1f67f75926430f31a407dc6d4aa11c41dffa77ba2a72"
     },
     "social-link": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "6c04b8db3f8c9cfbbc9ad124649b233fade9a92539f6aee8e388470444693965",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "6241d260abcadedd86e365ac95b110aea6f327f824bcf01d26d4b92c470ea12f",
       "text": "f7a6d9f53d5db5774add224ab3c2003147a23099f52d220df3376a7f43c06221"
     },
     "start": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "787192d4f1f21932370da3847cce81fe1610306ca887fdec3779d815c639aa8d",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "55b49f6e2b92ed3786ccf77dacda4ca162ce1216805337fef2e50035351d3586",
       "text": "ed918be6a65bdc28666148d1dac07b0d14ef631bd20c2d50648694244822a460"
     },
     "starter-kit": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "3bfa2b17aa4411c56e3397e031a8b06bd694c0853d7c7447218f41887c733fc8",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "4b272407c5d92af87bb7909c1b8901e8cbf883fcd4d893c0634f3ddff12be8c7",
       "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
     },
     "teleports": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "787192d4f1f21932370da3847cce81fe1610306ca887fdec3779d815c639aa8d",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "55b49f6e2b92ed3786ccf77dacda4ca162ce1216805337fef2e50035351d3586",
       "text": "73594d9fd931d83d6a162ef3a56101980bf64d965c228670ee5e545b7112799a"
     },
     "titles": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "8b8ae15e547af025b0763b0f1bded1c28c8584d07e779b88fda06cbffca13b94",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "ad7771d7bd320bd1d4f0f50d58b5c90f41b2673c03a626a957d2fe5345e2d4f7",
       "text": "bcc217b388db006684a99c2af5c0747236878ffc8519043c0dc5660b66135827"
     },
     "updates": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "eff2a5ca1aaf5e8867dc0791c9996dd0edb5d1ed045beae5b899d3cd744d71ee",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "9b21fde1c6104bece2a053f6b3e2187a331f6886fac6a5b14e119e9a10ef2653",
       "text": "86d8fb7e52ba88ed0e3ba02254a6ac983a5903dd96d0e8cd1b347320788e0b45"
     },
     "vk": {
-      "reason": "Сверка после обновления Label/LabelsMenuService и API_VERSION 46: содержание страниц проверено, действующие модули описаны",
-      "sources": "6c04b8db3f8c9cfbbc9ad124649b233fade9a92539f6aee8e388470444693965",
+      "reason": "сверка после правок ядра (платёжный источник generator-fuel) и модуля генератора: текст страницы не затронут",
+      "sources": "6241d260abcadedd86e365ac95b110aea6f327f824bcf01d26d4b92c470ea12f",
       "text": "8dddc8fb2f91621b7957c6227e91feb18317b56c886564fa7c3d8671fe805240"
     }
   },
