@@ -48,6 +48,7 @@ public final class GeneratorConfig {
     private final int offlineHours;
     private final double offlineEfficiency;
     private final int menuRange;
+    private final int bunkerNotifyCooldownMinutes;
     private final int slotsRebirthUnlockAt;
     private final int slotsPaidRankMinStep;
     private final boolean fuelEnabled;
@@ -67,6 +68,7 @@ public final class GeneratorConfig {
 
     private GeneratorConfig(int cycleSeconds, int bunkerBase, int offlineHours,
                             double offlineEfficiency, int menuRange,
+                            int bunkerNotifyCooldownMinutes,
                             int slotsRebirthUnlockAt, int slotsPaidRankMinStep,
                             boolean fuelEnabled, int cyclesPerBucket,
                             double rebirthPercentPerRebirth, double rebirthDecay,
@@ -79,6 +81,7 @@ public final class GeneratorConfig {
         this.offlineHours = offlineHours;
         this.offlineEfficiency = offlineEfficiency;
         this.menuRange = menuRange;
+        this.bunkerNotifyCooldownMinutes = bunkerNotifyCooldownMinutes;
         this.slotsRebirthUnlockAt = slotsRebirthUnlockAt;
         this.slotsPaidRankMinStep = slotsPaidRankMinStep;
         this.fuelEnabled = fuelEnabled;
@@ -118,6 +121,11 @@ public final class GeneratorConfig {
     /** Радиус доступа к управлению генератором от ядра, блоков (чанк ядра доступен всегда). */
     public int menuRange() {
         return menuRange;
+    }
+
+    /** Кулдаун живого оповещения о полном бункере, минуты; 0 — выключено. */
+    public int bunkerNotifyCooldownMinutes() {
+        return bunkerNotifyCooldownMinutes;
     }
 
     /** Перерождений для второго слота генераторов; 0 — слот выключен. */
@@ -212,6 +220,10 @@ public final class GeneratorConfig {
         if (menuRange < 1 || menuRange > 64) {
             throw new IllegalArgumentException("generator.menu-range: ждём 1…64");
         }
+        int bunkerNotifyCooldownMinutes = root.getInt("bunker-notify-cooldown-minutes", 30);
+        if (bunkerNotifyCooldownMinutes < 0 || bunkerNotifyCooldownMinutes > 1440) {
+            throw new IllegalArgumentException("generator.bunker-notify-cooldown-minutes: ждём 0…1440");
+        }
         int slotsRebirthUnlockAt = root.getInt("slots.rebirth-unlock-at", 1);
         if (slotsRebirthUnlockAt < 0 || slotsRebirthUnlockAt > 1_000_000) {
             throw new IllegalArgumentException("generator.slots.rebirth-unlock-at: ждём 0…1000000");
@@ -244,7 +256,8 @@ public final class GeneratorConfig {
                 GeneratorStore.MAX_LEVEL);
         Cost chunkCost = parseCost(upgrades.get("chunk"), "upgrades.chunk");
         return new GeneratorConfig(cycleSeconds, bunkerBase, offlineHours,
-                offlineEfficiency, menuRange, slotsRebirthUnlockAt, slotsPaidRankMinStep,
+                offlineEfficiency, menuRange, bunkerNotifyCooldownMinutes,
+                slotsRebirthUnlockAt, slotsPaidRankMinStep,
                 fuelEnabled, cyclesPerBucket,
                 percentPerRebirth, decay, bonusCap,
                 payoutBase, payoutPerTier, payoutPerRankStep, payoutHardMax,

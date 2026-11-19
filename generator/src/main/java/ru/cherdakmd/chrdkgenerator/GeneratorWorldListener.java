@@ -215,6 +215,7 @@ public final class GeneratorWorldListener implements Listener {
                 block.setType(Material.AIR, false);
             }
         }
+        plugin.holograms().remove(before);
         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 0.6f);
         GeneratorHandouts.giveCore(player, plugin.coreItem(), before.coreItem());
         GeneratorHandouts.giveBunker(player, plugin.config(), before, units, random);

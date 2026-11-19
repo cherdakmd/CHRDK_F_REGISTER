@@ -141,8 +141,9 @@ final class GeneratorTicker {
                 chunkModule, config.offlineEfficiency(),
                 config.offlineHours() * 3_600_000L, room);
         if (settle.units() > 0 || settle.advanceMillis() > 0) {
-            plugin.store().addBunker(owner, entry.slot(), settle.units(),
+            long bunkerLevel = plugin.store().addBunker(owner, entry.slot(), settle.units(),
                     entry.lastCalcMillis() + settle.advanceMillis());
+            plugin.notifier().onProduction(entry, bunkerLevel);
         }
         if (settle.units() > 0) {
             // Деньги тиров 5+: мелкие порции по шансу, удача множит кратность.
@@ -169,6 +170,7 @@ final class GeneratorTicker {
             lastFx.put(owner, now);
             fx(world, entry, cells, chamber);
         }
+        plugin.holograms().update(owner, entry.slot());
     }
 
     /** Ведро лавы выгорело: ячейка прогорает, пока её не доливят. */

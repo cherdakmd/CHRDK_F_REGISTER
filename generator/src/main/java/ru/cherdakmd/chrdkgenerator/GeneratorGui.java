@@ -217,7 +217,17 @@ public final class GeneratorGui implements Listener {
         String cost = entry.tier() >= GeneratorConfig.TIERS
                 ? "—"
                 : GeneratorUpgrades.describe(GeneratorUpgrades.tierCost(plugin.config(), entry.tier() + 1));
-        return button(Material.LADDER, "menu-upgrade-tier", "menu-upgrade-lore", "cost", cost);
+        String effect;
+        if (entry.tier() >= GeneratorConfig.TIERS) {
+            effect = "максимальный тир";
+        } else {
+            GeneratorConfig.Tier current = plugin.config().tier(entry.tier());
+            GeneratorConfig.Tier next = plugin.config().tier(entry.tier() + 1);
+            effect = current.name() + " → " + next.name() + ": "
+                    + current.unitsPerCycle() + " → " + next.unitsPerCycle() + " ед./цикл";
+        }
+        return button(Material.LADDER, "menu-upgrade-tier", "menu-upgrade-lore",
+                "cost", cost, "effect", effect);
     }
 
     private ItemStack moduleItem(String name, GeneratorStore.Entry entry) {
@@ -225,6 +235,7 @@ public final class GeneratorGui implements Listener {
         String cost = level >= GeneratorStore.MAX_LEVEL
                 ? "—"
                 : GeneratorUpgrades.describe(GeneratorUpgrades.moduleCost(plugin.config(), level + 1));
+        String effect = moduleEffect(name, level);
         ItemStack item = new ItemStack(switch (name) {
             case "speed" -> Material.SUGAR;
             case "capacity" -> Material.BARREL;
@@ -236,9 +247,27 @@ public final class GeneratorGui implements Listener {
                 "level", String.valueOf(level))
                 .decoration(TextDecoration.ITALIC, false));
         meta.lore(lines("menu-module-lore",
-                "cost", cost, "max", String.valueOf(GeneratorStore.MAX_LEVEL)));
+                "cost", cost, "max", String.valueOf(GeneratorStore.MAX_LEVEL),
+                "effect", effect));
         item.setItemMeta(meta);
         return item;
+    }
+
+    /** Текущий и следующий эффект модуля для лора кнопки. */
+    private String moduleEffect(String name, int level) {
+        if (level >= GeneratorStore.MAX_LEVEL) {
+            return "максимальный уровень";
+        }
+        int next = level + 1;
+        return switch (name) {
+            case "speed" -> "цикл " + GeneratorMath.cycleSeconds(plugin.config().cycleSeconds(), level)
+                    + "с → " + GeneratorMath.cycleSeconds(plugin.config().cycleSeconds(), next) + "с";
+            case "capacity" -> "бункер "
+                    + GeneratorMath.bunkerCapacity(plugin.config().bunkerBase(), level) * plugin.config().offlineHours()
+                    + " → " + GeneratorMath.bunkerCapacity(plugin.config().bunkerBase(), next) * plugin.config().offlineHours()
+                    + " ед.";
+            default -> "вес редких +" + level * 10 + "% → +" + next * 10 + "%";
+        };
     }
 
     private ItemStack chunkItem(GeneratorStore.Entry entry) {

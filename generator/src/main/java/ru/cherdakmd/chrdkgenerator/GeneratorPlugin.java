@@ -40,6 +40,8 @@ public final class GeneratorPlugin extends JavaPlugin {
     private GeneratorWorldListener worldListener;
     private GeneratorGui gui;
     private GeneratorTake take;
+    private GeneratorHolograms holograms;
+    private GeneratorBunkerNotifier notifier;
     private GeneratorPlaceholders placeholders;
     private final java.util.Map<String, String> states = new java.util.concurrent.ConcurrentHashMap<>();
 
@@ -89,10 +91,13 @@ public final class GeneratorPlugin extends JavaPlugin {
         this.upgrades = new GeneratorUpgrades(this);
         this.take = new GeneratorTake(this);
         this.gui = new GeneratorGui(this);
+        this.holograms = new GeneratorHolograms(this);
+        this.notifier = new GeneratorBunkerNotifier(this);
         this.worldListener = new GeneratorWorldListener(this);
         registerCraft();
         Bukkit.getPluginManager().registerEvents(this.worldListener, this);
         Bukkit.getPluginManager().registerEvents(this.gui, this);
+        Bukkit.getPluginManager().registerEvents(this.notifier, this);
         Bukkit.getPluginManager().registerEvents(new GeneratorRebirthListener(this), this);
         PluginCommand command = getCommand("generator");
         if (command != null) {
@@ -283,6 +288,14 @@ public final class GeneratorPlugin extends JavaPlugin {
 
     public GeneratorTake take() {
         return take;
+    }
+
+    public GeneratorHolograms holograms() {
+        return holograms;
+    }
+
+    public GeneratorBunkerNotifier notifier() {
+        return notifier;
     }
 
     /** Кэш состояния камеры: тикер пишет, меню и PAPI читают без чтений мира. */
