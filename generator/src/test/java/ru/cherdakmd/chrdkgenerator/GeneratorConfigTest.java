@@ -37,6 +37,10 @@ class GeneratorConfigTest {
         assertEquals(1, config.slotsPaidRankMinStep());
         assertEquals(false, config.fuelEnabled());
         assertEquals(256, config.cyclesPerBucket());
+        assertEquals(true, config.fuelAutoRefuel());
+        assertEquals(256, config.fuelAutoRefuelPrice());
+        assertEquals(true, config.autoSellEnabled());
+        assertEquals(250, config.autoSellFallbackPrice());
         assertEquals(5.0, config.rebirthPercentPerRebirth());
         assertEquals(0.9, config.rebirthDecay());
         assertEquals(50.0, config.rebirthBonusCapPercent());

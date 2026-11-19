@@ -53,6 +53,10 @@ public final class GeneratorConfig {
     private final int slotsPaidRankMinStep;
     private final boolean fuelEnabled;
     private final int cyclesPerBucket;
+    private final boolean fuelAutoRefuel;
+    private final int fuelAutoRefuelPrice;
+    private final boolean autoSellEnabled;
+    private final int autoSellFallbackPrice;
     private final double rebirthPercentPerRebirth;
     private final double rebirthDecay;
     private final double rebirthBonusCapPercent;
@@ -71,6 +75,8 @@ public final class GeneratorConfig {
                             int bunkerNotifyCooldownMinutes,
                             int slotsRebirthUnlockAt, int slotsPaidRankMinStep,
                             boolean fuelEnabled, int cyclesPerBucket,
+                            boolean fuelAutoRefuel, int fuelAutoRefuelPrice,
+                            boolean autoSellEnabled, int autoSellFallbackPrice,
                             double rebirthPercentPerRebirth, double rebirthDecay,
                             double rebirthBonusCapPercent,
                             int payoutBase, int payoutPerTier, int payoutPerRankStep, int payoutHardMax,
@@ -86,6 +92,10 @@ public final class GeneratorConfig {
         this.slotsPaidRankMinStep = slotsPaidRankMinStep;
         this.fuelEnabled = fuelEnabled;
         this.cyclesPerBucket = cyclesPerBucket;
+        this.fuelAutoRefuel = fuelAutoRefuel;
+        this.fuelAutoRefuelPrice = fuelAutoRefuelPrice;
+        this.autoSellEnabled = autoSellEnabled;
+        this.autoSellFallbackPrice = autoSellFallbackPrice;
         this.rebirthPercentPerRebirth = rebirthPercentPerRebirth;
         this.rebirthDecay = rebirthDecay;
         this.rebirthBonusCapPercent = rebirthBonusCapPercent;
@@ -144,6 +154,26 @@ public final class GeneratorConfig {
 
     public int cyclesPerBucket() {
         return cyclesPerBucket;
+    }
+
+    /** Автозакупка прогоревшего ведра лавы за деньги (при включённом топливе). */
+    public boolean fuelAutoRefuel() {
+        return fuelAutoRefuel;
+    }
+
+    /** Цена автозакупленного ведра лавы, единицы денег. */
+    public int fuelAutoRefuelPrice() {
+        return fuelAutoRefuelPrice;
+    }
+
+    /** Автопродажа заполненного бункера по ценам магазина. */
+    public boolean autoSellEnabled() {
+        return autoSellEnabled;
+    }
+
+    /** Fallback-цена предмета вне каталога магазина при автопродаже, minor. */
+    public int autoSellFallbackPrice() {
+        return autoSellFallbackPrice;
     }
 
     public double rebirthPercentPerRebirth() {
@@ -234,6 +264,16 @@ public final class GeneratorConfig {
         }
         boolean fuelEnabled = root.getBoolean("fuel.enabled", false);
         int cyclesPerBucket = positive(root, "fuel.cycles-per-bucket");
+        boolean fuelAutoRefuel = root.getBoolean("fuel.auto-refuel", true);
+        int fuelAutoRefuelPrice = root.getInt("fuel.auto-refuel-price", 256);
+        if (fuelAutoRefuelPrice <= 0 || fuelAutoRefuelPrice > 1_000_000) {
+            throw new IllegalArgumentException("generator.fuel.auto-refuel-price: ждём 1…1000000");
+        }
+        boolean autoSellEnabled = root.getBoolean("auto-sell.enabled", true);
+        int autoSellFallbackPrice = root.getInt("auto-sell.fallback-price-per-item", 250);
+        if (autoSellFallbackPrice < 0 || autoSellFallbackPrice > 1_000_000) {
+            throw new IllegalArgumentException("generator.auto-sell.fallback-price-per-item: ждём 0…1000000");
+        }
         double percentPerRebirth = fraction(root, "rebirth-percent-per-rebirth", 0, Double.MAX_VALUE);
         double decay = fraction(root, "rebirth-decay", 0, 1);
         double bonusCap = fraction(root, "rebirth-bonus-cap-percent", 0, Double.MAX_VALUE);
@@ -258,7 +298,8 @@ public final class GeneratorConfig {
         return new GeneratorConfig(cycleSeconds, bunkerBase, offlineHours,
                 offlineEfficiency, menuRange, bunkerNotifyCooldownMinutes,
                 slotsRebirthUnlockAt, slotsPaidRankMinStep,
-                fuelEnabled, cyclesPerBucket,
+                fuelEnabled, cyclesPerBucket, fuelAutoRefuel, fuelAutoRefuelPrice,
+                autoSellEnabled, autoSellFallbackPrice,
                 percentPerRebirth, decay, bonusCap,
                 payoutBase, payoutPerTier, payoutPerRankStep, payoutHardMax,
                 craft, tiers, tierCosts, moduleCosts, chunkCost);

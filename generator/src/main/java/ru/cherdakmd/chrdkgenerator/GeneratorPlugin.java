@@ -42,6 +42,7 @@ public final class GeneratorPlugin extends JavaPlugin {
     private GeneratorTake take;
     private GeneratorHolograms holograms;
     private GeneratorBunkerNotifier notifier;
+    private GeneratorAutoSell autoSell;
     private GeneratorPlaceholders placeholders;
     private final java.util.Map<String, String> states = new java.util.concurrent.ConcurrentHashMap<>();
 
@@ -93,6 +94,7 @@ public final class GeneratorPlugin extends JavaPlugin {
         this.gui = new GeneratorGui(this);
         this.holograms = new GeneratorHolograms(this);
         this.notifier = new GeneratorBunkerNotifier(this);
+        this.autoSell = new GeneratorAutoSell(this);
         this.worldListener = new GeneratorWorldListener(this);
         registerCraft();
         Bukkit.getPluginManager().registerEvents(this.worldListener, this);
@@ -296,6 +298,10 @@ public final class GeneratorPlugin extends JavaPlugin {
 
     public GeneratorBunkerNotifier notifier() {
         return notifier;
+    }
+
+    public GeneratorAutoSell autoSell() {
+        return autoSell;
     }
 
     /** Кэш состояния камеры: тикер пишет, меню и PAPI читают без чтений мира. */

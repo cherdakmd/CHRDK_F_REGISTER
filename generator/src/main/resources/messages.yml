@@ -83,6 +83,9 @@ messages:
     - "%state%"
   bunker-full: "<yellow>Бункер генератора заполнен (%bunker%/%capacity%): заберите продукцию.</yellow>"
   bunker-full-join: "<yellow>Пока вас не было, бункер генератора заполнился (%bunker%/%capacity%): заберите продукцию.</yellow>"
+  auto-sold: "<green>Продукция продана автоматически: %units% ед. на %money% ₽.</green>"
+  fuel-auto-refueled: "<green>Топливо закуплено автоматически: %price% ₽ за ведро лавы.</green>"
+  fuel-auto-failed: "<red>Автозаправка не удалась (нужно %price% ₽): лава прогорела.</red>"
 
   # --- снятие и выдачи ---
   take-none: "<yellow>Генератор не установлен — снимать нечего.</yellow>"

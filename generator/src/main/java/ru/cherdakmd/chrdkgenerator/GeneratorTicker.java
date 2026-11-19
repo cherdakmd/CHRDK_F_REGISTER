@@ -143,7 +143,9 @@ final class GeneratorTicker {
         if (settle.units() > 0 || settle.advanceMillis() > 0) {
             long bunkerLevel = plugin.store().addBunker(owner, entry.slot(), settle.units(),
                     entry.lastCalcMillis() + settle.advanceMillis());
-            plugin.notifier().onProduction(entry, bunkerLevel);
+            if (!plugin.autoSell().trySell(owner, entry.slot(), bunkerLevel)) {
+                plugin.notifier().onProduction(entry, bunkerLevel);
+            }
         }
         if (settle.units() > 0) {
             // Деньги тиров 5+: мелкие порции по шансу, удача множит кратность.
@@ -160,8 +162,13 @@ final class GeneratorTicker {
             long used = entry.fuelUsedMs() + settle.advanceMillis();
             long budget = (long) config.cyclesPerBucket() * (long) cycleMs;
             if (used >= budget) {
-                burnLava(world, entry, cells, chamber);
-                used = 0;
+                if (config.fuelAutoRefuel() && tryAutoRefuel(owner, entry)) {
+                    // Ведро куплено: лава остаётся на месте, счётчик начинает новое.
+                    used = 0;
+                } else {
+                    burnLava(world, entry, cells, chamber);
+                    used = 0;
+                }
             }
             plugin.store().setFuelUsedMs(owner, entry.slot(), used);
         }
@@ -182,6 +189,26 @@ final class GeneratorTicker {
         Block lava = GeneratorCells.candidates(world, entry.x(), entry.y(), entry.z())
                 .get(chamber.lavaIndex());
         lava.setType(Material.AIR, false);
+    }
+
+    /**
+     * Автозакупка прогоревшего ведра лавы за деньги владельца (sink, только
+     * банк). Владелец не в игре или средств нет — отказ, лава прогорает.
+     */
+    private boolean tryAutoRefuel(UUID owner, GeneratorStore.Entry entry) {
+        Player player = Bukkit.getPlayer(owner);
+        if (player == null || !player.isOnline()) {
+            return false;
+        }
+        int price = plugin.config().fuelAutoRefuelPrice();
+        boolean ok = plugin.payments().perform(player, player, price,
+                "generator-fuel", "auto:" + entry.slot(), () -> true);
+        if (ok) {
+            plugin.messages().send(player, "fuel-auto-refueled", "price", String.valueOf(price));
+        } else {
+            plugin.messages().send(player, "fuel-auto-failed", "price", String.valueOf(price));
+        }
+        return ok;
     }
 
     /** Работа видна: пар и искры на стыке лавы и воды, басовый щелчок цикла. */

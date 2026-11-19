@@ -31,6 +31,8 @@ dependencies {
     compileOnly project(':')
     // Приваты CHRDK_Claims: установка ядра только в свой чанк (soft-dep).
     compileOnly project(':claims')
+    // Магазин алмазов CHRDK_DiamondShop: цены продажи для автопродажи продукции (soft-dep).
+    compileOnly project(':diamond-shop')
     compileOnly "com.google.code.gson:gson:2.11.0"
     // PlaceholderAPI — мягкая интеграция: в рантайме плагина может не быть.
     // CI: официальный GitHub release той же версии, проверенный prepare_papi.py (compileOnly, не упаковка).
@@ -42,6 +44,7 @@ dependencies {
     // Классы ядра нужно и тестам: хранилища пишут файлы через SafeJsonWriter.
     testImplementation project(':')
     testImplementation project(':claims')
+    testImplementation project(':diamond-shop')
     testImplementation "com.google.code.gson:gson:2.11.0"
     testImplementation "org.junit.jupiter:junit-jupiter:5.11.3"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
