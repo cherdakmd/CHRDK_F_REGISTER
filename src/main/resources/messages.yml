@@ -1268,6 +1268,8 @@ messages:
   "profile":
     "no-permission": "<red>Нет права chrdkregister.profile.</red>"
     "others-denied": "<red>Профили других игроков доступны с правом chrdkregister.profile.others.</red>"
+    "access-changed": "<red>Доступ к этой карточке изменился.</red>"
+    "stale-section": "<yellow>Карточка изменилась. Откройте профиль снова.</yellow>"
     "player-only": "<red>Из консоли укажите ник: /profile <ник>.</red>"
     "not-found": "<red>Игрок «%player%» не найден.</red>"
     "usage": "<yellow>/profile [ник]</yellow> <gray>— карточка, </gray><yellow>/profile chat [ник]</yellow> <gray>— текстом.</gray>"

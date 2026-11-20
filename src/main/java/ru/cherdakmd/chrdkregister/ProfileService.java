@@ -107,7 +107,8 @@ public final class ProfileService implements Listener {
         if (sender == null) {
             return false;
         }
-        if (!sender.hasPermission("chrdkregister.profile")) {
+        if (!sender.hasPermission("chrdkregister.profile")
+                || (sender instanceof Player player && accessManager.isBlocked(player))) {
             plugin.messages().send(sender, "profile.no-permission");
             return true;
         }
@@ -118,6 +119,13 @@ public final class ProfileService implements Listener {
         if (!target.self() && !sender.hasPermission("chrdkregister.profile.others")) {
             plugin.messages().send(sender, "profile.others-denied");
             return true;
+        }
+        if (sender instanceof Player player && !target.self()) {
+            Player online = Bukkit.getPlayer(target.id());
+            if (online != null && !player.canSee(online)) {
+                plugin.messages().send(sender, "profile.not-found", "player", target.name());
+                return true;
+            }
         }
         if (chat || !(sender instanceof Player)) {
             print(sender, target);
@@ -302,7 +310,8 @@ public final class ProfileService implements Listener {
 
     /** Подсказки {@code /profile [chat] [ник]}. */
     public List<String> complete(CommandSender sender, String[] args) {
-        if (args == null || args.length == 0) return List.of();
+        if (args == null || args.length == 0 || !sender.hasPermission("chrdkregister.profile")
+                || (sender instanceof Player player && accessManager.isBlocked(player))) return List.of();
         if (args.length >= 2 && args[0].equalsIgnoreCase("friend")) {
             if (args.length == 2) {
                 String prefix = args[1].toLowerCase(Locale.ROOT);
@@ -323,7 +332,7 @@ public final class ProfileService implements Listener {
         }
         if (args.length > 2) return List.of();
         if (args.length == 2) {
-            return args[0].equalsIgnoreCase("chat") ? names(args[1]) : List.of();
+            return args[0].equalsIgnoreCase("chat") ? names(sender, args[1]) : List.of();
         }
         String prefix = args[0] == null ? "" : args[0].toLowerCase(Locale.ROOT);
         List<String> out = new ArrayList<>();
@@ -332,15 +341,17 @@ public final class ProfileService implements Listener {
         }
         if ("social".startsWith(prefix)) out.add("social");
         if ("friend".startsWith(prefix)) out.add("friend");
-        out.addAll(names(args[0]));
+        out.addAll(names(sender, args[0]));
         return out;
     }
 
-    private static List<String> names(String rawPrefix) {
+    private static List<String> names(CommandSender sender, String rawPrefix) {
+        if (!sender.hasPermission("chrdkregister.profile") || !sender.hasPermission("chrdkregister.profile.others")) return List.of();
         String prefix = rawPrefix == null ? "" : rawPrefix.toLowerCase(Locale.ROOT);
         List<String> names = new ArrayList<>();
         for (Player online : Bukkit.getOnlinePlayers()) {
-            if (online.getName().toLowerCase(Locale.ROOT).startsWith(prefix)) {
+            if ((!(sender instanceof Player viewer) || viewer.canSee(online))
+                    && online.getName().toLowerCase(Locale.ROOT).startsWith(prefix)) {
                 names.add(online.getName());
             }
         }
@@ -661,18 +672,24 @@ public final class ProfileService implements Listener {
             player.closeInventory();
             return;
         }
+        Player currentTarget = Bukkit.getPlayer(holder.targetId);
+        if (!canOpenCard(!accessManager.isBlocked(player), player.hasPermission("chrdkregister.profile"),
+                holder.self, player.hasPermission("chrdkregister.profile.others"),
+                currentTarget == null || player.canSee(currentTarget))) {
+            player.closeInventory();
+            plugin.messages().send(player, "profile.access-changed");
+            return;
+        }
         if (slot == TO_CHAT_SLOT) {
             player.closeInventory();
             Target target = resolve(player, holder.targetName);
-            if (target != null) {
-                print(player, target);
-            }
+            if (target != null && holder.targetId.equals(target.id())) print(player, target);
             return;
         }
         if (slot == LABELS_SLOT) {
             // Кнопка есть только в своей карточке, но проверяем и здесь: клик
             // мог прийти из чужого меню, если холдер подменили.
-            if (holder.owner.equals(player.getUniqueId())
+            if (holder.self && holder.owner.equals(player.getUniqueId())
                     && player.hasPermission("chrdkregister.labels")) {
                 LabelsMenuService menu = plugin.labelsMenu();
                 if (menu != null) {
@@ -680,7 +697,9 @@ public final class ProfileService implements Listener {
                     // показываем меню следующим тиком, когда экран уже свободен.
                     player.closeInventory();
                     Bukkit.getScheduler().runTask(plugin, () -> {
-                        if (player.isOnline()) {
+                        if (player.isOnline() && !accessManager.isBlocked(player)
+                                && player.hasPermission("chrdkregister.profile")
+                                && player.hasPermission("chrdkregister.labels")) {
                             menu.open(player);
                         }
                     });
@@ -724,18 +743,26 @@ public final class ProfileService implements Listener {
         if (slot == REFRESH_SLOT) {
             String name = holder.targetName;
             Bukkit.getScheduler().runTask(plugin, () -> {
+                if (!player.isOnline() || player.getOpenInventory().getTopInventory().getHolder() != holder) return;
                 Target target = resolve(player, name);
-                if (target != null && player.isOnline()) {
-                    open(player, target);
-                }
+                if (target != null && holder.targetId.equals(target.id())) show(player, false, name);
             });
             return;
         }
         int index = sectionIndex(slot);
         if (index >= 0 && index < holder.sections.size()) {
-            // Чат за открытым меню не видно: сначала закрываем, потом печатаем.
+            Target target = resolve(player, holder.targetName);
+            ChrdkRegisterApi.ProfileSection selected = holder.sections.get(index);
+            ChrdkRegisterApi.ProfileSection fresh = target == null || !holder.targetId.equals(target.id())
+                    ? null : currentSection(selected, holder.sections, sections(target));
+            if (fresh == null) {
+                player.closeInventory();
+                plugin.messages().send(player, "profile.stale-section");
+                return;
+            }
+            // Печатаем актуальные данные, а не снимок меню, где ссылка могла быть удалена.
             player.closeInventory();
-            printSection(player, holder.sections.get(index));
+            printSection(player, fresh);
         }
     }
 
@@ -744,6 +771,25 @@ public final class ProfileService implements Listener {
         if (event.getView().getTopInventory().getHolder() instanceof Holder) {
             event.setCancelled(true);
         }
+    }
+
+    /** Доступ проверяется заново при каждом действии в уже открытом меню. */
+    static boolean canOpenCard(boolean authenticated, boolean profilePermission, boolean self,
+                               boolean othersPermission, boolean targetVisible) {
+        return authenticated && profilePermission && (self || (othersPermission && targetVisible));
+    }
+
+    /** Поиск только однозначной пары заголовок/иконка в обоих снимках. */
+    static ChrdkRegisterApi.ProfileSection currentSection(ChrdkRegisterApi.ProfileSection selected,
+            List<ChrdkRegisterApi.ProfileSection> original, List<ChrdkRegisterApi.ProfileSection> current) {
+        if (selected == null || original == null || current == null) return null;
+        var oldMatches = original.stream().filter(section -> sameSectionKind(selected, section)).toList();
+        var newMatches = current.stream().filter(section -> sameSectionKind(selected, section)).toList();
+        return oldMatches.size() == 1 && newMatches.size() == 1 ? newMatches.get(0) : null;
+    }
+
+    private static boolean sameSectionKind(ChrdkRegisterApi.ProfileSection a, ChrdkRegisterApi.ProfileSection b) {
+        return b != null && a.title().equals(b.title()) && a.icon() == b.icon();
     }
 
     static int sectionIndex(int slot) {

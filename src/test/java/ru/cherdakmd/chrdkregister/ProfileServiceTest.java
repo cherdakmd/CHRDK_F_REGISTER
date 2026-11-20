@@ -47,6 +47,30 @@ class ProfileServiceTest {
     }
 
     @Test
+    void openCardRequiresCurrentAccessAndVisibility() {
+        assertTrue(ProfileService.canOpenCard(true, true, true, false, false));
+        assertTrue(ProfileService.canOpenCard(true, true, false, true, true));
+        assertTrue(!ProfileService.canOpenCard(false, true, true, true, true));
+        assertTrue(!ProfileService.canOpenCard(true, false, true, true, true));
+        assertTrue(!ProfileService.canOpenCard(true, true, false, false, true));
+        assertTrue(!ProfileService.canOpenCard(true, true, false, true, false));
+    }
+
+    @Test
+    void sectionClickUsesFreshDataAndFailsClosedWhenRemovedOrAmbiguous() {
+        var old = new ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.ProfileSection(
+                "Публичные соцсети", org.bukkit.Material.WRITABLE_BOOK,
+                java.util.List.of(net.kyori.adventure.text.Component.text("старый адрес")));
+        var fresh = new ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.ProfileSection(
+                "Публичные соцсети", org.bukkit.Material.WRITABLE_BOOK,
+                java.util.List.of(net.kyori.adventure.text.Component.text("новый адрес")));
+        assertEquals(fresh, ProfileService.currentSection(old, java.util.List.of(old), java.util.List.of(fresh)));
+        org.junit.jupiter.api.Assertions.assertNull(ProfileService.currentSection(old, java.util.List.of(old), java.util.List.of()));
+        org.junit.jupiter.api.Assertions.assertNull(ProfileService.currentSection(old, java.util.List.of(old, fresh), java.util.List.of(fresh)));
+        org.junit.jupiter.api.Assertions.assertNull(ProfileService.currentSection(old, java.util.List.of(old), java.util.List.of(old, fresh)));
+    }
+
+    @Test
     void friendCommandIsRegisteredWithProfilePermission() {
         var descriptor = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(
                 java.nio.file.Path.of("src/main/resources/plugin.yml").toFile());
