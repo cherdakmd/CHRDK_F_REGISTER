@@ -68,6 +68,30 @@ class SkillStoreTest {
     }
 
     @Test
+    void buildSnapshotDistinguishesMissingAndIsImmutableAcrossChangesAndRestart() {
+        SkillStore store = new SkillStore(folder, LOGGER);
+        assertTrue(store.buildSnapshot(PLAYER).isEmpty());
+        store.addAttribute(PLAYER, PlayerAttribute.STRENGTH, 12);
+        store.setBranch(PLAYER, BuildBranch.PRIEST, 6);
+        SkillStore.BuildSnapshot snapshot = store.buildSnapshot(PLAYER).orElseThrow();
+        assertEquals(12, snapshot.attributes().get(PlayerAttribute.STRENGTH));
+        assertEquals(0, snapshot.attributes().get(PlayerAttribute.AGILITY));
+        assertEquals(6, snapshot.branches().get(BuildBranch.PRIEST));
+        assertEquals(0, snapshot.branches().get(BuildBranch.WARRIOR));
+        org.junit.jupiter.api.Assertions.assertThrows(UnsupportedOperationException.class,
+                () -> snapshot.attributes().put(PlayerAttribute.STRENGTH, 99));
+        store.addAttribute(PLAYER, PlayerAttribute.STRENGTH, 2);
+        assertEquals(12, snapshot.attributes().get(PlayerAttribute.STRENGTH));
+        store.flush();
+        SkillStore restored = new SkillStore(folder, LOGGER);
+        restored.load();
+        var restoredSnapshot = restored.buildSnapshot(PLAYER).orElseThrow();
+        assertEquals(14, restoredSnapshot.attributes().get(PlayerAttribute.STRENGTH));
+        assertEquals(6, restoredSnapshot.branches().get(BuildBranch.PRIEST));
+        assertTrue(restored.buildSnapshot("unknown").isEmpty());
+    }
+
+    @Test
     void branchesBonusAndPveSurviveRestart() {
         SkillStore store = new SkillStore(folder, LOGGER);
         assertTrue(store.setBranch(PLAYER, BuildBranch.WARRIOR, 3));

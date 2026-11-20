@@ -1298,6 +1298,8 @@ messages:
     "chat-footer": "<dark_gray>Разделов: %sections%</dark_gray>"
     "to-chat": "<gold>В чат</gold>"
     "to-chat-lore": "<gray>Показать весь профиль текстом</gray>"
+    "group-invite": "<green>Пригласить в группу</green>"
+    "group-invite-lore": "<gray>Отправить приглашение игроку</gray>"
     "refresh": "<yellow>Обновить</yellow>"
     "refresh-lore": "<gray>Пересобрать карточку</gray>"
     "close": "<red>Закрыть</red>"

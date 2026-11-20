@@ -11,6 +11,9 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -57,6 +60,8 @@ public final class ProfileService implements Listener {
     static final int TO_CHAT_SLOT = 45;
     /** 1.4.186: переход в меню «Оформление ника» — только в своей карточке. */
     static final int LABELS_SLOT = 47;
+    /** В чужой онлайн-карточке — приглашение в группу через модуль гильдий. */
+    static final int GROUP_INVITE_SLOT = 51;
     static final int REFRESH_SLOT = 49;
     static final int CLOSE_SLOT = 53;
 
@@ -68,6 +73,7 @@ public final class ProfileService implements Listener {
     private final ProfileRegistry registry;
     /** Личные переключатели надписей: раздел «Оформление ника» (1.4.186). */
     private LabelPreferences labelPreferences;
+    private final java.util.Map<UUID, Integer> lastProfileClickTick = new java.util.HashMap<>();
 
     public ProfileService(RegisterPlugin plugin, AccessManager accessManager, BankStore bank,
                           ProfileRegistry registry) {
@@ -112,6 +118,36 @@ public final class ProfileService implements Listener {
         }
         open((Player) sender, target);
         return true;
+    }
+
+    /** ПКМ пустой основной рукой: не перехватываем предметы и отменённые действия. */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onPlayerInteract(PlayerInteractEntityEvent event) {
+        if (event.getHand() != EquipmentSlot.HAND || !(event.getRightClicked() instanceof Player target)) return;
+        Player viewer = event.getPlayer();
+        if (viewer.getUniqueId().equals(target.getUniqueId()) || target.hasMetadata("NPC")
+                || viewer.hasMetadata("NPC") || !viewer.canSee(target)
+                || !viewer.getInventory().getItemInMainHand().getType().isAir()
+                || !viewer.getInventory().getItemInOffHand().getType().isAir()
+                || accessManager.isBlocked(viewer) || accessManager.isBlocked(target)
+                || !viewer.hasPermission("chrdkregister.profile")
+                || !viewer.hasPermission("chrdkregister.profile.others")) return;
+        int tick = Bukkit.getCurrentTick();
+        if (java.util.Objects.equals(lastProfileClickTick.put(viewer.getUniqueId(), tick), tick)) return;
+        UUID targetId = target.getUniqueId();
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            Player current = Bukkit.getPlayer(targetId);
+            if (event.isCancelled() || !viewer.isOnline() || current == null || !current.isOnline()
+                    || current.hasMetadata("NPC") || !viewer.canSee(current)
+                    || accessManager.isBlocked(viewer) || accessManager.isBlocked(current)
+                    || !viewer.getOpenInventory().getTopInventory().getType().equals(org.bukkit.event.inventory.InventoryType.CRAFTING)) return;
+            show(viewer, false, current.getName());
+        });
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        lastProfileClickTick.remove(event.getPlayer().getUniqueId());
     }
 
     /** Подсказки {@code /profile [chat] [ник]}. */
@@ -305,7 +341,7 @@ public final class ProfileService implements Listener {
 
     private void open(Player viewer, Target target) {
         List<ChrdkRegisterApi.ProfileSection> sections = sections(target);
-        Holder holder = new Holder(viewer.getUniqueId(), target.name(), sections);
+        Holder holder = new Holder(viewer.getUniqueId(), target.id(), target.name(), target.self(), sections);
         Inventory inventory = Bukkit.createInventory(holder, SIZE,
                 plugin.messages().get("profile.title", "player", target.name()));
         holder.inventory = inventory;
@@ -317,6 +353,11 @@ public final class ProfileService implements Listener {
                 "profile.to-chat", "profile.to-chat-lore"));
         if (target.self() && viewer.hasPermission("chrdkregister.labels")) {
             inventory.setItem(LABELS_SLOT, labelsButton());
+        }
+        if (!target.self() && target.online() && groupCommand() != null
+                && viewer.hasPermission("chrdkguilds.use")) {
+            inventory.setItem(GROUP_INVITE_SLOT, button(Material.LIME_BANNER,
+                    "profile.group-invite", "profile.group-invite-lore"));
         }
         inventory.setItem(REFRESH_SLOT, button(Material.SUNFLOWER,
                 "profile.refresh", "profile.refresh-lore"));
@@ -471,6 +512,23 @@ public final class ProfileService implements Listener {
             }
             return;
         }
+        if (slot == GROUP_INVITE_SLOT && !holder.self
+                && event.getView().getTopInventory().getItem(GROUP_INVITE_SLOT) != null) {
+            Player target = Bukkit.getPlayer(holder.targetId);
+            org.bukkit.command.PluginCommand command = groupCommand();
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (!player.isOnline() || target == null || !target.isOnline() || !player.canSee(target)
+                        || accessManager.isBlocked(player) || accessManager.isBlocked(target)
+                        || !player.hasPermission("chrdkregister.profile")
+                        || !player.hasPermission("chrdkregister.profile.others")
+                        || !player.hasPermission("chrdkguilds.use") || command == null
+                        || groupCommand() != command) return;
+                if (player.getOpenInventory().getTopInventory().getHolder() != holder) return;
+                player.closeInventory();
+                command.execute(player, "party", new String[]{"invite", target.getName()});
+            });
+            return;
+        }
         if (slot == REFRESH_SLOT) {
             String name = holder.targetName;
             Bukkit.getScheduler().runTask(plugin, () -> {
@@ -505,15 +563,26 @@ public final class ProfileService implements Listener {
         return -1;
     }
 
+    private org.bukkit.command.PluginCommand groupCommand() {
+        org.bukkit.plugin.Plugin guilds = Bukkit.getPluginManager().getPlugin("CHRDK_Guilds");
+        if (guilds == null || !guilds.isEnabled()) return null;
+        org.bukkit.command.PluginCommand command = Bukkit.getPluginCommand("chrdk_guilds:party");
+        return command != null && command.getPlugin() == guilds ? command : null;
+    }
+
     /** Кто открыл меню и чей профиль в нём показан. */
     static final class Holder implements InventoryHolder {
         private final UUID owner;
+        private final UUID targetId;
         private final String targetName;
+        private final boolean self;
         private final List<ChrdkRegisterApi.ProfileSection> sections;
         private Inventory inventory;
 
-        Holder(UUID owner, String targetName, List<ChrdkRegisterApi.ProfileSection> sections) {
+        Holder(UUID owner, UUID targetId, String targetName, boolean self, List<ChrdkRegisterApi.ProfileSection> sections) {
             this.owner = owner;
+            this.targetId = targetId;
+            this.self = self;
             this.targetName = targetName;
             this.sections = List.copyOf(sections);
         }

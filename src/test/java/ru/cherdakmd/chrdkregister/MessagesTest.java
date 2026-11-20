@@ -68,7 +68,7 @@ class MessagesTest {
             // 1.4.156: кнопки меню /profile — ключи передаются в ProfileService#button.
             "finance.award-status", // общий API-адаптер читает Messages вызывающего модуля
             "profile.to-chat", "profile.to-chat-lore", "profile.refresh",
-            "profile.refresh-lore", "profile.close");
+            "profile.refresh-lore", "profile.close", "profile.group-invite", "profile.group-invite-lore");
 
     private static final String RESOURCE_PATH = "src/main/resources/messages.yml";
 

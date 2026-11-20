@@ -36,21 +36,25 @@ final class GuildsProfile implements ChrdkRegisterApi.ProfileProvider {
         Messages messages = plugin.messages();
         Guild guild = plugin.service().guildOf(context.playerId());
         List<Component> lines = new ArrayList<>();
-        var sanction=plugin.store().sanction(context.playerId());
-        long now=System.currentTimeMillis();
-        lines.add(messages.get("discipline-status","count",sanction.violations(now)));
-        lines.add(messages.get("peace-debt-status","debt",sanction.debt()));
-        if(sanction.branded(now))lines.add(messages.get("discipline-brand-status","until",GuildPeaceController.time(sanction.brandUntil())));
+        if (context.self()) {
+            var sanction=plugin.store().sanction(context.playerId());
+            long now=System.currentTimeMillis();
+            lines.add(messages.get("discipline-status","count",sanction.violations(now)));
+            lines.add(messages.get("peace-debt-status","debt",sanction.debt()));
+            if(sanction.branded(now))lines.add(messages.get("discipline-brand-status","until",GuildPeaceController.time(sanction.brandUntil())));
+        }
         if (guild == null) {
             lines.add(messages.get("profile-none", "cost",
                     GuildMath.diamonds(plugin.config().creationCost())));
             lines.add(messages.get("profile-none-hint"));
             lines.add(messages.get("dues-new-clan"));
         } else {
-            lines.add(messages.get("dues-info","rate",guild.duesRate(),"reserve",guild.duesReserve()));
+            if (context.self()) {
+                lines.add(messages.get("dues-info","rate",guild.duesRate(),"reserve",guild.duesReserve()));
+                var term=guild.peaceTerm(context.playerId());
+                if(term!=null)lines.add(messages.get("peace-profile-term","paid",GuildPeaceController.time(term.paidUntil())));
+            }
             lines.add(messages.get("peace-profile-mode","mode",guild.mode().label(),"rate",GuildPeaceService.DAILY));
-            var term=guild.peaceTerm(context.playerId());
-            if(term!=null)lines.add(messages.get("peace-profile-term","paid",GuildPeaceController.time(term.paidUntil())));
             GuildRank rank = guild.rankOf(context.playerId());
             lines.add(messages.get("profile-name",
                     "name", Messages.trusted(plugin.styles().name(guild)),
@@ -61,9 +65,11 @@ final class GuildsProfile implements ChrdkRegisterApi.ProfileProvider {
             lines.add(messages.get("profile-members",
                     "count", String.valueOf(guild.size()),
                     "cap", String.valueOf(GuildMath.memberCap(guild.level()))));
-            lines.add(messages.get("profile-treasury",
-                    "amount", GuildMath.diamonds(guild.treasury()),
-                    "level", GuildMath.roman(guild.level())));
+            if (context.self()) {
+                lines.add(messages.get("profile-treasury",
+                        "amount", GuildMath.diamonds(guild.treasury()),
+                        "level", GuildMath.roman(guild.level())));
+            }
             GuildWar war = plugin.service().warOf(guild.id());
             if (war != null) {
                 Guild opponent = plugin.store().guild(war.opponentOf(guild.id()));

@@ -321,6 +321,29 @@ public final class SkillStore {
         dirty = true;
     }
 
+    /** Снимок сохранённого билда; отсутствие записи отличается от нулевого билда. */
+    public synchronized java.util.Optional<BuildSnapshot> buildSnapshot(String playerKey) {
+        PlayerData data = players.get(playerKey);
+        if (data == null) return java.util.Optional.empty();
+        Map<PlayerAttribute, Integer> attributes = new EnumMap<>(PlayerAttribute.class);
+        for (PlayerAttribute attribute : PlayerAttribute.values()) {
+            attributes.put(attribute, data.attribute(attribute));
+        }
+        Map<BuildBranch, Integer> branches = new EnumMap<>(BuildBranch.class);
+        for (BuildBranch branch : BuildBranch.values()) {
+            branches.put(branch, data.branch(branch));
+        }
+        return java.util.Optional.of(new BuildSnapshot(attributes, branches));
+    }
+
+    public record BuildSnapshot(Map<PlayerAttribute, Integer> attributes,
+                                Map<BuildBranch, Integer> branches) {
+        public BuildSnapshot {
+            attributes = Map.copyOf(attributes);
+            branches = Map.copyOf(branches);
+        }
+    }
+
     /** Вложенные очки атрибута; нет профиля — нули. */
     public synchronized int attribute(String playerKey, PlayerAttribute attribute) {
         PlayerData data = players.get(playerKey);
