@@ -9,10 +9,10 @@ guilds:
   menu-personal-lore: "<gray>Личная ступень: %level% · нажмите для /rank my</gray>"
   menu-personal-boundary: "<gray>Не даёт клану мест, должностей или прав на землю.</gray>"
   # ------------------------------- временные группы --------------------------
-  squad-help: "<aqua>Группа:</aqua> /guild squad invite ник · accept · decline · leave · info"
+  squad-help: "<aqua>Группа:</aqua> /party invite ник · accept · decline · leave · info"
   squad-invite-sent: "<green>Приглашение отправлено игроку %player% на 60 секунд.</green>"
-  squad-invite-received: "<aqua>%player% приглашает вас в группу.</aqua> <yellow>/guild squad accept</yellow> или <yellow>/guild squad decline</yellow> · 60 секунд."
-  squad-joined: "<green>Состав группы обновлён. /guild squad info</green>"
+  squad-invite-received: "<aqua>%player% приглашает вас в группу.</aqua> <yellow>/party accept</yellow> или <yellow>/party decline</yellow> · 60 секунд."
+  squad-joined: "<green>Состав группы обновлён. /party info</green>"
   squad-declined: "<gray>Приглашение отклонено.</gray>"
   squad-no-invite: "<red>Нет приглашения в группу.</red>"
   squad-invite-expired: "<red>Приглашение в группу истекло.</red>"

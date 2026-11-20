@@ -194,7 +194,7 @@ public final class GuildsPlugin extends JavaPlugin {
 
     private void registerCommands() {
         GuildsCommandHandler handler = new GuildsCommandHandler(this);
-        for (String name : new String[]{"guild", "gchat", "guildadmin"}) {
+        for (String name : new String[]{"guild", "party", "gchat", "guildadmin"}) {
             PluginCommand command = getCommand(name);
             if (command == null) {
                 getLogger().warning("Команда " + name + " не объявлена в plugin.yml — пропущена.");

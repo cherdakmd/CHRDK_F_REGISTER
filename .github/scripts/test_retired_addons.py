@@ -25,6 +25,23 @@ class RetiredAddonsGuardTest(unittest.TestCase):
     def test_current_repository_is_clean(self):
         self.assertEqual([], check(ROOT))
 
+    def test_new_group_command_is_narrowly_allowed(self):
+        for path in ("wiki/guilds.md", "guilds/src/main/resources/plugin.yml",
+                     "guilds/src/main/resources/messages.yml"):
+            with self.subTest(path=path):
+                with tempfile.TemporaryDirectory() as directory:
+                    root = Path(directory)
+                    file = root / path
+                    file.parent.mkdir(parents=True, exist_ok=True)
+                    file.write_text('Текущая команда /party invite', encoding='utf-8')
+                    self.assertEqual([], check(root))
+                    file.write_text('/party invite и /lottery', encoding='utf-8')
+                    self.assertTrue(check(root), "другие команды той же строки запрещены")
+                    file.write_text('/party invite CHRDK_Party', encoding='utf-8')
+                    self.assertTrue(check(root), "старый аддон остаётся запрещён")
+                    file.write_text('/old:party invite', encoding='utf-8')
+                    self.assertTrue(check(root), "namespaced-команды не входят в исключение")
+
     def test_every_retired_command_alias_and_namespace_is_rejected(self):
         for alias in ALIASES.split("|"):
             for prefix in ("", "custom_namespace:"):

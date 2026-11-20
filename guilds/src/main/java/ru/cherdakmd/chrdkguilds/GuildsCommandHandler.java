@@ -39,6 +39,14 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
         this.plugin = plugin;
     }
 
+    /** Оба маршрута используют единый обработчик и одинаковые проверки. */
+    static String[] partyArguments(String[] args) {
+        String[] routed = new String[args.length + 1];
+        routed[0] = "squad";
+        System.arraycopy(args, 0, routed, 1, args.length);
+        return routed;
+    }
+
     /** Общий маршрут GUI сохраняет все проверки авторизации, прав и режима. */
     static String canonicalSubcommand(String argument) {
         String key=argument.toLowerCase(Locale.ROOT);
@@ -59,6 +67,11 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
         }
         if (!plugin.config().enabled()) {
             plugin.messages().send(sender, "disabled");
+            return true;
+        }
+        if (command.getName().equalsIgnoreCase("party")) {
+            Player player = player(sender);
+            if (player != null) plugin.adventureGroups().command(player, partyArguments(args));
             return true;
         }
         if (command.getName().equalsIgnoreCase("gchat")) {
@@ -951,6 +964,12 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
             return List.of();
         }
         if (!sender.hasPermission("chrdkguilds.use") || !plugin.config().enabled()) {
+            return List.of();
+        }
+        if (command.getName().equalsIgnoreCase("party")) {
+            if (args.length == 1) return filter(List.of("invite", "accept", "decline", "leave", "info"), args[0]);
+            if (args.length == 2 && args[0].equalsIgnoreCase("invite"))
+                return filter(Bukkit.getOnlinePlayers().stream().filter(plugin::visible).map(Player::getName).toList(), args[1]);
             return List.of();
         }
         if (args.length >= 2 && args[0].equalsIgnoreCase("squad")) {
