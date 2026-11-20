@@ -26,6 +26,15 @@ final class SkillsBuildProfile implements ChrdkRegisterApi.ProfileProvider {
         if (context == null || context.playerId() == null || plugin.store() == null) return null;
         Messages messages = plugin.messages();
         List<Component> lines = new ArrayList<>();
+        if (plugin.skills() != null) {
+            plugin.store().progressSnapshot(context.playerId().toString()).ifPresent(snapshot -> {
+                ProgressRating.Result rating = ProgressRating.calculate(snapshot, plugin.skills().curve());
+                lines.add(messages.get("profile-rating", "score", rating.score()));
+                lines.add(messages.get("profile-rating-formula", "level", rating.totalLevel(),
+                        "rebirths", rating.rebirths(), "bonus", rating.bonusPoints()));
+                lines.add(messages.get("profile-rating-note"));
+            });
+        }
         plugin.store().buildSnapshot(context.playerId().toString()).ifPresent(build -> {
             lines.add(messages.get("profile-build-attributes"));
             for (PlayerAttribute attribute : PlayerAttribute.values()) {

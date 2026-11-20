@@ -33,6 +33,9 @@ messages:
   # -------------------------------- профиль ----------------------------------
   profile-title: "Навыки"
   profile-build-title: "Боевые показатели и билд"
+  profile-rating: "<gold>Рейтинг развития (прототип): </gold><white>%score%</white>"
+  profile-rating-formula: "<gray>Уровни %level% / 5 + перерождения %rebirths% × 20 + бонусные очки %bonus%</gray>"
+  profile-rating-note: "<dark_gray>Уровни делятся на 5 с округлением вниз. Экипировка и реальная эффективность в бою не учитываются.</dark_gray>"
   profile-build-attributes: "<gold>Вложенные очки атрибутов</gold>"
   profile-build-attribute: "<gray>%name%: </gray><white>%value%</white>"
   profile-build-branches: "<gold>Ветки билда</gold>"
