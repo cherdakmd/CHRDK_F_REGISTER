@@ -47,6 +47,16 @@ class ProfileServiceTest {
     }
 
     @Test
+    void friendButtonDoesNotCoverOtherSlots() {
+        int slot = ProfileService.FRIEND_INVITE_SLOT;
+        assertTrue(slot >= 0 && slot < ProfileService.SIZE);
+        for (int section : ProfileService.SECTION_SLOTS) assertTrue(slot != section);
+        assertTrue(slot != ProfileService.HEAD_SLOT && slot != ProfileService.LABELS_SLOT
+                && slot != ProfileService.TO_CHAT_SLOT && slot != ProfileService.REFRESH_SLOT
+                && slot != ProfileService.CLOSE_SLOT && slot != ProfileService.GROUP_INVITE_SLOT);
+    }
+
+    @Test
     void sectionSlotsAreInsideTheMenuAndUnique() {
         assertEquals(21, ProfileService.SECTION_SLOTS.length);
         boolean[] seen = new boolean[ProfileService.SIZE];

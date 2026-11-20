@@ -62,6 +62,7 @@ public final class ProfileService implements Listener {
     static final int LABELS_SLOT = 47;
     /** В чужой онлайн-карточке — приглашение в группу через модуль гильдий. */
     static final int GROUP_INVITE_SLOT = 51;
+    static final int FRIEND_INVITE_SLOT = 50;
     static final int REFRESH_SLOT = 49;
     static final int CLOSE_SLOT = 53;
 
@@ -72,6 +73,8 @@ public final class ProfileService implements Listener {
     private final BankStore bank;
     private final ProfileRegistry registry;
     private final PublicSocialLinks publicSocialLinks;
+    private final FriendStore friends;
+    private final FriendRequests friendRequests;
     /** Личные переключатели надписей: раздел «Оформление ника» (1.4.186). */
     private LabelPreferences labelPreferences;
     private final java.util.Map<UUID, Integer> lastProfileClickTick = new java.util.HashMap<>();
@@ -83,6 +86,8 @@ public final class ProfileService implements Listener {
         this.bank = bank;
         this.registry = registry;
         this.publicSocialLinks = new PublicSocialLinks(plugin.getDataFolder().toPath(), plugin.getLogger());
+        this.friends = new FriendStore(plugin.getDataFolder().toPath(), plugin.getLogger());
+        this.friendRequests = new FriendRequests(friends);
     }
 
     /** Подключает переключатели надписей (вызывается при включении ядра). */
@@ -150,6 +155,94 @@ public final class ProfileService implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         lastProfileClickTick.remove(event.getPlayer().getUniqueId());
+        friendRequests.quit(event.getPlayer().getUniqueId());
+    }
+
+    /** Команды друзей: запросы временные, дружба сохраняется только после согласия. */
+    public boolean friend(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            plugin.messages().send(sender, "profile.friend-player-only");
+            return true;
+        }
+        if (!player.hasPermission("chrdkregister.profile") || accessManager.isBlocked(player)) {
+            plugin.messages().send(player, "profile.no-permission");
+            return true;
+        }
+        if (!friends.available()) {
+            plugin.messages().send(player, "profile.friend-unavailable");
+            return true;
+        }
+        if (args.length >= 2 && args[1].equalsIgnoreCase("list") && args.length <= 3) {
+            int page = 1;
+            if (args.length == 3) {
+                try { page = Integer.parseInt(args[2]); } catch (NumberFormatException ignored) { page = 0; }
+            }
+            List<String> names = friends.friendsOf(player.getUniqueId()).stream()
+                    .map(id -> { String name = Bukkit.getOfflinePlayer(id).getName(); return name == null ? id.toString() : name; })
+                    .sorted(String.CASE_INSENSITIVE_ORDER).toList();
+            int pages = Math.max(1, (names.size() + 9) / 10);
+            if (page < 1 || page > pages) { plugin.messages().send(player, "profile.friend-usage"); return true; }
+            plugin.messages().send(player, "profile.friend-list", "page", page, "pages", pages,
+                    "names", names.isEmpty() ? "—" : String.join(", ", names.subList((page - 1) * 10, Math.min(page * 10, names.size()))));
+            return true;
+        }
+        if (args.length != 3) { plugin.messages().send(player, "profile.friend-usage"); return true; }
+        String action = args[1].toLowerCase(Locale.ROOT);
+        if (action.equals("remove")) {
+            Target target = resolve(player, args[2]);
+            if (target == null) return true;
+            FriendStore.Result result = friends.remove(player.getUniqueId(), target.id());
+            if (result == FriendStore.Result.OK) plugin.messages().send(player, "profile.friend-removed", "player", target.name());
+            else if (result == FriendStore.Result.NOT_FRIENDS) plugin.messages().send(player, "profile.friend-not-friends");
+            else plugin.messages().send(player, "profile.friend-unavailable");
+            return true;
+        }
+        if (!action.equals("invite") && !action.equals("accept") && !action.equals("decline")) {
+            plugin.messages().send(player, "profile.friend-usage"); return true;
+        }
+        Player other = Bukkit.getPlayerExact(args[2]);
+        if (other == null || !other.isOnline() || other.hasMetadata("NPC") || !player.canSee(other)
+                || !other.canSee(player) || accessManager.isBlocked(other)
+                || !other.hasPermission("chrdkregister.profile")) {
+            plugin.messages().send(player, "profile.friend-offline"); return true;
+        }
+        if (action.equals("invite")) inviteFriend(player, other);
+        else {
+            FriendRequests.Result result = action.equals("accept")
+                    ? friendRequests.accept(player.getUniqueId(), other.getUniqueId(), System.currentTimeMillis())
+                    : friendRequests.decline(player.getUniqueId(), other.getUniqueId(), System.currentTimeMillis());
+            if (result == FriendRequests.Result.OK) {
+                if (action.equals("accept")) {
+                    plugin.messages().send(player, "profile.friend-accepted", "player", other.getName());
+                    plugin.messages().send(other, "profile.friend-accepted", "player", player.getName());
+                } else {
+                    plugin.messages().send(player, "profile.friend-declined");
+                    plugin.messages().send(other, "profile.friend-declined-other", "player", player.getName());
+                }
+            } else friendError(player, result);
+        }
+        return true;
+    }
+
+    private void inviteFriend(Player player, Player target) {
+        FriendRequests.Result result = friendRequests.invite(player.getUniqueId(), target.getUniqueId(), System.currentTimeMillis());
+        if (result != FriendRequests.Result.OK) { friendError(player, result); return; }
+        plugin.messages().send(player, "profile.friend-sent", "player", target.getName());
+        plugin.messages().send(target, "profile.friend-received", "player", player.getName());
+    }
+
+    private void friendError(Player player, FriendRequests.Result result) {
+        String key = switch (result) {
+            case SELF -> "profile.friend-self";
+            case FRIENDS -> "profile.friend-already";
+            case PENDING -> "profile.friend-pending";
+            case REVERSE_PENDING -> "profile.friend-reverse";
+            case NO_REQUEST -> "profile.friend-no-request";
+            case LIMIT -> "profile.friend-limit";
+            case COOLDOWN -> "profile.friend-cooldown";
+            default -> "profile.friend-unavailable";
+        };
+        plugin.messages().send(player, key);
     }
 
     /** Управление только своими явно опубликованными ссылками. */
@@ -202,6 +295,17 @@ public final class ProfileService implements Listener {
     /** Подсказки {@code /profile [chat] [ник]}. */
     public List<String> complete(CommandSender sender, String[] args) {
         if (args == null || args.length == 0) return List.of();
+        if (args.length >= 2 && args[0].equalsIgnoreCase("friend")) {
+            if (args.length == 2) {
+                String prefix = args[1].toLowerCase(Locale.ROOT);
+                return List.of("invite", "accept", "decline", "remove", "list").stream()
+                        .filter(option -> option.startsWith(prefix)).toList();
+            }
+            if (args.length != 3 || args[1].equalsIgnoreCase("list") || !(sender instanceof Player viewer)) return List.of();
+            String prefix = args[2].toLowerCase(Locale.ROOT);
+            return Bukkit.getOnlinePlayers().stream().filter(viewer::canSee)
+                    .map(Player::getName).filter(name -> name.toLowerCase(Locale.ROOT).startsWith(prefix)).toList();
+        }
         if (args.length >= 2 && args[0].equalsIgnoreCase("social")) {
             List<String> options = args.length == 2 ? List.of("set", "remove", "help")
                     : args.length == 3 && (args[1].equalsIgnoreCase("set") || args[1].equalsIgnoreCase("remove"))
@@ -219,6 +323,7 @@ public final class ProfileService implements Listener {
             out.add("chat");
         }
         if ("social".startsWith(prefix)) out.add("social");
+        if ("friend".startsWith(prefix)) out.add("friend");
         out.addAll(names(args[0]));
         return out;
     }
@@ -412,6 +517,11 @@ public final class ProfileService implements Listener {
         if (target.self() && viewer.hasPermission("chrdkregister.labels")) {
             inventory.setItem(LABELS_SLOT, labelsButton());
         }
+        if (!target.self() && target.online() && friends.available()
+                && !friends.areFriends(viewer.getUniqueId(), target.id())) {
+            inventory.setItem(FRIEND_INVITE_SLOT, button(Material.PLAYER_HEAD,
+                    "profile.friend-invite-button", "profile.friend-invite-lore"));
+        }
         if (!target.self() && target.online() && groupCommand() != null
                 && viewer.hasPermission("chrdkguilds.use")) {
             inventory.setItem(GROUP_INVITE_SLOT, button(Material.LIME_BANNER,
@@ -568,6 +678,22 @@ public final class ProfileService implements Listener {
                     });
                 }
             }
+            return;
+        }
+        if (slot == FRIEND_INVITE_SLOT && !holder.self
+                && event.getView().getTopInventory().getItem(FRIEND_INVITE_SLOT) != null) {
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                Player target = Bukkit.getPlayer(holder.targetId);
+                if (!player.isOnline() || target == null || !target.isOnline()
+                        || target.hasMetadata("NPC") || !player.canSee(target) || !target.canSee(player)
+                        || accessManager.isBlocked(player) || accessManager.isBlocked(target)
+                        || !target.hasPermission("chrdkregister.profile")
+                        || !player.hasPermission("chrdkregister.profile")
+                        || !player.hasPermission("chrdkregister.profile.others")
+                        || player.getOpenInventory().getTopInventory().getHolder() != holder) return;
+                player.closeInventory();
+                inviteFriend(player, target);
+            });
             return;
         }
         if (slot == GROUP_INVITE_SLOT && !holder.self
