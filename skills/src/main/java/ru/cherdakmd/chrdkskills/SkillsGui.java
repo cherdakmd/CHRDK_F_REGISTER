@@ -760,6 +760,9 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
                 "max", String.valueOf(BuildBranch.MAX_LEVEL)));
         List<Component> lore = new ArrayList<>();
         lore.add(plugin.messages().get("build-gui-desc-" + branch.id()));
+        if (branch == BuildBranch.CLERIC || branch == BuildBranch.PRIEST) {
+            lore.add(plugin.messages().get("support-self-only"));
+        }
         for (BranchAbility ability : BranchAbility.values()) {
             if (ability.branch() != branch) {
                 continue;

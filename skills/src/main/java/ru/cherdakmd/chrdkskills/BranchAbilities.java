@@ -13,8 +13,8 @@ import java.util.List;
  * Исполнитель активных приёмов веток билда. Приёмы новые — приёмы классов не
  * переносятся. Сила приёма масштабируется ступенью престижа и уровнем ветки
  * ({@link BranchMath#power}); выносливость и таймеры общие с приёмами навыков
- * ({@link SkillAbilityStore}). Приёмы поддержки (Клирик, Жрец) направлены на
- * ближайшего раненого союзника — это роли щита поддержки.
+ * ({@link SkillAbilityStore}). Пока нет проверки положительных эффектов для
+ * территорий и PvP, приёмы поддержки применяются только к исполнителю.
  */
 final class BranchAbilities {
 
@@ -54,6 +54,10 @@ final class BranchAbilities {
             return error;
         }
         apply(player, ability, BranchMath.power(prestige, level, 1.0), level);
+        if (ability == BranchAbility.FAITH_SHIELD || ability == BranchAbility.PURGE
+                || ability == BranchAbility.HEALING_SHIELD || ability == BranchAbility.GRACE) {
+            plugin.messages().send(player, "support-self-only");
+        }
         return "";
     }
 
@@ -113,20 +117,9 @@ final class BranchAbilities {
         }
     }
 
-    /** Приёмы поддержки идут ближайшему раненому союзнику, иначе — себе. */
-    private Player supportTarget(Player self) {
-        List<Player> allies = self.getNearbyEntities(8, 4, 8).stream()
-                .filter(entity -> entity instanceof Player ally && !ally.isDead())
-                .map(entity -> (Player) entity)
-                .filter(ally -> ally.getHealth() < maxHealth(ally))
-                .limit(1)
-                .collect(java.util.stream.Collectors.toList());
-        return allies.isEmpty() ? self : allies.get(0);
-    }
-
-    private static double maxHealth(Player player) {
-        var attribute = player.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
-        return attribute == null ? 20.0 : attribute.getValue();
+    /** Fail closed until a positive-effect protection contract is available. */
+    static Player supportTarget(Player self) {
+        return self;
     }
 
     private static void damageAround(Player player, double radius, double damage) {
