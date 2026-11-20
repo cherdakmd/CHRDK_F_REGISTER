@@ -197,8 +197,27 @@ public final class ClaimsService {
         }
     }
 
+    void discardCircleConfirmation(Player player) {
+        discardCircleConfirmation(confirmations, player.getUniqueId(), player, System.nanoTime());
+    }
+
+    static void discardCircleConfirmation(ru.cherdakmd.chrdkregister.api.EconomyConfirmations confirmations,
+                                          java.util.UUID owner, Object session, long now) {
+        // consume always removes the entry, even for a mismatched quote.
+        confirmations.consume(owner, session, new Object(), now);
+    }
+
     /** Preview and buy one disk, or the union of disks around the current owned territory. */
     public void circle(Player player, int radius, boolean territory, boolean confirm) {
+        try {
+            circleChecked(player, radius, territory, confirm);
+        } finally {
+            // Even a refusal before a fresh quote is built consumes the old consent.
+            if (confirm) discardCircleConfirmation(player);
+        }
+    }
+
+    private void circleChecked(Player player, int radius, boolean territory, boolean confirm) {
         if (!mutation(player)) return;
         synchronized (plugin.store()) {
             var world = player.getWorld();

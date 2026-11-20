@@ -29,13 +29,17 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         boolean quote=args.length>0&&(args[0].equalsIgnoreCase("budget")||args[0].equalsIgnoreCase("sellback"));
-        if(!(quote?plugin.financeReadReady():plugin.financeReady())&&(args.length==0||!args[0].equalsIgnoreCase("recovery"))) { plugin.messages().send(sender,"finance.unavailable");return true; }
+        if(!(quote?plugin.financeReadReady():plugin.financeReady())&&(args.length==0||!args[0].equalsIgnoreCase("recovery"))) {
+            discardCircleConfirmation(sender, args);
+            plugin.messages().send(sender,"finance.unavailable");return true;
+        }
 
         if (!(sender instanceof Player player)) {
             sender.sendMessage(plugin.messages().plain("player-only"));
             return true;
         }
         if (!player.hasPermission("chrdkclaims.use") && !player.hasPermission("chrdkclaims.admin")) {
+            discardCircleConfirmation(player, args);
             plugin.messages().send(player, "no-permission");
             return true;
         }
@@ -98,24 +102,34 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
         return true;
     }
 
+    private void discardCircleConfirmation(CommandSender sender, String[] args) {
+        if (sender instanceof Player player && plugin.service() != null && args.length > 0
+                && args[0].equalsIgnoreCase("circle")
+                && Arrays.stream(args).skip(1).anyMatch(s -> s.equalsIgnoreCase("confirm"))) {
+            plugin.service().discardCircleConfirmation(player);
+        }
+    }
+
     private void circle(Player player, String[] args) {
-        if (!ready(player)) return;
+        if (!ready(player)) { discardCircleConfirmation(player, args); return; }
         int radius;
         try {
             if (args.length < 2 || args.length > 4) throw new IllegalArgumentException();
             radius = Integer.parseInt(args[1]);
             if (radius < 1 || radius > 5) throw new IllegalArgumentException();
         } catch (IllegalArgumentException ex) {
+            discardCircleConfirmation(player, args);
             plugin.messages().send(player, "circle-usage"); return;
         }
         boolean territory = false, confirm = false;
         if (args.length >= 3) {
             if (args[2].equalsIgnoreCase("territory")) territory = true;
             else if (args[2].equalsIgnoreCase("confirm")) confirm = true;
-            else { plugin.messages().send(player, "circle-usage"); return; }
+            else { discardCircleConfirmation(player, args); plugin.messages().send(player, "circle-usage"); return; }
         }
         if (args.length == 4) {
             if (!territory || !args[3].equalsIgnoreCase("confirm")) {
+                discardCircleConfirmation(player, args);
                 plugin.messages().send(player, "circle-usage"); return;
             }
             confirm = true;

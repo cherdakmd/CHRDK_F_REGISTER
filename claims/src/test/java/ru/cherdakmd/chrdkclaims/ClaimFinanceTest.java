@@ -83,6 +83,34 @@ class ClaimFinanceTest {
         assertEquals("Buyer",store.claimAt("world",0,0).owner); assertEquals("Buyer",store.claimAt("world",1,0).owner);
         assertEquals(60,bank.balance("Buyer")); assertEquals(1,store.financialSequence());
     }
+    @Test void circleBankRefusalLeavesNoDebitOrClaims() {
+        start(); bank.refuse=true;
+        var cells=List.of(new ClaimCircle.Cell(0,0),new ClaimCircle.Cell(1,0));
+        assertFalse(ClaimLand.buyCircle(store,"world",cells,"Buyer",20,now+1));
+        assertNull(store.claimAt("world",0,0)); assertNull(store.claimAt("world",1,0));
+        assertEquals(100,bank.balance("Buyer")); assertEquals(0,store.financialSequence());
+        assertNull(store.financialPending()); assertFalse(store.finance.busy());
+    }
+    @Test void circlePrepareFailureDoesNotDebitOrPartiallyClaim() throws Exception {
+        start(); Files.createDirectory(dir.resolve("claims/claims-data.json.tmp"));
+        var cells=List.of(new ClaimCircle.Cell(0,0),new ClaimCircle.Cell(1,0));
+        assertFalse(ClaimLand.buyCircle(store,"world",cells,"Buyer",20,now+1));
+        assertEquals(0,bank.commits); assertEquals(100,bank.balance("Buyer"));
+        assertNull(store.claimAt("world",0,0)); assertNull(store.claimAt("world",1,0));
+    }
+    @Test void circleMergingOwnedTerritoryPreservesExistingPaymentAndRights() {
+        start(); var old=new Claim("world",0,0,"Buyer",now+12345);
+        old.members.add("Friend"); old.setRole("Friend",Claim.Role.CONTAINER); old.greeting="Hello";
+        store.add(old);
+        assertTrue(ClaimLand.buyCircle(store,"world",List.of(new ClaimCircle.Cell(1,0),new ClaimCircle.Cell(2,0)),"Buyer",20,now+ClaimMath.DAY_MILLIS));
+        restart();
+        assertEquals(now+12345,store.claimAt("world",0,0).paidUntil);
+        for(int x=0;x<=2;x++) {
+            var claim=store.claimAt("world",x,0);
+            assertEquals(Claim.Role.CONTAINER,claim.memberRole("Friend")); assertEquals("Hello",claim.greeting);
+        }
+        assertEquals(60,bank.balance("Buyer"));
+    }
     @Test void circleInsufficientFundsDoesNotMutate() {
         start(); var cells=List.of(new ClaimCircle.Cell(0,0),new ClaimCircle.Cell(1,0));
         assertFalse(ClaimLand.buyCircle(store,"world",cells,"Buyer",60,now+1));

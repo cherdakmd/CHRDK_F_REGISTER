@@ -21,6 +21,26 @@ class ClaimCircleTest {
         assertFalse(result.contains(cell(-1, -1)));
     }
 
+    @Test void radiusTwoAndNegativeCoordinatesUseEuclideanDistance() {
+        var result = ClaimCircle.expand(List.of(cell(-20, -30)), 2, 100, 100);
+        assertEquals(13, result.size());
+        assertTrue(result.contains(cell(-22, -30)));
+        assertTrue(result.contains(cell(-21, -31)));
+        assertFalse(result.contains(cell(-22, -31)));
+        assertFalse(result.contains(cell(-18, -28)));
+    }
+
+    @Test void refusedConfirmationInvalidatesOnlyThatPlayersQuote() {
+        var confirmations = new ru.cherdakmd.chrdkregister.api.EconomyConfirmations();
+        var owner = java.util.UUID.randomUUID(); var other = java.util.UUID.randomUUID();
+        var session = new Object(); var otherSession = new Object();
+        assertTrue(confirmations.offer(owner, session, "circle", 0));
+        assertTrue(confirmations.offer(other, otherSession, "other", 0));
+        ClaimsService.discardCircleConfirmation(confirmations, owner, session, 1);
+        assertFalse(confirmations.consume(owner, session, "circle", 2));
+        assertTrue(confirmations.consume(other, otherSession, "other", 2));
+    }
+
     @Test void boundsAndLimitsFailClosed() {
         assertThrows(IllegalArgumentException.class, () -> ClaimCircle.expand(List.of(cell(Integer.MAX_VALUE, 0)), 1, 100, 100));
         assertThrows(IllegalArgumentException.class, () -> ClaimCircle.expand(List.of(cell(0, Integer.MIN_VALUE)), 1, 100, 100));
