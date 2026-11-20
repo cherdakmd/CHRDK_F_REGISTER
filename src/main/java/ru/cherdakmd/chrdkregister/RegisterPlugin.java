@@ -286,6 +286,7 @@ public final class RegisterPlugin extends JavaPlugin {
         PluginCommand profileCommand = getCommand("profile");
         if (profileCommand != null) {
             profileCommand.setExecutor((sender, command, label, args) -> {
+                if (args.length > 0 && args[0].equalsIgnoreCase("social")) return profileService.social(sender, args);
                 boolean chat = args.length > 0 && args[0].equalsIgnoreCase("chat");
                 String target = chat
                         ? (args.length > 1 ? args[1] : null)

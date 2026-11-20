@@ -71,6 +71,7 @@ public final class ProfileService implements Listener {
     private final AccessManager accessManager;
     private final BankStore bank;
     private final ProfileRegistry registry;
+    private final PublicSocialLinks publicSocialLinks;
     /** Личные переключатели надписей: раздел «Оформление ника» (1.4.186). */
     private LabelPreferences labelPreferences;
     private final java.util.Map<UUID, Integer> lastProfileClickTick = new java.util.HashMap<>();
@@ -81,6 +82,7 @@ public final class ProfileService implements Listener {
         this.accessManager = accessManager;
         this.bank = bank;
         this.registry = registry;
+        this.publicSocialLinks = new PublicSocialLinks(plugin.getDataFolder().toPath(), plugin.getLogger());
     }
 
     /** Подключает переключатели надписей (вызывается при включении ядра). */
@@ -150,11 +152,64 @@ public final class ProfileService implements Listener {
         lastProfileClickTick.remove(event.getPlayer().getUniqueId());
     }
 
+    /** Управление только своими явно опубликованными ссылками. */
+    public boolean social(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            plugin.messages().send(sender, "profile.social-player-only");
+            return true;
+        }
+        if (!player.hasPermission("chrdkregister.profile") || accessManager.isBlocked(player)) {
+            plugin.messages().send(player, "profile.no-permission");
+            return true;
+        }
+        if (args.length == 1 || (args.length == 2 && args[1].equalsIgnoreCase("help"))) {
+            plugin.messages().send(player, "profile.social-usage");
+            return true;
+        }
+        boolean set = args.length == 4 && args[1].equalsIgnoreCase("set");
+        boolean remove = args.length == 3 && args[1].equalsIgnoreCase("remove");
+        PublicSocialLinks.Platform platform = args.length >= 3 ? PublicSocialLinks.Platform.parse(args[2]) : null;
+        if ((!set && !remove) || platform == null) {
+            plugin.messages().send(player, "profile.social-usage");
+            return true;
+        }
+        if (set && PublicSocialLinks.validate(platform, args[3]).isEmpty()) {
+            plugin.messages().send(player, "profile.social-invalid");
+            return true;
+        }
+        if (!publicSocialLinks.update(player.getUniqueId(), platform, set ? args[3] : null)) {
+            plugin.messages().send(player, "profile.social-save-error");
+        } else {
+            plugin.messages().send(player, set ? "profile.social-saved" : "profile.social-removed", "platform", platform.label);
+        }
+        return true;
+    }
+
+    private ChrdkRegisterApi.ProfileSection socialSection(Target target) {
+        Optional<java.util.Map<PublicSocialLinks.Platform, String>> links = publicSocialLinks.read(target.id());
+        if (links.isEmpty() || links.get().isEmpty()) return null;
+        List<Component> lines = new ArrayList<>();
+        for (PublicSocialLinks.Platform platform : PublicSocialLinks.Platform.values()) {
+            String url = links.get().get(platform);
+            if (url != null) {
+                lines.add(plugin.messages().get("profile.social-line", "platform", platform.label, "url", url)
+                        .clickEvent(net.kyori.adventure.text.event.ClickEvent.openUrl(url)));
+            }
+        }
+        return new ChrdkRegisterApi.ProfileSection(plugin.messages().raw("profile.social-title"), Material.WRITABLE_BOOK, lines);
+    }
+
     /** Подсказки {@code /profile [chat] [ник]}. */
     public List<String> complete(CommandSender sender, String[] args) {
-        if (args == null || args.length == 0 || args.length > 2) {
-            return List.of();
+        if (args == null || args.length == 0) return List.of();
+        if (args.length >= 2 && args[0].equalsIgnoreCase("social")) {
+            List<String> options = args.length == 2 ? List.of("set", "remove", "help")
+                    : args.length == 3 && (args[1].equalsIgnoreCase("set") || args[1].equalsIgnoreCase("remove"))
+                    ? List.of("vk", "discord", "telegram", "youtube", "twitch") : List.of();
+            String prefix = args[args.length - 1].toLowerCase(Locale.ROOT);
+            return options.stream().filter(option -> option.startsWith(prefix)).toList();
         }
+        if (args.length > 2) return List.of();
         if (args.length == 2) {
             return args[0].equalsIgnoreCase("chat") ? names(args[1]) : List.of();
         }
@@ -163,6 +218,7 @@ public final class ProfileService implements Listener {
         if ("chat".startsWith(prefix)) {
             out.add("chat");
         }
+        if ("social".startsWith(prefix)) out.add("social");
         out.addAll(names(args[0]));
         return out;
     }
@@ -248,6 +304,8 @@ public final class ProfileService implements Listener {
         if (core != null && !core.lines().isEmpty()) {
             out.add(core);
         }
+        ChrdkRegisterApi.ProfileSection social = socialSection(target);
+        if (social != null) out.add(social);
         ChrdkRegisterApi.ProfileSection labels = labelsSection(target);
         if (labels != null) {
             out.add(labels);
