@@ -269,7 +269,8 @@ class PresentationUpdateTest {
                 assertTrue(descriptor.contains("commands."+command),entry.command());
             }
         }
-        // Меню — карта сервера: каждый установленный аддон должен быть в нём представлен.
+        // Метаданные в разработке не имеют игровых команд и не рекламируются.
+        assertTrue(menuAddons.remove("CHRDK_CustomItems"));
         assertEquals(menuAddons,advertised,"меню покрывает все аддоны, включая новые волны");
     }
 

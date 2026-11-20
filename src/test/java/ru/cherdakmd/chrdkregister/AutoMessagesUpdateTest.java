@@ -99,7 +99,9 @@ class AutoMessagesUpdateTest {
             matcher = Pattern.compile("%[a-z_]+%").matcher(entry.text());
             while (matcher.find()) assertTrue(placeholders.contains(matcher.group()), matcher.group());
         }
-        assertEquals(addons.keySet(), advertised, "в рассылке представлены все действующие аддоны");
+        // Экспериментальный каталог без игровых функций не рекламируется.
+        assertNotNull(addons.remove("CHRDK_CustomItems"));
+        assertEquals(addons.keySet(), advertised, "в рассылке представлены игровые аддоны");
         MiniMessage.builder().strict(true).build().deserialize(config.getString("auto-messages.prefix"));
     }
 

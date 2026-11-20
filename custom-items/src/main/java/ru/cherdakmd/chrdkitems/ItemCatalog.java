@@ -33,7 +33,7 @@ final class ItemCatalog {
             catch (IllegalArgumentException e) { throw invalid(id, "unknown category"); }
             String materialName = section.getString("material");
             Material material = Material.getMaterial(materialName);
-            if (material == null || !material.isItem() || !matches(category, material.name()))
+            if (material == null || !matches(category, material.name()))
                 throw invalid(id, "material does not match category");
             String model = section.getString("model");
             if (!MODEL.matcher(model).matches() || model.contains("..") || model.contains("//") || model.endsWith("/"))
@@ -44,13 +44,15 @@ final class ItemCatalog {
     }
 
     private static boolean matches(Category category, String material) {
+        boolean armorTier = java.util.Set.of("LEATHER", "CHAINMAIL", "IRON", "GOLDEN", "DIAMOND", "NETHERITE", "TURTLE").contains(material.substring(0, material.indexOf('_') < 0 ? material.length() : material.indexOf('_')));
+        boolean toolTier = java.util.Set.of("WOODEN", "STONE", "IRON", "GOLDEN", "DIAMOND", "NETHERITE").contains(material.substring(0, material.indexOf('_') < 0 ? material.length() : material.indexOf('_')));
         return switch (category) {
-            case ARMOR -> material.endsWith("_HELMET") || material.endsWith("_CHESTPLATE")
-                    || material.endsWith("_LEGGINGS") || material.endsWith("_BOOTS");
-            case WEAPON -> material.endsWith("_SWORD") || material.equals("BOW")
+            case ARMOR -> armorTier && (material.endsWith("_HELMET") || material.endsWith("_CHESTPLATE")
+                    || material.endsWith("_LEGGINGS") || material.endsWith("_BOOTS"));
+            case WEAPON -> (toolTier && material.endsWith("_SWORD")) || material.equals("BOW")
                     || material.equals("CROSSBOW") || material.equals("TRIDENT") || material.equals("MACE");
-            case TOOL -> material.endsWith("_PICKAXE") || material.endsWith("_AXE")
-                    || material.endsWith("_SHOVEL") || material.endsWith("_HOE");
+            case TOOL -> toolTier && (material.endsWith("_PICKAXE") || material.endsWith("_AXE")
+                    || material.endsWith("_SHOVEL") || material.endsWith("_HOE"));
         };
     }
     private static IllegalArgumentException invalid(String id, String reason) {

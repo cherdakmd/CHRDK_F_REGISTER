@@ -15,9 +15,10 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 processResources {
-    inputs.property 'version', project.version
+    def pluginVersion = project.version
+    inputs.property 'version', pluginVersion
     filteringCharset = 'UTF-8'
-    filesMatching('plugin.yml') { expand version: project.version }
+    filesMatching('plugin.yml') { expand version: pluginVersion }
 }
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8'; options.release = 25 }
 java { sourceCompatibility = JavaVersion.VERSION_25; targetCompatibility = JavaVersion.VERSION_25 }
