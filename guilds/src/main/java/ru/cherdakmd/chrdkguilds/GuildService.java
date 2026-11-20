@@ -38,6 +38,17 @@ public final class GuildService {
         return store.of(player);
     }
 
+    /**
+     * Отношение двух игроков по текущему состоянию гильдий, только чтение.
+     * Вызывать на серверном потоке; проверять, что плагин включён, перед каждым
+     * использованием и не кешировать ответ. При отсутствии плагина, ошибки
+     * доступа или {@link GuildRelation#UNKNOWN} запрещать зависимое действие.
+     * Это не проверка прав PvP, защиты территории или принадлежности к группе.
+     */
+    public GuildRelation relation(UUID first, UUID second) {
+        return store == null ? GuildRelation.UNKNOWN : store.relation(first, second);
+    }
+
     /** Гильдия по иду, названию или тегу. */
     public Guild find(String query) {
         return store.find(query);

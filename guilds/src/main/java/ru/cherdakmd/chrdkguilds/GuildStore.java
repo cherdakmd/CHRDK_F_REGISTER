@@ -349,6 +349,29 @@ final class GuildStore {
         return id == null ? null : guilds.get(id);
     }
 
+    /** Единый снимок отношений: ошибка чтения никогда не означает отсутствия войны. */
+    synchronized GuildRelation relation(UUID first, UUID second) {
+        if (first == null || second == null || !healthy || (finance != null && !finance.healthy())) {
+            return GuildRelation.UNKNOWN;
+        }
+        try {
+            refresh();
+            String a = byMember.get(first);
+            String b = byMember.get(second);
+            if ((a != null && !guilds.containsKey(a)) || (b != null && !guilds.containsKey(b))) {
+                return GuildRelation.UNKNOWN;
+            }
+            if (a == null || b == null) return GuildRelation.OTHER;
+            if (a.equals(b)) return GuildRelation.SAME_GUILD;
+            for (GuildWar war : wars) {
+                if (war.active() && war.involves(a) && war.involves(b)) return GuildRelation.ACTIVE_WAR;
+            }
+            return GuildRelation.OTHER;
+        } catch (RuntimeException error) {
+            return GuildRelation.UNKNOWN;
+        }
+    }
+
     synchronized Guild byName(String name) {
         refresh();
         String key = GuildMath.key(name);
