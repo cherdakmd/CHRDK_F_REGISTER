@@ -104,6 +104,19 @@ class AdventureGroupsTest {
         assertEquals(AdventureGroups.Result.INVITE_MISSING, groups.accept(d, 5));
     }
 
+    @Test void maintenanceDissolvesWarAndLeavesUnknownForRetry() {
+        assertEquals(AdventureGroups.Result.OK, groups.invite(a, b, 0));
+        assertEquals(AdventureGroups.Result.OK, groups.accept(b, 1));
+        state.set(GuildRelation.UNKNOWN);
+        assertTrue(groups.reconcile().isEmpty());
+        assertEquals(Set.of(a, b), Set.copyOf(groups.snapshot(a)));
+        state.set(GuildRelation.ACTIVE_WAR);
+        assertEquals(1, groups.reconcile().size());
+        assertTrue(groups.snapshot(a).isEmpty());
+        assertTrue(groups.snapshot(b).isEmpty());
+        assertTrue(groups.reconcile().isEmpty());
+    }
+
     @Test void invalidLimitAndSelfInvitation() {
         assertThrows(IllegalArgumentException.class,
                 () -> new AdventureGroups(1, (x, y) -> GuildRelation.OTHER, online::contains));

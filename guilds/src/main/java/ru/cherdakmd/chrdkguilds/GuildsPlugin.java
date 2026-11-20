@@ -33,6 +33,7 @@ public final class GuildsPlugin extends JavaPlugin {
     private GuildStyleController styles;
     private GuildStyleGui styleGui;
     private GuildRecruitmentGui recruitment;
+    private AdventureGroupController adventureGroups;
     private ru.cherdakmd.chrdkregister.api.PaidActions payments;
     private GuildFinance finance;
     private GuildPeaceController peace;
@@ -52,6 +53,8 @@ public final class GuildsPlugin extends JavaPlugin {
             this.payments = new ru.cherdakmd.chrdkregister.api.PaidActions(this,this::coreApi,this::messages,"guilds");
             store.bind(payments.store());
             this.service = new GuildService(config, store);
+            this.adventureGroups = new AdventureGroupController(this);
+            getServer().getPluginManager().registerEvents(adventureGroups, this);
             this.finance = new GuildFinance(this,payments);
             this.peace = new GuildPeaceController(this);
             this.store.combatGuard(peace::combatBlocked);
@@ -97,6 +100,7 @@ public final class GuildsPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (adventureGroups != null) adventureGroups.shutdown();
         if (recruitment != null) recruitment.closeAll();
         if (styles != null) styles.close();
         Bukkit.getServicesManager().unregisterAll(this);
@@ -122,6 +126,7 @@ public final class GuildsPlugin extends JavaPlugin {
     /** Один такт: срок приглашений, конец войн и объявления о них. */
     private void tick() {
         if (service == null || payments == null) return;
+        if (adventureGroups != null) adventureGroups.maintain();
         styleGui.refresh();
         payments.tick();
         if (payments.paused()) return;
@@ -145,6 +150,7 @@ public final class GuildsPlugin extends JavaPlugin {
         this.config = GuildConfig.parse(getConfig(), getLogger());
         this.messages = Messages.load(this, config.locale(), getLogger());
         this.service = new GuildService(config,store);
+        if (adventureGroups != null) adventureGroups.reset();
         gui.refresh();
     }
 
@@ -238,6 +244,7 @@ public final class GuildsPlugin extends JavaPlugin {
     GuildStyleController styles() { return styles; }
     GuildStyleGui styleGui() { return styleGui; }
     GuildRecruitmentGui recruitment() { return recruitment; }
+    AdventureGroupController adventureGroups() { return adventureGroups; }
 
     public GuildsGui gui() {
         return gui;

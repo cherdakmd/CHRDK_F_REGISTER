@@ -10,10 +10,9 @@ import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
 /**
- * Временная модель добровольных групп. Не хранится на диске и пока не
- * подключена к командам или событиям сервера. Вызывать на серверном потоке.
- * Перед игровым использованием требуется подключить обработку выхода, войн,
- * смены гильдии и отключения плагина; на одни проверки при вступлении полагаться нельзя.
+ * Временная модель добровольных групп; не хранится на диске.
+ * Вызывать на серверном потоке. Перед использованием состава для игровых
+ * эффектов обязательно повторно проверять все пары через {@link #verify(UUID)}.
  */
 final class AdventureGroups {
     static final int MIN_MEMBERS = 2;
@@ -132,6 +131,26 @@ final class AdventureGroups {
     List<UUID> members(UUID player) {
         if (verify(player) != Result.OK) return List.of();
         return List.copyOf(membership.get(player).members);
+    }
+
+    /** Снимок для обработки выхода и уведомлений, не для принятия решений о доступе. */
+    List<UUID> participants() { return List.copyOf(membership.keySet()); }
+
+    /** Снимок для уведомлений, не применять для принятия решений о доступе. */
+    List<UUID> snapshot(UUID player) {
+        Team team = membership.get(player);
+        return team == null ? List.of() : List.copyOf(team.members);
+    }
+
+    /** Перепроверяет все группы; возвращает составы, распущенные из-за войны. */
+    List<List<UUID>> reconcile() {
+        List<Team> teams = membership.values().stream().distinct().toList();
+        List<List<UUID>> dissolved = new ArrayList<>();
+        for (Team team : teams) {
+            List<UUID> before = List.copyOf(team.members);
+            if (verify(team.leader) == Result.AT_WAR) dissolved.add(before);
+        }
+        return List.copyOf(dissolved);
     }
 
     /** На отключении плагина: временные группы и приглашения не восстанавливаются. */
