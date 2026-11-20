@@ -1,0 +1,6 @@
+name: CHRDK_CustomItems
+version: ${version}
+main: ru.cherdakmd.chrdkitems.CustomItemsPlugin
+api-version: '26.3'
+description: "Экспериментальный каталог будущей кастомной экипировки"
+author: cherdakmd

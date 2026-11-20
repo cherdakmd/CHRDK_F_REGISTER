@@ -52,6 +52,7 @@ groups:
   pages:
   - enchants
   - artifacts
+  - custom-items
   - cosmetics
 - id: ranks
   title: Ранги и доступ

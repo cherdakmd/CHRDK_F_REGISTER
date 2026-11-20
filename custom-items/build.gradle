@@ -1,0 +1,24 @@
+plugins { id 'java' }
+
+group = project.maven_group
+version = project.plugin_version
+base { archivesName = 'chrdk-custom-items' }
+repositories {
+    mavenCentral()
+    maven { url = 'https://repo.purpurmc.org/snapshots' }
+    maven { url = 'https://repo.papermc.io/repository/maven-public/' }
+}
+dependencies {
+    compileOnly "org.purpurmc.purpur:purpur-api:${project.purpur_api_version}"
+    testImplementation "org.purpurmc.purpur:purpur-api:${project.purpur_api_version}"
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.3'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+processResources {
+    inputs.property 'version', project.version
+    filteringCharset = 'UTF-8'
+    filesMatching('plugin.yml') { expand version: project.version }
+}
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8'; options.release = 25 }
+java { sourceCompatibility = JavaVersion.VERSION_25; targetCompatibility = JavaVersion.VERSION_25 }
+test { useJUnitPlatform() }
