@@ -866,6 +866,7 @@ public final class SocialService {
 
             @Override
             public ChrdkRegisterApi.ProfileSection section(ChrdkRegisterApi.ProfileContext context) {
+                if (context == null || !context.self()) return null;
                 Optional<SocialLinkStore.Binding> binding = store.binding(context.playerName());
                 String line = binding.map(value -> "<gray>Мессенджер: <white>"
                                 + (PROVIDER_VK.equals(value.provider()) ? "ВКонтакте" : "MAX")

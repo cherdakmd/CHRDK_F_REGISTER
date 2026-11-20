@@ -27,7 +27,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
     private static final List<String> SUBS = List.of("help", "menu", "gui", "create", "invite",
             "accept", "decline", "leave", "kick", "promote", "demote", "transfer", "disband",
             "deposit", "withdraw", "upgrade", "info", "top", "members", "chat", "war",
-            "rename", "retag", "mode", "peace", "dues", "discipline", "style", "list", "recruit");
+            "rename", "retag", "mode", "peace", "dues", "discipline", "style", "list", "recruit", "squad");
     private static final List<String> WAR_SUBS = List.of("declare", "accept", "decline",
             "status", "surrender");
     private static final List<String> ADMIN_SUBS = List.of("reload", "info", "disband",
@@ -37,6 +37,14 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
 
     GuildsCommandHandler(GuildsPlugin plugin) {
         this.plugin = plugin;
+    }
+
+    /** Оба маршрута используют единый обработчик и одинаковые проверки. */
+    static String[] partyArguments(String[] args) {
+        String[] routed = new String[args.length + 1];
+        routed[0] = "squad";
+        System.arraycopy(args, 0, routed, 1, args.length);
+        return routed;
     }
 
     /** Общий маршрут GUI сохраняет все проверки авторизации, прав и режима. */
@@ -61,6 +69,11 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
             plugin.messages().send(sender, "disabled");
             return true;
         }
+        if (command.getName().equalsIgnoreCase("party")) {
+            Player player = player(sender);
+            if (player != null) plugin.adventureGroups().command(player, partyArguments(args));
+            return true;
+        }
         if (command.getName().equalsIgnoreCase("gchat")) {
             if (!(sender instanceof Player player)) {
                 plugin.messages().send(sender, "player-only");
@@ -72,6 +85,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
             return menu(sender);
         }
         switch (canonicalSubcommand(args[0])) {
+            case "squad" -> { Player p=player(sender); if(p!=null)plugin.adventureGroups().command(p,args); }
             case "list" -> { Player p=player(sender); if(p!=null)plugin.recruitment().browse(p,0); }
             case "recruit" -> { Player p=player(sender); if(p!=null)plugin.recruitment().setting(p,args); }
             case "style" -> { Player p=player(sender); if(p!=null)plugin.styles().command(p,args); }
@@ -113,7 +127,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
 
     private void help(CommandSender sender) {
         plugin.messages().send(sender, "help-header");
-        for (String key : List.of("style-help", "discipline-public-help", "discipline-rules", "dues-help", "peace-help", "help-create", "help-invite", "help-join", "help-leave",
+        for (String key : List.of("squad-help", "style-help", "discipline-public-help", "discipline-rules", "dues-help", "peace-help", "help-create", "help-invite", "help-join", "help-leave",
                 "help-ranks", "help-treasury", "help-war", "help-chat", "help-info", "help-top")) {
             plugin.messages().send(sender, key);
         }
@@ -950,6 +964,18 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
             return List.of();
         }
         if (!sender.hasPermission("chrdkguilds.use") || !plugin.config().enabled()) {
+            return List.of();
+        }
+        if (command.getName().equalsIgnoreCase("party")) {
+            if (args.length == 1) return filter(List.of("invite", "accept", "decline", "leave", "info"), args[0]);
+            if (args.length == 2 && args[0].equalsIgnoreCase("invite"))
+                return filter(Bukkit.getOnlinePlayers().stream().filter(plugin::visible).map(Player::getName).toList(), args[1]);
+            return List.of();
+        }
+        if (args.length >= 2 && args[0].equalsIgnoreCase("squad")) {
+            if (args.length == 2) return filter(List.of("invite", "accept", "decline", "leave", "info"), args[1]);
+            if (args.length == 3 && args[1].equalsIgnoreCase("invite"))
+                return filter(Bukkit.getOnlinePlayers().stream().filter(plugin::visible).map(Player::getName).toList(), args[2]);
             return List.of();
         }
         if (args.length >= 2 && args[0].equalsIgnoreCase("style")) {

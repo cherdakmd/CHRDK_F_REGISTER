@@ -32,6 +32,20 @@ messages:
 
   # -------------------------------- профиль ----------------------------------
   profile-title: "Навыки"
+  profile-build-title: "Боевые показатели и билд"
+  profile-rating: "<gold>Рейтинг развития (прототип): </gold><white>%score%</white>"
+  profile-rating-formula: "<gray>Уровни %level% / 5 + перерождения %rebirths% × 20 + бонусные очки %bonus%</gray>"
+  profile-rating-note: "<dark_gray>Уровни делятся на 5 с округлением вниз. Экипировка и реальная эффективность в бою не учитываются.</dark_gray>"
+  profile-build-attributes: "<gold>Вложенные очки атрибутов</gold>"
+  profile-build-attribute: "<gray>%name%: </gray><white>%value%</white>"
+  profile-build-branches: "<gold>Ветки билда</gold>"
+  profile-build-branch: "<gray>%name%: </gray><white>%level%/%max%</white>"
+  profile-combat-heading: "<gold>Текущие атрибуты персонажа (онлайн)</gold>"
+  profile-combat-health: "<gray>Макс. здоровье: </gray><white>%value%</white>"
+  profile-combat-armor: "<gray>Броня: </gray><white>%value%</white>"
+  profile-combat-attack: "<gray>Атрибут атаки: </gray><white>%value%</white>"
+  profile-combat-speed: "<gray>Скорость атаки: </gray><white>%value%</white>"
+  profile-combat-note: "<dark_gray>Атрибуты не равны итоговому урону или защите: эффекты и цель влияют на бой.</dark_gray>"
   profile-level: "<gray>Суммарный уровень: </gray><white>%level%</white> <dark_gray>·</dark_gray> <gray>опыт </gray><white>%xp%</white>"
   profile-best: "<gray>Лучший навык: </gray><white>%skill%</white> <gray>(ур. %level%)</gray>"
 

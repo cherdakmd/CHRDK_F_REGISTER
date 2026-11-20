@@ -321,6 +321,42 @@ public final class SkillStore {
         dirty = true;
     }
 
+    /** Согласованный снимок развития; без записи оценка неизвестна, а не равна нулю. */
+    public synchronized java.util.Optional<ProgressSnapshot> progressSnapshot(String playerKey) {
+        PlayerData data = players.get(playerKey);
+        if (data == null) return java.util.Optional.empty();
+        Map<SkillType, Long> xp = new EnumMap<>(SkillType.class);
+        for (SkillType skill : SkillType.values()) xp.put(skill, data.xp(skill));
+        return java.util.Optional.of(new ProgressSnapshot(xp, data.rebirths, data.bonusPoints));
+    }
+
+    public record ProgressSnapshot(Map<SkillType, Long> xp, int rebirths, int bonusPoints) {
+        public ProgressSnapshot { xp = Map.copyOf(xp); }
+    }
+
+    /** Снимок сохранённого билда; отсутствие записи отличается от нулевого билда. */
+    public synchronized java.util.Optional<BuildSnapshot> buildSnapshot(String playerKey) {
+        PlayerData data = players.get(playerKey);
+        if (data == null) return java.util.Optional.empty();
+        Map<PlayerAttribute, Integer> attributes = new EnumMap<>(PlayerAttribute.class);
+        for (PlayerAttribute attribute : PlayerAttribute.values()) {
+            attributes.put(attribute, data.attribute(attribute));
+        }
+        Map<BuildBranch, Integer> branches = new EnumMap<>(BuildBranch.class);
+        for (BuildBranch branch : BuildBranch.values()) {
+            branches.put(branch, data.branch(branch));
+        }
+        return java.util.Optional.of(new BuildSnapshot(attributes, branches));
+    }
+
+    public record BuildSnapshot(Map<PlayerAttribute, Integer> attributes,
+                                Map<BuildBranch, Integer> branches) {
+        public BuildSnapshot {
+            attributes = Map.copyOf(attributes);
+            branches = Map.copyOf(branches);
+        }
+    }
+
     /** Вложенные очки атрибута; нет профиля — нули. */
     public synchronized int attribute(String playerKey, PlayerAttribute attribute) {
         PlayerData data = players.get(playerKey);

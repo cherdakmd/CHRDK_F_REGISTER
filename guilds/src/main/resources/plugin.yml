@@ -13,6 +13,10 @@ commands:
     usage: /guild [menu|gui|list|recruit <open|closed>|create|invite|accept|deposit|war|info|top|mode <status|peaceful|battle|prepay>|dues [10+]|discipline [игрок]|style]
     aliases: [guilds, clan, clans, klan, klans, gildiya, gildii]
     permission: chrdkguilds.use
+  party:
+    description: Временная группа приключений.
+    usage: /party [invite <ник>|accept|decline|leave|info]
+    permission: chrdkguilds.use
   gchat:
     description: Написать в чат гильдии.
     usage: /gchat <текст>

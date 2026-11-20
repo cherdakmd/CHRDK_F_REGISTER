@@ -18,6 +18,10 @@ PATTERNS = (
 RETIRED_PATHS = ("bosses", "treasures", "wiki/bosses.md", "wiki/treasures.md", "docs/TREASURES_ARSENAL.md", "streams", "wiki/streams.md", "events", "wiki/events.md", "queue", "wiki/queue.md", "lottery", "party", "referrals", "wiki/lottery.md", "wiki/party.md", "wiki/referrals.md", "hunt", "professions", "wiki/hunt.md", "wiki/professions.md", "tier-forge", "wiki/tierforge.md")
 GENERATED_DIRS = {"node_modules", "test-results", "playwright-report", "__pycache__"}
 SUFFIXES = {".json", ".java", ".yml", ".yaml", ".md", ".py", ".js", ".html", ".gradle", ".properties"}
+# Новая команда групп реализована в модуле гильдий; старый аддон, его
+# пространства имён, страницы и остальные команды по-прежнему запрещены.
+NEW_PARTY_COMMAND_PATHS = {"guilds/src/main/resources/plugin.yml",
+                           "guilds/src/main/resources/messages.yml", "wiki/guilds.md"}
 
 
 def active_files(root: Path) -> list[Path]:
@@ -48,7 +52,13 @@ def check(root: Path) -> list[str]:
                 continue # PDC старых мобов: защита сохранённых миров, не загрузка снятого аддона.
             if relative == "src/main/java/ru/cherdakmd/chrdkregister/api/ForgeMarketCatalog.java":
                 continue # Замороженные гранты старых сделок: namespace чужой PDC без живого модуля.
-            if any(pattern.search(line) for pattern in PATTERNS):
+            # Разрешаем только точное имя новой команды в её документации и
+            # ресурсах. Другие совпадения на той же строке не игнорируются.
+            forbidden = any(
+                not (relative in NEW_PARTY_COMMAND_PATHS and match.group().lower() == "/party")
+                for pattern in PATTERNS for match in pattern.finditer(line)
+            )
+            if forbidden:
                 errors.append(f"{relative}:{number}: ссылка на снятый аддон: {line.strip()}")
             if relative == "settings.gradle" and re.search(
                     r"(?i)^\s*include\s+['\"](?:bosses|treasures|streams|events|queue|lottery|party|referrals|hunt|professions|tier-forge)['\"]", line):
@@ -62,7 +72,7 @@ def main() -> int:
         print("Найдены остатки снятых аддонов:", file=sys.stderr)
         print("\n".join(errors), file=sys.stderr)
         return 1
-    print("Bosses/Treasures/Streams/Events/Queue/Lottery/Party/Referrals/Hunt/Professions/TierForge: активных ссылок, команд, страниц и модулей не найдено.")
+    print("Снятые аддоны: остатки не найдены; разрешена только новая команда групп в ресурсах гильдий и её описании.")
     return 0
 
 

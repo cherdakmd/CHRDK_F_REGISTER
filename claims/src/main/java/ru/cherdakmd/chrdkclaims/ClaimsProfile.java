@@ -48,11 +48,12 @@ final class ClaimsProfile implements ChrdkRegisterApi.ProfileProvider {
                 "used", String.valueOf(claims),
                 "limit", String.valueOf(limit)));
         if (rented > 0) lines.add(plugin.messages().get("profile-rented", "count", rented));
-        if (plugin.store().fundsReady(name)) {
-            lines.add(plugin.messages().get("finance.profile-treasury",
-                    "amount", String.valueOf(balance)));
+        if (context.self()) {
+            if (plugin.store().fundsReady(name)) {
+                lines.add(plugin.messages().get("finance.profile-treasury",
+                        "amount", String.valueOf(balance)));
+            } else lines.add(plugin.messages().get("finance.profile-unavailable"));
         }
-        else lines.add(plugin.messages().get("finance.profile-unavailable"));
         return new ChrdkRegisterApi.ProfileSection(plugin.messages().raw("profile-title"),
                 Material.OAK_FENCE, lines);
     }

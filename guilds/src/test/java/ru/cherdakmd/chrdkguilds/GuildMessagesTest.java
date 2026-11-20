@@ -25,6 +25,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class GuildMessagesTest {
 
     private static final List<String> REQUIRED = List.of(
+            "squad-help", "squad-invite-sent", "squad-invite-received", "squad-joined",
+            "squad-declined", "squad-no-invite", "squad-invite-expired", "squad-left", "squad-member-left",
+            "squad-disbanded", "squad-war-disbanded", "squad-reset", "squad-info", "squad-not-member",
+            "squad-offline", "squad-already-joined", "squad-not-leader", "squad-full", "squad-at-war", "squad-unavailable",
             "chat-prefix-open", "chat-prefix-close", "peace-chat-prefix-open", "peace-chat-prefix-close", "peace-pending-prefix-open", "peace-pending-prefix-close", "tab-battle-prefix-open", "tab-battle-prefix-close", "tab-peace-prefix-open", "tab-peace-prefix-close", "tab-peace-pending-prefix-open", "tab-peace-pending-prefix-close",
             "style-leader-only",
 
@@ -135,6 +139,9 @@ class GuildMessagesTest {
     void placeholdersMatchTheCode() throws Exception {
         ConfigurationSection section = load();
         Map<String, List<String>> expected = new LinkedHashMap<>();
+        expected.put("squad-invite-sent", List.of("%player%"));
+        expected.put("squad-invite-received", List.of("%player%"));
+        expected.put("squad-info", List.of("%players%"));
         expected.put("style-animation-status", List.of("%effect%"));
         expected.put("style-binding", List.of("%clan%"));
         expected.put("style-gui-choice", List.of("%choice%"));

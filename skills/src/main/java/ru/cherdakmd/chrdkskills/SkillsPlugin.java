@@ -121,6 +121,7 @@ public final class SkillsPlugin extends JavaPlugin {
         if (coreApi != null) {
             try {
                 coreApi.registerProfile("skills", new SkillsProfile(this));
+                coreApi.registerProfile("skills-build", new SkillsBuildProfile(this));
             } catch (RuntimeException | LinkageError error) {
                 getLogger().warning("[CHRDK_Skills] раздел профиля недоступен "
                         + "(нужно ядро 1.4.156+): " + error);
@@ -171,6 +172,7 @@ public final class SkillsPlugin extends JavaPlugin {
         if (coreApi != null) {
             try {
                 coreApi.unregisterProfile("skills");
+                coreApi.unregisterProfile("skills-build");
             } catch (RuntimeException | LinkageError ignored) {
                 // Ядро старше API v8 — снимать нечего.
             }

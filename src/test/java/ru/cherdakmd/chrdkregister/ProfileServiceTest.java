@@ -37,6 +37,68 @@ class ProfileServiceTest {
     }
 
     @Test
+    void groupInviteDoesNotCoverSectionsOrOtherButtons() {
+        int slot = ProfileService.GROUP_INVITE_SLOT;
+        assertTrue(slot >= 0 && slot < ProfileService.SIZE);
+        for (int section : ProfileService.SECTION_SLOTS) assertTrue(slot != section);
+        assertTrue(slot != ProfileService.HEAD_SLOT && slot != ProfileService.LABELS_SLOT
+                && slot != ProfileService.TO_CHAT_SLOT && slot != ProfileService.REFRESH_SLOT
+                && slot != ProfileService.CLOSE_SLOT);
+    }
+
+    @Test
+    void openCardRequiresCurrentAccessAndVisibility() {
+        assertTrue(ProfileService.canOpenCard(true, true, true, false, false));
+        assertTrue(ProfileService.canOpenCard(true, true, false, true, true));
+        assertTrue(!ProfileService.canOpenCard(false, true, true, true, true));
+        assertTrue(!ProfileService.canOpenCard(true, false, true, true, true));
+        assertTrue(!ProfileService.canOpenCard(true, true, false, false, true));
+        assertTrue(!ProfileService.canOpenCard(true, true, false, true, false));
+    }
+
+    @Test
+    void sectionClickUsesFreshDataAndFailsClosedWhenRemovedOrAmbiguous() {
+        var old = new ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.ProfileSection(
+                "Публичные соцсети", org.bukkit.Material.WRITABLE_BOOK,
+                java.util.List.of(net.kyori.adventure.text.Component.text("старый адрес")));
+        var fresh = new ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.ProfileSection(
+                "Публичные соцсети", org.bukkit.Material.WRITABLE_BOOK,
+                java.util.List.of(net.kyori.adventure.text.Component.text("новый адрес")));
+        assertEquals(fresh, ProfileService.currentSection(old, java.util.List.of(old), java.util.List.of(fresh)));
+        org.junit.jupiter.api.Assertions.assertNull(ProfileService.currentSection(old, java.util.List.of(old), java.util.List.of()));
+        org.junit.jupiter.api.Assertions.assertNull(ProfileService.currentSection(old, java.util.List.of(old, fresh), java.util.List.of(fresh)));
+        org.junit.jupiter.api.Assertions.assertNull(ProfileService.currentSection(old, java.util.List.of(old), java.util.List.of(old, fresh)));
+    }
+
+    @Test
+    void friendCommandIsRegisteredWithProfilePermission() {
+        var descriptor = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(
+                java.nio.file.Path.of("src/main/resources/plugin.yml").toFile());
+        assertTrue(descriptor.isConfigurationSection("commands.friend"));
+        assertEquals("chrdkregister.profile", descriptor.getString("commands.friend.permission"));
+    }
+
+    @Test
+    void friendCommandRoutesEveryArgumentWithoutChangingIt() {
+        org.junit.jupiter.api.Assertions.assertArrayEquals(new String[]{"friend"}, ProfileService.friendArgs(new String[0]));
+        org.junit.jupiter.api.Assertions.assertArrayEquals(new String[]{"friend", "accept", "Player"},
+                ProfileService.friendArgs(new String[]{"accept", "Player"}));
+        org.junit.jupiter.api.Assertions.assertArrayEquals(new String[]{"friend", "list", "2"},
+                ProfileService.friendArgs(new String[]{"list", "2"}));
+        org.junit.jupiter.api.Assertions.assertArrayEquals(new String[]{"friend", ""}, ProfileService.friendArgs(new String[]{""}));
+    }
+
+    @Test
+    void friendButtonDoesNotCoverOtherSlots() {
+        int slot = ProfileService.FRIEND_INVITE_SLOT;
+        assertTrue(slot >= 0 && slot < ProfileService.SIZE);
+        for (int section : ProfileService.SECTION_SLOTS) assertTrue(slot != section);
+        assertTrue(slot != ProfileService.HEAD_SLOT && slot != ProfileService.LABELS_SLOT
+                && slot != ProfileService.TO_CHAT_SLOT && slot != ProfileService.REFRESH_SLOT
+                && slot != ProfileService.CLOSE_SLOT && slot != ProfileService.GROUP_INVITE_SLOT);
+    }
+
+    @Test
     void sectionSlotsAreInsideTheMenuAndUnique() {
         assertEquals(21, ProfileService.SECTION_SLOTS.length);
         boolean[] seen = new boolean[ProfileService.SIZE];

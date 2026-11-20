@@ -286,6 +286,8 @@ public final class RegisterPlugin extends JavaPlugin {
         PluginCommand profileCommand = getCommand("profile");
         if (profileCommand != null) {
             profileCommand.setExecutor((sender, command, label, args) -> {
+                if (args.length > 0 && args[0].equalsIgnoreCase("social")) return profileService.social(sender, args);
+                if (args.length > 0 && args[0].equalsIgnoreCase("friend")) return profileService.friend(sender, args);
                 boolean chat = args.length > 0 && args[0].equalsIgnoreCase("chat");
                 String target = chat
                         ? (args.length > 1 ? args[1] : null)
@@ -298,6 +300,13 @@ public final class RegisterPlugin extends JavaPlugin {
             });
             profileCommand.setTabCompleter((sender, command, alias, args) ->
                     profileService.complete(sender, args));
+        }
+        PluginCommand friendCommand = getCommand("friend");
+        if (friendCommand != null) {
+            friendCommand.setExecutor((sender, command, label, args) ->
+                    profileService.friend(sender, ProfileService.friendArgs(args)));
+            friendCommand.setTabCompleter((sender, command, alias, args) ->
+                    profileService.complete(sender, ProfileService.friendArgs(args)));
         }
         this.hatCommand = new HatCommand(this, accessManager);
         PluginCommand hatCommandPlugin = getCommand("hat");
