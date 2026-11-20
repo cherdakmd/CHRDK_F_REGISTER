@@ -27,7 +27,7 @@ class PetsRemovalTest {
     @Test void removedModuleIsAbsentFromDistributionStockMenuAndAnnouncements() throws Exception {
         assertFalse(Files.exists(Path.of("pets")));
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_Pets"));
-        assertEquals(18, PluginUpdateService.MODULES.size());
+        assertEquals(19, PluginUpdateService.MODULES.size());
         var stock = yaml("config.yml"); var items = stock.getMapList("server-menu.items");
         assertEquals(44, items.size());
         assertFalse(items.stream().anyMatch(item -> RetiredAddons.plugin(String.valueOf(item.get("plugin")))
