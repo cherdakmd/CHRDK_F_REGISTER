@@ -59,6 +59,7 @@ CORE_PUBLIC = {
     "register",
     "login",
     "profile",
+    "friend",
     "menu",
     "rank",
     "hat",

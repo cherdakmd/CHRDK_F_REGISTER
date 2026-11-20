@@ -158,6 +158,14 @@ public final class ProfileService implements Listener {
         friendRequests.quit(event.getPlayer().getUniqueId());
     }
 
+    /** Приводит /friend к тому же маршруту, что и /profile friend. */
+    static String[] friendArgs(String[] args) {
+        String[] result = new String[args.length + 1];
+        result[0] = "friend";
+        System.arraycopy(args, 0, result, 1, args.length);
+        return result;
+    }
+
     /** Команды друзей: запросы временные, дружба сохраняется только после согласия. */
     public boolean friend(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {

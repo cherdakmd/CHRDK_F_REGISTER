@@ -301,6 +301,13 @@ public final class RegisterPlugin extends JavaPlugin {
             profileCommand.setTabCompleter((sender, command, alias, args) ->
                     profileService.complete(sender, args));
         }
+        PluginCommand friendCommand = getCommand("friend");
+        if (friendCommand != null) {
+            friendCommand.setExecutor((sender, command, label, args) ->
+                    profileService.friend(sender, ProfileService.friendArgs(args)));
+            friendCommand.setTabCompleter((sender, command, alias, args) ->
+                    profileService.complete(sender, ProfileService.friendArgs(args)));
+        }
         this.hatCommand = new HatCommand(this, accessManager);
         PluginCommand hatCommandPlugin = getCommand("hat");
         if (hatCommandPlugin != null) {

@@ -47,6 +47,24 @@ class ProfileServiceTest {
     }
 
     @Test
+    void friendCommandIsRegisteredWithProfilePermission() {
+        var descriptor = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(
+                java.nio.file.Path.of("src/main/resources/plugin.yml").toFile());
+        assertTrue(descriptor.isConfigurationSection("commands.friend"));
+        assertEquals("chrdkregister.profile", descriptor.getString("commands.friend.permission"));
+    }
+
+    @Test
+    void friendCommandRoutesEveryArgumentWithoutChangingIt() {
+        org.junit.jupiter.api.Assertions.assertArrayEquals(new String[]{"friend"}, ProfileService.friendArgs(new String[0]));
+        org.junit.jupiter.api.Assertions.assertArrayEquals(new String[]{"friend", "accept", "Player"},
+                ProfileService.friendArgs(new String[]{"accept", "Player"}));
+        org.junit.jupiter.api.Assertions.assertArrayEquals(new String[]{"friend", "list", "2"},
+                ProfileService.friendArgs(new String[]{"list", "2"}));
+        org.junit.jupiter.api.Assertions.assertArrayEquals(new String[]{"friend", ""}, ProfileService.friendArgs(new String[]{""}));
+    }
+
+    @Test
     void friendButtonDoesNotCoverOtherSlots() {
         int slot = ProfileService.FRIEND_INVITE_SLOT;
         assertTrue(slot >= 0 && slot < ProfileService.SIZE);
