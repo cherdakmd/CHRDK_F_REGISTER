@@ -18,7 +18,7 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
 
     private static final List<String> SUBS = List.of("help", "menu", "tp", "info", "map", "list",
             "unclaim", "add", "remove", "deposit", "withdraw", "balance", "sell", "sellback",
-            "buy", "transfer", "forsale", "borders", "near", "notices", "greeting", "rent", "clan", "budget");
+            "buy", "transfer", "forsale", "borders", "near", "notices", "greeting", "rent", "clan", "budget", "circle");
 
     private final ClaimsPlugin plugin;
 
@@ -46,6 +46,7 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
         String sub = args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
             case "help" -> plugin.messages().send(player, "finance.usage");
+            case "circle" -> circle(player, args);
             case "menu" -> menu(player, args);
             case "tp" -> teleport(player, args);
             case "info" -> info(player, args);
@@ -95,6 +96,31 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
             default -> plugin.messages().send(player, "unknown-sub");
         }
         return true;
+    }
+
+    private void circle(Player player, String[] args) {
+        if (!ready(player)) return;
+        int radius;
+        try {
+            if (args.length < 2 || args.length > 4) throw new IllegalArgumentException();
+            radius = Integer.parseInt(args[1]);
+            if (radius < 1 || radius > 5) throw new IllegalArgumentException();
+        } catch (IllegalArgumentException ex) {
+            plugin.messages().send(player, "circle-usage"); return;
+        }
+        boolean territory = false, confirm = false;
+        if (args.length >= 3) {
+            if (args[2].equalsIgnoreCase("territory")) territory = true;
+            else if (args[2].equalsIgnoreCase("confirm")) confirm = true;
+            else { plugin.messages().send(player, "circle-usage"); return; }
+        }
+        if (args.length == 4) {
+            if (!territory || !args[3].equalsIgnoreCase("confirm")) {
+                plugin.messages().send(player, "circle-usage"); return;
+            }
+            confirm = true;
+        }
+        service().circle(player, radius, territory, confirm);
     }
 
     private void rental(Player player, String[] args) {
@@ -659,6 +685,13 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
                 }
             }
             return result;
+        }
+        if (args[0].equalsIgnoreCase("circle")) {
+            List<String> values = args.length == 2 ? List.of("1", "2", "3", "4", "5")
+                    : args.length == 3 ? List.of("territory", "confirm")
+                    : args.length == 4 && args[2].equalsIgnoreCase("territory") ? List.of("confirm") : List.of();
+            String prefix = args[args.length - 1].toLowerCase(Locale.ROOT);
+            return values.stream().filter(s -> s.startsWith(prefix)).toList();
         }
         if(args.length==2&&(args[0].equalsIgnoreCase("budget")||args[0].equalsIgnoreCase("sellback"))) {
             var values=args[0].equalsIgnoreCase("budget")?List.of("1","3","7","14","30"):List.of("confirm");

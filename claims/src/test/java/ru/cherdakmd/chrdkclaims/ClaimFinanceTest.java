@@ -58,6 +58,36 @@ class ClaimFinanceTest {
         assertFalse(new ClaimFinance(fresh,bank).readReady());assertFalse(fresh.financialRegistered());assertEquals(root,bank.root.snapshotJson());
         bank.hide=true;assertFalse(store.finance.readReady());assertEquals(source,store.domainJson());assertEquals(root,bank.root.snapshotJson());
     }
+    @Test void circleBuysAllChunksInOneDurableTransaction() {
+        start(); var cells=List.of(new ClaimCircle.Cell(2,0),new ClaimCircle.Cell(3,0),new ClaimCircle.Cell(4,0));
+        assertTrue(ClaimLand.buyCircle(store,"world",cells,"Buyer",20,now+ClaimMath.DAY_MILLIS));
+        assertEquals(40,bank.balance("Buyer")); assertEquals(60,store.diamondsSpent()); assertEquals(1,store.financialSequence());
+        restart(); for(var cell:cells) assertEquals("Buyer",store.claimAt("world",cell.x(),cell.z()).owner);
+        assertEquals(40,bank.balance("Buyer"));
+    }
+    @Test void circleRefusalNeverBuysOnlyPart() {
+        start(); store.add(new Claim("world",4,0,"Owner",now));
+        var cells=List.of(new ClaimCircle.Cell(0,0),new ClaimCircle.Cell(3,0));
+        assertFalse(ClaimLand.buyCircle(store,"world",cells,"Buyer",20,now+1));
+        assertNull(store.claimAt("world",0,0)); assertEquals(100,bank.balance("Buyer")); assertEquals(0,store.financialSequence());
+        assertFalse(ClaimLand.buyCircle(store,"world",List.of(cells.get(0),cells.get(0)),"Buyer",20,now+1));
+        assertNull(store.claimAt("world",0,0)); assertEquals(100,bank.balance("Buyer"));
+    }
+    @Test void circleUncertainCommitProtectsAllAndRecoversTogether() {
+        start(); bank.hideAfterCommit=true;
+        var cells=List.of(new ClaimCircle.Cell(0,0),new ClaimCircle.Cell(1,0));
+        assertFalse(ClaimLand.buyCircle(store,"world",cells,"Buyer",20,now+1));
+        assertNull(store.claimAt("world",0,0)); assertNull(store.claimAt("world",1,0));
+        assertNotNull(store.protectedClaimAt("world",0,0)); assertNotNull(store.protectedClaimAt("world",1,0));
+        assertEquals(60,bank.balance("Buyer")); restart();
+        assertEquals("Buyer",store.claimAt("world",0,0).owner); assertEquals("Buyer",store.claimAt("world",1,0).owner);
+        assertEquals(60,bank.balance("Buyer")); assertEquals(1,store.financialSequence());
+    }
+    @Test void circleInsufficientFundsDoesNotMutate() {
+        start(); var cells=List.of(new ClaimCircle.Cell(0,0),new ClaimCircle.Cell(1,0));
+        assertFalse(ClaimLand.buyCircle(store,"world",cells,"Buyer",60,now+1));
+        assertNull(store.claimAt("world",0,0)); assertNull(store.claimAt("world",1,0)); assertEquals(100,bank.balance("Buyer"));
+    }
     @Test void newLandAndStatisticsAppearOnlyWithDurableDebit() {start();assertTrue(buy());assertEquals(70,bank.balance("Buyer"));assertEquals("Buyer",store.claimAt("world",0,0).owner);assertEquals(30,store.diamondsSpent());assertEquals(1,store.financialSequence());restart();assertEquals(30,store.diamondsSpent());assertEquals(70,bank.balance("Buyer"));}
     @Test void unknownCommitKeepsBeforeLiveAndProtectsPendingNewChunk() {start();bank.hideAfterCommit=true;assertFalse(buy());assertNull(store.claimAt("world",0,0));assertNotNull(store.protectedClaimAt("world",0,0));assertEquals(0,store.diamondsSpent());assertEquals(70,bank.balance("Buyer"));assertTrue(store.finance.busy());restart();assertEquals("Buyer",store.claimAt("world",0,0).owner);assertEquals(70,bank.balance("Buyer"));assertEquals(30,store.diamondsSpent());}
     @Test void pendingPreventsAnotherPurchaseEvenForAnotherChunk() {start();bank.hideAfterCommit=true;buy();assertFalse(ClaimLand.buy(store,"world",1,0,"Buyer",30,now+1));assertEquals(70,bank.balance("Buyer"));assertNull(store.claimAt("world",1,0));}
