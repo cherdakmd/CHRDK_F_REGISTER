@@ -127,6 +127,16 @@ final class AdventureGroups {
         return result;
     }
 
+    /** Только чтение связи; не является проверкой прав на применение эффектов. */
+    AdventureGroupRelation relation(UUID first, UUID second) {
+        if (first == null || second == null) return AdventureGroupRelation.UNKNOWN;
+        Team team = membership.get(first);
+        if (team == null || membership.get(second) != team) return AdventureGroupRelation.DIFFERENT;
+        Result result = verify(first);
+        if (result != Result.OK) return AdventureGroupRelation.UNKNOWN;
+        return AdventureGroupRelation.SAME_GROUP;
+    }
+
     /** Только подтверждённые участники; при неизвестных отношениях список недоступен. */
     List<UUID> members(UUID player) {
         if (verify(player) != Result.OK) return List.of();

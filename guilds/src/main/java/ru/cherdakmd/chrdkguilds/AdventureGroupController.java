@@ -34,6 +34,21 @@ final class AdventureGroupController implements Listener {
 
     void shutdown() { if (groups != null) groups.clear(); }
 
+    /** Публичный мост вызывает это на серверном потоке; полное содержимое группы не раскрывается. */
+    AdventureGroupRelation groupRelation(UUID first, UUID second) {
+        if (!plugin.isEnabled() || plugin.config() == null || !plugin.config().enabled()
+                || plugin.payments() == null || plugin.payments().paused() || groups == null
+                || first == null || second == null || !availablePlayer(first) || !availablePlayer(second)) {
+            return AdventureGroupRelation.UNKNOWN;
+        }
+        List<UUID> before = groups.snapshot(first);
+        if (!before.contains(second)) return AdventureGroupRelation.DIFFERENT;
+        AdventureGroups.Result verified = groups.verify(first);
+        if (verified == AdventureGroups.Result.AT_WAR) notifyAll(before, "squad-war-disbanded");
+        if (verified != AdventureGroups.Result.OK) return AdventureGroupRelation.UNKNOWN;
+        return groups.relation(first, second);
+    }
+
     private GuildRelation relation(UUID a, UUID b) {
         if (!plugin.isEnabled() || plugin.config() == null || !plugin.config().enabled()
                 || plugin.payments() == null || plugin.payments().paused() || plugin.service() == null) {

@@ -241,6 +241,24 @@ public final class GuildsPlugin extends JavaPlugin {
         return service;
     }
 
+    /**
+     * Подтверждённое совместное членство в текущей временной группе.
+     * Только серверный поток и только чтение; перед каждым использованием
+     * заново проверяются доступность игроков и отношения всех членов группы.
+     * UNKNOWN, отсутствие/отключение плагина и ошибки не означают разрешения.
+     * Результат не подтверждает безопасность PvP, приватов или способности.
+     */
+    public AdventureGroupRelation groupRelation(java.util.UUID first, java.util.UUID second) {
+        if (!Bukkit.isPrimaryThread() || !isEnabled() || adventureGroups == null) {
+            return AdventureGroupRelation.UNKNOWN;
+        }
+        try {
+            return adventureGroups.groupRelation(first, second);
+        } catch (RuntimeException | LinkageError error) {
+            return AdventureGroupRelation.UNKNOWN;
+        }
+    }
+
     GuildStyleController styles() { return styles; }
     GuildStyleGui styleGui() { return styleGui; }
     GuildRecruitmentGui recruitment() { return recruitment; }

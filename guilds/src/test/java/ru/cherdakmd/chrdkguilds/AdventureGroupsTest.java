@@ -117,6 +117,24 @@ class AdventureGroupsTest {
         assertTrue(groups.reconcile().isEmpty());
     }
 
+    @Test void groupRelationRequiresFreshVerificationAndFailsClosed() {
+        assertEquals(AdventureGroupRelation.UNKNOWN, groups.relation(null, b));
+        assertEquals(AdventureGroupRelation.DIFFERENT, groups.relation(a, b));
+        assertEquals(AdventureGroups.Result.OK, groups.invite(a, b, 0));
+        assertEquals(AdventureGroups.Result.OK, groups.accept(b, 1));
+        assertEquals(AdventureGroupRelation.SAME_GROUP, groups.relation(a, b));
+        assertEquals(AdventureGroupRelation.SAME_GROUP, groups.relation(b, a));
+        assertEquals(AdventureGroupRelation.DIFFERENT, groups.relation(a, c));
+        state.set(GuildRelation.UNKNOWN);
+        assertEquals(AdventureGroupRelation.UNKNOWN, groups.relation(a, b));
+        state.set(GuildRelation.ACTIVE_WAR);
+        assertEquals(AdventureGroupRelation.UNKNOWN, groups.relation(a, b));
+        assertTrue(groups.snapshot(a).isEmpty(), "активная война распускает группу");
+        assertEquals(AdventureGroupRelation.DIFFERENT, groups.relation(a, b));
+        groups.clear();
+        assertEquals(AdventureGroupRelation.DIFFERENT, groups.relation(a, b));
+    }
+
     @Test void invalidLimitAndSelfInvitation() {
         assertThrows(IllegalArgumentException.class,
                 () -> new AdventureGroups(1, (x, y) -> GuildRelation.OTHER, online::contains));
