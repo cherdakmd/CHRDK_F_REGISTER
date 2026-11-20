@@ -761,7 +761,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         List<Component> lore = new ArrayList<>();
         lore.add(plugin.messages().get("build-gui-desc-" + branch.id()));
         if (branch == BuildBranch.CLERIC || branch == BuildBranch.PRIEST) {
-            lore.add(plugin.messages().get("support-self-only"));
+            lore.add(plugin.messages().get("support-gui-hint"));
         }
         for (BranchAbility ability : BranchAbility.values()) {
             if (ability.branch() != branch) {
