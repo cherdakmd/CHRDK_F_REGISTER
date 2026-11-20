@@ -112,29 +112,14 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
 
     private void circle(Player player, String[] args) {
         if (!ready(player)) { discardCircleConfirmation(player, args); return; }
-        int radius;
+        ClaimCircle.Command request;
         try {
-            if (args.length < 2 || args.length > 4) throw new IllegalArgumentException();
-            radius = Integer.parseInt(args[1]);
-            if (radius < 1 || radius > 5) throw new IllegalArgumentException();
+            request = ClaimCircle.parse(args);
         } catch (IllegalArgumentException ex) {
             discardCircleConfirmation(player, args);
             plugin.messages().send(player, "circle-usage"); return;
         }
-        boolean territory = false, confirm = false;
-        if (args.length >= 3) {
-            if (args[2].equalsIgnoreCase("territory")) territory = true;
-            else if (args[2].equalsIgnoreCase("confirm")) confirm = true;
-            else { discardCircleConfirmation(player, args); plugin.messages().send(player, "circle-usage"); return; }
-        }
-        if (args.length == 4) {
-            if (!territory || !args[3].equalsIgnoreCase("confirm")) {
-                discardCircleConfirmation(player, args);
-                plugin.messages().send(player, "circle-usage"); return;
-            }
-            confirm = true;
-        }
-        service().circle(player, radius, territory, confirm);
+        service().circle(player, request.radius(), request.territory(), request.confirm());
     }
 
     private void rental(Player player, String[] args) {

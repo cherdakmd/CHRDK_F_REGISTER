@@ -19,7 +19,7 @@ public final class ClaimsService {
     private final ru.cherdakmd.chrdkregister.api.EconomyConfirmations confirmations = new ru.cherdakmd.chrdkregister.api.EconomyConfirmations();
     private final Map<java.util.UUID,Long> budgetWarnings = new java.util.HashMap<>();
     private record SellbackQuote(Claim claim, String owner, int price, long paidUntil, int debt, int salePrice) { }
-    private record CircleQuote(String world, int x, int z, int radius, boolean territory,
+    record CircleQuote(String world, int x, int z, int radius, boolean territory,
                                List<ClaimCircle.Cell> area, List<ClaimCircle.Cell> buy,
                                int price, int upkeep, int owned, int limit) { }
     private static final int CIRCLE_MAX_CELLS = 256;

@@ -8,6 +8,30 @@ import java.util.TreeSet;
 /** Pure chunk geometry for a radius around one or more source chunks. */
 final class ClaimCircle {
     record Cell(int x, int z) { }
+    record Command(int radius, boolean territory, boolean confirm) { }
+
+    /** Parse the full /claim argument array without changing any game state. */
+    static Command parse(String[] args) {
+        if (args == null || args.length < 2 || args.length > 4 || !"circle".equalsIgnoreCase(args[0]))
+            throw new IllegalArgumentException("Invalid circle command");
+        int radius;
+        try { radius = Integer.parseInt(args[1]); }
+        catch (NumberFormatException ex) { throw new IllegalArgumentException("Invalid radius", ex); }
+        if (radius < 1 || radius > 5) throw new IllegalArgumentException("Invalid radius");
+        boolean territory = false, confirm = false;
+        if (args.length >= 3) {
+            if ("territory".equalsIgnoreCase(args[2])) territory = true;
+            else if ("confirm".equalsIgnoreCase(args[2])) confirm = true;
+            else throw new IllegalArgumentException("Invalid mode");
+        }
+        if (args.length == 4) {
+            if (!territory || !"confirm".equalsIgnoreCase(args[3]))
+                throw new IllegalArgumentException("Invalid confirmation");
+            confirm = true;
+        }
+        return new Command(radius, territory, confirm);
+    }
+
     private static final Comparator<Cell> ORDER = Comparator.comparingInt(Cell::x).thenComparingInt(Cell::z);
 
     /**
