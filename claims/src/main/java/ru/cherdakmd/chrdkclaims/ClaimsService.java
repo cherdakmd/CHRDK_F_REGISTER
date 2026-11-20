@@ -19,6 +19,11 @@ public final class ClaimsService {
     private final ru.cherdakmd.chrdkregister.api.EconomyConfirmations confirmations = new ru.cherdakmd.chrdkregister.api.EconomyConfirmations();
     private final Map<java.util.UUID,Long> budgetWarnings = new java.util.HashMap<>();
     private record SellbackQuote(Claim claim, String owner, int price, long paidUntil, int debt, int salePrice) { }
+    private record CircleQuote(String world, int x, int z, int radius, boolean territory,
+                               List<ClaimCircle.Cell> area, List<ClaimCircle.Cell> buy,
+                               int price, int upkeep, int owned, int limit) { }
+    private static final int CIRCLE_MAX_CELLS = 256;
+    private static final int CIRCLE_MAX_WORK = 200_000;
 
     public ClaimsService(ClaimsPlugin plugin) {
         this.plugin = plugin;
@@ -101,24 +106,31 @@ public final class ClaimsService {
 
     /** Проверка возможности купить именно этот чанк (статус-отказ в out-сообщение). */
     public String checkBuyable(Player player, Chunk chunk) {
+        return checkBuyable(player, chunk.getWorld(), chunk.getX(), chunk.getZ());
+    }
+
+    private String checkBuyable(Player player, org.bukkit.World world, int x, int z) {
         if (!plugin.store().fundsReady(player.getName())) return "finance.unavailable";
         ClaimsConfig cfg = plugin.config();
-        if (!cfg.worldEnabled(chunk.getWorld().getName())) {
+        if (!cfg.worldEnabled(world.getName())) {
             return "world-disabled";
         }
-        Claim existing = plugin.store().claimAt(chunk.getWorld().getName(), chunk.getX(), chunk.getZ());
+        Claim existing = plugin.store().claimAt(world.getName(), x, z);
         if (existing != null) {
             if (existing.isOwner(player.getName())) {
                 return "already-yours";
             }
             return existing.salePrice > 0 ? "for-sale" : "already-claimed";
         }
-        if (plugin.store().foreignNearby(chunk.getWorld().getName(), chunk.getX(), chunk.getZ(), player.getName(), List.of())) return "foreign-buffer";
+        if (plugin.store().foreignNearby(world.getName(), x, z, player.getName(), List.of())) return "foreign-buffer";
         if (cfg.spawnMargin > 0) {
-            var spawn = chunk.getWorld().getSpawnLocation();
-            int dx = (chunk.getX() << 4) + 8 - spawn.getBlockX();
-            int dz = (chunk.getZ() << 4) + 8 - spawn.getBlockZ();
-            if (dx * dx + dz * dz <= (long) cfg.spawnMargin * cfg.spawnMargin) {
+            var spawn = world.getSpawnLocation();
+            long dx = (long) x * 16 + 8 - spawn.getBlockX();
+            long dz = (long) z * 16 + 8 - spawn.getBlockZ();
+            // Bound each component first so squaring cannot overflow long.
+            long margin = cfg.spawnMargin;
+            if (Math.abs(dx) <= margin && Math.abs(dz) <= margin
+                    && (double) dx * dx + (double) dz * dz <= (double) margin * margin) {
                 return "spawn-margin";
             }
         }
@@ -126,7 +138,7 @@ public final class ClaimsService {
         if (plugin.store().count(player.getName()) >= limit) {
             return "limit-reached";
         }
-        if (available(player) < cfg.priceIn(chunk.getWorld().getName())) {
+        if (available(player) < cfg.priceIn(world.getName())) {
             return "finance.not-enough";
         }
         return null;
@@ -182,6 +194,81 @@ public final class ClaimsService {
                     "price", String.valueOf(price),
                     "upkeep", String.valueOf(upkeep),
                     "paid", formatDate(claim.paidUntil));
+        }
+    }
+
+    /** Preview and buy one disk, or the union of disks around the current owned territory. */
+    public void circle(Player player, int radius, boolean territory, boolean confirm) {
+        if (!mutation(player)) return;
+        synchronized (plugin.store()) {
+            var world = player.getWorld();
+            var here = player.getLocation().getChunk();
+            int x = here.getX(), z = here.getZ();
+            List<ClaimCircle.Cell> seeds;
+            if (territory) {
+                Claim anchor = plugin.store().claimAt(world.getName(), x, z);
+                if (anchor == null || !anchor.isOwner(player.getName())) {
+                    plugin.messages().send(player, "circle-own-territory"); return;
+                }
+                seeds = plugin.store().territory(anchor).stream().map(c -> new ClaimCircle.Cell(c.x, c.z)).toList();
+            } else seeds = List.of(new ClaimCircle.Cell(x, z));
+            List<ClaimCircle.Cell> area;
+            try {
+                area = ClaimCircle.expand(seeds, radius, CIRCLE_MAX_WORK, CIRCLE_MAX_CELLS);
+            } catch (IllegalArgumentException ex) {
+                plugin.messages().send(player, "circle-too-large"); return;
+            }
+            List<ClaimCircle.Cell> free = new ArrayList<>();
+            for (var cell : area) {
+                Claim existing = plugin.store().claimAt(world.getName(), cell.x(), cell.z());
+                if (existing != null && existing.isOwner(player.getName())) continue;
+                String refusal = checkBuyable(player, world, cell.x(), cell.z());
+                if (refusal != null) {
+                    String reason = switch (refusal) {
+                        case "already-claimed", "for-sale" -> "занят другим игроком";
+                        case "foreign-buffer" -> "отступ от чужого привата";
+                        case "spawn-margin" -> "защита спавна";
+                        case "world-disabled" -> "приваты в мире отключены";
+                        case "limit-reached" -> "исчерпан лимит";
+                        case "finance.not-enough" -> "недостаточно средств";
+                        default -> "банк или данные недоступны";
+                    };
+                    plugin.messages().send(player, "circle-blocked", "x", cell.x(), "z", cell.z(), "reason", reason);
+                    return;
+                }
+                free.add(cell);
+            }
+            if (free.isEmpty()) { plugin.messages().send(player, "circle-empty"); return; }
+            int owned = plugin.store().count(player.getName()), limit = limitOf(player.getName());
+            if ((long) owned + free.size() > limit) {
+                plugin.messages().send(player, "circle-limit", "count", free.size(), "owned", owned, "limit", limit); return;
+            }
+            int price = plugin.config().priceIn(world.getName()), upkeep = plugin.config().upkeepIn(world.getName());
+            long total = (long) price * free.size();
+            if (price < 0 || available(player) < total) {
+                plugin.messages().send(player, "circle-funds", "total", total, "balance", available(player)); return;
+            }
+            var quote = new CircleQuote(world.getName(), x, z, radius, territory, area, List.copyOf(free), price, upkeep, owned, limit);
+            if (confirm) {
+                if (!confirmations.consume(player.getUniqueId(), player, quote, System.nanoTime())) {
+                    plugin.messages().send(player, "finance.confirm-missing"); return;
+                }
+                long paidUntil = System.currentTimeMillis() + ClaimMath.DAY_MILLIS;
+                if (!ClaimLand.buyCircle(plugin.store(), world.getName(), free, player.getName(), price, paidUntil)) {
+                    plugin.messages().send(player, "finance.unavailable"); return;
+                }
+                audit("buy-circle", player.getName() + " " + world.getName() + " " + x + "," + z
+                        + " radius=" + radius + " territory=" + territory + " count=" + free.size() + " total=" + total);
+                plugin.messages().send(player, "circle-done", "count", free.size(), "total", total,
+                        "upkeep", (long) upkeep * free.size(), "paid", formatDate(paidUntil));
+            } else {
+                if (!confirmations.offer(player.getUniqueId(), player, quote, System.nanoTime())) {
+                    plugin.messages().send(player, "finance.confirm-busy"); return;
+                }
+                String command = "/claim circle " + radius + (territory ? " territory" : "") + " confirm";
+                plugin.messages().send(player, "circle-preview", "count", free.size(), "total", total,
+                        "upkeep", (long) upkeep * free.size(), "command", command);
+            }
         }
     }
 

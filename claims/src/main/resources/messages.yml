@@ -28,6 +28,15 @@ claims:
   coords-invalid: "<red>Координаты чанка — два целых числа: /claim info <x> <z> или /claim tp <x> <z>.</red>"
   usage: "<gray>/claim — купить чанк · menu · tp [x z] · info [x z] · map [радиус] · list [стр] · forsale [стр] · near [радиус] · borders · notices [on|off] · greeting [текст|снять] · rent · clan · unclaim [all confirm] · add/remove <ник> [доступ|контейнеры|полный] [все] · transfer <ник> · balance (/bal) · sell <цена|снять> · sellback [confirm] · budget [1–30] · buy [x z] · help</gray>"
   # покупка/продажа
+  circle-usage: '<yellow>/claim circle <радиус 1–5> [territory] [confirm]. Без territory — вокруг текущего чанка; territory — вокруг всей своей связанной территории. Сначала команда без confirm.</yellow>'
+  circle-own-territory: '<red>Для territory встаньте на свой приват.</red>'
+  circle-too-large: '<red>Область слишком большая (не более 256 чанков и ограничение вычислений), либо координаты вне допустимого диапазона. Уменьшите радиус.</red>'
+  circle-blocked: '<red>Чанк [%x%, %z%] недоступен: %reason%. Ничего не куплено; чужие и защищённые чанки не пропускаются.</red>'
+  circle-empty: '<yellow>В области нет свободных чанков для покупки.</yellow>'
+  circle-limit: '<red>Нужно %count% новых чанков; сейчас %owned%, лимит %limit%. Ничего не куплено.</red>'
+  circle-funds: '<red>Нужно %total% ⛁ с личного /bal; доступно %balance%. Ничего не куплено.</red>'
+  circle-preview: '<yellow>Будет куплено %count% чанков за %total% ⛁ с личного /bal; дополнительное содержание %upkeep% ⛁/сутки. Первые сутки включены. Свои чанки не оплачиваются повторно.</yellow><newline><yellow>Слияние территорий может снять продажу и сократить общий доступ участников или клана. Подтвердите в этом чанке в течение 30 секунд: %command%. При изменении условий запросите расчёт заново.</yellow>'
+  circle-done: '<green>Куплено %count% чанков за %total% ⛁. Дополнительное содержание %upkeep% ⛁/сутки, оплачено до %paid%.</green>'
   bought: "<green>Чанк приватизирован за %price% ⛁! Рента %upkeep% ⛁/сутки, оплачен до %paid%. Участники: /claim add <ник>.</green>"
   already-claimed: "<red>Этот чанк уже занят (%owner%). Границы — /claim map.</red>"
   already-for-sale: "<red>Чанк принадлежит %owner% и продаётся за %price% ⛁ — купить: /claim buy.</red>"
@@ -367,7 +376,7 @@ claims:
     recovery: '<gray>Claims: исправность=%healthy%, готовность=%ready%, причина=%reason%; local lineage/sequence=%lineage%/%sequence%, Core lineage/sequence=%bankLineage%/%bankSequence%, registration ACK local/Core=%registered%/%bankRegistered%, pending=%pending%.</gray>'
     backup-protected: '<yellow>Финансовый источник нельзя откатывать отдельно в работающем сервере. Нужны остановка и согласованные копии Claims, банка и playerdata. Не удаляйте журналы и квитанции.</yellow>'
     unclaim-all-confirm: '<red>Будут сняты все ваши приваты (%count%). Возврата оплаты нет; личный /bal не обнуляется. Подтвердите: <yellow>/claim unclaim all confirm</yellow></red>'
-    usage: <gray>/claim — купить чанк · menu · tp [x z] · info [x z] · map [радиус] · list [стр] · forsale [стр] · near [радиус] · borders · notices [on|off] · greeting [текст|снять] · rent · clan · unclaim [all confirm] · add/remove <ник> [доступ|контейнеры|полный]
+    usage: <gray>/claim — купить чанк · circle <радиус 1–5> [territory] [confirm] · menu · tp [x z] · info [x z] · map [радиус] · list [стр] · forsale [стр] · near [радиус] · borders · notices [on|off] · greeting [текст|снять] · rent · clan · unclaim [all confirm] · add/remove <ник> [доступ|контейнеры|полный]
       [все] · transfer <ник> · balance (личный /bal) · sell <цена|снять> · sellback [confirm] · budget [1–30] · buy [x z] · help</gray>
     withdraw-done: '<green>Отдельной казны Claims нет. Используйте /bal withdraw для личного счёта.</green>'
     withdraw-not-enough: <red>На личном /bal всего %balance% ⛁.</red>

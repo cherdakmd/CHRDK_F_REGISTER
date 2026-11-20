@@ -9,6 +9,23 @@ final class ClaimLand {
         if(price<0||paidUntil<1||store.claimAt(world,x,z)!=null||!store.transferFunds(Map.of(owner,-(long)price),owner)) return false;
         store.add(new Claim(world,x,z,owner,paidUntil)); store.addDiamondsSpent(price); return true;
     }
+    /** All cells and their debit are committed in a single domain WAL transition. */
+    static boolean buyCircle(ClaimStore store, String world, List<ClaimCircle.Cell> cells,
+                             String owner, int price, long paidUntil) {
+        if (cells == null || cells.isEmpty() || cells.size() > 256 || price < 0 || paidUntil < 1) return false;
+        if (cells.stream().anyMatch(Objects::isNull) || new HashSet<>(cells).size() != cells.size()) return false;
+        if (store.finance != null) return store.finance.execute("land-buy-circle",
+                s -> buyCircle(s, world, cells, owner, price, paidUntil), Boolean.TRUE::equals, false);
+        long total = (long) price * cells.size();
+        for (var cell : cells) {
+            if (store.claimAt(world, cell.x(), cell.z()) != null
+                    || store.foreignNearby(world, cell.x(), cell.z(), owner, List.of())) return false;
+        }
+        if (!store.transferFunds(Map.of(owner, -total), owner)) return false;
+        for (var cell : cells) store.add(new Claim(world, cell.x(), cell.z(), owner, paidUntil));
+        store.addDiamondsSpent(total);
+        return true;
+    }
     static boolean sellback(ClaimStore store,Claim claim,int reward) {
         if(claim==null) return false;
         if(store.finance!=null) return store.finance.execute("land-sellback",s->sellback(s,s.claimAt(claim.world,claim.x,claim.z),reward),Boolean.TRUE::equals,false);
