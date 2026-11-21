@@ -33,6 +33,7 @@ public final class CustomItemsPlugin extends JavaPlugin {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
+        getServer().getPluginManager().registerEvents(new BuiltinInteract(catalog), this);
         mudShovel = new MudShovel(this);
         mudShovel.start();
         try {

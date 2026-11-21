@@ -29,7 +29,7 @@ final class PrototypeItems {
             lore.add(Component.text("Тестовый предмет; рецепт пока не определён."));
         } else if (BuiltinItems.isBuiltin(definition)) {
             lore.add(Component.text("Тестовый предмет; рецепт пока не определён."));
-            if (!definition.id().equals("litter_scoop")) lore.add(Component.text("Использование: /customitems use в основной руке."));
+            if (!definition.id().equals("litter_scoop")) lore.add(Component.text("Использование: правый клик в основной руке."));
         } else lore.add(Component.text("Прототип: крафт и боевые бонусы не реализованы."));
         meta.lore(lore);
         meta.getPersistentDataContainer().set(ID, PersistentDataType.STRING, definition.id());
