@@ -61,7 +61,12 @@ public final class PaidActions {
         if (!store.healthy() || !journal.healthy() || journal.pending()!=null) return true;
         var core=api.get(); if(core==null) return true;
         long bankSequence=core.bankChargeSequence(source,store.lineage());
-        return store.registered()&&bankSequence!=journal.nextSequence()-1&&!registrationRecoverable();
+        return sequenceMismatchRequiresPause(store.registered(), bankSequence, journal.nextSequence()-1, registrationRecoverable());
+    }
+    /** Незарегистрированный источник можно заново зарегистрировать только при пустом локальном журнале.
+     * Положительная последовательность банка никогда не является потерянным ACK: локальная история утрачена. */
+    public static boolean sequenceMismatchRequiresPause(boolean registered, long bankSequence, long localSequence, boolean registrationRecoverable) {
+        return registered && bankSequence != localSequence && !(bankSequence == -1 && registrationRecoverable);
     }
     /** Ни оплата, ни refund/resolution ещё не существовали: потерян только ACK/lineage. */
     private boolean registrationRecoverable() { return registrationRecoverable(store,journal); }

@@ -113,6 +113,13 @@ class PaidActionStoreTest {
         assertEquals(j.nextSequence()-1,bank().bankChargeSequence("teleports",s.lineage())); Files.writeString(b.file(),old);
         assertNotEquals(j.nextSequence()-1,bank().bankChargeSequence("teleports",s.lineage()));
     }
+    @Test void emptyReinstalledJournalCannotIgnoreBankHistory() {
+        assertTrue(PaidActions.sequenceMismatchRequiresPause(true, 5, 0, true));
+        assertTrue(PaidActions.sequenceMismatchRequiresPause(true, 0, 5, false));
+        assertFalse(PaidActions.sequenceMismatchRequiresPause(true, 0, 0, true));
+        assertFalse(PaidActions.sequenceMismatchRequiresPause(true, -1, 0, true));
+        assertTrue(PaidActions.sequenceMismatchRequiresPause(true, -1, 5, false));
+    }
     @Test void pristinePaidActionCanRestoreLineageButAnyObligationFailsClosed() throws Exception {
         var s=registered(); var j=new ChargeJournal(dir,"teleports",s.lineage());
         assertTrue(PaidActions.registrationRecoverable(s,j));
