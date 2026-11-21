@@ -7,7 +7,7 @@ messages:
   player-only: "<red>Эта команда доступна только игрокам.</red>"
   no-permission: "<red>Недостаточно прав.</red>"
   usage: "<yellow>/generator [take | upgrade <tier|speed|capacity|luck|chunk>]</yellow>"
-  admin-usage: "<yellow>/generatoradmin <reload|finance|recover></yellow>"
+  admin-usage: "<yellow>/generatoradmin <reload|finance|recover|rebase-lost></yellow>"
   reloaded: "<green>Конфиг CHRDK_Generator перезагружен.</green>"
 
   # --- генератор ---

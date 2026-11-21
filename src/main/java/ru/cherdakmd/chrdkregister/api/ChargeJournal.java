@@ -135,6 +135,32 @@ public final class ChargeJournal {
     public synchronized void rollback(BankCharge verifiedMissing) throws IOException {
         writable(); requirePending(verifiedMissing); var next = copy(); next.pending = null; write(next);
     }
+    /** Архивировать потерянное намерение до ручного согласования с подтверждённым курсором банка.
+     * Не решает, была ли старая операция оплачена; вызывающий обязан выполнить все проверки. */
+    public synchronized void archiveAndRebase(BankCharge payment, long bankSequence) throws IOException {
+        writable(); requirePending(payment);
+        if (!"generator-upgrades".equals(data.source) || data.sequence != 0 || payment.sequence() != 1
+                || payment.cash() != 0 || payment.change() != 0 || payment.debit() != payment.price()
+                || bankSequence <= payment.sequence() || bankSequence == Long.MAX_VALUE)
+            throw new IllegalArgumentException("unsafe journal rebase");
+        Path archive = file.resolveSibling("bank-charge-lost-" + payment.transaction() + ".json");
+        try { io.run(() -> {
+            byte[] original = Files.readAllBytes(file);
+            if (!JSON.toJson(data).equals(JSON.toJson(readExisting(file.getParent()))))
+                throw new IOException("journal changed on disk");
+            if (Files.exists(archive)) {
+                if (!Arrays.equals(original, Files.readAllBytes(archive))) throw new IOException("different recovery archive exists");
+            } else {
+                try (FileChannel channel = FileChannel.open(archive, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)) {
+                    var bytes = java.nio.ByteBuffer.wrap(original);
+                    while (bytes.hasRemaining()) channel.write(bytes);
+                    channel.force(true);
+                }
+                try (FileChannel directory = FileChannel.open(file.getParent(), StandardOpenOption.READ)) { directory.force(true); }
+            }
+        }); } catch (IOException | RuntimeException error) { healthy = false; throw error; }
+        var next = copy(); next.sequence = bankSequence; next.pending = null; write(next);
+    }
     private void requirePending(BankCharge payment) {
         if (payment == null || data.pending == null || !data.pending.payment.equals(payment)) throw new IllegalArgumentException("pending identity");
     }

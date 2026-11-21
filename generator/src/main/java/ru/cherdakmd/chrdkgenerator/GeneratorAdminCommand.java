@@ -22,6 +22,30 @@ public final class GeneratorAdminCommand implements CommandExecutor, TabComplete
             plugin.messages().send(sender, "no-permission");
             return true;
         }
+        if (args.length > 0 && args[0].equalsIgnoreCase("rebase-lost")) {
+            if (!(sender instanceof org.bukkit.command.ConsoleCommandSender)) {
+                sender.sendMessage("Согласование утраченной истории доступно только из консоли.");
+                return true;
+            }
+            if (args.length != 3 || !args[2].equalsIgnoreCase("confirm")) {
+                sender.sendMessage("Использование: generatoradmin rebase-lost <UUID платежа из finance> confirm. Исход платежа неизвестен; услуга и возврат не выполняются.");
+                return true;
+            }
+            try {
+                var id = java.util.UUID.fromString(args[1]);
+                if (plugin.payments() != null && plugin.payments().rebaseLostGeneratorHistory(id, sender.getName())) {
+                    sender.sendMessage("Журнал согласован, прежнее намерение сохранено в архив. Проверьте generatoradmin finance. Балансы не изменены.");
+                } else {
+                    sender.sendMessage("Согласование отклонено: условия безопасности не выполнены. Данные не изменены.");
+                }
+            } catch (IllegalArgumentException error) {
+                sender.sendMessage("Неверный UUID или небезопасное состояние. Согласование не выполнено.");
+            } catch (Exception error) {
+                plugin.getLogger().log(java.util.logging.Level.SEVERE, "Ошибка согласования журнала генератора; проверьте архив и журнал перед повтором", error);
+                sender.sendMessage("Ошибка записи: исход согласования требует проверки файлов и лога; не повторяйте вслепую.");
+            }
+            return true;
+        }
         if (paymentCommand(args)) {
             if (plugin.payments() == null) {
                 plugin.messages().send(sender, "finance.service-wait");

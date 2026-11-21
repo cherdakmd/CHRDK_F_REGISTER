@@ -183,6 +183,31 @@ public final class PaidActions {
             flushRefunds(); if(journal.pending()==null)store.enableMinor(); return true;
         } catch (Exception error) { failure(player,error); return false; }
     }
+    /** Явный операторский отказ от потерянной истории, только для нового журнала генератора.
+     * Это не доказательство исхода платежа и не выполняет услугу или возврат. */
+    public boolean rebaseLostGeneratorHistory(UUID transaction, String operator) throws IOException {
+        return rebaseLostGeneratorHistory(source, store, journal, api.get(), transaction, operator, plugin.getLogger());
+    }
+    public static boolean rebaseLostGeneratorHistory(String source, PaidActionStore store, ChargeJournal journal,
+            ChrdkRegisterApi core, UUID transaction, String operator, java.util.logging.Logger logger) throws IOException {
+        if (!"generator-upgrades".equals(source) || core == null || transaction == null || operator == null || operator.isBlank()) return false;
+        var pending = journal.pending();
+        if (pending == null || !pending.payment().transaction().equals(transaction)) return false;
+        var payment = pending.payment();
+        if (!store.healthy() || !journal.healthy() || !store.registered() || !store.actions().isEmpty()
+                || !store.refunds().isEmpty() || !store.resolutions().isEmpty() || !store.values().isEmpty()
+                || !store.snapshot().equals(pending.beforeState()) || journal.nextSequence() != 1
+                || !core.personalBankAvailable() || !core.incomeSourceAvailable(source, store.lineage())
+                || core.bankChargeStatus(payment) != BankCharge.Status.CONFLICT) return false;
+        long sequence = core.bankChargeSequence(source, store.lineage());
+        if (sequence <= payment.sequence() || sequence == Long.MAX_VALUE) return false;
+        logger.warning("Ручное согласование утерянной истории генератора: оператор=" + operator
+                + ", transaction=" + transaction + ", bankSequence=" + sequence
+                + "; исход платежа неизвестен, услуга и возврат не выполняются. Архив: bank-charge-lost-" + transaction + ".json");
+        journal.archiveAndRebase(payment, sequence);
+        logger.warning("Согласование журнала генератора завершено: transaction=" + transaction + ", bankSequence=" + sequence);
+        return true;
+    }
     public void tick() { if (store.healthy() && journal.healthy()) recover(null); }
     public void flushRefunds() throws IOException {
         if (!ready()) return;
