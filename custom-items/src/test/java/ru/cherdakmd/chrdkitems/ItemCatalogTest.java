@@ -23,6 +23,17 @@ class ItemCatalogTest {
         assertEquals(ItemCatalog.Category.TOOL, load(definition("pick", "tool", "IRON_PICKAXE", "chrdk_items:item/pick")).get("pick").category());
         assertEquals(ItemCatalog.Category.CONSUMABLE, load(definition("scroll", "consumable", "PAPER", "chrdk_items:item/scroll")).get("scroll").category());
     }
+    @Test void optionalTextIsValidatedAndImmutable() {
+        var entry = load(definition("blade", "weapon", "IRON_SWORD", "chrdk_items:item/blade")
+                + "    name: \"Пример\"\n    description:\n      - \"Описание\"\n").get("blade");
+        assertEquals("Пример", entry.name());
+        assertEquals(java.util.List.of("Описание"), entry.description());
+        assertThrows(UnsupportedOperationException.class, () -> entry.description().clear());
+        assertThrows(IllegalArgumentException.class, () -> load(definition("blade", "weapon", "IRON_SWORD", "chrdk_items:item/blade") + "    name: 12\n"));
+        assertThrows(IllegalArgumentException.class, () -> load(definition("blade", "weapon", "IRON_SWORD", "chrdk_items:item/blade") + "    description: [1]\n"));
+        assertThrows(IllegalArgumentException.class, () -> load(definition("blade", "weapon", "IRON_SWORD", "chrdk_items:item/blade") + "    description: [a, b, c, d, e]\n"));
+        assertThrows(IllegalArgumentException.class, () -> load(definition("blade", "weapon", "IRON_SWORD", "chrdk_items:item/blade") + "    name: \"" + "a".repeat(65) + "\"\n"));
+    }
     @Test void rejectsUnsafeOrIncompleteDefinitions() {
         assertThrows(IllegalArgumentException.class, () -> load("other: {}"));
         assertThrows(IllegalArgumentException.class, () -> load("items:\n  test: {}"));

@@ -5,11 +5,18 @@ api-version: '26.3'
 description: "Экспериментальный каталог будущей кастомной экипировки"
 author: cherdakmd
 commands:
+  customitems:
+    description: "Просмотр экспериментального каталога предметов"
+    usage: "/customitems [all|weapon|armor|tool|consumable] [страница] | info <id>"
+    permission: chrdkcustomitems.use
   customitemsadmin:
     description: "Экспериментальная выдача предмета из каталога себе"
     usage: "/customitemsadmin give <id>"
     permission: chrdkcustomitems.admin
 permissions:
+  chrdkcustomitems.use:
+    description: "Просмотр каталога прототипов"
+    default: true
   chrdkcustomitems.admin:
     description: "Выдача прототипов только для тестирования"
     default: op

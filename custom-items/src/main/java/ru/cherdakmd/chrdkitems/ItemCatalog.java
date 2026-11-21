@@ -4,6 +4,9 @@ import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 
 import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -14,7 +17,12 @@ final class ItemCatalog {
     private static final Pattern ID = Pattern.compile("[a-z][a-z0-9_]{0,63}");
     private static final Pattern MODEL = Pattern.compile("chrdk_items:item/[a-z0-9_/-]+");
     enum Category { ARMOR, WEAPON, TOOL, CONSUMABLE }
-    record Definition(String id, Category category, Material material, String model) { }
+    record Definition(String id, Category category, Material material, String model, String name, List<String> description) {
+        Definition { description = List.copyOf(description); }
+        Definition(String id, Category category, Material material, String model) {
+            this(id, category, material, model, "Прототип: " + id, List.of());
+        }
+    }
 
     static Map<String, Definition> load(ConfigurationSection root) {
         if (root == null || !root.isConfigurationSection("items"))
@@ -24,8 +32,9 @@ final class ItemCatalog {
         for (String id : items.getKeys(false)) {
             if (!ID.matcher(id).matches()) throw invalid(id, "invalid id");
             var section = items.getConfigurationSection(id);
-            if (section == null || !section.getKeys(false).equals(java.util.Set.of("category", "material", "model")))
-                throw invalid(id, "expected exactly category, material and model");
+            if (section == null || !section.getKeys(false).containsAll(Set.of("category", "material", "model"))
+                    || !Set.of("category", "material", "model", "name", "description").containsAll(section.getKeys(false)))
+                throw invalid(id, "expected category, material, model and optional name and description");
             if (!section.isString("category") || !section.isString("material") || !section.isString("model"))
                 throw invalid(id, "fields must be strings");
             Category category;
@@ -38,9 +47,29 @@ final class ItemCatalog {
             String model = section.getString("model");
             if (!MODEL.matcher(model).matches() || model.contains("..") || model.contains("//") || model.endsWith("/"))
                 throw invalid(id, "invalid model path");
-            result.put(id, new Definition(id, category, material, model));
+            String name = "Прототип: " + id;
+            if (section.contains("name")) {
+                if (!section.isString("name")) throw invalid(id, "name must be a string");
+                name = text(id, section.getString("name"), 64);
+            }
+            var description = new ArrayList<String>();
+            if (section.contains("description")) {
+                var lines = section.getList("description");
+                if (lines == null || lines.size() > 4) throw invalid(id, "description must have at most four lines");
+                for (Object line : lines) {
+                    if (!(line instanceof String value)) throw invalid(id, "description lines must be strings");
+                    description.add(text(id, value, 160));
+                }
+            }
+            result.put(id, new Definition(id, category, material, model, name, description));
         }
         return Collections.unmodifiableMap(result);
+    }
+
+    private static String text(String id, String value, int max) {
+        if (value == null || value.isBlank() || value.length() > max || value.codePoints().anyMatch(Character::isISOControl))
+            throw invalid(id, "invalid text");
+        return value.strip();
     }
 
     private static boolean matches(Category category, String material) {

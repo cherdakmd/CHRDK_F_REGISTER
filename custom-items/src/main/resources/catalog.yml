@@ -6,6 +6,9 @@
 # ECHO_SHARD, AMETHYST_SHARD или PRISMARINE_CRYSTALS (пока без использования).
 # items:
 #   example_blade:
+#     name: "Учебный клинок"
+#     description:
+#       - "Прототип без дополнительных свойств."
 #     category: weapon
 #     material: IRON_SWORD
 #     model: chrdk_items:item/example_blade

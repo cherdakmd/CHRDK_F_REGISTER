@@ -44,6 +44,7 @@ public final class CustomItemsPlugin extends JavaPlugin {
     }
 
     @Override public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (command.getName().equalsIgnoreCase("customitems")) return new CatalogCommand(catalog).execute(sender, args);
         if (!sender.hasPermission("chrdkcustomitems.admin")) {
             sender.sendMessage(Component.text("Нет права на выдачу прототипов."));
             return true;

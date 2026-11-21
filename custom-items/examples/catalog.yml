@@ -2,18 +2,30 @@
 # Прототипы не имеют необычных свойств, крафтов и механики расходования.
 items:
   test_blade:
+    name: "Учебный клинок"
+    description:
+      - "Прототип оружия без дополнительных свойств."
     category: weapon
     material: IRON_SWORD
     model: chrdk_items:item/test_blade
   test_pick:
+    name: "Учебная кирка"
+    description:
+      - "Прототип инструмента без дополнительных свойств."
     category: tool
     material: IRON_PICKAXE
     model: chrdk_items:item/test_pick
   test_helm:
+    name: "Учебный шлем"
+    description:
+      - "Прототип брони без дополнительных свойств."
     category: armor
     material: IRON_HELMET
     model: chrdk_items:item/test_helm
   test_scroll:
+    name: "Учебный свиток"
+    description:
+      - "Макет расходника: использовать пока нельзя."
     category: consumable
     material: PAPER
     model: chrdk_items:item/test_scroll

@@ -5,7 +5,6 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 
-import java.util.List;
 
 /** Test-only construction; persistent tags are identifiers, not proof of authenticity. */
 final class PrototypeItems {
@@ -17,8 +16,11 @@ final class PrototypeItems {
         var stack = new ItemStack(definition.material());
         var meta = stack.getItemMeta();
         if (meta == null) throw new IllegalStateException("material has no item metadata");
-        meta.displayName(Component.text("Прототип: " + definition.id()));
-        meta.lore(List.of(Component.text("Тестовый предмет: свойства и крафт не реализованы.")));
+        meta.displayName(Component.text(definition.name()));
+        var lore = new java.util.ArrayList<Component>();
+        for (String line : definition.description()) lore.add(Component.text(line));
+        lore.add(Component.text("Тестовый предмет: свойства и крафт не реализованы."));
+        meta.lore(lore);
         meta.getPersistentDataContainer().set(ID, PersistentDataType.STRING, definition.id());
         meta.getPersistentDataContainer().set(SCHEMA, PersistentDataType.INTEGER, CURRENT_SCHEMA);
         // Custom model data is ignored by vanilla clients without the experimental pack.
