@@ -50,7 +50,6 @@ review: [core, claims, teleports, diamond-shop]
   оставайтесь в той же точке и не меняйте направление взгляда.
 - `/claim sellback` → `/claim sellback confirm` для одного чанка под вами.
 - `/customitems` — GUI-каталог предметов только для просмотра.
-- `/party` — GUI состава, приглашений и выхода из временной группы.
 - `/customitems info mud_shovel` — информация о лопате; `/customitemsadmin give mud_shovel` — тестовая выдача администратору себе.
 - `/claim circle 2` → `/claim circle 2 confirm` — предпросмотр и покупка квадрата чанков, включая углы; вариант
   `circle 1 territory` расширяет связанную территорию. Условия и ограничения —
