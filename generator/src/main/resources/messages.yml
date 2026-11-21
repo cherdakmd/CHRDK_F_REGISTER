@@ -7,7 +7,7 @@ messages:
   player-only: "<red>Эта команда доступна только игрокам.</red>"
   no-permission: "<red>Недостаточно прав.</red>"
   usage: "<yellow>/generator [take | upgrade <tier|speed|capacity|luck|chunk>]</yellow>"
-  admin-usage: "<yellow>/generatoradmin <reload></yellow>"
+  admin-usage: "<yellow>/generatoradmin <reload|finance|recover></yellow>"
   reloaded: "<green>Конфиг CHRDK_Generator перезагружен.</green>"
 
   # --- генератор ---
@@ -111,4 +111,8 @@ messages:
   finance.service-wait: "<yellow>Платёж ожидает сверки. Новые сделки приостановлены. Администратору: /generatoradmin recover.</yellow>"
   finance.service-insufficient: "<red>Нужно %cost% в банке: сначала /bal. Улучшения оплачиваются только банком.</red>"
   finance.service-refused: "<red>Операция отклонена. Новое списание/возврат не выполнены.</red>"
+  finance.service-checked: "<green>Безопасная сверка завершена. Это не принудительное подтверждение и не обход IO-карантина; проверьте /generatoradmin finance.</green>"
+  finance.service-payment: "<yellow>Незавершённый платёж %id%, плательщик %payer%. Не удаляйте журнал.</yellow>"
+  finance.service-action: "<yellow>Резерв %id%: payer=%payer%, actor=%actor%, цена=%price%, этап=%phase%, вид=%kind%, цель=%target%.</yellow>"
+  finance.service-status: "<gray>Незавершённых услуг: %count%, блокировка оплаты: %paused%. EXECUTING требует проверки фактического исхода.</gray>"
   finance.service-refunding: "<yellow>Улучшение не куплено. Возврат %cost% учтён для /bal; при недоступном банке непогашенная часть сохранена.</yellow>"

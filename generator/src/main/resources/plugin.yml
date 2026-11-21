@@ -14,7 +14,7 @@ commands:
   generatoradmin:
     description: "Администрирование генератора"
     permission: chrdkgenerator.admin
-    usage: "/generatoradmin <reload>"
+    usage: "/generatoradmin <reload|finance|recover>"
 permissions:
   chrdkgenerator.use:
     description: "Просмотр статуса и управление своим генератором"
