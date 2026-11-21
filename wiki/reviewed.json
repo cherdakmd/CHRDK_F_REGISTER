@@ -46,8 +46,8 @@
       "text": "50a9a056b0f984435fea5d8a4c255b262334ef0dde7ca94a75b71942bbe73811"
     },
     "custom-items": {
-      "reason": "Проверены прототипная административная выдача, расходники и решение об отсутствии ролей в пати.",
-      "sources": "4faf61fd01d11eedc7b0b7009e3dac9a39743a85baccf81c6d8702ff7cab752a",
+      "reason": "Сверена неизменённая логика поиска свободной ячейки для административного прототипа.",
+      "sources": "50cdddd79adfb0b03c10acae12a0b84ddb0a8e2999cff75c7ceaebfe7ad90100",
       "text": "16cb88cf9dfcc42e8df8d7cdef9b0b5d94dc97d607509ec52fef937460737f2f"
     },
     "dailies": {

@@ -47,7 +47,10 @@ public final class CustomItemsPlugin extends JavaPlugin {
         }
         // Only an empty main-storage slot, no drop and no partial writes or merging.
         var inventory = player.getInventory();
-        int slot = firstFreeStorage(inventory);
+        int slot = firstFreeStorage(i -> {
+            var current = inventory.getItem(i);
+            return current != null && !current.getType().isAir();
+        });
         if (slot < 0) {
             player.sendMessage(Component.text("Нет свободной ячейки инвентаря; предмет не выдан."));
             return true;
@@ -66,10 +69,9 @@ public final class CustomItemsPlugin extends JavaPlugin {
         return true;
     }
 
-    static int firstFreeStorage(org.bukkit.inventory.PlayerInventory inventory) {
+    static int firstFreeStorage(java.util.function.IntPredicate occupied) {
         for (int i = 0; i < 36; i++) {
-            var item = inventory.getItem(i);
-            if (item == null || item.getType().isAir()) return i;
+            if (!occupied.test(i)) return i;
         }
         return -1;
     }
