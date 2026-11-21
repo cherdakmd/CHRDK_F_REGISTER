@@ -1,87 +1,88 @@
 # Пример только для закрытого теста: вручную скопировать в plugins/CHRDK_CustomItems/catalog.yml.
-# Прототипы не имеют необычных свойств, крафтов и механики расходования.
+# Свойства — небоевые тестовые действия /customitems use (отключены по умолчанию).
+# Три расходника тратят один предмет; крафтов и боевых бонусов пока нет.
 items:
   test_blade:
     name: "Учебный клинок"
     description:
-      - "Прототип оружия без дополнительных свойств."
+      - "Показывает направление взгляда."
     category: weapon
     material: IRON_SWORD
     model: chrdk_items:item/test_blade
   test_pick:
     name: "Учебная кирка"
     description:
-      - "Прототип инструмента без дополнительных свойств."
+      - "Определяет видимый блок в пределах 5 блоков."
     category: tool
     material: IRON_PICKAXE
     model: chrdk_items:item/test_pick
   test_helm:
     name: "Учебный шлем"
     description:
-      - "Прототип брони без дополнительных свойств."
+      - "Показывает освещённость у игрока."
     category: armor
     material: IRON_HELMET
     model: chrdk_items:item/test_helm
   test_scroll:
     name: "Учебный свиток"
     description:
-      - "Макет расходника: использовать пока нельзя."
+      - "Одноразово показывает координаты и мир."
     category: consumable
     material: PAPER
     model: chrdk_items:item/test_scroll
   test_sunblade:
     name: "Солнечный клинок (прототип)"
     description:
-      - "Вариант оружия для проверки внешнего вида."
+      - "Показывает время мира."
     category: weapon
     material: GOLDEN_SWORD
     model: chrdk_items:item/test_sunblade
   test_moonblade:
     name: "Лунный клинок (прототип)"
     description:
-      - "Вариант оружия для проверки внешнего вида."
+      - "Показывает номер игрового дня."
     category: weapon
     material: DIAMOND_SWORD
     model: chrdk_items:item/test_moonblade
   test_chest:
     name: "Учебный нагрудник"
     description:
-      - "Прототип брони без дополнительных свойств."
+      - "Показывает уровень сытости."
     category: armor
     material: IRON_CHESTPLATE
     model: chrdk_items:item/test_chest
   test_boots:
     name: "Учебные ботинки"
     description:
-      - "Прототип брони без дополнительных свойств."
+      - "Показывает текущую высоту."
     category: armor
     material: IRON_BOOTS
     model: chrdk_items:item/test_boots
   test_shovel:
     name: "Учебная лопата"
     description:
-      - "Прототип инструмента без дополнительных свойств."
+      - "Показывает освещение небом у игрока."
     category: tool
     material: IRON_SHOVEL
     model: chrdk_items:item/test_shovel
   test_hoe:
     name: "Учебная мотыга"
     description:
-      - "Прототип инструмента без дополнительных свойств."
+      - "Показывает текущий биом."
     category: tool
     material: IRON_HOE
     model: chrdk_items:item/test_hoe
   test_rune:
     name: "Учебная руна"
     description:
-      - "Макет расходника: использовать пока нельзя."
+      - "Одноразово показывает уровень опыта."
     category: consumable
     material: AMETHYST_SHARD
     model: chrdk_items:item/test_rune
   test_charm:
     name: "Учебный талисман"
     description:
-      - "Макет расходника: использовать пока нельзя."
+      - "Одноразово показывает точку возрождения."
     category: consumable
     material: ECHO_SHARD
     model: chrdk_items:item/test_charm

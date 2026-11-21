@@ -30,7 +30,7 @@ class CatalogCommandTest {
         assertTrue(messages.stream().anyMatch(s -> s.contains("Свиток [scroll]")));
         messages.clear();
         assertTrue(command.execute(sender, new String[]{"info", "scroll"}));
-        assertTrue(messages.stream().anyMatch(s -> s.contains("ещё не реализованы")));
+        assertTrue(messages.stream().anyMatch(s -> s.contains("не реализованы")));
         messages.clear(); permitted[0] = false;
         assertTrue(command.execute(sender, new String[]{"info", "scroll"}));
         assertEquals(1, messages.size()); assertTrue(messages.getFirst().contains("Нет права"));

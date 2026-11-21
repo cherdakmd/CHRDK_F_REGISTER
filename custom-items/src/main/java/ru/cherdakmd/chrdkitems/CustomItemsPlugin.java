@@ -24,7 +24,7 @@ public final class CustomItemsPlugin extends JavaPlugin {
             yaml.load(new File(getDataFolder(), "catalog.yml"));
             catalog = ItemCatalog.load(yaml);
             getLogger().info("Experimental catalog: " + catalog.size()
-                    + " definitions validated; no recipes or effects are registered.");
+                    + " definitions validated; test properties are opt-in, recipes are not registered.");
         } catch (IOException | InvalidConfigurationException | IllegalArgumentException e) {
             getLogger().severe("Invalid item catalog; addon disabled: " + e.getMessage());
             getServer().getPluginManager().disablePlugin(this);
@@ -44,7 +44,15 @@ public final class CustomItemsPlugin extends JavaPlugin {
     }
 
     @Override public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (command.getName().equalsIgnoreCase("customitems")) return new CatalogCommand(catalog).execute(sender, args);
+        if (command.getName().equalsIgnoreCase("customitems")) {
+            if (args.length == 1 && args[0].equalsIgnoreCase("use")) {
+                if (!sender.hasPermission("chrdkcustomitems.use")) sender.sendMessage(Component.text("Нет права на использование прототипов."));
+                else if (!(sender instanceof Player player)) sender.sendMessage(Component.text("Использование доступно только игроку."));
+                else PrototypeUse.use(player, catalog, getConfig().getBoolean("prototype-properties", false));
+                return true;
+            }
+            return new CatalogCommand(catalog).execute(sender, args);
+        }
         if (!sender.hasPermission("chrdkcustomitems.admin")) {
             sender.sendMessage(Component.text("Нет права на выдачу прототипов."));
             return true;

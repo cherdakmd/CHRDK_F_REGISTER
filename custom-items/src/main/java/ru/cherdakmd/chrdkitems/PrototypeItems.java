@@ -19,7 +19,12 @@ final class PrototypeItems {
         meta.displayName(Component.text(definition.name()));
         var lore = new java.util.ArrayList<Component>();
         for (String line : definition.description()) lore.add(Component.text(line));
-        lore.add(Component.text("Тестовый предмет: свойства и крафт не реализованы."));
+        var effect = PrototypeEffects.effect(definition);
+        if (effect != null) {
+            lore.add(Component.text(effect.description));
+            lore.add(Component.text("Тест: /customitems use с предметом в руке (если включено)."));
+        }
+        lore.add(Component.text("Прототип: крафт и боевые бонусы не реализованы."));
         meta.lore(lore);
         meta.getPersistentDataContainer().set(ID, PersistentDataType.STRING, definition.id());
         meta.getPersistentDataContainer().set(SCHEMA, PersistentDataType.INTEGER, CURRENT_SCHEMA);

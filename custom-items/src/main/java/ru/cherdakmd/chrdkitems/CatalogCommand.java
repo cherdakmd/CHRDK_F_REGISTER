@@ -19,13 +19,16 @@ final class CatalogCommand {
             sender.sendMessage(Component.text(item.name() + " [" + item.id() + "]"));
             sender.sendMessage(Component.text(CatalogView.categoryName(item.category()) + " · основа: " + item.material().name()));
             item.description().forEach(line -> sender.sendMessage(Component.text(line)));
-            sender.sendMessage(Component.text("Прототип: необычные свойства, крафт и использование расходников ещё не реализованы."));
+            var effect = PrototypeEffects.effect(item);
+            if (effect != null) sender.sendMessage(Component.text("Тестовое свойство: " + effect.description
+                    + " /customitems use с предметом в руке (если включено)."));
+            sender.sendMessage(Component.text("Прототип: крафт и боевые бонусы не реализованы."));
             return true;
         }
         final CatalogView.Query query;
         try { query = CatalogView.parse(args); }
         catch (IllegalArgumentException e) {
-            sender.sendMessage(Component.text("Использование: /customitems [all|weapon|armor|tool|consumable] [страница] или /customitems info <id>"));
+            sender.sendMessage(Component.text("Использование: /customitems [all|weapon|armor|tool|consumable] [страница] или /customitems info <id> или /customitems use"));
             return true;
         }
         var page = CatalogView.search(catalog, query);

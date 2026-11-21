@@ -7,7 +7,7 @@ author: cherdakmd
 commands:
   customitems:
     description: "Просмотр экспериментального каталога предметов"
-    usage: "/customitems [all|weapon|armor|tool|consumable] [страница] | info <id>"
+    usage: "/customitems [all|weapon|armor|tool|consumable] [страница] | info <id> | use"
     permission: chrdkcustomitems.use
   customitemsadmin:
     description: "Экспериментальная выдача предмета из каталога себе"
