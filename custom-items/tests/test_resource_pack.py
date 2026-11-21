@@ -6,7 +6,11 @@ import unittest
 
 PACK = Path(__file__).resolve().parents[1] / "resource-pack"
 ITEMS = {"iron_sword": "test_blade", "iron_pickaxe": "test_pick",
-         "iron_helmet": "test_helm", "paper": "test_scroll"}
+         "iron_helmet": "test_helm", "paper": "test_scroll",
+         "golden_sword": "test_sunblade", "diamond_sword": "test_moonblade",
+         "iron_chestplate": "test_chest", "iron_boots": "test_boots",
+         "iron_shovel": "test_shovel", "iron_hoe": "test_hoe",
+         "amethyst_shard": "test_rune", "echo_shard": "test_charm"}
 
 
 class ResourcePackTest(unittest.TestCase):

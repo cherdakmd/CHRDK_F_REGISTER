@@ -29,3 +29,59 @@ items:
     category: consumable
     material: PAPER
     model: chrdk_items:item/test_scroll
+  test_sunblade:
+    name: "Солнечный клинок (прототип)"
+    description:
+      - "Вариант оружия для проверки внешнего вида."
+    category: weapon
+    material: GOLDEN_SWORD
+    model: chrdk_items:item/test_sunblade
+  test_moonblade:
+    name: "Лунный клинок (прототип)"
+    description:
+      - "Вариант оружия для проверки внешнего вида."
+    category: weapon
+    material: DIAMOND_SWORD
+    model: chrdk_items:item/test_moonblade
+  test_chest:
+    name: "Учебный нагрудник"
+    description:
+      - "Прототип брони без дополнительных свойств."
+    category: armor
+    material: IRON_CHESTPLATE
+    model: chrdk_items:item/test_chest
+  test_boots:
+    name: "Учебные ботинки"
+    description:
+      - "Прототип брони без дополнительных свойств."
+    category: armor
+    material: IRON_BOOTS
+    model: chrdk_items:item/test_boots
+  test_shovel:
+    name: "Учебная лопата"
+    description:
+      - "Прототип инструмента без дополнительных свойств."
+    category: tool
+    material: IRON_SHOVEL
+    model: chrdk_items:item/test_shovel
+  test_hoe:
+    name: "Учебная мотыга"
+    description:
+      - "Прототип инструмента без дополнительных свойств."
+    category: tool
+    material: IRON_HOE
+    model: chrdk_items:item/test_hoe
+  test_rune:
+    name: "Учебная руна"
+    description:
+      - "Макет расходника: использовать пока нельзя."
+    category: consumable
+    material: AMETHYST_SHARD
+    model: chrdk_items:item/test_rune
+  test_charm:
+    name: "Учебный талисман"
+    description:
+      - "Макет расходника: использовать пока нельзя."
+    category: consumable
+    material: ECHO_SHARD
+    model: chrdk_items:item/test_charm

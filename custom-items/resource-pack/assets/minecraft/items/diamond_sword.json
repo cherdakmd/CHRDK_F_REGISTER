@@ -1,0 +1,27 @@
+{
+  "model": {
+    "type": "minecraft:range_dispatch",
+    "property": "minecraft:custom_model_data",
+    "index": 0,
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "minecraft:item/diamond_sword"
+    },
+    "entries": [
+      {
+        "threshold": 810001,
+        "model": {
+          "type": "minecraft:model",
+          "model": "chrdk_items:item/test_moonblade"
+        }
+      },
+      {
+        "threshold": 810002,
+        "model": {
+          "type": "minecraft:model",
+          "model": "minecraft:item/diamond_sword"
+        }
+      }
+    ]
+  }
+}

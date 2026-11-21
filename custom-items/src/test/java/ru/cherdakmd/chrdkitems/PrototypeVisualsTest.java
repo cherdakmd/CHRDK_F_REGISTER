@@ -9,7 +9,9 @@ class PrototypeVisualsTest {
         var yaml = new org.bukkit.configuration.file.YamlConfiguration();
         yaml.load(new java.io.File("examples/catalog.yml"));
         var examples = ItemCatalog.load(yaml);
-        assertEquals(4, examples.size());
+        assertEquals(12, examples.size());
+        for (var category : ItemCatalog.Category.values())
+            assertEquals(3, examples.values().stream().filter(def -> def.category() == category).count(), category.name());
         for (var definition : examples.values()) assertEquals(810001, PrototypeVisuals.modelData(definition));
     }
     @Test void onlyExactPrototypeDefinitionsReceiveModelData() {
