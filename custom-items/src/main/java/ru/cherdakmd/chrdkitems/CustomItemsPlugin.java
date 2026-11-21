@@ -24,10 +24,22 @@ public final class CustomItemsPlugin extends JavaPlugin {
             yaml.load(new File(getDataFolder(), "catalog.yml"));
             catalog = ItemCatalog.load(yaml);
             getLogger().info("Experimental catalog: " + catalog.size()
-                    + " definitions validated; no recipes, effects or resource pack are registered.");
+                    + " definitions validated; no recipes or effects are registered.");
         } catch (IOException | InvalidConfigurationException | IllegalArgumentException e) {
             getLogger().severe("Invalid item catalog; addon disabled: " + e.getMessage());
             getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        try {
+            var pack = ResourcePackSettings.parse(getConfig());
+            if (pack != null) {
+                var delivery = new ResourcePackDelivery(this, pack);
+                getServer().getPluginManager().registerEvents(delivery, this);
+                getServer().getOnlinePlayers().forEach(delivery::schedule);
+                getLogger().info("Resource pack delivery enabled for joining players.");
+            }
+        } catch (IllegalArgumentException e) {
+            getLogger().warning(e.getMessage() + "; automatic pack delivery disabled.");
         }
     }
 
