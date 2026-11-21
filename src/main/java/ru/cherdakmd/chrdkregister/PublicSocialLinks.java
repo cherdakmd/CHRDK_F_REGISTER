@@ -68,9 +68,11 @@ final class PublicSocialLinks {
                 return Optional.of("https://" + host + path + query);
             }
             if (host.startsWith("www.")) host = host.substring(4);
-            if (!host.equals(platform.host) || uri.getRawPath() == null
+            // VK использует два официальных домена. Не разрешаем произвольные .ru в поле VK.
+            boolean allowedHost = host.equals(platform.host) || platform == Platform.VK && host.equals("vk.ru");
+            if (!allowedHost || uri.getRawPath() == null
                     || !platform.path.matcher(uri.getRawPath()).matches()) return Optional.empty();
-            return Optional.of("https://" + platform.host + uri.getRawPath());
+            return Optional.of("https://" + host + uri.getRawPath());
         } catch (Exception exception) {
             return Optional.empty();
         }

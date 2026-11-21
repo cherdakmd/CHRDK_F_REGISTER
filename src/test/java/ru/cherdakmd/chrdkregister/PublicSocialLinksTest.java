@@ -19,6 +19,11 @@ class PublicSocialLinksTest {
 
     @Test void acceptsOnlyExplicitCanonicalProfileUrls() {
         assertEquals("https://vk.com/example", PublicSocialLinks.validate(VK, "https://www.vk.com/example").orElseThrow());
+        assertEquals("https://vk.ru/example", PublicSocialLinks.validate(VK, "https://vk.ru/example").orElseThrow());
+        assertEquals("https://vk.ru/example", PublicSocialLinks.validate(VK, "https://www.vk.ru/example").orElseThrow());
+        assertTrue(PublicSocialLinks.validate(VK, "https://vk.ru.evil.test/example").isEmpty());
+        assertTrue(PublicSocialLinks.validate(VK, "https://evil.ru/example").isEmpty());
+        assertEquals("https://example.ru/path?a=1", PublicSocialLinks.validate(OTHER, "https://example.ru/path?a=1").orElseThrow());
         assertTrue(PublicSocialLinks.validate(DISCORD, "https://discord.com/users/123456789012345678").isPresent());
         assertTrue(PublicSocialLinks.validate(TELEGRAM, "https://t.me/example_user").isPresent());
         assertTrue(PublicSocialLinks.validate(YOUTUBE, "https://youtube.com/@example").isPresent());
@@ -44,13 +49,13 @@ class PublicSocialLinksTest {
         var store = new PublicSocialLinks(folder, Logger.getAnonymousLogger());
         UUID other = UUID.randomUUID();
         assertEquals(Map.of(), store.read(id).orElseThrow());
-        assertTrue(store.update(id, VK, "https://vk.com/example"));
+        assertTrue(store.update(id, VK, "https://vk.ru/example"));
         assertTrue(store.update(id, TELEGRAM, "https://t.me/example_user"));
         assertTrue(store.update(id, TIKTOK, "https://tiktok.com/@example"));
         assertTrue(store.update(id, OTHER, "https://example.com/my-page"));
         assertFalse(store.update(id, VK, "https://evil.test/example"));
         var restarted = new PublicSocialLinks(folder, Logger.getAnonymousLogger());
-        assertEquals("https://vk.com/example", restarted.read(id).orElseThrow().get(VK));
+        assertEquals("https://vk.ru/example", restarted.read(id).orElseThrow().get(VK));
         assertEquals(Map.of(), restarted.read(other).orElseThrow());
         assertTrue(restarted.update(id, VK, null));
         assertEquals(Map.of(TELEGRAM, "https://t.me/example_user", TIKTOK, "https://tiktok.com/@example", OTHER, "https://example.com/my-page"), store.read(id).orElseThrow());

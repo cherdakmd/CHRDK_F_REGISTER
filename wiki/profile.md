@@ -31,7 +31,7 @@ review: [core, ranks, guilds, achievements, vk]
 к карточке; в чате по ней можно нажать. Служебные привязки для входа и их ID
 автоматически не публикуются.
 
-Для основных платформ принимаются прямые HTTPS-ссылки без параметров: `https://vk.com/имя`,
+Для основных платформ принимаются прямые HTTPS-ссылки без параметров: `https://vk.com/имя` или `https://vk.ru/имя`,
 `https://discord.com/users/числовой-id` (17–20 цифр), `https://t.me/имя`,
 `https://youtube.com/@имя` или путь канала `channel`, `c`, `user`, и
 `https://twitch.tv/имя`, `https://tiktok.com/@имя`. `other` — одна произвольная
