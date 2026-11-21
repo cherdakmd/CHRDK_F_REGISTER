@@ -4,3 +4,12 @@ main: ru.cherdakmd.chrdkitems.CustomItemsPlugin
 api-version: '26.3'
 description: "Экспериментальный каталог будущей кастомной экипировки"
 author: cherdakmd
+commands:
+  customitemsadmin:
+    description: "Экспериментальная выдача предмета из каталога себе"
+    usage: "/customitemsadmin give <id>"
+    permission: chrdkcustomitems.admin
+permissions:
+  chrdkcustomitems.admin:
+    description: "Выдача прототипов только для тестирования"
+    default: op

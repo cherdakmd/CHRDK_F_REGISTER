@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 final class ItemCatalog {
     private static final Pattern ID = Pattern.compile("[a-z][a-z0-9_]{0,63}");
     private static final Pattern MODEL = Pattern.compile("chrdk_items:item/[a-z0-9_/-]+");
-    enum Category { ARMOR, WEAPON, TOOL }
+    enum Category { ARMOR, WEAPON, TOOL, CONSUMABLE }
     record Definition(String id, Category category, Material material, String model) { }
 
     static Map<String, Definition> load(ConfigurationSection root) {
@@ -53,6 +53,9 @@ final class ItemCatalog {
                     || material.equals("CROSSBOW") || material.equals("TRIDENT") || material.equals("MACE");
             case TOOL -> toolTier && (material.endsWith("_PICKAXE") || material.endsWith("_AXE")
                     || material.endsWith("_SHOVEL") || material.endsWith("_HOE"));
+            // Neutral bases: no vanilla eating, drinking, placement or projectile use.
+            case CONSUMABLE -> java.util.Set.of("PAPER", "CLAY_BALL", "ECHO_SHARD",
+                    "AMETHYST_SHARD", "PRISMARINE_CRYSTALS").contains(material);
         };
     }
     private static IllegalArgumentException invalid(String id, String reason) {
