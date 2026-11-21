@@ -16,6 +16,7 @@ import java.util.Map;
 public final class CustomItemsPlugin extends JavaPlugin {
     private Map<String, ItemCatalog.Definition> catalog = Map.of();
     private MudShovel mudShovel;
+    private ResourcePackHttpServer packServer;
 
     @Override public void onEnable() {
         saveDefaultConfig();
@@ -37,17 +38,22 @@ public final class CustomItemsPlugin extends JavaPlugin {
         try {
             var pack = ResourcePackSettings.parse(getConfig(), getDataFolder().toPath().resolve(ResourcePackSettings.PACK_FILE));
             if (pack != null) {
+                if (pack.host()) {
+                    packServer = new ResourcePackHttpServer(pack.bind(), pack.port(), pack.bytes());
+                    getLogger().info("Resource pack HTTP server listening on " + pack.bind() + ":" + pack.port());
+                }
                 var delivery = new ResourcePackDelivery(this, pack);
                 getServer().getPluginManager().registerEvents(delivery, this);
                 getServer().getOnlinePlayers().forEach(delivery::schedule);
                 getLogger().info("Resource pack delivery enabled for joining players.");
             }
-        } catch (IllegalArgumentException e) {
-            getLogger().warning(e.getMessage() + "; automatic pack delivery disabled.");
+        } catch (IllegalArgumentException | IOException e) {
+            getLogger().warning("Resource pack setup failed: " + e.getMessage() + "; automatic pack delivery disabled.");
         }
     }
 
     @Override public void onDisable() {
+        if (packServer != null) { packServer.close(); packServer = null; }
         if (mudShovel != null) mudShovel.stop();
     }
 
