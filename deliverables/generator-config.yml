@@ -1,0 +1,141 @@
+# Версия схемы конфигурации: не удаляйте, она защищает владельческие правки.
+config-version: 1
+
+# CHRDK_Generator — личный генератор ресурсов (п.31).
+# Прогресс (тир, модули, бункер) хранится в generator.json по UUID игрока.
+
+general:
+  enabled: true
+  locale: ru
+
+generator:
+  cycle-seconds: 30
+  bunker-base: 256
+  offline-hours: 8
+  offline-efficiency: 0.5
+
+  fuel:
+    enabled: false
+    cycles-per-bucket: 256
+
+  # Явно отключено, чтобы новая версия не включила автопродажу по умолчанию.
+  auto-sell:
+    enabled: false
+    fallback-price-per-item: 250
+
+  payouts:
+    daily-cap-base: 384
+    daily-cap-per-tier: 64
+    daily-cap-per-rank-step: 32
+    daily-cap-hard-max: 4096
+
+  rebirth-percent-per-rebirth: 5.0
+  rebirth-decay: 0.9
+  rebirth-bonus-cap-percent: 50.0
+
+  craft:
+    enabled: true
+    shape: [ABA, BCB, ABA]
+    ingredients:
+      A: IRON_INGOT
+      B: COBBLESTONE
+      C: DIAMOND
+
+  # Девять тиров: первые семь сохранены из вашего конфига,
+  # последние два добавлены из стандартного конфига 2.0.20-rc.1.
+  tiers:
+    - name: Исток
+      units-per-cycle: 1
+      drops:
+        - {material: COBBLESTONE, weight: 6}
+        - {material: CLAY_BALL, weight: 2}
+        - {material: NETHERRACK, weight: 1}
+    - name: Смесь
+      units-per-cycle: 1
+      drops:
+        - {material: COBBLESTONE, weight: 4}
+        - {material: CLAY_BALL, weight: 2}
+        - {material: GRAVEL, weight: 1}
+    - name: Руда
+      units-per-cycle: 2
+      drops:
+        - {material: RAW_IRON, weight: 2}
+        - {material: RAW_COPPER, weight: 2}
+        - {material: COAL, weight: 1}
+    - name: Жила
+      units-per-cycle: 2
+      drops:
+        - {material: RAW_IRON, weight: 3}
+        - {material: RAW_GOLD, weight: 2}
+        - {material: REDSTONE, weight: 1}
+    - name: Глубина
+      units-per-cycle: 3
+      money: {chance: 0.15, portion: 2}
+      drops:
+        - {material: RAW_GOLD, weight: 3}
+        - {material: LAPIS_LAZULI, weight: 1}
+        - {material: AMETHYST_SHARD, weight: 1}
+    - name: Пучина
+      units-per-cycle: 3
+      money: {chance: 0.25, portion: 3}
+      drops:
+        - {material: DIAMOND, weight: 2}
+        - {material: EMERALD, weight: 2}
+        - {material: QUARTZ, weight: 1}
+    - name: Сердце
+      units-per-cycle: 4
+      money: {chance: 1.0, portion: 4}
+      drops:
+        - {material: DIAMOND, weight: 3}
+        - {material: NETHERITE_INGOT, weight: 2}
+        - {material: AMETHYST_SHARD, weight: 2}
+        - {material: ANCIENT_DEBRIS, weight: 1}
+        - {material: GHAST_TEAR, weight: 1}
+        - {material: PHANTOM_MEMBRANE, weight: 1}
+        - {material: PRISMARINE_CRYSTALS, weight: 1}
+        - {material: HEART_OF_THE_SEA, weight: 1, rare: true}
+        - {material: NETHER_STAR, weight: 1, rare: true}
+        - {material: END_CRYSTAL, weight: 1, rare: true}
+    - name: Пульс
+      units-per-cycle: 5
+      money: {chance: 1.0, portion: 5}
+      drops:
+        - {material: NETHERITE_INGOT, weight: 3}
+        - {material: DIAMOND, weight: 3}
+        - {material: ANCIENT_DEBRIS, weight: 2}
+        - {material: BLAZE_ROD, weight: 2}
+        - {material: GHAST_TEAR, weight: 2}
+        - {material: NETHER_STAR, weight: 1, rare: true}
+        - {material: HEART_OF_THE_SEA, weight: 1, rare: true}
+        - {material: SHULKER_SHELL, weight: 1, rare: true}
+    - name: Резонанс
+      units-per-cycle: 6
+      money: {chance: 1.0, portion: 6}
+      drops:
+        - {material: NETHERITE_INGOT, weight: 3}
+        - {material: DIAMOND, weight: 3}
+        - {material: ANCIENT_DEBRIS, weight: 2}
+        - {material: ECHO_SHARD, weight: 2}
+        - {material: SHULKER_SHELL, weight: 2}
+        - {material: BEACON, weight: 1, rare: true}
+        - {material: TOTEM_OF_UNDYING, weight: 1, rare: true}
+        - {material: ELYTRA, weight: 1, rare: true}
+
+  # Восемь переходов тиров и пять уровней модулей.
+  upgrades:
+    tiers:
+      - {money: 5000, resources: [{material: COBBLESTONE, amount: 256}]}
+      - {money: 25000, resources: [{material: IRON_INGOT, amount: 256}]}
+      - {money: 60000, resources: [{material: GOLD_INGOT, amount: 256}]}
+      - {money: 120000, resources: [{material: DIAMOND, amount: 64}]}
+      - {money: 250000, resources: [{material: NETHERITE_INGOT, amount: 16}]}
+      - {money: 500000, resources: [{material: NETHER_STAR, amount: 4}]}
+      - {money: 750000, resources: [{material: NETHER_STAR, amount: 8}]}
+      - {money: 1000000, resources: [{material: NETHERITE_INGOT, amount: 32}]}
+    modules:
+      - {money: 0, resources: [{material: IRON_INGOT, amount: 32}]}
+      - {money: 0, resources: [{material: IRON_INGOT, amount: 64}]}
+      - {money: 0, resources: [{material: DIAMOND, amount: 16}]}
+      - {money: 25000, resources: []}
+      - {money: 75000, resources: []}
+    chunk: {money: 50000, resources: [{material: DIAMOND, amount: 32}]}
