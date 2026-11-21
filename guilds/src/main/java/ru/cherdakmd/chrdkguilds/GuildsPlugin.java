@@ -34,6 +34,7 @@ public final class GuildsPlugin extends JavaPlugin {
     private GuildStyleGui styleGui;
     private GuildRecruitmentGui recruitment;
     private AdventureGroupController adventureGroups;
+    private AdventureGroupGui partyGui;
     private ru.cherdakmd.chrdkregister.api.PaidActions payments;
     private GuildFinance finance;
     private GuildPeaceController peace;
@@ -55,6 +56,8 @@ public final class GuildsPlugin extends JavaPlugin {
             this.service = new GuildService(config, store);
             this.adventureGroups = new AdventureGroupController(this);
             getServer().getPluginManager().registerEvents(adventureGroups, this);
+            this.partyGui = new AdventureGroupGui(this);
+            getServer().getPluginManager().registerEvents(partyGui, this);
             this.finance = new GuildFinance(this,payments);
             this.peace = new GuildPeaceController(this);
             this.store.combatGuard(peace::combatBlocked);
@@ -100,6 +103,7 @@ public final class GuildsPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (partyGui != null) partyGui.closeAll();
         if (adventureGroups != null) adventureGroups.shutdown();
         if (recruitment != null) recruitment.closeAll();
         if (styles != null) styles.close();
@@ -145,6 +149,7 @@ public final class GuildsPlugin extends JavaPlugin {
     /** Перечитывает конфиг; состав и войны остаются. */
     public void reloadGuilds() {
         if (recruitment != null) recruitment.closeAll();
+        if (partyGui != null) partyGui.closeAll();
         reloadConfig();
         ru.cherdakmd.chrdkregister.api.EconomyTariffMigration.apply(this);
         this.config = GuildConfig.parse(getConfig(), getLogger());
@@ -263,6 +268,7 @@ public final class GuildsPlugin extends JavaPlugin {
     GuildStyleGui styleGui() { return styleGui; }
     GuildRecruitmentGui recruitment() { return recruitment; }
     AdventureGroupController adventureGroups() { return adventureGroups; }
+    AdventureGroupGui partyGui() { return partyGui; }
 
     public GuildsGui gui() {
         return gui;

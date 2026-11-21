@@ -84,6 +84,11 @@ final class AdventureGroupController implements Listener {
         else notifyAll(after, "squad-member-left");
     }
 
+    List<UUID> menuMembers(UUID actor) {
+        maintain();
+        return groups.members(actor);
+    }
+
     void command(Player player, String[] args) {
         maintain();
         if (args.length < 2) { plugin.messages().send(player, "squad-help"); return; }

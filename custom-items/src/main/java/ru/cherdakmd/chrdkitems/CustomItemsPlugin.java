@@ -16,6 +16,7 @@ import java.util.Map;
 public final class CustomItemsPlugin extends JavaPlugin {
     private Map<String, ItemCatalog.Definition> catalog = Map.of();
     private MudShovel mudShovel;
+    private CatalogGui catalogGui;
     private ResourcePackHttpServer packServer;
 
     @Override public void onEnable() {
@@ -33,6 +34,8 @@ public final class CustomItemsPlugin extends JavaPlugin {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
+        catalogGui = new CatalogGui(this, catalog);
+        getServer().getPluginManager().registerEvents(catalogGui, this);
         getServer().getPluginManager().registerEvents(new BuiltinInteract(catalog), this);
         mudShovel = new MudShovel(this);
         mudShovel.start();
@@ -54,12 +57,18 @@ public final class CustomItemsPlugin extends JavaPlugin {
     }
 
     @Override public void onDisable() {
+        if (catalogGui != null) catalogGui.closeAll();
         if (packServer != null) { packServer.close(); packServer = null; }
         if (mudShovel != null) mudShovel.stop();
     }
 
     @Override public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (command.getName().equalsIgnoreCase("customitems")) {
+            if (args.length == 0 && sender instanceof Player player) {
+                if (!player.hasPermission("chrdkcustomitems.use")) player.sendMessage(Component.text("Нет права на просмотр каталога."));
+                else catalogGui.open(player, null, 1);
+                return true;
+            }
             if (args.length == 1 && args[0].equalsIgnoreCase("use")) {
                 if (!sender.hasPermission("chrdkcustomitems.use")) sender.sendMessage(Component.text("Нет права на использование прототипов."));
                 else if (!(sender instanceof Player player)) sender.sendMessage(Component.text("Использование доступно только игроку."));

@@ -15,7 +15,7 @@ commands:
     permission: chrdkguilds.use
   party:
     description: Временная группа приключений.
-    usage: /party [invite <ник>|accept|decline|leave|info]
+    usage: /party [menu|invite <ник>|accept|decline|leave|info]
     permission: chrdkguilds.use
   gchat:
     description: Написать в чат гильдии.

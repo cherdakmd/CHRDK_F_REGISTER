@@ -71,7 +71,10 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
         }
         if (command.getName().equalsIgnoreCase("party")) {
             Player player = player(sender);
-            if (player != null) plugin.adventureGroups().command(player, partyArguments(args));
+            if (player != null) {
+                if (args.length == 0 || (args.length == 1 && (args[0].equalsIgnoreCase("menu") || args[0].equalsIgnoreCase("gui")))) plugin.partyGui().open(player);
+                else plugin.adventureGroups().command(player, partyArguments(args));
+            }
             return true;
         }
         if (command.getName().equalsIgnoreCase("gchat")) {

@@ -16,7 +16,9 @@ review: [custom-items]
 материалы: `PAPER`, `CLAY_BALL`, `ECHO_SHARD`, `AMETHYST_SHARD`,
 `PRISMARINE_CRYSTALS`. Ошибка каталога отключает аддон.
 
-Игрокам доступна бесплатная витрина **только для чтения**: `/customitems`,
+Игрокам доступна бесплатная витрина **только для чтения**: `/customitems`
+открывает GUI с категориями, страницами, описаниями и текстурами (если пакет
+установлен); предметы из меню забрать нельзя. Команды
 `/customitems weapon`, `/customitems armor`, `/customitems tool`,
 `/customitems consumable` и `/customitems all 2` для выбора страницы.
 `/customitems info <id>` показывает описание и категорию. Витрина не выдаёт
