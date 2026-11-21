@@ -1,0 +1,19 @@
+# Пример только для закрытого теста: вручную скопировать в plugins/CHRDK_CustomItems/catalog.yml.
+# Прототипы не имеют необычных свойств, крафтов и механики расходования.
+items:
+  test_blade:
+    category: weapon
+    material: IRON_SWORD
+    model: chrdk_items:item/test_blade
+  test_pick:
+    category: tool
+    material: IRON_PICKAXE
+    model: chrdk_items:item/test_pick
+  test_helm:
+    category: armor
+    material: IRON_HELMET
+    model: chrdk_items:item/test_helm
+  test_scroll:
+    category: consumable
+    material: PAPER
+    model: chrdk_items:item/test_scroll

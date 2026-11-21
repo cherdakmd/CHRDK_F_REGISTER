@@ -23,3 +23,11 @@ processResources {
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8'; options.release = 25 }
 java { sourceCompatibility = JavaVersion.VERSION_25; targetCompatibility = JavaVersion.VERSION_25 }
 test { useJUnitPlatform() }
+
+// Separate client resource pack, never shaded into the server plugin or release ZIP.
+tasks.register('prototypeResourcePack', Zip) {
+    archiveFileName = 'chrdk-custom-items-prototype.zip'
+    destinationDirectory = layout.buildDirectory.dir('resource-packs')
+    from('resource-pack')
+}
+tasks.named('build') { dependsOn tasks.named('prototypeResourcePack') }

@@ -17,6 +17,7 @@ public final class CustomItemsPlugin extends JavaPlugin {
     private Map<String, ItemCatalog.Definition> catalog = Map.of();
 
     @Override public void onEnable() {
+        saveDefaultConfig();
         saveResource("catalog.yml", false);
         var yaml = new YamlConfiguration();
         try {
@@ -57,7 +58,7 @@ public final class CustomItemsPlugin extends JavaPlugin {
         }
         org.bukkit.inventory.ItemStack item;
         try {
-            item = PrototypeItems.create(definition);
+            item = PrototypeItems.create(definition, getConfig().getBoolean("prototype-textures", false));
         } catch (RuntimeException e) {
             getLogger().warning("Prototype creation failed: " + e.getClass().getSimpleName());
             player.sendMessage(Component.text("Не удалось создать прототип; проверьте журнал."));

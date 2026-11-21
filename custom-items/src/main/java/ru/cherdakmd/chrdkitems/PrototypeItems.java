@@ -13,7 +13,7 @@ final class PrototypeItems {
     static final NamespacedKey SCHEMA = new NamespacedKey("chrdk_items", "schema");
     static final int CURRENT_SCHEMA = 1;
 
-    static ItemStack create(ItemCatalog.Definition definition) {
+    static ItemStack create(ItemCatalog.Definition definition, boolean prototypeTextures) {
         var stack = new ItemStack(definition.material());
         var meta = stack.getItemMeta();
         if (meta == null) throw new IllegalStateException("material has no item metadata");
@@ -21,8 +21,10 @@ final class PrototypeItems {
         meta.lore(List.of(Component.text("Тестовый предмет: свойства и крафт не реализованы.")));
         meta.getPersistentDataContainer().set(ID, PersistentDataType.STRING, definition.id());
         meta.getPersistentDataContainer().set(SCHEMA, PersistentDataType.INTEGER, CURRENT_SCHEMA);
-        // A model key is deliberately not applied before a compatible resource pack exists:
-        // clients without that model must keep the vanilla appearance, not a missing texture.
+        // Custom model data is ignored by vanilla clients without the experimental pack.
+        // Explicit opt-in: other packs may already use the same values on these materials.
+        Integer modelData = prototypeTextures ? PrototypeVisuals.modelData(definition) : null;
+        if (modelData != null) meta.setCustomModelData(modelData);
         if (!stack.setItemMeta(meta)) throw new IllegalStateException("could not set item metadata");
         return stack;
     }

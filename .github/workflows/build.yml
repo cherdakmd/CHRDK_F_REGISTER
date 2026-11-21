@@ -76,6 +76,9 @@ jobs:
           python3 tools/datapacks/build_chrdk_treasure_addon.py --check
           python3 -m unittest discover -s tools/datapacks -p 'test_*.py' -v
 
+      - name: Validate experimental item resource pack
+        run: python3 -m unittest discover -s custom-items/tests -p 'test_*.py' -v
+
       - name: Build plugin
         shell: bash
         run: |
@@ -133,6 +136,14 @@ jobs:
           path: build/clan-preview/
           retention-days: 14
           if-no-files-found: error
+
+      - name: Upload experimental item resource pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: custom-items-resource-pack-${{ github.sha }}
+          path: custom-items/build/resource-packs/chrdk-custom-items-prototype.zip
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Upload plugin JAR
         uses: actions/upload-artifact@v4
