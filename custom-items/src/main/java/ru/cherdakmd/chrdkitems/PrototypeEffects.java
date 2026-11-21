@@ -42,8 +42,14 @@ final class PrototypeEffects {
         var meta = item.getItemMeta();
         if (meta == null) return false;
         var data = meta.getPersistentDataContainer();
-        return definition.id().equals(data.get(PrototypeItems.ID, PersistentDataType.STRING))
-                && Integer.valueOf(PrototypeItems.CURRENT_SCHEMA).equals(data.get(PrototypeItems.SCHEMA, PersistentDataType.INTEGER));
+        return identityMatchesFields(item.getType(), item.getAmount(),
+                data.get(PrototypeItems.ID, PersistentDataType.STRING),
+                data.get(PrototypeItems.SCHEMA, PersistentDataType.INTEGER), definition);
+    }
+    static boolean identityMatchesFields(org.bukkit.Material material, int amount, String id, Integer schema,
+                                         ItemCatalog.Definition definition) {
+        return definition != null && amount > 0 && material == definition.material()
+                && definition.id().equals(id) && Integer.valueOf(PrototypeItems.CURRENT_SCHEMA).equals(schema);
     }
 
     /** Null means no effect was possible, so a consumable must not be spent. */

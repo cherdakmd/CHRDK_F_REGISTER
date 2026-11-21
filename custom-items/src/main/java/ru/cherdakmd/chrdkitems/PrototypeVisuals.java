@@ -7,6 +7,7 @@ final class PrototypeVisuals {
     static final int MODEL_DATA = 810001;
 
     static Integer modelData(ItemCatalog.Definition def) {
+        if (matches(def, "mud_shovel", ItemCatalog.Category.TOOL, Material.IRON_SHOVEL)) return 810003;
         if (matches(def, "test_blade", ItemCatalog.Category.WEAPON, Material.IRON_SWORD)
                 || matches(def, "test_pick", ItemCatalog.Category.TOOL, Material.IRON_PICKAXE)
                 || matches(def, "test_helm", ItemCatalog.Category.ARMOR, Material.IRON_HELMET)

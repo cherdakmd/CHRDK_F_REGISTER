@@ -1324,7 +1324,7 @@ messages:
     "social-title": "Публичные соцсети"
     "social-line": "<gray>%platform%: </gray><aqua>%url%</aqua>"
     "social-player-only": "<red>Управлять ссылками можно только в игре.</red>"
-    "social-usage": "<yellow>/profile social set платформа ссылка</yellow><newline><yellow>/profile social remove платформа</yellow><newline><gray>Платформы: vk, discord, telegram, youtube, twitch. Ссылки видны всем, кто может открыть ваш профиль.</gray>"
+    "social-usage": "<yellow>/profile social set платформа ссылка</yellow><newline><yellow>/profile social remove платформа</yellow><newline><gray>Платформы: vk, discord, telegram, youtube, twitch, tiktok, other. Ссылки видны всем, кто может открыть ваш профиль.</gray>"
     "social-invalid": "<red>Недопустимая ссылка. Нужна HTTPS-ссылка на профиль выбранной платформы, без параметров и переадресаций.</red>"
     "social-save-error": "<red>Не удалось сохранить публичную ссылку. Сообщите администрации.</red>"
     "social-saved": "<green>%platform% опубликован в вашем профиле.</green>"

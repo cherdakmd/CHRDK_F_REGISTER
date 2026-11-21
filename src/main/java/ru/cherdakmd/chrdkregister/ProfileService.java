@@ -326,7 +326,7 @@ public final class ProfileService implements Listener {
         if (args.length >= 2 && args[0].equalsIgnoreCase("social")) {
             List<String> options = args.length == 2 ? List.of("set", "remove", "help")
                     : args.length == 3 && (args[1].equalsIgnoreCase("set") || args[1].equalsIgnoreCase("remove"))
-                    ? List.of("vk", "discord", "telegram", "youtube", "twitch") : List.of();
+                    ? List.of("vk", "discord", "telegram", "youtube", "twitch", "tiktok", "other") : List.of();
             String prefix = args[args.length - 1].toLowerCase(Locale.ROOT);
             return options.stream().filter(option -> option.startsWith(prefix)).toList();
         }

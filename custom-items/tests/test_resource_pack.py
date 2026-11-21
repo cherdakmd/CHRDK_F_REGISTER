@@ -28,9 +28,17 @@ class ResourcePackTest(unittest.TestCase):
                 dispatch = json.loads((PACK / f"assets/minecraft/items/{base}.json").read_text())["model"]
                 self.assertEqual("minecraft:custom_model_data", dispatch["property"])
                 self.assertEqual(f"minecraft:item/{base}", dispatch["fallback"]["model"])
-                self.assertEqual([810001, 810002], [e["threshold"] for e in dispatch["entries"]])
+                self.assertEqual([810001, 810002, 810003, 810004] if base == "iron_shovel" else [810001, 810002], [e["threshold"] for e in dispatch["entries"]])
                 self.assertEqual(f"chrdk_items:item/{name}", dispatch["entries"][0]["model"]["model"])
                 self.assertEqual(dispatch["fallback"], dispatch["entries"][1]["model"])
+                if base == "iron_shovel":
+                    self.assertEqual("chrdk_items:item/mud_shovel", dispatch["entries"][2]["model"]["model"])
+                    self.assertEqual(dispatch["fallback"], dispatch["entries"][3]["model"])
+                    special = json.loads((root / "models/item/mud_shovel.json").read_text())
+                    self.assertEqual("chrdk_items:item/mud_shovel", special["textures"]["layer0"])
+                    image = (root / "textures/item/mud_shovel.png").read_bytes()
+                    self.assertEqual(b"\x89PNG\r\n\x1a\n", image[:8])
+                    self.assertEqual((64, 64), struct.unpack(">II", image[16:24]))
                 data = (root / f"textures/item/{name}.png").read_bytes()
                 self.assertEqual(b"\x89PNG\r\n\x1a\n", data[:8])
                 self.assertEqual((64, 64), struct.unpack(">II", data[16:24]))

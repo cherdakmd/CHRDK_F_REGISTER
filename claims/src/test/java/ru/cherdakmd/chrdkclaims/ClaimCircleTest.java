@@ -7,27 +7,27 @@ import static org.junit.jupiter.api.Assertions.*;
 class ClaimCircleTest {
     private static ClaimCircle.Cell cell(int x, int z) { return new ClaimCircle.Cell(x, z); }
 
-    @Test void radiusOneIsDiskNotSquare() {
-        assertEquals(List.of(cell(-1, 0), cell(0, -1), cell(0, 0), cell(0, 1), cell(1, 0)),
-                ClaimCircle.expand(List.of(cell(0, 0)), 1, 100, 100));
+    @Test void radiusOneIncludesAllEightNeighbours() {
+        var result = ClaimCircle.expand(List.of(cell(0, 0)), 1, 100, 100);
+        assertEquals(9, result.size());
+        for (int x = -1; x <= 1; x++) for (int z = -1; z <= 1; z++) assertTrue(result.contains(cell(x, z)));
     }
 
     @Test void territoryUsesUnionWithoutDuplicatesAndIsDeterministic() {
         var result = ClaimCircle.expand(List.of(cell(1, 0), cell(0, 0)), 1, 100, 100);
-        assertEquals(8, result.size());
+        assertEquals(12, result.size());
         assertEquals(result, ClaimCircle.expand(List.of(cell(0, 0), cell(1, 0)), 1, 100, 100));
-        assertTrue(result.contains(cell(-1, 0)));
-        assertTrue(result.contains(cell(2, 0)));
-        assertFalse(result.contains(cell(-1, -1)));
+        assertTrue(result.contains(cell(-1, -1)));
+        assertTrue(result.contains(cell(2, 1)));
     }
 
-    @Test void radiusTwoAndNegativeCoordinatesUseEuclideanDistance() {
+    @Test void radiusTwoAndNegativeCoordinatesIncludeCorners() {
         var result = ClaimCircle.expand(List.of(cell(-20, -30)), 2, 100, 100);
-        assertEquals(13, result.size());
-        assertTrue(result.contains(cell(-22, -30)));
-        assertTrue(result.contains(cell(-21, -31)));
-        assertFalse(result.contains(cell(-22, -31)));
-        assertFalse(result.contains(cell(-18, -28)));
+        assertEquals(25, result.size());
+        assertTrue(result.contains(cell(-22, -32)));
+        assertTrue(result.contains(cell(-18, -28)));
+        assertFalse(result.contains(cell(-23, -30)));
+        assertEquals(121, ClaimCircle.expand(List.of(cell(0, 0)), 5, 200, 256).size());
     }
 
     @Test void refusedConfirmationInvalidatesOnlyThatPlayersQuote() {

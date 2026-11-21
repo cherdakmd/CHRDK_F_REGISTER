@@ -10,7 +10,9 @@ repositories {
 }
 dependencies {
     compileOnly "org.purpurmc.purpur:purpur-api:${project.purpur_api_version}"
+    compileOnly project(':')
     testImplementation "org.purpurmc.purpur:purpur-api:${project.purpur_api_version}"
+    testImplementation project(':')
     testImplementation 'org.junit.jupiter:junit-jupiter:5.11.3'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
@@ -24,10 +26,16 @@ tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8'; options.
 java { sourceCompatibility = JavaVersion.VERSION_25; targetCompatibility = JavaVersion.VERSION_25 }
 test { useJUnitPlatform() }
 
-// Separate client resource pack, never shaded into the server plugin or release ZIP.
+// Build a standalone client resource pack; a copy is embedded for first-time installation.
 tasks.register('prototypeResourcePack', Zip) {
     archiveFileName = 'chrdk-custom-items-prototype.zip'
     destinationDirectory = layout.buildDirectory.dir('resource-packs')
     from('resource-pack')
 }
 tasks.named('build') { dependsOn tasks.named('prototypeResourcePack') }
+
+// Install a copy under plugins/CHRDK_CustomItems on first startup; never overwrite operator changes.
+tasks.named('processResources') {
+    dependsOn tasks.named('prototypeResourcePack')
+    from(tasks.named('prototypeResourcePack')) { rename { 'custom-items-pack.zip' } }
+}

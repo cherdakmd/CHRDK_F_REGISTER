@@ -25,7 +25,9 @@ final class PublicSocialLinks {
         DISCORD("discord", "Discord", "discord.com", "/users/[0-9]{17,20}"),
         TELEGRAM("telegram", "Telegram", "t.me", "/[A-Za-z0-9_]{5,32}"),
         YOUTUBE("youtube", "YouTube", "youtube.com", "/(?:@[A-Za-z0-9_.-]{3,100}|(?:channel|c|user)/[A-Za-z0-9_.-]{1,100})"),
-        TWITCH("twitch", "Twitch", "twitch.tv", "/[A-Za-z0-9_]{4,25}");
+        TWITCH("twitch", "Twitch", "twitch.tv", "/[A-Za-z0-9_]{4,25}"),
+        TIKTOK("tiktok", "TikTok", "tiktok.com", "/@[A-Za-z0-9_.]{2,24}"),
+        OTHER("other", "Другая ссылка", "", ".*");
 
         final String id, label, host;
         final Pattern path;
@@ -55,8 +57,16 @@ final class PublicSocialLinks {
             URI uri = new URI(input);
             if (!"https".equalsIgnoreCase(uri.getScheme()) || uri.getHost() == null
                     || uri.getRawUserInfo() != null || uri.getPort() != -1
-                    || uri.getRawQuery() != null || uri.getRawFragment() != null) return Optional.empty();
+                    || (platform != Platform.OTHER && uri.getRawQuery() != null) || uri.getRawFragment() != null) return Optional.empty();
             String host = uri.getHost().toLowerCase(Locale.ROOT);
+            if (platform == Platform.OTHER) {
+                // Arbitrary external HTTPS link: no credentials, IP literals, local names or ports.
+                if (!host.matches("(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z][a-z0-9-]{1,62}")
+                        || host.endsWith(".local") || host.endsWith(".localhost") || host.endsWith(".internal")) return Optional.empty();
+                String path = uri.getRawPath() == null ? "" : uri.getRawPath();
+                String query = uri.getRawQuery() == null ? "" : "?" + uri.getRawQuery();
+                return Optional.of("https://" + host + path + query);
+            }
             if (host.startsWith("www.")) host = host.substring(4);
             if (!host.equals(platform.host) || uri.getRawPath() == null
                     || !platform.path.matcher(uri.getRawPath()).matches()) return Optional.empty();

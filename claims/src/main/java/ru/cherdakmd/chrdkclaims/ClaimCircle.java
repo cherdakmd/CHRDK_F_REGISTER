@@ -35,7 +35,7 @@ final class ClaimCircle {
     private static final Comparator<Cell> ORDER = Comparator.comparingInt(Cell::x).thenComparingInt(Cell::z);
 
     /**
-     * The union of Euclidean disks measured between chunk coordinates. A strict
+     * The union of chunk-aligned squares, including diagonal corners. A strict
      * work/output budget prevents a large territory from monopolising the server.
      * Overflow is rejected rather than silently wrapping around the world.
      */
@@ -50,7 +50,6 @@ final class ClaimCircle {
             if (source == null) throw new IllegalArgumentException("Null source");
             for (int dx = -radius; dx <= radius; dx++) {
                 for (int dz = -radius; dz <= radius; dz++) {
-                    if (dx * dx + dz * dz > radius * radius) continue;
                     long x = (long) source.x + dx, z = (long) source.z + dz;
                     if (x < Integer.MIN_VALUE || x > Integer.MAX_VALUE || z < Integer.MIN_VALUE || z > Integer.MAX_VALUE)
                         throw new IllegalArgumentException("Chunk coordinate overflow");

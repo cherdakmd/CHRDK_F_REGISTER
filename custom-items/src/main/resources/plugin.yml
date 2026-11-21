@@ -4,6 +4,7 @@ main: ru.cherdakmd.chrdkitems.CustomItemsPlugin
 api-version: '26.3'
 description: "Экспериментальный каталог будущей кастомной экипировки"
 author: cherdakmd
+depend: [CHRDK_Core]
 commands:
   customitems:
     description: "Просмотр экспериментального каталога предметов"

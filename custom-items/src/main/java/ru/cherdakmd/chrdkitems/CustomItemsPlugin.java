@@ -15,14 +15,16 @@ import java.util.Map;
 /** Experimental addon; catalog is loaded once and admin issuance is test-only. */
 public final class CustomItemsPlugin extends JavaPlugin {
     private Map<String, ItemCatalog.Definition> catalog = Map.of();
+    private MudShovel mudShovel;
 
     @Override public void onEnable() {
         saveDefaultConfig();
         saveResource("catalog.yml", false);
+        saveResource(ResourcePackSettings.PACK_FILE, false);
         var yaml = new YamlConfiguration();
         try {
             yaml.load(new File(getDataFolder(), "catalog.yml"));
-            catalog = ItemCatalog.load(yaml);
+            catalog = BuiltinItems.merge(ItemCatalog.load(yaml));
             getLogger().info("Experimental catalog: " + catalog.size()
                     + " definitions validated; test properties are opt-in, recipes are not registered.");
         } catch (IOException | InvalidConfigurationException | IllegalArgumentException e) {
@@ -30,8 +32,10 @@ public final class CustomItemsPlugin extends JavaPlugin {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
+        mudShovel = new MudShovel(this);
+        mudShovel.start();
         try {
-            var pack = ResourcePackSettings.parse(getConfig());
+            var pack = ResourcePackSettings.parse(getConfig(), getDataFolder().toPath().resolve(ResourcePackSettings.PACK_FILE));
             if (pack != null) {
                 var delivery = new ResourcePackDelivery(this, pack);
                 getServer().getPluginManager().registerEvents(delivery, this);
@@ -41,6 +45,10 @@ public final class CustomItemsPlugin extends JavaPlugin {
         } catch (IllegalArgumentException e) {
             getLogger().warning(e.getMessage() + "; automatic pack delivery disabled.");
         }
+    }
+
+    @Override public void onDisable() {
+        if (mudShovel != null) mudShovel.stop();
     }
 
     @Override public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {

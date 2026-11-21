@@ -6,7 +6,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 
-/** Adds our pack without clearing other server packs; clients can decline it. */
+/** Adds our pack without clearing other server packs; enforcement is opt-in. */
 final class ResourcePackDelivery implements Listener {
     private final CustomItemsPlugin plugin;
     private final ResourcePackSettings.Pack pack;
@@ -23,7 +23,7 @@ final class ResourcePackDelivery implements Listener {
             if (!plugin.isEnabled() || !player.isOnline()) return;
             try {
                 player.addResourcePack(ResourcePackSettings.PACK_ID, pack.url(), pack.hashBytes(),
-                        "Текстуры предметов CHRDK", false);
+                        "Текстуры предметов CHRDK", pack.required());
             } catch (RuntimeException e) {
                 plugin.getLogger().warning("Не удалось отправить запрос ресурс-пака игроку "
                         + player.getUniqueId() + ": " + e.getClass().getSimpleName());

@@ -22,7 +22,9 @@ final class CatalogCommand {
             var effect = PrototypeEffects.effect(item);
             if (effect != null) sender.sendMessage(Component.text("Тестовое свойство: " + effect.description
                     + " /customitems use с предметом в руке (если включено)."));
-            sender.sendMessage(Component.text("Прототип: крафт и боевые бонусы не реализованы."));
+            if (BuiltinItems.isMudShovel(item))
+                sender.sendMessage(Component.text("В основной руке: иммунитет к отравлению, скорость I и регенерация I. Рецепт не определён."));
+            else sender.sendMessage(Component.text("Прототип: крафт и боевые бонусы не реализованы."));
             return true;
         }
         final CatalogView.Query query;
