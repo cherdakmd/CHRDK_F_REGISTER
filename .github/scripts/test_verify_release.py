@@ -133,6 +133,8 @@ class ReleaseValidationTest(unittest.TestCase):
                        "Сокровища Бесплодных земель", "Редкости снаряжения", "акшнбаре"),
             "2.0.19": ("18 JAR одной версии", "chrdk-vk-2.0.19.jar", "Mine Treasure",
                        "Профили, друзья и группы", "Генератор", "тестовом сервере"),
+            "2.0.20-rc.1": ("19 JAR одной версии", "chrdk-vk-2.0.20-rc.1.jar", "Mine Treasure",
+                            "ТОЛЬКО тестовый кандидат", "CHRDK_CustomItems", "не проведён"),
         }
         if version in current_kits:
             self.assertIn(f"CHRDK {version}", current)
@@ -276,6 +278,16 @@ class ReleaseWorkflowContractTest(unittest.TestCase):
             script = section.split("\n      - name:", 1)[0]
             self.assertLess(len(script), 21000)
         self.assertTrue((root / "docs/releases/update-memo.txt").read_text().startswith("CHRDK"))
+
+    def test_experimental_item_pack_is_checksummed_and_distributed(self):
+        root = Path(__file__).resolve().parents[2]
+        source = (root / ".github/workflows/release.yml").read_text()
+        self.assertIn('unzip -t "chrdk-custom-items-pack-${version}.zip"', source)
+        self.assertIn('sha1sum -c "chrdk-custom-items-pack-${version}.sha1"', source)
+        self.assertIn('sha256sum "chrdk-custom-items-pack-${version}.zip" "chrdk-custom-items-pack-${version}.sha1" >> "$checksums"', source)
+        for name in ("item_pack", "item_pack_sha1"):
+            self.assertIn("${{ env." + name + " }}", source.split("Upload full dry-run release candidate", 1)[1])
+            self.assertIn("${{ env." + name + " }}", source.split("name: Attach manifest-verified release assets", 1)[1])
 
     def test_grim_configs_are_release_assets(self):
         root = Path(__file__).resolve().parents[2]

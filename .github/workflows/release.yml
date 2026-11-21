@@ -197,7 +197,15 @@ jobs:
           sha256sum "chrdk-plugins-${version}.zip" "chrdk-vk-${version}.jar" \
             "mine-treasure-1.6.5-ru.zip" \
             "chrdk-grim-configs-${version}.zip" > "$checksums"
+          # Отдельный клиентский ресурс-пак; сохраняем SHA-1 для server config.
+          cp custom-items/build/resource-packs/chrdk-custom-items-prototype.zip "chrdk-custom-items-pack-${version}.zip"
+          unzip -t "chrdk-custom-items-pack-${version}.zip"
+          sha1sum "chrdk-custom-items-pack-${version}.zip" > "chrdk-custom-items-pack-${version}.sha1"
+          sha1sum -c "chrdk-custom-items-pack-${version}.sha1"
+          sha256sum "chrdk-custom-items-pack-${version}.zip" "chrdk-custom-items-pack-${version}.sha1" >> "$checksums"
           sha256sum -c "$checksums"
+          echo "item_pack=chrdk-custom-items-pack-${version}.zip" >> "$GITHUB_ENV"
+          echo "item_pack_sha1=chrdk-custom-items-pack-${version}.sha1" >> "$GITHUB_ENV"
           echo "zip=chrdk-plugins-${version}.zip" >> "$GITHUB_ENV"
           echo "vk_jar=chrdk-vk-${version}.jar" >> "$GITHUB_ENV"
           echo "datapack=mine-treasure-1.6.5-ru.zip" >> "$GITHUB_ENV"
@@ -225,6 +233,8 @@ jobs:
             ${{ env.vk_jar }}
             ${{ env.datapack }}
             ${{ env.grim_configs }}
+            ${{ env.item_pack }}
+            ${{ env.item_pack_sha1 }}
             ${{ env.checksums }}
           if-no-files-found: error
           retention-days: 14
@@ -240,5 +250,5 @@ jobs:
           else
             gh release upload "${{ github.event.release.tag_name }}" "${{ env.zip }}" "${{ env.vk_jar }}" \
               "${{ env.grim_configs }}" \
-              "${{ env.datapack }}" "${{ env.checksums }}" --clobber
+              "${{ env.datapack }}" "${{ env.item_pack }}" "${{ env.item_pack_sha1 }}" "${{ env.checksums }}" --clobber
           fi
