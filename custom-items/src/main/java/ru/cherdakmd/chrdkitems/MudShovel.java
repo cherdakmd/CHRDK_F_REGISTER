@@ -13,21 +13,25 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.api.PassivePotions;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.UUID;
 
 /** Main-thread held-item passive; effects are reconciled through Core's shared owner. */
 final class MudShovel implements Listener {
     private final CustomItemsPlugin plugin;
-    private final Set<UUID> active = new HashSet<>();
+    private final Map<UUID, String> active = new HashMap<>();
     private BukkitTask task;
     private long tick;
     private static final int PERIOD = 20;
     private static final List<PotionEffect> EFFECTS = List.of(
             new PotionEffect(PotionEffectType.SPEED, 1, 0, true, false, true),
             new PotionEffect(PotionEffectType.REGENERATION, 1, 0, true, false, true));
+
+    private static final List<PotionEffect> LITTER_EFFECTS = List.of(
+            new PotionEffect(PotionEffectType.SLOWNESS, 1, 0, true, false, true),
+            new PotionEffect(PotionEffectType.NIGHT_VISION, 1, 0, true, false, true));
 
     MudShovel(CustomItemsPlugin plugin) { this.plugin = plugin; }
     void start() {
@@ -43,11 +47,16 @@ final class MudShovel implements Listener {
         tick++;
         for (Player player : Bukkit.getOnlinePlayers()) {
             boolean held = holding(player);
-            boolean was = active.contains(player.getUniqueId());
+            var item = player.getInventory().getItemInMainHand();
+            boolean litter = plugin.isEnabled() && player.isOnline() && !player.isDead()
+                    && PrototypeEffects.identityMatches(item, BuiltinItems.LITTER);
+            String wanted = held ? BuiltinItems.SHOVEL.id() : litter ? BuiltinItems.LITTER.id() : "";
+            String was = active.getOrDefault(player.getUniqueId(), "");
             if (held && player.hasPotionEffect(PotionEffectType.POISON)) player.removePotionEffect(PotionEffectType.POISON);
-            if (held != was || (held && tick % PERIOD == 0)) {
-                if (held) active.add(player.getUniqueId()); else active.remove(player.getUniqueId());
-                PassivePotions.replace(plugin, "mud-shovel", player, held ? EFFECTS : List.of(), PERIOD);
+            if (!wanted.equals(was) || (!wanted.isEmpty() && tick % PERIOD == 0)) {
+                if (wanted.isEmpty()) active.remove(player.getUniqueId()); else active.put(player.getUniqueId(), wanted);
+                PassivePotions.replace(plugin, "held-item", player,
+                        held ? EFFECTS : litter ? LITTER_EFFECTS : List.of(), PERIOD);
             }
         }
     }

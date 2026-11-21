@@ -35,6 +35,20 @@
           "type": "minecraft:model",
           "model": "minecraft:item/iron_shovel"
         }
+      },
+      {
+        "threshold": 810005,
+        "model": {
+          "type": "minecraft:model",
+          "model": "chrdk_items:item/litter_scoop"
+        }
+      },
+      {
+        "threshold": 810006,
+        "model": {
+          "type": "minecraft:model",
+          "model": "minecraft:item/iron_shovel"
+        }
       }
     ]
   }

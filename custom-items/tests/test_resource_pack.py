@@ -28,7 +28,8 @@ class ResourcePackTest(unittest.TestCase):
                 dispatch = json.loads((PACK / f"assets/minecraft/items/{base}.json").read_text())["model"]
                 self.assertEqual("minecraft:custom_model_data", dispatch["property"])
                 self.assertEqual(f"minecraft:item/{base}", dispatch["fallback"]["model"])
-                self.assertEqual([810001, 810002, 810003, 810004] if base == "iron_shovel" else [810001, 810002], [e["threshold"] for e in dispatch["entries"]])
+                expected = [810001, 810002, 810003, 810004, 810005, 810006] if base == "iron_shovel" else [810001, 810002, 810003, 810004] if base == "iron_pickaxe" else [810001, 810002]
+                self.assertEqual(expected, [e["threshold"] for e in dispatch["entries"]])
                 self.assertEqual(f"chrdk_items:item/{name}", dispatch["entries"][0]["model"]["model"])
                 self.assertEqual(dispatch["fallback"], dispatch["entries"][1]["model"])
                 if base == "iron_shovel":
@@ -42,6 +43,25 @@ class ResourcePackTest(unittest.TestCase):
                 data = (root / f"textures/item/{name}.png").read_bytes()
                 self.assertEqual(b"\x89PNG\r\n\x1a\n", data[:8])
                 self.assertEqual((64, 64), struct.unpack(">II", data[16:24]))
+
+    def test_new_builtin_models_and_bounded_dispatch(self):
+        root = PACK / "assets/chrdk_items"
+        for base, name, threshold in [("iron_shovel", "litter_scoop", 810005), ("iron_pickaxe", "weather_gauge", 810003), ("wooden_hoe", "cat_finder", 810003), ("stone_axe", "spawn_guide", 810003)]:
+            with self.subTest(item=name):
+                model = json.loads((root / f"models/item/{name}.json").read_text())
+                self.assertEqual(f"chrdk_items:item/{name}", model["textures"]["layer0"])
+                item = json.loads((root / f"items/item/{name}.json").read_text())
+                self.assertEqual(f"chrdk_items:item/{name}", item["model"]["model"])
+                data = (root / f"textures/item/{name}.png").read_bytes()
+                self.assertEqual(b"\x89PNG\r\n\x1a\n", data[:8])
+                self.assertEqual((64, 64), struct.unpack(">II", data[16:24]))
+                dispatch = json.loads((PACK / f"assets/minecraft/items/{base}.json").read_text())["model"]
+                entries = dispatch["entries"]
+                self.assertEqual(sorted(e["threshold"] for e in entries), [e["threshold"] for e in entries])
+                entry = next(i for i, e in enumerate(entries) if e["threshold"] == threshold)
+                self.assertEqual(f"chrdk_items:item/{name}", entries[entry]["model"]["model"])
+                self.assertEqual(threshold + 1, entries[entry + 1]["threshold"])
+                self.assertEqual(dispatch["fallback"], entries[entry + 1]["model"])
 
 
 if __name__ == "__main__":

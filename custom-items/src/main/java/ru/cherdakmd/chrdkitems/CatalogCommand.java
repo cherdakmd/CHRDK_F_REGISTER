@@ -24,6 +24,9 @@ final class CatalogCommand {
                     + " /customitems use с предметом в руке (если включено)."));
             if (BuiltinItems.isMudShovel(item))
                 sender.sendMessage(Component.text("В основной руке: иммунитет к отравлению, скорость I и регенерация I. Рецепт не определён."));
+            else if (BuiltinItems.isBuiltin(item)) sender.sendMessage(Component.text(item.id().equals("litter_scoop")
+                    ? "Пассив в основной руке. Рецепт пока не определён."
+                    : "Использование: /customitems use в основной руке. Рецепт пока не определён."));
             else sender.sendMessage(Component.text("Прототип: крафт и боевые бонусы не реализованы."));
             return true;
         }

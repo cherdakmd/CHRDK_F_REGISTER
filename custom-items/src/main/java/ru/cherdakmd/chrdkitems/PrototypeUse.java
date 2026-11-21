@@ -8,7 +8,6 @@ import org.bukkit.persistence.PersistentDataType;
 /** Synchronous on the command thread; only the three cosmetic/information consumables are spent. */
 final class PrototypeUse {
     static void use(Player player, Map<String, ItemCatalog.Definition> catalog, boolean enabled) {
-        if (!enabled) { player.sendMessage(Component.text("Тестовые свойства выключены на сервере.")); return; }
         var inventory = player.getInventory();
         var item = inventory.getItemInMainHand();
         if (item.getType().isAir() || !item.hasItemMeta()) {
@@ -16,6 +15,14 @@ final class PrototypeUse {
         }
         var id = item.getItemMeta().getPersistentDataContainer().get(PrototypeItems.ID, PersistentDataType.STRING);
         var definition = id == null ? null : catalog.get(id);
+        if (BuiltinUse.supports(definition) && PrototypeEffects.identityMatches(item, definition)) {
+            try {
+                String text = BuiltinUse.describe(definition, player);
+                player.sendMessage(Component.text(text == null ? "Данные недоступны." : text));
+            } catch (RuntimeException e) { player.sendMessage(Component.text("Не удалось получить данные.")); }
+            return;
+        }
+        if (!enabled) { player.sendMessage(Component.text("Тестовые свойства выключены на сервере.")); return; }
         var effect = PrototypeEffects.effect(definition);
         if (effect == null || !PrototypeEffects.identityMatches(item, definition)) {
             player.sendMessage(Component.text("У этого предмета нет доступного тестового свойства.")); return;

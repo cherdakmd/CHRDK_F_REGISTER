@@ -27,7 +27,7 @@ public final class CustomItemsPlugin extends JavaPlugin {
             yaml.load(new File(getDataFolder(), "catalog.yml"));
             catalog = BuiltinItems.merge(ItemCatalog.load(yaml));
             getLogger().info("Experimental catalog: " + catalog.size()
-                    + " definitions validated; test properties are opt-in, recipes are not registered.");
+                    + " definitions validated; prototype properties are opt-in, built-in items are active; recipes are not registered.");
         } catch (IOException | InvalidConfigurationException | IllegalArgumentException e) {
             getLogger().severe("Invalid item catalog; addon disabled: " + e.getMessage());
             getServer().getPluginManager().disablePlugin(this);

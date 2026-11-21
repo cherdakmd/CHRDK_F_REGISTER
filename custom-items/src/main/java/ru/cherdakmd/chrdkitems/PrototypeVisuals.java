@@ -7,6 +7,10 @@ final class PrototypeVisuals {
     static final int MODEL_DATA = 810001;
 
     static Integer modelData(ItemCatalog.Definition def) {
+        if (matches(def, "litter_scoop", ItemCatalog.Category.TOOL, Material.IRON_SHOVEL)) return 810005;
+        if (matches(def, "cat_finder", ItemCatalog.Category.TOOL, Material.WOODEN_HOE)
+                || matches(def, "spawn_guide", ItemCatalog.Category.TOOL, Material.STONE_AXE)
+                || matches(def, "weather_gauge", ItemCatalog.Category.TOOL, Material.IRON_PICKAXE)) return 810003;
         if (matches(def, "mud_shovel", ItemCatalog.Category.TOOL, Material.IRON_SHOVEL)) return 810003;
         if (matches(def, "test_blade", ItemCatalog.Category.WEAPON, Material.IRON_SWORD)
                 || matches(def, "test_pick", ItemCatalog.Category.TOOL, Material.IRON_PICKAXE)

@@ -21,6 +21,20 @@
           "type": "minecraft:model",
           "model": "minecraft:item/iron_pickaxe"
         }
+      },
+      {
+        "threshold": 810003,
+        "model": {
+          "type": "minecraft:model",
+          "model": "chrdk_items:item/weather_gauge"
+        }
+      },
+      {
+        "threshold": 810004,
+        "model": {
+          "type": "minecraft:model",
+          "model": "minecraft:item/iron_pickaxe"
+        }
       }
     ]
   }

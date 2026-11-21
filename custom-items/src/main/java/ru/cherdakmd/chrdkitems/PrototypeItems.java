@@ -27,13 +27,16 @@ final class PrototypeItems {
         if (BuiltinItems.isMudShovel(definition)) {
             lore.add(Component.text("В основной руке: иммунитет к отравлению, скорость I и регенерация I."));
             lore.add(Component.text("Тестовый предмет; рецепт пока не определён."));
+        } else if (BuiltinItems.isBuiltin(definition)) {
+            lore.add(Component.text("Тестовый предмет; рецепт пока не определён."));
+            if (!definition.id().equals("litter_scoop")) lore.add(Component.text("Использование: /customitems use в основной руке."));
         } else lore.add(Component.text("Прототип: крафт и боевые бонусы не реализованы."));
         meta.lore(lore);
         meta.getPersistentDataContainer().set(ID, PersistentDataType.STRING, definition.id());
         meta.getPersistentDataContainer().set(SCHEMA, PersistentDataType.INTEGER, CURRENT_SCHEMA);
         // Custom model data is ignored by vanilla clients without the experimental pack.
         // Explicit opt-in: other packs may already use the same values on these materials.
-        Integer modelData = (prototypeTextures || BuiltinItems.isMudShovel(definition)) ? PrototypeVisuals.modelData(definition) : null;
+        Integer modelData = (prototypeTextures || BuiltinItems.isBuiltin(definition)) ? PrototypeVisuals.modelData(definition) : null;
         if (modelData != null) meta.setCustomModelData(modelData);
         if (!stack.setItemMeta(meta)) throw new IllegalStateException("could not set item metadata");
         return stack;
