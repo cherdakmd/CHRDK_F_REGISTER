@@ -141,6 +141,78 @@ class RebirthBankPayoutTest {
         assertEquals(288L, reopened.totals().get(id));
     }
 
+    @Test void fullResetIntentAndNewPayoutSurviveRestartWithoutLosingHistory() {
+        var store = fresh();
+        assertEquals(1, store.beginPaidRebirth(OWNER, 123));
+        assertTrue(RebirthBankPayout.reconcile(store, OWNER, ledger));
+        store.addXp(OWNER, SkillType.MINING, 42);
+        store.addAttribute(OWNER, PlayerAttribute.STRENGTH, 3);
+        store.setBranch(OWNER, BuildBranch.values()[0], 1);
+        store.addBonusPoints(OWNER, 9);
+        store.addPve(OWNER, 800);
+        store.markRebirthMilestone(OWNER, 5);
+        store.grantRebirthUnique(OWNER, "test_unique");
+        String epoch = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+        assertTrue(store.beginFullReset(OWNER, epoch));
+        store = reload();
+        assertEquals(epoch, store.pendingResetEpoch(OWNER));
+        assertEquals(0, store.beginPaidRebirth(OWNER, 100));
+        assertFalse(RebirthBankPayout.reconcile(store, OWNER, ledger));
+        journal.put(RebirthCycleJournal.marker(epoch), 0L);
+        assertTrue(store.finishFullReset(OWNER, epoch));
+        store = reload();
+        assertEquals(0, store.xp(OWNER, SkillType.MINING));
+        assertEquals(0, store.spentAttributes(OWNER));
+        assertEquals(0, store.spentBranches(OWNER));
+        assertEquals(0, store.bonusPoints(OWNER));
+        assertEquals(0, store.pve(OWNER));
+        assertEquals(0, store.rebirths(OWNER));
+        assertTrue(store.claimedRebirthMilestones(OWNER).contains(5));
+        assertTrue(store.rebirthUniques(OWNER).contains("test_unique"));
+        assertTrue(RebirthBankPayout.reconcile(store, OWNER, ledger));
+        assertEquals(1, store.beginPaidRebirth(OWNER, 321));
+        assertTrue(RebirthBankPayout.reconcile(store, OWNER, ledger));
+        assertEquals(123L, journal.get("rebirth:1"));
+        assertEquals(321L, journal.get("rebirth:" + epoch + ":1"));
+        store = reload();
+        assertTrue(RebirthBankPayout.reconcile(store, OWNER, ledger));
+        assertTrue(store.finishFullReset(OWNER, epoch));
+        assertEquals(1, store.rebirths(OWNER));
+    }
+
+    @Test void resetCheckpointFailureDoesNotAdvanceDiskAndIsRetryable() throws Exception {
+        var store = fresh();
+        String epoch = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+        Path tmp = folder.resolve("skills.json.tmp");
+        Files.createDirectory(tmp);
+        Files.writeString(tmp.resolve("block"), "x");
+        assertFalse(store.beginFullReset(OWNER, epoch));
+        assertNull(reload().pendingResetEpoch(OWNER));
+        Files.delete(tmp.resolve("block")); Files.delete(tmp);
+        assertTrue(store.beginFullReset(OWNER, epoch));
+        Files.createDirectory(tmp); Files.writeString(tmp.resolve("block"), "x");
+        assertFalse(store.finishFullReset(OWNER, epoch));
+        assertEquals(epoch, reload().pendingResetEpoch(OWNER));
+        assertEquals(123, reload().xp(OWNER, SkillType.MINING));
+        Files.delete(tmp.resolve("block")); Files.delete(tmp);
+        assertTrue(store.finishFullReset(OWNER, epoch));
+        assertNull(reload().pendingResetEpoch(OWNER));
+        assertEquals(0, reload().xp(OWNER, SkillType.MINING));
+    }
+
+    @Test void resetHistoryRejectsMalformedSnapshots() throws Exception {
+        var store = fresh();
+        String epoch = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+        assertTrue(store.beginFullReset(OWNER, epoch));
+        assertTrue(store.finishFullReset(OWNER, epoch));
+        Path file = folder.resolve("skills.json");
+        String json = Files.readString(file);
+        Files.writeString(file, json.replace("\"legacy\"", "\"invalid\""));
+        var corrupt = new SkillStore(folder, Logger.getAnonymousLogger());
+        corrupt.load();
+        assertFalse(corrupt.healthy());
+    }
+
     @Test void calculatesFallbacksForOneOrTwoUniqueSlots() {
         assertEquals(32, RebirthRewardPlan.amount(32, 128, false, 1));
         assertEquals(96, RebirthRewardPlan.amount(32, 128, false, 0));

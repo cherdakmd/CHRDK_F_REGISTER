@@ -75,6 +75,10 @@ public final class SkillStore {
         public long pendingRebirthAmount = 0;
         public int lastBankRebirthCount = 0;
         public long lastBankRebirthAmount = 0;
+        /** Цикл и архив квитанций; legacy означает исходные ключи rebirth:N. */
+        private String rebirthEpoch = RebirthCycleJournal.LEGACY;
+        private final List<RebirthCycleJournal.Cycle> previousRebirthCycles = new ArrayList<>();
+        private String pendingResetEpoch;
 
         public long xp(SkillType skill) {
             return xp.getOrDefault(skill, 0L);
@@ -270,6 +274,19 @@ public final class SkillStore {
                 if (row.get("rebirthConverted") instanceof Boolean flag) {
                     player.rebirthConverted = flag;
                 }
+                if (row.get("rebirthCycles") instanceof Map<?, ?> cycles) {
+                    player.rebirthEpoch = (String) cycles.get("current");
+                    if (cycles.get("pendingReset") instanceof String pending) player.pendingResetEpoch = pending;
+                    for (Object value : (List<?>) cycles.get("previous")) {
+                        Map<?, ?> old = (Map<?, ?>) value;
+                        PendingRebirth last = null;
+                        if (old.get("last") instanceof Map<?, ?> receipt) {
+                            last = new PendingRebirth(((java.math.BigDecimal) receipt.get("count")).intValueExact(),
+                                    ((java.math.BigDecimal) receipt.get("amount")).longValueExact());
+                        }
+                        player.previousRebirthCycles.add(new RebirthCycleJournal.Cycle((String) old.get("id"), last));
+                    }
+                }
                 if (row.get("lastBankRebirth") instanceof Map<?, ?> last) {
                     player.lastBankRebirthCount = ((java.math.BigDecimal) last.get("count")).intValueExact();
                     player.lastBankRebirthAmount = ((java.math.BigDecimal) last.get("amount")).longValueExact();
@@ -362,6 +379,30 @@ public final class SkillStore {
                 throw new IllegalArgumentException("неверное обязательство перерождения: " + field);
             }
         }
+        if (row.containsKey("rebirthCycles")) {
+            if (!(row.get("rebirthCycles") instanceof Map<?, ?> cycles)
+                    || !(cycles.get("current") instanceof String current) || !validCycleId(current)
+                    || !(cycles.get("previous") instanceof List<?> previous) || previous.size() > 10_000
+                    || !cycles.keySet().stream().allMatch(k -> k.equals("current") || k.equals("previous") || k.equals("pendingReset")))
+                throw new IllegalArgumentException("неверные циклы перерождений");
+            var seen = new java.util.HashSet<String>();
+            for (int i = 0; i < previous.size(); i++) {
+                if (!(previous.get(i) instanceof Map<?, ?> item)
+                        || !(item.get("id") instanceof String id) || !validCycleId(id)
+                        || (i == 0) != id.equals(RebirthCycleJournal.LEGACY) || !seen.add(id)
+                        || !item.keySet().stream().allMatch(k -> k.equals("id") || k.equals("last")))
+                    throw new IllegalArgumentException("неверная история циклов");
+                if (item.containsKey("last")) validateReceipt(item.get("last"));
+            }
+            if (!seen.add(current) || (previous.isEmpty() != current.equals(RebirthCycleJournal.LEGACY)))
+                throw new IllegalArgumentException("несогласованный цикл перерождений");
+            if (cycles.containsKey("pendingReset")) {
+                if (!(cycles.get("pendingReset") instanceof String pending) || !validCycleId(pending)
+                        || pending.equals(RebirthCycleJournal.LEGACY) || !seen.add(pending)
+                        || row.containsKey("pendingRebirth"))
+                    throw new IllegalArgumentException("неверное намерение сброса");
+            }
+        }
         if (row.containsKey("rebirthUniques")) {
             if (!(row.get("rebirthUniques") instanceof List<?> uniques))
                 throw new IllegalArgumentException("неверный список уникальных наград");
@@ -370,6 +411,21 @@ public final class SkillStore {
                     throw new IllegalArgumentException("неверная уникальная награда");
             }
         }
+    }
+
+    private static boolean validCycleId(String id) {
+        if (RebirthCycleJournal.LEGACY.equals(id)) return true;
+        try { return id != null && java.util.UUID.fromString(id).toString().equals(id); }
+        catch (IllegalArgumentException error) { return false; }
+    }
+
+    private static void validateReceipt(Object value) {
+        if (!(value instanceof Map<?, ?> receipt) || receipt.size() != 2
+                || !(receipt.get("count") instanceof java.math.BigDecimal count)
+                || !(receipt.get("amount") instanceof java.math.BigDecimal amount)
+                || count.longValueExact() < 1 || count.longValueExact() > 1_000_000
+                || amount.longValueExact() < 1 || amount.longValueExact() > 1_000_000)
+            throw new IllegalArgumentException("неверная квитанция старого цикла");
     }
 
     public synchronized long xp(String playerKey, SkillType skill) {
@@ -661,10 +717,56 @@ public final class SkillStore {
                 : new PendingRebirth(player.lastBankRebirthCount, player.lastBankRebirthAmount);
     }
 
+    synchronized List<RebirthCycleJournal.Cycle> rebirthCycles(String playerKey) {
+        PlayerData player = players.get(playerKey);
+        if (player == null) return List.of(new RebirthCycleJournal.Cycle(RebirthCycleJournal.LEGACY, null));
+        var cycles = new ArrayList<>(player.previousRebirthCycles);
+        cycles.add(new RebirthCycleJournal.Cycle(player.rebirthEpoch, lastBankRebirth(playerKey)));
+        return List.copyOf(cycles);
+    }
+
+    synchronized String pendingResetEpoch(String playerKey) {
+        PlayerData player = players.get(playerKey);
+        return player == null ? null : player.pendingResetEpoch;
+    }
+
+    /** Только намерение: никаких изменений прогресса до проверки банка и генератора. */
+    synchronized boolean beginFullReset(String playerKey, String epoch) {
+        PlayerData player = players.get(playerKey);
+        if (!healthy || player == null || !validCycleId(epoch) || RebirthCycleJournal.LEGACY.equals(epoch)
+                || player.pendingRebirthCount != 0 || player.previousRebirthCycles.size() >= 10_000) return false;
+        if (player.pendingResetEpoch != null) return player.pendingResetEpoch.equals(epoch) && checkpoint();
+        if (player.rebirthEpoch.equals(epoch) || player.previousRebirthCycles.stream().anyMatch(c -> c.id().equals(epoch))) return false;
+        player.pendingResetEpoch = epoch;
+        dirty = true;
+        return checkpoint();
+    }
+
+    /** Вызывать только после durable отметки журнала и подтверждения генератора. */
+    synchronized boolean finishFullReset(String playerKey, String epoch) {
+        PlayerData player = players.get(playerKey);
+        if (!healthy || player == null || epoch == null) return false;
+        if (player.pendingResetEpoch == null) return epoch.equals(player.rebirthEpoch) && checkpoint();
+        if (!epoch.equals(player.pendingResetEpoch) || player.pendingRebirthCount != 0) return false;
+        player.previousRebirthCycles.add(new RebirthCycleJournal.Cycle(player.rebirthEpoch, lastBankRebirth(playerKey)));
+        player.rebirthEpoch = epoch;
+        player.pendingResetEpoch = null;
+        resetForRebirth(playerKey);
+        player.prestige.clear();
+        player.rebirths = 0;
+        player.rebirthConverted = true;
+        player.bonusPoints = 0;
+        player.pve = 0;
+        player.lastBankRebirthCount = 0;
+        player.lastBankRebirthAmount = 0;
+        dirty = true;
+        return checkpoint();
+    }
+
     /** Фиксирует сброс, новый счётчик и замороженную сумму одним снимком до внешней выплаты. */
     synchronized int beginPaidRebirth(String playerKey, long amount) {
         PlayerData player = players.get(playerKey);
-        if (!healthy || player == null || player.pendingRebirthCount != 0
+        if (!healthy || player == null || player.pendingRebirthCount != 0 || player.pendingResetEpoch != null
                 || player.rebirths >= 1_000_000 || amount < 0 || amount > 1_000_000) return 0;
         var oldXp = new EnumMap<>(player.xp);
         var oldBranches = new EnumMap<>(player.branches);
@@ -860,6 +962,20 @@ public final class SkillStore {
             if (player.bonusPoints > 0) fields.put("bonusPoints", player.bonusPoints);
             if (player.pve > 0) fields.put("pve", player.pve);
             if (player.classConverted) fields.put("classConverted", true);
+            if (!player.previousRebirthCycles.isEmpty() || player.pendingResetEpoch != null) {
+                Map<String, Object> cycles = new LinkedHashMap<>();
+                cycles.put("current", player.rebirthEpoch);
+                List<Object> previous = new ArrayList<>();
+                for (var cycle : player.previousRebirthCycles) {
+                    Map<String, Object> old = new LinkedHashMap<>();
+                    old.put("id", cycle.id());
+                    if (cycle.last() != null) old.put("last", Map.of("count", cycle.last().count(), "amount", cycle.last().amount()));
+                    previous.add(old);
+                }
+                cycles.put("previous", previous);
+                if (player.pendingResetEpoch != null) cycles.put("pendingReset", player.pendingResetEpoch);
+                fields.put("rebirthCycles", cycles);
+            }
             if (player.rebirths > 0) fields.put("rebirths", player.rebirths);
             if (player.rebirthConverted) fields.put("rebirthConverted", true);
             if (player.pendingRebirthCount > 0) fields.put("pendingRebirth", Map.of(
