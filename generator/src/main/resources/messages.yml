@@ -10,6 +10,13 @@ messages:
   admin-usage: "<yellow>/generatoradmin <reload|finance|recover|rebase-lost></yellow>"
   reloaded: "<green>Конфиг CHRDK_Generator перезагружен.</green>"
   payout-bank-credit: "<green>+%amount% ⛁ на банковский счёт · генератор</green>"
+  container-title: "<dark_gray>Бункер генератора</dark_gray>"
+  container-refresh: "<yellow>Обновить бункер</yellow>"
+  container-settings: "<gold>Управление генератором</gold>"
+  container-close: "<red>Закрыть</red>"
+  container-unavailable: "<red>Бункер временно недоступен. Обратитесь к администрации; данные генератора удалять нельзя.</red>"
+  container-transfer-failed: "<yellow>Перенос не выполнен; проверьте авторизацию, свободное место и пустой курсор.</yellow>"
+  container-fuel-rejected: "<yellow>Для загрузки используйте Shift-клик по обычному печному топливу. Проверьте место в ячейках топлива.</yellow>"
 
   # --- генератор ---
   core-item-name: "<light_purple>Ядро генератора</light_purple>"

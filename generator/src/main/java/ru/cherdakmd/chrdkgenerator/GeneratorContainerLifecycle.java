@@ -45,7 +45,7 @@ final class GeneratorContainerLifecycle {
             if (view == null || !view.core().equals(binding.core())
                     || !Objects.equals(view.lastMigration(), source.containerLastMigration(owner, slot))) return Result.CONFLICT;
             var sale = target.saleState(owner, slot);
-            if (view.pending() || sale.pending() != null || entry.bunker() != 0
+            if (view.pending() || sale.pending() != null || sale.moneyDebt() != 0 || entry.bunker() != 0
                     || source.containerMigration(owner, slot) != null
                     || view.slots().stream().anyMatch(Objects::nonNull)) return Result.NOT_EMPTY;
             if (!source.beginContainerRelease(owner, slot, binding.core())) return Result.WAIT;

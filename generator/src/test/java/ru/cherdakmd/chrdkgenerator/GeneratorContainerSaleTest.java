@@ -35,6 +35,21 @@ class GeneratorContainerSaleTest {
     GeneratorContainerSale.Result run(GeneratorContainerStore s, Ledger l, boolean sell) {
         return GeneratorContainerSale.run(s, owner, 0, sell, (material, n) -> n * 20_000L, l);
     }
+    @Test void productionMoneyIsSavedAndPaidInBoundedPortions() {
+        var s = ready(); var view = s.view(owner, 0);
+        assertTrue(s.settleProduction(owner, 0, core, view.revision(), view.slots(), 0, 100, 1_500_000));
+        var ledger = new Ledger(); ledger.accepting = false;
+        assertEquals(GeneratorContainerSale.Result.WAIT, run(open(), ledger, false));
+        var state = open().saleState(owner, 0);
+        assertEquals(500_000, state.moneyDebt());
+        assertEquals(1_000_000, state.pending().amount());
+        ledger.accepting = true;
+        assertEquals(GeneratorContainerSale.Result.SOLD, run(open(), ledger, false));
+        assertEquals(GeneratorContainerSale.Result.SOLD, run(open(), ledger, false));
+        assertEquals(GeneratorContainerSale.Result.IDLE, run(open(), ledger, false));
+        assertEquals(1_500_000, ledger.receipts.values().stream().mapToLong(Long::longValue).sum());
+        assertEquals(64, open().view(owner, 0).slots().get(0).amount());
+    }
     @Test void saleFreezesItemsAndAmountBeforeCreditAndRetries() {
         var s = ready(); var ledger = new Ledger(); ledger.accepting = false;
         assertEquals(GeneratorContainerSale.Result.WAIT, run(s, ledger, true));

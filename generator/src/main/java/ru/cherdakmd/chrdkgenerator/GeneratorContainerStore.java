@@ -65,6 +65,7 @@ final class GeneratorContainerStore {
         UUID lastMigration;
         long saleSequence;
         Sale salePending;
+        long moneyDebt;
         Pending pending;
     }
     private record Retired(UUID release, long saleSequence) {
@@ -138,10 +139,15 @@ final class GeneratorContainerStore {
             if (!entry.getValue().isJsonObject()) throw new IllegalArgumentException("container row type");
             var row = entry.getValue().getAsJsonObject();
             var required = java.util.Set.of("owner", "slot", "core", "revision", "slots", "burnMillis", "lastCalcMillis", "pending");
-            var allowed = java.util.Set.of("owner", "slot", "core", "revision", "slots", "burnMillis", "lastCalcMillis", "pending", "lastMigration", "saleSequence", "salePending");
+            var allowed = java.util.Set.of("owner", "slot", "core", "revision", "slots", "burnMillis", "lastCalcMillis", "pending", "lastMigration", "saleSequence", "salePending", "moneyDebt");
             if (!row.keySet().containsAll(required) || !allowed.containsAll(row.keySet())
                     || row.has("saleSequence") != row.has("salePending"))
                 throw new IllegalArgumentException("container row fields");
+            if (row.has("moneyDebt")) {
+                if (!row.get("moneyDebt").isJsonPrimitive() || !row.get("moneyDebt").getAsJsonPrimitive().isNumber())
+                    throw new IllegalArgumentException("container money debt");
+                row.get("moneyDebt").getAsBigDecimal().longValueExact();
+            }
             if (row.has("saleSequence")) {
                 if (!row.get("saleSequence").isJsonPrimitive() || !row.get("saleSequence").getAsJsonPrimitive().isNumber())
                     throw new IllegalArgumentException("sale sequence");
@@ -218,7 +224,7 @@ final class GeneratorContainerStore {
                     || !key(row.owner, row.slot).equals(entry.getKey()) || row.revision < 0
                     || row.slots == null || row.slots.size() != SLOTS || row.burnMillis < 0 || row.lastCalcMillis < 0)
                 throw new IllegalArgumentException("container row");
-            if (row.saleSequence < 0 || (row.salePending != null && row.salePending.sequence() != row.saleSequence))
+            if (row.moneyDebt < 0 || row.saleSequence < 0 || (row.salePending != null && row.salePending.sequence() != row.saleSequence))
                 throw new IllegalArgumentException("container sale state");
             if (data.retiredContainers.containsKey(row.owner + ":" + row.core)) throw new IllegalArgumentException("active and retired container history");
             if (!cores.add(row.core)) throw new IllegalArgumentException("duplicate container core");
@@ -281,7 +287,7 @@ final class GeneratorContainerStore {
             Retired receipt = data.retiredContainers.get(owner + ":" + core);
             return receipt != null && release.equals(receipt.release());
         }
-        if (!row.core.equals(core) || row.pending != null || row.salePending != null
+        if (!row.core.equals(core) || row.pending != null || row.salePending != null || row.moneyDebt != 0
                 || !java.util.Objects.equals(row.lastMigration, expectedMigration)
                 || row.slots.stream().anyMatch(java.util.Objects::nonNull)) return false;
         Data next = copy();
@@ -290,11 +296,11 @@ final class GeneratorContainerStore {
         return publish(next);
     }
 
-    record SaleState(long sequence, Sale pending) { }
+    record SaleState(long sequence, Sale pending, long moneyDebt) { }
 
     synchronized SaleState saleState(UUID owner, int slot) {
         Container row = data.containers.get(key(owner, slot));
-        return !healthy || row == null ? null : new SaleState(row.saleSequence, row.salePending);
+        return !healthy || row == null ? null : new SaleState(row.saleSequence, row.salePending, row.moneyDebt);
     }
 
     /** Изъятие одной порции предметов и обязательство сохраняются одной записью. */
@@ -312,6 +318,22 @@ final class GeneratorContainerStore {
         change.slots.set(index, amount == item.amount() ? null : new Stack(item.material(), item.amount() - amount));
         change.saleSequence++;
         change.salePending = new Sale(change.saleSequence, price);
+        change.revision++;
+        return publish(next);
+    }
+
+    /** Переводит часть начисленных денег в устойчивое обязательство. */
+    synchronized boolean reserveMoney(UUID owner, int slot, UUID core, long revision) {
+        Container row = data.containers.get(key(owner, slot));
+        if (!healthy || row == null || !row.core.equals(core) || row.revision != revision
+                || row.revision == Long.MAX_VALUE || row.saleSequence == Long.MAX_VALUE
+                || row.pending != null || row.salePending != null || row.moneyDebt <= 0) return false;
+        Data next = copy();
+        Container change = next.containers.get(key(owner, slot));
+        long amount = Math.min(change.moneyDebt, GeneratorPayoutCoordinator.MAX_OBLIGATION);
+        change.moneyDebt -= amount;
+        change.saleSequence++;
+        change.salePending = new Sale(change.saleSequence, amount);
         change.revision++;
         return publish(next);
     }
@@ -359,16 +381,24 @@ final class GeneratorContainerStore {
      */
     synchronized boolean settle(UUID owner, int slot, UUID core, long expectedRevision,
                                 List<Stack> slots, long burnMillis, long lastCalcMillis) {
+        return settleProduction(owner, slot, core, expectedRevision, slots, burnMillis, lastCalcMillis, 0);
+    }
+
+    /** Начисление денег включено в тот же снимок, что топливо и предметы. */
+    synchronized boolean settleProduction(UUID owner, int slot, UUID core, long expectedRevision,
+                                          List<Stack> slots, long burnMillis, long lastCalcMillis, long money) {
         Container row = data.containers.get(key(owner, slot));
         if (!healthy || row == null || !row.core.equals(core) || row.pending != null
                 || row.revision != expectedRevision || row.revision == Long.MAX_VALUE
-                || slots == null || slots.size() != SLOTS || burnMillis < 0 || lastCalcMillis < row.lastCalcMillis)
+                || slots == null || slots.size() != SLOTS || burnMillis < 0 || lastCalcMillis < row.lastCalcMillis
+                || money < 0 || money > Long.MAX_VALUE - row.moneyDebt)
             return false;
         Data next = copy();
         Container change = next.containers.get(key(owner, slot));
         change.slots = new ArrayList<>(slots);
         change.burnMillis = burnMillis;
         change.lastCalcMillis = lastCalcMillis;
+        change.moneyDebt += money;
         change.revision++;
         return publish(next);
     }

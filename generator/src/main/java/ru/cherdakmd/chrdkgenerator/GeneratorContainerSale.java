@@ -23,6 +23,11 @@ final class GeneratorContainerSale {
         if (view == null || state == null) return Result.CONFLICT;
         Map<String, Long> receipts = ledger.reservations(owner);
         if (!matchesHistory(view.core(), state, receipts)) return Result.CONFLICT;
+        if (state.pending() == null && state.moneyDebt() > 0) {
+            if (view.pending()) return Result.WAIT;
+            if (!store.reserveMoney(owner, slot, view.core(), view.revision())) return Result.WAIT;
+            state = store.saleState(owner, slot);
+        }
         if (state.pending() == null) {
             if (!sell || view.pending()) return Result.IDLE;
             boolean reserved = false;
