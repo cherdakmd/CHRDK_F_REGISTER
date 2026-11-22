@@ -102,12 +102,9 @@ public final class DailyCommandHandler implements TabExecutor {
         if (args.length >= 2 && "lookup".equalsIgnoreCase(args[0])) {
             String name = args[1].trim();
             Player online = Bukkit.getPlayerExact(name);
-            UUID uuid = online != null ? online.getUniqueId()
-                    : (plugin.coreApi() != null ? uuidOf(name) : null);
+            UUID uuid = online != null ? online.getUniqueId() : null;
             if (uuid == null) {
-                plugin.messages().send(sender, "admin.lookup",
-                        "player", name, "streak", "—", "total", "—",
-                        "claimed", plugin.messages().mini("daily.claimed-no"));
+                plugin.messages().send(sender, "admin.player-not-found", "player", name);
                 return true;
             }
             DailyStore.Progress progress = plugin.store().progressOf(uuid);
@@ -127,11 +124,9 @@ public final class DailyCommandHandler implements TabExecutor {
                 return true;
             }
             Player online = Bukkit.getPlayerExact(name);
-            UUID uuid = online != null ? online.getUniqueId() : uuidOf(name);
+            UUID uuid = online != null ? online.getUniqueId() : null;
             if (uuid == null) {
-                plugin.messages().send(sender, "admin.lookup", "player", name,
-                        "streak", "—", "total", "—",
-                        "claimed", plugin.messages().mini("daily.claimed-no"));
+                plugin.messages().send(sender, "admin.player-not-found", "player", name);
                 return true;
             }
             try{plugin.store().setStreak(uuid, streak, System.currentTimeMillis());}catch(RuntimeException e){plugin.messages().send(sender,"finance.daily-wait");return true;}
@@ -140,13 +135,6 @@ public final class DailyCommandHandler implements TabExecutor {
         }
         plugin.messages().send(sender, "admin.usage");
         return true;
-    }
-
-    private UUID uuidOf(String name) {
-        // UUID берём из онлайна; оффлайн-просмотр — по прямому совпадению ника в ядре не делаем
-        @SuppressWarnings("deprecation")
-        Player cached = Bukkit.getPlayer(name);
-        return cached == null ? null : cached.getUniqueId();
     }
 
     @Override

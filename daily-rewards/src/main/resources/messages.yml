@@ -35,6 +35,7 @@ messages:
   "admin":
     "usage": "<gray>/dailyadmin lookup <ник> | set <ник> <стрик> | reload | recovery | resolve <UUID> confirm</gray>"
     "lookup": "<gray>%player%: стрик %streak%, всего взято %total%, сегодня %claimed%</gray>"
+    "player-not-found": "<yellow>Игрок %player% не найден онлайн: данные Daily и статус награды неизвестны. Повторите, когда игрок войдёт, указав точный ник.</yellow>"
     "set-ok": "<green>Стрик игрока %player% установлен в %streak% (сброс последнего дня — забрать сможет завтра).</green>"
     "reloaded": "<green>Конфигурация ежедневок перечитана.</green>"
     "invalid-number": "<red>Некорректное число: %value%</red>"
