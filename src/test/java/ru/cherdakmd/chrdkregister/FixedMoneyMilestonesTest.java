@@ -77,10 +77,10 @@ class FixedMoneyMilestonesTest {
         // Original, registered journal must never bind a bank that lost its source.
         assertFalse(j.bind(new Gateway(emptyBank)));
     }
-    @Test void fullBankLeavesObligationAndPartialCreditForRetry() throws Exception {
+    @Test void fullBankLeavesWholeObligationForRetry() throws Exception {
         var j=imported();var b=bank();var g=new Gateway(b);b.deposit(owner,"Alex",BankStore.MAX_BALANCE);
         j.accept(g,owner,"new",15000);assertFalse(j.pay(g,owner));assertEquals(15000,journal().total(owner));
-        assertTrue(b.withdraw(owner,50));assertFalse(j.pay(g,owner));assertEquals(5000,b.creditedEntitlement(SOURCE,j.lineage(),owner.toString(),owner));
+        assertTrue(b.withdraw(owner,50));assertFalse(j.pay(g,owner));assertEquals(0,b.creditedEntitlement(SOURCE,j.lineage(),owner.toString(),owner));
         assertTrue(b.withdraw(owner,100));assertTrue(journal().pay(g,owner));assertEquals(BankStore.MAX_BALANCE*100L,b.balanceMinor(owner));
     }
     @Test void badFieldsDuplicatesAndFractionsFailClosed() throws Exception {
