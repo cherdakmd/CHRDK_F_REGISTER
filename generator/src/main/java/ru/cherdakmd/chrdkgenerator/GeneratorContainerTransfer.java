@@ -80,7 +80,7 @@ final class GeneratorContainerTransfer {
     InventoryTransfer.Decision recover(Player player, int generatorSlot) throws IOException {
         if (!available(player)) return InventoryTransfer.Decision.WAIT;
         return store.recover(player.getUniqueId(), generatorSlot,
-                ChargeInventory.inventory(player, WITNESS, () -> authenticated.test(player)));
+                ChargeInventory.inventory(player, WITNESS, () -> authenticated.test(player)), System.currentTimeMillis());
     }
 
     private InventoryTransfer.Decision transfer(Player player, int slot, GeneratorContainerStore.View view,

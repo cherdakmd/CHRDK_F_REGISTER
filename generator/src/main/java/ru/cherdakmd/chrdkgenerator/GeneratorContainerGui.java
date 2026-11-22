@@ -72,6 +72,7 @@ final class GeneratorContainerGui implements Listener {
             holder.inventory.setItem(i, new ItemStack(material, stack.amount()));
         }
         holder.inventory.setItem(45, button(Material.HOPPER, "container-refresh"));
+        holder.inventory.setItem(47, button(Material.COAL, "container-fuel-help"));
         holder.inventory.setItem(49, button(Material.COMPARATOR, "container-settings"));
         holder.inventory.setItem(53, button(Material.BARRIER, "container-close"));
     }

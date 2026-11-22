@@ -93,6 +93,15 @@ class GeneratorContainerStoreTest {
         assertEquals(new GeneratorContainerStore.Stack("COAL", 3), open().view(owner, 0).slots().get(36));
     }
 
+    @Test void delayedFuelTransferDiscardsBlockedTimeBeforeFuelAppears() throws Exception {
+        var store = open(); assertTrue(store.create(owner, 0, core, 100));
+        assertTrue(store.prepare(owner, 0, core, 0, tx, 36, "COAL", 1, "before", "after"));
+        var bag = new Bag(owner);
+        assertEquals(InventoryTransfer.Decision.APPLIED, open().recover(owner, 0, bag, 10_000));
+        assertEquals(10_000, open().view(owner, 0).lastCalcMillis());
+        assertEquals(new GeneratorContainerStore.Stack("COAL", 1), open().view(owner, 0).slots().get(36));
+    }
+
     @Test void pendingConflictBlocksProductionAndOtherTransfers() throws Exception {
         var store = open();
         assertTrue(store.create(owner, 0, core, 100));

@@ -12,6 +12,7 @@ messages:
   payout-bank-credit: "<green>+%amount% ⛁ на банковский счёт · генератор</green>"
   container-title: "<dark_gray>Бункер генератора</dark_gray>"
   container-refresh: "<yellow>Обновить бункер</yellow>"
+  container-fuel-help: "<gold>Топливо: нижний ряд. Загрузка — Shift-клик из инвентаря.</gold>"
   container-settings: "<gold>Управление генератором</gold>"
   container-close: "<red>Закрыть</red>"
   container-unavailable: "<red>Бункер временно недоступен. Обратитесь к администрации; данные генератора удалять нельзя.</red>"

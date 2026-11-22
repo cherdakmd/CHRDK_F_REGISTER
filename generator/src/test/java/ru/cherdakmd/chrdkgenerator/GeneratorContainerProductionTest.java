@@ -76,6 +76,15 @@ class GeneratorContainerProductionTest {
             }
         }
     }
+    @Test void exactFuelBoundaryDoesNotDiscardPartialCycleWhenAnotherItemExists() {
+        var v = view(0, 100, 2);
+        var p = GeneratorContainerProduction.plan(v, 3100, 4000, 1, 0, true, .5, 10_000, 100,
+                s -> s.equals("COAL") ? new GeneratorFurnaceFuel.Fuel(s, 3000, null) : null,
+                s -> 64, () -> "COBBLESTONE");
+        assertEquals(0, p.units());
+        assertEquals(100, p.lastCalcMillis());
+        assertEquals(2, p.slots().get(36).amount());
+    }
     @Test void fullCapacityStopsFuelConsumptionAndForgetsIdle() {
         var p = plan(view(3000, 100, 1), 5100, 0);
         assertEquals(0, p.units());

@@ -21,9 +21,11 @@ final class GeneratorContainerProduction {
             return new Plan(view.slots(), view.burnMillis(), now, 0);
         // Первый проход лишь выясняет, сколько времени физически доступно. Реальный
         // расход во втором проходе ограничен учтённым производством временем.
-        var available = GeneratorFurnaceBurn.consume(view.slots(), view.burnMillis(), elapsed, fuel, maxStack);
+        // Проверить на миллисекунду дальше: на точной границе одного предмета
+        // следующий уже может быть готов, и дробный цикл не должен сгореть.
+        long probe = elapsed == Long.MAX_VALUE ? elapsed : elapsed + 1;
+        var available = GeneratorFurnaceBurn.consume(view.slots(), view.burnMillis(), probe, fuel, maxStack);
         long budget = available.usedMillis();
-        if (budget == elapsed && available.burnMillis() > 0 && budget < Long.MAX_VALUE) budget++;
         var settlement = GeneratorProduction.settleWithFuel(elapsed, cycleMillis, unitsPerCycle, bonus,
                 chunk, offlineEfficiency, offlineBudgetMillis, room, budget);
         var consumed = GeneratorFurnaceBurn.consume(view.slots(), view.burnMillis(), settlement.fuelUsedMillis(), fuel, maxStack);

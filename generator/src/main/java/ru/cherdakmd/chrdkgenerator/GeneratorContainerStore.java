@@ -423,6 +423,12 @@ final class GeneratorContainerStore {
     /** Повтор безопасен: после native witness публикуется только сохранённый intent. */
     synchronized InventoryTransfer.Decision recover(UUID owner, int slot, InventoryTransfer.Inventory inventory) throws IOException {
         Container row = data.containers.get(key(owner, slot));
+        return recover(owner, slot, inventory, row == null ? 0 : row.lastCalcMillis);
+    }
+
+    synchronized InventoryTransfer.Decision recover(UUID owner, int slot, InventoryTransfer.Inventory inventory, long now) throws IOException {
+        if (now < 0) return InventoryTransfer.Decision.CONFLICT;
+        Container row = data.containers.get(key(owner, slot));
         if (!healthy || row == null) return InventoryTransfer.Decision.CONFLICT;
         Pending p = row.pending;
         if (p == null) return InventoryTransfer.Decision.APPLIED;
@@ -434,6 +440,9 @@ final class GeneratorContainerStore {
         Stack before = change.slots.get(p.index);
         int amount = (before == null ? 0 : before.amount()) + p.delta;
         change.slots.set(p.index, amount == 0 ? null : new Stack(p.material, amount));
+        // Пока playerdata ожидала восстановления, производство было заблокировано.
+        // Новый предмет не может оплачивать прошедший интервал задним числом.
+        change.lastCalcMillis = Math.max(change.lastCalcMillis, now);
         change.pending = null;
         change.revision++;
         if (!publish(next)) throw new IOException("generator container commit failed; intent retained");
