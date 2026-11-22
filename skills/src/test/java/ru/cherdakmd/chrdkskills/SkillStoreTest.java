@@ -30,6 +30,42 @@ class SkillStoreTest {
     Path folder;
 
     @Test
+    void rebirthResetsProgressAndAdvancesCounterInOneSnapshot() {
+        SkillStore store = new SkillStore(folder, LOGGER);
+        store.addXp(PLAYER, SkillType.MINING, 123);
+        store.addAttribute(PLAYER, PlayerAttribute.STRENGTH, 5);
+        store.setBranch(PLAYER, BuildBranch.WARRIOR, 2);
+        store.addBonusPoints(PLAYER, 3);
+        assertEquals(1, store.applyRebirth(PLAYER));
+        store.flush();
+        SkillStore restored = new SkillStore(folder, LOGGER);
+        restored.load();
+        assertEquals(1, restored.rebirths(PLAYER));
+        assertEquals(0, restored.xp(PLAYER, SkillType.MINING));
+        assertEquals(0, restored.attribute(PLAYER, PlayerAttribute.STRENGTH));
+        assertEquals(0, restored.branch(PLAYER, BuildBranch.WARRIOR));
+        assertEquals(3, restored.bonusPoints(PLAYER));
+    }
+
+    @Test
+    void concurrentSavingNeverPersistsHalfARebirth() throws Exception {
+        SkillStore store = new SkillStore(folder, LOGGER);
+        store.addXp(PLAYER, SkillType.MINING, 42);
+        store.flush();
+        Thread saver = new Thread(() -> {
+            for (int i = 0; i < 200; i++) store.flush();
+        });
+        saver.start();
+        store.applyRebirth(PLAYER);
+        saver.join();
+        store.saveNow();
+        SkillStore restored = new SkillStore(folder, LOGGER);
+        restored.load();
+        assertEquals(1, restored.rebirths(PLAYER));
+        assertEquals(0, restored.xp(PLAYER, SkillType.MINING));
+    }
+
+    @Test
     void addXpAccumulates() {
         SkillStore store = new SkillStore(folder, LOGGER);
         assertEquals(0L, store.xp(PLAYER, SkillType.MINING));

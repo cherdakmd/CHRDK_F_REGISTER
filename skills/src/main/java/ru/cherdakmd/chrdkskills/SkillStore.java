@@ -573,6 +573,16 @@ public final class SkillStore {
         dirty = true;
     }
 
+    /** Сброс и увеличение счётчика — один снимок для фонового сохранения. */
+    public synchronized int applyRebirth(String playerKey) {
+        if (playerKey == null || !players.containsKey(playerKey)) {
+            throw new IllegalArgumentException("missing rebirth player");
+        }
+        resetForRebirth(playerKey);
+        addRebirth(playerKey);
+        return players.get(playerKey).rebirths;
+    }
+
     /** Полный сброс персонажа: уровни навыков, атрибуты и ветки — под ноль. */
     public synchronized void resetForRebirth(String playerKey) {
         PlayerData data = players.get(playerKey);
@@ -737,19 +747,15 @@ public final class SkillStore {
     }
 
     /** Пишет файл, если есть изменения (или его ещё нет). */
-    public void saveNow() {
-        String json;
-        synchronized (this) {
-            if (!dirty && Files.isRegularFile(file)) {
-                return;
-            }
-            json = snapshotJson();
+    public synchronized void saveNow() {
+        if (!dirty && Files.isRegularFile(file)) {
+            return;
         }
-        write(json);
+        write(snapshotJson());
     }
 
     /** Немедленная запись без проверки флага (выключение сервера, тесты). */
-    public void flush() {
+    public synchronized void flush() {
         write(snapshotJson());
     }
 

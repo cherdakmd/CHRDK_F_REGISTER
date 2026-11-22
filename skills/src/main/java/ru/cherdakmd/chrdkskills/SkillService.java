@@ -296,9 +296,7 @@ public final class SkillService {
             confirmations.offer(player.getUniqueId(), "rebirth", "all", now);
             return RebirthResult.PENDING;
         }
-        store.resetForRebirth(key(player));
-        store.addRebirth(key(player));
-        int count = store.rebirths(key(player));
+        int count = store.applyRebirth(key(player));
         double bonus = RebirthMath.xpBonusPercent(count,
                 plugin.config().rebirthXpPercentPerRebirth(),
                 plugin.config().rebirthXpDecay(),

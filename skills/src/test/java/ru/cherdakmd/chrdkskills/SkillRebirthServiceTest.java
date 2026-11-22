@@ -98,12 +98,11 @@ final class SkillRebirthServiceTest {
         String method = service.substring(start, service.indexOf("private void giveUniqueReward", start));
 
         int confirm = method.indexOf("confirmations.consume(player.getUniqueId(), \"rebirth\", \"all\", now)");
-        int reset = method.indexOf("store.resetForRebirth(key(player))");
-        int add = method.indexOf("store.addRebirth(key(player))");
+        int reset = method.indexOf("store.applyRebirth(key(player))");
         int diamonds = method.indexOf("giveDiamonds(player, RebirthMath.rebirthDiamonds(");
         int unique = method.indexOf("giveUniqueReward(player)");
         int milestone = method.indexOf("grantMilestoneRewards(player, count)");
-        assertTrue(confirm >= 0 && reset > confirm && add > reset && diamonds > add
+        assertTrue(confirm >= 0 && reset > confirm && diamonds > reset
                         && unique > diamonds && milestone > unique,
                 "подтверждение → полный сброс → счётчик → награды по порядку");
 
