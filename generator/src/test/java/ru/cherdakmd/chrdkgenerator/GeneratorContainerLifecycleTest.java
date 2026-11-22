@@ -127,6 +127,23 @@ class GeneratorContainerLifecycleTest {
         assertTrue(restored.resetSkillCycle(owner, epoch, UUID.randomUUID(), 0));
     }
 
+    @Test void adminCycleResetRetriesFailedCheckpointWithoutResettingTwice() throws Exception {
+        var s = ready();
+        assertTrue(s.observeSkillRebirth(owner, 0));
+        s.setTier(owner, 0, 3);
+        s.flush();
+        Path blocked = dir.resolve("generator.json.tmp");
+        Files.createDirectory(blocked);
+        Files.writeString(blocked.resolve("block"), "x");
+        UUID epoch = UUID.randomUUID();
+        assertFalse(s.resetSkillCycle(owner, null, epoch, 0));
+        assertEquals(3, source().entry(owner, 0).tier());
+        Files.delete(blocked.resolve("block"));
+        Files.delete(blocked);
+        assertTrue(s.resetSkillCycle(owner, null, epoch, 0));
+        assertEquals(1, source().entry(owner, 0).tier());
+    }
+
     @Test void oldSourceWithLiveContainerFailsClosed() throws Exception {
         var s = ready(); var t = target();
         Path backup = dir.resolve("backup"); Files.copy(dir.resolve("generator.json"), backup);
