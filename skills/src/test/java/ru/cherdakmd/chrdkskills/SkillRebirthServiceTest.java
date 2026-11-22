@@ -196,14 +196,15 @@ final class SkillRebirthServiceTest {
         int award = listener.indexOf("service.award(player, skill, 1L);");
         int drop = listener.indexOf("diamondDrop(player, skill,", award);
         assertTrue(award >= 0 && drop > award,
-                "физический дроп вызывается после award и не зависит от его результата");
+                "награда вызывается после award и не зависит от его результата");
 
         int start = listener.indexOf("private void diamondDrop(");
         int end = listener.indexOf("\n    /**", start);
         assertTrue(start >= 0 && end > start);
         String method = listener.substring(start, end);
         assertTrue(method.contains("DiamondDrops.roll("));
-        assertTrue(method.contains("dropItemNaturally("));
+        assertTrue(method.contains("plugin.diamondLoot().accept("));
+        assertFalse(method.contains("dropItemNaturally("));
         assertFalse(method.contains("PrestigeXpGate"));
         assertFalse(method.contains("Award.none"));
     }

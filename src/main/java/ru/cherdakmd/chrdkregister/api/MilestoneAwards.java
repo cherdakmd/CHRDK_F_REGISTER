@@ -48,7 +48,13 @@ public final class MilestoneAwards {
     private boolean conflict;
     private int cursor, playerCursor;
     private java.util.function.Consumer<Player> reconcile=player->{};
+    private java.util.function.BiConsumer<UUID,Long> creditNotice=(owner,minor)->{};
     public void reconciler(java.util.function.Consumer<Player> action) { reconcile=Objects.requireNonNull(action); }
+    /** Notification only: sent for a confirmed positive bank receipt delta, not reservation. */
+    public void onCredit(java.util.function.BiConsumer<UUID,Long> action) { creditNotice=Objects.requireNonNull(action); }
+    public static long confirmedDelta(long before,long after) {
+        return before >= 0 && after >= before ? after - before : 0;
+    }
     private final Bank bank=new Bank() {
         public boolean available() { return api.get()!=null&&api.get().personalBankAvailable(); }
         public boolean registered(String s,UUID l) { return api.get().incomeSourceAvailable(s,l); }
@@ -61,7 +67,18 @@ public final class MilestoneAwards {
         public boolean known(UUID owner) { return api.get().canReceiveBankIncome(owner); }
         public boolean receiptCompatible(long credited,long totalBase) { return credited>=0; }
         public long credited(String s,UUID l,UUID owner) { return api.get().creditedEntitlement(s,l,owner.toString(),owner); }
-        public boolean credit(String s,UUID l,UUID owner,long total) { return api.get().creditMarketEntitlement(s,l,owner.toString(),owner,total); }
+        public boolean credit(String s,UUID l,UUID owner,long total) {
+            var current=api.get();
+            long before=current.creditedEntitlement(s,l,owner.toString(),owner);
+            boolean result=current.creditMarketEntitlement(s,l,owner.toString(),owner,total);
+            long after=current.creditedEntitlement(s,l,owner.toString(),owner);
+            long delta=confirmedDelta(before,after);
+            if(delta>0) {
+                try { creditNotice.accept(owner,delta); }
+                catch(RuntimeException error) { plugin.getLogger().log(java.util.logging.Level.WARNING,"Не удалось показать начисление",error); }
+            }
+            return result;
+        }
     };
     public MilestoneAwards(JavaPlugin plugin,Supplier<ChrdkRegisterApi> api,Supplier<ru.cherdakmd.chrdkregister.Messages> messages,String source,Map<UUID,Set<String>> legacy) throws Exception {
         if(!source.matches("[a-z][a-z0-9-]{0,47}")||api.get()==null||ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<20) throw new IllegalStateException("Нужен Core API 20+");

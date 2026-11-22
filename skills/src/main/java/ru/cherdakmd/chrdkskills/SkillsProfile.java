@@ -67,23 +67,15 @@ final class SkillsProfile implements ChrdkRegisterApi.ProfileProvider {
                 "skill", Messages.trusted(messages.raw("skill." + best.id() + ".name")),
                 "level", String.valueOf(bestLevel)));
         // Перерождения читаем из хранилища по UUID: раздел работает и для
-        // оффлайн-игрока. Шкала ступеней (перерождение = 10) кормит дневной
-        // лимит алмазов — это прежний контракт DiamondCapMath.
+        // оффлайн-игрока.
         int rebirths = plugin.store().rebirths(context.playerId().toString());
-        int total = rebirths * 10;
         if (rebirths > 0) {
             lines.add(messages.get("profile-rebirth",
                     "count", String.valueOf(rebirths),
                     "title", Messages.trusted(RebirthMath.title(rebirths))));
         }
-        // Персональный дневной лимит дропа: ранг, престиж, уровни и донатные
-        // бусты читаются по имени, поэтому строка работает и для оффлайн-игрока.
         if (context.self()) {
-            int personalCap = plugin.diamondDailyCap(context.playerName(), totalLevel, total);
-            int usedToday = plugin.store().diamondDropsToday(
-                    context.playerId().toString(), DiamondDrops.today());
-            lines.add(messages.get("profile-diamond-cap",
-                    "used", String.valueOf(usedToday), "cap", String.valueOf(personalCap)));
+            lines.add(messages.get("profile-diamond-unlimited"));
             if (context.online()) {
                 lines.add(messages.get("ability-energy", "energy", plugin.abilities().energy(context.playerId()), "max", SkillAbility.MAX_ENERGY));
             }

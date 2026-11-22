@@ -73,6 +73,8 @@ public final class SkillListener implements Listener {
     private final SkillService service;
     private PlacedBlocks placedBlocks;
     private final Random random = new Random();
+    private record PendingBlockReward(SkillType skill, Material material) { }
+    private final Map<BlockBreakEvent, PendingBlockReward> pendingBlockRewards = new java.util.WeakHashMap<>();
     /** Кто открыл варочную стойку: ключ блока → uuid и время. */
     private final Map<String, BrewOwner> brewOwners = new ConcurrentHashMap<>();
 
@@ -116,18 +118,25 @@ public final class SkillListener implements Listener {
         service.award(player, skill, 1L);
         plugin.xpItems().rollDrop(player, skill, 1.0);
         doubleDrop(player, block, skill);
-        diamondDrop(player, skill, block.getLocation().add(0.5, 0.5, 0.5), type, false);
+        pendingBlockRewards.put(event, new PendingBlockReward(skill, type));
         if (skill == SkillType.FARMING) {
             if (plugin.abilities().activeFor(player, skill)) service.award(player, skill, 1L);
             replayCrop(player, event);
         }
     }
 
-    /**
-     * Физический алмаз за честное действие. Уровень навыка, ступень престижа и
-     * платный ранг влияют и на шанс, и на количество; дневной потолок режет
-     * фермы, а поставленные блоки отсекаются {@link PlacedBlocks} выше.
-     */
+    /** Дождаться отмены защиты других плагинов до создания денежного обязательства. */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onBlockBreakReward(BlockBreakEvent event) {
+        PendingBlockReward pending = pendingBlockRewards.remove(event);
+        if (pending == null || event.isCancelled()) return;
+        Player player = event.getPlayer();
+        SkillType skill = pending.skill();
+        diamondDrop(player, skill, event.getBlock().getLocation().add(0.5, 0.5, 0.5),
+                pending.material(), false);
+    }
+
+    /** Денежная награда навыка за честное действие; ванильный дроп не меняется. */
     private void diamondDrop(Player player, SkillType skill, Location at,
                              Material blockType, boolean mob) {
         if (player == null || skill == null || at == null || at.getWorld() == null) {
@@ -151,22 +160,19 @@ public final class SkillListener implements Listener {
         if (bonus == null) {
             bonus = RankBonus.NONE;
         }
-        // Прокачка влияет только на дневной бюджет: шанс и количество за одно
-        // выпадение остаются прежними и по-прежнему зажаты потолками контракта.
-        DiamondDrops.Settings personal = settings.withDailyCap(
-                plugin.diamondDailyCap(player, bonus));
         DiamondDrops.Result result = DiamondDrops.roll(
                 service.level(player, skill),
                 plugin.config().curve().maxLevel(),
                 service.rebirths(player),
                 bonus.level(), bonus.xpPercent(), bonus.dropPercent(),
-                service.diamondDropsToday(player), mob,
-                random.nextDouble(), personal);
+                0, mob, random.nextDouble(), settings);
         if (!result.dropped()) {
             return;
         }
-        at.getWorld().dropItemNaturally(at, new ItemStack(Material.DIAMOND, result.amount()));
-        service.noteDiamondDrops(player, result.amount());
+        // Резервируем в долговечном журнале до уведомления; предметы не создаём.
+        if (plugin.diamondLoot().accept(player, "drop:" + UUID.randomUUID(), result.amount())) {
+            service.noteDiamondDrops(player, result.amount());
+        }
     }
 
     /** Мобы: только враждебные, только убитые живым игроком, тот же дневной лимит. */

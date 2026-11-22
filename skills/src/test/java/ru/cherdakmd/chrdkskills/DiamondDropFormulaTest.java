@@ -65,16 +65,13 @@ class DiamondDropFormulaTest {
     }
 
     @Test
-    void dailyCapTruncatesAndThenStops() {
-        long almost = S.dailyCap() - 1;
-        DiamondDrops.Result last = DiamondDrops.roll(100, 100, 0, 5, 50, 25,
-                almost, false, 0.0, S);
-        assertEquals(1, last.amount(), "выдаём только остаток дневного бюджета");
-
-        DiamondDrops.Result exhausted = DiamondDrops.roll(100, 100, 0, 5, 50, 25,
-                S.dailyCap(), false, 0.0, S);
-        assertFalse(exhausted.dropped());
-        assertEquals("daily-cap", exhausted.reason());
+    void historicalDailyCapNeverRestrictsRewards() {
+        var baseline = DiamondDrops.roll(100, 100, 0, 5, 50, 25, 0, false, 0.0, S);
+        for (long used : new long[]{S.dailyCap() - 1, S.dailyCap(), Long.MAX_VALUE}) {
+            var result = DiamondDrops.roll(100, 100, 0, 5, 50, 25, used, false, 0.0, S);
+            assertEquals(baseline.amount(), result.amount());
+            assertTrue(result.dropped());
+        }
     }
 
     @Test
@@ -118,13 +115,9 @@ class DiamondDropFormulaTest {
         assertEquals(S.maxAmount(), personal.maxAmount(), "стак не меняется");
         assertEquals(S.enabled(), personal.enabled());
 
-        // Один и тот же бросок при исчерпанном бюджете 256 даёт отказ,
-        // а при персональном 1024 — всё ещё выпадение.
-        long exhaustedForBase = 256;
-        assertFalse(DiamondDrops.roll(100, 100, 0, 5, 50, 25,
-                exhaustedForBase, false, 0.0, S).dropped());
-        assertTrue(DiamondDrops.roll(100, 100, 0, 5, 50, 25,
-                exhaustedForBase, false, 0.0, personal).dropped());
+        assertEquals(DiamondDrops.roll(100, 100, 0, 5, 50, 25,
+                256, false, 0.0, S).amount(), DiamondDrops.roll(100, 100, 0, 5, 50, 25,
+                256, false, 0.0, personal).amount());
     }
 
     @Test

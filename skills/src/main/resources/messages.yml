@@ -88,6 +88,8 @@ messages:
   menu-summary-xp: "<gray>Опыта накоплено: <white>%xp%</white></gray>"
   menu-summary-rebirth: "<gray>Перерождений: </gray><white>%count%</white>"
   profile-rebirth: "<gray>Перерождения: </gray><white>%count%</white> <dark_gray>·</dark_gray> <light_purple>%title%</light_purple>"
+  profile-diamond-unlimited: "<gray>Награды навыков: <white>без суточного лимита</white>, на банковский счёт.</gray>"
+  diamond-bank-credit: "<green>+%amount% ⛁ на банковский счёт</green>"
   profile-diamond-cap: "<gray>Лимит алмазов из добычи: </gray><white>%used%/%cap%</white> <dark_gray>за сегодня (МСК)</dark_gray>"
 
   # ------------------------- вкладка «Перерождение» -------------------------

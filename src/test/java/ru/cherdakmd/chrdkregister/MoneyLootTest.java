@@ -15,4 +15,23 @@ class MoneyLootTest {
  @Test void unavailableAndUnknownOwnerPreserveSourceAcrossRestart()throws Exception{for(String source:List.of("custom-loot")){var s=load(source);s.initialize(Map.of());s.reserve(owner,"mob:"+UUID.randomUUID(),9);var g=new MilestoneFinanceTest.Gateway(bank());g.available=false;assertFalse(MilestoneAwards.deliver(s,g,source,owner,9));g.available=true;g.known=false;assertFalse(MilestoneAwards.deliver(load(source),g,source,owner,9));assertEquals(9,load(source).totals().get(owner));g.known=true;assertTrue(MilestoneAwards.deliver(s,g,source,owner,9));}}
  @Test void fullAndPartialCapDoNotLoseAcceptedCustomLoot()throws Exception{var s=load("custom-loot");s.initialize(Map.of());s.reserve(owner,"mob:"+UUID.randomUUID(),9);var b=bank();b.setBalance(owner,"Steve",BankStore.MAX_BALANCE);var g=new MilestoneFinanceTest.Gateway(b);assertFalse(MilestoneAwards.deliver(s,g,"custom-loot",owner,9));b.withdraw(owner,4);assertFalse(MilestoneAwards.deliver(load("custom-loot"),g,"custom-loot",owner,9));b.withdraw(owner,5);assertTrue(MilestoneAwards.deliver(load("custom-loot"),g,"custom-loot",owner,9));assertEquals(BankStore.MAX_BALANCE,b.balance(owner));}
  @Test void failedSourceWriteDoesNotInventACredit()throws Exception{var s=load("custom-loot");s.initialize(Map.of());Files.createDirectory(dir.resolve("custom-loot/milestone-awards.json.tmp"));assertThrows(java.io.IOException.class,()->s.reserve(owner,"mob:"+UUID.randomUUID(),9));assertTrue(load("custom-loot").totals().isEmpty());assertEquals(0,bank().balance(owner));}
+ @Test void marketReceiptDeltaNotifiesOnlyOnceAfterRealCredit() throws Exception {
+  var source=load("skill-diamonds"); source.initialize(Map.of());
+  source.reserve(owner,"drop:abc",3);
+  var bank=bank(); assertTrue(bank.registerIncomeSource("skill-diamonds",source.lineage()));
+  long before=bank.creditedEntitlement("skill-diamonds",source.lineage(),owner.toString(),owner);
+  assertTrue(bank.creditMarketEntitlement("skill-diamonds",source.lineage(),owner.toString(),owner,3));
+  long after=bank.creditedEntitlement("skill-diamonds",source.lineage(),owner.toString(),owner);
+  assertEquals(bank.balanceMinor(owner),MilestoneAwards.confirmedDelta(before,after));
+  assertTrue(after>before);
+  assertTrue(bank.creditMarketEntitlement("skill-diamonds",source.lineage(),owner.toString(),owner,3));
+  assertEquals(0,MilestoneAwards.confirmedDelta(after,bank.creditedEntitlement("skill-diamonds",source.lineage(),owner.toString(),owner)));
+ }
+ @Test void creditNoticeUsesOnlyConfirmedPositiveReceiptDelta(){
+  assertEquals(75, MilestoneAwards.confirmedDelta(100,175));
+  assertEquals(0, MilestoneAwards.confirmedDelta(100,100));
+  assertEquals(0, MilestoneAwards.confirmedDelta(-1,175));
+  assertEquals(0, MilestoneAwards.confirmedDelta(175,-1));
+  assertEquals(0, MilestoneAwards.confirmedDelta(175,100));
+ }
 }

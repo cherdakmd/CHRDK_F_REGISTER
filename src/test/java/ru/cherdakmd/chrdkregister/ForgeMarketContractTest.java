@@ -17,7 +17,7 @@ class ForgeMarketContractTest {
 
     @Test void api46KeepsClaimLineageAndApi44CatalogContracts() throws Exception {
         String api = read("src/main/java/ru/cherdakmd/chrdkregister/api/ChrdkRegisterApi.java");
-        assertTrue(api.contains("int API_VERSION = 46;"));
+        assertTrue(api.contains("int API_VERSION = 47;"));
         assertTrue(api.contains("UUID claimSourceLineage()"));
         assertTrue(api.contains("long claimExchangeSequence(UUID lineage)"));
         assertFalse(api.contains("forgeMaterialSource()"),

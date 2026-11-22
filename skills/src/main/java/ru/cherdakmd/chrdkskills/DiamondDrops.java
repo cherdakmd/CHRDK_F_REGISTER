@@ -1,7 +1,7 @@
 package ru.cherdakmd.chrdkskills;
 
 /**
- * Формула выпадения алмазов предметом из блоков и мобов.
+ * Формула алмазной награды навыков за блоки и мобов.
  *
  * <p>Класс без Bukkit-типов и без состояния: всё считается из параметров и
  * одного броска {@code dice}, поэтому баланс проверяется юнит-тестами без
@@ -9,9 +9,7 @@ package ru.cherdakmd.chrdkskills;
  * влияет и на шанс, и на количество алмазов; потолки зашиты здесь, чтобы
  * конфиг не смог продать бесконечную экономику.</p>
  *
- * <p>Алмазы приходят <b>физическим предметом</b> в мир, а не деньгами в
- * {@code /bal}: существующий {@code MilestoneAwards} остаётся разовым
- * источником вех и не смешивается с новым лутом.</p>
+ * <p>Результат используется для банковской награды; ванильный дроп не меняется.</p>
  */
 public final class DiamondDrops {
 
@@ -116,10 +114,8 @@ public final class DiamondDrops {
         if (settings == null || !settings.enabled()) {
             return Result.miss(0.0, "disabled");
         }
-        long remaining = settings.dailyCap() - Math.max(0L, droppedToday);
-        if (remaining <= 0L) {
-            return Result.miss(0.0, "daily-cap");
-        }
+        // droppedToday and dailyCap remain in the public signature for compatibility;
+        // neither limits rewards. Chance and per-event amount retain their bounds.
         double ratio = levelRatio(level, maxLevel);
         int safeRank = (int) clamp(rankLevel, 0, 5);
         int safePrestige = (int) clamp(prestige, 0, MAX_PRESTIGE);
@@ -147,9 +143,8 @@ public final class DiamondDrops {
                 + (int) Math.floor(safePrestige / 2.0) * settings.prestigeAmountBonus()
                 + (mob ? settings.mobAmountBonus() : 0);
         amount = (int) clamp(amount, 0, settings.maxAmount());
-        amount = (int) Math.min(amount, remaining);
         if (amount <= 0) {
-            return Result.miss(chance, "daily-cap");
+            return Result.miss(chance, "zero-amount");
         }
         return new Result(amount, chance, "ok");
     }

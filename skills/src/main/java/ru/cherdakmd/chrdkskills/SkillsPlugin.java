@@ -51,6 +51,8 @@ public final class SkillsPlugin extends JavaPlugin {
 
     private ru.cherdakmd.chrdkregister.api.MoneyLoot moneyLoot;
     public ru.cherdakmd.chrdkregister.api.MoneyLoot moneyLoot() { return moneyLoot; }
+    private ru.cherdakmd.chrdkregister.api.MoneyLoot diamondLoot;
+    public ru.cherdakmd.chrdkregister.api.MoneyLoot diamondLoot() { return diamondLoot; }
 
     @Override
     public void onEnable() {
@@ -60,9 +62,17 @@ public final class SkillsPlugin extends JavaPlugin {
         // Конфиг читается до создания листенера: антинакрутка берёт из него TTL.
         reloadSkillsConfig();
         try {
-            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 38) throw new IllegalStateException("Нужен Core API 38+");
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 47) throw new IllegalStateException("Нужен Core API 47+");
             this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"skills-awards",ru.cherdakmd.chrdkregister.api.MilestoneMigration.json(getDataFolder().toPath().resolve("skills.json"),ru.cherdakmd.chrdkregister.api.MilestoneMigration.Kind.SKILLS));
             this.moneyLoot = new ru.cherdakmd.chrdkregister.api.MoneyLoot(this, this::coreApi, this::messages, "skill-crystals");
+            this.diamondLoot = new ru.cherdakmd.chrdkregister.api.MoneyLoot(this, this::coreApi, this::messages, "skill-diamonds");
+            this.diamondLoot.onCredit((owner, minor) -> {
+                Player player = Bukkit.getPlayer(owner);
+                if (player != null && player.isOnline()) {
+                    player.sendActionBar(messages().get("diamond-bank-credit", "amount",
+                            ru.cherdakmd.chrdkregister.api.DiamondMoney.format(minor)));
+                }
+            });
         } catch (Exception | LinkageError error) {
             getLogger().log(java.util.logging.Level.SEVERE,"Модуль остановлен без сброса прогресса/наград",error);
             this.store = null;
@@ -156,6 +166,7 @@ public final class SkillsPlugin extends JavaPlugin {
         }
         if (awards != null) awards.close();
         if (moneyLoot != null) moneyLoot.close();
+        if (diamondLoot != null) diamondLoot.close();
         if (xpShop != null) {
             try {
                 xpShop.payments().flushRefunds();
