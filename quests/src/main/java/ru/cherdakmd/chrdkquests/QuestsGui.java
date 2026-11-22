@@ -153,9 +153,9 @@ public final class QuestsGui implements Listener {
         lore.add(plugin.messages().get("menu-info-done",
                 "done", String.valueOf(plugin.service().doneCount(id)),
                 "total", String.valueOf(plugin.service().totalQuests())));
-        lore.add(plugin.messages().get("menu-info-claims",
-                "left", String.valueOf(plugin.service().claimsLeft(id, plugin.today())),
-                "limit", String.valueOf(plugin.config().claimsPerDay())));
+        lore.add(plugin.messages().get("menu-no-daily-limit",
+                "left", "∞",
+                "limit", "∞"));
         lore.add(plugin.messages().get("menu-info-ready",
                 "ready", String.valueOf(plugin.service().readyCount(id))));
         return item(Material.WRITABLE_BOOK, "menu-info-name", null, lore);

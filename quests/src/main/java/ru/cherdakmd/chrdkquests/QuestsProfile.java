@@ -56,9 +56,9 @@ final class QuestsProfile implements ChrdkRegisterApi.ProfileProvider {
         lines.add(messages.get("profile-progress",
                 "done", String.valueOf(plugin.service().doneCount(id)),
                 "total", String.valueOf(plugin.service().totalQuests())));
-        lines.add(messages.get("profile-claims",
-                "left", String.valueOf(plugin.service().claimsLeft(id, plugin.today())),
-                "limit", String.valueOf(plugin.config().claimsPerDay())));
+        lines.add(messages.get("profile-no-daily-limit",
+                "left", "∞",
+                "limit", "∞"));
         List<Quest> current = plugin.service().currentQuests(id);
         int shown = 0;
         Player online = context.online() ? Bukkit.getPlayer(id) : null;

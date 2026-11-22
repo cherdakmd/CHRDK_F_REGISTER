@@ -86,8 +86,8 @@ public final class QuestsCommandHandler implements CommandExecutor, TabCompleter
                 "help-join", "help-leave", "help-faction")) {
             plugin.messages().send(sender, key);
         }
-        plugin.messages().send(sender, "help-footer",
-                "limit", String.valueOf(plugin.config().claimsPerDay()));
+        plugin.messages().send(sender, "help-no-daily-limit",
+                "limit", "∞");
     }
 
     private void list(CommandSender sender) {
@@ -115,9 +115,9 @@ public final class QuestsCommandHandler implements CommandExecutor, TabCompleter
                     "need", String.valueOf(quest.amount()),
                     "status", Messages.trusted(plugin.messages().raw(statusKey(availability))));
         }
-        plugin.messages().send(sender, "list-footer",
-                "left", String.valueOf(plugin.service().claimsLeft(id, plugin.today())),
-                "limit", String.valueOf(plugin.config().claimsPerDay()));
+        plugin.messages().send(sender, "list-no-daily-limit",
+                "left", "∞",
+                "limit", "∞");
     }
 
     private void info(CommandSender sender, String[] args) {
@@ -306,7 +306,7 @@ public final class QuestsCommandHandler implements CommandExecutor, TabCompleter
                 "reputation", String.valueOf(plugin.service().reputation(id)),
                 "done", String.valueOf(plugin.service().doneCount(id)),
                 "total", String.valueOf(plugin.service().totalQuests()),
-                "claims", String.valueOf(plugin.service().claimsLeft(id, plugin.today())));
+                "claims", "∞");
     }
 
     private void grant(CommandSender sender, String[] args) {

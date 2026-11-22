@@ -66,7 +66,7 @@ public final class QuestsPlugin extends JavaPlugin {
             getLogger().info("CHRDK_Quests включён: фракций " + config.factions().size()
                     + ", персонажей " + config.npcList().size()
                     + ", заданий " + config.totalQuests()
-                    + ", сдач в день " + config.claimsPerDay() + ".");
+                    + ", суточного лимита сдач нет.");
         } catch (ReflectiveOperationException | RuntimeException exception) {
             getLogger().severe("CHRDK_Quests не смог запуститься: " + exception.getMessage());
             exception.printStackTrace();

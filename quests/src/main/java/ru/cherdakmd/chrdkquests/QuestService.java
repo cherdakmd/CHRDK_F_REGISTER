@@ -303,10 +303,8 @@ public final class QuestService {
         } else if (progress(playerId, quest) < quest.amount()) {
             return Result.NOT_READY;
         }
-        if (claimsLeft(playerId, day) <= 0) {
-            return Result.DAILY_LIMIT;
-        }
-        if (!store.countClaim(playerId, day, config.claimsPerDay())) {
+        // Счётчик остаётся статистикой; старый конфиг больше не ограничивает сдачи.
+        if (!store.countClaim(playerId, day, 0)) {
             return Result.DAILY_LIMIT;
         }
         store.markDone(playerId, quest.id());
@@ -329,10 +327,9 @@ public final class QuestService {
         return store.faction(playerId);
     }
 
-    /** Сколько сдач осталось на сегодня. */
+    /** -1 означает отсутствие суточного лимита; сохраняем числовой контракт API. */
     public int claimsLeft(UUID playerId, String day) {
-        int used = store.claims(playerId, day);
-        return Math.max(0, config.claimsPerDay() - used);
+        return -1;
     }
 
     /** Ид текущего дня для суточного счёта — UTC, как в остальных аддонах. */

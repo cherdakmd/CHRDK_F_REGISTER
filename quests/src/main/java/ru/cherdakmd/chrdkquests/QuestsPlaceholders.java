@@ -49,7 +49,7 @@ public final class QuestsPlaceholders extends PlaceholderExpansion {
         if (player == null) {
             return switch (key) {
                 case "total" -> Integer.toString(plugin.service().totalQuests());
-                case "claims_limit" -> Integer.toString(plugin.config().claimsPerDay());
+                case "claims_limit" -> "-1";
                 default -> "";
             };
         }
@@ -71,7 +71,7 @@ public final class QuestsPlaceholders extends PlaceholderExpansion {
             case "available" -> Integer.toString(plugin.service().currentQuests(id).size());
             case "ready" -> Integer.toString(plugin.service().readyCount(id));
             case "claims_left" -> Integer.toString(plugin.service().claimsLeft(id, plugin.today()));
-            case "claims_limit" -> Integer.toString(plugin.config().claimsPerDay());
+            case "claims_limit" -> "-1";
             default -> "";
         };
     }

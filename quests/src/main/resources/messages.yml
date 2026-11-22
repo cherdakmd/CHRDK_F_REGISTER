@@ -18,12 +18,14 @@ quests:
   help-join: "<yellow>/quests join <фракция></yellow> <gray>— вступить во фракцию</gray>"
   help-leave: "<yellow>/quests leave</yellow> <gray>— выйти из фракции (репутация сохранится)</gray>"
   help-faction: "<yellow>/quests faction</yellow> <gray>— ранг и репутация</gray>"
+  help-no-daily-limit: "<gray>Суточного лимита сдач нет. Награда — опыт, предметы и очки фракции.</gray>"
   help-footer: "<gray>За сутки можно сдать <white>%limit%</white> заданий. Награда — опыт, предметы и очки фракции.</gray>"
 
   # -------------------------------- список ----------------------------------
   list-empty: "<gray>Сейчас нет открытых заданий. Загляните в меню: <yellow>/quests</yellow>.</gray>"
   list-header: "<gold>Текущие задания</gold> <dark_gray>·</dark_gray> <gray>%count%</gray>"
   list-line: "<dark_gray>·</dark_gray> <white>%name%</white> <gray>(%npc%)</gray> <dark_gray>—</dark_gray> <white>%have%/%need%</white> <dark_gray>·</dark_gray> %status%"
+  list-no-daily-limit: "<gray>Суточного лимита сдач нет.</gray>"
   list-footer: "<gray>Сдач осталось сегодня: <white>%left%</white> из <white>%limit%</white>.</gray>"
 
   # --------------------------------- статусы --------------------------------
@@ -97,6 +99,7 @@ quests:
   menu-info-rank: "<gray>Ранг:</gray> <white>%rank%</white> <dark_gray>(%number%)</dark_gray>"
   menu-info-reputation: "<gray>Репутация:</gray> <white>%reputation%</white> <dark_gray>·</dark_gray> <gray>порог: %next%</gray>"
   menu-info-done: "<gray>Закрыто заданий:</gray> <white>%done%/%total%</white>"
+  menu-no-daily-limit: "<gray>Суточного лимита сдач нет.</gray>"
   menu-info-claims: "<gray>Сдач осталось:</gray> <white>%left%/%limit%</white>"
   menu-info-ready: "<gray>Готово к сдаче:</gray> <green>%ready%</green>"
   menu-faction-description: "<gray>%description%</gray>"
@@ -124,6 +127,7 @@ quests:
   profile-faction: "<gray>%faction% · %rank%</gray>"
   profile-reputation: "<gray>Репутация: <white>%reputation%</white> · до ранга %next%</gray>"
   profile-progress: "<gray>Заданий закрыто: <white>%done%/%total%</white></gray>"
+  profile-no-daily-limit: "<gray>Суточного лимита сдач нет.</gray>"
   profile-claims: "<gray>Сдач сегодня: <white>%left%/%limit%</white></gray>"
   profile-quest: "<gray>· %name%: <white>%have%/%need%</white></gray>"
 

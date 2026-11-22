@@ -279,7 +279,8 @@ public final class QuestStore {
             return false;
         }
         Player player = of(id);
-        int cap = Math.clamp(limit, 1, QuestConfig.MAX_CLAIMS_PER_DAY);
+        // limit=0 — не ограничивать, оставляя счётчик только для статистики.
+        int cap = limit == 0 ? Integer.MAX_VALUE : Math.clamp(limit, 1, QuestConfig.MAX_CLAIMS_PER_DAY);
         if (!day.equals(player.claimDay)) {
             player.claimDay = day;
             player.claimCount = 0;

@@ -229,20 +229,17 @@ class QuestServiceTest {
     }
 
     @Test
-    void dailyLimitStopsExtraClaims(@TempDir Path dir) {
-        QuestService service = service(dir, CONFIG.replace("claims-per-day: 3",
-                "claims-per-day: 1"));
-        assertEquals(1, service.claimsLeft(PLAYER, DAY));
+    void oldDailyLimitDoesNotBlockDistinctClaimsButEachQuestRemainsOnceOnly(@TempDir Path dir) {
+        QuestService service = service(dir, CONFIG.replace("claims-per-day: 3", "claims-per-day: 1"));
+        assertEquals(-1, service.claimsLeft(PLAYER, DAY));
         service.store().addProgress(PLAYER, "elder_kill", 2, 2);
         assertSame(QuestService.Result.OK, service.claim(PLAYER, "elder_kill", 0, DAY));
-        assertEquals(0, service.claimsLeft(PLAYER, DAY));
-        assertEquals(1, service.claimsLeft(PLAYER, "2026-10-25"), "новый день — снова можно");
-
+        assertSame(QuestService.Result.DONE, service.claim(PLAYER, "elder_kill", 0, DAY));
         service.store().addProgress(PLAYER, "elder_mine", 3, 3);
-        assertSame(QuestService.Result.DAILY_LIMIT, service.claim(PLAYER, "elder_mine", 0, DAY));
-        assertFalse(service.store().done(PLAYER, "elder_mine"), "отказ не закрывает задание");
-        assertSame(QuestService.Result.OK,
-                service.claim(PLAYER, "elder_mine", 0, "2026-10-25"));
+        assertSame(QuestService.Result.OK, service.claim(PLAYER, "elder_mine", 0, DAY));
+        assertTrue(service.store().done(PLAYER, "elder_mine"));
+        assertEquals(2, service.store().claims(PLAYER, DAY));
+        assertEquals(-1, service.claimsLeft(PLAYER, "2026-10-25"));
     }
 
     @Test
