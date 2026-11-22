@@ -3,7 +3,10 @@ package ru.cherdakmd.chrdkenchants;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.ItemStack;
@@ -41,6 +44,32 @@ public final class AttributeRepairListener implements Listener {
         boolean attributes = plugin.items().repairAttributes(stack);
         boolean book = plugin.items().refreshBookDescription(stack);
         if (attributes || book) player.updateInventory();
+    }
+
+    /** Книга может попасть в текущий слот из контейнера без смены слота. */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onInventoryClick(InventoryClickEvent event) {
+        if (!(event.getWhoClicked() instanceof Player player)
+                || !plugin.items().isEnchantBook(event.getCurrentItem())
+                    && !plugin.items().isEnchantBook(event.getCursor())) return;
+        // Инвентарь меняется после события; не вмешиваемся в обработку клика.
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (!player.isOnline()) return;
+            repair(player);
+            ItemStack cursor = player.getItemOnCursor();
+            if (plugin.items().refreshBookDescription(cursor)) {
+                player.setItemOnCursor(cursor);
+            }
+        });
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onInteract(PlayerInteractEvent event) {
+        if (!plugin.items().isEnchantBook(event.getItem())) return;
+        Player player = event.getPlayer();
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (player.isOnline()) repair(player);
+        });
     }
 
     /** Обойти инвентарь игрока и вернуть ванильную базу всем нашим предметам. */

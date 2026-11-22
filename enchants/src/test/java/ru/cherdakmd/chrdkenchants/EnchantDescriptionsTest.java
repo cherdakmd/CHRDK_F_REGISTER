@@ -158,6 +158,9 @@ class EnchantDescriptionsTest {
         String repairListener = source("AttributeRepairListener");
         assertTrue(repairListener.contains("refreshBookDescription(stack)"),
                 "старые книги укорачиваются сами при входе и смене слота");
+        assertTrue(repairListener.contains("onInventoryClick(InventoryClickEvent event)"));
+        assertTrue(repairListener.contains("onInteract(PlayerInteractEvent event)"));
+        assertTrue(repairListener.contains("refreshBookDescription(cursor)"));
     }
     @Test void catalogDetailsUseServerSnapshotAndRetainDeferredAuthGenerationAndViewChecks() throws Exception {
         String gui = source("EnchantGui");
