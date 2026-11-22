@@ -68,6 +68,17 @@ class FullResetCoordinatorTest {
         assertTrue(RebirthBankPayout.reconcile(load(), OWNER, ledger));
     }
 
+    @Test void repeatingSameRebirthNumberAfterResetCreditsNewEventOnlyOnce() {
+        var s = ready();
+        assertTrue(FullResetCoordinator.start(s, OWNER, EPOCH, ledger, generator));
+        s = load();
+        assertEquals(1, s.beginPaidRebirth(OWNER, 42));
+        assertTrue(RebirthBankPayout.reconcile(s, OWNER, ledger));
+        assertTrue(RebirthBankPayout.reconcile(load(), OWNER, ledger));
+        assertEquals(Map.of("rebirth:1", 42L, "reset:" + EPOCH, 0L,
+                "rebirth:" + EPOCH + ":1", 42L), journal);
+    }
+
     @Test void missingReceiptOrMarkerMismatchNeverCallsGenerator() {
         var s = ready(); generatorAvailable = false;
         assertFalse(FullResetCoordinator.start(s, OWNER, EPOCH, ledger, generator));

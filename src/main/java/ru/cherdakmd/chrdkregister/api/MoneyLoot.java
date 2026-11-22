@@ -24,5 +24,11 @@ public final class MoneyLoot implements AutoCloseable {
     public void onCredit(java.util.function.BiConsumer<UUID,Long> action){awards.onCredit(action);}
     public static int unit(String material){return switch(material){case "DIAMOND"->1;case "DIAMOND_BLOCK"->9;default->0;};}
     public boolean accept(Player owner,String event,long amount){if(amount==0)return true;if(amount<0||!awards.reserve(owner,event,amount))return false;awards.tick();return true;}
+    /** Устойчивая нулевая отметка, не создающая банковое начисление. */
+    public boolean mark(Player owner,String event) {
+        if(owner==null||event==null||!event.matches("reset:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) return false;
+        if(!awards.reserve(owner,event,0)) return false;
+        return awards.amount(owner,event)==0;
+    }
     @Override public void close(){awards.close();}
 }

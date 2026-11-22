@@ -93,6 +93,9 @@ final class GeneratorUpgrades {
 
     /** Повышение тира: деньги + ресурсы, тир растёт на 1 (до 9). */
     void upgradeTier(Player player, int slot) {
+        if (!plugin.containers().syncRebirth(player.getUniqueId(), player, System.currentTimeMillis())) {
+            plugin.messages().send(player, "container-unavailable"); return;
+        }
         GeneratorStore.Entry entry = plugin.store().entry(player.getUniqueId(), slot);
         if (entry == null) {
             plugin.messages().send(player, "upgrade-none");
@@ -116,6 +119,9 @@ final class GeneratorUpgrades {
 
     /** Покупка следующего уровня модуля «Скорость»/«Ёмкость»/«Удача». */
     void upgradeModule(Player player, int slot, String name) {
+        if (!plugin.containers().syncRebirth(player.getUniqueId(), player, System.currentTimeMillis())) {
+            plugin.messages().send(player, "container-unavailable"); return;
+        }
         GeneratorStore.Entry entry = plugin.store().entry(player.getUniqueId(), slot);
         if (entry == null) {
             plugin.messages().send(player, "upgrade-none");
@@ -140,6 +146,9 @@ final class GeneratorUpgrades {
 
     /** Разовая покупка модуля «Чанк» (plugin-chunk-ticket). */
     void buyChunk(Player player, int slot) {
+        if (!plugin.containers().syncRebirth(player.getUniqueId(), player, System.currentTimeMillis())) {
+            plugin.messages().send(player, "container-unavailable"); return;
+        }
         GeneratorStore.Entry entry = plugin.store().entry(player.getUniqueId(), slot);
         if (entry == null) {
             plugin.messages().send(player, "upgrade-none");

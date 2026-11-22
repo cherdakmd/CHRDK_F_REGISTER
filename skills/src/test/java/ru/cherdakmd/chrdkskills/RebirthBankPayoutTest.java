@@ -156,6 +156,11 @@ class RebirthBankPayoutTest {
         assertTrue(store.beginFullReset(OWNER, epoch));
         store = reload();
         assertEquals(epoch, store.pendingResetEpoch(OWNER));
+        assertTrue(store.resetBlocked(OWNER));
+        var state = store.cycleState(OWNER).orElseThrow();
+        assertTrue(state.resetting());
+        assertEquals(epoch, state.pendingEpoch());
+        assertEquals(1, state.count());
         assertEquals(0, store.beginPaidRebirth(OWNER, 100));
         assertFalse(RebirthBankPayout.reconcile(store, OWNER, ledger));
         journal.put(RebirthCycleJournal.marker(epoch), 0L);

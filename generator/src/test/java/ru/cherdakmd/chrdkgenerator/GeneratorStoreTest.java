@@ -34,6 +34,24 @@ class GeneratorStoreTest {
     }
 
     @Test
+    void resetForPlayerWithoutGeneratorCreatesDurableEpochForFutureInstall(@TempDir Path dir) throws Exception {
+        var store = ready(dir);
+        UUID owner = UUID.randomUUID(), epoch = UUID.randomUUID();
+        assertTrue(store.resetSkillCycle(owner, null, epoch, 4));
+        var restored = newStore(dir); restored.load();
+        assertTrue(restored.healthy());
+        assertEquals(epoch, restored.skillResetEpoch(owner));
+        assertEquals(0, restored.entry(owner).rebirths());
+        assertEquals(GeneratorStore.InstallStatus.OK,
+                restored.install(owner, UUID.randomUUID(), "world", 0, 64, 0, 100, 3).status());
+        restored.flush();
+        var reloaded = newStore(dir); reloaded.load();
+        assertTrue(reloaded.healthy());
+        assertEquals(epoch, reloaded.skillResetEpoch(owner));
+        assertFalse(reloaded.resetSkillCycle(owner, null, UUID.randomUUID(), 0));
+    }
+
+    @Test
     void installBindAndPersist_roundTrip(@TempDir Path dir) throws Exception {
         GeneratorStore store = ready(dir);
         UUID owner = UUID.randomUUID();

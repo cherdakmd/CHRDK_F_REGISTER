@@ -159,7 +159,7 @@ final class SkillXpItems implements Listener {
 
     /** Общий расход: проверки, пауза, опыт и списание одной штуки из руки. */
     private void use(Player player, SkillType skill, EquipmentSlot hand) {
-        if (!plugin.config().enabled() || player.getGameMode() != GameMode.SURVIVAL
+        if (plugin.skills().resetPending(player) || !plugin.config().enabled() || player.getGameMode() != GameMode.SURVIVAL
                 || plugin.coreApi() == null || !plugin.coreApi().isAuthenticated(player)
                 || !plugin.getConfig().getBoolean("xp-potions.enabled", true)) {
             fail(player, "xp-potion-unavailable");

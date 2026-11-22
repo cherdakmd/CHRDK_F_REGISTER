@@ -42,6 +42,8 @@ review: [core, claims, teleports, diamond-shop]
 Полный список и границы — в
 [защите сервера](https://github.com/cherdakmd/CHRDK_F_REGISTER/blob/main/docs/SERVER_GUARD.md).
 
+Администратору с `chrdkskills.admin` доступен `/skillsadmin fullreset <ник> confirm` для полного сброса авторизованного игрока в сети. Последствия, обязательные зависимости и восстановление описаны в [навыках](skills.md); не путайте его с `/skillsadmin reset <ник>`, сбрасывающим только опыт.
+
 ## Сначала условия, затем подтверждение
 
 - `/pay ник сумма [preview]` → `/pay ник сумма confirm`.

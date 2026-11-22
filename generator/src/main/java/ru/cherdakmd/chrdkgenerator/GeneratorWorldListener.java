@@ -122,7 +122,8 @@ public final class GeneratorWorldListener implements Listener {
             plugin.messages().send(player, "place-not-your-claim");
             return;
         }
-        if (!plugin.store().payoutCheckpoint()) {
+        if (!plugin.store().payoutCheckpoint()
+                || !plugin.containers().syncRebirth(player.getUniqueId(), player, System.currentTimeMillis())) {
             plugin.messages().send(player, "container-unavailable"); return;
         }
         GeneratorStore.InstallResult installed;

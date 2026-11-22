@@ -64,7 +64,7 @@ public final class SkillsPlugin extends JavaPlugin {
         // Конфиг читается до создания листенера: антинакрутка берёт из него TTL.
         reloadSkillsConfig();
         try {
-            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 48) throw new IllegalStateException("Нужен Core API 48+");
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 49) throw new IllegalStateException("Нужен Core API 49+");
             this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"skills-awards",ru.cherdakmd.chrdkregister.api.MilestoneMigration.json(getDataFolder().toPath().resolve("skills.json"),ru.cherdakmd.chrdkregister.api.MilestoneMigration.Kind.SKILLS));
             this.moneyLoot = new ru.cherdakmd.chrdkregister.api.MoneyLoot(this, this::coreApi, this::messages, "skill-crystals");
             this.diamondLoot = new ru.cherdakmd.chrdkregister.api.MoneyLoot(this, this::coreApi, this::messages, "skill-diamonds");
@@ -163,6 +163,10 @@ public final class SkillsPlugin extends JavaPlugin {
             abilities.pulse();
             if (xpShop != null) xpShop.payments().tick();
             for (Player player : Bukkit.getOnlinePlayers()) {
+                if (store.pendingResetEpoch(player.getUniqueId().toString()) != null) {
+                    service.fullReset(player, false);
+                    continue;
+                }
                 if (store.pendingRebirth(player.getUniqueId().toString()) != null) {
                     service.reconcileRebirth(player);
                 }
@@ -181,6 +185,7 @@ public final class SkillsPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        Bukkit.getServicesManager().unregisterAll(this);
         if (gui != null) {
             Bukkit.getServicesManager().unregister(SkillsMenuApi.class, gui);
         }
@@ -276,6 +281,9 @@ public final class SkillsPlugin extends JavaPlugin {
 
     /** Регистрация публичного API: другие аддоны видят только интерфейс. */
     public void registerApi() {
+        Bukkit.getServicesManager().register(ru.cherdakmd.chrdkregister.api.SkillResetBridge.Skills.class,
+                owner -> store == null || owner == null ? java.util.Optional.empty() : store.cycleState(owner.toString()),
+                this, ServicePriority.Normal);
         Bukkit.getServicesManager().register(ru.cherdakmd.chrdkregister.api.RebirthCountProvider.class,
                 player -> player == null || store == null ? java.util.OptionalInt.empty()
                         : store.progressSnapshot(player.getUniqueId().toString())
@@ -428,8 +436,7 @@ public final class SkillsPlugin extends JavaPlugin {
             if (skill == null || xp <= 0L) {
                 return false;
             }
-            service.grantXp(player, skill, xp);
-            return true;
+            return service.grantXp(player, skill, xp).xp() > 0;
         }
 
         @Override

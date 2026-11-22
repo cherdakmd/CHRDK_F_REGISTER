@@ -92,8 +92,8 @@ public final class GeneratorPlugin extends JavaPlugin {
         this.coreItem = new GeneratorCoreItem(this);
         this.recipeKey = new NamespacedKey(this, "core");
         try {
-            if (ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 48)
-                throw new IllegalStateException("Нужен Core API 48+");
+            if (ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 49)
+                throw new IllegalStateException("Нужен Core API 49+");
             this.moneyLoot = new MoneyLoot(this, this::coreApi, this::messages, "generator-payouts");
             this.moneyLoot.onCredit((owner, minor) -> {
                 var player = Bukkit.getPlayer(owner);
@@ -149,6 +149,14 @@ public final class GeneratorPlugin extends JavaPlugin {
             admin.setExecutor(handler);
             admin.setTabCompleter(handler);
         }
+        Bukkit.getServicesManager().register(ru.cherdakmd.chrdkregister.api.SkillResetBridge.Generator.class,
+                (player, previous, next, count) -> {
+                    try { return containers.resetSkillCycle(player, previous, next, count); }
+                    catch (java.io.IOException | RuntimeException error) {
+                        getLogger().warning("Сброс генератора ожидает восстановления: " + error.getMessage());
+                        return false;
+                    }
+                }, this, org.bukkit.plugin.ServicePriority.Normal);
         this.ticker = new GeneratorTicker(this);
         this.ticker.start();
         registerPlaceholders();
@@ -197,6 +205,7 @@ public final class GeneratorPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        Bukkit.getServicesManager().unregisterAll(this);
         if (this.ticker != null) {
             this.ticker.stop();
             this.ticker = null;

@@ -141,7 +141,7 @@ messages:
   # ------------------------------- админские --------------------------------
   admin-reloaded: "<green>Конфиг навыков перечитан.</green>"
   admin-player-not-found: "<red>Игрок не найден в сети.</red>"
-  admin-usage: "<yellow>/skillsadmin reload|givexp <ник> <навык> <опыт>|setlevel <ник> <навык> <уровень>|reset <ник></yellow>"
+  admin-usage: "<yellow>/skillsadmin reload|givexp <ник> <навык> <опыт>|setlevel <ник> <навык> <уровень>|reset <ник>|fullreset <ник> confirm</yellow>"
   admin-reset: "<green>Навыки игрока <white>%player%</white> сброшены.</green>"
   admin-gave-xp: "<green>%player%: +%xp% опыта навыка %skill%, теперь уровень %level%.</green>"
   admin-set-level: "<green>%player%: навык %skill% установлен на уровень %level%.</green>"

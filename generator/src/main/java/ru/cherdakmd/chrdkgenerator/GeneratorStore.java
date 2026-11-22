@@ -753,7 +753,17 @@ public final class GeneratorStore {
         writable();
         if (owner == null || nextEpoch == null || nextEpoch.equals(expectedEpoch) || expectedCount < 0) return false;
         List<Row> rows = rows(owner);
-        if (rows == null || rows.isEmpty()) return false;
+        if (rows == null) {
+            if (expectedEpoch != null) return false;
+            rows = new ArrayList<>();
+            Row initial = new Row();
+            initial.skillRebirthBaseline = true;
+            initial.lastSkillRebirth = expectedCount;
+            rows.add(initial);
+            data.players.put(owner, rows);
+            dirty = true;
+        }
+        if (rows.isEmpty()) return false;
         Row primary = rows.get(0);
         if (nextEpoch.equals(primary.skillResetEpoch)) return payoutCheckpoint();
         if (!java.util.Objects.equals(expectedEpoch, primary.skillResetEpoch)
@@ -770,6 +780,11 @@ public final class GeneratorStore {
         primary.skillResetEpoch = nextEpoch;
         dirty = true;
         return payoutCheckpoint();
+    }
+
+    synchronized UUID skillResetEpoch(UUID owner) {
+        Row primary = row(owner, 0);
+        return primary == null ? null : primary.skillResetEpoch;
     }
 
     synchronized int requestedSkillRebirth(UUID owner) {

@@ -10,7 +10,6 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import ru.cherdakmd.chrdkregister.api.InventoryTransfer;
-import ru.cherdakmd.chrdkregister.api.RebirthCountProvider;
 
 /** Игровой адаптер устойчивого контейнера. Все действия вызываются на главном потоке. */
 final class GeneratorContainers {
@@ -38,11 +37,15 @@ final class GeneratorContainers {
     }
 
     boolean syncRebirth(UUID owner, Player player, long now) {
-        var provider = Bukkit.getServicesManager().load(RebirthCountProvider.class);
-        if (player != null && player.isOnline() && plugin.coreApi().isAuthenticated(player) && provider != null) {
-            var observed = provider.rebirths(player);
-            if (observed.isPresent() && !plugin.store().observeSkillRebirth(owner, observed.getAsInt())) return false;
-        }
+        var provider = Bukkit.getServicesManager().load(ru.cherdakmd.chrdkregister.api.SkillResetBridge.Skills.class);
+        if (provider == null) return false;
+        var state = provider.state(owner);
+        if (state.isEmpty() || state.get().resetting()) return false;
+        UUID epoch = plugin.store().skillResetEpoch(owner);
+        String actual = epoch == null ? "legacy" : epoch.toString();
+        if (!actual.equals(state.get().epoch())) return false;
+        if (plugin.store().entry(owner) == null) return true;
+        if (!plugin.store().observeSkillRebirth(owner, state.get().count())) return false;
         int requested = plugin.store().requestedSkillRebirth(owner);
         if (requested == 0) return true;
         for (var entry : plugin.store().entries(owner)) {
@@ -51,6 +54,34 @@ final class GeneratorContainers {
             if (result == GeneratorContainerCoordinator.Result.WAIT || result == GeneratorContainerCoordinator.Result.CONFLICT) return false;
         }
         return plugin.store().rebirthKeepingBunker(owner, requested);
+    }
+
+    boolean resetSkillCycle(Player player, String previous, String next, int count) throws IOException {
+        if (player == null || !player.isOnline() || !plugin.coreApi().isAuthenticated(player)
+                || plugin.payments() == null || plugin.payments().occupied(player.getUniqueId())) return false;
+        UUID oldEpoch = "legacy".equals(previous) ? null : UUID.fromString(previous);
+        UUID newEpoch = UUID.fromString(next);
+        UUID owner = player.getUniqueId();
+        var provider = Bukkit.getServicesManager().load(ru.cherdakmd.chrdkregister.api.SkillResetBridge.Skills.class);
+        if (provider == null) return false;
+        var state = provider.state(owner);
+        if (state.isEmpty() || !next.equals(state.get().pendingEpoch()) || !state.get().epoch().equals(previous)
+                || state.get().count() != count) return false;
+        if (!recoverPlayer(player)) return false;
+        var existing = plugin.store().entry(owner);
+        if (existing != null && !newEpoch.equals(plugin.store().skillResetEpoch(owner))) {
+            if (!java.util.Objects.equals(oldEpoch, plugin.store().skillResetEpoch(owner))
+                    || !plugin.store().observeSkillRebirth(owner, count)) return false;
+            int requested = plugin.store().requestedSkillRebirth(owner);
+            long now = System.currentTimeMillis();
+            for (var entry : plugin.store().entries(owner)) {
+                if (!entry.installed()) continue;
+                var result = settle(entry, now, false);
+                if (result == GeneratorContainerCoordinator.Result.WAIT || result == GeneratorContainerCoordinator.Result.CONFLICT) return false;
+            }
+            if (requested > 0 && !plugin.store().rebirthKeepingBunker(owner, requested)) return false;
+        }
+        return plugin.store().resetSkillCycle(owner, oldEpoch, newEpoch, count);
     }
 
     boolean preparePlayer(Player player, int slot) throws IOException {

@@ -79,6 +79,7 @@ public final class SkillStore {
         private String rebirthEpoch = RebirthCycleJournal.LEGACY;
         private final List<RebirthCycleJournal.Cycle> previousRebirthCycles = new ArrayList<>();
         private String pendingResetEpoch;
+        private boolean resetWritePending;
 
         public long xp(SkillType skill) {
             return xp.getOrDefault(skill, 0L);
@@ -725,6 +726,23 @@ public final class SkillStore {
         return List.copyOf(cycles);
     }
 
+    synchronized java.util.Optional<ru.cherdakmd.chrdkregister.api.SkillResetBridge.State> cycleState(String playerKey) {
+        if (!healthy || playerKey == null || !checkpoint()) return java.util.Optional.empty();
+        PlayerData player = players.get(playerKey);
+        if (player != null) player.resetWritePending = false;
+        return java.util.Optional.of(player == null
+                ? new ru.cherdakmd.chrdkregister.api.SkillResetBridge.State(RebirthCycleJournal.LEGACY, 0, null)
+                : new ru.cherdakmd.chrdkregister.api.SkillResetBridge.State(player.rebirthEpoch, player.rebirths, player.pendingResetEpoch));
+    }
+
+    synchronized boolean resetBlocked(String playerKey) {
+        PlayerData player = players.get(playerKey);
+        if (!healthy) return true;
+        if (player == null) return false;
+        if (player.resetWritePending && checkpoint()) player.resetWritePending = false;
+        return player.pendingResetEpoch != null || player.resetWritePending;
+    }
+
     synchronized String pendingResetEpoch(String playerKey) {
         PlayerData player = players.get(playerKey);
         return player == null ? null : player.pendingResetEpoch;
@@ -738,6 +756,7 @@ public final class SkillStore {
         if (player.pendingResetEpoch != null) return player.pendingResetEpoch.equals(epoch) && checkpoint();
         if (player.rebirthEpoch.equals(epoch) || player.previousRebirthCycles.stream().anyMatch(c -> c.id().equals(epoch))) return false;
         player.pendingResetEpoch = epoch;
+        player.rebirthConverted = true;
         dirty = true;
         return checkpoint();
     }
@@ -759,8 +778,11 @@ public final class SkillStore {
         player.pve = 0;
         player.lastBankRebirthCount = 0;
         player.lastBankRebirthAmount = 0;
+        player.resetWritePending = true;
         dirty = true;
-        return checkpoint();
+        boolean saved = checkpoint();
+        if (saved) player.resetWritePending = false;
+        return saved;
     }
 
     /** Фиксирует сброс, новый счётчик и замороженную сумму одним снимком до внешней выплаты. */

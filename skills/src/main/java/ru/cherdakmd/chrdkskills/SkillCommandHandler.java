@@ -47,6 +47,10 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
             plugin.messages().send(sender, "no-permission");
             return true;
         }
+        if (sender instanceof Player blocked && service.resetPending(blocked)) {
+            blocked.sendMessage(net.kyori.adventure.text.Component.text("Сброс навыков ожидает восстановления; действия временно недоступны."));
+            return true;
+        }
         if (args.length == 0 || args[0].equalsIgnoreCase("menu")) {
             if (!(sender instanceof Player player)) {
                 plugin.messages().send(sender, "player-only");
@@ -343,10 +347,30 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
             plugin.messages().send(sender, "admin-reloaded");
             return true;
         }
+        if (args.length >= 1 && args[0].equalsIgnoreCase("fullreset")) {
+            if (args.length != 3 || !args[2].equalsIgnoreCase("confirm")) {
+                sender.sendMessage(net.kyori.adventure.text.Component.text(
+                        "Полный сброс необратим: /skillsadmin fullreset <ник> confirm. Старые деньги и одноразовые награды сохраняются."));
+                return true;
+            }
+            Player target = Bukkit.getPlayerExact(args[1]);
+            if (target == null) { plugin.messages().send(sender, "admin-player-not-found"); return true; }
+            boolean pending = service.resetPending(target);
+            plugin.getLogger().warning("[CHRDK_Skills] " + sender.getName() + " запросил полный сброс " + target.getUniqueId());
+            boolean done = service.fullReset(target, !pending);
+            sender.sendMessage(net.kyori.adventure.text.Component.text(done
+                    ? "Полный сброс игрока " + target.getName() + " завершён."
+                    : "Сброс не завершён. Если намерение сохранено, восстановление продолжится автоматически; проверьте Skills, генератор и журнал банка."));
+            return true;
+        }
         if (args.length >= 2 && args[0].equalsIgnoreCase("reset")) {
             Player target = Bukkit.getPlayerExact(args[1]);
             if (target == null) {
                 plugin.messages().send(sender, "admin-player-not-found");
+                return true;
+            }
+            if (service.resetPending(target)) {
+                sender.sendMessage(net.kyori.adventure.text.Component.text("Сброс игрока ожидает восстановления."));
                 return true;
             }
             service.reset(target);
@@ -359,6 +383,10 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
             Player target = Bukkit.getPlayerExact(args[1]);
             if (target == null) {
                 plugin.messages().send(sender, "admin-player-not-found");
+                return true;
+            }
+            if (service.resetPending(target)) {
+                sender.sendMessage(net.kyori.adventure.text.Component.text("Сброс игрока ожидает восстановления."));
                 return true;
             }
             SkillType skill = args.length >= 3 ? SkillType.byId(args[2]) : null;
@@ -385,6 +413,10 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
             Player target = Bukkit.getPlayerExact(args[1]);
             if (target == null) {
                 plugin.messages().send(sender, "admin-player-not-found");
+                return true;
+            }
+            if (service.resetPending(target)) {
+                sender.sendMessage(net.kyori.adventure.text.Component.text("Сброс игрока ожидает восстановления."));
                 return true;
             }
             SkillType skill = args.length >= 3 ? SkillType.byId(args[2]) : null;
@@ -450,7 +482,7 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
             return List.of();
         }
         if (args.length == 1) {
-            return filter(List.of("reload", "givexp", "setlevel", "reset"), args[0]);
+            return filter(List.of("reload", "givexp", "setlevel", "reset", "fullreset"), args[0]);
         }
         if (args.length == 2 && !args[0].equalsIgnoreCase("reload")) {
             return Bukkit.getOnlinePlayers().stream().map(Player::getName)

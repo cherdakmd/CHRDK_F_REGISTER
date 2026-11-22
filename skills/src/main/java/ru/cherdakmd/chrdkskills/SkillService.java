@@ -142,7 +142,7 @@ public final class SkillService {
      * вызывающий обновляет эффекты ({@code plugin.effects().apply(player)}).
      */
     public boolean spendAttribute(Player player, PlayerAttribute attribute, int points) {
-        if (player == null || attribute == null || points <= 0
+        if (player == null || resetPending(player) || attribute == null || points <= 0
                 || points > freeAttributePoints(player)) {
             return false;
         }
@@ -151,7 +151,7 @@ public final class SkillService {
 
     /** Полный сброс распределения; все очки возвращаются в свободный пул. */
     public void resetAttributes(Player player) {
-        if (player == null) {
+        if (player == null || resetPending(player)) {
             return;
         }
         store.resetAttributes(key(player));
@@ -177,7 +177,7 @@ public final class SkillService {
      * {@code false} — не хватает свободных или ветка на потолке.
      */
     public boolean spendBranch(Player player, BuildBranch branch, int points) {
-        if (player == null || branch == null || points <= 0
+        if (player == null || resetPending(player) || branch == null || points <= 0
                 || points > freeAttributePoints(player)) {
             return false;
         }
@@ -190,7 +190,7 @@ public final class SkillService {
 
     /** Сброс веток; очки возвращаются в общий пул. Оплата сброса — у вызывающего. */
     public void resetBranches(Player player) {
-        if (player == null) {
+        if (player == null || resetPending(player)) {
             return;
         }
         store.resetBranches(key(player));
@@ -206,7 +206,7 @@ public final class SkillService {
      * но не выдаёт очки. Новый код использует атомарный {@link #awardPve}.
      */
     public int addPve(Player player, long units) {
-        if (player == null || units <= 0) return 0;
+        if (player == null || resetPending(player) || units <= 0) return 0;
         long before = store.pve(key(player));
         long after = store.addPve(key(player), units);
         return (int) Math.min(Integer.MAX_VALUE,
@@ -215,12 +215,12 @@ public final class SkillService {
 
     /** Атомарно учитывает PvE-вклад и выдаёт очки за новые пороги. */
     public int awardPve(Player player, long units) {
-        return player == null ? 0 : store.awardPve(key(player), units);
+        return player == null || resetPending(player) ? 0 : store.awardPve(key(player), units);
     }
 
     /** Выдаёт бонусные очки общего пула (награда за вклад). */
     public void grantBonusPoints(Player player, int points) {
-        if (player == null || points <= 0) {
+        if (player == null || resetPending(player) || points <= 0) {
             return;
         }
         store.addBonusPoints(key(player), points);
@@ -333,6 +333,41 @@ public final class SkillService {
         return RebirthResult.DONE;
     }
 
+    boolean resetPending(Player player) {
+        return player != null && store.resetBlocked(key(player));
+    }
+
+    private FullResetCoordinator.Ledger resetLedger(Player player) {
+        return new FullResetCoordinator.Ledger() {
+            public Map<String, Long> reservations() { return plugin.rebirthLoot().reservations(player.getUniqueId()); }
+            public boolean accept(String event, long amount) { return plugin.rebirthLoot().accept(player, event, amount); }
+            public boolean mark(String event) { return plugin.rebirthLoot().mark(player, event); }
+        };
+    }
+
+    boolean fullReset(Player player, boolean start) {
+        if (player == null || !player.isOnline() || plugin.coreApi() == null
+                || !plugin.coreApi().isAuthenticated(player) || plugin.rebirthLoot() == null
+                || plugin.xpShop() == null || plugin.xpShop().payments().occupied(player.getUniqueId())) return false;
+        var generator = Bukkit.getServicesManager().load(ru.cherdakmd.chrdkregister.api.SkillResetBridge.Generator.class);
+        if (generator == null) return false;
+        try {
+            var ledger = resetLedger(player);
+            FullResetCoordinator.Generator reset = (old, next, count) -> generator.reset(player, old, next, count);
+            boolean complete = start ? FullResetCoordinator.start(store, key(player), UUID.randomUUID().toString(), ledger, reset)
+                    : FullResetCoordinator.resume(store, key(player), ledger, reset);
+            if (complete) {
+                plugin.effects().apply(player);
+                plugin.getLogger().info("Полный сброс Skills завершён для " + player.getUniqueId());
+                player.sendMessage(net.kyori.adventure.text.Component.text("Полный сброс навыков и перерождений завершён."));
+            }
+            return complete;
+        } catch (RuntimeException | LinkageError error) {
+            plugin.getLogger().log(java.util.logging.Level.WARNING, "Полный сброс ожидает восстановления", error);
+            return false;
+        }
+    }
+
     boolean reconcileRebirth(Player player) {
         if (player == null || !player.isOnline() || plugin.rebirthLoot() == null) return false;
         try {
@@ -433,7 +468,7 @@ public final class SkillService {
      * @param units сколько действий засчитать (блоки, рыбы, пункты урона)
      */
     public Award award(Player player, SkillType skill, long units) {
-        if (player == null || skill == null || units <= 0L || !plugin.config().enabled()) {
+        if (player == null || resetPending(player) || skill == null || units <= 0L || !plugin.config().enabled()) {
             return Award.none(skill);
         }
         if (!plugin.config().skill(skill).enabled()) {
@@ -494,7 +529,7 @@ public final class SkillService {
 
     /** Админское начисление: то же, но без ограничения «единиц» и с проверкой прав. */
     public Award grantXp(Player player, SkillType skill, long xp) {
-        if (player == null || skill == null || xp <= 0L) {
+        if (player == null || resetPending(player) || skill == null || xp <= 0L) {
             return Award.none(skill);
         }
         int oldLevel = level(player, skill);
@@ -509,7 +544,7 @@ public final class SkillService {
 
     /** Админская установка уровня: опыт ставится на начало уровня. */
     public void setLevel(Player player, SkillType skill, int level) {
-        if (player == null || skill == null) {
+        if (player == null || resetPending(player) || skill == null) {
             return;
         }
         int clamped = Math.max(1, Math.min(curve().maxLevel(), level));
@@ -517,7 +552,7 @@ public final class SkillService {
     }
 
     public void reset(Player player) {
-        if (player == null) {
+        if (player == null || resetPending(player)) {
             return;
         }
         for (SkillType skill : SkillType.values()) {

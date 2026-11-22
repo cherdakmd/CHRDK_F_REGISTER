@@ -540,6 +540,11 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
                 || !holder.owner.equals(player.getUniqueId())) {
             return;
         }
+        if (service.resetPending(player)) {
+            player.closeInventory();
+            player.sendMessage(net.kyori.adventure.text.Component.text("Сброс навыков ожидает восстановления."));
+            return;
+        }
         int slot = event.getRawSlot();
         if (slot < 0 || slot >= holder.inventory.getSize()) {
             return;
