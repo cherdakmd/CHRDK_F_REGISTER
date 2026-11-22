@@ -17,7 +17,8 @@ final class GeneratorContainerProduction {
             throw new IllegalArgumentException("invalid generator production state");
         long elapsed = now - view.lastCalcMillis();
         if (elapsed == 0) return new Plan(view.slots(), view.burnMillis(), now, 0);
-        if (room == 0) return new Plan(view.slots(), view.burnMillis(), now, 0);
+        if (room == 0 || physicallyFull(view.slots(), maxStack))
+            return new Plan(view.slots(), view.burnMillis(), now, 0);
         // Первый проход лишь выясняет, сколько времени физически доступно. Реальный
         // расход во втором проходе ограничен учтённым производством временем.
         var available = GeneratorFurnaceBurn.consume(view.slots(), view.burnMillis(), elapsed, fuel, maxStack);
@@ -29,5 +30,17 @@ final class GeneratorContainerProduction {
         var output = GeneratorBunkerMigration.plan(consumed.slots(), settlement.units(), roll, maxStack);
         return new Plan(output.slots(), consumed.burnMillis(),
                 Math.addExact(view.lastCalcMillis(), settlement.advanceMillis()), output.units());
+    }
+
+    private static boolean physicallyFull(List<GeneratorContainerStore.Stack> slots, Function<String, Integer> maxStack) {
+        for (int i = 0; i < GeneratorContainerStore.RESOURCE_SLOTS; i++) {
+            var item = slots.get(i);
+            if (item == null) return false;
+            Integer max = maxStack.apply(item.material());
+            if (max == null || max < 1 || max > 64 || item.amount() > max)
+                throw new IllegalArgumentException("invalid container stack limit");
+            if (item.amount() < max) return false;
+        }
+        return true;
     }
 }

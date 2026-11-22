@@ -39,6 +39,17 @@ class GeneratorBunkerMigrationTest {
         assertEquals(GeneratorBunkerMigration.Result.FULL, run(source(), target()));
         assertEquals(696, source().entry(owner, 0).bunker());
     }
+    @Test void restartImmediatelyAfterIntentUsesFrozenItems() throws Exception {
+        var s = ready(20); var t = target(); assertTrue(t.create(owner, 0, core, 1));
+        var view = t.view(owner, 0);
+        var plan = GeneratorBunkerMigration.plan(view.slots(), 20, () -> "GOLD_INGOT", x -> 64);
+        var intent = new GeneratorStore.ContainerMigration(UUID.randomUUID(), core, 20, view.revision(), null, plan.slots());
+        assertTrue(s.prepareContainerMigration(owner, 0, intent));
+        assertEquals(GeneratorBunkerMigration.Result.READY, run(source(), target()));
+        assertEquals("GOLD_INGOT", target().view(owner, 0).slots().get(0).material());
+        assertEquals(20, stored(target()));
+        assertEquals(0, source().entry(owner, 0).bunker());
+    }
     @Test void restartAfterSourceIntentOrDestinationApplyNeverRerolls() throws Exception {
         var s = ready(20); var t = target(); assertTrue(t.create(owner, 0, core, 1));
         var view = t.view(owner, 0);

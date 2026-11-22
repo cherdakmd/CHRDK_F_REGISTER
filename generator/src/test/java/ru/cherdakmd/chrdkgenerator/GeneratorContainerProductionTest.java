@@ -37,6 +37,17 @@ class GeneratorContainerProductionTest {
         assertEquals(3000, p.burnMillis());
         assertEquals(1, p.slots().get(36).amount());
     }
+    @Test void physicallyFullStopsFuelConsumptionEvenWhenLogicalCapacityRemains() {
+        var v = view(3000, 100, 1);
+        var slots = new ArrayList<>(v.slots());
+        for (int i = 0; i < 36; i++) slots.set(i, new GeneratorContainerStore.Stack("COBBLESTONE", 64));
+        var full = new GeneratorContainerStore.View(v.core(), 0, slots, 3000, 100, false, null);
+        var p = plan(full, 5100, 100);
+        assertEquals(0, p.units());
+        assertEquals(5100, p.lastCalcMillis());
+        assertEquals(3000, p.burnMillis());
+        assertEquals(slots, p.slots());
+    }
     @Test void fullCapacityStopsFuelConsumptionAndForgetsIdle() {
         var p = plan(view(3000, 100, 1), 5100, 0);
         assertEquals(0, p.units());
