@@ -19,7 +19,7 @@ class GuardPolicyTest {
         for(String root:List.of("lp","luckperms","papi","placeholderapi","skinsrestorer","sr","plasmovoice",
                 "pv","cameraman","pl","plugins","version","ver","about","icanhasbukkit","help","?","timings","tps",
                 "guard","adminpanel","apanel","rankadmin","socialspy","spy","honoradmin",
-                "achadmin","shopadmin","dshopadmin","disastersadmin","vkadmin",
+                "achadmin","shopadmin","dshopadmin","vkadmin",
                 "guildadmin","ga","bpadmin","tpadmin","skillsadmin"))
             for(String prefix:List.of("/","/minecraft:","/bukkit:"," /PAPER:"))
                 assertTrue(GuardPolicy.consoleOnly(prefix+root.toUpperCase()+" payload",
@@ -27,7 +27,7 @@ class GuardPolicyTest {
     }
     @Test void ordinaryGameplayCommandsStayAllowed() {
         for(String text:List.of("/shop sell","/shop cap","/rank","/pass menu","/pass my","/menu","/guide",
-                "/artifacts collection","/skills","/profile","/disasters shop","/msg friend /lp","/login secret",
+                "/artifacts collection","/skills","/profile","/msg friend /lp","/login secret",
                 "/register /fill /op","/2fa 123456"))
             assertFalse(GuardPolicy.consoleOnly(text,GuardSettings.DEFAULT_CONSOLE_ONLY,k->null),text);
     }

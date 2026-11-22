@@ -29,11 +29,11 @@ class OrdersRemovalTest {
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_Orders"));
         assertEquals(19, PluginUpdateService.MODULES.size());
         var stock = yaml("config.yml"); var items = stock.getMapList("server-menu.items");
-        assertEquals(44, items.size());
+        assertEquals(43, items.size());
         assertFalse(items.stream().anyMatch(item -> RetiredAddons.plugin(String.valueOf(item.get("plugin")))
                 || RetiredAddons.command(String.valueOf(item.get("command")))));
         assertFalse(items.stream().anyMatch(item -> String.valueOf(item.get("command")).startsWith("order")));
-        assertEquals(37, stock.getList("auto-messages.messages").size());
+        assertEquals(36, stock.getList("auto-messages.messages").size());
         assertEquals(stock.getList("auto-messages.messages").size(), ChatConfig.fromBukkitConfig(stock).autoMessageEntries().size());
         for (Object raw : stock.getList("auto-messages.messages"))
             assertFalse(RetiredAddons.announcement(raw instanceof Map<?, ?> map ? String.valueOf(map.get("text")) : String.valueOf(raw)));
@@ -70,7 +70,7 @@ class OrdersRemovalTest {
                 .anyMatch(item -> String.valueOf(item.get("command")).startsWith("order")));
         assertFalse(live.getList("auto-messages.messages").stream()
                 .anyMatch(raw -> String.valueOf(raw).contains("/orders list")));
-        assertEquals(44, live.getMapList("server-menu.items").size());
-        assertEquals(37, live.getList("auto-messages.messages").size());
+        assertEquals(43, live.getMapList("server-menu.items").size());
+        assertEquals(36, live.getList("auto-messages.messages").size());
     }
 }

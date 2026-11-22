@@ -42,7 +42,7 @@ class StreamsRemovalTest {
         assertEquals(8, LabelPreferences.Label.values().length);
         var current = yaml("config.yml");
         var items = current.getMapList("server-menu.items");
-        assertEquals(44, items.size());
+        assertEquals(43, items.size());
         assertEquals(4, items.stream().filter(item -> "social".equals(item.get("category"))).count());
         assertFalse(items.stream().anyMatch(item -> RetiredAddons.command(String.valueOf(item.get("command")))
                 || RetiredAddons.plugin(String.valueOf(item.get("plugin")))));

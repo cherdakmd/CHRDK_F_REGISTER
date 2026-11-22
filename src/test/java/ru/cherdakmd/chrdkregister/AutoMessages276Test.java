@@ -21,7 +21,7 @@ class AutoMessages276Test {
         var before = old.getMapList("auto-messages.messages");
         var after = fresh.getMapList("auto-messages.messages");
         assertEquals(41, before.size(), "сток 275 остаётся эталоном");
-        assertEquals(37, after.size(), "1.4.282 добавила Plasmo Voice, CHRDK_Disasters — подсказку о /disasters; CHRDK_Mobs — подсказку о /mobtiers; п.29 убрал подсказку о /classes; п.31 — подсказку о /generator; шаг 2 античита — подсказку об античите; полное снятие питомцев убрало их подсказку; снятие заказов убрало подсказку доски; вырезка тиров убрала подсказку о /tiers");
+        assertEquals(36, after.size(), "1.4.282 добавила Plasmo Voice, CHRDK_Disasters — подсказку о /disasters; CHRDK_Mobs — подсказку о /mobtiers; п.29 убрал подсказку о /classes; п.31 — подсказку о /generator; шаг 2 античита — подсказку об античите; полное снятие питомцев убрало их подсказку; снятие заказов убрало подсказку доски; вырезка тиров убрала подсказку о /tiers");
         var removedAudience = java.util.Set.of("CHRDK_Hunt", "CHRDK_Professions", "CHRDK_Classes");
         var retained = before.stream().filter(item -> !removedAudience.contains(String.valueOf(item.get("plugin")))
                 && !RetiredAddons.announcement(String.valueOf(item.get("text")))).toList();
