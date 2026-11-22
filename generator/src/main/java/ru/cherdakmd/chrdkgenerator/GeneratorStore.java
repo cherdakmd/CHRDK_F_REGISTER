@@ -121,6 +121,9 @@ public final class GeneratorStore {
         UUID containerCore;
         String containerTransition;
         UUID containerReleaseId;
+        List<GeneratorDrops.Drop> legacyDrops;
+        int legacyLuck;
+        int lastSkillRebirth;
     }
 
     /** Замороженный план: сохраняется до изменения второго файла. */
@@ -205,7 +208,7 @@ public final class GeneratorStore {
                     for (String key : List.of("tier", "bunker", "lastCalcMillis", "x", "y", "z")) {
                         number(player.get(key));
                     }
-                    for (String key : List.of("rebirths", "fuelUsedMs", "money", "payoutDay", "payoutSequence", "pendingPayout")) {
+                    for (String key : List.of("rebirths", "fuelUsedMs", "money", "payoutDay", "payoutSequence", "pendingPayout", "lastSkillRebirth")) {
                         if (player.has(key) && !player.get(key).isJsonNull()) {
                             number(player.get(key));
                         }
@@ -235,6 +238,24 @@ public final class GeneratorStore {
                     if (player.has("containerTransition") && !player.get("containerTransition").isJsonNull()
                             && (!player.get("containerTransition").isJsonPrimitive() || !player.get("containerTransition").getAsJsonPrimitive().isString()))
                         throw new IOException("container transition");
+                    for (String field : List.of("legacyLuck", "lastSkillRebirth")) {
+                        if (player.has(field) && !player.get(field).isJsonNull()) {
+                            number(player.get(field)); player.get(field).getAsBigDecimal().intValueExact();
+                        }
+                    }
+                    if (player.has("legacyDrops") && !player.get("legacyDrops").isJsonNull()) {
+                        if (!player.get("legacyDrops").isJsonArray()) throw new IOException("legacy drops type");
+                        for (var elementDrop : player.getAsJsonArray("legacyDrops")) {
+                            if (!elementDrop.isJsonObject()) throw new IOException("legacy drop type");
+                            var drop = elementDrop.getAsJsonObject();
+                            if (!drop.keySet().equals(Set.of("material", "weight", "rare"))
+                                    || !drop.get("material").isJsonPrimitive() || !drop.get("material").getAsJsonPrimitive().isString()
+                                    || !drop.get("rare").isJsonPrimitive() || !drop.get("rare").getAsJsonPrimitive().isBoolean())
+                                throw new IOException("legacy drop fields");
+                            number(drop.get("weight"));
+                            drop.get("weight").getAsBigDecimal().intValueExact();
+                        }
+                    }
                     if (player.has("containerMigration") && !player.get("containerMigration").isJsonNull()) {
                         var migration = player.get("containerMigration").getAsJsonObject();
                         if (!migration.keySet().equals(Set.of("transaction", "core", "units", "expectedRevision", "afterSlots"))
@@ -302,7 +323,7 @@ public final class GeneratorStore {
             for (Row row : rows) {
                 if (row == null || row.tier < 1 || row.tier > MAX_TIER
                         || row.bunker < 0 || row.lastCalcMillis < 0 || row.modules == null
-                        || row.rebirths < 0 || row.fuelUsedMs < 0 || row.money < 0 || row.payoutDay < 0
+                        || row.rebirths < 0 || row.lastSkillRebirth < 0 || row.fuelUsedMs < 0 || row.money < 0 || row.payoutDay < 0
                         || row.payoutSequence < 0 || row.pendingPayout < 0
                         || row.pendingPayout > row.money || row.pendingPayout > 1_000_000
                         || (row.pendingPayout > 0 && (!row.legacyPayoutReconciled
@@ -316,6 +337,19 @@ public final class GeneratorStore {
                         || row.containerMigration != null)) throw new IllegalArgumentException("container transition state");
                 if ((row.containerReleaseId != null) != "RELEASE".equals(row.containerTransition))
                     throw new IllegalArgumentException("container release receipt");
+                if (row.legacyLuck < 0 || row.legacyLuck > MAX_LEVEL
+                        || (row.legacyDrops == null && row.legacyLuck != 0)
+                        || (row.legacyDrops != null && (row.legacyDrops.isEmpty() || row.containerCore == null || row.bunker == 0)))
+                    throw new IllegalArgumentException("legacy drop state");
+                if (row.legacyDrops != null) {
+                    long weight = 0;
+                    for (var drop : row.legacyDrops) {
+                        if (drop == null || drop.material() == null || !drop.material().matches("[A-Z0-9_]{1,128}") || drop.weight() <= 0)
+                            throw new IllegalArgumentException("legacy drop");
+                        weight += GeneratorDrops.effectiveWeight(drop, row.legacyLuck);
+                        if (weight > Integer.MAX_VALUE) throw new IllegalArgumentException("legacy drop weights");
+                    }
+                }
                 if (row.containerMigration != null) {
                     var migration = row.containerMigration;
                     if (!migration.core().equals(row.coreItem) || migration.units() > row.bunker
@@ -570,7 +604,7 @@ public final class GeneratorStore {
         if (row == null) {
             throw new IllegalStateException("generator missing row");
         }
-        if (row.containerMigration != null) throw new IllegalStateException("generator migration pending");
+        if (row.containerMigration != null || row.containerCore != null) throw new IllegalStateException("generator container bound");
         row.bunker = units > Long.MAX_VALUE - row.bunker ? Long.MAX_VALUE : row.bunker + units;
         row.lastCalcMillis = Math.max(0L, now);
         dirty = true;
@@ -592,7 +626,7 @@ public final class GeneratorStore {
         if (row == null) {
             throw new IllegalStateException("generator missing row");
         }
-        if (row.containerMigration != null) throw new IllegalStateException("generator migration pending");
+        if (row.containerMigration != null || row.containerCore != null) throw new IllegalStateException("generator container bound");
         row.bunker = units > Long.MAX_VALUE - row.bunker ? Long.MAX_VALUE : row.bunker + units;
         row.lastCalcMillis = now;
         row.fuelUsedMs = fuelUsedMs;
@@ -610,7 +644,7 @@ public final class GeneratorStore {
         if (row == null || amount == 0) {
             return 0L;
         }
-        if (row.containerMigration != null) throw new IllegalStateException("generator migration pending");
+        if (row.containerMigration != null || row.containerCore != null) throw new IllegalStateException("generator container bound");
         long taken = Math.min(row.bunker, amount);
         if (taken > 0) {
             row.bunker -= taken;
@@ -632,8 +666,8 @@ public final class GeneratorStore {
             return -1L;
         }
         long handed = 0L;
-        for (Row row : rows) if (row.containerMigration != null)
-            throw new IllegalStateException("generator migration pending");
+        for (Row row : rows) if (row.containerMigration != null || row.containerCore != null)
+            throw new IllegalStateException("generator container bound");
         for (Row row : rows) {
             handed += row.bunker;
             row.bunker = 0L;
@@ -646,6 +680,24 @@ public final class GeneratorStore {
         }
         dirty = true;
         return handed;
+    }
+
+    /** Сброс с сохранением старого баланса и содержимого контейнеров; событие идемпотентно по номеру. */
+    synchronized boolean rebirthKeepingBunker(UUID owner, int skillCount) {
+        writable();
+        List<Row> rows = rows(owner);
+        if (rows == null || rows.isEmpty() || skillCount <= 0) return false;
+        Row primary = rows.get(0);
+        if (skillCount <= primary.lastSkillRebirth) return payoutCheckpoint();
+        for (Row row : rows) {
+            if (row.containerTransition != null || row.containerMigration != null
+                    || (row.bunker > 0 && (row.containerCore == null || row.legacyDrops == null))) return false;
+        }
+        for (Row row : rows) { row.tier = 1; row.modules.clear(); }
+        if (primary.rebirths < Integer.MAX_VALUE) primary.rebirths++;
+        primary.lastSkillRebirth = skillCount;
+        dirty = true;
+        return payoutCheckpoint();
     }
 
     /** Расход топлива текущего ведра генератора, миллисекунд работы (сбрасывается при замене лавы). */
@@ -724,13 +776,33 @@ public final class GeneratorStore {
         return row == null || row.containerCore == null ? null : new ContainerBinding(row.containerCore, row.containerTransition, row.containerReleaseId);
     }
 
-    synchronized boolean beginContainerBinding(UUID owner, int slot, UUID core) {
+    synchronized boolean beginContainerBinding(UUID owner, int slot, UUID core, List<GeneratorDrops.Drop> drops, int luck) {
         writable();
         Row row = row(owner, slot);
         if (row == null || core == null || !core.equals(row.coreItem) || row.containerCore != null
                 || row.containerMigration != null || row.containerLastMigration != null) return false;
-        row.containerCore = core; row.containerTransition = "CREATE"; dirty = true;
+        if (row.bunker > 0) {
+            if (drops == null || drops.isEmpty() || luck < 0 || luck > MAX_LEVEL) return false;
+            long weight = 0;
+            for (var drop : drops) {
+                if (drop == null || drop.material() == null || !drop.material().matches("[A-Z0-9_]{1,128}") || drop.weight() <= 0) return false;
+                weight += GeneratorDrops.effectiveWeight(drop, luck);
+                if (weight > Integer.MAX_VALUE) return false;
+            }
+        }
+        row.containerCore = core; row.containerTransition = "CREATE";
+        if (row.bunker > 0) { row.legacyDrops = List.copyOf(drops); row.legacyLuck = luck; }
+        dirty = true;
         return payoutCheckpoint();
+    }
+
+    record LegacyDrops(List<GeneratorDrops.Drop> drops, int luck) {
+        LegacyDrops { drops = List.copyOf(drops); }
+    }
+
+    synchronized LegacyDrops legacyDrops(UUID owner, int slot) {
+        Row row = row(owner, slot);
+        return row == null || row.legacyDrops == null ? null : new LegacyDrops(row.legacyDrops, row.legacyLuck);
     }
 
     synchronized boolean finishContainerBinding(UUID owner, int slot, UUID core) {
@@ -787,6 +859,7 @@ public final class GeneratorStore {
                 || !row.containerMigration.transaction().equals(transaction)
                 || row.bunker < row.containerMigration.units()) return false;
         row.bunker -= row.containerMigration.units();
+        if (row.bunker == 0) { row.legacyDrops = null; row.legacyLuck = 0; }
         row.containerLastMigration = transaction;
         row.containerMigration = null;
         dirty = true;

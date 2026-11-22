@@ -8,7 +8,8 @@ final class GeneratorContainerLifecycle {
     enum Result { READY, NOT_EMPTY, WAIT, CONFLICT }
     private GeneratorContainerLifecycle() { }
 
-    static Result bind(GeneratorStore source, GeneratorContainerStore target, UUID owner, int slot) {
+    static Result bind(GeneratorStore source, GeneratorContainerStore target, UUID owner, int slot,
+                       java.util.List<GeneratorDrops.Drop> drops, int luck) {
         if (!source.payoutCheckpoint() || !target.healthy()) return Result.WAIT;
         var entry = source.entry(owner, slot);
         if (entry == null || !entry.installed()) return Result.CONFLICT;
@@ -17,7 +18,7 @@ final class GeneratorContainerLifecycle {
         if (binding == null) {
             if (view != null || source.containerMigration(owner, slot) != null
                     || source.containerLastMigration(owner, slot) != null) return Result.CONFLICT;
-            if (!source.beginContainerBinding(owner, slot, entry.coreItem())) return Result.WAIT;
+            if (!source.beginContainerBinding(owner, slot, entry.coreItem(), drops, luck)) return Result.WAIT;
             binding = source.containerBinding(owner, slot);
         }
         if (!binding.core().equals(entry.coreItem()) || "RELEASE".equals(binding.transition())) return Result.CONFLICT;
