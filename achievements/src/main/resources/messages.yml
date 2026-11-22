@@ -41,7 +41,7 @@ messages:
   progress-line: "<green>%bar%</green> <gray>%percent%%</gray>"
   progress-next: "<gray>Ближе всего: <white>%name%</white></gray>"
   progress-badge: "<gray>Ваш бейдж: %badge%</gray>"
-  progress-badge-none: "<dark_gray>Бейдж не выбран — откройте достижение с бейджем</dark_gray>"
+  progress-badge-none: "<dark_gray>Бейдж не выбран; доступны только ранее заработанные</dark_gray>"
 
   # ----------------------------- уведомления ------------------------------
   achievement-unlocked: "<gold>✦ Достижение открыто: <white>%name%</white> <dark_gray>(%category%)</dark_gray></gold>"
@@ -95,7 +95,7 @@ messages:
   ach.sto-vhodov.name: "Сотый вход"
   ach.sto-vhodov.desc: "Заходить на сервер сто раз."
   ach.veteran.name: "Ветеран"
-  ach.veteran.desc: "Провести в игре сто часов. Даёт бейдж «Ветеран»."
+  ach.veteran.desc: "Провести в игре сто часов. Прежний бейдж заменён денежной наградой."
 
   # ----------- путь: шесть достижений за катастрофы (1.5.2) -------------
   ach.pervaya-katastrofa.name: "Первая катастрофа"
@@ -191,7 +191,7 @@ messages:
   ach.dushevnaya-beseda.name: "Душевная беседа"
   ach.dushevnaya-beseda.desc: "Написать тысячу сообщений в чат."
   ach.legenda.name: "Легенда"
-  ach.legenda.desc: "Открыть все остальные достижения. Даёт бейдж «Легенда»."
+  ach.legenda.desc: "Открыть все остальные достижения. Прежний бейдж заменён денежной наградой."
   ach.bankir.name: "Банкир"
   ach.bankir.desc: "Накопить тысячу алмазов на счёте банка."
   ach.mecenat.name: "Меценат"
@@ -263,7 +263,7 @@ messages:
   ach.povelitel-zverej.name: "Повелитель зверей"
   ach.povelitel-zverej.desc: "Приручить пятьдесят животных."
   ach.legenda-legend.name: "Легенда легенд"
-  ach.legenda-legend.desc: "Открыть все остальные достижения обновлённого каталога. Даёт бейдж «Легенда легенд»."
+  ach.legenda-legend.desc: "Открыть все остальные достижения обновлённого каталога. Прежний бейдж заменён денежной наградой."
 
   finance.award-status: '<gray>Награды /bal: %source%, lineage=%lineage%, получателей с доходом=%count%, исправен=%healthy%, конфликт=%conflict%. Это не сброс IO-карантина.</gray>'
 

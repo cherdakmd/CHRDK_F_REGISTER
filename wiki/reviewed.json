@@ -6,8 +6,8 @@
       "text": "22da55d66565e92d409d2897afb237c660d1b8bf670652e677116f7b0836cea2"
     },
     "achievements": {
-      "reason": "Сверено отображение сохранённой суммы и компактная граница старых порогов",
-      "sources": "22c2ad075e5c2dcad3dd95317acadb152d8e1228b2380425058b19c17f6c1761",
+      "reason": "Сверены подсказки о денежной замене бейджей и вех коллекции",
+      "sources": "503233d086f0920cfe9e2fbd3b1d8cbe1b26804f8fb965254ec462aff624a649",
       "text": "799760b027b83a8d115ab2612d64259238be4e0cb761bde747a0c03d469cc8f5"
     },
     "anticheat": {
@@ -16,8 +16,8 @@
       "text": "51b63277043ce6c1160efb4e4df51b63a25f083191e5bbae1aeffc7207a997cc"
     },
     "artifacts": {
-      "reason": "Сверено отображение сохранённой суммы и компактная граница старых порогов",
-      "sources": "8889c1bb3ad4d52c8caf04e5f312985e8deed3a5343a798ca49b17424159dfa3",
+      "reason": "Сверены подсказки о денежной замене бейджей и вех коллекции",
+      "sources": "d569695520959f0a3cdd2cdf026a8273a7259653a96321e4e33a7877733be0ff",
       "text": "a8bcc5133ed47c9287fef411fd0b63c57783baa1e4fe3e4b2041d52411e00dc2"
     },
     "battlepass": {
@@ -101,8 +101,8 @@
       "text": "e15957dfe1e03322c3eac3605586bbf5ed49a6bab2b8cb7664e2119000ef0d17"
     },
     "mmorpg-roadmap": {
-      "reason": "Сверено отображение сохранённой суммы и компактная граница старых порогов",
-      "sources": "6a6941ee35a7d7ef45bd7fb1b66851654f392979dc857a2cae30446bc74781be",
+      "reason": "Сверены подсказки о денежной замене бейджей и вех коллекции",
+      "sources": "e56a1b9aa8370ccb730e1ec04fb73e0b50a9be28c0ba6ac4d91216cd0f813041",
       "text": "c812385dc7c2ecb222169994ea31c68c5840a46c4c3d69d2e51fa831327458ea"
     },
     "mobs": {
@@ -116,8 +116,8 @@
       "text": "79580a49c09219f65539abace395b5f2469f91fc2f0ac9b3ecae109c4fa1ecb4"
     },
     "profile": {
-      "reason": "Сверено отображение сохранённой суммы и компактная граница старых порогов",
-      "sources": "effe790f262a30dc1a1af093bffaca53b15d47de59bcb1d81cf4e3e2c6b7e936",
+      "reason": "Сверены подсказки о денежной замене бейджей и вех коллекции",
+      "sources": "a0014447a2fb8cfd2fe1a006af8e91859932c4de9c846893f50a9f5b3ab6f737",
       "text": "eab7f721084103468af18739b15d07adbd8f894c6091fd88a9d81e173a2b866d"
     },
     "quests": {
@@ -151,8 +151,8 @@
       "text": "ed918be6a65bdc28666148d1dac07b0d14ef631bd20c2d50648694244822a460"
     },
     "starter-kit": {
-      "reason": "Сверено отображение сохранённой суммы и компактная граница старых порогов",
-      "sources": "8889c1bb3ad4d52c8caf04e5f312985e8deed3a5343a798ca49b17424159dfa3",
+      "reason": "Сверены подсказки о денежной замене бейджей и вех коллекции",
+      "sources": "d569695520959f0a3cdd2cdf026a8273a7259653a96321e4e33a7877733be0ff",
       "text": "2aa7231dcb7819c00042416d6c0315be060bded0307a7866a9cac0d981ccd6ce"
     },
     "teleports": {
