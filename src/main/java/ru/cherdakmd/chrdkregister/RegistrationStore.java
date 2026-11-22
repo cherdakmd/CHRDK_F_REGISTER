@@ -2045,6 +2045,50 @@ public final class RegistrationStore {
         return name == null ? "" : name.trim().toLowerCase(Locale.ROOT);
     }
 
+    /** Замороженное обязательство находится в том же checkpoint, что и остаток времени. */
+    record BoostIntent(UUID owner, UUID transaction, long millis, long minor) { }
+    enum BoostSettlement { NONE, WAIT, CONFLICT, COMPLETE }
+
+    /**
+     * Одна попытка миграции аккаунта. Пока не подключена к планировщику: сначала
+     * должны быть учтены старые незавершённые выдачи всех источников буста.
+     * Долговечный intent предшествует банку, банковская квитанция — уменьшению
+     * остатка. Повтор после рестарта использует тот же UUID и ту же сумму.
+     */
+    synchronized BoostSettlement settleBoostCompensation(String name, BankStore bank) {
+        if (!AccessManager.isValidMinecraftName(name) || bank == null) return BoostSettlement.CONFLICT;
+        PlayerAccount account = data.accounts.get(canonicalName(name));
+        if (account == null) return BoostSettlement.NONE;
+        UUID owner;
+        try { owner = UUID.fromString(account.uuid); }
+        catch (IllegalArgumentException | NullPointerException invalid) { return BoostSettlement.CONFLICT; }
+        if (!owner.toString().equals(account.uuid)) return BoostSettlement.CONFLICT;
+        long owners = data.accounts.values().stream().filter(a -> a != null && owner.toString().equals(a.uuid)).count();
+        if (owners != 1) return BoostSettlement.CONFLICT;
+        BoostIntent intent = account.boostCompensationIntent;
+        if (intent == null) {
+            if (account.rewardBoostMillis == 0) return BoostSettlement.NONE;
+            var amount = BoostCompensation.minor(account.rewardBoostMillis);
+            if (amount.isEmpty() || amount.getAsLong() <= 0) return BoostSettlement.CONFLICT;
+            intent = new BoostIntent(owner, UUID.randomUUID(), account.rewardBoostMillis, amount.getAsLong());
+            account.boostCompensationIntent = intent;
+            dirty = true;
+        }
+        if (!owner.equals(intent.owner()) || intent.transaction() == null || intent.millis() <= 0
+                || account.rewardBoostMillis < intent.millis()
+                || BoostCompensation.minor(intent.millis()).orElse(-1) != intent.minor()) return BoostSettlement.CONFLICT;
+        // Обязательство должно быть durable даже после прошлого неуспешного checkpoint.
+        if (!checkpointGameplayRewards()) return BoostSettlement.WAIT;
+        var result = bank.creditBoostCompensationOnce(owner, intent.transaction(), intent.minor());
+        if (result != ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.MoneyGrant.ADDED
+                && result != ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.MoneyGrant.ALREADY) return BoostSettlement.WAIT;
+        account.rewardBoostMillis -= intent.millis();
+        account.boostCompensationIntent = null;
+        if (account.rewardBoostMillis == 0) account.rewardBoostFractions.clear();
+        dirty = true;
+        return checkpointGameplayRewards() ? BoostSettlement.COMPLETE : BoostSettlement.WAIT;
+    }
+
     /** Не обрезает приз, не удаляет старые receipt: повтор после сбоя подтверждает ту же выдачу. */
     public synchronized ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.BoostGrant grantRewardBoostOnce(
             UUID uuid, String name, int hours, int bankHours, String receipt) {
@@ -2079,7 +2123,7 @@ public final class RegistrationStore {
 
     public synchronized void consumeRewardBoost(String playerName, long millis) {
         PlayerAccount account = data.accounts.get(canonicalName(playerName));
-        if (account == null || millis <= 0 || account.rewardBoostMillis <= 0) return;
+        if (account == null || millis <= 0 || account.rewardBoostMillis <= 0 || account.boostCompensationIntent != null) return;
         account.rewardBoostMillis = Math.max(0, account.rewardBoostMillis - millis);
         markDirty();
     }
@@ -2087,7 +2131,7 @@ public final class RegistrationStore {
     public synchronized long boostExperience(String playerName, String channel, long base, long current) {
         if (channel == null || !Set.of("vanilla", "professions", "skills").contains(channel)) return current;
         PlayerAccount account = data.accounts.get(canonicalName(playerName));
-        if (account == null || account.rewardBoostMillis <= 0) return current;
+        if (account == null || account.rewardBoostMillis <= 0 || account.boostCompensationIntent != null) return current;
         if (account.rewardBoostFractions == null) account.rewardBoostFractions = new LinkedHashMap<>();
         var result = RewardBoostMath.experience(base, current, account.rewardBoostFractions.getOrDefault(channel, 0.0));
         account.rewardBoostFractions.put(channel, result.fraction());
@@ -2162,6 +2206,7 @@ public final class RegistrationStore {
         result.rankGrantedAt = source.rankGrantedAt;
         result.lastGrantHours = source.lastGrantHours;
         result.rewardBoostMillis = source.rewardBoostMillis;
+        result.boostCompensationIntent = source.boostCompensationIntent;
         result.rewardBoostReceipts = source.rewardBoostReceipts==null?new LinkedHashMap<>():new LinkedHashMap<>(source.rewardBoostReceipts);
         result.rewardBoostFractions = source.rewardBoostFractions == null ? new LinkedHashMap<>()
                 : new LinkedHashMap<>(source.rewardBoostFractions);
@@ -2332,6 +2377,7 @@ public final class RegistrationStore {
     /** An account of a player: pass, credentials, 2FA, sessions, ignore list and mute. */
     public static final class PlayerAccount {
         public long rewardBoostMillis;
+        private BoostIntent boostCompensationIntent;
         /** Идемпотентные игровые выдачи; не журнал оплаты и не платные права. */
         public Map<String,Integer> rewardBoostReceipts=new LinkedHashMap<>();
         public Map<String, Double> rewardBoostFractions = new LinkedHashMap<>();
