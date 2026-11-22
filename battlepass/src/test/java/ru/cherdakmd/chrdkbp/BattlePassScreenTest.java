@@ -119,10 +119,10 @@ class BattlePassScreenTest {
     void premiumRewardShowsBoostHoursButNeverPaidProducts() throws Exception {
         String line = plain(screen().mission("bp",
                 new BattlePassView.Mission(premium(), 10, false, false, false, false, true)));
-        assertTrue(line.contains("+1 ч."), "бесплатная награда потерялась: " + line);
+        assertTrue(line.contains("1 ч. → компенсация в /bal"), "бесплатная награда потерялась: " + line);
         assertTrue(line.contains("★ +3 ч."), "нет часов премиум-трека: " + line);
         assertFalse(line.contains("подарок"), "платные товары не могут обещаться как награда: " + line);
-        assertTrue(line.contains("буста"), line);
+        assertTrue(line.contains("компенсация"), line);
         assertTrue(line.contains("забрать"), "премиум-награда должна быть доступна: " + line);
         assertFalse(line.contains("<"), "в тексте остались теги: " + line);
     }
