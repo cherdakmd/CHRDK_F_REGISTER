@@ -135,11 +135,22 @@ final class GeneratorTicker {
         double bonus = GeneratorMath.rebirthBonusPercent(
                 config.rebirthPercentPerRebirth(), config.rebirthDecay(),
                 config.rebirthBonusCapPercent(), entry.rebirths());
-        GeneratorProduction.Settle settle = GeneratorProduction.settle(
-                now - entry.lastCalcMillis(), cycleMs,
-                config.tier(entry.tier()).unitsPerCycle(), bonus,
-                chunkModule, config.offlineEfficiency(),
-                config.offlineHours() * 3_600_000L, room);
+        long elapsed = Math.max(0L, now - entry.lastCalcMillis());
+        GeneratorProduction.Settle settle;
+        GeneratorProduction.FuelSettle fuelSettle = null;
+        if (config.fuelEnabled()) {
+            long budget = (long) config.cyclesPerBucket() * (long) cycleMs;
+            long remaining = Math.max(0L, budget - entry.fuelUsedMs());
+            fuelSettle = GeneratorProduction.settleWithFuel(elapsed, cycleMs,
+                    config.tier(entry.tier()).unitsPerCycle(), bonus, chunkModule,
+                    config.offlineEfficiency(), config.offlineHours() * 3_600_000L,
+                    room, remaining);
+            settle = new GeneratorProduction.Settle(fuelSettle.units(), fuelSettle.advanceMillis());
+        } else {
+            settle = GeneratorProduction.settle(elapsed, cycleMs,
+                    config.tier(entry.tier()).unitsPerCycle(), bonus, chunkModule,
+                    config.offlineEfficiency(), config.offlineHours() * 3_600_000L, room);
+        }
         if (settle.units() > 0 || settle.advanceMillis() > 0) {
             long bunkerLevel = plugin.store().addBunker(owner, entry.slot(), settle.units(),
                     entry.lastCalcMillis() + settle.advanceMillis());
@@ -158,10 +169,9 @@ final class GeneratorTicker {
                 }
             }
         }
-        if (config.fuelEnabled() && settle.advanceMillis() > 0) {
-            long used = entry.fuelUsedMs() + settle.advanceMillis();
-            long budget = (long) config.cyclesPerBucket() * (long) cycleMs;
-            if (used >= budget) {
+        if (fuelSettle != null && (fuelSettle.fuelUsedMillis() > 0 || fuelSettle.exhausted())) {
+            long used = entry.fuelUsedMs() + fuelSettle.fuelUsedMillis();
+            if (fuelSettle.exhausted()) {
                 if (config.fuelAutoRefuel() && tryAutoRefuel(owner, entry)) {
                     // Ведро куплено: лава остаётся на месте, счётчик начинает новое.
                     used = 0;

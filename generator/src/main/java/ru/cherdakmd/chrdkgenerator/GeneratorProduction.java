@@ -43,13 +43,42 @@ final class GeneratorProduction {
     static Settle settle(long elapsedMillis, double cycleMillis, long unitsPerCycle,
                          double rateBonusPercent, boolean chunkModule,
                          double offlineEfficiency, long offlineBudgetMillis, long bunkerRoom) {
+        return settle(elapsedMillis, cycleMillis, unitsPerCycle, rateBonusPercent,
+                chunkModule, offlineEfficiency, offlineBudgetMillis, bunkerRoom,
+                elapsedMillis > ONLINE_GAP_MILLIS);
+    }
+
+    /** Production and fuel consumption are both bounded by the same available work time. */
+    record FuelSettle(long units, long advanceMillis, long fuelUsedMillis, boolean exhausted) { }
+
+    static FuelSettle settleWithFuel(long elapsedMillis, double cycleMillis, long unitsPerCycle,
+                                    double rateBonusPercent, boolean chunkModule,
+                                    double offlineEfficiency, long offlineBudgetMillis,
+                                    long bunkerRoom, long fuelRemainingMillis) {
+        if (elapsedMillis <= 0 || cycleMillis <= 0 || unitsPerCycle <= 0) {
+            return new FuelSettle(0, 0, 0, false);
+        }
+        var fuel = GeneratorFuelBudget.plan(elapsedMillis, Math.max(0, fuelRemainingMillis), true);
+        boolean exhausted = fuel.remainingMillis() == 0;
+        Settle result = settle(fuel.workingMillis(), cycleMillis, unitsPerCycle,
+                rateBonusPercent, chunkModule, offlineEfficiency, offlineBudgetMillis,
+                bunkerRoom, elapsedMillis > ONLINE_GAP_MILLIS);
+        // Once empty, discard the unproductive interval, including partial cycles.
+        // Otherwise a later refill could retroactively produce without fuel.
+        return new FuelSettle(result.units(), exhausted ? elapsedMillis : result.advanceMillis(),
+                exhausted ? fuel.workingMillis() : result.advanceMillis(), exhausted);
+    }
+
+    private static Settle settle(long elapsedMillis, double cycleMillis, long unitsPerCycle,
+                                 double rateBonusPercent, boolean chunkModule,
+                                 double offlineEfficiency, long offlineBudgetMillis,
+                                 long bunkerRoom, boolean offline) {
         if (elapsedMillis <= 0 || cycleMillis <= 0 || unitsPerCycle <= 0) {
             return new Settle(0L, 0L);
         }
         if (bunkerRoom <= 0) {
             return new Settle(0L, elapsedMillis);
         }
-        boolean offline = elapsedMillis > ONLINE_GAP_MILLIS;
         double efficiency = 1.0;
         double budgetMillis = elapsedMillis;
         if (offline && !chunkModule) {

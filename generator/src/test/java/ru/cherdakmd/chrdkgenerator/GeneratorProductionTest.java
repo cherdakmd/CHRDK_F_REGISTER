@@ -67,6 +67,51 @@ class GeneratorProductionTest {
         assertEquals(GeneratorProduction.ONLINE_GAP_MILLIS + 1, gap.advanceMillis());
     }
 
+    @Test void fuelBoundsOfflineProductionAndDiscardsUnpaidTime() {
+        var exhausted = GeneratorProduction.settleWithFuel(600_000, CYCLE_MS, 1, 0,
+                false, 0.5, BUDGET_MS, 1_000, 60_000);
+        // 60 seconds of fuel during a long gap remains offline at 50%, not online at 100%.
+        assertEquals(1, exhausted.units());
+        assertEquals(600_000, exhausted.advanceMillis());
+        assertEquals(60_000, exhausted.fuelUsedMillis());
+        assertEquals(true, exhausted.exhausted());
+
+        var empty = GeneratorProduction.settleWithFuel(600_000, CYCLE_MS, 1, 0,
+                true, 1, BUDGET_MS, 1_000, 0);
+        assertEquals(0, empty.units());
+        assertEquals(600_000, empty.advanceMillis());
+        assertEquals(0, empty.fuelUsedMillis());
+        assertEquals(true, empty.exhausted());
+    }
+
+    @Test void fuelKeepsOnlinePartialCyclesUnlessExhausted() {
+        var partial = GeneratorProduction.settleWithFuel(15_000, CYCLE_MS, 1, 0,
+                false, 1, BUDGET_MS, 1_000, 60_000);
+        assertEquals(0, partial.advanceMillis());
+        assertEquals(0, partial.fuelUsedMillis());
+        assertEquals(false, partial.exhausted());
+        var last = GeneratorProduction.settleWithFuel(15_000, CYCLE_MS, 1, 0,
+                false, 1, BUDGET_MS, 1_000, 10_000);
+        assertEquals(0, last.units());
+        assertEquals(15_000, last.advanceMillis());
+        assertEquals(10_000, last.fuelUsedMillis());
+        assertEquals(true, last.exhausted());
+    }
+
+    @Test void fuelAtExactBoundaryAndFullBunker() {
+        var exact = GeneratorProduction.settleWithFuel(30_000, CYCLE_MS, 1, 0,
+                false, 1, BUDGET_MS, 1_000, 30_000);
+        assertEquals(1, exact.units());
+        assertEquals(30_000, exact.fuelUsedMillis());
+        assertEquals(true, exact.exhausted());
+        var full = GeneratorProduction.settleWithFuel(100_000, CYCLE_MS, 1, 0,
+                false, 1, BUDGET_MS, 0, 60_000);
+        assertEquals(0, full.units());
+        assertEquals(100_000, full.advanceMillis());
+        assertEquals(60_000, full.fuelUsedMillis());
+        assertEquals(true, full.exhausted());
+    }
+
     @Test void overflowAndRoomCapBurnTheExcess() {
         // Бункер почти полон: из 20 циклов влезает только 3 единицы, время горит.
         GeneratorProduction.Settle full = GeneratorProduction.settle(
