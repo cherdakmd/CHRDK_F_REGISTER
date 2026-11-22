@@ -69,6 +69,17 @@ class AnvilBookMergeTest {
     }
 
     @Test
+    void vanillaPreviewMustPreserveEveryExpectedEnchantAndLevel() throws Exception {
+        assertTrue(VanillaBookMerge.preserves(Map.of("fortune", 3, "mending", 1), Map.of("fortune", 3, "mending", 1, "extra", 1)));
+        assertFalse(VanillaBookMerge.preserves(Map.of("fortune", 3, "mending", 1), Map.of("fortune", 3)));
+        assertFalse(VanillaBookMerge.preserves(Map.of("fortune", 3), Map.of("fortune", 2)));
+        String listener = source("AnvilApplyListener");
+        assertTrue(listener.contains("checkedVanilla == null"));
+        assertTrue(listener.contains("!preservesVanillaBook(left, right, result)"));
+        assertTrue(source("VanillaBookMerge").contains("if (existing == merged.get(enchantment)) continue;"));
+    }
+
+    @Test
     void containerMaterialSkipsSupportButKeepsLimits() {
         EnchantDef def = EnchantRegistry.byId("careful_work");
         assertNotNull(def);

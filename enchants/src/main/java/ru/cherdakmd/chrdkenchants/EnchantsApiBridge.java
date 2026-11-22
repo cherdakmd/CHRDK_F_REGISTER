@@ -11,8 +11,9 @@ import java.util.Map;
  * Реализация {@link ChrdkEnchantsApi} (1.4.128): другие аддоны могут спросить
  * каталог чар и наложить их на предмет, не зная ничего о внутренностях модуля.
  *
- * <p>Правила те же, что у стола и наковальни: вид предмета, лимит чар,
- * конфликтные группы, включённость в конфиге и мастер-выключатель проклятий.
+ * <p>Для нового наложения действуют вид предмета, лимиты, конфликтные группы,
+ * включённость и мастер-выключатель проклятий. Копирование для улучшения —
+ * отдельный совместимый путь: оно не проверяет материал и лимиты.
  * Все методы терпимы к чужим предметам и выключенному конфигу.</p>
  */
 public final class EnchantsApiBridge implements ChrdkEnchantsApi {
@@ -99,10 +100,12 @@ public final class EnchantsApiBridge implements ChrdkEnchantsApi {
         if (config == null || item == null || def == null || !config.isEnabled(def.id())) {
             return false;
         }
-        Map<String, Integer> present = plugin.items().read(item);
+        Map<String, Integer> present = plugin.items().validated(item);
+        if (present == null) return false; // не перезаписываем повреждённую PDC терпимым декодером
         if (present.containsKey(def.id())) {
             return true; // уже стоит — считаем успехом, уровень не понижаем
         }
+        if (!EnchantConflicts.validSet(present) || def.curse() && !config.cursesEnabled()) return false;
         List<EnchantDef> allowed = EnchantRoller.applicable(List.of(def),
                 item.getType().name(), present,
                 config.maxPerItem(), config.maxLegendaryPerItem());
@@ -119,13 +122,15 @@ public final class EnchantsApiBridge implements ChrdkEnchantsApi {
         if (from == null || to == null) {
             return;
         }
-        Map<String, Integer> source = plugin.items().read(from);
-        if (source.isEmpty()) {
+        Map<String, Integer> source = plugin.items().validated(from);
+        Map<String, Integer> target = plugin.items().validated(to);
+        // Повреждённые данные нельзя молча сократить и записать обратно.
+        if (source == null || target == null || source.isEmpty()) {
             return;
         }
         // 1.4.282: незеритовый апгрейд переносит чары, но не может склеить
         // «Жилодробитель» с «Дробителем» (или любую другую conflictGroup).
-        Map<String, Integer> merged = EnchantConflicts.merge(source, plugin.items().read(to));
+        Map<String, Integer> merged = EnchantConflicts.merge(source, target);
         plugin.items().write(to, merged);
     }
 

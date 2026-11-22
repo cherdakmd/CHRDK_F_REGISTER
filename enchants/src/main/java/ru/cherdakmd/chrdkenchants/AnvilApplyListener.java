@@ -80,11 +80,19 @@ public final class AnvilApplyListener implements Listener {
                 ? storage : null;
         boolean pureBook = bookMeta != null && !bookMeta.hasStoredEnchants();
         VanillaBookMerge.Result manualVanilla = null;
+        // Native может вернуть результат, молча отбросив несовместимую часть
+        // смешанной книги. До появления безопасного остатка запрещаем такой расход.
+        VanillaBookMerge.Result checkedVanilla = bookMeta != null && bookMeta.hasStoredEnchants()
+                ? VanillaBookMerge.merge(left, bookMeta,
+                    plugin.config() == null ? 10 : plugin.config().vanillaLevelCap()) : null;
+        if (bookMeta != null && bookMeta.hasStoredEnchants() && checkedVanilla == null) {
+            reject(event, viewer);
+            return;
+        }
         // Не оживляем native Too Expensive (40+). При обычном null проверяем
         // vanilla-перенос сами: кастомный тир-предмет не должен мешать книге.
         if (vanilla == null && !pureBook && vanillaCost < 40) {
-            manualVanilla = VanillaBookMerge.merge(left, bookMeta,
-                    plugin.config() == null ? 10 : plugin.config().vanillaLevelCap());
+            manualVanilla = checkedVanilla;
             if (manualVanilla == null) {
                 reject(event, viewer);
                 return;
@@ -107,6 +115,11 @@ public final class AnvilApplyListener implements Listener {
         // 2.0.16: надванильные уровни ванильных чар не режутся ванильным зажимом.
         VanillaLevels.restore(result, left, right,
                 plugin.config() == null ? 10 : plugin.config().vanillaLevelCap());
+        if (checkedVanilla != null && !VanillaBookMerge.preserves(VanillaLevels.levels(checkedVanilla.item()),
+                VanillaLevels.levels(result))) {
+            reject(event, viewer);
+            return;
+        }
         Map<String, Integer> before = plugin.items().read(left);
         // Идемпотентность пересборки: Paper может вернуть наш прежний результат повторным
         // PrepareResult — сбрасываем его чары к состоянию левого слота, иначе merge книги
@@ -238,6 +251,13 @@ public final class AnvilApplyListener implements Listener {
                 : plugin.service().canApplyFromBook(left, right) != null;
     }
 
+    private boolean preservesVanillaBook(ItemStack left, ItemStack right, ItemStack result) {
+        if (!(right.getItemMeta() instanceof EnchantmentStorageMeta storage) || !storage.hasStoredEnchants()) return true;
+        var expected = VanillaBookMerge.merge(left, storage,
+                plugin.config() == null ? 10 : plugin.config().vanillaLevelCap());
+        return expected != null && VanillaBookMerge.preserves(VanillaLevels.levels(expected.item()), VanillaLevels.levels(result));
+    }
+
     private static int work(ItemStack item) {
         return item.getItemMeta() instanceof Repairable repairable ? repairable.getRepairCost() : 0;
     }
@@ -281,7 +301,7 @@ public final class AnvilApplyListener implements Listener {
                         player.getGameMode() == GameMode.CREATIVE)
                     || view.canBypassCost() || !player.hasPermission("chrdkenchants.use")
                     || plugin.coreApi() == null || !plugin.coreApi().isAuthenticated(player)
-                    || transferBlocked(left, right)) {
+                    || transferBlocked(left, right) || !preservesVanillaBook(left, right, result)) {
                 event.setCancelled(true);
                 return;
             }

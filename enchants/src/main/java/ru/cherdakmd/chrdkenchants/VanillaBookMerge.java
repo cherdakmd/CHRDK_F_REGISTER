@@ -22,6 +22,12 @@ final class VanillaBookMerge {
     private VanillaBookMerge() {
     }
 
+    /** Проверяет, что preview не теряет ни одной чары или уровня ожидаемого набора. */
+    static <K> boolean preserves(Map<K, Integer> expected, Map<K, Integer> actual) {
+        return expected.entrySet().stream()
+                .allMatch(entry -> actual.getOrDefault(entry.getKey(), 0) >= entry.getValue());
+    }
+
     /**
      * @param levelCap потолок уровней ванильных чар ({@code rules.vanilla-level-cap}):
      *                 равные уровни сливаются в +1 вплоть до него, входные уровни не режутся
@@ -65,6 +71,9 @@ final class VanillaBookMerge {
             merged.put(enchantment, after);
         }
         for (Enchantment enchantment : book.getStoredEnchants().keySet()) {
+            // Bukkit возвращает false, если уровень не изменился; это не ошибка.
+            int existing = storage != null ? storage.getStoredEnchantLevel(enchantment) : meta.getEnchantLevel(enchantment);
+            if (existing == merged.get(enchantment)) continue;
             // true — уровни выше ванильного максимума допустимы: потолок уже
             // применён в merge, ограничение платформы только мешало бы.
             boolean added = storage != null
