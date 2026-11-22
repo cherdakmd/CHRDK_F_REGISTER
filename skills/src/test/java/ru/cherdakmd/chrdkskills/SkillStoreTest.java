@@ -292,6 +292,61 @@ class SkillStoreTest {
         Files.createDirectories(folder);
         Files.writeString(store.file(), "{ это не json", StandardCharsets.UTF_8);
         store.load();
+        assertFalse(store.healthy());
         assertEquals(0L, store.xp(PLAYER, SkillType.MINING));
+        store.addXp(PLAYER, SkillType.MINING, 7);
+        store.saveNow();
+        store.flush();
+        assertEquals("{ это не json", Files.readString(store.file(), StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void malformedShapeNeverOverwritesOriginalOrKeepsPartialPlayers() throws Exception {
+        String original = "{\"version\":1,\"players\":{\"" + PLAYER
+                + "\":{\"xp\":{\"mining\":10}},\"bad\":42}}";
+        Files.writeString(folder.resolve("skills.json"), original);
+        SkillStore store = new SkillStore(folder, LOGGER);
+        store.load();
+        assertFalse(store.healthy());
+        assertEquals(0L, store.xp(PLAYER, SkillType.MINING));
+        store.flush();
+        assertEquals(original, Files.readString(store.file()));
+    }
+
+    @Test
+    void unsupportedVersionIsNotSilentlyRewritten() throws Exception {
+        String original = "{\"version\":2,\"players\":{}}";
+        Files.writeString(folder.resolve("skills.json"), original);
+        SkillStore store = new SkillStore(folder, LOGGER);
+        store.load();
+        assertFalse(store.healthy());
+        store.saveNow();
+        store.flush();
+        assertEquals(original, Files.readString(store.file()));
+    }
+
+    @Test
+    void invalidRebirthAccountingIsNeverSilentlyTruncated() throws Exception {
+        for (String fields : List.of("\"rebirths\":1.5", "\"rebirths\":1000001",
+                "\"rebirthConverted\":\"true\"", "\"claimedRebirthMilestones\":[5,2.5]",
+                "\"rebirthUniques\":[null]")) {
+            String original = "{\"version\":1,\"players\":{\"" + PLAYER + "\":{" + fields + "}}}";
+            Files.writeString(folder.resolve("skills.json"), original);
+            SkillStore store = new SkillStore(folder, LOGGER);
+            store.load();
+            assertFalse(store.healthy(), fields);
+            store.flush();
+            assertEquals(original, Files.readString(store.file()));
+        }
+    }
+
+    @Test
+    void missingFileIsValidForNewServer() {
+        SkillStore store = new SkillStore(folder, LOGGER);
+        store.load();
+        assertTrue(store.healthy());
+        store.addXp(PLAYER, SkillType.MINING, 7);
+        store.saveNow();
+        assertTrue(Files.isRegularFile(store.file()));
     }
 }

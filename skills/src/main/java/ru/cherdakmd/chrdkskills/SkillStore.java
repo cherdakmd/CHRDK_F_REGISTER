@@ -156,6 +156,12 @@ public final class SkillStore {
     private final Logger logger;
     private final Map<String, PlayerData> players = new LinkedHashMap<>();
     private boolean dirty;
+    private boolean healthy = true;
+
+    /** Ошибка чтения блокирует сохранение до восстановления файла и перезапуска. */
+    public synchronized boolean healthy() {
+        return healthy;
+    }
 
     public SkillStore(Path dataFolder, Logger logger) {
         this.file = dataFolder.resolve("skills.json");
@@ -167,18 +173,22 @@ public final class SkillStore {
     }
 
     public synchronized void load() {
-        if (!Files.isRegularFile(file)) {
-            return;
-        }
+        if (!healthy) return;
+        if (Files.notExists(file)) return;
         try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+            if (!Files.isRegularFile(file) || Files.size(file) > 32L * 1024 * 1024) {
+                throw new IllegalArgumentException("неподходящий тип или размер файла");
+            }
             Map<String, Object> data = GSON.fromJson(reader, DATA_TYPE);
-            if (data == null || !(data.get("players") instanceof Map<?, ?> rows)) {
-                return;
+            if (data == null || !(data.get("version") instanceof java.math.BigDecimal version)
+                    || version.intValueExact() != 1 || !(data.get("players") instanceof Map<?, ?> rows)) {
+                throw new IllegalArgumentException("неверная структура skills.json");
             }
             for (Map.Entry<?, ?> entry : rows.entrySet()) {
                 if (!(entry.getValue() instanceof Map<?, ?> row)) {
-                    continue;
+                    throw new IllegalArgumentException("неверная запись игрока");
                 }
+                validateRebirthFields(row);
                 PlayerData player = new PlayerData();
                 if (row.get("xp") instanceof Map<?, ?> xpRows) {
                     for (Map.Entry<?, ?> xp : xpRows.entrySet()) {
@@ -293,8 +303,41 @@ public final class SkillStore {
             }
             logger.info("[CHRDK_Skills] Загружено профилей: " + players.size() + ".");
         } catch (Exception exception) {
+            healthy = false;
+            players.clear();
+            dirty = false;
             logger.severe("[CHRDK_Skills] Не удалось прочитать " + file + ": "
-                    + exception.getMessage());
+                    + exception.getMessage() + ". Сохранение отключено; восстановите согласованную копию данных.");
+        }
+    }
+
+    private static void validateRebirthFields(Map<?, ?> row) {
+        if (row.containsKey("rebirths")) {
+            Object value = row.get("rebirths");
+            if (!(value instanceof java.math.BigDecimal number)
+                    || number.longValueExact() < 0 || number.longValueExact() > 1_000_000) {
+                throw new IllegalArgumentException("неверный счётчик перерождений");
+            }
+        }
+        if (row.containsKey("rebirthConverted") && !(row.get("rebirthConverted") instanceof Boolean)) {
+            throw new IllegalArgumentException("неверный флаг конвертации перерождений");
+        }
+        if (row.containsKey("claimedRebirthMilestones")) {
+            if (!(row.get("claimedRebirthMilestones") instanceof List<?> marks))
+                throw new IllegalArgumentException("неверный список вех перерождений");
+            for (Object value : marks) {
+                if (!(value instanceof java.math.BigDecimal number)
+                        || number.longValueExact() <= 0 || number.longValueExact() > Integer.MAX_VALUE)
+                    throw new IllegalArgumentException("неверная веха перерождения");
+            }
+        }
+        if (row.containsKey("rebirthUniques")) {
+            if (!(row.get("rebirthUniques") instanceof List<?> uniques))
+                throw new IllegalArgumentException("неверный список уникальных наград");
+            for (Object value : uniques) {
+                if (!(value instanceof String id) || id.isBlank())
+                    throw new IllegalArgumentException("неверная уникальная награда");
+            }
         }
     }
 
@@ -748,6 +791,7 @@ public final class SkillStore {
 
     /** Пишет файл, если есть изменения (или его ещё нет). */
     public synchronized void saveNow() {
+        if (!healthy) return;
         if (!dirty && Files.isRegularFile(file)) {
             return;
         }
@@ -756,6 +800,7 @@ public final class SkillStore {
 
     /** Немедленная запись без проверки флага (выключение сервера, тесты). */
     public synchronized void flush() {
+        if (!healthy) return;
         write(snapshotJson());
     }
 

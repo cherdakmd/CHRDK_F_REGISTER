@@ -79,6 +79,11 @@ public final class SkillsPlugin extends JavaPlugin {
             Bukkit.getPluginManager().disablePlugin(this); return;
         }
         this.store.load();
+        if (!store.healthy()) {
+            getLogger().severe("CHRDK_Skills остановлен: файл прогресса не читается. Не удаляйте его; восстановите согласованную копию.");
+            Bukkit.getPluginManager().disablePlugin(this);
+            return;
+        }
         // П.29: классовый прогресс из вырезанного модуля classes конвертируется
         // в очки пула. classes.json читается только на чтение.
         ClassProgressMigrator.run(this.store, getDataFolder().getAbsoluteFile().getParentFile().toPath(),
