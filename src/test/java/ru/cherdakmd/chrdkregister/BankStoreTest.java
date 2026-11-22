@@ -220,7 +220,9 @@ class BankStoreTest {
 
     @Test
     void queuedBarrierTimeoutRejectsOperationWithoutQuarantiningBank(@TempDir Path dir) throws Exception {
-        StorageIo io = new StorageIo(100L);
+        // The first operation must time out in the deliberately blocked queue;
+        // leave enough time for a real fsync on a busy runner after it is released.
+        StorageIo io = new StorageIo(2_000L);
         CountDownLatch gate = new CountDownLatch(1);
         CountDownLatch started = new CountDownLatch(1);
         Thread blocker = new Thread(() -> {
