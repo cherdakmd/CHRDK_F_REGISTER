@@ -32,7 +32,7 @@ record GuardSettings(boolean enabled, int ipBurst, int ipRefillSeconds, int glob
             // Админ-корни и алиасы аддонов CHRDK_* (модули из ZIP).
             "achadmin", "artifactsadmin", "bpadmin", "claimadmin",
             "goalsadmin", "dailyadmin", "dlyadmin",
-            "shopadmin", "dshopadmin", "marketadmin", "disastersadmin", "enchantsadmin",
+            "shopadmin", "dshopadmin", "marketadmin", "enchantsadmin",
             "guildadmin", "guildsadmin", "clanadmin", "clansadmin", "ga",
             "questsadmin", "ranksadmin",
             "skillsadmin", "tpadmin", "vkadmin",

@@ -92,6 +92,7 @@ public final class AchievementService {
         String key = key(player);
         for (String id : store.unlocked(key)) {
             AchievementDef def = AchievementRegistry.byId(id);
+            if (def == null) def = AchievementRegistry.historicalById(id);
             if (def != null && !store.claimed(key).contains(id)) pay(player,def);
         }
         int opened = 0;
@@ -226,7 +227,9 @@ public final class AchievementService {
     }
 
     public int unlockedCount(Player player) {
-        return store.unlocked(key(player)).size();
+        // Исторические записи сохраняются для уже выданных наград и мета-прогресса,
+        // но не должны увеличивать счётчик активного каталога выше его размера.
+        return (int) store.unlocked(key(player)).stream().filter(id -> AchievementRegistry.byId(id) != null).count();
     }
 
     public int total() {

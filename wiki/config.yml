@@ -25,7 +25,6 @@ groups:
   pages:
   - claims
   - teleports
-  - disasters
   - mobs
 - id: economy
   title: Алмазы и торговля

@@ -7,7 +7,7 @@ import zipfile
 
 # Отдельные опциональные аддоны публикуются самостоятельными JAR-файлами рядом с общим ZIP,
 # но не включаются внутрь общего архива chrdk-plugins-<version>.zip.
-STANDALONE_MODULES = {"vk", "disasters"}
+STANDALONE_MODULES = {"vk"}
 VERSION_PATTERN = r"\d+\.\d+(?:\.\d+){0,2}(?:-rc\.[1-9]\d*|-fix)?"
 
 

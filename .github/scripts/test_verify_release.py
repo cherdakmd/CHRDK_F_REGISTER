@@ -200,7 +200,7 @@ class ReleaseValidationTest(unittest.TestCase):
         self.assertNotIn("CHRDK_Orders", names, "доска заказов полностью снята")
         self.assertNotIn("CHRDK_VK", names, "CHRDK_VK публикуется отдельно, а не внутри общего ZIP")
         self.assertNotIn("CHRDK_Disasters", names, "CHRDK_Disasters не входит в общий ZIP и больше не прикрепляется к релизам")
-        self.assertEqual({"CHRDK_VK": "vk", "CHRDK_Disasters": "disasters"}, standalone_plugins(root))
+        self.assertEqual({"CHRDK_VK": "vk"}, standalone_plugins(root))
         self.assertNotIn("CHRDK_Bosses", names)
         self.assertNotIn("CHRDK_Treasures", names)
         self.assertNotIn("CHRDK_Streams", names)

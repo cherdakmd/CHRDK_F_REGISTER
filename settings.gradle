@@ -31,7 +31,6 @@ include 'quests'
 include 'guilds'
 include 'vk'
 
-include 'disasters'
 include 'mobs'
 include 'generator'
 include 'anticheat'

@@ -183,7 +183,6 @@ security:
     - shopadmin
     - dshopadmin
     - marketadmin
-    - disastersadmin
     - enchantsadmin
     - guildadmin
     - guildsadmin
@@ -1138,7 +1137,6 @@ server-menu:
     - {"category": "world", "icon": "RED_BED", "name": "<gold><bold>Поставить дом</bold></gold>", "lore": "<gray>Встаньте в нужной точке и введите</gray>\n<dark_gray>/sethome имя</dark_gray>\n<dark_gray>Лимит точек зависит от ранга</dark_gray>"}
     - {"category": "world", "icon": "ENDER_PEARL", "name": "<gold><bold>Случайный телепорт</bold></gold>", "lore": "<gray>RTP за алмазы</gray>\n<dark_gray>Цена — в настройках телепортов</dark_gray>", "command": "rtp", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
     - {"category": "world", "icon": "OAK_DOOR", "name": "<gold><bold>Телепорт к игроку</bold></gold>", "lore": "<gray>Запрос: /tpa ник</gray>\n<dark_gray>Принять: /tpaccept</dark_gray>", "command": "tpa", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
-    - {"category": "world", "icon": "SAND", "name": "<gold><bold>Катастрофы</bold></gold>", "lore": "<gray>Пыльная буря, метеориты и землетрясение</gray>\n<dark_gray>Клик: /disasters — когда ждать следующую</dark_gray>", "command": "disasters", "plugin": "CHRDK_Disasters", "permission": "chrdkdisasters.use"}
     - {"category": "world", "icon": "SPIDER_EYE", "name": "<gold><bold>Тиры мобов</bold></gold>", "lore": "<gray>Чем дальше от спавна, тем сильнее враги</gray>\\n<dark_gray>Клик: /mobtiers — границы и награды</dark_gray>", "command": "mobtiers", "plugin": "CHRDK_Mobs", "permission": "chrdkmobs.use"}
     # ------------------------------ снаряжение ------------------------------
     - {"category": "gear", "icon": "ENCHANTED_BOOK", "name": "<gold><bold>Кастомные чары</bold></gold>", "lore": "<gray>Каталог чар и описания</gray>\n<dark_gray>Получение — через игровую механику</dark_gray>", "command": "enchants", "plugin": "CHRDK_Enchants", "permission": "chrdkenchants.use"}
@@ -1551,7 +1549,6 @@ auto-messages:
     - {"text": "<gray>Свой угол производства: <white>/generator</white> — личный генератор из лавы и воды, тиры ресурсов и модули.</gray>", "plugin": "CHRDK_Generator", "permission": "chrdkgenerator.use"}
     - {"text": "<gray>Читы на CHERDAK ловит античит: движение, бой, пакеты и чат под наблюдением. Срабатывания попадают в журнал доказательств, запрет выносит человек — исключений ни у кого.</gray>", "plugin": "CHRDK_Anticheat", "permission": "chrdkanticheat.use"}
     - {"text": "<gray>На CHERDAK работает <white>Plasmo Voice</white>: голосовой чат с учётом расстояния между игроками. Нужен клиентский мод Plasmo Voice и настроенный микрофон; текстовые каналы и правила общения остаются прежними.</gray>"}
-    - {"text": "<gray>Катастрофы CHERDAK не задевают приваты и спавн: <white>/disasters</white> покажет, когда ждать следующую. Изменённые блоки возвращаются по таймеру, опыта и алмазов с них нет.</gray>", "plugin": "CHRDK_Disasters", "permission": "chrdkdisasters.use"}
     - {"text": "<gray>Чем дальше от спавна мира, тем опаснее мобы: подпись «Т3 · Зомби» — это тир врага, а убийство сильных приносит деньги на счёт. Границы тиров и награды: <white>/mobtiers</white>.</gray>", "plugin": "CHRDK_Mobs", "permission": "chrdkmobs.use"}
 
 # ================================================================

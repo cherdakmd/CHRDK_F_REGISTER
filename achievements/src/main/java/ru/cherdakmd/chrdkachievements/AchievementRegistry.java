@@ -49,8 +49,7 @@ import static ru.cherdakmd.chrdkachievements.AchievementMetric.DISASTER_SHARDS;
 import static ru.cherdakmd.chrdkachievements.AchievementMetric.DISASTER_LEVEL;
 
 /**
- * Каталог достижений: 78 записей. Исторические разделы — по 18, «Путь»
- * дополнительно получил шесть записей за катастрофы CHRDK_Disasters.
+ * Каталог достижений: 72 записи, по 18 в каждом разделе.
  *
  * <p>Пороги подобраны так, чтобы путь от «первого шага» до «легенды» занимал
  * недели, а не часы: 200 часов игры, 100 км, 25 000 мобов, 250 000 блоков.
@@ -67,8 +66,8 @@ import static ru.cherdakmd.chrdkachievements.AchievementMetric.DISASTER_LEVEL;
  */
 public final class AchievementRegistry {
 
-    public static final int EXPECTED_SIZE = 78;
-    /** Историческая норма разделов; «Путь» после волны катастроф шире. */
+    public static final int EXPECTED_SIZE = 72;
+    /** Норма каждого раздела. */
     public static final int PER_CATEGORY = 18;
 
     /**
@@ -85,6 +84,7 @@ public final class AchievementRegistry {
     public static final int MASTER_GOAL = 71;
 
     private static final Map<String, AchievementDef> REGISTRY = new LinkedHashMap<>();
+    private static final Map<String, AchievementDef> HISTORICAL = new LinkedHashMap<>();
 
     static {
         /* ---------------------------------- путь ---------------------------------- */
@@ -109,13 +109,13 @@ public final class AchievementRegistry {
         register("nizhnij-dom", PATH, NETHER_VISITS, 100, 2, 16);
         register("gost-kraya", PATH, END_VISITS, 25, 2, 16);
 
-        /* ------------- путь: катастрофы CHRDK_Disasters (1.5.2) ------------- */
-        register("pervaya-katastrofa", PATH, DISASTERS_SURVIVED, 1, 0, 2);
-        register("desyat-katastrof", PATH, DISASTERS_SURVIVED, 10, 1, 8);
-        register("pyatdesyat-katastrof", PATH, DISASTERS_SURVIVED, 50, 2, 16);
-        register("vse-shest-bedstvij", PATH, DISASTER_KINDS, 6, 1, 12);
-        register("sto-oskolkov", PATH, DISASTER_SHARDS, 100, 1, 8);
-        register("stojkost-pyat", PATH, DISASTER_LEVEL, 5, 2, 16);
+        /* Старые награды: только сверка ранее открытых записей, не активный каталог. */
+        registerHistorical("pervaya-katastrofa", PATH, DISASTERS_SURVIVED, 1, 0, 2);
+        registerHistorical("desyat-katastrof", PATH, DISASTERS_SURVIVED, 10, 1, 8);
+        registerHistorical("pyatdesyat-katastrof", PATH, DISASTERS_SURVIVED, 50, 2, 16);
+        registerHistorical("vse-shest-bedstvij", PATH, DISASTER_KINDS, 6, 1, 12);
+        registerHistorical("sto-oskolkov", PATH, DISASTER_SHARDS, 100, 1, 8);
+        registerHistorical("stojkost-pyat", PATH, DISASTER_LEVEL, 5, 2, 16);
 
         /* ---------------------------------- бой ----------------------------------- */
         register("ohotnik", COMBAT, MOBS_KILLED, 100, 1, 4);
@@ -196,6 +196,15 @@ public final class AchievementRegistry {
                                  AchievementMetric metric, long goal, int passHours, int diamonds,
                                  String badge) {
         REGISTRY.put(id, new AchievementDef(id, category, metric, goal, passHours, diamonds, badge));
+    }
+
+    private static void registerHistorical(String id, AchievementDef.Category category,
+                                           AchievementMetric metric, long goal, int passHours, int diamonds) {
+        HISTORICAL.put(id, new AchievementDef(id, category, metric, goal, passHours, diamonds, null));
+    }
+    /** Только для сохранения обязательств по ранее открытым достижениям. */
+    public static AchievementDef historicalById(String id) {
+        return id == null ? null : HISTORICAL.get(id.toLowerCase(Locale.ROOT).trim());
     }
 
     public static AchievementDef byId(String id) {

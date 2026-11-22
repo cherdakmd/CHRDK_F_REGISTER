@@ -17,21 +17,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class AchievementRegistryTest {
 
     @Test
-    void catalogueHasSeventyEightAndKeepsHistoricalCategories() {
+    void retiredEntriesAreNotInCatalogueButExistingRewardsRemainRecognizable() {
+        assertEquals(72, AchievementRegistry.size());
         assertEquals(AchievementRegistry.EXPECTED_SIZE, AchievementRegistry.size());
-        assertEquals(78, AchievementRegistry.size());
-        for (AchievementDef.Category category : AchievementDef.Category.values()) {
-            if (category == AchievementDef.Category.PATH) {
-                // Шесть новых записей катастроф добавились только в «Путь».
-                assertEquals(AchievementRegistry.PER_CATEGORY + 6,
-                        AchievementRegistry.byCategory(category).size(),
-                        "в «Пути» 18 исторических + 6 за катастрофы");
-            } else {
-                assertEquals(AchievementRegistry.PER_CATEGORY,
-                        AchievementRegistry.byCategory(category).size(),
-                        "в разделе " + category.id() + " должно быть ровно 18 достижений");
-            }
-        }
+        for (AchievementDef.Category category : AchievementDef.Category.values())
+            assertEquals(AchievementRegistry.PER_CATEGORY, AchievementRegistry.byCategory(category).size());
+        assertNull(AchievementRegistry.byId("pervaya-katastrofa"));
+        assertNotNull(AchievementRegistry.historicalById("pervaya-katastrofa"));
     }
 
     @Test

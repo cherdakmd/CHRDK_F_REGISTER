@@ -57,7 +57,7 @@ public final class AchievementsConfig {
         ConfigurationSection root = cfg.getConfigurationSection("rewards");
         if (root != null) {
             for (String key : root.getKeys(false)) {
-                if (AchievementRegistry.byId(key) == null) {
+                if (AchievementRegistry.byId(key) == null && AchievementRegistry.historicalById(key) == null) {
                     logger.warning("[CHRDK_Achievements] Награда для неизвестного достижения: "
                             + key);
                     continue;

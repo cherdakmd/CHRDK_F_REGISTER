@@ -15,7 +15,7 @@ PATTERNS = (
     re.compile(r"(?i)(?:\bcommand|[\"']command[\"'])\s*:\s*[\"']?/?(?:[a-z0-9_.-]+:)?(?:"
                + ALIASES + r")(?![a-z0-9_/-])"),
 )
-RETIRED_PATHS = ("bosses", "treasures", "wiki/bosses.md", "wiki/treasures.md", "docs/TREASURES_ARSENAL.md", "streams", "wiki/streams.md", "events", "wiki/events.md", "queue", "wiki/queue.md", "lottery", "party", "referrals", "wiki/lottery.md", "wiki/party.md", "wiki/referrals.md", "hunt", "professions", "wiki/hunt.md", "wiki/professions.md", "tier-forge", "wiki/tierforge.md")
+RETIRED_PATHS = ("disasters", "wiki/disasters.md", "bosses", "treasures", "wiki/bosses.md", "wiki/treasures.md", "docs/TREASURES_ARSENAL.md", "streams", "wiki/streams.md", "events", "wiki/events.md", "queue", "wiki/queue.md", "lottery", "party", "referrals", "wiki/lottery.md", "wiki/party.md", "wiki/referrals.md", "hunt", "professions", "wiki/hunt.md", "wiki/professions.md", "tier-forge", "wiki/tierforge.md")
 GENERATED_DIRS = {"node_modules", "test-results", "playwright-report", "__pycache__"}
 SUFFIXES = {".json", ".java", ".yml", ".yaml", ".md", ".py", ".js", ".html", ".gradle", ".properties"}
 # Новая команда групп реализована в модуле гильдий; старый аддон, его
