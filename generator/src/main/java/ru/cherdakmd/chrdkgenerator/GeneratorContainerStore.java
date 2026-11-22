@@ -39,6 +39,13 @@ final class GeneratorContainerStore {
         View { slots = java.util.Collections.unmodifiableList(new ArrayList<>(slots)); }
     }
 
+    record Sale(long sequence, long amount) {
+        Sale {
+            if (sequence <= 0 || amount <= 0 || amount > GeneratorPayoutCoordinator.MAX_OBLIGATION)
+                throw new IllegalArgumentException("invalid container sale");
+        }
+    }
+
     private static final class Pending {
         UUID transaction;
         String beforePlayer;
@@ -56,6 +63,8 @@ final class GeneratorContainerStore {
         long burnMillis;
         long lastCalcMillis;
         UUID lastMigration;
+        long saleSequence;
+        Sale salePending;
         Pending pending;
     }
     private static final class Data {
@@ -106,9 +115,26 @@ final class GeneratorContainerStore {
         for (var entry : root.getAsJsonObject("containers").entrySet()) {
             if (!entry.getValue().isJsonObject()) throw new IllegalArgumentException("container row type");
             var row = entry.getValue().getAsJsonObject();
-            if (!row.keySet().equals(java.util.Set.of("owner", "slot", "core", "revision", "slots", "burnMillis", "lastCalcMillis", "pending", "lastMigration"))
-                    && !row.keySet().equals(java.util.Set.of("owner", "slot", "core", "revision", "slots", "burnMillis", "lastCalcMillis", "pending")))
+            var required = java.util.Set.of("owner", "slot", "core", "revision", "slots", "burnMillis", "lastCalcMillis", "pending");
+            var allowed = java.util.Set.of("owner", "slot", "core", "revision", "slots", "burnMillis", "lastCalcMillis", "pending", "lastMigration", "saleSequence", "salePending");
+            if (!row.keySet().containsAll(required) || !allowed.containsAll(row.keySet())
+                    || row.has("saleSequence") != row.has("salePending"))
                 throw new IllegalArgumentException("container row fields");
+            if (row.has("saleSequence")) {
+                if (!row.get("saleSequence").isJsonPrimitive() || !row.get("saleSequence").getAsJsonPrimitive().isNumber())
+                    throw new IllegalArgumentException("sale sequence");
+                row.get("saleSequence").getAsBigDecimal().longValueExact();
+                var sale = row.get("salePending");
+                if (!sale.isJsonNull()) {
+                    if (!sale.isJsonObject() || !sale.getAsJsonObject().keySet().equals(java.util.Set.of("sequence", "amount")))
+                        throw new IllegalArgumentException("sale pending");
+                    for (String field : List.of("sequence", "amount")) {
+                        var value = sale.getAsJsonObject().get(field);
+                        if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) throw new IllegalArgumentException("sale number");
+                        value.getAsBigDecimal().longValueExact();
+                    }
+                }
+            }
             if (row.has("lastMigration") && !row.get("lastMigration").isJsonNull()) {
                 if (!row.get("lastMigration").isJsonPrimitive() || !row.get("lastMigration").getAsJsonPrimitive().isString()) throw new IllegalArgumentException("migration id");
                 String id = row.get("lastMigration").getAsString();
@@ -163,6 +189,8 @@ final class GeneratorContainerStore {
                     || !key(row.owner, row.slot).equals(entry.getKey()) || row.revision < 0
                     || row.slots == null || row.slots.size() != SLOTS || row.burnMillis < 0 || row.lastCalcMillis < 0)
                 throw new IllegalArgumentException("container row");
+            if (row.saleSequence < 0 || (row.salePending != null && row.salePending.sequence() != row.saleSequence))
+                throw new IllegalArgumentException("container sale state");
             if (!cores.add(row.core)) throw new IllegalArgumentException("duplicate container core");
             for (Stack item : row.slots) if (item != null) new Stack(item.material(), item.amount());
             if (row.pending != null) {
@@ -211,6 +239,43 @@ final class GeneratorContainerStore {
         Container row = data.containers.get(key(owner, slot));
         return !healthy || row == null ? null : new View(row.core, row.revision, row.slots,
                 row.burnMillis, row.lastCalcMillis, row.pending != null, row.lastMigration);
+    }
+
+    record SaleState(long sequence, Sale pending) { }
+
+    synchronized SaleState saleState(UUID owner, int slot) {
+        Container row = data.containers.get(key(owner, slot));
+        return !healthy || row == null ? null : new SaleState(row.saleSequence, row.salePending);
+    }
+
+    /** Изъятие одной порции предметов и обязательство сохраняются одной записью. */
+    synchronized boolean reserveSale(UUID owner, int slot, UUID core, long revision,
+                                     int index, int amount, long price) {
+        Container row = data.containers.get(key(owner, slot));
+        if (!healthy || row == null || !row.core.equals(core) || row.revision != revision
+                || row.revision == Long.MAX_VALUE || row.saleSequence == Long.MAX_VALUE
+                || row.pending != null || row.salePending != null || index < 0 || index >= RESOURCE_SLOTS
+                || amount <= 0 || price <= 0 || price > GeneratorPayoutCoordinator.MAX_OBLIGATION) return false;
+        Stack item = row.slots.get(index);
+        if (item == null || amount > item.amount()) return false;
+        Data next = copy();
+        Container change = next.containers.get(key(owner, slot));
+        change.slots.set(index, amount == item.amount() ? null : new Stack(item.material(), item.amount() - amount));
+        change.saleSequence++;
+        change.salePending = new Sale(change.saleSequence, price);
+        change.revision++;
+        return publish(next);
+    }
+
+    /** Квитанция банка проверяется вызывающим до подтверждения. */
+    synchronized boolean finishSale(UUID owner, int slot, Sale sale) {
+        Container row = data.containers.get(key(owner, slot));
+        if (!healthy || row == null || sale == null || !sale.equals(row.salePending) || row.revision == Long.MAX_VALUE) return false;
+        Data next = copy();
+        Container change = next.containers.get(key(owner, slot));
+        change.salePending = null;
+        change.revision++;
+        return publish(next);
     }
 
     /** Идемпотентно принимает замороженную порцию старого числового бункера. */
