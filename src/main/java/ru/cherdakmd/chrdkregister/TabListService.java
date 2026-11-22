@@ -165,6 +165,7 @@ public final class TabListService implements Listener {
         BukkitTask timer(Runnable callback, int period);
         BukkitTask later(Runnable callback, long delay);
         Scoreboard board();
+        default Component withRebirth(Player player, Component name) { return name; }
     }
     private final class GameRuntime implements Runtime {
         public java.util.Collection<? extends Player> online() { return Bukkit.getOnlinePlayers(); }
@@ -176,6 +177,21 @@ public final class TabListService implements Listener {
         public BukkitTask timer(Runnable callback, int period) { return Bukkit.getScheduler().runTaskTimer(plugin, callback, period, period); }
         public BukkitTask later(Runnable callback, long delay) { return Bukkit.getScheduler().runTaskLater(plugin, callback, delay); }
         public Scoreboard board() { return Bukkit.getScoreboardManager() == null ? null : Bukkit.getScoreboardManager().getMainScoreboard(); }
+        public Component withRebirth(Player player, Component name) {
+            var provider = Bukkit.getServicesManager().load(ru.cherdakmd.chrdkregister.api.RebirthCountProvider.class);
+            if (provider == null) return name;
+            try {
+                return TabRebirth.append(name, provider.rebirths(player), paidRebirthHide(player), TabRebirth.hidden(player));
+            } catch (RuntimeException | LinkageError error) {
+                return name; // недоступные данные не заменяем выдуманным нулём
+            }
+        }
+    }
+    boolean paidRebirthHide(Player player) {
+        if (player == null || accessManager == null) return false;
+        int level = accessManager.store().rankLevel(player.getName(), System.currentTimeMillis());
+        var tier = level <= 0 ? null : accessManager.config().ranks().tier(level);
+        return tier != null && TabRebirth.eligible(tier.id());
     }
     private Settings settings = Settings.disabled();
     private BukkitTask refreshTask;
@@ -379,10 +395,16 @@ public final class TabListService implements Listener {
     private void applyName(Player player, boolean active, TabContext context, String format) {
         // Общий refresh/join тоже фиксирует состояние: эффект может закончиться ДО первого heartbeat.
         if (active) animatedNames.add(player.getUniqueId()); else animatedNames.remove(player.getUniqueId());
-        if (format == null || format.isBlank()) releaseName(player);
-        else deliverName(player, format.equals("%player_tagged%")
-                ? runtime.messages().markup(nameDecorator.decorate(player.getName()))
-                : renderName(runtime.messages(), format, context, player));
+        if (format == null || format.isBlank()) {
+            Component base = Component.text(player.getName());
+            Component result = runtime.withRebirth(player, base);
+            if (result.equals(base)) releaseName(player); else deliverName(player, result);
+        } else {
+            Component base = format.equals("%player_tagged%")
+                    ? runtime.messages().markup(nameDecorator.decorate(player.getName())
+                    ) : renderName(runtime.messages(), format, context, player);
+            deliverName(player, runtime.withRebirth(player, base));
+        }
     }
     private void releaseName(Player player) {
         var id = player.getUniqueId();

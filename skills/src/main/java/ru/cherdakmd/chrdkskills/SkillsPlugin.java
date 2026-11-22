@@ -244,6 +244,11 @@ public final class SkillsPlugin extends JavaPlugin {
 
     /** Регистрация публичного API: другие аддоны видят только интерфейс. */
     public void registerApi() {
+        Bukkit.getServicesManager().register(ru.cherdakmd.chrdkregister.api.RebirthCountProvider.class,
+                player -> player == null || store == null ? java.util.OptionalInt.empty()
+                        : store.progressSnapshot(player.getUniqueId().toString())
+                                .map(snapshot -> java.util.OptionalInt.of(snapshot.rebirths()))
+                                .orElseGet(java.util.OptionalInt::empty), this, ServicePriority.Normal);
         Bukkit.getServicesManager().register(ChrdkSkillsApi.class,
                 new SkillsApiImpl(service), this, ServicePriority.Normal);
         // Публичный контракт меню «Навыки» — ServicesManager.

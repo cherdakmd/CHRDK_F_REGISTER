@@ -121,6 +121,11 @@ messages:
   # labels — /labels и /profile: что игрок показывает в нике (1.4.183, дробно 1.4.186)
   # ---------------------------------------------------------------
   "labels":
+    "rebirth-usage": "<yellow>Использование: /labels rebirth</yellow>"
+    "rebirth-denied": "<red>Скрыть число перерождений в TAB могут только обладатели активного ранга Меценат или Покровитель.</red>"
+    "rebirth-hidden": "<green>Ваше число перерождений скрыто в TAB.</green>"
+    "rebirth-shown": "<green>Ваше число перерождений показывается в TAB.</green>"
+    "rebirth-failed": "<red>Не удалось сохранить настройку. Проверьте лог сервера.</red>"
     "header": "<gold>Оформление ника</gold> <dark_gray>·</dark_gray> <gray>что видят другие в табе и чате</gray>"
     "status-line": "<gray>%name%: %value%</gray>"
     "name-rank": "<white>Ранг</white> <dark_gray>(название и знак ступени)</dark_gray>"

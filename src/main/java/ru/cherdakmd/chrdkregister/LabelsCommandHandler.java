@@ -34,7 +34,7 @@ public final class LabelsCommandHandler implements CommandExecutor, TabCompleter
             "rank", "classes", "guilds",
             "quests", "achievements", "header",
             "badges", "all", "on", "off", "reset", "status", "menu",
-            "color", "order", "preset");
+            "color", "order", "preset", "rebirth");
 
     private final RegisterPlugin plugin;
     private final LabelPreferences preferences;
@@ -70,6 +70,23 @@ public final class LabelsCommandHandler implements CommandExecutor, TabCompleter
             return true;
         }
         String option = args[0].toLowerCase(Locale.ROOT);
+        if (option.equals("rebirth")) {
+            if (args.length != 1) { messages.send(player, "labels.rebirth-usage"); return true; }
+            if (plugin.tabList() == null || !plugin.tabList().paidRebirthHide(player)) {
+                messages.send(player, "labels.rebirth-denied");
+                return true;
+            }
+            try {
+                boolean hidden = !TabRebirth.hidden(player);
+                TabRebirth.setHidden(player, hidden);
+                messages.send(player, hidden ? "labels.rebirth-hidden" : "labels.rebirth-shown");
+                plugin.refreshTab();
+            } catch (RuntimeException error) {
+                plugin.getLogger().log(java.util.logging.Level.WARNING, "Не удалось сохранить настройку TAB", error);
+                messages.send(player, "labels.rebirth-failed");
+            }
+            return true;
+        }
         if (option.equals("status")) {
             sendStatus(player);
             return true;
