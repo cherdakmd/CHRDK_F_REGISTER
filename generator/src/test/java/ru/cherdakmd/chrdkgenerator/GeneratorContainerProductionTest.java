@@ -48,6 +48,34 @@ class GeneratorContainerProductionTest {
         assertEquals(3000, p.burnMillis());
         assertEquals(slots, p.slots());
     }
+    @Test void productionSnapshotSurvivesRestartAndFailedWrite() throws Exception {
+        var dir = java.nio.file.Files.createTempDirectory("generator-production-");
+        try {
+            var owner = UUID.randomUUID(); var core = UUID.randomUUID();
+            var store = new GeneratorContainerStore(dir, java.util.logging.Logger.getAnonymousLogger());
+            store.load(); assertTrue(store.create(owner, 0, core, 100));
+            var stock = new ArrayList<>(store.view(owner, 0).slots());
+            stock.set(36, new GeneratorContainerStore.Stack("COAL", 2));
+            assertTrue(store.settle(owner, 0, core, 0, stock, 0, 100));
+            var before = store.view(owner, 0); var p = plan(before, 5100, 100);
+            var tmp = dir.resolve("generator-containers.json.tmp");
+            java.nio.file.Files.createDirectory(tmp); java.nio.file.Files.writeString(tmp.resolve("block"), "x");
+            assertFalse(store.settle(owner, 0, core, before.revision(), p.slots(), p.burnMillis(), p.lastCalcMillis()));
+            var reopened = new GeneratorContainerStore(dir, java.util.logging.Logger.getAnonymousLogger()); reopened.load();
+            assertEquals(before, reopened.view(owner, 0));
+            java.nio.file.Files.delete(tmp.resolve("block")); java.nio.file.Files.delete(tmp);
+            assertTrue(reopened.settle(owner, 0, core, before.revision(), p.slots(), p.burnMillis(), p.lastCalcMillis()));
+            var after = new GeneratorContainerStore(dir, java.util.logging.Logger.getAnonymousLogger()); after.load();
+            assertEquals(p.slots(), after.view(owner, 0).slots());
+            assertEquals(p.burnMillis(), after.view(owner, 0).burnMillis());
+            assertEquals(p.lastCalcMillis(), after.view(owner, 0).lastCalcMillis());
+            assertFalse(after.settle(owner, 0, core, before.revision(), p.slots(), p.burnMillis(), p.lastCalcMillis()));
+        } finally {
+            try (var files = java.nio.file.Files.walk(dir)) {
+                for (var path : files.sorted(java.util.Comparator.reverseOrder()).toList()) java.nio.file.Files.deleteIfExists(path);
+            }
+        }
+    }
     @Test void fullCapacityStopsFuelConsumptionAndForgetsIdle() {
         var p = plan(view(3000, 100, 1), 5100, 0);
         assertEquals(0, p.units());
