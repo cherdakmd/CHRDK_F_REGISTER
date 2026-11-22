@@ -213,7 +213,9 @@ messages:
     "set-fail": "<red>Поле %field% или значение %value% не прошли проверку. Поля: base-price, ref-stock, min-multiplier, max-multiplier, sell-enabled, purchase-multiplier, category.</red>"
     "remove-ok": "<green>%material% удалён из витрины. Строка в config.yml не тронута; вернуть: /shopadmin restore %material%.</green>"
     "restore-ok": "<green>%material%: удаление и правки отменены, товар снова берётся из config.yml.</green>"
+    "cap-unlimited": "<gold>Суточного лимита оборота для %player% нет.</gold> <gray>Оборот за сегодня: %used% ⛁ (UTC).</gray>"
     "cap-info": "<gold>Лимит оборота %player%: </gold><aqua>%total% ⛁</aqua><gray> (использовано %used% ⛁ за сегодня, МСК-сдвиг не применяется — окно UTC).</gray><dark_gray> База %base% · ранг %rank% · престиж %prestige% · уровни %levels% · Pass %pass% · буст %boost% · донат %entitlement%.</dark_gray>"
+    "cap-target-offline": "<yellow>Игрок %player% не в сети. Для просмотра статистики выберите игрока в сети.</yellow>"
     "cap-offline": "<yellow>Игрок %player% не в сети: персональный лимит считается только для онлайн-профиля.</yellow>"
     "gui":
       "title": "<gold>Редактор каталога</gold> <gray>%page%/%pages%</gray>"

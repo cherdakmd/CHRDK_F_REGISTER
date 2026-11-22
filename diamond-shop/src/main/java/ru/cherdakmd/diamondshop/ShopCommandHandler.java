@@ -359,7 +359,7 @@ public final class ShopCommandHandler implements TabExecutor {
         if (args.length >= 2) {
             target = org.bukkit.Bukkit.getPlayerExact(args[1]);
             if (target == null) {
-                plugin.messages().send(sender, "admin.cap-offline", "player", args[1]);
+                plugin.messages().send(sender, "admin.cap-target-offline", "player", args[1]);
                 return;
             }
         } else if (sender instanceof Player player) {
@@ -368,12 +368,8 @@ public final class ShopCommandHandler implements TabExecutor {
             plugin.messages().send(sender, "admin.usage");
             return;
         }
-        var parts = plugin.shopService().dailyLimitBreakdown(target);
-        plugin.messages().send(sender, "admin.cap-info",
+        plugin.messages().send(sender, "admin.cap-unlimited",
                 "player", target.getName(),
-                "base", parts.base(), "rank", parts.rank(), "prestige", parts.prestige(),
-                "levels", parts.levels(), "pass", parts.pass(), "boost", parts.boost(),
-                "entitlement", parts.entitlement(), "total", parts.total(),
                 "used", PriceEngine.round(plugin.shopService().store().usedToday(
                         target.getUniqueId(), System.currentTimeMillis())));
     }

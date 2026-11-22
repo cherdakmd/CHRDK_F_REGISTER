@@ -107,6 +107,20 @@ final class ShopConfigCapTest {
     }
 
     @Test
+    void oldCapSettingsDoNotAffectDiagnosticOrTradingLimit() throws Exception {
+        var yaml = shipped();
+        yaml.set("items", new ArrayList<>());
+        yaml.set("pricing.daily-cap.enabled", true);
+        yaml.set("pricing.daily-turnover-limit", 1);
+        var service = new ShopService(ShopConfig.parse(yaml, LOG), null,
+                () -> { throw new AssertionError("limit must not consult core"); },
+                () -> { throw new AssertionError("limit must not consult skills"); });
+        assertEquals(0d, service.dailyLimit(null));
+        assertEquals(new ShopCapMath.Breakdown(0, 0, 0, 0, 0, 0, 0, 0),
+                service.dailyLimitBreakdown(null));
+    }
+
+    @Test
     void everyLotCostsAtLeastTwoWholeDiamonds() throws Exception {
         var yaml = shipped();
         double spread = yaml.getDouble("pricing.spread-percent", 10.0);

@@ -64,56 +64,14 @@ public final class ShopService {
     /** Дневные акции или {@code null}, если аддон собран без них (тесты/старые вызовы). */
     public ShopPromoService promos() { return promos; }
 
-    /**
-     * Персональный дневной лимит оборота игрока в целых алмазах.
-     * {@code 0} — владелец выключил лимит ({@code daily-cap.enabled: false}).
-     * Явный {@code pricing.daily-turnover-limit > 0} зажимает лимит сверху.
-     */
+    /** Суточного лимита оборота нет; ноль — совместимый признак отсутствия лимита. */
     public double dailyLimit(Player player) {
-        // Дневной оборот больше не ограничивает заработок или покупки.
-        // Старые pricing.daily-cap.* намеренно игнорируются после обновления.
         return 0;
     }
 
-    /** Разбор лимита по источникам — для {@code /shopadmin cap} и диагностики. */
+    /** Исторический API диагностики: старые настройки больше не действуют. */
     public ShopCapMath.Breakdown dailyLimitBreakdown(Player player) {
-        ShopCapMath.Settings settings = config.dailyCap();
-        if (settings == null || !settings.enabled()) {
-            return new ShopCapMath.Breakdown(0, 0, 0, 0, 0, 0, 0, 0);
-        }
-        ShopCapMath.Breakdown parts = ShopCapMath.breakdown(settings.base(), settings, capContext(player));
-        double manual = config.dailyTurnoverLimit();
-        return manual > 0 && parts.total() > manual
-                ? new ShopCapMath.Breakdown(parts.base(), parts.rank(), parts.prestige(), parts.levels(),
-                        parts.pass(), parts.boost(), parts.entitlement(), (long) manual)
-                : parts;
-    }
-
-    /** Сбор прокачки: недоступное ядро или отсутствующий CHRDK_Skills дают нули. */
-    private ShopCapMath.Context capContext(Player player) {
-        if (player == null) {
-            return ShopCapMath.Context.NONE;
-        }
-        String name = player.getName();
-        ChrdkRegisterApi core = api.get();
-        RankBonus bonus = core == null ? RankBonus.NONE : core.rankBonus(name);
-        if (bonus == null) {
-            bonus = RankBonus.NONE;
-        }
-        int prestige = 0, level = 0;
-        var skills = skillsApi.get();
-        if (skills != null) {
-            prestige = skills.totalPrestige(player);
-            level = skills.totalLevel(player);
-        }
-        ShopCapMath.Settings settings = config.dailyCap();
-        String entitlementId = settings == null ? "" : settings.entitlementId();
-        boolean pass = core != null && core.hasActivePass(name);
-        boolean boost = core != null && core.rewardBoostRemainingMillis(name) > 0;
-        boolean entitlement = core != null && entitlementId != null && !entitlementId.isEmpty()
-                && core.hasEntitlement(name, entitlementId);
-        return new ShopCapMath.Context(bonus.level(), bonus.xpPercent(), bonus.dropPercent(),
-                bonus.extraSkill(), prestige, level, pass, boost, entitlement);
+        return new ShopCapMath.Breakdown(0, 0, 0, 0, 0, 0, 0, 0);
     }
     public double priceOf(ShopConfig.ShopItem item) {
         return PriceEngine.price(item.basePrice(), store.stockOf(item, System.currentTimeMillis(), config.stockRecoveryPerHour()),
