@@ -18,19 +18,16 @@ import java.util.UUID;
  * Честный PvE-вклад с журналом и наградами (перенос из классов, п.28):
  * реальный урон по естественным врагам копит журнал вклада ({@code pve} в
  * skills.json) и выдаёт бонусные очки общего пула — награду за вклад. Временные
- * цели и PvP не считаются, вклад по одному мобу ограничен его здоровьем,
- * награда очками — дневной потолок ({@link BranchMath#PVE_DAILY_POINTS}).
+ * цели и PvP не считаются, вклад по одному мобу ограничен его здоровьем.
+ * Суточного лимита награды очками нет.
  */
 final class PveContributionListener implements Listener {
 
-    private static final long DAY_MS = 86_400_000L;
     private static final int MAX_TRACKED_MOBS = 2_048;
 
     private final SkillsPlugin plugin;
     /** Моб → игрок → суммарный реальный урон. */
     private final Map<UUID, Map<UUID, Double>> hits = new HashMap<>();
-    /** Игрок → [календарный день, выданные сегодня очки]. */
-    private final Map<UUID, int[]> daily = new HashMap<>();
 
     PveContributionListener(SkillsPlugin plugin) {
         this.plugin = plugin;
@@ -70,40 +67,12 @@ final class PveContributionListener implements Listener {
         }
     }
 
-    /** Вклад идёт в журнал всегда; очки — только в пределах дневного потолка. */
+    /** Вклад и очки попадают в один снимок; дневного ограничения нет. */
     private void award(Player player, long units) {
-        int due = plugin.skills().addPve(player, units);
-        if (due <= 0) {
-            return;
-        }
-        int granted = Math.min(due, dailyAllowance(player));
-        if (granted <= 0) {
-            return;
-        }
-        plugin.skills().grantBonusPoints(player, granted);
-        recordDaily(player, granted);
+        int granted = plugin.skills().awardPve(player, units);
+        if (granted <= 0) return;
         plugin.messages().send(player, "pve-award",
                 "points", granted, "pve", plugin.skills().pveContribution(player));
-    }
-
-    private int dailyAllowance(Player player) {
-        int day = (int) (System.currentTimeMillis() / DAY_MS);
-        int[] slot = daily.computeIfAbsent(player.getUniqueId(), key -> new int[]{day, 0});
-        if (slot[0] != day) {
-            slot[0] = day;
-            slot[1] = 0;
-        }
-        return Math.max(0, BranchMath.PVE_DAILY_POINTS - slot[1]);
-    }
-
-    private void recordDaily(Player player, int granted) {
-        int day = (int) (System.currentTimeMillis() / DAY_MS);
-        int[] slot = daily.computeIfAbsent(player.getUniqueId(), key -> new int[]{day, 0});
-        if (slot[0] != day) {
-            slot[0] = day;
-            slot[1] = 0;
-        }
-        slot[1] += granted;
     }
 
     private Player damager(org.bukkit.entity.Entity source) {

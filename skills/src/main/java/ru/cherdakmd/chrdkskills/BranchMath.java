@@ -15,8 +15,6 @@ public final class BranchMath {
     static final long RESPEC_PRICE = 2_500L;
     /** Бонусное очко общего пула за каждые единиц честного PvE-вклада. */
     static final int PVE_PER_POINT = 500;
-    /** Дневной потолок бонусных очков за PvE-вклад. */
-    static final int PVE_DAILY_POINTS = 10;
     static final int RANK_MIN = 1;
     static final int RANK_MAX = 10;
 

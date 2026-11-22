@@ -117,8 +117,9 @@ public final class SkillService {
      * (уровни навыков + престиж), честный PvE-вклад добавляет бонусные очки.
      */
     public int freeAttributePoints(Player player) {
-        return Math.max(0, attributePoints(player) + bonusPoints(player)
-                - store.spentAttributes(key(player)) - store.spentBranches(key(player)));
+        long free = (long) attributePoints(player) + bonusPoints(player)
+                - store.spentAttributesLong(key(player)) - store.spentBranches(key(player));
+        return (int) Math.max(0L, Math.min(Integer.MAX_VALUE, free));
     }
 
     /** Вложенные очки атрибута. */
@@ -201,15 +202,20 @@ public final class SkillService {
     }
 
     /**
-     * Прибавляет единицы честного PvE-вклада и возвращает число выданных
-     * бонусных очков пула ({@link BranchMath#PVE_PER_POINT}). Дневной потолок
-     * очков и честность события проверяет вызывающий слушатель.
+     * Устаревший метод учёта вклада: возвращает число пройденных порогов,
+     * но не выдаёт очки. Новый код использует атомарный {@link #awardPve}.
      */
     public int addPve(Player player, long units) {
         if (player == null || units <= 0) return 0;
         long before = store.pve(key(player));
         long after = store.addPve(key(player), units);
-        return (int) (after / BranchMath.PVE_PER_POINT - before / BranchMath.PVE_PER_POINT);
+        return (int) Math.min(Integer.MAX_VALUE,
+                after / BranchMath.PVE_PER_POINT - before / BranchMath.PVE_PER_POINT);
+    }
+
+    /** Атомарно учитывает PvE-вклад и выдаёт очки за новые пороги. */
+    public int awardPve(Player player, long units) {
+        return player == null ? 0 : store.awardPve(key(player), units);
     }
 
     /** Выдаёт бонусные очки общего пула (награда за вклад). */

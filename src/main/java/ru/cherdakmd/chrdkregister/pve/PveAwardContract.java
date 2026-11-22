@@ -20,7 +20,8 @@ public final class PveAwardContract {
     /** Минимальный вклад: 20 % здоровья моба, но не более 20 единиц. */
     public static final double CONTRIBUTION_FRACTION = 0.20;
     public static final double CONTRIBUTION_FLAT_CAP = 20.0;
-    /** Общий дневной бюджет начислений на игрока по всем получателям. */
+    /** Историческое значение для совместимости; общий дневной лимит не применяется. */
+    @Deprecated
     public static final int DAILY_AWARD_CAP = 2_000;
 
     private PveAwardContract() {

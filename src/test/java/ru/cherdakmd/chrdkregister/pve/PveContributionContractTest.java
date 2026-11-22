@@ -86,8 +86,8 @@ class PveContributionContractTest {
     }
 
     @Test
-    void otherRecipientsShareTheSameDailyBudget() {
-        // CLASS_XP и SKILL_XP идут в один реестр, а не в два независимых лимита.
+    void historicalDailyBudgetDoesNotBlockAnotherRecipient() {
+        // Старый общий порог больше не ограничивает SKILL_XP.
         for (int i = 0; i < PveAwardContract.DAILY_AWARD_CAP; i++) {
             PveDeathEvidence each = new PveDeathEvidence(PLAYER, UUID.randomUUID(),
                     1_000L, DAY, true, true, true, false, false, false, true,
@@ -95,8 +95,8 @@ class PveContributionContractTest {
             PveAwardLedger.shared().register(PLAYER,
                     PveAwardContract.receipt(each.deathId(), PveRecipient.CLASS_XP, DAY));
         }
-        assertFalse(PveContributionContract.register(accepted(),
+        assertTrue(PveContributionContract.register(accepted(),
                 PveContributionContract.verify(accepted())),
-                "общий дневной бюджет исчерпан");
+                "старый дневной бюджет не ограничивает награду");
     }
 }

@@ -8,13 +8,11 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Общий реестр квитанций PvE-наград: один дневной бюджет на игрока <b>по всем
- * получателям</b>.
+ * Общий реестр квитанций PvE-наград: защита от повторного начисления.
  *
  * <p>{@link #shared()} — единственный экземпляр в рантайме. Класс живёт в ядре
- * CHRDK_Core, а модули подключаются через {@code compileOnly project(':')},
- * поэтому их обработчики смерти видят один и тот же реестр и не создают шесть
- * независимых дневных лимитов. Конструктор открыт для изолированных JVM-тестов
+ * CHRDK_Core, а модули подключаются через {@code compileOnly project(':')}.
+ * Дневной бюджет наград больше не применяется. Конструктор открыт для изолированных JVM-тестов
  * и сценариев, где общий экземпляр не нужен.</p>
  *
  * <p>Реестр хранит <b>только текущий день UTC</b>: при смене дня квитанции и
@@ -42,9 +40,8 @@ public final class PveAwardLedger {
     }
 
     /**
-     * Регистрирует награду. {@code false} — квитанция уже есть или общий
-     * дневной бюджет исчерпан; в этом случае вызывающий модуль пропускает
-     * начисление. Численные награды модулей не меняются.
+     * Регистрирует награду. {@code false} — невалидный ввод или квитанция
+     * уже есть. Статистика единиц не ограничивает начисление.
      */
     public synchronized boolean register(UUID playerId, PveReceipt receipt) {
         if (playerId == null || receipt == null) {
@@ -58,11 +55,8 @@ public final class PveAwardLedger {
             return false;
         }
         int already = spent.getOrDefault(playerId, 0);
-        if (already + receipt.units() > PveAwardContract.DAILY_AWARD_CAP) {
-            mine.remove(receipt.key());
-            return false;
-        }
-        spent.put(playerId, already + receipt.units());
+        // Saturation applies only to the diagnostic counter, never to awards.
+        spent.put(playerId, (int) Math.min(Integer.MAX_VALUE, (long) already + receipt.units()));
         trim();
         return true;
     }

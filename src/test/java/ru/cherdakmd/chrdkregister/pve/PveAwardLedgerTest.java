@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Общий реестр: дубликаты, бюджет по всем получателям, смена дня. */
+/** Общий реестр: дубликаты, статистика по всем получателям, смена дня. */
 class PveAwardLedgerTest {
 
     private static final UUID PLAYER = UUID.fromString("44444444-4444-4444-4444-444444444444");
@@ -43,7 +43,7 @@ class PveAwardLedgerTest {
     }
 
     @Test
-    void differentRecipientsForOneDeathShareTheBudget() {
+    void differentRecipientsForOneDeathAreDistinct() {
         PveAwardLedger ledger = new PveAwardLedger();
         UUID death = UUID.randomUUID();
         for (PveRecipient recipient : PveRecipient.values()) {
@@ -54,19 +54,29 @@ class PveAwardLedgerTest {
     }
 
     @Test
-    void dailyCapIsSharedAcrossAllRecipients() {
+    void historicalBudgetDoesNotBlockDistinctReceipts() {
         PveAwardLedger ledger = new PveAwardLedger();
         for (int i = 0; i < PveAwardContract.DAILY_AWARD_CAP; i++) {
             assertTrue(ledger.register(PLAYER,
                     receipt(UUID.randomUUID(), PveRecipient.BATTLEPASS, DAY)));
         }
-        assertEquals(PveAwardContract.DAILY_AWARD_CAP, ledger.spent(PLAYER));
-        assertFalse(ledger.register(PLAYER,
-                receipt(UUID.randomUUID(), PveRecipient.PERK_POWDER, DAY)));
-        assertEquals(PveAwardContract.DAILY_AWARD_CAP, ledger.spent(PLAYER));
-        assertTrue(ledger.register(OTHER,
-                receipt(UUID.randomUUID(), PveRecipient.PERK_POWDER, DAY)),
-                "бudget считается на игрока, а не на весь сервер");
+        UUID death = UUID.randomUUID();
+        var next = receipt(death, PveRecipient.PERK_POWDER, DAY);
+        assertTrue(ledger.register(PLAYER, next));
+        assertFalse(ledger.register(PLAYER, next), "защита от повтора сохраняется");
+        assertEquals(PveAwardContract.DAILY_AWARD_CAP + 1, ledger.spent(PLAYER));
+        assertTrue(ledger.register(OTHER, next));
+    }
+
+    @Test
+    void diagnosticCounterSaturatesWithoutBlockingRewards() {
+        var ledger = new PveAwardLedger();
+        var first = new PveReceipt(UUID.randomUUID(), PveRecipient.BATTLEPASS, DAY, Integer.MAX_VALUE);
+        var second = receipt(UUID.randomUUID(), PveRecipient.PERK_POWDER, DAY);
+        assertTrue(ledger.register(PLAYER, first));
+        assertTrue(ledger.register(PLAYER, second));
+        assertEquals(Integer.MAX_VALUE, ledger.spent(PLAYER));
+        assertFalse(ledger.register(PLAYER, first));
     }
 
     @Test

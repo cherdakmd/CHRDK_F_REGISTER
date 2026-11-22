@@ -88,7 +88,7 @@ public final class SkillStore {
 
         /** Кладёт очки атрибута; отрицательный итог зажимается к нулю. */
         public void addAttribute(PlayerAttribute attribute, int points) {
-            int next = Math.max(0, attribute(attribute) + points);
+            int next = (int) Math.max(0L, Math.min(Integer.MAX_VALUE, (long) attribute(attribute) + points));
             switch (attribute) {
                 case STRENGTH -> strength = next;
                 case AGILITY -> agility = next;
@@ -99,8 +99,12 @@ public final class SkillStore {
         }
 
         /** Суммарно вложенные очки всех атрибутов. */
+        public long spentAttributesLong() {
+            return (long) strength + agility + stamina + wisdom + cunning;
+        }
+
         public int spentAttributes() {
-            return strength + agility + stamina + wisdom + cunning;
+            return (int) Math.min(Integer.MAX_VALUE, spentAttributesLong());
         }
 
         /** Уровень ветки билда. */
@@ -224,7 +228,7 @@ public final class SkillStore {
                     for (PlayerAttribute attribute : PlayerAttribute.values()) {
                         Object value = attributeRows.get(attribute.id());
                         if (value instanceof Number number) {
-                            player.addAttribute(attribute, Math.max(0, Math.min(100_000, number.intValue())));
+                            player.addAttribute(attribute, (int) Math.max(0L, Math.min(Integer.MAX_VALUE, number.longValue())));
                         }
                     }
                 }
@@ -237,7 +241,7 @@ public final class SkillStore {
                     }
                 }
                 if (row.get("bonusPoints") instanceof Number number) {
-                    player.bonusPoints = Math.max(0, Math.min(100_000, number.intValue()));
+                    player.bonusPoints = (int) Math.max(0L, Math.min(Integer.MAX_VALUE, number.longValue()));
                 }
                 if (row.get("pve") instanceof Number number) {
                     player.pve = Math.max(0L, number.longValue());
@@ -369,12 +373,19 @@ public final class SkillStore {
         return data == null ? 0 : data.spentAttributes();
     }
 
+    /** Полная сумма для расчёта остатка без переполнения int. */
+    public synchronized long spentAttributesLong(String playerKey) {
+        PlayerData data = players.get(playerKey);
+        return data == null ? 0 : data.spentAttributesLong();
+    }
+
     /** Вкладывает очки в атрибут; {@code false} — нет игрока, атрибута или очков. */
     public synchronized boolean addAttribute(String playerKey, PlayerAttribute attribute, int points) {
         if (playerKey == null || attribute == null || points <= 0) {
             return false;
         }
         PlayerData data = players.computeIfAbsent(playerKey, key -> new PlayerData());
+        if ((long) data.attribute(attribute) + points > Integer.MAX_VALUE) return false;
         data.addAttribute(attribute, points);
         dirty = true;
         return true;
@@ -437,7 +448,7 @@ public final class SkillStore {
     public synchronized void addBonusPoints(String playerKey, int points) {
         if (playerKey == null) return;
         PlayerData data = players.computeIfAbsent(playerKey, key -> new PlayerData());
-        data.bonusPoints = Math.max(0, data.bonusPoints + points);
+        data.bonusPoints = (int) Math.max(0L, Math.min(Integer.MAX_VALUE, (long) data.bonusPoints + points));
         dirty = true;
     }
 
@@ -451,9 +462,25 @@ public final class SkillStore {
     public synchronized long addPve(String playerKey, long units) {
         if (playerKey == null) return 0L;
         PlayerData data = players.computeIfAbsent(playerKey, key -> new PlayerData());
-        data.pve = Math.max(0L, data.pve + units);
+        if (units > 0 && units > Long.MAX_VALUE - data.pve) data.pve = Long.MAX_VALUE;
+        else if (units < 0 && units < -data.pve) data.pve = 0;
+        else data.pve += units;
         dirty = true;
         return data.pve;
+    }
+
+    /** Вклад и заработанные очки обновляются вместе относительно фонового сохранения. */
+    public synchronized int awardPve(String playerKey, long units) {
+        if (playerKey == null || units <= 0) return 0;
+        PlayerData data = players.computeIfAbsent(playerKey, key -> new PlayerData());
+        long before = data.pve;
+        long after = units > Long.MAX_VALUE - before ? Long.MAX_VALUE : before + units;
+        long due = after / BranchMath.PVE_PER_POINT - before / BranchMath.PVE_PER_POINT;
+        int awarded = (int) Math.min(due, (long) Integer.MAX_VALUE - data.bonusPoints);
+        data.pve = after;
+        data.bonusPoints += awarded;
+        dirty = true;
+        return awarded;
     }
 
     /**
@@ -469,7 +496,7 @@ public final class SkillStore {
             return false;
         }
         data.classConverted = true;
-        data.bonusPoints = Math.max(0, data.bonusPoints + points);
+        data.bonusPoints = (int) Math.max(0L, Math.min(Integer.MAX_VALUE, (long) data.bonusPoints + points));
         dirty = true;
         return true;
     }

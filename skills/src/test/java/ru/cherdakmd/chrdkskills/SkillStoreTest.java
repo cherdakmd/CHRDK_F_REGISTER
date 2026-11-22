@@ -113,6 +113,53 @@ class SkillStoreTest {
     }
 
     @Test
+    void pvePointsAreNotCappedPerDayAndPersistAboveOldLoadLimit() {
+        SkillStore store = new SkillStore(folder, LOGGER);
+        assertEquals(12, store.awardPve(PLAYER, 6_000));
+        assertEquals(0, store.awardPve(PLAYER, 499));
+        assertEquals(1, store.awardPve(PLAYER, 1));
+        store.addBonusPoints(PLAYER, 100_000);
+        store.flush();
+        SkillStore restored = new SkillStore(folder, LOGGER);
+        restored.load();
+        assertEquals(100_013, restored.bonusPoints(PLAYER));
+        assertEquals(6_500, restored.pve(PLAYER));
+        assertEquals(1, restored.awardPve(PLAYER, 500));
+        assertEquals(100_014, restored.bonusPoints(PLAYER));
+    }
+
+    @Test
+    void largeAttributeValuesRoundTripAndTotalsDoNotOverflow() {
+        SkillStore store = new SkillStore(folder, LOGGER);
+        assertTrue(store.addAttribute(PLAYER, PlayerAttribute.STRENGTH, Integer.MAX_VALUE));
+        assertFalse(store.addAttribute(PLAYER, PlayerAttribute.STRENGTH, 1));
+        assertTrue(store.addAttribute(PLAYER, PlayerAttribute.AGILITY, 200_000));
+        assertEquals((long) Integer.MAX_VALUE + 200_000, store.spentAttributesLong(PLAYER));
+        assertEquals(Integer.MAX_VALUE, store.spentAttributes(PLAYER));
+        store.flush();
+        SkillStore restored = new SkillStore(folder, LOGGER);
+        restored.load();
+        assertEquals(Integer.MAX_VALUE, restored.attribute(PLAYER, PlayerAttribute.STRENGTH));
+        assertEquals(200_000, restored.attribute(PLAYER, PlayerAttribute.AGILITY));
+        assertEquals((long) Integer.MAX_VALUE + 200_000, restored.spentAttributesLong(PLAYER));
+    }
+
+    @Test
+    void pveAndPointCountersSaturateWithoutOverflow() {
+        SkillStore store = new SkillStore(folder, LOGGER);
+        store.addBonusPoints(PLAYER, Integer.MAX_VALUE - 1);
+        assertEquals(1, store.awardPve(PLAYER, Long.MAX_VALUE));
+        assertEquals(Integer.MAX_VALUE, store.bonusPoints(PLAYER));
+        assertEquals(Long.MAX_VALUE, store.pve(PLAYER));
+        assertEquals(0, store.awardPve(PLAYER, 1));
+        store.flush();
+        SkillStore restored = new SkillStore(folder, LOGGER);
+        restored.load();
+        assertEquals(Integer.MAX_VALUE, restored.bonusPoints(PLAYER));
+        assertEquals(Long.MAX_VALUE, restored.pve(PLAYER));
+    }
+
+    @Test
     void setXpNeverGoesBelowZero() {
         SkillStore store = new SkillStore(folder, LOGGER);
         store.setXp(PLAYER, SkillType.MINING, 100);

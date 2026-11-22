@@ -726,7 +726,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         List<Component> lore = new ArrayList<>();
         lore.add(plugin.messages().get("points-gui-free",
                 "points", String.valueOf(service.freeAttributePoints(player)),
-                "total", String.valueOf(service.attributePoints(player) + service.bonusPoints(player))));
+                "total", String.valueOf((long) service.attributePoints(player) + service.bonusPoints(player))));
         lore.addAll(extra);
         meta.lore(lore);
         item.setItemMeta(meta);
@@ -743,7 +743,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
                 plugin.messages().get("attrs-gui-desc-" + attribute.id()),
                 plugin.messages().get("points-gui-free",
                         "points", String.valueOf(service.freeAttributePoints(player)),
-                        "total", String.valueOf(service.attributePoints(player) + service.bonusPoints(player))),
+                        "total", String.valueOf((long) service.attributePoints(player) + service.bonusPoints(player))),
                 plugin.messages().get("points-gui-hint-add"),
                 plugin.messages().get("points-gui-hint-add5")));
         item.setItemMeta(meta);
@@ -773,7 +773,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         }
         lore.add(plugin.messages().get("points-gui-free",
                 "points", String.valueOf(service.freeAttributePoints(player)),
-                "total", String.valueOf(service.attributePoints(player) + service.bonusPoints(player))));
+                "total", String.valueOf((long) service.attributePoints(player) + service.bonusPoints(player))));
         lore.add(plugin.messages().get("points-gui-hint-add"));
         lore.add(plugin.messages().get("points-gui-hint-add5"));
         meta.lore(lore);
