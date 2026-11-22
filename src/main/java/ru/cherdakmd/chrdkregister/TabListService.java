@@ -644,7 +644,7 @@ public final class TabListService implements Listener {
                         accessManager.getStage(player) == AccessManager.PlayerStage.AUTHENTICATED,
                         accessManager.getStage(player) == AccessManager.PlayerStage.AUTHENTICATED && plugin.bank() != null && plugin.bank().enabled()
                                 ? plugin.bank().balance(player) : -1,
-                        accessManager.getStage(player) == AccessManager.PlayerStage.AUTHENTICATED ? accessManager.store().rewardBoostRemaining(player.getName()) : 0,
+                        0, // Старый буст не действует; его остаток ожидает компенсации.
                         tps, Bukkit.getAverageTickTime(), player.getPing(), worldName(player)),
                 plugin.moderation() == null
                         ? "0/" + ModerationLedger.DEFAULT_WARN_LIMIT

@@ -46,8 +46,8 @@ vk:
   chat-toggled: "<gray>Отображение сообщений беседы <aqua>[ВК-чат]</aqua> и записей стены: %state%.</gray>"
   mentions-toggled: "<gray>Пересылка упоминаний <aqua>@ваш_ник</aqua> в беседу ВК: %state%.</gray>"
 
-  boost-link-granted: "<green>✦ Бонус за привязку ВКонтакте: не-боевой буст <gold>x2 XP</gold> на <white>%hours% ч.</white> активирован!</green>"
-  boost-member-granted: "<green>✦ Спасибо за подписку на группу ВК! Буст <gold>x2 XP</gold> на <white>%hours% ч.</white> и значок в <white>/labels</white> разблокированы!</green>"
+  boost-link-granted: "<green>✦ Бонус за привязку ВКонтакте: <white>%hours% ч.</white> старого буста ожидают компенсации в /bal.</green>"
+  boost-member-granted: "<green>✦ Спасибо за подписку на группу ВК! <white>%hours% ч.</white> старого буста ожидают компенсации в /bal; значок в <white>/labels</white> разблокирован.</green>"
 
   wall-broadcast: "<#0077FF>[ВК]</#0077FF> <white>Новая запись в группе:</white> <gray>%preview%</gray> <click:open_url:'%post_url%'><hover:show_text:'<aqua>Открыть запись ВКонтакте</aqua>'><aqua><underlined>[Читать ↗]</underlined></aqua></hover></click>"
 

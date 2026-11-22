@@ -361,7 +361,7 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi, IncomeSourceLineag
 
     @Override
     public long rewardBoostRemainingMillis(String playerName) {
-        return accessManager.store().rewardBoostRemaining(playerName);
+        return 0L; // Старые часы — денежное обязательство, а не действующий XP-буст.
     }
 
     @Override

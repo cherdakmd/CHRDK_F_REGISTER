@@ -36,8 +36,8 @@ battlepass:
   "state-claimed": "<dark_gray>✔</dark_gray>"
   "bar-filled": "<green>%bars%</green>"
   "bar-empty": "<dark_gray>%bars%</dark_gray>"
-  "reward-free": "<green>+%hours% ч. буста</green>"
-  "reward-vip": "<light_purple>VIP +%hours% ч. буста</light_purple>"
+  "reward-free": "<green>%hours% ч. → компенсация в /bal</green>"
+  "reward-vip": "<light_purple>VIP %hours% ч. → компенсация в /bal</light_purple>"
   "reward-both": "<green>+%free% ч.</green> <light_purple>(VIP +%vip% ч.)</light_purple>"
   "reward-premium-hours": "<gold>★ +%hours% ч.</gold>"
   "reward-premium-item": "<gold>★ подарок</gold>"
@@ -49,7 +49,7 @@ battlepass:
   "footer-vip-locked": "<dark_gray>VIP-награды (%count%) откроются с рангом —</dark_gray> <yellow>/pass menu</yellow>"
   "footer-idle": "<dark_gray>Награды открываются по мере прогресса и доступны весь сезон.</dark_gray>"
   "points-footer": "<dark_gray>Очки сезона:</dark_gray> <gold>%points%</gold> <dark_gray>·</dark_gray> <dark_gray>выполнено заданий:</dark_gray> <white>%completed%</white>"
-  "reward": "<green>Награда получена:</green> %desc% <dark_gray>·</dark_gray> <green>+%hours% ч. буста</green> <gray>• только онлайн; запас — /profile</gray>"
+  "reward": "<green>Награда принята:</green> %desc% <dark_gray>·</dark_gray> <gray>%hours% ч. старого буста ожидают автоматической компенсации в /bal.</gray>"
   "reward-products": "<green>Награда получена:</green> %desc% <dark_gray>·</dark_gray> <gold>подарки активированы</gold>"
   "vip-denied": "<yellow>%desc%: VIP-награда (+%hours% ч.) — только для владельцев ранга.</yellow>"
   "not-ready": "<yellow>%desc%: ещё не выполнено (%progress%/%target%).</yellow>"
@@ -60,7 +60,7 @@ battlepass:
   "no-core": "<red>Ядро сервера сейчас недоступно — награду выдать нельзя. Попробуйте позже.</red>"
   "no-permission": "<red>У вас нет доступа к батлпассу.</red>"
   "usage": "<yellow>Использование: /%label% [menu|tasks|rewards|progress|top|info <id>|claim [id|all]|help]</yellow>"
-  "claim-all-summary": "<green>Забрано наград: %count%</green> <dark_gray>·</dark_gray> <green>+%hours% ч. буста</green> <gray>• только онлайн; запас — /profile</gray>"
+  "claim-all-summary": "<green>Принято наград: %count%</green> <dark_gray>·</dark_gray> <gray>%hours% ч. старого буста ожидают компенсации в /bal.</gray>"
   "claim-all-products": "<green>Забрано наград: %count%</green> <dark_gray>·</dark_gray> <gold>подарки активированы</gold>"
   "claim-all-empty": "<yellow>Готовых наград нет: сначала выполните задания.</yellow> <gray>Прогресс —</gray> <yellow>/battlepass</yellow>"
   "claim-all-vip-only": "<yellow>VIP-награды (%count%) ждут ранг — других наград к получению нет.</yellow>"
@@ -76,7 +76,7 @@ battlepass:
     - "<yellow>/%label% claim <id></yellow> <gray>— забрать награду за одно задание</gray>"
     - "<yellow>/%label% info <id></yellow> <gray>— подробности задания: цель, награды, очки, условия</gray>"
     - "<yellow>/%label% top</yellow> <gray>— рейтинг сезона по очкам</gray>"
-    - "<dark_gray>Награды выдаются часами буста; VIP-ветка доступна владельцам активного ранга.</dark_gray>"
+    - "<dark_gray>Часы старого буста компенсируются на /bal; VIP-ветка доступна владельцам активного ранга.</dark_gray>"
 
   "info-header": "%desc%"
   "info-line": "<dark_gray>Задание</dark_gray> <white>%id%</white> <dark_gray>·</dark_gray> <gray>волна</gray> <white>%week%</white> <dark_gray>·</dark_gray> <gray>тип</gray> <white>%type%</white>"
@@ -131,7 +131,7 @@ battlepass:
 
   "wave-opened": "<gold><bold>Открылась новая волна — %week%!</bold></gold> <gray>Задания уже в</gray> <yellow>/battlepass</yellow>"
   "actionbar-completed": "<green>✔ Задание выполнено — /battlepass claim</green>"
-  "actionbar-claimed": "<green>+%hours% ч. буста</green>"
+  "actionbar-claimed": "<green>%hours% ч. → компенсация в /bal</green>"
   "actionbar-wave": "<gold>Новая волна: %week%</gold>"
 
   "admin-reloaded": "<green>Батлпасс перечитан: волн %weeks%, заданий %missions%.</green>"
@@ -183,7 +183,7 @@ battlepass:
   "guide-claim-lore": ["<gray>Забрать выполненные доступные ветки.</gray>", "<gray>Права и прогресс проверяются заново.</gray>", "<yellow>Целый приз не помещается? Он подождёт.</yellow>"]
   "guide-tracks": ["<green>Бесплатная дорожка: всем.</green>", "<light_purple>VIP: дополнительно при активном ранге.</light_purple>", "<gold>Премиум: покупка пропуска или ранг IV–V.</gold>", "<gray>Премиум не выполняет задания за вас.</gray>", "<yellow>Нажмите: магазин. Это не покупка.</yellow>"]
   "guide-bank": "<green>Что даёт приз и где он хранится?</green>"
-  "guide-bank-lore": ["<gray>Отдельный игровой буст: +10% XP.</gray>", "<gray>Работает на обычный XP, профессии и навыки.</gray>", "<gray>Остаток в банке: %minutes% минут.</gray>", "<gray>Время идёт только онлайн после входа.</gray>", "<gray>Не продлевает ранг и платные покупки.</gray>", "<gray>Время буста копится без игрового потолка.</gray>", "<gray>Алмазы зачисляются на личный /bal.</gray>", "<gray>Неполученные призы ждут в заданиях.</gray>", "<gray>Пустые слоты инвентаря не требуются.</gray>"]
+  "guide-bank-lore": ["<gray>Старый игровой XP-буст больше не действует.</gray>", "<gray>Его часы автоматически компенсируются на /bal.</gray>", "<gray>Курс: 150 алмазов за час.</gray>", "<gray>Выплата может ожидать доступности банка.</gray>", "<gray>Ранг и платные покупки не меняются.</gray>", "<gray>Неполученные призы ждут в заданиях.</gray>"]
   "guide-recommended": "<yellow>Что сделать сейчас?</yellow>"
   "guide-recommended-lore": ["%desc%", "<gray>Счётчик: %progress%/%target%</gray>", "<yellow>Нажмите: условия и награды.</yellow>"]
   "guide-reward-page": "<gold>Награды · страница %page%/%pages%</gold>"
@@ -198,8 +198,8 @@ battlepass:
   "guide-access-locked": "Нужен доступ к дорожке"
   "guide-in-progress": "Сначала выполните цель"
   "guide-ready": "Можно забрать"
-  "guide-track-reward": "<gold>%track% · %hours% ч. буста · %diamonds% 💠</gold>"
-  "guide-track-lore": ["<gray>Статус: %state%</gray>", "<gray>Приз: %hours% ч. буста + %diamonds% 💠 в /bal.</gray>", "<yellow>Нажмите: условия задания.</yellow>"]
+  "guide-track-reward": "<gold>%track% · %hours% ч. к компенсации · %diamonds% 💠</gold>"
+  "guide-track-lore": ["<gray>Статус: %state%</gray>", "<gray>Приз: %hours% ч. к компенсации и %diamonds% 💠 в /bal.</gray>", "<yellow>Нажмите: условия задания.</yellow>"]
   "guide-detail": "<dark_gray>Задание · условия и награды</dark_gray>"
   "guide-conditions": ["<gray>Прогресс: %progress%/%target% · осталось: %remaining%</gray>", "<gray>За выполнение: %points% очков сезона.</gray>", "<gray>Миры: %worlds%</gray>", "<gray>Право: %permission%</gray>", "<gray>Открытие: день %day% · %date% UTC</gray>", "<yellow>Точные цели — значок подзорной трубы справа.</yellow>"]
   "guide-any-world": "Любой мир"
@@ -211,7 +211,7 @@ battlepass:
   "guide-fair": "<yellow>Почему счётчик может не расти?</yellow>"
   "guide-fair-lore": ["<gray>Проверьте дату открытия и список целей.</gray>", "<gray>Мир и права могут ограничивать задание.</gray>", "<gray>Креатив по умолчанию не засчитывается.</gray>", "<gray>Свои недавно поставленные блоки не добыча.</gray>", "<gray>Плавка — выемка результата из печи.</gray>", "<gray>Рыбалка — пойманный улов, не взмах удочки.</gray>", "<gray>После конца сезона прогресс заморожен.</gray>", "<gray>Готовые призы остаются доступны.</gray>"]
   "menu-filter-empty": "<gray>Заданий в этом фильтре пока нет</gray>"
-  "guide-track-claim-lore": ["<gray>Статус: %state%</gray>", "<gray>Приз: %hours% ч. буста + %diamonds% 💠 в /bal.</gray>", "<yellow>Нажмите: забрать только эту дорожку.</yellow>", "<gray>Можно выбрать крупный приз первым.</gray>"]
+  "guide-track-claim-lore": ["<gray>Статус: %state%</gray>", "<gray>Приз: %hours% ч. к компенсации и %diamonds% 💠 в /bal.</gray>", "<yellow>Нажмите: забрать только эту дорожку.</yellow>", "<gray>Можно выбрать крупный приз первым.</gray>"]
 
   # Биомный атлас и наградные ранги — 1.4.281-rc.2
   "atlas-title-lifetime": "<dark_gray>Биомные достижения · навсегда</dark_gray>"
@@ -253,7 +253,7 @@ battlepass:
   "exp-menu": "<dark_gray>Особые ранги BattlePass</dark_gray>"
   "exp-free-lore": ["<gray>Получен: %owned% · навсегда.</gray>", "<gray>За завершение основной ленты BP.</gray>", "<gray>8 меток, 1 маршрут до 8 точек, компас и журнал.</gray>", "<gray>Переход между точками маршрута — вручную.</gray>", "<gray>Уникальный бирюзовый эффект, без игровой силы.</gray>"]
   "exp-premium-lore": ["<gray>Получен: %owned% · навсегда.</gray>", "<gray>Основная лента пройдена + премиум действует при выдаче.</gray>", "<gray>24 метки, 5 маршрутов до 24 точек.</gray>", "<gray>Автоматический переход к следующей точке в радиусе 4 м.</gray>", "<gray>Уникальный золотой эффект.</gray>", "<gray>Включает Экспедитора; лимиты не складываются.</gray>"]
-  "exp-condition": ["<gray>Выполните все задания основной ленты.</gray>", "<gray>Биомный атлас — дополнительная ветка, не условие ранга.</gray>", "<gray>Покупка премиума без прохождения ранг не даёт.</gray>", "<gray>Не нужно сначала потратить все часы буста.</gray>", "<gray>Оплаченные ранги I–V и их права не заменяются.</gray>"]
+  "exp-condition": ["<gray>Выполните все задания основной ленты.</gray>", "<gray>Биомный атлас — дополнительная ветка, не условие ранга.</gray>", "<gray>Покупка премиума без прохождения ранг не даёт.</gray>", "<gray>Оплаченные ранги I–V и их права не заменяются.</gray>"]
   "exp-unavailable": "<red>Выдача/запись не подтверждена. Повторите позже; повреждённые данные не удаляйте.</red>"
   "exp-not-ready": "<yellow>Для особого ранга завершите все задания основной ленты BattlePass. Биомные задания для этого не обязательны.</yellow>"
   "exp-not-owned": "<yellow>Сначала получите Экспедитора или Покорителя миров за основную ленту BP.</yellow>"

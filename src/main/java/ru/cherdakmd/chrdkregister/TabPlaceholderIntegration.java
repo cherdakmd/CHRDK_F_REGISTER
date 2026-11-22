@@ -97,8 +97,7 @@ public final class TabPlaceholderIntegration extends PlaceholderExpansion {
         String world = live == null ? "" : live.getWorld().getName();
         long balance = authenticated && bank != null && bank.enabled()
                 ? bank.balance(live) : -1;
-        long boostMillis = authenticated && access != null
-                ? access.store().rewardBoostRemaining(live.getName()) : 0;
+        long boostMillis = 0; // Остаток старого буста ожидает денежной компенсации, не действует.
 
         return switch (key) {
             case "brand" -> messages.plain("tab.brand");

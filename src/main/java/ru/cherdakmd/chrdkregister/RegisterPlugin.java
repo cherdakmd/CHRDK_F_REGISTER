@@ -133,7 +133,6 @@ public final class RegisterPlugin extends JavaPlugin {
         this.profileRegistry = new ProfileRegistry(getLogger());
         this.rewardBoosts = new RewardBoostService(this, accessManager);
         getServer().getPluginManager().registerEvents(rewardBoosts, this);
-        profileRegistry.register("reward-boost", rewardBoosts::profile);
         this.profileService = new ProfileService(this, accessManager, bankStore, profileRegistry);
         getServer().getPluginManager().registerEvents(profileService, this);
         // Автосообщения показывают баланс банка: подстановка %balance%.
