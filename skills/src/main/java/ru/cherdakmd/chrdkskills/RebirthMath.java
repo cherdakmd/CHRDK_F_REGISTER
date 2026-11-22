@@ -8,7 +8,7 @@ import java.util.List;
  * уникальные награды. Повторять можно многократно.
  *
  * <p>Условие: все десять навыков на потолке ({@code 100}). Награда за каждое
- * перерождение: титул, физические алмазы и случайный уникальный предмет из
+ * перерождение: титул, денежные алмазы и случайный уникальный предмет из
  * пула (без повторов, пока пул не исчерпан). На вехах — особые награды.</p>
  *
  * <p>Множитель опыта растёт с убывающей отдачей: {@code k}-е перерождение даёт
@@ -39,7 +39,7 @@ public final class RebirthMath {
     public static final double DEFAULT_XP_DECAY = 0.9;
     public static final double DEFAULT_XP_BONUS_CAP_PERCENT = 50.0;
 
-    /** Потолок алмазов за перерождение/веху (предметом, не в /bal). */
+    /** Потолок базовой суммы алмазов за перерождение/веху. */
     public static final int MAX_REBIRTH_DIAMONDS = 256;
     public static final int MAX_MILESTONE_DIAMONDS = 2048;
 
@@ -106,7 +106,7 @@ public final class RebirthMath {
         return safe > MILESTONES.get(MILESTONES.size() - 1) && safe % LATER_MILESTONE_STEP == 0;
     }
 
-    /** Алмазы за перерождение (предметом). */
+    /** Базовая сумма алмазов за перерождение. */
     public static int rebirthDiamonds(int configured) {
         return clamp(configured, 0, MAX_REBIRTH_DIAMONDS);
     }

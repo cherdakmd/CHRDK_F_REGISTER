@@ -98,18 +98,17 @@ final class SkillRebirthServiceTest {
         String method = service.substring(start, service.indexOf("private void giveUniqueReward", start));
 
         int confirm = method.indexOf("confirmations.consume(player.getUniqueId(), \"rebirth\", \"all\", now)");
-        int reset = method.indexOf("store.applyRebirth(key(player))");
-        int diamonds = method.indexOf("giveDiamonds(player, RebirthMath.rebirthDiamonds(");
+        int reset = method.indexOf("store.beginPaidRebirth(key(player), amount)");
         int unique = method.indexOf("giveUniqueReward(player)");
         int milestone = method.indexOf("grantMilestoneRewards(player, count)");
-        assertTrue(confirm >= 0 && reset > confirm && diamonds > reset
-                        && unique > diamonds && milestone > unique,
-                "подтверждение → полный сброс → счётчик → награды по порядку");
+        assertTrue(confirm >= 0 && reset > confirm && unique > reset && milestone > unique,
+                "подтверждение → сохранённый сброс и обязательство → уникальные награды");
+        assertFalse(method.contains("giveDiamonds("));
 
         String uniqueMethod = service.substring(service.indexOf("private void giveUniqueReward"),
                 service.indexOf("private ItemStack buildUnique"));
         assertTrue(uniqueMethod.contains("grantRebirthUnique"), "выданный id фиксируется");
-        assertTrue(uniqueMethod.contains("* 2"), "исчерпанный пул — удвоенные алмазы");
+        assertTrue(uniqueMethod.contains("Компенсация уже заморожена"), "исчерпанный пул учтён в обязательстве");
 
         String milestoneMethod = service.substring(service.indexOf("private void grantMilestoneRewards"));
         assertTrue(milestoneMethod.contains("markRebirthMilestone"), "веха одноразовая");

@@ -53,6 +53,8 @@ public final class SkillsPlugin extends JavaPlugin {
     public ru.cherdakmd.chrdkregister.api.MoneyLoot moneyLoot() { return moneyLoot; }
     private ru.cherdakmd.chrdkregister.api.MoneyLoot diamondLoot;
     public ru.cherdakmd.chrdkregister.api.MoneyLoot diamondLoot() { return diamondLoot; }
+    private ru.cherdakmd.chrdkregister.api.MoneyLoot rebirthLoot;
+    public ru.cherdakmd.chrdkregister.api.MoneyLoot rebirthLoot() { return rebirthLoot; }
 
     @Override
     public void onEnable() {
@@ -62,10 +64,18 @@ public final class SkillsPlugin extends JavaPlugin {
         // Конфиг читается до создания листенера: антинакрутка берёт из него TTL.
         reloadSkillsConfig();
         try {
-            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 47) throw new IllegalStateException("Нужен Core API 47+");
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 48) throw new IllegalStateException("Нужен Core API 48+");
             this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"skills-awards",ru.cherdakmd.chrdkregister.api.MilestoneMigration.json(getDataFolder().toPath().resolve("skills.json"),ru.cherdakmd.chrdkregister.api.MilestoneMigration.Kind.SKILLS));
             this.moneyLoot = new ru.cherdakmd.chrdkregister.api.MoneyLoot(this, this::coreApi, this::messages, "skill-crystals");
             this.diamondLoot = new ru.cherdakmd.chrdkregister.api.MoneyLoot(this, this::coreApi, this::messages, "skill-diamonds");
+            this.rebirthLoot = new ru.cherdakmd.chrdkregister.api.MoneyLoot(this, this::coreApi, this::messages, "skill-rebirth-diamonds");
+            this.rebirthLoot.onCredit((owner, minor) -> {
+                Player player = Bukkit.getPlayer(owner);
+                if (player != null && player.isOnline()) {
+                    player.sendActionBar(messages().get("diamond-bank-credit", "amount",
+                            ru.cherdakmd.chrdkregister.api.DiamondMoney.format(minor)));
+                }
+            });
             this.diamondLoot.onCredit((owner, minor) -> {
                 Player player = Bukkit.getPlayer(owner);
                 if (player != null && player.isOnline()) {
@@ -152,6 +162,11 @@ public final class SkillsPlugin extends JavaPlugin {
         this.abilityTask = Bukkit.getScheduler().runTaskTimer(this, () -> {
             abilities.pulse();
             if (xpShop != null) xpShop.payments().tick();
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                if (store.pendingRebirth(player.getUniqueId().toString()) != null) {
+                    service.reconcileRebirth(player);
+                }
+            }
         }, 20L, 20L);
 
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -172,6 +187,7 @@ public final class SkillsPlugin extends JavaPlugin {
         if (awards != null) awards.close();
         if (moneyLoot != null) moneyLoot.close();
         if (diamondLoot != null) diamondLoot.close();
+        if (rebirthLoot != null) rebirthLoot.close();
         if (xpShop != null) {
             try {
                 xpShop.payments().flushRefunds();

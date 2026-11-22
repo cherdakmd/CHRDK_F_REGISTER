@@ -51,7 +51,7 @@ public final class SkillService {
     private final EconomyConfirmations confirmations = new EconomyConfirmations();
 
     /** Результат обращения к {@link #requestRebirth}. */
-    public enum RebirthResult { DISABLED, NOT_READY, PENDING, DONE }
+    public enum RebirthResult { DISABLED, NOT_READY, PENDING, UNAVAILABLE, DONE }
 
     /** Строка топа перерождений. */
     public record RebirthEntry(String name, int count) {
@@ -287,7 +287,7 @@ public final class SkillService {
 
     /**
      * Общий исполнитель: двухшаговое подтверждение, полный сброс персонажа и
-     * награды — алмазы предметом, уникальный предмет из пула без повторов и
+     * награды — алмазы на счёт, уникальный предмет из пула без повторов и
      * особые награды на вехах.
      */
     private RebirthResult applyRebirth(Player player) {
@@ -296,12 +296,24 @@ public final class SkillService {
             confirmations.offer(player.getUniqueId(), "rebirth", "all", now);
             return RebirthResult.PENDING;
         }
-        int count = store.applyRebirth(key(player));
+        if (!reconcileRebirth(player)) return RebirthResult.UNAVAILABLE;
+        int nextCount = store.rebirths(key(player)) + 1;
+        boolean milestone = RebirthMath.milestone(nextCount)
+                && !store.claimedRebirthMilestones(key(player)).contains(nextCount);
+        var used = Set.copyOf(store.rebirthUniques(key(player)));
+        long fresh = plugin.config().rebirthUniqueItems().stream()
+                .map(SkillsConfig.UniqueItem::id).filter(id -> !used.contains(id)).distinct().count();
+        long amount = RebirthRewardPlan.amount(plugin.config().rebirthDiamondsPerRebirth(),
+                plugin.config().rebirthMilestoneDiamonds(), milestone, fresh);
+        int count = store.beginPaidRebirth(key(player), amount);
+        if (count == 0) return RebirthResult.UNAVAILABLE;
+        if (!reconcileRebirth(player)) {
+            plugin.getLogger().warning("Денежная награда перерождения ожидает восстановления для " + player.getUniqueId());
+        }
         double bonus = RebirthMath.xpBonusPercent(count,
                 plugin.config().rebirthXpPercentPerRebirth(),
                 plugin.config().rebirthXpDecay(),
                 plugin.config().rebirthXpBonusCapPercent());
-        giveDiamonds(player, RebirthMath.rebirthDiamonds(plugin.config().rebirthDiamondsPerRebirth()));
         giveUniqueReward(player);
         plugin.messages().send(player, "rebirth-done",
                 "count", String.valueOf(count),
@@ -321,6 +333,19 @@ public final class SkillService {
         return RebirthResult.DONE;
     }
 
+    boolean reconcileRebirth(Player player) {
+        if (player == null || !player.isOnline() || plugin.rebirthLoot() == null) return false;
+        try {
+            return RebirthBankPayout.reconcile(store, key(player), new RebirthBankPayout.Ledger() {
+                public Map<String, Long> reservations() { return plugin.rebirthLoot().reservations(player.getUniqueId()); }
+                public boolean accept(String event, long amount) { return plugin.rebirthLoot().accept(player, event, amount); }
+            });
+        } catch (RuntimeException | LinkageError error) {
+            plugin.getLogger().log(java.util.logging.Level.WARNING, "Награда перерождения ожидает восстановления", error);
+            return false;
+        }
+    }
+
     /**
      * Уникальный предмет из пула: случайный из ещё не выданных. Пул исчерпан —
      * утешительные алмазы двойной нормы.
@@ -330,8 +355,7 @@ public final class SkillService {
                 .filter(item -> !store.rebirthUniques(key(player)).contains(item.id()))
                 .toList();
         if (fresh.isEmpty()) {
-            giveDiamonds(player, RebirthMath.rebirthDiamonds(
-                    plugin.config().rebirthDiamondsPerRebirth()) * 2);
+            // Компенсация уже заморожена вместе с денежной наградой перерождения.
             return;
         }
         SkillsConfig.UniqueItem pick = fresh.get(
@@ -365,7 +389,6 @@ public final class SkillService {
         if (!RebirthMath.milestone(count) || !store.markRebirthMilestone(key(player), count)) {
             return;
         }
-        giveDiamonds(player, RebirthMath.milestoneDiamonds(plugin.config().rebirthMilestoneDiamonds()));
         giveUniqueReward(player);
         plugin.getLogger().info("[CHRDK_Skills] " + player.getName()
                 + " достиг вехи перерождения " + count);
@@ -375,14 +398,6 @@ public final class SkillService {
                     "count", String.valueOf(count),
                     "title", Messages.trusted(RebirthMath.title(count))));
         }
-    }
-
-    /** Алмазы предметом: в инвентарь, остаток — под ноги. */
-    private void giveDiamonds(Player player, int amount) {
-        if (player == null || !player.isOnline() || amount <= 0) {
-            return;
-        }
-        giveItem(player, new ItemStack(Material.DIAMOND, Math.min(64 * 36, amount)));
     }
 
     /** Предмет в инвентарь, остаток — под ноги. */

@@ -70,6 +70,11 @@ public final class SkillStore {
         public final Set<Integer> claimedRebirthMilestones = new TreeSet<>();
         /** Уникальные предметы пула, уже выданные за перерождения (без повторов). */
         public final List<String> rebirthUniques = new ArrayList<>();
+        /** Замороженное денежное обязательство последнего перерождения. */
+        public int pendingRebirthCount = 0;
+        public long pendingRebirthAmount = 0;
+        public int lastBankRebirthCount = 0;
+        public long lastBankRebirthAmount = 0;
 
         public long xp(SkillType skill) {
             return xp.getOrDefault(skill, 0L);
@@ -265,6 +270,21 @@ public final class SkillStore {
                 if (row.get("rebirthConverted") instanceof Boolean flag) {
                     player.rebirthConverted = flag;
                 }
+                if (row.get("lastBankRebirth") instanceof Map<?, ?> last) {
+                    player.lastBankRebirthCount = ((java.math.BigDecimal) last.get("count")).intValueExact();
+                    player.lastBankRebirthAmount = ((java.math.BigDecimal) last.get("amount")).longValueExact();
+                    if (player.lastBankRebirthCount > player.rebirths) {
+                        throw new IllegalArgumentException("несогласованная квитанция перерождения");
+                    }
+                }
+                if (row.get("pendingRebirth") instanceof Map<?, ?> pending) {
+                    player.pendingRebirthCount = ((java.math.BigDecimal) pending.get("count")).intValueExact();
+                    player.pendingRebirthAmount = ((java.math.BigDecimal) pending.get("amount")).longValueExact();
+                    if (player.pendingRebirthCount != player.rebirths
+                            || player.pendingRebirthCount <= player.lastBankRebirthCount) {
+                        throw new IllegalArgumentException("несогласованное обязательство перерождения");
+                    }
+                }
                 if (row.get("claimedRebirthMilestones") instanceof List<?> marks) {
                     for (Object element : marks) {
                         if (element instanceof Number number && number.intValue() > 0) {
@@ -329,6 +349,17 @@ public final class SkillStore {
                 if (!(value instanceof java.math.BigDecimal number)
                         || number.longValueExact() <= 0 || number.longValueExact() > Integer.MAX_VALUE)
                     throw new IllegalArgumentException("неверная веха перерождения");
+            }
+        }
+        for (String field : List.of("pendingRebirth", "lastBankRebirth")) {
+            if (!row.containsKey(field)) continue;
+            if (!(row.get(field) instanceof Map<?, ?> pending)
+                    || pending.size() != 2
+                    || !(pending.get("count") instanceof java.math.BigDecimal count)
+                    || count.longValueExact() < 1 || count.longValueExact() > 1_000_000
+                    || !(pending.get("amount") instanceof java.math.BigDecimal amount)
+                    || amount.longValueExact() < 1 || amount.longValueExact() > 1_000_000) {
+                throw new IllegalArgumentException("неверное обязательство перерождения: " + field);
             }
         }
         if (row.containsKey("rebirthUniques")) {
@@ -616,6 +647,61 @@ public final class SkillStore {
         dirty = true;
     }
 
+    record PendingRebirth(int count, long amount) { }
+
+    synchronized PendingRebirth pendingRebirth(String playerKey) {
+        PlayerData player = players.get(playerKey);
+        return player == null || player.pendingRebirthCount == 0 ? null
+                : new PendingRebirth(player.pendingRebirthCount, player.pendingRebirthAmount);
+    }
+
+    synchronized PendingRebirth lastBankRebirth(String playerKey) {
+        PlayerData player = players.get(playerKey);
+        return player == null || player.lastBankRebirthCount == 0 ? null
+                : new PendingRebirth(player.lastBankRebirthCount, player.lastBankRebirthAmount);
+    }
+
+    /** Фиксирует сброс, новый счётчик и замороженную сумму одним снимком до внешней выплаты. */
+    synchronized int beginPaidRebirth(String playerKey, long amount) {
+        PlayerData player = players.get(playerKey);
+        if (!healthy || player == null || player.pendingRebirthCount != 0
+                || player.rebirths >= 1_000_000 || amount < 0 || amount > 1_000_000) return 0;
+        var oldXp = new EnumMap<>(player.xp);
+        var oldBranches = new EnumMap<>(player.branches);
+        int strength = player.strength, agility = player.agility, stamina = player.stamina;
+        int wisdom = player.wisdom, cunning = player.cunning, oldCount = player.rebirths;
+        int count = applyRebirth(playerKey);
+        if (amount > 0) {
+            player.pendingRebirthCount = count;
+            player.pendingRebirthAmount = amount;
+        }
+        if (checkpoint()) return count;
+        player.xp.putAll(oldXp);
+        player.branches.putAll(oldBranches);
+        player.strength = strength; player.agility = agility; player.stamina = stamina;
+        player.wisdom = wisdom; player.cunning = cunning; player.rebirths = oldCount;
+        player.pendingRebirthCount = 0; player.pendingRebirthAmount = 0;
+        dirty = true;
+        return 0;
+    }
+
+    synchronized boolean checkpoint() {
+        if (!healthy) return false;
+        saveNow();
+        return !dirty && Files.isRegularFile(file);
+    }
+
+    synchronized boolean finishPaidRebirth(String playerKey, int count, long amount) {
+        PlayerData player = players.get(playerKey);
+        if (player == null || player.pendingRebirthCount != count || player.pendingRebirthAmount != amount) return false;
+        player.pendingRebirthCount = 0;
+        player.pendingRebirthAmount = 0;
+        player.lastBankRebirthCount = count;
+        player.lastBankRebirthAmount = amount;
+        dirty = true;
+        return checkpoint();
+    }
+
     /** Сброс и увеличение счётчика — один снимок для фонового сохранения. */
     public synchronized int applyRebirth(String playerKey) {
         if (playerKey == null || !players.containsKey(playerKey)) {
@@ -776,6 +862,10 @@ public final class SkillStore {
             if (player.classConverted) fields.put("classConverted", true);
             if (player.rebirths > 0) fields.put("rebirths", player.rebirths);
             if (player.rebirthConverted) fields.put("rebirthConverted", true);
+            if (player.pendingRebirthCount > 0) fields.put("pendingRebirth", Map.of(
+                    "count", player.pendingRebirthCount, "amount", player.pendingRebirthAmount));
+            if (player.lastBankRebirthCount > 0) fields.put("lastBankRebirth", Map.of(
+                    "count", player.lastBankRebirthCount, "amount", player.lastBankRebirthAmount));
             if (!player.claimedRebirthMilestones.isEmpty()) {
                 fields.put("claimedRebirthMilestones", new ArrayList<>(player.claimedRebirthMilestones));
             }

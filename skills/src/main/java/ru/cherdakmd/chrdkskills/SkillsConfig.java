@@ -346,7 +346,7 @@ public final class SkillsConfig {
         return rebirthXpBonusCapPercent;
     }
 
-    /** Алмазы предметом за каждое перерождение. */
+    /** Базовая сумма алмазов за каждое перерождение. */
     public int rebirthDiamondsPerRebirth() {
         return rebirthDiamondsPerRebirth;
     }

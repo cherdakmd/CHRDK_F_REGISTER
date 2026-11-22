@@ -257,6 +257,7 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
             case NOT_READY -> plugin.messages().send(player, "rebirth-not-ready",
                     "level", String.valueOf(plugin.config().curve().maxLevel()));
             case PENDING -> plugin.messages().send(player, "rebirth-confirm");
+            case UNAVAILABLE -> plugin.messages().send(player, "rebirth-unavailable");
             case DONE -> plugin.getLogger().info("[CHRDK_Skills] " + player.getName()
                     + " переродился, счётчик " + service.rebirths(player));
         }
