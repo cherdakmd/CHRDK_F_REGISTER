@@ -98,7 +98,7 @@ public final class DailyRewardsPlugin extends JavaPlugin {
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
         this.config = DailyConfig.parse(getConfig(), getLogger(), true);
-        if(coreApi!=null)try {if(ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<25)coreApi=null;}catch(ReflectiveOperationException e){coreApi=null;}
+        if(coreApi!=null)try {if(ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<50)coreApi=null;}catch(ReflectiveOperationException e){coreApi=null;}
     }
 
     public ChrdkRegisterApi coreApi() {

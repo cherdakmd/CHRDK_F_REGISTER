@@ -98,6 +98,15 @@ public final class ShopService {
         double spot=peekPrice(item,System.currentTimeMillis());
         return TradeAmounts.quote(batchSize(item),buy?askPrice(item,spot):bidPrice(item,spot),units,buy);
     }
+    /** Read-only bid for reward conversion; NOT_BOUGHT differs from a broken market. */
+    public RewardMarketQuote.Quote rewardQuote(String material, int amount) {
+        var unavailable = new RewardMarketQuote.Quote(RewardMarketQuote.Status.UNAVAILABLE, 0);
+        if (store == null || !store.legacyAvailable() || material == null || amount < 1 || amount > 2304) return unavailable;
+        var item = config.item(material).orElse(null);
+        if (item == null || !item.sellEnabled()) return new RewardMarketQuote.Quote(RewardMarketQuote.Status.NOT_BOUGHT, 0);
+        long quote = quantityQuote(item, amount, false);
+        return quote < 0 ? unavailable : new RewardMarketQuote.Quote(RewardMarketQuote.Status.AVAILABLE, quote);
+    }
     private double peekPrice(ShopConfig.ShopItem item,long now) {
         return PriceEngine.price(item.basePrice(),store.peekStock(item,now,config.stockRecoveryPerHour()),
                 item.refStock(),item.minMultiplier(),item.maxMultiplier());

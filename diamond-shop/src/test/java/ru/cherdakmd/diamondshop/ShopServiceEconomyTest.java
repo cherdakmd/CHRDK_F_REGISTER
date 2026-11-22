@@ -47,6 +47,16 @@ class ShopServiceEconomyTest {
             if(item.sellEnabled()&&s.bidPrice(item)>0) assertEquals(s.bidPrice(item),s.quantityQuote(item,batch,false),item.material());
         }
     }
+    @Test void rewardQuoteIsReadOnlyAndDistinguishesMissingItems() throws Exception {
+        var s=service(10); var item=s.config().items().stream().filter(i->i.sellEnabled()).findFirst().orElseThrow();
+        String before=s.store().snapshotJson();
+        var q=s.rewardQuote(item.material(),64);
+        assertEquals(ru.cherdakmd.chrdkregister.api.RewardMarketQuote.Status.AVAILABLE,q.status());
+        assertEquals(s.quantityQuote(item,64,false),q.minor());
+        assertEquals(ru.cherdakmd.chrdkregister.api.RewardMarketQuote.Status.NOT_BOUGHT,s.rewardQuote("NOT_AN_ITEM",1).status());
+        assertEquals(ru.cherdakmd.chrdkregister.api.RewardMarketQuote.Status.UNAVAILABLE,s.rewardQuote(item.material(),2305).status());
+        assertEquals(before,s.store().snapshotJson());
+    }
     @Test void everyTariffRaisesAskButLeavesAllBidsAndRecipeCeilingsUnchanged() throws Exception {
         var fresh=config(10);
         var oldItems=fresh.items().stream().map(i->new ShopConfig.ShopItem(i.material(),i.category(),i.basePrice(),

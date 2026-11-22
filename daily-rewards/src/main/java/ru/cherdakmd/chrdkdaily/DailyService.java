@@ -18,6 +18,14 @@ public final class DailyService {
         public long credited(UUID l,UUID id){return plugin.coreApi().creditedEntitlement(DailyStore.SOURCE,l,id.toString(),id);}
         public boolean credit(UUID l,UUID id,long total){return plugin.coreApi().creditMarketEntitlement(DailyStore.SOURCE,l,id.toString(),id,total);}
     };
+    private final DailyDelivery.MoneyBank moneyBank=new DailyDelivery.MoneyBank(){
+        public boolean available(){return plugin.coreApi()!=null&&plugin.coreApi().personalBankAvailable();}
+        public boolean registered(UUID l){return plugin.coreApi().incomeSourceAvailable(DailyStore.MONEY_SOURCE,l);}
+        public boolean register(UUID l){return plugin.coreApi().registerIncomeSource(DailyStore.MONEY_SOURCE,l);}
+        public boolean known(UUID id){return plugin.coreApi().canReceiveBankIncome(id);}
+        public long credited(UUID l,UUID id){return plugin.coreApi().creditedEntitlement(DailyStore.MONEY_SOURCE,l,id.toString(),id);}
+        public boolean credit(UUID l,UUID id,long total){return plugin.coreApi().creditEntitlementMinor(DailyStore.MONEY_SOURCE,l,id.toString(),id,total);}
+    };
     public DailyService(DailyRewardsPlugin plugin,DailyStore store){this.plugin=plugin;this.store=store;}
     public DailyStore store(){return store;}
     public record ClaimResult(int streak,List<DailyConfig.ItemReward> items,int passHours,boolean vip,int cycleDay,long money){}
@@ -26,13 +34,17 @@ public final class DailyService {
     public ClaimResult claim(Player p){
         if(!canClaim(p))return null;
         try {
-            if(!DailyDelivery.bind(store,bank)) {waitMessage(p);return null;}
-            try{DailyDelivery.money(store,bank);}catch(Exception e){conflict=true;throw e;}
+            if(!DailyDelivery.bind(store,bank) || !DailyDelivery.bindMoney(store,moneyBank)) {waitMessage(p);return null;}
+            try{DailyDelivery.money(store,bank); DailyDelivery.moneyMinor(store,moneyBank);}catch(Exception e){conflict=true;throw e;}
             boolean vip=plugin.coreApi().rankLevel(p.getName())>=Math.max(1,plugin.getConfig().getInt("vip.min-rank",2));
-            var r=store.accept(p.getUniqueId(),System.currentTimeMillis(),plugin.config(),vip);if(r==null)return null;
-            DailyDelivery.money(store,bank); // Cap/unknown UUID is not cancellation of a saved reward.
-            if(!deliver(p)){waitMessage(p);return null;}
-            return new ClaimResult(r.streak(),r.items(),r.hours(),r.vip(),r.cycleDay(),r.money());
+            var shop=Bukkit.getServicesManager().load(ru.cherdakmd.chrdkregister.api.RewardMarketQuote.class);
+            var rate=plugin.coreApi().diamondRate();
+            var accepted=store.acceptMoney(p.getUniqueId(),System.currentTimeMillis(),plugin.config(),vip,
+                    reward -> DailyMoneyQuote.quote(reward,vip,shop,rate::scaleMinor));
+            if(accepted==null)return null;
+            DailyDelivery.moneyMinor(store,moneyBank); // Full or offline: persisted total is retried.
+            var r=accepted.reward();
+            return new ClaimResult(r.streak(),r.items(),r.hours(),r.vip(),r.cycleDay(),accepted.minor());
         } catch(Exception e){failure(e);waitMessage(p);return null;}
     }
     private void waitMessage(Player p){plugin.messages().send(p,"finance.daily-wait");}
@@ -46,7 +58,7 @@ public final class DailyService {
     public void tick(){
         if(conflict||!store.healthy())return;
         try {
-            try{DailyDelivery.money(store,bank);}catch(Exception e){conflict=true;throw e;}
+            try{DailyDelivery.money(store,bank); DailyDelivery.moneyMinor(store,moneyBank);}catch(Exception e){conflict=true;throw e;}
             var online=new ArrayList<>(Bukkit.getOnlinePlayers());
             for(int i=0;i<Math.min(4,online.size());i++){var p=online.get(Math.floorMod(cursor++,online.size()));if(eligible(p)&&store.pending(p.getUniqueId())!=null)deliver(p);}
         }catch(Exception e){failure(e);}

@@ -10,6 +10,27 @@ final class DailyDelivery {
         boolean known(UUID owner); long credited(UUID lineage,UUID owner); boolean credit(UUID lineage,UUID owner,long total);
         default boolean receiptCompatible(long credited,long totalBase){return credited>=0&&credited<=totalBase;}
     }
+    interface MoneyBank {
+        boolean available(); boolean registered(UUID lineage); boolean register(UUID lineage);
+        boolean known(UUID owner); long credited(UUID lineage, UUID owner); boolean credit(UUID lineage, UUID owner, long totalMinor);
+    }
+    /** Separate lineage namespace prevents mixing old market-scaled totals and frozen hundredths. */
+    static boolean bindMoney(DailyStore store, MoneyBank bank) throws IOException {
+        if (!store.healthy() || !bank.available()) return false;
+        if (bank.registered(store.lineage())) { if (!store.initialize()) return false; store.markMoneyRegistered(); return true; }
+        if (!store.moneyMinor().isEmpty()) return false;
+        if (!store.initialize() || !bank.register(store.lineage())) return false;
+        store.markMoneyRegistered(); return true;
+    }
+    static void moneyMinor(DailyStore store, MoneyBank bank) throws IOException {
+        if (!bindMoney(store,bank)) return;
+        for (var e : store.moneyMinor().entrySet()) {
+            if (e.getValue()==0 || !bank.known(e.getKey())) continue;
+            long credited=bank.credited(store.lineage(),e.getKey());
+            if (credited<0 || credited>e.getValue()) throw new IOException("daily money source/receipt conflict");
+            bank.credit(store.lineage(),e.getKey(),e.getValue());
+        }
+    }
     interface Native { void item(DailyConfig.ItemReward item) throws Exception; void boost(int hours) throws Exception; }
     static boolean bind(DailyStore store,Bank bank) throws IOException {
         if(!store.healthy()||!bank.available())return false;

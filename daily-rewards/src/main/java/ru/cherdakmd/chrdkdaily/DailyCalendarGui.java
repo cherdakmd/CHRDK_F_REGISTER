@@ -52,7 +52,7 @@ public final class DailyCalendarGui implements Listener {
         // день стрика, который отобразится как «сегодняшний»
         int displayStreak = claimedToday ? progress.streak : progress.streak + 1;
         int todayIndex = Math.floorMod(displayStreak - 1, cycleSize);
-        boolean vip = plugin.coreApi() != null && plugin.coreApi().hasActivePass(player.getName());
+        boolean vip = plugin.coreApi() != null && plugin.coreApi().rankLevel(player.getName()) >= Math.max(1, plugin.getConfig().getInt("vip.min-rank", 2));
 
         // рамка: верхний ряд и хвост за месячной сеткой
         ItemStack filler = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
@@ -105,7 +105,14 @@ public final class DailyCalendarGui implements Listener {
         ItemMeta meta = icon.getItemMeta();
         if (meta != null) {
             meta.displayName(plugin.messages().get(nameKey, "day", dayNum));
-            String rewardText = DailyConfig.describe(day, vip, java.util.Optional.empty());
+            String rewardText;
+            try {
+                var api=plugin.coreApi();
+                if (api==null || !api.personalBankAvailable()) throw new IllegalStateException("bank unavailable");
+                var shop=Bukkit.getServicesManager().load(ru.cherdakmd.chrdkregister.api.RewardMarketQuote.class);
+                long minor=DailyMoneyQuote.quote(day,vip,shop,api.diamondRate()::scaleMinor);
+                rewardText="/bal ≈"+ru.cherdakmd.chrdkregister.api.DiamondMoney.format(minor)+" 💠 (цена при получении)";
+            } catch (RuntimeException ex) { rewardText="оценка временно недоступна"; }
             meta.lore(plugin.messages().getList(loreKey,
                     "streak", progress.streak,
                     "days", opensIn,

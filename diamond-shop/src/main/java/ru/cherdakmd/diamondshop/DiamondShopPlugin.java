@@ -54,6 +54,9 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
         ConfigUpgrader.apply(this);
         ShopCatalogMigration.apply(this);
         reloadShopConfig(); // stores первичную инициализацию всех сервисов
+        getServer().getServicesManager().register(ru.cherdakmd.chrdkregister.api.RewardMarketQuote.class,
+                (material, amount) -> shopService.rewardQuote(material, amount), this,
+                org.bukkit.plugin.ServicePriority.Normal);
 
         Bukkit.getPluginManager().registerEvents(this,this);
         recoveryTask=Bukkit.getScheduler().runTaskTimer(this,()->shopService.recoverPending(),1L,20L);

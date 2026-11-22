@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 /** Canonical daily progress + frozen reward + cumulative income. No progress reset recreates money. */
 public final class DailyStore {
     public static final String SOURCE="daily-rewards";
+    public static final String MONEY_SOURCE="daily-rewards-money";
     public static final class Progress {
         public long lastClaimDay=-1;
         public int streak,totalClaims;
@@ -27,6 +28,8 @@ public final class DailyStore {
         Map<UUID,Progress> players=new LinkedHashMap<>();
         Map<UUID,Long> totals=new LinkedHashMap<>();
         Map<UUID,Reward> pending=new LinkedHashMap<>();
+        boolean moneyRegistered;
+        Map<UUID,Long> moneyMinor=new LinkedHashMap<>();
     }
     private static final Gson JSON=new GsonBuilder().setPrettyPrinting().create();
     private final Path file; private final Logger logger;
@@ -42,11 +45,17 @@ public final class DailyStore {
             var row=DailyJson.read(file); ru.cherdakmd.chrdkregister.api.FinanceNumbers.requireIntegral(row);
             if(!row.has("players")||!row.get("players").isJsonObject()) throw new IOException("daily players");
             if(!row.has("schema")) {
-                if(row.has("totals")||row.has("pending")||row.has("lineage")) throw new IOException("downgraded daily");
+                if(row.has("totals")||row.has("pending")||row.has("lineage")||row.has("moneyMinor")||row.has("moneyRegistered")) throw new IOException("downgraded daily");
                 data.players=JSON.fromJson(row.get("players"),new com.google.gson.reflect.TypeToken<LinkedHashMap<UUID,Progress>>(){}.getType()); dirty=true;
             } else {
                 for(String key:List.of("schema","lineage","registered","players","totals","pending")) if(!row.has(key)||row.get(key).isJsonNull()) throw new IOException("missing daily "+key);
                 if(!row.get("schema").isJsonPrimitive()||!row.get("schema").getAsJsonPrimitive().isNumber()||!row.get("registered").isJsonPrimitive()||!row.get("registered").getAsJsonPrimitive().isBoolean()) throw new IOException("daily metadata type");
+                int schema = Math.toIntExact(number(row.get("schema")));
+                if (schema == 1 && (row.has("moneyMinor") || row.has("moneyRegistered"))) throw new IOException("downgraded daily money schema");
+                if (schema == 2) {
+                    if (!row.has("moneyRegistered") || !row.get("moneyRegistered").isJsonPrimitive() || !row.get("moneyRegistered").getAsJsonPrimitive().isBoolean() || !row.has("moneyMinor") || !row.get("moneyMinor").isJsonObject()) throw new IOException("daily money metadata");
+                    for (var e : row.getAsJsonObject("moneyMinor").entrySet()) { ru.cherdakmd.chrdkregister.api.MilestoneMigration.uuid(e.getKey()); number(e.getValue()); }
+                }
                 ru.cherdakmd.chrdkregister.api.MilestoneMigration.uuid(row.get("lineage").getAsString());
                 for(var e:row.getAsJsonObject("totals").entrySet()){ru.cherdakmd.chrdkregister.api.MilestoneMigration.uuid(e.getKey());number(e.getValue());}
                 for(var e:row.getAsJsonObject("pending").entrySet()) {
@@ -56,6 +65,7 @@ public final class DailyStore {
                     for(String k:List.of("vip","executing")) if(!r.has(k)||!r.get(k).isJsonPrimitive()||!r.get(k).getAsJsonPrimitive().isBoolean())throw new IOException("daily reward bool");
                 }
                 data=JSON.fromJson(row,Data.class);
+                if (schema == 1) { data.moneyMinor = new LinkedHashMap<>(); data.moneyRegistered = false; }
             }
             for(var e:row.getAsJsonObject("players").entrySet()) {
                 ru.cherdakmd.chrdkregister.api.MilestoneMigration.uuid(e.getKey()); var p=e.getValue().getAsJsonObject();
@@ -66,9 +76,11 @@ public final class DailyStore {
     }
     private static long number(JsonElement v) {if(v==null||!v.isJsonPrimitive()||!v.getAsJsonPrimitive().isNumber())throw new IllegalArgumentException("daily number");return v.getAsBigDecimal().longValueExact();}
     private static void validate(Data d) {
-        if(d==null||d.schema!=1||d.lineage==null||d.players==null||d.totals==null||d.pending==null||!d.registered&&(!d.totals.isEmpty()||!d.pending.isEmpty()))throw new IllegalArgumentException("daily schema");
+        if(d==null||(d.schema!=1&&d.schema!=2)||d.lineage==null||d.players==null||d.totals==null||d.pending==null||!d.registered&&(!d.totals.isEmpty()||!d.pending.isEmpty()))throw new IllegalArgumentException("daily schema");
         for(var e:d.players.entrySet()) {var p=e.getValue();if(e.getKey()==null||p==null||p.lastClaimDay< -1||p.streak<0||p.totalClaims<0)throw new IllegalArgumentException("daily progress");}
         for(var e:d.totals.entrySet()) if(e.getKey()==null||e.getValue()==null||e.getValue()<0||!d.players.containsKey(e.getKey()))throw new IllegalArgumentException("daily total");
+        if (d.moneyMinor == null || !d.moneyRegistered && !d.moneyMinor.isEmpty() || d.schema == 1 && (d.moneyRegistered || !d.moneyMinor.isEmpty())) throw new IllegalArgumentException("daily money schema");
+        for (var e : d.moneyMinor.entrySet()) if (e.getKey()==null || e.getValue()==null || e.getValue()<0 || !d.players.containsKey(e.getKey())) throw new IllegalArgumentException("daily money total");
         for(var e:d.pending.entrySet()) {
             var r=e.getValue(); var p=d.players.get(e.getKey());
             if(r==null||p==null||r.day()<0||r.day()!=p.lastClaimDay||r.streak()!=p.streak||r.cycleDay()<1||r.hours()<0||r.hours()>24||r.money()<0||r.completed()<0||r.completed()>r.effects()||r.executing()&&r.completed()==r.effects()||d.totals.getOrDefault(e.getKey(),0L)<r.money())throw new IllegalArgumentException("daily frozen reward");
@@ -80,11 +92,14 @@ public final class DailyStore {
     public synchronized UUID lineage() {return data.lineage;}
     public synchronized boolean registered() {return data.registered;}
     public synchronized Map<UUID,Long> totals() {return Map.copyOf(data.totals);}
+    public synchronized Map<UUID,Long> moneyMinor() {return Map.copyOf(data.moneyMinor);}
+    public synchronized boolean moneyRegistered() {return data.moneyRegistered;}
+    public synchronized void markMoneyRegistered() throws IOException {if (!data.moneyRegistered) {var n=copy(); n.schema=2; n.moneyRegistered=true; write(n);}}
     public synchronized Reward pending(UUID id) {return data.pending.get(id);}
     public synchronized Map<UUID,Reward> pendingRewards(){return Map.copyOf(data.pending);}
     private Data copy() {return JSON.fromJson(JSON.toJson(data),Data.class);}
     private void write(Data next) throws IOException {
-        if(!healthy)throw new IOException("daily quarantined"); validate(next);
+        if(!healthy)throw new IOException("daily quarantined"); next.schema=2; validate(next);
         try {
             Files.createDirectories(file.getParent());var tmp=file.resolveSibling("daily-data.json.tmp");byte[] bytes=JSON.toJson(next).getBytes(StandardCharsets.UTF_8);if(bytes.length>32*1024*1024)throw new IOException("daily capacity");Files.write(tmp,bytes);
             try(var c=FileChannel.open(tmp,StandardOpenOption.WRITE)){c.force(true);}Files.move(tmp,file,StandardCopyOption.ATOMIC_MOVE,StandardCopyOption.REPLACE_EXISTING);checkpoint.afterReplace();try(var c=FileChannel.open(file.getParent(),StandardOpenOption.READ)){c.force(true);}
@@ -105,6 +120,17 @@ public final class DailyStore {
         for(var item:reward.itemsFor(vip)){int unit=moneyUnit(item.material());if(unit>0)money=Math.addExact(money,Math.multiplyExact((long)unit,item.amount()));else items.add(item);}
         var r=new Reward(dayOf(now),streak,reward.day(),vip,items,vip?reward.vipPassHours():0,money,0,false);
         n.pending.put(id,r);n.totals.put(id,Math.addExact(n.totals.getOrDefault(id,0L),money));write(n);return r;
+    }
+    record MoneyAcceptance(Reward reward, long minor) { }
+    /** Accept only a frozen /bal quote; old native pending entries are not rewritten. */
+    public synchronized MoneyAcceptance acceptMoney(UUID id, long now, DailyConfig config, boolean vip,
+                                            java.util.function.ToLongFunction<DailyConfig.DayReward> quote) throws IOException {
+        if (!data.registered || !data.moneyRegistered || !canClaim(id,now)) return null;
+        var n=copy(); int streak=advance(n,id,dayOf(now)); var day=config.rewardForStreakDay(streak);
+        long minor=quote.applyAsLong(day); if(minor<0) throw new IllegalArgumentException("negative daily quote");
+        n.moneyMinor.put(id,Math.addExact(n.moneyMinor.getOrDefault(id,0L),minor));
+        var result=new Reward(dayOf(now),streak,day.day(),vip,List.of(),0,0,0,false);
+        write(n); return new MoneyAcceptance(result, minor);
     }
     public synchronized void begin(UUID id) throws IOException {var r=data.pending.get(id);if(r==null||r.executing()||r.completed()==r.effects())throw new IllegalStateException("daily effect phase");var n=copy();n.pending.put(id,r.step(r.completed(),true));write(n);}
     public synchronized void finishEffect(UUID id) throws IOException {var r=data.pending.get(id);if(r==null||!r.executing())throw new IllegalStateException("daily effect not executing");var n=copy();n.pending.put(id,r.step(r.completed()+1,false));write(n);}
