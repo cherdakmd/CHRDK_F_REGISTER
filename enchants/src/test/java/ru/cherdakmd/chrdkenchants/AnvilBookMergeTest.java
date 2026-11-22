@@ -26,10 +26,10 @@ class AnvilBookMergeTest {
         assertTrue(anvil.contains("customBook(left) && right != null && right.getType() == Material.ENCHANTED_BOOK"),
                 "наша книга слева + ванильная справа — тоже наше слияние");
         assertTrue(anvil.contains("private boolean transferBlocked(ItemStack left, ItemStack right)"));
-        assertTrue(anvil.contains("? plugin.items().validated(left) == null"),
+        assertTrue(anvil.contains("return plugin.items().validated(left) == null"),
                 "ванильная книга справа требует лишь валидной PDC слева");
-        assertTrue(anvil.contains(": plugin.service().canApplyFromBook(left, right) != null"),
-                "наша книга справа проходит полные правила переноса");
+        assertTrue(anvil.contains("data == null || data.isEmpty() || plugin.service().canApplyFromBook(left, right) != null"),
+                "повреждённая или пустая наша книга не становится ванильной и не расходуется");
         assertTrue(anvil.contains("if (!plugin.items().read(right).isEmpty())"),
                 "без кастомной части книги applyFromBook не вызывается");
         assertTrue(anvil.contains("plugin.items().write(result, before)"),

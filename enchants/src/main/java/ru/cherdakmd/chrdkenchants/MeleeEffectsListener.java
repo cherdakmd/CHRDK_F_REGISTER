@@ -47,16 +47,11 @@ public final class MeleeEffectsListener implements Listener {
         Map<String, Integer> enchants = plugin.items().read(weapon);
         if (enchants.isEmpty()) return;
 
-        processing.add(attacker.getUniqueId());
-        try {
-            applyHitEffects(event, attacker, victim, enchants);
-        } finally {
-            processing.remove(attacker.getUniqueId());
-        }
+        applyDamageModifiers(event, attacker, victim, enchants);
     }
 
-    private void applyHitEffects(EntityDamageByEntityEvent event, Player attacker,
-                                 LivingEntity victim, Map<String, Integer> enchants) {
+    private void applyDamageModifiers(EntityDamageByEntityEvent event, Player attacker,
+                                      LivingEntity victim, Map<String, Integer> enchants) {
         // Казнь: добивать почти павших
         EnchantDef execution = mountIf(enchants, "execution");
         if (execution != null) {
@@ -81,6 +76,26 @@ public final class MeleeEffectsListener implements Listener {
             }
         }
 
+    }
+
+    /** Побочные эффекты запускаются после защит на HIGH/HIGHEST, а не до их отмены. */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onConfirmedHit(EntityDamageByEntityEvent event) {
+        if (!(event.getDamager() instanceof Player attacker)
+                || !(event.getEntity() instanceof LivingEntity victim)
+                || event.getFinalDamage() <= 0 || processing.contains(attacker.getUniqueId())) return;
+        Map<String, Integer> enchants = plugin.items().read(attacker.getInventory().getItemInMainHand());
+        if (enchants.isEmpty()) return;
+        processing.add(attacker.getUniqueId());
+        try {
+            applyHitEffects(event, attacker, victim, enchants);
+        } finally {
+            processing.remove(attacker.getUniqueId());
+        }
+    }
+
+    private void applyHitEffects(EntityDamageByEntityEvent event, Player attacker,
+                                 LivingEntity victim, Map<String, Integer> enchants) {
         double finalDamage = event.getFinalDamage();
 
         // Громобой

@@ -246,9 +246,14 @@ public final class AnvilApplyListener implements Listener {
      */
     private boolean transferBlocked(ItemStack left, ItemStack right) {
         if (right == null) return true;
-        return plugin.items().read(right).isEmpty()
-                ? plugin.items().validated(left) == null
-                : plugin.service().canApplyFromBook(left, right) != null;
+        // Маркер справа означает нашу книгу даже при повреждённой или пустой
+        // PDC. Терпимое read() нельзя использовать для выбора ванильного пути:
+        // иначе книга с неверной записью может быть расходована без переноса.
+        if (plugin.items().marked(right)) {
+            var data = plugin.items().validated(right);
+            return data == null || data.isEmpty() || plugin.service().canApplyFromBook(left, right) != null;
+        }
+        return plugin.items().validated(left) == null;
     }
 
     private boolean preservesVanillaBook(ItemStack left, ItemStack right, ItemStack result) {
