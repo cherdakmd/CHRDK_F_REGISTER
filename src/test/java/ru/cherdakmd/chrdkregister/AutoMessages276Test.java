@@ -36,7 +36,7 @@ class AutoMessages276Test {
             assertNotEquals(a.remove("text"), b.remove("text"), "Текст №" + (i + 1));
             assertEquals(a, b, "Фильтры аудитории №" + (i + 1));
         }
-        var voice = after.get(after.size()-3);
+        var voice = after.stream().filter(row -> String.valueOf(row.get("text")).contains("Plasmo Voice")).findFirst().orElseThrow();
         assertTrue(String.valueOf(voice.get("text")).contains("Plasmo Voice"));
         assertEquals(Set.of("text"), voice.keySet(), "внешняя интеграция не требует фильтра аддона");
         old.set("auto-messages.enabled", false);
