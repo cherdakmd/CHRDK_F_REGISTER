@@ -9,7 +9,8 @@ final class GeneratorContainerLifecycle {
     private GeneratorContainerLifecycle() { }
 
     static Result bind(GeneratorStore source, GeneratorContainerStore target, UUID owner, int slot,
-                       java.util.List<GeneratorDrops.Drop> drops, int luck) {
+                       java.util.List<GeneratorDrops.Drop> drops, int luck, long now) {
+        if (now < 0) return Result.CONFLICT;
         if (!source.payoutCheckpoint() || !target.healthy()) return Result.WAIT;
         var entry = source.entry(owner, slot);
         if (entry == null || !entry.installed()) return Result.CONFLICT;
@@ -24,7 +25,9 @@ final class GeneratorContainerLifecycle {
         if (!binding.core().equals(entry.coreItem()) || "RELEASE".equals(binding.transition())) return Result.CONFLICT;
         if ("CREATE".equals(binding.transition())) {
             if (view != null && !view.core().equals(binding.core())) return Result.CONFLICT;
-            if (view == null && !target.create(owner, slot, binding.core(), entry.lastCalcMillis())) return Result.WAIT;
+            // До включения новой системы топлива не было: прошлый простой не
+            // становится бесплатным рабочим временем после первой заправки.
+            if (view == null && !target.create(owner, slot, binding.core(), now)) return Result.WAIT;
             if (!source.finishContainerBinding(owner, slot, binding.core())) return Result.WAIT;
             view = target.view(owner, slot);
         }
