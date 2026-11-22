@@ -27,7 +27,7 @@ public final class MilestoneMigration {
         if(!Files.exists(file)) return Map.of();
         try {
             if(!Files.isRegularFile(file)||Files.size(file)>32L*1024*1024) throw new IllegalArgumentException("legacy capacity/type");
-            var data=JsonParser.parseString(Files.readString(file)).getAsJsonObject(); FinanceNumbers.requireIntegral(data);
+            var data=StrictFinancialJson.read(file); FinanceNumbers.requireIntegral(data);
             if(!data.has("version")||!data.get("version").isJsonPrimitive()||!data.get("version").getAsJsonPrimitive().isNumber()
                     ||data.get("version").getAsBigDecimal().longValueExact()!=1||!data.has("players")||!data.get("players").isJsonObject()) throw new IllegalArgumentException("legacy schema");
             var out=new LinkedHashMap<UUID,Set<String>>();

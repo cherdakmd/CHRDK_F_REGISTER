@@ -45,4 +45,25 @@ class MilestoneMigrationTest {
         }
     }
 
+    @Test void duplicateFinancialKeysAreNeverSilentlyDiscarded() throws Exception {
+        String row="{\"claimed\":[25],\"discovered\":[],\"firstFound\":0,\"lastFound\":0}";
+        for(String bad:List.of(
+                "{\"version\":1,\"players\":{\""+owner+"\":"+row+",\""+owner+"\":"+row+"}}",
+                "{\"version\":1,\"players\":{\""+owner+"\":{\"claimed\":[25],\"claimed\":[],\"discovered\":[],\"firstFound\":0,\"lastFound\":0}}}")) {
+            Files.writeString(file(),bad);
+            assertThrows(IOException.class,()->MilestoneMigration.json(file(),MilestoneMigration.Kind.ARTIFACTS));
+            assertEquals(bad,Files.readString(file()));
+        }
+    }
+    @Test void duplicateAwardKeysBlockLoadAndLegacyCopyWithoutChangingFiles() throws Exception {
+        Path folder=dir.resolve("source"); Files.createDirectories(folder);
+        String body="{\"schema\":1,\"source\":\"test-awards\",\"lineage\":\""+UUID.randomUUID()+"\",\"imported\":true,\"registered\":true,\"awards\":{\""+owner+"\":{\"one\":10,\"one\":0}}}";
+        Path journal=folder.resolve("milestone-awards.json");Files.writeString(journal,body);
+        assertThrows(IOException.class,()->new MilestoneStore(folder,"test-awards"));
+        assertEquals(body,Files.readString(journal));
+        Path old=dir.resolve("milestone-awards.json");Files.writeString(old,body);
+        assertThrows(IOException.class,()->MilestoneStore.openIn(dir,"test-awards"));
+        assertEquals(body,Files.readString(old));
+        assertFalse(Files.exists(dir.resolve("test-awards/milestone-awards.json")));
+    }
 }

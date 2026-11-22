@@ -43,7 +43,7 @@ public final class MilestoneStore {
             if(Files.size(legacy)>32L*1024*1024) throw new IllegalArgumentException("award capacity");
             String legacySource;
             try {
-                legacySource=JsonParser.parseString(Files.readString(legacy)).getAsJsonObject().get("source").getAsString();
+                legacySource=StrictFinancialJson.read(legacy).get("source").getAsString();
             } catch(RuntimeException error) {
                 throw new IOException("Повреждён milestone-awards.json; не сбрасывайте журнал наград",error);
             }
@@ -64,7 +64,7 @@ public final class MilestoneStore {
         if (!Files.exists(file)) { var fresh=new Data(); fresh.source=source; write(fresh); return; }
         try {
             if (Files.size(file)>32L*1024*1024) throw new IllegalArgumentException("award capacity");
-            var object=JsonParser.parseString(Files.readString(file)).getAsJsonObject(); FinanceNumbers.requireIntegral(object);
+            var object=StrictFinancialJson.read(file); FinanceNumbers.requireIntegral(object);
             for(String key:List.of("schema","source","lineage","imported","registered","awards"))
                 if(!object.has(key)||object.get(key).isJsonNull()) throw new IllegalArgumentException("missing "+key);
             if(!object.get("schema").isJsonPrimitive()||!object.get("schema").getAsJsonPrimitive().isNumber()
