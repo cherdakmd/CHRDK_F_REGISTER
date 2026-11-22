@@ -51,6 +51,22 @@ class GeneratorContainerCoordinatorTest {
         assertEquals(1, target().view(owner, 0).slots().get(36).amount());
         assertEquals(696, source().entry(owner, 0).bunker());
     }
+    @Test void writeFailureCannotPublishItemsWithoutFuelAndMoney() throws Exception {
+        var s = ready(0); var t = target();
+        assertEquals(GeneratorContainerCoordinator.Result.READY, run(s, t, 100, false));
+        var v = t.view(owner, 0); var slots = new ArrayList<>(v.slots());
+        slots.set(36, new GeneratorContainerStore.Stack("COAL", 2));
+        assertTrue(t.settle(owner, 0, core, v.revision(), slots, 0, 100));
+        var before = t.view(owner, 0);
+        Path tmp = dir.resolve("generator-containers.json.tmp");
+        java.nio.file.Files.createDirectory(tmp); java.nio.file.Files.writeString(tmp.resolve("block"), "x");
+        assertEquals(GeneratorContainerCoordinator.Result.WAIT, run(s, t, 5100, true));
+        assertEquals(before, target().view(owner, 0));
+        assertEquals(0, target().saleState(owner, 0).moneyDebt());
+        java.nio.file.Files.delete(tmp.resolve("block")); java.nio.file.Files.delete(tmp);
+        assertEquals(GeneratorContainerCoordinator.Result.READY, run(source(), target(), 5100, true));
+        assertEquals(500, target().saleState(owner, 0).moneyDebt());
+    }
     @Test void brokenChamberDiscardsIdleWithoutBurningFuel() throws Exception {
         var s = ready(0); var t = target();
         assertEquals(GeneratorContainerCoordinator.Result.READY, run(s, t, 100, false));
