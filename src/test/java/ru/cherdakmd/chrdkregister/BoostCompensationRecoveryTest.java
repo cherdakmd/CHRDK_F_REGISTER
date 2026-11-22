@@ -73,6 +73,17 @@ class BoostCompensationRecoveryTest {
         assertEquals(0, s.rewardBoostRemaining("Steve")); assertEquals(30_000, b.balanceMinor(id));
     }
 
+    @Test void fullBankKeepsFrozenBoostAndPaysAfterSpaceIsAvailable() {
+        UUID id = UUID.randomUUID(); var s = account(id); var b = bank();
+        assertEquals(BankStore.MAX_BALANCE, b.deposit(id, "Steve", BankStore.MAX_BALANCE));
+        assertEquals(WAIT, s.settleBoostCompensation("Steve", b));
+        assertEquals(3_600_000, s.rewardBoostRemaining("Steve"));
+        assertTrue(b.withdraw(id, 150));
+        assertEquals(COMPLETE, s.settleBoostCompensation("Steve", b));
+        assertEquals(0, s.rewardBoostRemaining("Steve"));
+        assertEquals(BankStore.MAX_BALANCE * 100L, b.balanceMinor(id));
+    }
+
     @Test void rejectDuplicateIdentityAndPreserveExistingBoost() {
         UUID id = UUID.randomUUID(); var s = account(id); s.recordPlayerSeen(id, "Other"); var b = bank();
         assertEquals(CONFLICT, s.settleBoostCompensation("Steve", b));
