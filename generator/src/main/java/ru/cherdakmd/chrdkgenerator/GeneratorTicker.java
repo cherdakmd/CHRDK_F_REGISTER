@@ -152,8 +152,11 @@ final class GeneratorTicker {
                     config.offlineEfficiency(), config.offlineHours() * 3_600_000L, room);
         }
         if (settle.units() > 0 || settle.advanceMillis() > 0) {
-            long bunkerLevel = plugin.store().addBunker(owner, entry.slot(), settle.units(),
-                    entry.lastCalcMillis() + settle.advanceMillis());
+            long nextTime = entry.lastCalcMillis() + settle.advanceMillis();
+            long bunkerLevel = fuelSettle == null
+                    ? plugin.store().addBunker(owner, entry.slot(), settle.units(), nextTime)
+                    : plugin.store().addBunkerWithFuel(owner, entry.slot(), settle.units(), nextTime,
+                            Math.addExact(entry.fuelUsedMs(), fuelSettle.fuelUsedMillis()));
             if (!plugin.autoSell().trySell(owner, entry.slot(), bunkerLevel)) {
                 plugin.notifier().onProduction(entry, bunkerLevel);
             }
@@ -169,18 +172,11 @@ final class GeneratorTicker {
                 }
             }
         }
-        if (fuelSettle != null && (fuelSettle.fuelUsedMillis() > 0 || fuelSettle.exhausted())) {
-            long used = entry.fuelUsedMs() + fuelSettle.fuelUsedMillis();
-            if (fuelSettle.exhausted()) {
-                if (config.fuelAutoRefuel() && tryAutoRefuel(owner, entry)) {
-                    // Ведро куплено: лава остаётся на месте, счётчик начинает новое.
-                    used = 0;
-                } else {
-                    burnLava(world, entry, cells, chamber);
-                    used = 0;
-                }
+        if (fuelSettle != null && fuelSettle.exhausted()) {
+            if (!(config.fuelAutoRefuel() && tryAutoRefuel(owner, entry))) {
+                burnLava(world, entry, cells, chamber);
             }
-            plugin.store().setFuelUsedMs(owner, entry.slot(), used);
+            plugin.store().setFuelUsedMs(owner, entry.slot(), 0);
         }
         Long last = lastFx.get(owner);
         if (last == null || now - last >= (long) cycleMs) {

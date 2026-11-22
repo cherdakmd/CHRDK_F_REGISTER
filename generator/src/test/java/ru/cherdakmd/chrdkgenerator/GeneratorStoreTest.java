@@ -62,6 +62,49 @@ class GeneratorStoreTest {
     }
 
     @Test
+    void productionAndFuelPersistTogetherAndInvalidInputChangesNothing(@TempDir Path dir) throws Exception {
+        GeneratorStore store = ready(dir);
+        UUID owner = UUID.randomUUID();
+        store.install(owner, UUID.randomUUID(), "world", 0, 64, 0, 100L, 3);
+        assertEquals(7, store.addBunkerWithFuel(owner, 0, 7, 500, 400));
+        assertThrows(IllegalArgumentException.class,
+                () -> store.addBunkerWithFuel(owner, 0, 5, 900, -1));
+        assertThrows(IllegalArgumentException.class,
+                () -> store.addBunkerWithFuel(owner, 0, -1, 900, 800));
+        store.flush();
+        var restored = newStore(dir);
+        restored.load();
+        var entry = restored.entry(owner);
+        assertEquals(7, entry.bunker());
+        assertEquals(500, entry.lastCalcMillis());
+        assertEquals(400, entry.fuelUsedMs());
+    }
+
+    @Test
+    void concurrentSnapshotsNeverObserveProductionWithoutFuel(@TempDir Path dir) throws Exception {
+        GeneratorStore store = ready(dir);
+        UUID owner = UUID.randomUUID();
+        store.install(owner, UUID.randomUUID(), "world", 0, 64, 0, 0, 3);
+        var failure = new java.util.concurrent.atomic.AtomicReference<Throwable>();
+        Thread writer = new Thread(() -> {
+            try {
+                for (int i = 1; i <= 2_000; i++) {
+                    store.addBunkerWithFuel(owner, 0, 1, i, i);
+                }
+            } catch (Throwable error) { failure.set(error); }
+        });
+        writer.start();
+        while (writer.isAlive()) {
+            var entry = store.entry(owner);
+            assertEquals(entry.bunker(), entry.fuelUsedMs());
+            assertEquals(entry.bunker(), entry.lastCalcMillis());
+        }
+        writer.join();
+        assertNull(failure.get());
+        assertEquals(2_000, store.entry(owner).fuelUsedMs());
+    }
+
+    @Test
     void removeHandsOverBunkerAndClearsBindButKeepsTier(@TempDir Path dir) throws Exception {
         GeneratorStore store = ready(dir);
         UUID owner = UUID.randomUUID();

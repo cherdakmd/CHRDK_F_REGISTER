@@ -497,6 +497,28 @@ public final class GeneratorStore {
         return row.bunker;
     }
 
+    /**
+     * Записывает производство и расход топлива под одной блокировкой, чтобы
+     * фоновый снимок не сохранил продукцию без соответствующего расхода.
+     * Это не транзакция с миром Minecraft или платной автозаправкой.
+     */
+    public synchronized long addBunkerWithFuel(UUID owner, int slot, long units,
+                                               long now, long fuelUsedMs) {
+        writable();
+        if (units < 0 || now < 0 || fuelUsedMs < 0) {
+            throw new IllegalArgumentException("generator production or fuel");
+        }
+        Row row = row(owner, slot);
+        if (row == null) {
+            throw new IllegalStateException("generator missing row");
+        }
+        row.bunker = units > Long.MAX_VALUE - row.bunker ? Long.MAX_VALUE : row.bunker + units;
+        row.lastCalcMillis = now;
+        row.fuelUsedMs = fuelUsedMs;
+        dirty = true;
+        return row.bunker;
+    }
+
     /** Забирает продукцию из бункера генератора («забрать всё»). */
     public synchronized long withdrawBunker(UUID owner, int slot, long amount) {
         writable();
