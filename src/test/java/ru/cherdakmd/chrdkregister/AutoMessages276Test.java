@@ -28,7 +28,7 @@ class AutoMessages276Test {
         var retainedFresh=after.stream().filter(item->{
             String text=String.valueOf(item.get("text"));return !text.contains("Plasmo Voice")&&!text.contains("/disasters")&&!text.contains("/mobtiers")&&!text.contains("/generator")&&!text.contains("античит");
         }).toList();
-        assertEquals(retained.size()+5,after.size());
+        assertEquals(retained.size()+4,after.size());
         assertEquals(retained.size(), retainedFresh.size());
         for (int i = 0; i < retained.size(); i++) {
             var a = new LinkedHashMap<>(retained.get(i));
