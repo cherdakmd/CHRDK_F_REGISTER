@@ -69,5 +69,9 @@ class ShopPromoMathTest {
         assertEquals(4, ShopPromoMath.lots(16, 64));
         assertEquals(200, ShopPromoMath.askTotal(50, 16, 64));
         assertEquals(0, ShopPromoMath.askTotal(-1, 16, 64));
+        assertEquals(ShopPromoMath.MAX_BONUS_VALUE,
+                ShopPromoMath.askTotal(Long.MAX_VALUE, 1, Long.MAX_VALUE));
+        assertEquals(ShopPromoMath.MAX_BONUS_VALUE,
+                ShopPromoMath.askTotal(Long.MAX_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE));
     }
 }

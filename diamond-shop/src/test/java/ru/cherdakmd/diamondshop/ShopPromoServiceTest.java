@@ -11,7 +11,7 @@ import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Ежедневная горячая скупка, окно 6 часов, лимит 5000 и анти-арбитраж. */
+/** Ежедневная горячая скупка, окно 6 часов, отсутствие дневного лимита и анти-арбитраж. */
 class ShopPromoServiceTest {
 
     @TempDir
@@ -67,38 +67,34 @@ class ShopPromoServiceTest {
     }
 
     @Test
-    void dailyPlayerCapSurvivesWindowChangesAndResetsOnlyNextUtcDay() {
+    void oldCapsDoNotBlockBonusesAcrossWindows() {
         ShopPromoService promos = service(settings());
         long now = ShopPromoMath.DAY_MILLIS + 1000;
         ShopConfig.ShopItem featured = item(promos.plan(now).featured().get(0), true);
-        assertEquals(500000, promos.remaining(STEVE, now));
-
+        assertEquals(-1, promos.remaining(STEVE, now));
         var first = promos.quote(STEVE, featured, 2_000_000, 10_000_000, 64, 100_000_000, now);
-        assertEquals(100000, first.amount(), "потолок тестовой сделки 1000 ⛁");
+        assertEquals(1_000_000, first.amount(), "старый лимит сделки не применяется");
         assertTrue(promos.reserve(STEVE, first, now));
-        assertEquals(400000, promos.remaining(STEVE, now), "лимит расходуется до WAL, а не после него");
         promos.record(STEVE, featured.material(), 64, first, now);
-        assertEquals(400000, promos.remaining(STEVE, now), "commit не должен списать бонус повторно");
-        var rest = new ShopPromoService.Bonus(400000, false, false);
-        assertTrue(promos.reserve(STEVE, rest, now));
-        promos.record(STEVE, featured.material(), 1, rest, now);
-
         long nextWindow = now + ShopPromoMath.WINDOW_MILLIS;
-        assertEquals(0, promos.remaining(STEVE, nextWindow));
-        assertEquals(0, promos.quote(STEVE, item(promos.plan(nextWindow).featured().get(0), true),
-                100, 1000, 64, 1000, nextWindow).amount());
-        assertEquals(500000, promos.remaining(STEVE, now + ShopPromoMath.DAY_MILLIS));
+        var next = promos.quote(STEVE, item(promos.plan(nextWindow).featured().get(0), true),
+                100, 1000, 64, 1000, nextWindow);
+        assertEquals(50, next.amount(), "старый суточный лимит не блокирует бонус");
+        assertTrue(promos.reserve(STEVE, next, nextWindow));
+        assertEquals(-1, promos.remaining(STEVE, now + ShopPromoMath.DAY_MILLIS));
     }
 
     @Test
     void rejectedTradeReleasesOnlyItsReservation() {
-        ShopPromoService promos = service(settings());
+        var store = new ShopPromoStore(dir.resolve("release"), Logger.getAnonymousLogger());
+        store.load();
+        ShopPromoService promos = new ShopPromoService(settings(), store);
         long now = ShopPromoMath.DAY_MILLIS + 1000;
         var bonus = new ShopPromoService.Bonus(100000, false, false);
         assertTrue(promos.reserve(STEVE, bonus, now));
-        assertEquals(400000, promos.remaining(STEVE, now));
+        assertEquals(100000, store.bonusPaid(STEVE, now));
         promos.release(STEVE, bonus, now);
-        assertEquals(500000, promos.remaining(STEVE, now));
+        assertEquals(0, store.bonusPaid(STEVE, now));
     }
 
     @Test
@@ -110,7 +106,7 @@ class ShopPromoServiceTest {
         long now = ShopPromoMath.DAY_MILLIS + 1000;
         var bonus = new ShopPromoService.Bonus(100000, false, false);
         assertFalse(promos.reserve(STEVE, bonus, now));
-        assertEquals(500000, promos.remaining(STEVE, now));
+        assertEquals(-1, promos.remaining(STEVE, now));
     }
 
     @Test

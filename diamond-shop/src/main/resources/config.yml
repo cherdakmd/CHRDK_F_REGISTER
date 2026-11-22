@@ -115,7 +115,7 @@ promotions:
     - DIAMOND_ORE
   featured-per-window: 5
   hot-buyback-percent: 50
-  # Потолок бонуса за одну сделку и за календарные сутки UTC, целые алмазы.
+  # Устаревшие настройки совместимости: лимиты бонуса не применяются.
   max-bonus-per-trade: 5000
   max-bonus-per-player-per-day: 5000
 

@@ -165,7 +165,8 @@ final class ShopPromoStore {
         rollDay(nowMillis);
         Progress progress = players.computeIfAbsent(player.toString(), ignored -> new Progress());
         long before = progress.bonus;
-        progress.bonus = Math.addExact(before, bonus);
+        if (bonus > Long.MAX_VALUE - before) return false;
+        progress.bonus = before + bonus;
         if (save()) return true;
         progress.bonus = before;
         return false;

@@ -59,7 +59,7 @@ public final class ShopMarketGui implements Listener {
             inventory.setItem(HOME_PROMO,button(Material.GOLD_INGOT,"market.home.promo",List.of(
                     plugin.messages().get("market.home.promo-type","type",promos.typeLabel(now)),
                     plugin.messages().get("market.home.promo-items","items",promos.featuredLabel(now)),
-                    plugin.messages().get("market.home.promo-left","left",ShopMoney.text(promos.remaining(player.getUniqueId(),now))))));
+                    plugin.messages().get("market.home.promo-unlimited"))));
         }
         ShopWelcomeGift gift=plugin.welcomeGift();
         if(gift!=null&&gift.enabled()) {

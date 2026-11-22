@@ -95,7 +95,10 @@ final class ShopPromoMath {
         if (askPerLot <= 0 || batch <= 0 || units <= 0) {
             return 0;
         }
-        return Math.min(MAX_BONUS_VALUE, askPerLot * units / batch);
+        var amount = java.math.BigInteger.valueOf(askPerLot)
+                .multiply(java.math.BigInteger.valueOf(units))
+                .divide(java.math.BigInteger.valueOf(batch));
+        return amount.min(java.math.BigInteger.valueOf(MAX_BONUS_VALUE)).longValueExact();
     }
 
     /** Сколько полных партий в сделке (минимум одна — бонус не делится на ноль). */

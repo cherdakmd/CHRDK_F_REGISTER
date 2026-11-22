@@ -148,6 +148,7 @@ messages:
       "promo": "<gold>★ Акция дня</gold>"
       "promo-type": "<yellow>%type%</yellow>"
       "promo-items": "<gray>%items%</gray>"
+      "promo-unlimited": "<gray>Доплата за горячую скупку без суточного лимита · новые 5 ресурсов каждые 6 ч</gray>"
       "promo-left": "<gray>Доплата +50% · осталось <gold>%left% ⛁</gold><gray> на сутки · новые 5 ресурсов каждые 6 ч</gray>"
       "gift": "<green>◆ Подарок игроку</green>"
       "gift-amount": "<gold>%amount% ⛁</gold><gray> на банковский счёт</gray>"

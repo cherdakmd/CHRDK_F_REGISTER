@@ -51,8 +51,7 @@ final class ShopPromoService {
         if (!enabled()) {
             return 0;
         }
-        return Math.max(0, settings.maxBonusPerPlayerPerDay()*100L
-                - store.snapshot(player, nowMillis).bonus());
+        return -1; // no daily bonus cap
     }
 
     /**
@@ -72,19 +71,14 @@ final class ShopPromoService {
         if (plan.featured().isEmpty()) {
             return Bonus.none();
         }
-        ShopPromoStore.Snapshot progress = store.snapshot(player, nowMillis);
-        long dailyLeft = Math.max(0, settings.maxBonusPerPlayerPerDay()*100L - progress.bonus());
-        if (dailyLeft == 0) {
-            return Bonus.none();
-        }
         String material = item.material();
         if (!plan.featured().contains(material)) {
             return Bonus.none();
         }
         long desired = ShopPromoMath.percentOf(baseMoney, settings.hotBuybackPercent());
         long noArbitrage = Math.max(0, askTotal - baseMoney);
-        long amount = ShopPromoMath.cap(desired, noArbitrage, settings.maxBonusPerTrade()*100L,
-                dailyLeft, turnoverHeadroom);
+        long amount = ShopPromoMath.cap(desired, noArbitrage, ShopPromoMath.MAX_BONUS_VALUE,
+                Long.MAX_VALUE, turnoverHeadroom);
         if (amount <= 0) {
             return Bonus.none();
         }
@@ -94,9 +88,7 @@ final class ShopPromoService {
     /** Денежный резерв сохраняется до ShopStore.prepare; false запрещает только доплату. */
     boolean reserve(UUID player, Bonus bonus, long nowMillis) {
         if (!enabled() || bonus == null || bonus.amount() <= 0) return true;
-        long dailyLeft = Math.max(0, settings.maxBonusPerPlayerPerDay()*100L
-                - store.bonusPaid(player, nowMillis));
-        return bonus.amount() <= dailyLeft && store.reserve(player, nowMillis, bonus.amount());
+        return store.reserve(player, nowMillis, bonus.amount());
     }
 
     /** Отклонённая/не принятая в WAL сделка не должна расходовать суточный лимит. */

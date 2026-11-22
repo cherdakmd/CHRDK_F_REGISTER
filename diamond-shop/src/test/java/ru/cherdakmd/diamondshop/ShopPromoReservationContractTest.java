@@ -29,6 +29,6 @@ class ShopPromoReservationContractTest {
         String service = Files.readString(Path.of(
                 "src/main/java/ru/cherdakmd/diamondshop/ShopPromoService.java"));
         assertTrue(service.contains("store.commit(player, nowMillis, material, units, 0, false, false)"));
-        assertTrue(service.contains("bonus.amount() <= dailyLeft && store.reserve"));
+        assertTrue(service.contains("return store.reserve(player, nowMillis, bonus.amount())"));
     }
 }
