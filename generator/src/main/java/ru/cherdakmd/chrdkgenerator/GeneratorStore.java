@@ -716,6 +716,8 @@ public final class GeneratorStore {
         if (row == null || count < 0) return false;
         if (!row.skillRebirthBaseline) {
             row.lastSkillRebirth = count; row.skillRebirthBaseline = true; dirty = true;
+        } else if (count < row.lastSkillRebirth || (row.requestedSkillRebirth > 0 && count < row.requestedSkillRebirth)) {
+            return false;
         } else if (count > row.lastSkillRebirth && count > row.requestedSkillRebirth) {
             row.requestedSkillRebirth = count; dirty = true;
         }

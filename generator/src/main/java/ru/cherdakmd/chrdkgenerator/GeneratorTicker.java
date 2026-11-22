@@ -17,20 +17,16 @@ import java.util.Random;
 import java.util.UUID;
 
 /**
- * Пульс производства: раз в секунду на каждый установленный генератор.
- *
- * <p>Работает только в загруженных чанках с целой камерой: простой (сломанная
- * ячейка) сгорает без начисления, выгрузка чанка и рестарты добираются
- * офлайн-расчётом при следующем старте (п.31, §6). Топливо расходуется
- * рабочим временем: ведро лавы держит {@code cycles-per-bucket} циклов, потом
- * ячейка прогорает и требует доливки. Модуль «Чанк» держит чанк загруженным
- * и снимает офлайн-ограничения.</p>
+ * Пульс восстановления и производства. Расчёт выполняется в загруженном
+ * чанке, а продукция, печное топливо, тара и денежное обязательство
+ * фиксируются общим снимком контейнера.
  */
 final class GeneratorTicker {
 
     private final GeneratorPlugin plugin;
     private final Map<String, Long> nextProduction = new HashMap<>();
     private final Map<UUID, Long> payoutWarnings = new HashMap<>();
+    private final Map<UUID, Long> recoveryWarnings = new HashMap<>();
     private final Map<UUID, Long> nextPayout = new HashMap<>();
     private final Random random = new Random();
     private BukkitTask tickTask;
@@ -71,7 +67,14 @@ final class GeneratorTicker {
                 Player player = Bukkit.getPlayer(owner);
                 if (player != null && player.isOnline() && plugin.coreApi().isAuthenticated(player)
                         && !plugin.containers().recoverPlayer(player)) continue;
-                if (!plugin.containers().syncRebirth(owner, player, now)) continue;
+                if (!plugin.containers().syncRebirth(owner, player, now)) {
+                    if (now - recoveryWarnings.getOrDefault(owner, 0L) >= 60_000L) {
+                        recoveryWarnings.put(owner, now);
+                        plugin.getLogger().warning("[CHRDK_Generator] Перерождение ожидает восстановления или сверки Skills: " + owner);
+                    }
+                    continue;
+                }
+                recoveryWarnings.remove(owner);
                 entries = plugin.store().entries(owner);
                 for (GeneratorStore.Entry entry : entries) {
                     if (entry.installed()) {

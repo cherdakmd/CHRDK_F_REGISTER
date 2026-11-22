@@ -213,8 +213,7 @@ public final class GeneratorWorldListener implements Listener {
     }
 
     /**
-     * Снятие ядра владельцем (слом, {@code /gen take}, меню): блок убирается,
-     * бинд снимается, бункер и ядро выдаются предметами.
+     * Убирает блок после устойчивого возврата ядра игроку.
      */
     void clearCore(Player player, GeneratorStore.Entry before) {
         if (before == null || !before.installed()) {

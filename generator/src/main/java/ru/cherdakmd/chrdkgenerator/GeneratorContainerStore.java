@@ -17,10 +17,9 @@ import ru.cherdakmd.chrdkregister.api.InventoryTransfer;
 import ru.cherdakmd.chrdkregister.storage.SafeJsonWriter;
 
 /**
- * Долговечное содержимое будущего общего окна. Все изменения контейнера и
+ * Долговечное содержимое общего окна. Все изменения контейнера и
  * состояния производства публикуются одним снимком; перенос в playerdata
  * проходит через intent и native witness, а не через Bukkit-событие клика.
- * Пока не подключён к действующему генератору.
  */
 final class GeneratorContainerStore {
     static final int RESOURCE_SLOTS = 36;

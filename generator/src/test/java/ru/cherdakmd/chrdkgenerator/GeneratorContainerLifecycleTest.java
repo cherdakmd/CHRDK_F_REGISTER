@@ -97,6 +97,7 @@ class GeneratorContainerLifecycleTest {
         assertEquals(0, source().requestedSkillRebirth(owner));
         assertTrue(source().observeSkillRebirth(owner, 6));
         assertEquals(0, source().requestedSkillRebirth(owner));
+        assertFalse(source().observeSkillRebirth(owner, 5));
     }
     @Test void oldSourceWithLiveContainerFailsClosed() throws Exception {
         var s = ready(); var t = target();
