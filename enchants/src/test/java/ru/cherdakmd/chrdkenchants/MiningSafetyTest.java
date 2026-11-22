@@ -8,6 +8,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.jupiter.api.Assertions.*;
 
 class MiningSafetyTest {
+    @Test void veinNeighborsAreUniqueAndSymmetricInAllDirections() {
+        var offsets = new HashSet<>(MiningPolicy.NEIGHBORS);
+        assertEquals(18, offsets.size());
+        assertEquals(offsets.size(), MiningPolicy.NEIGHBORS.size());
+        assertFalse(offsets.contains(new MiningPolicy.Offset(0, 0, 0)));
+        for (var offset : offsets) {
+            assertTrue(offsets.contains(new MiningPolicy.Offset(-offset.x(), -offset.y(), -offset.z())), offset.toString());
+        }
+    }
     @Test void geometryIsUniqueAndNeverRebreaksTheCenter() {
         for (double[] direction : new double[][]{{1,0,0},{-1,0,0},{0,1,0},{0,-1,0},{0,0,1},{0,0,-1},{.3,.2,-.8}})
             for (int level = 1; level <= 2; level++) {
@@ -138,7 +147,7 @@ class MiningSafetyTest {
     }
     @Test void expansionsUseNativeBreaksAndCannotTraverseDeniedOreOrReloadChunks() throws Exception {
         String source = source("ToolEffectsListener");
-        for (String guard : List.of("player.breakBlock(block)", "if (breakOne(player, block, source)) { count++; queue.add(block); }",
+        for (String guard : List.of("player.breakBlock(block)", "if (result == BreakResult.BROKEN) { count++; queue.add(block); }", "if (result == BreakResult.STOP) return;",
                 "secondary.add", "finally { secondary.remove", "source.secondary", "source.sneaking",
                 "source.generation == plugin.sourceGeneration()", "getHeldItemSlot() != source.slot", "distanceSquared",
                 "isChunkLoaded", "instanceof org.bukkit.block.TileState", "PveEquipment.same(source.tool",

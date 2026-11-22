@@ -38,18 +38,18 @@ public final class AttributeRepairListener implements Listener {
     public void onHeld(PlayerItemHeldEvent event) {
         Player player = event.getPlayer();
         ItemStack stack = player.getInventory().getItem(event.getNewSlot());
-        if (plugin.items().repairAttributes(stack) || plugin.items().refreshBookDescription(stack)) {
-            player.updateInventory();
-        }
+        boolean attributes = plugin.items().repairAttributes(stack);
+        boolean book = plugin.items().refreshBookDescription(stack);
+        if (attributes || book) player.updateInventory();
     }
 
     /** Обойти инвентарь игрока и вернуть ванильную базу всем нашим предметам. */
     void repair(Player player) {
         boolean changed = false;
         for (ItemStack stack : player.getInventory().getContents()) {
-            if (plugin.items().repairAttributes(stack) || plugin.items().refreshBookDescription(stack)) {
-                changed = true;
-            }
+            boolean attributes = plugin.items().repairAttributes(stack);
+            boolean book = plugin.items().refreshBookDescription(stack);
+            if (attributes || book) changed = true;
         }
         if (changed) {
             player.updateInventory();

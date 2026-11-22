@@ -107,7 +107,7 @@ public final class EnchantItems {
             meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, encoded);
         }
         applyAttributes(item, meta, safe);
-        refreshLore(meta, safe);
+        refreshLore(meta, safe, item.getType() == Material.ENCHANTED_BOOK);
         item.setItemMeta(meta);
     }
 
@@ -125,7 +125,7 @@ public final class EnchantItems {
         }
         Map<String, Integer> enchants = read(item);
         applyAttributes(item, meta, enchants);
-        refreshLore(meta, enchants);
+        refreshLore(meta, enchants, item.getType() == Material.ENCHANTED_BOOK);
         item.setItemMeta(meta);
     }
 
@@ -258,7 +258,7 @@ public final class EnchantItems {
         if (!isEnchantBook(book) || validated(book) == null) return false;
         ItemMeta meta = book.getItemMeta();
         var previous = meta.lore();
-        refreshLore(meta, read(book));
+        refreshLore(meta, read(book), true);
         if (java.util.Objects.equals(previous, meta.lore())) return false;
         return book.setItemMeta(meta);
     }
@@ -267,20 +267,22 @@ public final class EnchantItems {
      * Перерисовывает секцию лора чар: старые наши строки (с маркером) удаляются,
      * новые добавляются по реестру.
      */
-    private void refreshLore(ItemMeta meta, Map<String, Integer> enchants) {
+    private void refreshLore(ItemMeta meta, Map<String, Integer> enchants, boolean book) {
         List<Component> lore = meta.hasLore() && meta.lore() != null
                 ? new ArrayList<>(meta.lore()) : new ArrayList<>();
         lore.removeIf(this::isOurs);
-        for (Map.Entry<String, Integer> entry : new LinkedHashMap<>(enchants).entrySet()) {
+        // Стабильный порядок исключает ложные изменения описания после перезапуска.
+        for (Map.Entry<String, Integer> entry : enchants.entrySet().stream().sorted(Map.Entry.comparingByKey()).toList()) {
             EnchantDef def = EnchantRegistry.byId(entry.getKey());
             if (def == null) continue;
-            // Книга и предмет показывают только название и уровень чары:
-            // полное описание (ID, редкость, цели, правила) — в /enchants info,
-            // иначе лор книги не влезает в экран.
-            // 1.4.128: проклятия пишутся красным — по лору видно, что это минус
             lore.add(plugin.messages().get(def.curse() ? "lore-line-curse" : "lore-line",
                     "name", plugin.messages().mini("en." + def.id() + ".name"),
                     "levelroman", EnchantCodec.roman(entry.getValue())));
+            if (book) {
+                String targets = String.join(", ", EnchantTargets.labelKeys(def).stream().map(plugin.messages()::raw).toList());
+                lore.add(plugin.messages().get(def.curse() ? "book-items-curse" : "book-items",
+                        "items", ru.cherdakmd.chrdkregister.Messages.trusted(targets)));
+            }
         }
         meta.lore(lore.isEmpty() ? null : lore);
     }

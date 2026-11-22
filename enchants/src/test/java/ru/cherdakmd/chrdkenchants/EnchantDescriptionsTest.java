@@ -30,6 +30,26 @@ class EnchantDescriptionsTest {
             assertFalse(plain(messages, key).matches("(?s).*%[a-z_]+%.*"), key);
         }
     }
+    @Test void targetLabelsMatchRegistryExactlyForEveryEnchantment() throws Exception {
+        var m = messages();
+        for (var def : EnchantRegistry.all()) {
+            var keys = EnchantTargets.labelKeys(def);
+            assertFalse(keys.isEmpty(), def.id());
+            for (String key : keys) assertFalse(m.raw(key).isBlank(), def.id() + ": " + key);
+            if (def.supports().size() == ItemGroup.values().length) {
+                assertEquals(List.of("book-items-all"), keys);
+                assertFalse(m.raw(keys.getFirst()).contains("любой предмет"));
+            } else {
+                assertEquals(def.supports().size(), keys.size(), def.id());
+                for (var group : def.supports()) {
+                    assertTrue(keys.contains("catalog-group-" + group.name().toLowerCase(Locale.ROOT)), def.id());
+                }
+            }
+        }
+        assertEquals(List.of("catalog-group-hoe"), EnchantTargets.labelKeys(EnchantRegistry.byId("harvest_replant")));
+        assertEquals(List.of("catalog-group-pickaxe"), EnchantTargets.labelKeys(EnchantRegistry.byId("autosmelt")));
+        assertTrue(m.raw("catalog-group-chestplate").toLowerCase(Locale.ROOT).contains("элитр"));
+    }
     @Test void helpTopicsAreFiniteCaseInsensitiveAndDoNotAcceptArbitraryMessagePaths() throws Exception {
         var messages = messages();
         for (String topic : EnchantHelp.TOPICS) {
@@ -124,14 +144,17 @@ class EnchantDescriptionsTest {
     @Test void descriptionRefreshIsExplicitAndOnlyChangesLoreOnAValidatedBook() throws Exception {
         String items = source("EnchantItems"), commands = source("EnchantCommandHandler");
         String refresh = items.substring(items.indexOf("public boolean refreshBookDescription"), items.indexOf("Перерисовывает секцию лора"));
-        assertTrue(refresh.contains("validated(book) == null")); assertTrue(refresh.contains("refreshLore(meta, read(book))"));
+        assertTrue(refresh.contains("validated(book) == null")); assertTrue(refresh.contains("refreshLore(meta, read(book), true)"));
         assertFalse(refresh.contains("applyAttributes(")); assertFalse(refresh.contains("stampBook(")); assertFalse(refresh.contains("write("));
         assertTrue(commands.contains("refreshBookDescription(described)"));
-        // Контракт лора книги: только название и уровень, без ID/редкости/описаний.
-        assertFalse(items.contains("get(\"book-level\""), "книга не показывает ID и уровень/максимум строкой");
-        assertFalse(items.contains("get(\"book-preview\""), "книга не показывает подсказки и описание");
+        // Краткая цель для каждой чары только на книгах; ID и длинная справка остаются в каталоге.
+        assertFalse(items.contains("get(\"book-level\""));
+        assertFalse(items.contains("get(\"book-preview\""));
         assertFalse(items.contains("get(\"book-rarity\"")); assertFalse(items.contains("get(\"book-apply\""));
-        assertTrue(items.contains("\"lore-line\""), "строка книги — название и уровень");
+        assertTrue(items.contains("\"lore-line\""));
+        assertTrue(items.contains("if (book)"));
+        assertTrue(items.contains("\"book-items-curse\" : \"book-items\""));
+        assertTrue(items.contains("EnchantTargets.labelKeys(def)"));
         String repairListener = source("AttributeRepairListener");
         assertTrue(repairListener.contains("refreshBookDescription(stack)"),
                 "старые книги укорачиваются сами при входе и смене слота");

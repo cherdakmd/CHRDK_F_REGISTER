@@ -10,7 +10,7 @@ import java.util.logging.Logger;
  * Снимок конфигурации: источники чар, лимиты, проклятия, флаги по каждой id.
  *
  * <p>1.4.128: {@code sources.table.curse-chance-percent} — с какой вероятностью
- * бросок со стола вместо светлой чары выдаёт проклятие (по умолчанию 25% от уже
+ * бросок со стола вместо светлой чары выдаёт проклятие (по умолчанию 15% от уже
  * сработавшего шанса), {@code rules.curses-enabled} — мастер-выключатель
  * проклятий: при {@code false} они не выпадают ни из одного источника, но уже
  * лежащие на предметах чары не снимаются.</p>
@@ -43,12 +43,12 @@ public record EnchantsConfig(
 
     public static EnchantsConfig parse(FileConfiguration config, Logger logger) {
         boolean table = clampBool(config, "sources.table.enabled", true);
-        int tableChance = clamp(config.getInt("sources.table.chance-percent", 35), 0, 100,
+        int tableChance = clamp(config.getInt("sources.table.chance-percent", 30), 0, 100,
                 logger, "sources.table.chance-percent");
-        int curseChance = clamp(config.getInt("sources.table.curse-chance-percent", 25), 0, 100,
+        int curseChance = clamp(config.getInt("sources.table.curse-chance-percent", 15), 0, 100,
                 logger, "sources.table.curse-chance-percent");
         boolean villager = clampBool(config, "sources.villager.enabled", true);
-        int villagerChance = clamp(config.getInt("sources.villager.convert-chance-percent", 50),
+        int villagerChance = clamp(config.getInt("sources.villager.convert-chance-percent", 35),
                 0, 100, logger, "sources.villager.convert-chance-percent");
         int maxPerItem = clamp(config.getInt("rules.max-per-item", 3), 1, 30, logger, "rules.max-per-item");
         int maxLegendary = clamp(config.getInt("rules.max-legendary-per-item", 1), 0, maxPerItem,

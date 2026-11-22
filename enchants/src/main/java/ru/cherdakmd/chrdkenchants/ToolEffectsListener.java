@@ -130,13 +130,16 @@ public final class ToolEffectsListener implements Listener {
                 || !center.getWorld().isChunkLoaded(px >> 4, pz >> 4)) return null;
         return center.getWorld().getBlockAt(px, py, pz);
     }
-    private boolean breakOne(Player player, Block block, Source source) {
-        if (block == null || !valid(source) || player.getInventory().getHeldItemSlot() != source.slot || !PveEquipment.same(source.tool, player.getInventory().getItemInMainHand())
-                || !(player.getEyeLocation().distanceSquared(block.getLocation().add(.5,.5,.5)) <= 25)
+    private enum BreakResult { SKIPPED, BROKEN, STOP }
+    private BreakResult breakOne(Player player, Block block, Source source) {
+        if (!valid(source) || player.getInventory().getHeldItemSlot() != source.slot
+                || !PveEquipment.same(source.tool, player.getInventory().getItemInMainHand())) return BreakResult.STOP;
+        if (block == null || !(player.getEyeLocation().distanceSquared(block.getLocation().add(.5,.5,.5)) <= 25)
                 || block.isLiquid() || block.getType().isAir() || block.getType().getHardness() <= 0
-                || block.getType().getHardness() >= 30 || block.getState() instanceof org.bukkit.block.TileState) return false;
+                || block.getType().getHardness() >= 30 || block.getState() instanceof org.bukkit.block.TileState) return BreakResult.SKIPPED;
         secondary.add(player.getUniqueId());
-        try { return player.breakBlock(block); }
+        // Отказ native (в том числе запрет привата) прерывает всю серию, а не только один блок.
+        try { return player.breakBlock(block) ? BreakResult.BROKEN : BreakResult.STOP; }
         finally { secondary.remove(player.getUniqueId()); }
     }
     private void vein(Player player, Block start, Source source, int maximum) {
@@ -148,13 +151,16 @@ public final class ToolEffectsListener implements Listener {
                 if (count >= maximum) break;
                 Block block = target(current, offset.x(), offset.y(), offset.z()); if (block == null) continue;
                 if (!seen.add(block.getX()+":"+block.getY()+":"+block.getZ()) || block.getType() != source.type) continue;
-                if (breakOne(player, block, source)) { count++; queue.add(block); }
+                BreakResult result = breakOne(player, block, source);
+                if (result == BreakResult.STOP) return;
+                if (result == BreakResult.BROKEN) { count++; queue.add(block); }
             }
         }
     }
     private void area(Player player, Block center, Source source, int level) {
         var direction = source.direction;
-        for (var offset : MiningPolicy.area(direction.getX(), direction.getY(), direction.getZ(), level))
-            breakOne(player, target(center, offset.x(), offset.y(), offset.z()), source);
+        for (var offset : MiningPolicy.area(direction.getX(), direction.getY(), direction.getZ(), level)) {
+            if (breakOne(player, target(center, offset.x(), offset.y(), offset.z()), source) == BreakResult.STOP) return;
+        }
     }
 }

@@ -9,6 +9,7 @@ final class MiningPolicy {
     record Offset(int x, int y, int z) { }
     static final List<Offset> NEIGHBORS = List.of(new Offset(1,0,0),new Offset(-1,0,0),new Offset(0,1,0),new Offset(0,-1,0),
             new Offset(0,0,1),new Offset(0,0,-1),new Offset(1,1,0),new Offset(-1,1,0),new Offset(0,1,1),new Offset(0,1,-1),
+            new Offset(1,-1,0),new Offset(-1,-1,0),new Offset(0,-1,1),new Offset(0,-1,-1),
             new Offset(1,0,1),new Offset(-1,0,-1),new Offset(1,0,-1),new Offset(-1,0,1));
     private static final Map<String,String> MINERALS = Map.ofEntries(
             Map.entry("IRON_ORE","RAW_IRON"),Map.entry("GOLD_ORE","RAW_GOLD"),Map.entry("COPPER_ORE","RAW_COPPER"),

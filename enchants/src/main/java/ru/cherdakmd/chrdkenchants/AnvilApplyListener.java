@@ -169,6 +169,24 @@ public final class AnvilApplyListener implements Listener {
         if (!(player.getOpenInventory() instanceof AnvilView view)) { plugin.messages().send(player, "preview-open-anvil"); return; }
         var quote = quotes.get(player.getUniqueId());
         var left = view.getTopInventory().getItem(0); var right = view.getTopInventory().getItem(1);
+        if (quote == null && customBook(right) && left != null && player.hasPermission("chrdkenchants.use")
+                && plugin.coreApi() != null && plugin.coreApi().isAuthenticated(player)) {
+            String reason = plugin.service().canApplyFromBook(left, right);
+            if (reason != null) {
+                String message = switch (reason) {
+                    case "invalid-data" -> "preview-invalid-data";
+                    case "not-book" -> "preview-not-book";
+                    case "disabled" -> "preview-disabled";
+                    case "mismatch" -> "preview-mismatch";
+                    case "conflict" -> "preview-conflict";
+                    case "limit" -> "preview-limit";
+                    case "legendary-limit" -> "preview-legendary-limit";
+                    default -> "preview-unavailable";
+                };
+                plugin.messages().send(player, message);
+                return;
+            }
+        }
         if (quote == null || !quote.source(view, left, right, view.getRenameText())
                 || !quote.output(view.getTopInventory().getItem(2), ru.cherdakmd.chrdkregister.api.AnvilCosts.actual(view), view.getRepairItemCountCost(),
                     view.getMaximumRepairCost(), plugin.sourceGeneration(), cumulativeCost(), player.getGameMode() == GameMode.CREATIVE)

@@ -120,7 +120,7 @@ public final class EnchantService {
         // 1.4.282: книга-«мутант» и уже испорченный предмет не проходят проверку
         // целиком, даже если по одной чаре конфликт маскируется порядком обхода.
         if (!EnchantConflicts.validSet(bookEnchants) || !EnchantConflicts.validSet(itemEnchants)) {
-            return "blocked";
+            return "conflict";
         }
         for (String id : bookEnchants.keySet()) {
             EnchantDef def = EnchantRegistry.byId(id);
@@ -136,11 +136,14 @@ public final class EnchantService {
                     bookTarget ? null : item.getType().name(), hypothetical,
                     plugin.config().maxPerItem(), plugin.config().maxLegendaryPerItem());
             if (rest.isEmpty()) {
+                if (EnchantConflicts.conflictsWith(hypothetical, id)) return "conflict";
+                if (hypothetical.size() >= plugin.config().maxPerItem()) return "limit";
+                if (def.rarity() == EnchantDef.Rarity.LEGENDARY) return "legendary-limit";
                 return "blocked";
             }
             // добавление даже при замене существующей той же чары — пересчёт лимита:
             if (!itemEnchants.containsKey(id) && itemEnchants.size() >= plugin.config().maxPerItem()) {
-                return "blocked";
+                return "limit";
             }
             itemEnchants.put(id, bookEnchants.get(id));
         }
@@ -149,7 +152,7 @@ public final class EnchantService {
         }
         // Итоговый набор после всех переносов тоже должен быть без конфликтов.
         if (!EnchantConflicts.validSet(itemEnchants)) {
-            return "blocked";
+            return "conflict";
         }
         return null;
     }

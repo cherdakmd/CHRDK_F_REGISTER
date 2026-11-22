@@ -120,8 +120,7 @@ public final class EnchantGui implements Listener {
         return plugin.messages().raw("catalog-group-" + group.name().toLowerCase(java.util.Locale.ROOT));
     }
     public String supportedLabel(EnchantDef def) {
-        if (def.supports().size() == ItemGroup.values().length) return plugin.messages().raw("item-any");
-        return String.join(", ", def.supports().stream().sorted().map(this::groupLabel).toList());
+        return String.join(", ", EnchantTargets.labelKeys(def).stream().map(plugin.messages()::raw).toList());
     }
     String conflictsLabel(EnchantDef def) {
         List<String> names = new ArrayList<>(EnchantCatalog.conflicts(def).stream()

@@ -12,6 +12,13 @@ enchants:
     инвентаря, выходе, смерти, TP или reload.</red>'
   preview-open-anvil: <yellow>Откройте наковальню, положите предмет слева и кастомную книгу справа, затем /enchants preview.</yellow>
   preview-unavailable: <red>Нет действующего безопасного расчёта. Проверьте книгу, совместимость и состояние наковальни.</red>
+  preview-invalid-data: <red>Данные чар книги или предмета повреждены. Ничего не расходуется; обратитесь к администрации.</red>
+  preview-not-book: <red>Справа нужна действительная кастомная книга чар.</red>
+  preview-disabled: <red>В книге есть отключённая чара; перенос невозможен.</red>
+  preview-mismatch: <red>Хотя бы одна чара книги не подходит предмету слева. Проверьте назначения в книге.</red>
+  preview-conflict: <red>Чары книги и предмета конфликтуют или уже содержат несовместимый набор.</red>
+  preview-limit: <red>Достигнут лимит кастомных чар на предмете.</red>
+  preview-legendary-limit: <red>Достигнут лимит легендарных чар на предмете.</red>
   preview-price: <aqua>Наковальня:</aqua> <gray>базовая часть %native% + кастомные чары %custom% = <yellow>%total% уровней</yellow>; native-предел %maximum% (для
     Survival цена строго ниже). Только отчёт, предмет не выдаётся.</gray>
   preview-ready: <green>По текущему расчёту и вашему уровню получение доступно. При клике всё проверяется заново.</green>
@@ -454,6 +461,8 @@ enchants:
   - <gray>Имеющийся эффект того же типа не заменяется.</gray>
   book-rarity: '<dark_gray>✶</dark_gray> <gray>Редкость: %rarity% · предел %maxlevel%</gray>'
   book-items: '<dark_gray>✶</dark_gray> <gray>Для: %items%</gray>'
+  book-items-curse: '<dark_gray>✶</dark_gray> <gray>Для: %items%</gray> <red>· проклятие</red>'
+  book-items-all: мечи, топоры, луки, арбалеты, кирки, лопаты, тяпки, броня и элитры
   book-conflicts: '<dark_gray>✶</dark_gray> <gray>Несовместимо: %conflicts%</gray>'
   book-apply: '<dark_gray>✶</dark_gray> <gray>Наковальня: предмет слева, эта книга справа.</gray>'
   en.careful_work.name: Бережная работа

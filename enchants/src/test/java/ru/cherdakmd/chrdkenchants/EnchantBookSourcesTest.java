@@ -19,6 +19,24 @@ class EnchantBookSourcesTest {
         assertFalse(EnchantBookPolicy.allows("MYTHIC", 3));
         assertFalse(EnchantBookPolicy.allows("", 3));
     }
+    @Test void newDefaultsAreBalancedAndExistingSettingsArePreserved() throws Exception {
+        var defaults = EnchantsConfig.parse(new YamlConfiguration(), java.util.logging.Logger.getAnonymousLogger());
+        assertEquals(30, defaults.tableChancePercent());
+        assertEquals(15, defaults.tableCurseChancePercent());
+        assertEquals(35, defaults.villagerConvertChancePercent());
+        var saved = new YamlConfiguration();
+        saved.set("sources.table.chance-percent", 35);
+        saved.set("sources.table.curse-chance-percent", 25);
+        saved.set("sources.villager.convert-chance-percent", 50);
+        var prior = EnchantsConfig.parse(saved, java.util.logging.Logger.getAnonymousLogger());
+        assertEquals(35, prior.tableChancePercent());
+        assertEquals(25, prior.tableCurseChancePercent());
+        assertEquals(50, prior.villagerConvertChancePercent());
+        var bundled = yaml("config.yml");
+        assertEquals(30, bundled.getInt("sources.table.chance-percent"));
+        assertEquals(15, bundled.getInt("sources.table.curse-chance-percent"));
+        assertEquals(35, bundled.getInt("sources.villager.convert-chance-percent"));
+    }
     @Test void allTiersHaveLightBooksAndHigherTiersActuallyExpandThePool() {
         int previous = 0;
         for (int tier = 1; tier <= 3; tier++) {
