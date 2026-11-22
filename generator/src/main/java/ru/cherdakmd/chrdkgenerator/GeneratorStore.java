@@ -273,8 +273,8 @@ public final class GeneratorStore {
                         var take = player.get("coreTake");
                         if (!take.isJsonObject() || !take.getAsJsonObject().keySet().equals(Set.of("transaction", "core", "before", "after"))) throw new IOException("core take fields");
                         for (String field : List.of("transaction", "core", "before", "after")) {
-                            var value = take.getAsJsonObject().get(field);
-                            if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isString()) throw new IOException("core take field type");
+                            var fieldValue = take.getAsJsonObject().get(field);
+                            if (!fieldValue.isJsonPrimitive() || !fieldValue.getAsJsonPrimitive().isString()) throw new IOException("core take field type");
                         }
                         MilestoneMigration.uuid(take.getAsJsonObject().get("transaction").getAsString());
                         MilestoneMigration.uuid(take.getAsJsonObject().get("core").getAsString());
