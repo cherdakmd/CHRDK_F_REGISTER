@@ -35,7 +35,7 @@ final class GeneratorContainerStore {
                 throw new IllegalArgumentException("invalid generator container stack");
         }
     }
-    record View(UUID core, long revision, List<Stack> slots, long burnMillis, long lastCalcMillis, boolean pending) {
+    record View(UUID core, long revision, List<Stack> slots, long burnMillis, long lastCalcMillis, boolean pending, UUID lastMigration) {
         View { slots = java.util.Collections.unmodifiableList(new ArrayList<>(slots)); }
     }
 
@@ -55,6 +55,7 @@ final class GeneratorContainerStore {
         List<Stack> slots = emptySlots();
         long burnMillis;
         long lastCalcMillis;
+        UUID lastMigration;
         Pending pending;
     }
     private static final class Data {
@@ -105,8 +106,14 @@ final class GeneratorContainerStore {
         for (var entry : root.getAsJsonObject("containers").entrySet()) {
             if (!entry.getValue().isJsonObject()) throw new IllegalArgumentException("container row type");
             var row = entry.getValue().getAsJsonObject();
-            if (!row.keySet().equals(java.util.Set.of("owner", "slot", "core", "revision", "slots", "burnMillis", "lastCalcMillis", "pending")))
+            if (!row.keySet().equals(java.util.Set.of("owner", "slot", "core", "revision", "slots", "burnMillis", "lastCalcMillis", "pending", "lastMigration"))
+                    && !row.keySet().equals(java.util.Set.of("owner", "slot", "core", "revision", "slots", "burnMillis", "lastCalcMillis", "pending")))
                 throw new IllegalArgumentException("container row fields");
+            if (row.has("lastMigration") && !row.get("lastMigration").isJsonNull()) {
+                if (!row.get("lastMigration").isJsonPrimitive() || !row.get("lastMigration").getAsJsonPrimitive().isString()) throw new IllegalArgumentException("migration id");
+                String id = row.get("lastMigration").getAsString();
+                if (!UUID.fromString(id).toString().equals(id)) throw new IllegalArgumentException("migration id canonical");
+            }
             for (String field : List.of("owner", "core")) {
                 if (!row.get(field).isJsonPrimitive() || !row.get(field).getAsJsonPrimitive().isString()) throw new IllegalArgumentException("container id");
                 String id = row.get(field).getAsString();
@@ -203,7 +210,33 @@ final class GeneratorContainerStore {
     synchronized View view(UUID owner, int slot) {
         Container row = data.containers.get(key(owner, slot));
         return !healthy || row == null ? null : new View(row.core, row.revision, row.slots,
-                row.burnMillis, row.lastCalcMillis, row.pending != null);
+                row.burnMillis, row.lastCalcMillis, row.pending != null, row.lastMigration);
+    }
+
+    /** Идемпотентно принимает замороженную порцию старого числового бункера. */
+    synchronized boolean applyMigration(UUID owner, int slot, GeneratorStore.ContainerMigration migration) {
+        Container row = data.containers.get(key(owner, slot));
+        if (!healthy || row == null || migration == null || !row.core.equals(migration.core())) return false;
+        if (migration.transaction().equals(row.lastMigration)) return true;
+        if (row.pending != null || row.revision != migration.expectedRevision() || row.revision == Long.MAX_VALUE
+                || !java.util.Objects.equals(row.lastMigration, migration.previous())) return false;
+        long added = 0;
+        for (int i = 0; i < SLOTS; i++) {
+            Stack before = row.slots.get(i), after = migration.afterSlots().get(i);
+            if (i >= RESOURCE_SLOTS) {
+                if (!java.util.Objects.equals(before, after)) return false;
+                continue;
+            }
+            if (before != null && (after == null || !before.material().equals(after.material()) || before.amount() > after.amount())) return false;
+            if (after != null) added += after.amount() - (before == null ? 0 : before.amount());
+        }
+        if (added != migration.units()) return false;
+        Data next = copy();
+        Container change = next.containers.get(key(owner, slot));
+        change.slots = new ArrayList<>(migration.afterSlots());
+        change.lastMigration = migration.transaction();
+        change.revision++;
+        return publish(next);
     }
 
     /**

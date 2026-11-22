@@ -116,6 +116,19 @@ public final class GeneratorStore {
         long payoutSequence;
         long pendingPayout;
         boolean legacyPayoutReconciled;
+        UUID containerLastMigration;
+        ContainerMigration containerMigration;
+    }
+
+    /** Замороженный план: сохраняется до изменения второго файла. */
+    record ContainerMigration(UUID transaction, UUID core, long units, long expectedRevision,
+                              UUID previous, List<GeneratorContainerStore.Stack> afterSlots) {
+        ContainerMigration {
+            if (transaction == null || core == null || units <= 0 || expectedRevision < 0
+                    || afterSlots == null || afterSlots.size() != GeneratorContainerStore.SLOTS)
+                throw new IllegalArgumentException("invalid bunker migration");
+            afterSlots = java.util.Collections.unmodifiableList(new ArrayList<>(afterSlots));
+        }
     }
 
     private static final Gson JSON = new GsonBuilder().setPrettyPrinting().create();
@@ -205,6 +218,30 @@ public final class GeneratorStore {
                     for (var module : player.getAsJsonObject("modules").entrySet()) {
                         number(module.getValue());
                     }
+                    if (player.has("containerLastMigration") && !player.get("containerLastMigration").isJsonNull()) {
+                        MilestoneMigration.uuid(player.get("containerLastMigration").getAsString());
+                    }
+                    if (player.has("containerMigration") && !player.get("containerMigration").isJsonNull()) {
+                        var migration = player.get("containerMigration").getAsJsonObject();
+                        if (!migration.keySet().equals(Set.of("transaction", "core", "units", "expectedRevision", "afterSlots"))
+                                && !migration.keySet().equals(Set.of("transaction", "core", "units", "expectedRevision", "previous", "afterSlots")))
+                            throw new IOException("generator migration fields");
+                        MilestoneMigration.uuid(migration.get("transaction").getAsString());
+                        MilestoneMigration.uuid(migration.get("core").getAsString());
+                        if (migration.has("previous") && !migration.get("previous").isJsonNull()) MilestoneMigration.uuid(migration.get("previous").getAsString());
+                        number(migration.get("units"));
+                        number(migration.get("expectedRevision"));
+                        if (!migration.get("afterSlots").isJsonArray()) throw new IOException("generator migration slots");
+                        for (var item : migration.getAsJsonArray("afterSlots")) {
+                            if (item.isJsonNull()) continue;
+                            var stack = item.getAsJsonObject();
+                            if (!stack.keySet().equals(Set.of("material", "amount"))
+                                    || !stack.get("material").isJsonPrimitive()
+                                    || !stack.get("material").getAsJsonPrimitive().isString()) throw new IOException("generator migration stack");
+                            number(stack.get("amount"));
+                            stack.get("amount").getAsBigDecimal().intValueExact();
+                        }
+                    }
                     if (player.has("coreItem") && !player.get("coreItem").isJsonNull()) {
                         MilestoneMigration.uuid(player.get("coreItem").getAsString());
                     }
@@ -257,6 +294,14 @@ public final class GeneratorStore {
                         || (row.pendingPayout > 0 && (!row.legacyPayoutReconciled
                         || row.payoutSequence == Long.MAX_VALUE))) {
                     throw new IllegalArgumentException("generator entry");
+                }
+                if (row.containerMigration != null) {
+                    var migration = row.containerMigration;
+                    if (!migration.core().equals(row.coreItem) || migration.units() > row.bunker
+                            || !java.util.Objects.equals(migration.previous(), row.containerLastMigration))
+                        throw new IllegalArgumentException("generator migration state");
+                    for (var stack : migration.afterSlots()) if (stack != null)
+                        new GeneratorContainerStore.Stack(stack.material(), stack.amount());
                 }
                 for (var module : row.modules.entrySet()) {
                     Integer level = module.getValue();
@@ -439,6 +484,7 @@ public final class GeneratorStore {
     public synchronized long remove(UUID owner, int slot, long now) {
         writable();
         Row row = row(owner, slot);
+        if (row != null && row.containerMigration != null) throw new IllegalStateException("generator migration pending");
         if (row == null || row.coreItem == null) {
             return -1L;
         }
@@ -503,6 +549,7 @@ public final class GeneratorStore {
         if (row == null) {
             throw new IllegalStateException("generator missing row");
         }
+        if (row.containerMigration != null) throw new IllegalStateException("generator migration pending");
         row.bunker = units > Long.MAX_VALUE - row.bunker ? Long.MAX_VALUE : row.bunker + units;
         row.lastCalcMillis = Math.max(0L, now);
         dirty = true;
@@ -524,6 +571,7 @@ public final class GeneratorStore {
         if (row == null) {
             throw new IllegalStateException("generator missing row");
         }
+        if (row.containerMigration != null) throw new IllegalStateException("generator migration pending");
         row.bunker = units > Long.MAX_VALUE - row.bunker ? Long.MAX_VALUE : row.bunker + units;
         row.lastCalcMillis = now;
         row.fuelUsedMs = fuelUsedMs;
@@ -541,6 +589,7 @@ public final class GeneratorStore {
         if (row == null || amount == 0) {
             return 0L;
         }
+        if (row.containerMigration != null) throw new IllegalStateException("generator migration pending");
         long taken = Math.min(row.bunker, amount);
         if (taken > 0) {
             row.bunker -= taken;
@@ -562,6 +611,8 @@ public final class GeneratorStore {
             return -1L;
         }
         long handed = 0L;
+        for (Row row : rows) if (row.containerMigration != null)
+            throw new IllegalStateException("generator migration pending");
         for (Row row : rows) {
             handed += row.bunker;
             row.bunker = 0L;
@@ -643,6 +694,40 @@ public final class GeneratorStore {
         row.payoutDay = day;
         dirty = true;
         return true;
+    }
+
+    synchronized ContainerMigration containerMigration(UUID owner, int slot) {
+        Row row = row(owner, slot);
+        return row == null ? null : row.containerMigration;
+    }
+
+    synchronized UUID containerLastMigration(UUID owner, int slot) {
+        Row row = row(owner, slot);
+        return row == null ? null : row.containerLastMigration;
+    }
+
+    synchronized boolean prepareContainerMigration(UUID owner, int slot, ContainerMigration migration) {
+        writable();
+        Row row = row(owner, slot);
+        if (row == null || row.containerMigration != null || migration == null
+                || !migration.core().equals(row.coreItem) || migration.units() > row.bunker
+                || !java.util.Objects.equals(migration.previous(), row.containerLastMigration)) return false;
+        row.containerMigration = migration;
+        dirty = true;
+        return payoutCheckpoint();
+    }
+
+    synchronized boolean finishContainerMigration(UUID owner, int slot, UUID transaction) {
+        writable();
+        Row row = row(owner, slot);
+        if (row == null || row.containerMigration == null
+                || !row.containerMigration.transaction().equals(transaction)
+                || row.bunker < row.containerMigration.units()) return false;
+        row.bunker -= row.containerMigration.units();
+        row.containerLastMigration = transaction;
+        row.containerMigration = null;
+        dirty = true;
+        return payoutCheckpoint();
     }
 
     /** Состояние новой очереди выплат; деньги и старый день также принадлежат слоту 0. */
