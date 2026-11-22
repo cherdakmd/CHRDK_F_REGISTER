@@ -67,9 +67,13 @@ final class GeneratorContainerStore {
         Sale salePending;
         Pending pending;
     }
+    private record Retired(UUID release, long saleSequence) {
+        Retired { if (release == null || saleSequence < 0) throw new IllegalArgumentException("retired container"); }
+    }
     private static final class Data {
         int schema = 1;
         Map<String, Container> containers = new LinkedHashMap<>();
+        Map<String, Retired> retiredContainers = new LinkedHashMap<>();
     }
 
     private final Path file;
@@ -111,7 +115,25 @@ final class GeneratorContainerStore {
     }
 
     private static void validateJson(com.google.gson.JsonObject root) {
-        if (!root.keySet().equals(java.util.Set.of("schema", "containers"))) throw new IllegalArgumentException("container root fields");
+        if (!root.keySet().equals(java.util.Set.of("schema", "containers"))
+                && !root.keySet().equals(java.util.Set.of("schema", "containers", "retiredContainers"))) throw new IllegalArgumentException("container root fields");
+        if (root.has("retiredContainers")) {
+            if (!root.get("retiredContainers").isJsonObject()) throw new IllegalArgumentException("retired containers type");
+            for (var retired : root.getAsJsonObject("retiredContainers").entrySet()) {
+                String[] ids = retired.getKey().split(":", -1);
+                if (ids.length != 2 || !UUID.fromString(ids[0]).toString().equals(ids[0])
+                        || !UUID.fromString(ids[1]).toString().equals(ids[1]) || !retired.getValue().isJsonObject())
+                    throw new IllegalArgumentException("retired container key");
+                var value = retired.getValue().getAsJsonObject();
+                if (!value.keySet().equals(java.util.Set.of("release", "saleSequence"))
+                        || !value.get("release").isJsonPrimitive() || !value.get("release").getAsJsonPrimitive().isString()
+                        || !value.get("saleSequence").isJsonPrimitive() || !value.get("saleSequence").getAsJsonPrimitive().isNumber())
+                    throw new IllegalArgumentException("retired container fields");
+                String release = value.get("release").getAsString();
+                if (!UUID.fromString(release).toString().equals(release) || value.get("saleSequence").getAsBigDecimal().longValueExact() < 0)
+                    throw new IllegalArgumentException("retired container receipt");
+            }
+        }
         for (var entry : root.getAsJsonObject("containers").entrySet()) {
             if (!entry.getValue().isJsonObject()) throw new IllegalArgumentException("container row type");
             var row = entry.getValue().getAsJsonObject();
@@ -180,7 +202,14 @@ final class GeneratorContainerStore {
     }
 
     private static void validate(Data data) {
-        if (data == null || data.schema != 1 || data.containers == null) throw new IllegalArgumentException("container schema");
+        if (data == null || data.schema != 1 || data.containers == null || data.retiredContainers == null) throw new IllegalArgumentException("container schema");
+        for (var retired : data.retiredContainers.entrySet()) {
+            String[] ids = retired.getKey().split(":", -1);
+            if (ids.length != 2 || !UUID.fromString(ids[0]).toString().equals(ids[0])
+                    || !UUID.fromString(ids[1]).toString().equals(ids[1]) || retired.getValue() == null)
+                throw new IllegalArgumentException("retired container history");
+            new Retired(retired.getValue().release(), retired.getValue().saleSequence());
+        }
         var pendingOwners = new java.util.HashSet<UUID>();
         var cores = new java.util.HashSet<UUID>();
         for (var entry : data.containers.entrySet()) {
@@ -191,6 +220,7 @@ final class GeneratorContainerStore {
                 throw new IllegalArgumentException("container row");
             if (row.saleSequence < 0 || (row.salePending != null && row.salePending.sequence() != row.saleSequence))
                 throw new IllegalArgumentException("container sale state");
+            if (data.retiredContainers.containsKey(row.owner + ":" + row.core)) throw new IllegalArgumentException("active and retired container history");
             if (!cores.add(row.core)) throw new IllegalArgumentException("duplicate container core");
             for (Stack item : row.slots) if (item != null) new Stack(item.material(), item.amount());
             if (row.pending != null) {
@@ -231,6 +261,8 @@ final class GeneratorContainerStore {
         Data next = copy();
         Container row = new Container();
         row.owner = owner; row.slot = slot; row.core = core; row.lastCalcMillis = now;
+        Retired previous = next.retiredContainers.remove(owner + ":" + core);
+        if (previous != null) row.saleSequence = previous.saleSequence();
         next.containers.put(key(owner, slot), row);
         return publish(next);
     }
@@ -239,6 +271,23 @@ final class GeneratorContainerStore {
         Container row = data.containers.get(key(owner, slot));
         return !healthy || row == null ? null : new View(row.core, row.revision, row.slots,
                 row.burnMillis, row.lastCalcMillis, row.pending != null, row.lastMigration);
+    }
+
+    /** Под release-intent удаляет только пустой контейнер; горящий остаток списывается. */
+    synchronized boolean removeEmpty(UUID owner, int slot, UUID core, UUID expectedMigration, UUID release) {
+        if (!healthy || release == null) return false;
+        Container row = data.containers.get(key(owner, slot));
+        if (row == null) {
+            Retired receipt = data.retiredContainers.get(owner + ":" + core);
+            return receipt != null && release.equals(receipt.release());
+        }
+        if (!row.core.equals(core) || row.pending != null || row.salePending != null
+                || !java.util.Objects.equals(row.lastMigration, expectedMigration)
+                || row.slots.stream().anyMatch(java.util.Objects::nonNull)) return false;
+        Data next = copy();
+        next.retiredContainers.put(owner + ":" + core, new Retired(release, row.saleSequence));
+        next.containers.remove(key(owner, slot));
+        return publish(next);
     }
 
     record SaleState(long sequence, Sale pending) { }

@@ -118,6 +118,9 @@ public final class GeneratorStore {
         boolean legacyPayoutReconciled;
         UUID containerLastMigration;
         ContainerMigration containerMigration;
+        UUID containerCore;
+        String containerTransition;
+        UUID containerReleaseId;
     }
 
     /** Замороженный план: сохраняется до изменения второго файла. */
@@ -221,6 +224,17 @@ public final class GeneratorStore {
                     if (player.has("containerLastMigration") && !player.get("containerLastMigration").isJsonNull()) {
                         MilestoneMigration.uuid(player.get("containerLastMigration").getAsString());
                     }
+                    if (player.has("containerCore") && !player.get("containerCore").isJsonNull()) {
+                        if (!player.get("containerCore").isJsonPrimitive() || !player.get("containerCore").getAsJsonPrimitive().isString()) throw new IOException("container core");
+                        MilestoneMigration.uuid(player.get("containerCore").getAsString());
+                    }
+                    if (player.has("containerReleaseId") && !player.get("containerReleaseId").isJsonNull()) {
+                        if (!player.get("containerReleaseId").isJsonPrimitive() || !player.get("containerReleaseId").getAsJsonPrimitive().isString()) throw new IOException("container release id");
+                        MilestoneMigration.uuid(player.get("containerReleaseId").getAsString());
+                    }
+                    if (player.has("containerTransition") && !player.get("containerTransition").isJsonNull()
+                            && (!player.get("containerTransition").isJsonPrimitive() || !player.get("containerTransition").getAsJsonPrimitive().isString()))
+                        throw new IOException("container transition");
                     if (player.has("containerMigration") && !player.get("containerMigration").isJsonNull()) {
                         var migration = player.get("containerMigration").getAsJsonObject();
                         if (!migration.keySet().equals(Set.of("transaction", "core", "units", "expectedRevision", "afterSlots"))
@@ -295,6 +309,13 @@ public final class GeneratorStore {
                         || row.payoutSequence == Long.MAX_VALUE))) {
                     throw new IllegalArgumentException("generator entry");
                 }
+                if (row.containerCore != null && !row.containerCore.equals(row.coreItem))
+                    throw new IllegalArgumentException("container core mismatch");
+                if (row.containerTransition != null && (row.containerCore == null
+                        || (!row.containerTransition.equals("CREATE") && !row.containerTransition.equals("RELEASE"))
+                        || row.containerMigration != null)) throw new IllegalArgumentException("container transition state");
+                if ((row.containerReleaseId != null) != "RELEASE".equals(row.containerTransition))
+                    throw new IllegalArgumentException("container release receipt");
                 if (row.containerMigration != null) {
                     var migration = row.containerMigration;
                     if (!migration.core().equals(row.coreItem) || migration.units() > row.bunker
@@ -484,7 +505,7 @@ public final class GeneratorStore {
     public synchronized long remove(UUID owner, int slot, long now) {
         writable();
         Row row = row(owner, slot);
-        if (row != null && row.containerMigration != null) throw new IllegalStateException("generator migration pending");
+        if (row != null && (row.containerMigration != null || row.containerCore != null)) throw new IllegalStateException("generator container bound");
         if (row == null || row.coreItem == null) {
             return -1L;
         }
@@ -696,6 +717,48 @@ public final class GeneratorStore {
         return true;
     }
 
+    record ContainerBinding(UUID core, String transition, UUID releaseId) { }
+
+    synchronized ContainerBinding containerBinding(UUID owner, int slot) {
+        Row row = row(owner, slot);
+        return row == null || row.containerCore == null ? null : new ContainerBinding(row.containerCore, row.containerTransition, row.containerReleaseId);
+    }
+
+    synchronized boolean beginContainerBinding(UUID owner, int slot, UUID core) {
+        writable();
+        Row row = row(owner, slot);
+        if (row == null || core == null || !core.equals(row.coreItem) || row.containerCore != null
+                || row.containerMigration != null || row.containerLastMigration != null) return false;
+        row.containerCore = core; row.containerTransition = "CREATE"; dirty = true;
+        return payoutCheckpoint();
+    }
+
+    synchronized boolean finishContainerBinding(UUID owner, int slot, UUID core) {
+        writable();
+        Row row = row(owner, slot);
+        if (row == null || !core.equals(row.containerCore) || !"CREATE".equals(row.containerTransition)) return false;
+        row.containerTransition = null; dirty = true;
+        return payoutCheckpoint();
+    }
+
+    synchronized boolean beginContainerRelease(UUID owner, int slot, UUID core) {
+        writable();
+        Row row = row(owner, slot);
+        if (row == null || !core.equals(row.coreItem) || !core.equals(row.containerCore)
+                || row.containerTransition != null || row.containerMigration != null || row.bunker != 0) return false;
+        row.containerTransition = "RELEASE"; row.containerReleaseId = UUID.randomUUID(); dirty = true;
+        return payoutCheckpoint();
+    }
+
+    synchronized boolean finishContainerRelease(UUID owner, int slot, UUID core) {
+        writable();
+        Row row = row(owner, slot);
+        if (row == null || !core.equals(row.containerCore) || !"RELEASE".equals(row.containerTransition)) return false;
+        row.containerCore = null; row.containerTransition = null; row.containerLastMigration = null;
+        row.containerReleaseId = null; dirty = true;
+        return payoutCheckpoint();
+    }
+
     synchronized ContainerMigration containerMigration(UUID owner, int slot) {
         Row row = row(owner, slot);
         return row == null ? null : row.containerMigration;
@@ -709,7 +772,7 @@ public final class GeneratorStore {
     synchronized boolean prepareContainerMigration(UUID owner, int slot, ContainerMigration migration) {
         writable();
         Row row = row(owner, slot);
-        if (row == null || row.containerMigration != null || migration == null
+        if (row == null || row.containerMigration != null || row.containerTransition != null || migration == null
                 || !migration.core().equals(row.coreItem) || migration.units() > row.bunker
                 || !java.util.Objects.equals(migration.previous(), row.containerLastMigration)) return false;
         row.containerMigration = migration;
