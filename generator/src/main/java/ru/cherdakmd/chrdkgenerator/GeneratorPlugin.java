@@ -74,8 +74,17 @@ public final class GeneratorPlugin extends JavaPlugin {
         this.coreItem = new GeneratorCoreItem(this);
         this.recipeKey = new NamespacedKey(this, "core");
         try {
+            if (ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 48)
+                throw new IllegalStateException("Нужен Core API 48+");
             this.moneyLoot = new MoneyLoot(this, this::coreApi, this::messages, "generator-payouts");
-        } catch (RuntimeException error) {
+            this.moneyLoot.onCredit((owner, minor) -> {
+                var player = Bukkit.getPlayer(owner);
+                if (player != null && player.isOnline()) {
+                    player.sendActionBar(messages().get("payout-bank-credit", "amount",
+                            ru.cherdakmd.chrdkregister.api.DiamondMoney.format(minor)));
+                }
+            });
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError error) {
             getLogger().severe("денежный источник generator-payouts недоступен; данные не сброшены: "
                     + error.getMessage());
             Bukkit.getPluginManager().disablePlugin(this);

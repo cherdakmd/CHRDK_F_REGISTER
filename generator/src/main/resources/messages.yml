@@ -9,6 +9,7 @@ messages:
   usage: "<yellow>/generator [take | upgrade <tier|speed|capacity|luck|chunk>]</yellow>"
   admin-usage: "<yellow>/generatoradmin <reload|finance|recover|rebase-lost></yellow>"
   reloaded: "<green>Конфиг CHRDK_Generator перезагружен.</green>"
+  payout-bank-credit: "<green>+%amount% ⛁ на банковский счёт · генератор</green>"
 
   # --- генератор ---
   core-item-name: "<light_purple>Ядро генератора</light_purple>"

@@ -113,6 +113,9 @@ public final class GeneratorStore {
         long fuelUsedMs;
         long money;
         long payoutDay;
+        long payoutSequence;
+        long pendingPayout;
+        boolean legacyPayoutReconciled;
     }
 
     private static final Gson JSON = new GsonBuilder().setPrettyPrinting().create();
@@ -186,10 +189,15 @@ public final class GeneratorStore {
                     for (String key : List.of("tier", "bunker", "lastCalcMillis", "x", "y", "z")) {
                         number(player.get(key));
                     }
-                    for (String key : List.of("rebirths", "fuelUsedMs", "money", "payoutDay")) {
+                    for (String key : List.of("rebirths", "fuelUsedMs", "money", "payoutDay", "payoutSequence", "pendingPayout")) {
                         if (player.has(key) && !player.get(key).isJsonNull()) {
                             number(player.get(key));
                         }
+                    }
+                    if (player.has("legacyPayoutReconciled")
+                            && (!player.get("legacyPayoutReconciled").isJsonPrimitive()
+                            || !player.get("legacyPayoutReconciled").getAsJsonPrimitive().isBoolean())) {
+                        throw new IOException("generator payout migration flag");
                     }
                     if (!player.get("modules").isJsonObject()) {
                         throw new IOException("generator modules");
@@ -243,7 +251,11 @@ public final class GeneratorStore {
             for (Row row : rows) {
                 if (row == null || row.tier < 1 || row.tier > MAX_TIER
                         || row.bunker < 0 || row.lastCalcMillis < 0 || row.modules == null
-                        || row.rebirths < 0 || row.fuelUsedMs < 0 || row.money < 0 || row.payoutDay < 0) {
+                        || row.rebirths < 0 || row.fuelUsedMs < 0 || row.money < 0 || row.payoutDay < 0
+                        || row.payoutSequence < 0 || row.pendingPayout < 0
+                        || row.pendingPayout > row.money || row.pendingPayout > 1_000_000
+                        || (row.pendingPayout > 0 && (!row.legacyPayoutReconciled
+                        || row.payoutSequence == Long.MAX_VALUE))) {
                     throw new IllegalArgumentException("generator entry");
                 }
                 for (var module : row.modules.entrySet()) {
@@ -587,8 +599,8 @@ public final class GeneratorStore {
         if (row == null) {
             return -1L;
         }
-        long value = row.money + delta;
-        if (value < 0) {
+        long value = Math.addExact(row.money, delta);
+        if (value < row.pendingPayout) {
             throw new IllegalArgumentException("generator money: " + value);
         }
         if (row.money != value) {
@@ -633,6 +645,63 @@ public final class GeneratorStore {
         return true;
     }
 
+    /** Состояние новой очереди выплат; деньги и старый день также принадлежат слоту 0. */
+    record PayoutState(long money, long legacyDay, long sequence, long pending, boolean legacyReconciled) { }
+
+    synchronized PayoutState payoutState(UUID owner) {
+        Row row = row(owner, 0);
+        return row == null ? null : new PayoutState(row.money, row.payoutDay,
+                row.payoutSequence, row.pendingPayout, row.legacyPayoutReconciled);
+    }
+
+    /** Не начинать следующий внешний шаг, пока текущее состояние не сохранено. */
+    synchronized boolean payoutCheckpoint() {
+        writable();
+        if (dirty || !Files.isRegularFile(file)) flush();
+        return !dirty;
+    }
+
+    synchronized boolean reconcileLegacyPayout(UUID owner, long amount, long day) {
+        Row row = row(owner, 0);
+        if (row == null || row.legacyPayoutReconciled || row.pendingPayout != 0
+                || amount <= 0 || row.money < amount || day <= row.payoutDay) return false;
+        row.money -= amount;
+        row.payoutDay = day;
+        dirty = true;
+        return payoutCheckpoint();
+    }
+
+    synchronized boolean finishLegacyReconciliation(UUID owner) {
+        Row row = row(owner, 0);
+        if (row == null || row.pendingPayout != 0) return false;
+        if (!row.legacyPayoutReconciled) {
+            row.legacyPayoutReconciled = true;
+            dirty = true;
+        }
+        return payoutCheckpoint();
+    }
+
+    synchronized boolean preparePayout(UUID owner, long amount) {
+        Row row = row(owner, 0);
+        if (row == null || !row.legacyPayoutReconciled || row.pendingPayout != 0
+                || row.payoutSequence == Long.MAX_VALUE || amount <= 0
+                || amount > 1_000_000 || amount > row.money) return false;
+        row.pendingPayout = amount;
+        dirty = true;
+        return payoutCheckpoint();
+    }
+
+    synchronized boolean finishPayout(UUID owner, long sequence, long amount) {
+        Row row = row(owner, 0);
+        if (row == null || row.payoutSequence != sequence || row.pendingPayout != amount
+                || amount <= 0 || row.money < amount || sequence == Long.MAX_VALUE) return false;
+        row.money -= amount;
+        row.pendingPayout = 0;
+        row.payoutSequence++;
+        dirty = true;
+        return payoutCheckpoint();
+    }
+
     public synchronized boolean isDirty() {
         return dirty;
     }
@@ -656,6 +725,7 @@ public final class GeneratorStore {
         writable();
         String json = snapshotJson();
         if (json.getBytes(StandardCharsets.UTF_8).length > MAX_FILE_BYTES) {
+            dirty = true;
             throw new IllegalStateException("generator capacity");
         }
         if (!SafeJsonWriter.write(file, json, logger, "[CHRDK_Generator]")) {

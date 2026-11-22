@@ -3,13 +3,8 @@ package ru.cherdakmd.chrdkgenerator;
 import java.util.UUID;
 
 /**
- * Идемпотентные денежные выплаты генератора — чистая логика без Bukkit.
- *
- * <p>Деньги копятся в записи игрока и раз в игровой день уходят на {@code /bal}
- * через award source {@code generator-payouts}. Ключ события
- * {@code payout:<UUID>:<день>} закрепляет сумму за днём: повтор (рестарт,
- * повторный тик) не изменит уже замороженную сумму (п.31, §7). Дневной лимит
- * выдачи растёт с тиром генератора и ступенью ранга — {@link GeneratorMath#payoutDailyCap}.</p>
+ * Историческая логика дневной выплаты, оставленная для распознавания старых
+ * квитанций и совместимости. Новые выплаты проводит {@link GeneratorPayoutCoordinator}.
  */
 final class GeneratorPayouts {
 

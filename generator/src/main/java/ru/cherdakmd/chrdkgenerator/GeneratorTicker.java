@@ -30,6 +30,8 @@ final class GeneratorTicker {
 
     private final GeneratorPlugin plugin;
     private final Map<UUID, Long> lastFx = new HashMap<>();
+    private final Map<UUID, Long> payoutWarnings = new HashMap<>();
+    private final Map<UUID, Long> nextPayout = new HashMap<>();
     private final Random random = new Random();
     private BukkitTask tickTask;
     private BukkitTask saveTask;
@@ -57,20 +59,15 @@ final class GeneratorTicker {
 
     private void tick() {
         long now = System.currentTimeMillis();
-        long day = GeneratorPayouts.epochDay(now);
         for (UUID owner : plugin.store().owners()) {
             List<GeneratorStore.Entry> entries = plugin.store().entries(owner);
             if (entries.isEmpty()) {
                 continue;
             }
             try {
-                // Выплата денег — до производства: сумма дня детерминирована
-                // при рестарте (повтор ключа payout:<UUID>:<день> безопасен).
-                // Копилка общая на игрока, лимит — по лучшему тиру генераторов.
-                GeneratorStore.Entry primary = entries.get(0);
-                if (primary.money() > 0 && primary.payoutDay() < day) {
-                    tryPayout(owner, entries, day);
-                }
+                // Сначала восстановление старой/ожидающей выплаты, затем производство.
+                // Выплаты идут порциями с устойчивым ключом, без дневного лимита.
+                tryPayout(owner);
                 for (GeneratorStore.Entry entry : entries) {
                     if (entry.installed()) {
                         tickOne(owner, entry, now);
@@ -85,25 +82,32 @@ final class GeneratorTicker {
         }
     }
 
-    /** Идемпотентная выплата накопленных денег на /bal, раз в игровой день. */
-    private void tryPayout(UUID owner, List<GeneratorStore.Entry> entries, long day) {
+    /** Восстанавливает ожидание и отправляет одну техническую порцию за тик. */
+    private void tryPayout(UUID owner) {
         Player player = Bukkit.getPlayer(owner);
-        if (player == null || !player.isOnline()) {
-            return;
+        if (player == null || !player.isOnline() || plugin.coreApi() == null
+                || !plugin.coreApi().isAuthenticated(player)) return;
+        long now = System.currentTimeMillis();
+        var state = plugin.store().payoutState(owner);
+        if (state == null) return;
+        if (state.legacyReconciled() && state.pending() == 0
+                && state.money() < GeneratorPayoutCoordinator.MAX_OBLIGATION
+                && now < nextPayout.getOrDefault(owner, 0L)) return;
+        // Coalesce small production amounts to avoid an unbounded event per second.
+        nextPayout.put(owner, now + 60_000L);
+        boolean settled = GeneratorPayoutCoordinator.run(plugin.store(), owner, new GeneratorPayoutCoordinator.Ledger() {
+            public Map<String, Long> reservations(UUID id) { return plugin.moneyLoot().reservations(id); }
+            public boolean accept(String key, long amount) { return plugin.moneyLoot().accept(player, key, amount); }
+        });
+        if (settled) payoutWarnings.remove(owner);
+        else {
+            long last = payoutWarnings.getOrDefault(owner, 0L);
+            if (now - last >= 60_000L) {
+                payoutWarnings.put(owner, now);
+                plugin.getLogger().warning("Выплата генератора " + owner
+                        + " ожидает восстановления; не удаляйте generator.json или журнал generator-payouts.");
+            }
         }
-        GeneratorConfig config = plugin.config();
-        int rankStep = plugin.coreApi() == null ? 0 : plugin.coreApi().rankLevel(player.getName());
-        int tier = entries.stream().mapToInt(GeneratorStore.Entry::tier).max().orElse(1);
-        int cap = GeneratorMath.payoutDailyCap(config.payoutBase(), config.payoutPerTier(),
-                tier, config.payoutPerRankStep(), rankStep, config.payoutHardMax());
-        long amount = GeneratorPayouts.payAmount(entries.get(0).money(), cap);
-        if (amount <= 0) {
-            return;
-        }
-        if (!plugin.moneyLoot().accept(player, GeneratorPayouts.eventKey(owner, day), amount)) {
-            return;
-        }
-        plugin.store().takePayout(owner, amount, day);
     }
 
     private void tickOne(UUID owner, GeneratorStore.Entry entry, long now) {

@@ -12,6 +12,14 @@ public final class MoneyLoot implements AutoCloseable {
     public MoneyLoot(JavaPlugin plugin,Supplier<ChrdkRegisterApi> api,Supplier<Messages> messages,String source) {
         try{awards=new MilestoneAwards(plugin,api,messages,source,Map.of());}catch(Exception e){throw new IllegalStateException("Денежный источник "+source+" недоступен; не удаляйте milestone-awards.json",e);}
     }
+    /** Immutable snapshot of accepted event amounts, for recovery of legacy producers. */
+    public Map<String,Long> reservations(UUID owner) {
+        if(owner==null) return Map.of();
+        var store=awards.store();
+        Map<String,Long> out=new LinkedHashMap<>();
+        for(String key:store.claimed(owner)) out.put(key,store.amount(owner,key));
+        return Map.copyOf(out);
+    }
     /** Callback receives only a confirmed bank credit, in hundredths of a diamond. */
     public void onCredit(java.util.function.BiConsumer<UUID,Long> action){awards.onCredit(action);}
     public static int unit(String material){return switch(material){case "DIAMOND"->1;case "DIAMOND_BLOCK"->9;default->0;};}
