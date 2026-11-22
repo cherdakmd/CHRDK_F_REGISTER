@@ -176,7 +176,7 @@ final class DisasterContractTest {
         assertTrue(sources.contains("bankStore().deposit"),
                 "алмазы идут на счёт ядра, а не физическим дропом");
         assertTrue(sources.contains("isWardActive"), "пропуск катастрофы из магазина");
-        assertTrue(sources.contains("dailyLeft"), "дневной лимит осколков");
+        assertTrue(read("src/main/java/ru/cherdakmd/chrdkdisasters/DisasterProfile.java").contains("Long.MAX_VALUE - shards"), "защита от переполнения осколков");
         assertTrue(sources.contains("LinkageError"), "софт-зависимости fail-closed");
 
         String rewards = read("src/main/java/ru/cherdakmd/chrdkdisasters/DisasterRewards.java");

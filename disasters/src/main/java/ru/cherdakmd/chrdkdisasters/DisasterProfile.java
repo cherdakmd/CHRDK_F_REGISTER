@@ -60,14 +60,16 @@ public final class DisasterProfile {
         return kinds.size();
     }
 
-    /** @return сколько осколков реально начислено с учётом дневного лимита. */
+    /** Суточный заработок учитывается для статистики, но больше не ограничивается настройкой dailyCap.
+     * Технический предел long сохраняется: переполнение не должно превращать баланс в отрицательный. */
     public long earn(long requested, int dailyCap, String today) {
         if (today != null && !today.equals(day)) {
-            day = today == null ? "" : today;
+            day = today;
             dailyEarned = 0L;
         }
-        long left = DisasterProgressMath.dailyLeft(dailyEarned, dailyCap);
-        long granted = Math.min(Math.max(0L, requested), left);
+        if (shards < 0 || earned < 0 || dailyEarned < 0) return 0L;
+        long room = Math.min(Long.MAX_VALUE - shards, Math.min(Long.MAX_VALUE - earned, Long.MAX_VALUE - dailyEarned));
+        long granted = Math.min(Math.max(0L, requested), room);
         if (granted <= 0L) {
             return 0L;
         }

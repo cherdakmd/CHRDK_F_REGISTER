@@ -12,21 +12,24 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 final class DisasterProfileTest {
 
     @Test
-    void dailyCapLimitsShardsAndResetsNextMoscowDay() {
+    void dailyEarningsAreUnlimitedAndStatisticsResetNextMoscowDay() {
         DisasterProfile profile = new DisasterProfile();
         assertEquals(10, profile.earn(10, 120, "2026-11-07"));
-        assertEquals(10, profile.shards());
-        assertEquals(10, profile.earned());
-        assertEquals(110, profile.earn(200, 120, "2026-11-07"));
-        assertEquals(120, profile.shards());
-        assertEquals(120, profile.dailyEarned());
-        assertEquals(0, profile.earn(5, 120, "2026-11-07"));
-        assertEquals(120, profile.shards(), "лимит исчерпан");
-
+        assertEquals(200, profile.earn(200, 120, "2026-11-07"));
+        assertEquals(5, profile.earn(5, 0, "2026-11-07"));
+        assertEquals(215, profile.shards());
+        assertEquals(215, profile.dailyEarned());
         assertEquals(7, profile.earn(7, 120, "2026-11-08"));
         assertEquals(7, profile.dailyEarned());
-        assertEquals(127, profile.shards());
-        assertEquals(127, profile.earned());
+        assertEquals(222, profile.shards());
+        assertEquals(222, profile.earned());
+    }
+
+    @Test void technicalOverflowDoesNotWrapCurrency() {
+        DisasterProfile profile = DisasterProfile.fromMap(Map.of("shards", Long.MAX_VALUE - 2, "earned", Long.MAX_VALUE - 2));
+        assertEquals(2, profile.earn(10, 0, "today"));
+        assertEquals(Long.MAX_VALUE, profile.shards());
+        assertEquals(0, profile.earn(1, 0, "today"));
     }
 
     @Test
