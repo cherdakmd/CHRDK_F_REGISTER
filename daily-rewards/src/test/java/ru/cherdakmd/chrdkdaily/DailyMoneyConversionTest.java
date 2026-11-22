@@ -50,6 +50,15 @@ class DailyMoneyConversionTest {
         assertNull(s.acceptMoney(owner,now,config(),true,r->999999));
         assertEquals(30_580,load().moneyMinor().get(owner));
     }
+    @Test void missingLocalOwnerCannotBeMaskedByTheNextReward() throws Exception {
+        var bank=new Bank();var s=ready(bank);
+        s.acceptMoney(owner,now,config(),false,r->1500);DailyDelivery.moneyMinor(s,bank);
+        var path=dir.resolve("daily-data.json");var json=com.google.gson.JsonParser.parseString(Files.readString(path)).getAsJsonObject();
+        json.getAsJsonObject("moneyMinor").remove(owner.toString());Files.writeString(path,json.toString());
+        var stale=load();assertTrue(stale.healthy());
+        assertThrows(IOException.class,()->DailyDelivery.verifyMoneyOwner(stale,bank,owner));
+        assertEquals(1500,bank.root.balanceMinor(owner));
+    }
     @Test void failedQuoteDoesNotAdvanceOrWriteAnObligation() throws Exception {
         var bank=new Bank();var s=ready(bank);
         assertThrows(IllegalStateException.class,()->s.acceptMoney(owner,now,config(),false,r->{throw new IllegalStateException();}));

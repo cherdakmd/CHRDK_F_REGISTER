@@ -80,6 +80,13 @@ class QuestAwardJournalTest {
         assertThrows(IOException.class,()->fault.prepare(owner,"one",1500,null));assertFalse(fault.healthy());
         assertEquals(1500,load().award(owner,"one").minor());QuestFinance.pay(load(),b);assertEquals(1500,b.store.balanceMinor(owner));
     }
+    @Test void rolledBackOwnerCannotHideReceiptUnderNewReward() throws Exception {
+        var b=new Bank();var j=load();QuestFinance.bind(j,b);j.prepare(owner,"one",1500,null);QuestFinance.pay(j,b);
+        var path=dir.resolve("quest-money.json");var json=com.google.gson.JsonParser.parseString(Files.readString(path)).getAsJsonObject();
+        json.getAsJsonObject("awards").remove(owner.toString());Files.writeString(path,json.toString());
+        var stale=load();assertThrows(IOException.class,()->QuestFinance.verifyOwner(stale,b,owner));
+        assertEquals(1500,b.store.balanceMinor(owner));
+    }
     @Test void missingBankLineageCannotBeRecreatedWithAwards() throws Exception {
         var b=new Bank();var j=load();QuestFinance.bind(j,b);j.prepare(owner,"one",1500,null);
         b.store=new BankStore(dir.resolve("empty"),Logger.getAnonymousLogger());b.store.load();

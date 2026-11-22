@@ -22,6 +22,13 @@ final class DailyDelivery {
         if (!store.initialize() || !bank.register(store.lineage())) return false;
         store.markMoneyRegistered(); return true;
     }
+    /** Compare the existing high-water before increasing it; otherwise a stale/missing
+     * local owner row could be masked by the next accepted reward. */
+    static void verifyMoneyOwner(DailyStore store, MoneyBank bank, UUID owner) throws IOException {
+        long credited=bank.credited(store.lineage(),owner);
+        if (credited<0 || credited>store.moneyMinor().getOrDefault(owner,0L))
+            throw new IOException("daily money source older than bank receipt");
+    }
     static void moneyMinor(DailyStore store, MoneyBank bank) throws IOException {
         if (!bindMoney(store,bank)) return;
         for (var e : store.moneyMinor().entrySet()) {

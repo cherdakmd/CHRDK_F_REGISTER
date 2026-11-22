@@ -35,7 +35,7 @@ public final class DailyService {
         if(!canClaim(p))return null;
         try {
             if(!DailyDelivery.bind(store,bank) || !DailyDelivery.bindMoney(store,moneyBank)) {waitMessage(p);return null;}
-            try{DailyDelivery.money(store,bank); DailyDelivery.moneyMinor(store,moneyBank);}catch(Exception e){conflict=true;throw e;}
+            try{DailyDelivery.money(store,bank); DailyDelivery.moneyMinor(store,moneyBank); DailyDelivery.verifyMoneyOwner(store,moneyBank,p.getUniqueId());}catch(Exception e){conflict=true;throw e;}
             boolean vip=plugin.coreApi().rankLevel(p.getName())>=Math.max(1,plugin.getConfig().getInt("vip.min-rank",2));
             var shop=Bukkit.getServicesManager().load(ru.cherdakmd.chrdkregister.api.RewardMarketQuote.class);
             var rate=plugin.coreApi().diamondRate();

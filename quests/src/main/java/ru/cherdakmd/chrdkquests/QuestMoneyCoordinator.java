@@ -75,9 +75,8 @@ final class QuestMoneyCoordinator {
         if(!ready(player)||!QuestFinance.bind(journal,bank))throw new IllegalStateException("банк/журнал недоступен");
         reconcile(player);
         if(conflict||journal.pending(player.getUniqueId())||accepted(player.getUniqueId(),quest.id()))throw new IllegalStateException("сдача уже сохранена или ожидает сверки");
-        long previous=journal.totals().getOrDefault(player.getUniqueId(),0L);
-        long receipt=bank.credited(journal.lineage(),player.getUniqueId());
-        if(receipt<0||receipt>previous) {conflict=true;throw new IllegalStateException("журнал старше банковской квитанции");}
+        try {QuestFinance.verifyOwner(journal,bank,player.getUniqueId());}
+        catch(IOException mismatch) {conflict=true;throw mismatch;}
         long amount=quote(quest.reward());
         InventoryTransfer.Intent intent=null;
         if(quest.type()==QuestType.GATHER) {

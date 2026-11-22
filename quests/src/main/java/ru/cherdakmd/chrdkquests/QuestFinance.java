@@ -25,6 +25,10 @@ final class QuestFinance {
         if(result==InventoryTransfer.Decision.APPLIED)journal.confirmInventory(owner,quest);
         return result;
     }
+    static void verifyOwner(QuestAwardJournal journal,Bank bank,UUID owner) throws IOException {
+        long credited=bank.credited(journal.lineage(),owner);
+        if(credited<0||credited>journal.totals().getOrDefault(owner,0L))throw new IOException("quest journal older than bank receipt");
+    }
     static void pay(QuestAwardJournal journal,Bank bank) throws IOException {
         if(!bind(journal,bank))return;
         for(var row:journal.totals().entrySet()) payOne(journal,bank,row.getKey(),row.getValue());
