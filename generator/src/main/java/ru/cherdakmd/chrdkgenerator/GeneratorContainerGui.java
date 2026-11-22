@@ -95,8 +95,8 @@ final class GeneratorContainerGui implements Listener {
             var type = event.getClick();
             if (raw >= 45 && raw < 54 && (type == ClickType.LEFT || type == ClickType.RIGHT)) {
                 if (raw == 53) { player.closeInventory(); return; }
-                if (raw == 49) { access.settings(player, holder.slot); return; }
-                if (raw == 45) { open(player, holder.slot); return; }
+                if (raw == 49) { Bukkit.getScheduler().runTask(plugin, () -> access.settings(player, holder.slot)); return; }
+                if (raw == 45) { Bukkit.getScheduler().runTask(plugin, () -> open(player, holder.slot)); return; }
             }
             var beforeClick = store.view(holder.owner, holder.slot);
             if (raw >= 0 && raw < GeneratorContainerStore.SLOTS) {

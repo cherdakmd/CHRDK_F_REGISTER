@@ -85,6 +85,19 @@ class GeneratorContainerLifecycleTest {
         assertEquals(drops, restored.legacyDrops(owner, 0).drops());
         assertEquals("GOLD_INGOT", target().view(owner, 0).slots().get(0).material());
     }
+    @Test void rebirthCountBaselineAndPendingSurviveRestart() throws Exception {
+        var s = ready(); var t = target();
+        assertTrue(s.observeSkillRebirth(owner, 4));
+        assertEquals(0, source().requestedSkillRebirth(owner));
+        assertTrue(s.observeSkillRebirth(owner, 6));
+        assertEquals(6, source().requestedSkillRebirth(owner));
+        assertEquals(GeneratorContainerLifecycle.Result.READY, GeneratorContainerLifecycle.bind(s, t, owner, 0, null, 0, 100));
+        assertTrue(source().rebirthKeepingBunker(owner, 6));
+        assertEquals(2, source().entry(owner, 0).rebirths());
+        assertEquals(0, source().requestedSkillRebirth(owner));
+        assertTrue(source().observeSkillRebirth(owner, 6));
+        assertEquals(0, source().requestedSkillRebirth(owner));
+    }
     @Test void oldSourceWithLiveContainerFailsClosed() throws Exception {
         var s = ready(); var t = target();
         Path backup = dir.resolve("backup"); Files.copy(dir.resolve("generator.json"), backup);

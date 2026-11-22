@@ -97,6 +97,7 @@ final class GeneratorHolograms {
 
     /** Текст голографа: строки ключа {@code hologram-text}, склеенные переносами. */
     private String text(GeneratorStore.Entry entry, String stateText) {
+        entry = plugin.combinedBunkerEntry(entry);
         List<Component> lines = plugin.messages().getList("hologram-text",
                 "tier", String.valueOf(entry.tier()),
                 "tier_name", plugin.config().tier(entry.tier()).name(),

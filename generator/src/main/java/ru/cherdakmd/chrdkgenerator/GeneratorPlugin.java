@@ -30,6 +30,10 @@ public final class GeneratorPlugin extends JavaPlugin {
     private Messages messages;
     private ChrdkRegisterApi coreApi;
     private GeneratorStore store;
+    private GeneratorContainerStore containerStore;
+    private GeneratorContainers containers;
+    private GeneratorContainerGui containerGui;
+    private GeneratorCoreTake coreTake;
     private GeneratorConfig config;
     private GeneratorCoreItem coreItem;
     private NamespacedKey recipeKey;
@@ -71,6 +75,21 @@ public final class GeneratorPlugin extends JavaPlugin {
         } catch (Exception exception) {
             getLogger().severe("CHRDK_Generator: generator.json не принят диском: " + exception.getMessage());
         }
+        if (!this.store.healthy()) {
+            getLogger().severe("CHRDK_Generator остановлен: generator.json повреждён.");
+            Bukkit.getPluginManager().disablePlugin(this);
+            return;
+        }
+        this.containerStore = new GeneratorContainerStore(getDataFolder().toPath(), getLogger());
+        this.containerStore.load();
+        if (!this.containerStore.healthy()) {
+            getLogger().severe("CHRDK_Generator остановлен: контейнеры повреждены.");
+            Bukkit.getPluginManager().disablePlugin(this);
+            return;
+        }
+        var containerTransfer = new GeneratorContainerTransfer(containerStore,
+                player -> coreApi != null && coreApi.isAuthenticated(player));
+        this.containers = new GeneratorContainers(this, containerStore, containerTransfer);
         this.coreItem = new GeneratorCoreItem(this);
         this.recipeKey = new NamespacedKey(this, "core");
         try {
@@ -100,7 +119,15 @@ public final class GeneratorPlugin extends JavaPlugin {
         }
         this.upgrades = new GeneratorUpgrades(this);
         this.take = new GeneratorTake(this);
+        this.coreTake = new GeneratorCoreTake(this);
         this.gui = new GeneratorGui(this);
+        this.containerGui = new GeneratorContainerGui(this, containerStore, containerTransfer,
+                new GeneratorContainerGui.Access() {
+                    public boolean prepare(Player player, int slot) throws java.io.IOException {
+                        return containers.preparePlayer(player, slot);
+                    }
+                    public void settings(Player player, int slot) { gui.open(player, slot); }
+                });
         this.holograms = new GeneratorHolograms(this);
         this.notifier = new GeneratorBunkerNotifier(this);
         this.autoSell = new GeneratorAutoSell(this);
@@ -108,6 +135,7 @@ public final class GeneratorPlugin extends JavaPlugin {
         registerCraft();
         Bukkit.getPluginManager().registerEvents(this.worldListener, this);
         Bukkit.getPluginManager().registerEvents(this.gui, this);
+        Bukkit.getPluginManager().registerEvents(this.containerGui, this);
         Bukkit.getPluginManager().registerEvents(this.notifier, this);
         Bukkit.getPluginManager().registerEvents(new GeneratorRebirthListener(this), this);
         PluginCommand command = getCommand("generator");
@@ -212,6 +240,19 @@ public final class GeneratorPlugin extends JavaPlugin {
 
     public GeneratorStore store() {
         return store;
+    }
+
+    GeneratorContainerStore containerStore() { return containerStore; }
+    GeneratorContainers containers() { return containers; }
+    GeneratorContainerGui containerGui() { return containerGui; }
+    GeneratorCoreTake coreTake() { return coreTake; }
+
+    GeneratorStore.Entry combinedBunkerEntry(GeneratorStore.Entry entry) {
+        if (entry == null || containers == null) return entry;
+        long concrete = containers.count(entry.owner(), entry.slot());
+        long total = entry.bunker() > Long.MAX_VALUE - concrete ? Long.MAX_VALUE : entry.bunker() + concrete;
+        return new GeneratorStore.Entry(entry.owner(), entry.slot(), entry.coreItem(), entry.world(), entry.x(), entry.y(), entry.z(),
+                entry.tier(), entry.modules(), total, entry.lastCalcMillis(), entry.rebirths(), entry.fuelUsedMs(), entry.money(), entry.payoutDay());
     }
 
     public GeneratorConfig config() {

@@ -50,7 +50,6 @@ public final class GeneratorWorldListener implements Listener {
 
     private final GeneratorPlugin plugin;
     private final Map<BlockKey, CoreRef> coreAt = new LinkedHashMap<>();
-    private final Random random = new Random();
 
     public GeneratorWorldListener(GeneratorPlugin plugin) {
         this.plugin = plugin;
@@ -123,6 +122,9 @@ public final class GeneratorWorldListener implements Listener {
             plugin.messages().send(player, "place-not-your-claim");
             return;
         }
+        if (!plugin.store().payoutCheckpoint()) {
+            plugin.messages().send(player, "container-unavailable"); return;
+        }
         GeneratorStore.InstallResult installed;
         try {
             installed = plugin.store().install(player.getUniqueId(), coreId,
@@ -177,7 +179,7 @@ public final class GeneratorWorldListener implements Listener {
             plugin.messages().send(player, "no-permission");
             return;
         }
-        plugin.gui().open(player, core.slot());
+        plugin.containerGui().open(player, core.slot());
     }
 
     /** Ломают ядро: чужим — отказ, владелец снимает с выдачей бункера. */
@@ -193,17 +195,28 @@ public final class GeneratorWorldListener implements Listener {
             plugin.messages().send(player, "break-protected");
             return;
         }
-        GeneratorStore.Entry before = plugin.store().entry(core.owner(), core.slot());
-        long units = plugin.store().remove(core.owner(), core.slot(), System.currentTimeMillis());
-        removeCore(player, before, Math.max(0L, units));
-        plugin.messages().send(player, "break-ok", "bunker", String.valueOf(Math.max(0L, units)));
+        try {
+            if (!plugin.containers().preparePlayer(player, core.slot())
+                    || GeneratorContainerLifecycle.release(plugin.store(), plugin.containerStore(), core.owner(), core.slot())
+                    != GeneratorContainerLifecycle.Result.READY) {
+                plugin.messages().send(player, "container-not-empty"); return;
+            }
+        } catch (java.io.IOException | RuntimeException error) {
+            plugin.messages().send(player, "container-not-empty"); return;
+        }
+        try {
+            if (!plugin.coreTake().start(player, core.slot())) { plugin.messages().send(player, "container-not-empty"); return; }
+        } catch (java.io.IOException | RuntimeException error) {
+            plugin.messages().send(player, "container-unavailable"); return;
+        }
+        plugin.messages().send(player, "break-ok", "bunker", "0");
     }
 
     /**
      * Снятие ядра владельцем (слом, {@code /gen take}, меню): блок убирается,
      * бинд снимается, бункер и ядро выдаются предметами.
      */
-    void removeCore(Player player, GeneratorStore.Entry before, long units) {
+    void clearCore(Player player, GeneratorStore.Entry before) {
         if (before == null || !before.installed()) {
             return;
         }
@@ -217,8 +230,6 @@ public final class GeneratorWorldListener implements Listener {
         }
         plugin.holograms().remove(before);
         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 0.6f);
-        GeneratorHandouts.giveCore(player, plugin.coreItem(), before.coreItem());
-        GeneratorHandouts.giveBunker(player, plugin.config(), before, units, random);
     }
 
     /** Взрывы ядро не трогают. */

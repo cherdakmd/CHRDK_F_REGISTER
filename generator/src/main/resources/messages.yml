@@ -17,6 +17,7 @@ messages:
   container-unavailable: "<red>Бункер временно недоступен. Обратитесь к администрации; данные генератора удалять нельзя.</red>"
   container-transfer-failed: "<yellow>Перенос не выполнен; проверьте авторизацию, свободное место и пустой курсор.</yellow>"
   container-fuel-rejected: "<yellow>Для загрузки используйте Shift-клик по обычному печному топливу. Проверьте место в ячейках топлива.</yellow>"
+  container-not-empty: "<red>Сначала заберите ресурсы и топливо, освободите ячейку инвентаря и дождитесь выплат. При ошибке обратитесь к администрации.</red>"
 
   # --- генератор ---
   core-item-name: "<light_purple>Ядро генератора</light_purple>"
@@ -59,12 +60,12 @@ messages:
     - "<gray>С тира 5 шансуют деньги, с тира 7 — регулярно.</gray>"
   menu-bunker: "<gold>Бункер: %bunker% / %capacity% (%fill%%)"
   menu-bunker-lore:
-    - "<gray>ЛКМ — забрать всё предметами.</gray>"
-    - "<gray>Лишнее сгорает: забирайте вовремя.</gray>"
+    - "<gray>ЛКМ — открыть окно продукции и топлива.</gray>"
+    - "<gray>Забирайте предметы по ячейкам.</gray>"
   menu-rebirth: "<light_purple>Перерождений: %count% <gray>(бонус +%bonus%%)</gray>"
   menu-rebirth-lore:
     - "<gray>Перерождение персонажа сбрасывает тиры и модули,</gray>"
-    - "<gray>ядро остаётся, бункер выдаётся. Бонус растёт до +50%.</gray>"
+    - "<gray>ядро и содержимое бункера остаются. Бонус растёт до +50%.</gray>"
   menu-upgrade-tier: "<green>Улучшить тир"
   menu-upgrade-lore:
     - "<gray>Эффект: %effect%</gray>"
@@ -101,7 +102,7 @@ messages:
   take-ok: "<green>Генератор снят: выдано из бункера %bunker%, ядро возвращено.</green>"
   bunker-empty: "<yellow>Бункер пуст.</yellow>"
   bunker-withdrawn: "<green>Выдано из бункера: %bunker%.</green>"
-  rebirth-done: "<light_purple>Генератор переродился (№%count%): выдано %bunker%, тиры и модули сброшены. Бонус производства: +%bonus%%.</light_purple>"
+  rebirth-done: "<light_purple>Генератор переродился (№%count%): содержимое сохранено, тиры и модули сброшены. Бонус производства: +%bonus%%.</light_purple>"
 
   # --- улучшения ---
   upgrade-name-tier: "Тир"

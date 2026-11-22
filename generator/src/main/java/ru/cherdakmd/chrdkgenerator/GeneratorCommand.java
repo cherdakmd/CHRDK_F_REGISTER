@@ -32,7 +32,9 @@ public final class GeneratorCommand implements CommandExecutor, TabCompleter {
             return true;
         }
         if (args.length == 0) {
-            plugin.gui().open(player);
+            var target = plugin.nearbyEntry(player);
+            if (target != null) plugin.containerGui().open(player, target.slot());
+            else plugin.gui().open(player);
             return true;
         }
         switch (args[0].toLowerCase(Locale.ROOT)) {
@@ -44,6 +46,7 @@ public final class GeneratorCommand implements CommandExecutor, TabCompleter {
                 GeneratorTake.Result result = plugin.take().request(player, target.slot());
                 switch (result.status()) {
                     case NO_GENERATOR -> plugin.messages().send(player, "take-none");
+                    case CONTAINER_NOT_EMPTY -> plugin.messages().send(player, "container-not-empty");
                     case TOO_FAR -> plugin.messages().send(player, "command-too-far",
                             "range", String.valueOf(plugin.config().menuRange()));
                     case PENDING -> plugin.messages().send(player, "take-confirm");

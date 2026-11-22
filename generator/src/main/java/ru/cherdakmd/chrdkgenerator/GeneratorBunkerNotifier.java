@@ -51,7 +51,7 @@ final class GeneratorBunkerNotifier implements Listener {
         Player player = event.getPlayer();
         for (GeneratorStore.Entry entry : plugin.store().entries(player.getUniqueId())) {
             if (entry.installed()
-                    && entry.bunker() >= GeneratorStats.capacityUnits(entry, plugin.config())) {
+                    && plugin.combinedBunkerEntry(entry).bunker() >= GeneratorStats.capacityUnits(entry, plugin.config())) {
                 send(player, "bunker-full-join", entry);
             }
         }
@@ -59,7 +59,7 @@ final class GeneratorBunkerNotifier implements Listener {
 
     private void send(Player player, String key, GeneratorStore.Entry entry) {
         plugin.messages().send(player, key,
-                "bunker", String.valueOf(entry.bunker()),
+                "bunker", String.valueOf(plugin.combinedBunkerEntry(entry).bunker()),
                 "capacity", String.valueOf(GeneratorStats.capacityUnits(entry, plugin.config())));
     }
 }

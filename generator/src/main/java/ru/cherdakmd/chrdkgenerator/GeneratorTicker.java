@@ -29,7 +29,7 @@ import java.util.UUID;
 final class GeneratorTicker {
 
     private final GeneratorPlugin plugin;
-    private final Map<UUID, Long> lastFx = new HashMap<>();
+    private final Map<String, Long> nextProduction = new HashMap<>();
     private final Map<UUID, Long> payoutWarnings = new HashMap<>();
     private final Map<UUID, Long> nextPayout = new HashMap<>();
     private final Random random = new Random();
@@ -68,14 +68,25 @@ final class GeneratorTicker {
                 // Сначала восстановление старой/ожидающей выплаты, затем производство.
                 // Выплаты идут порциями с устойчивым ключом, без дневного лимита.
                 tryPayout(owner);
+                Player player = Bukkit.getPlayer(owner);
+                if (player != null && player.isOnline() && plugin.coreApi().isAuthenticated(player)
+                        && !plugin.containers().recoverPlayer(player)) continue;
+                if (!plugin.containers().syncRebirth(owner, player, now)) continue;
+                entries = plugin.store().entries(owner);
                 for (GeneratorStore.Entry entry : entries) {
                     if (entry.installed()) {
-                        tickOne(owner, entry, now);
+                        String key = owner + ":" + entry.slot();
+                        if (now >= nextProduction.getOrDefault(key, 0L)) {
+                            nextProduction.put(key, now + 5_000L);
+                            var result = plugin.containers().tick(entry, now);
+                            if (result == GeneratorContainerCoordinator.Result.CONFLICT)
+                                plugin.getLogger().warning("[CHRDK_Generator] Требуется сверка контейнера: " + key);
+                        }
                     } else {
                         plugin.publishState(owner, entry.slot(), "state-carried");
                     }
                 }
-            } catch (RuntimeException exception) {
+            } catch (java.io.IOException | RuntimeException exception) {
                 plugin.getLogger().warning("[CHRDK_Generator] сбой цикла для " + owner
                         + ": " + exception.getMessage());
             }
@@ -110,132 +121,4 @@ final class GeneratorTicker {
         }
     }
 
-    private void tickOne(UUID owner, GeneratorStore.Entry entry, long now) {
-        World world = Bukkit.getWorld(entry.world());
-        if (world == null || !world.isChunkLoaded(entry.x() >> 4, entry.z() >> 4)) {
-            // Чанк выгружен: время доберёт офлайн-расчёт при следующем входе.
-            plugin.publishState(owner, entry.slot(), "state-unloaded");
-            return;
-        }
-        Block core = world.getBlockAt(entry.x(), entry.y(), entry.z());
-        if (entry.modules().getOrDefault("chunk", 0) > 0) {
-            core.getChunk().addPluginChunkTicket(plugin);
-        }
-        List<GeneratorChamber.Cell> cells = GeneratorCells.scan(world, entry.x(), entry.y(), entry.z());
-        GeneratorChamber.Result chamber = GeneratorChamber.scan(cells);
-        plugin.publishState(owner, entry.slot(), GeneratorCells.stateKey(chamber.state()));
-        if (!chamber.working()) {
-            // Простой сгорает: метка расчёта — сейчас, без начисления.
-            plugin.store().addBunker(owner, entry.slot(), 0, now);
-            return;
-        }
-        GeneratorConfig config = plugin.config();
-        double cycleMs = GeneratorMath.cycleSeconds(config.cycleSeconds(),
-                entry.modules().getOrDefault("speed", 0)) * 1000.0;
-        long cap = (long) GeneratorMath.bunkerCapacity(config.bunkerBase(),
-                entry.modules().getOrDefault("capacity", 0)) * config.offlineHours();
-        long room = Math.max(0L, cap - entry.bunker());
-        boolean chunkModule = entry.modules().getOrDefault("chunk", 0) > 0;
-        double bonus = GeneratorMath.rebirthBonusPercent(
-                config.rebirthPercentPerRebirth(), config.rebirthDecay(),
-                config.rebirthBonusCapPercent(), entry.rebirths());
-        long elapsed = Math.max(0L, now - entry.lastCalcMillis());
-        GeneratorProduction.Settle settle;
-        GeneratorProduction.FuelSettle fuelSettle = null;
-        if (config.fuelEnabled()) {
-            long budget = (long) config.cyclesPerBucket() * (long) cycleMs;
-            long remaining = Math.max(0L, budget - entry.fuelUsedMs());
-            fuelSettle = GeneratorProduction.settleWithFuel(elapsed, cycleMs,
-                    config.tier(entry.tier()).unitsPerCycle(), bonus, chunkModule,
-                    config.offlineEfficiency(), config.offlineHours() * 3_600_000L,
-                    room, remaining);
-            settle = new GeneratorProduction.Settle(fuelSettle.units(), fuelSettle.advanceMillis());
-        } else {
-            settle = GeneratorProduction.settle(elapsed, cycleMs,
-                    config.tier(entry.tier()).unitsPerCycle(), bonus, chunkModule,
-                    config.offlineEfficiency(), config.offlineHours() * 3_600_000L, room);
-        }
-        if (settle.units() > 0 || settle.advanceMillis() > 0) {
-            long nextTime = entry.lastCalcMillis() + settle.advanceMillis();
-            long bunkerLevel = fuelSettle == null
-                    ? plugin.store().addBunker(owner, entry.slot(), settle.units(), nextTime)
-                    : plugin.store().addBunkerWithFuel(owner, entry.slot(), settle.units(), nextTime,
-                            Math.addExact(entry.fuelUsedMs(), fuelSettle.fuelUsedMillis()));
-            if (!plugin.autoSell().trySell(owner, entry.slot(), bunkerLevel)) {
-                plugin.notifier().onProduction(entry, bunkerLevel);
-            }
-        }
-        if (settle.units() > 0) {
-            // Деньги тиров 5+: мелкие порции по шансу, удача множит кратность.
-            GeneratorDrops.Money moneySpec = config.tier(entry.tier()).money();
-            if (moneySpec != null) {
-                long money = GeneratorDrops.money(moneySpec, (int) settle.units(),
-                        entry.modules().getOrDefault("luck", 0), random);
-                if (money > 0) {
-                    plugin.store().addMoney(owner, money);
-                }
-            }
-        }
-        if (fuelSettle != null && fuelSettle.exhausted()) {
-            if (!(config.fuelAutoRefuel() && tryAutoRefuel(owner, entry))) {
-                burnLava(world, entry, cells, chamber);
-            }
-            plugin.store().setFuelUsedMs(owner, entry.slot(), 0);
-        }
-        Long last = lastFx.get(owner);
-        if (last == null || now - last >= (long) cycleMs) {
-            lastFx.put(owner, now);
-            fx(world, entry, cells, chamber);
-        }
-        plugin.holograms().update(owner, entry.slot());
-    }
-
-    /** Ведро лавы выгорело: ячейка прогорает, пока её не доливят. */
-    private void burnLava(World world, GeneratorStore.Entry entry,
-                          List<GeneratorChamber.Cell> cells, GeneratorChamber.Result chamber) {
-        if (chamber.lavaIndex() < 0) {
-            return;
-        }
-        Block lava = GeneratorCells.candidates(world, entry.x(), entry.y(), entry.z())
-                .get(chamber.lavaIndex());
-        lava.setType(Material.AIR, false);
-    }
-
-    /**
-     * Автозакупка прогоревшего ведра лавы за деньги владельца (sink, только
-     * банк). Владелец не в игре или средств нет — отказ, лава прогорает.
-     */
-    private boolean tryAutoRefuel(UUID owner, GeneratorStore.Entry entry) {
-        Player player = Bukkit.getPlayer(owner);
-        if (player == null || !player.isOnline()) {
-            return false;
-        }
-        int price = plugin.config().fuelAutoRefuelPrice();
-        boolean ok = plugin.payments().perform(player, player, price,
-                "generator-fuel", "auto:" + entry.slot(), () -> true);
-        if (ok) {
-            plugin.messages().send(player, "fuel-auto-refueled", "price", String.valueOf(price));
-        } else {
-            plugin.messages().send(player, "fuel-auto-failed", "price", String.valueOf(price));
-        }
-        return ok;
-    }
-
-    /** Работа видна: пар и искры на стыке лавы и воды, басовый щелчок цикла. */
-    private void fx(World world, GeneratorStore.Entry entry,
-                    List<GeneratorChamber.Cell> cells, GeneratorChamber.Result chamber) {
-        if (chamber.lavaIndex() < 0 || chamber.waterIndex() < 0) {
-            return;
-        }
-        List<Block> candidates = GeneratorCells.candidates(world, entry.x(), entry.y(), entry.z());
-        Block lava = candidates.get(chamber.lavaIndex());
-        Block water = candidates.get(chamber.waterIndex());
-        Location seam = new Location(world,
-                (lava.getX() + water.getX()) / 2.0 + 0.5,
-                (lava.getY() + water.getY()) / 2.0 + 0.5,
-                (lava.getZ() + water.getZ()) / 2.0 + 0.5);
-        world.spawnParticle(Particle.CLOUD, seam, 3, 0.2, 0.1, 0.2, 0.01);
-        world.spawnParticle(Particle.FLAME, seam, 2, 0.15, 0.05, 0.15, 0.01);
-        world.playSound(seam, Sound.BLOCK_NOTE_BLOCK_BASS, 0.4f, 1.4f);
-    }
 }

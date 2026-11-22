@@ -24,7 +24,7 @@ final class GeneratorStats {
         if (capacity <= 0) {
             return 0;
         }
-        return (int) Math.max(0L, Math.min(100L, entry.bunker() * 100 / capacity));
+        return (int) Math.max(0.0, Math.min(100.0, (double) entry.bunker() * 100.0 / capacity));
     }
 
     /** Потолок бункера в единицах. */

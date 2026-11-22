@@ -64,7 +64,6 @@ public final class GeneratorGui implements Listener {
     };
 
     private final GeneratorPlugin plugin;
-    private final java.util.Random random = new java.util.Random();
 
     public GeneratorGui(GeneratorPlugin plugin) {
         this.plugin = plugin;
@@ -186,6 +185,7 @@ public final class GeneratorGui implements Listener {
     }
 
     private ItemStack bunkerItem(GeneratorStore.Entry entry) {
+        entry = plugin.combinedBunkerEntry(entry);
         ItemStack item = new ItemStack(Material.CHEST);
         ItemMeta meta = item.getItemMeta();
         meta.displayName(plugin.messages().get("menu-bunker",
@@ -311,7 +311,7 @@ public final class GeneratorGui implements Listener {
         }
         switch (slot) {
             case SLOT_CLOSE -> player.closeInventory();
-            case SLOT_BUNKER -> withdrawBunker(player, holder);
+            case SLOT_BUNKER -> Bukkit.getScheduler().runTask(plugin, () -> plugin.containerGui().open(player, holder.slot));
             case SLOT_UPGRADE_TIER -> buy(player, holder, () -> plugin.upgrades().upgradeTier(player, holder.slot));
             case SLOT_SPEED -> buy(player, holder, () -> plugin.upgrades().upgradeModule(player, holder.slot, "speed"));
             case SLOT_CAPACITY -> buy(player, holder, () -> plugin.upgrades().upgradeModule(player, holder.slot, "capacity"));
@@ -334,24 +334,12 @@ public final class GeneratorGui implements Listener {
         render(player, holder);
     }
 
-    /** «Забрать всё»: бункер выдаётся предметами, излишек под ноги. */
-    private void withdrawBunker(Player player, Holder holder) {
-        GeneratorStore.Entry entry = plugin.store().entry(player.getUniqueId(), holder.slot);
-        if (entry == null || entry.bunker() <= 0) {
-            plugin.messages().send(player, "bunker-empty");
-            return;
-        }
-        long units = plugin.store().withdrawBunker(player.getUniqueId(), holder.slot, entry.bunker());
-        GeneratorHandouts.giveBunker(player, plugin.config(), entry, units, random);
-        plugin.messages().send(player, "bunker-withdrawn", "bunker", String.valueOf(units));
-        render(player, holder);
-    }
-
     /** Снятие ядра с двухшаговым подтверждением (TTL 30 секунд). */
     private void take(Player player, Holder holder) {
         GeneratorTake.Result result = plugin.take().request(player, holder.slot);
         switch (result.status()) {
             case NO_GENERATOR -> plugin.messages().send(player, "take-none");
+            case CONTAINER_NOT_EMPTY -> plugin.messages().send(player, "container-not-empty");
             case TOO_FAR -> plugin.messages().send(player, "command-too-far",
                     "range", String.valueOf(plugin.config().menuRange()));
             case PENDING -> {

@@ -124,6 +124,17 @@ public final class GeneratorStore {
         List<GeneratorDrops.Drop> legacyDrops;
         int legacyLuck;
         int lastSkillRebirth;
+        boolean skillRebirthBaseline;
+        int requestedSkillRebirth;
+        CoreTake coreTake;
+    }
+
+    record CoreTake(UUID transaction, UUID core, String before, String after) {
+        CoreTake {
+            if (core == null || transaction == null || before == null || after == null || before.equals(after)
+                    || before.length() > 4 * 1024 * 1024 || after.length() > 4 * 1024 * 1024)
+                throw new IllegalArgumentException("core take intent");
+        }
     }
 
     /** Замороженный план: сохраняется до изменения второго файла. */
@@ -238,7 +249,7 @@ public final class GeneratorStore {
                     if (player.has("containerTransition") && !player.get("containerTransition").isJsonNull()
                             && (!player.get("containerTransition").isJsonPrimitive() || !player.get("containerTransition").getAsJsonPrimitive().isString()))
                         throw new IOException("container transition");
-                    for (String field : List.of("legacyLuck", "lastSkillRebirth")) {
+                    for (String field : List.of("legacyLuck", "lastSkillRebirth", "requestedSkillRebirth")) {
                         if (player.has(field) && !player.get(field).isJsonNull()) {
                             number(player.get(field)); player.get(field).getAsBigDecimal().intValueExact();
                         }
@@ -255,6 +266,18 @@ public final class GeneratorStore {
                             number(drop.get("weight"));
                             drop.get("weight").getAsBigDecimal().intValueExact();
                         }
+                    }
+                    if (player.has("skillRebirthBaseline") && (!player.get("skillRebirthBaseline").isJsonPrimitive()
+                            || !player.get("skillRebirthBaseline").getAsJsonPrimitive().isBoolean())) throw new IOException("rebirth baseline type");
+                    if (player.has("coreTake") && !player.get("coreTake").isJsonNull()) {
+                        var take = player.get("coreTake");
+                        if (!take.isJsonObject() || !take.getAsJsonObject().keySet().equals(Set.of("transaction", "core", "before", "after"))) throw new IOException("core take fields");
+                        for (String field : List.of("transaction", "core", "before", "after")) {
+                            var value = take.getAsJsonObject().get(field);
+                            if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isString()) throw new IOException("core take field type");
+                        }
+                        MilestoneMigration.uuid(take.getAsJsonObject().get("transaction").getAsString());
+                        MilestoneMigration.uuid(take.getAsJsonObject().get("core").getAsString());
                     }
                     if (player.has("containerMigration") && !player.get("containerMigration").isJsonNull()) {
                         var migration = player.get("containerMigration").getAsJsonObject();
@@ -323,13 +346,17 @@ public final class GeneratorStore {
             for (Row row : rows) {
                 if (row == null || row.tier < 1 || row.tier > MAX_TIER
                         || row.bunker < 0 || row.lastCalcMillis < 0 || row.modules == null
-                        || row.rebirths < 0 || row.lastSkillRebirth < 0 || row.fuelUsedMs < 0 || row.money < 0 || row.payoutDay < 0
+                        || row.rebirths < 0 || row.lastSkillRebirth < 0 || row.requestedSkillRebirth < 0
+                        || (row.requestedSkillRebirth > 0 && (!row.skillRebirthBaseline || row.requestedSkillRebirth <= row.lastSkillRebirth))
+                        || row.fuelUsedMs < 0 || row.money < 0 || row.payoutDay < 0
                         || row.payoutSequence < 0 || row.pendingPayout < 0
                         || row.pendingPayout > row.money || row.pendingPayout > 1_000_000
                         || (row.pendingPayout > 0 && (!row.legacyPayoutReconciled
                         || row.payoutSequence == Long.MAX_VALUE))) {
                     throw new IllegalArgumentException("generator entry");
                 }
+                if (row.coreTake != null && (!row.coreTake.core().equals(row.coreItem) || row.containerCore != null
+                        || row.containerMigration != null || row.bunker != 0)) throw new IllegalArgumentException("core take state");
                 if (row.containerCore != null && !row.containerCore.equals(row.coreItem))
                     throw new IllegalArgumentException("container core mismatch");
                 if (row.containerTransition != null && (row.containerCore == null
@@ -539,7 +566,7 @@ public final class GeneratorStore {
     public synchronized long remove(UUID owner, int slot, long now) {
         writable();
         Row row = row(owner, slot);
-        if (row != null && (row.containerMigration != null || row.containerCore != null)) throw new IllegalStateException("generator container bound");
+        if (row != null && (row.containerMigration != null || row.containerCore != null || row.coreTake != null)) throw new IllegalStateException("generator container bound");
         if (row == null || row.coreItem == null) {
             return -1L;
         }
@@ -682,6 +709,37 @@ public final class GeneratorStore {
         return handed;
     }
 
+    /** Первичная отметка не воспроизводит исторические перерождения. */
+    synchronized boolean observeSkillRebirth(UUID owner, int count) {
+        writable();
+        Row row = row(owner, 0);
+        if (row == null || count < 0) return false;
+        if (!row.skillRebirthBaseline) {
+            row.lastSkillRebirth = count; row.skillRebirthBaseline = true; dirty = true;
+        } else if (count > row.lastSkillRebirth && count > row.requestedSkillRebirth) {
+            row.requestedSkillRebirth = count; dirty = true;
+        }
+        return payoutCheckpoint();
+    }
+
+    synchronized boolean requestSkillRebirth(UUID owner, int count) {
+        writable();
+        Row row = row(owner, 0);
+        if (row == null || count <= 0) return false;
+        if (!row.skillRebirthBaseline) {
+            row.lastSkillRebirth = count - 1; row.skillRebirthBaseline = true; dirty = true;
+        }
+        if (count > row.lastSkillRebirth && count > row.requestedSkillRebirth) {
+            row.requestedSkillRebirth = count; dirty = true;
+        }
+        return payoutCheckpoint();
+    }
+
+    synchronized int requestedSkillRebirth(UUID owner) {
+        Row row = row(owner, 0);
+        return row == null ? 0 : row.requestedSkillRebirth;
+    }
+
     /** Сброс с сохранением старого баланса и содержимого контейнеров; событие идемпотентно по номеру. */
     synchronized boolean rebirthKeepingBunker(UUID owner, int skillCount) {
         writable();
@@ -689,13 +747,17 @@ public final class GeneratorStore {
         if (rows == null || rows.isEmpty() || skillCount <= 0) return false;
         Row primary = rows.get(0);
         if (skillCount <= primary.lastSkillRebirth) return payoutCheckpoint();
+        if (primary.requestedSkillRebirth > skillCount) return false;
         for (Row row : rows) {
             if (row.containerTransition != null || row.containerMigration != null
                     || (row.bunker > 0 && (row.containerCore == null || row.legacyDrops == null))) return false;
         }
         for (Row row : rows) { row.tier = 1; row.modules.clear(); }
-        if (primary.rebirths < Integer.MAX_VALUE) primary.rebirths++;
+        int delta = primary.skillRebirthBaseline ? skillCount - primary.lastSkillRebirth : 1;
+        primary.rebirths = (int) Math.min(Integer.MAX_VALUE, (long) primary.rebirths + delta);
         primary.lastSkillRebirth = skillCount;
+        primary.skillRebirthBaseline = true;
+        primary.requestedSkillRebirth = 0;
         dirty = true;
         return payoutCheckpoint();
     }
@@ -771,6 +833,29 @@ public final class GeneratorStore {
 
     record ContainerBinding(UUID core, String transition, UUID releaseId) { }
 
+    synchronized CoreTake coreTake(UUID owner, int slot) {
+        Row row = row(owner, slot);
+        return row == null ? null : row.coreTake;
+    }
+
+    synchronized boolean prepareCoreTake(UUID owner, int slot, CoreTake intent) {
+        writable();
+        Row row = row(owner, slot);
+        if (row == null || intent == null || !intent.core().equals(row.coreItem) || row.containerCore != null
+                || row.containerMigration != null || row.containerLastMigration != null || row.bunker != 0 || row.coreTake != null) return false;
+        for (Row other : rows(owner)) if (other.coreTake != null) return false;
+        row.coreTake = intent; dirty = true;
+        return payoutCheckpoint();
+    }
+
+    synchronized boolean finishCoreTake(UUID owner, int slot, UUID transaction, long now) {
+        writable();
+        Row row = row(owner, slot);
+        if (row == null || row.coreTake == null || !row.coreTake.transaction().equals(transaction) || now < 0) return false;
+        row.coreItem = null; row.world = null; row.coreTake = null; row.lastCalcMillis = now; dirty = true;
+        return payoutCheckpoint();
+    }
+
     synchronized ContainerBinding containerBinding(UUID owner, int slot) {
         Row row = row(owner, slot);
         return row == null || row.containerCore == null ? null : new ContainerBinding(row.containerCore, row.containerTransition, row.containerReleaseId);
@@ -779,7 +864,7 @@ public final class GeneratorStore {
     synchronized boolean beginContainerBinding(UUID owner, int slot, UUID core, List<GeneratorDrops.Drop> drops, int luck) {
         writable();
         Row row = row(owner, slot);
-        if (row == null || core == null || !core.equals(row.coreItem) || row.containerCore != null
+        if (row == null || core == null || !core.equals(row.coreItem) || row.containerCore != null || row.coreTake != null
                 || row.containerMigration != null || row.containerLastMigration != null) return false;
         if (row.bunker > 0) {
             if (drops == null || drops.isEmpty() || luck < 0 || luck > MAX_LEVEL) return false;

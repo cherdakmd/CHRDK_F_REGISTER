@@ -55,7 +55,7 @@ public final class GeneratorPlaceholders extends PlaceholderExpansion {
         if (player == null) {
             return null;
         }
-        GeneratorStore.Entry entry = plugin.store().entry(player.getUniqueId());
+        GeneratorStore.Entry entry = plugin.combinedBunkerEntry(plugin.store().entry(player.getUniqueId()));
         return switch (params.toLowerCase(java.util.Locale.ROOT)) {
             case "tier" -> String.valueOf(GeneratorStats.tier(entry));
             case "fill" -> String.valueOf(GeneratorStats.fillPercent(entry, plugin.config()));

@@ -17,6 +17,7 @@ final class GeneratorTake {
         enum Status {
             NO_GENERATOR,
             TOO_FAR,
+            CONTAINER_NOT_EMPTY,
             PENDING,
             DONE
         }
@@ -49,8 +50,18 @@ final class GeneratorTake {
             confirmations.offer(player.getUniqueId(), SESSION, quote, now);
             return new Result(Result.Status.PENDING, 0L);
         }
-        long units = plugin.store().remove(player.getUniqueId(), slot, System.currentTimeMillis());
-        plugin.worldListener().removeCore(player, entry, Math.max(0L, units));
-        return new Result(Result.Status.DONE, Math.max(0L, units));
+        try {
+            if (!plugin.containers().preparePlayer(player, slot)
+                    || GeneratorContainerLifecycle.release(plugin.store(), plugin.containerStore(), player.getUniqueId(), slot)
+                    != GeneratorContainerLifecycle.Result.READY) return new Result(Result.Status.CONTAINER_NOT_EMPTY, 0);
+        } catch (java.io.IOException | RuntimeException error) {
+            return new Result(Result.Status.CONTAINER_NOT_EMPTY, 0);
+        }
+        try {
+            if (!plugin.coreTake().start(player, slot)) return new Result(Result.Status.CONTAINER_NOT_EMPTY, 0);
+        } catch (java.io.IOException | RuntimeException error) {
+            return new Result(Result.Status.CONTAINER_NOT_EMPTY, 0);
+        }
+        return new Result(Result.Status.DONE, 0);
     }
 }
