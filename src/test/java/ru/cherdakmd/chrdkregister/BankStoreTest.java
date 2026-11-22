@@ -200,6 +200,25 @@ class BankStoreTest {
     }
 
     @Test
+    void queuedTimeoutAfterExternalCallbackStillQuarantines(@TempDir Path dir) throws Exception {
+        StorageIo io = new StorageIo(100L);
+        CountDownLatch gate = new CountDownLatch(1), started = new CountDownLatch(1);
+        Thread blocker = new Thread(() -> {
+            try { io.run(() -> { started.countDown(); try { gate.await(); } catch (InterruptedException e) { Thread.currentThread().interrupt(); } }); }
+            catch (IOException ignored) { }
+        });
+        blocker.setDaemon(true); blocker.start();
+        assertTrue(started.await(5, TimeUnit.SECONDS));
+        BankStore bank = new BankStore(dir, LOGGER, () -> { }, io); bank.load();
+        var called = new java.util.concurrent.atomic.AtomicBoolean();
+        assertFalse(bank.exchangeAccountsMinor(java.util.Map.of(UUID.randomUUID(), 100L), () -> called.set(true)));
+        assertTrue(called.get());
+        assertFalse(bank.available(), "внешнее состояние могло измениться до отказа записи");
+        gate.countDown();
+        io.run(() -> { }, 5_000L);
+    }
+
+    @Test
     void queuedBarrierTimeoutRejectsOperationWithoutQuarantiningBank(@TempDir Path dir) throws Exception {
         StorageIo io = new StorageIo(100L);
         CountDownLatch gate = new CountDownLatch(1);

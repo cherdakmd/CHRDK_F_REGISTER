@@ -716,7 +716,9 @@ public final class BankStore {
         }
         commit.run(); var next=envelope();
         deltas.forEach((id,delta)->adjustMinor(next.accounts.computeIfAbsent(id.toString(),key->new Account()),delta));
-        return publishAuction(next);
+        // Внешний callback уже мог изменить состояние; даже отсутствие записи
+        // банка здесь не доказывает безопасность повторного выполнения сделки.
+        return publishAuction(next, true);
     }
 
     public synchronized long deposit(UUID id, String name, long amount) {
@@ -1115,17 +1117,20 @@ public final class BankStore {
         if (delta >= 0) account.deposited = counter(account.deposited, delta); else account.withdrawn = counter(account.withdrawn, -delta);
         account.updated = System.currentTimeMillis();
     }
-    private boolean publishAuction(Envelope next) {
+    private boolean publishAuction(Envelope next) { return publishAuction(next, false); }
+
+    private boolean publishAuction(Envelope next, boolean priorExternalCommit) {
         try { writeStrict(next); }
         catch (StorageIo.StallException stall) {
-            if (!stall.started()) {
+            if (!stall.started() && !priorExternalCommit) {
                 // Достоверно ничего не записано этим вызовом: финоперация
                 // отклонена, но неизвестного банковского commit не возникло.
                 logger.warning("[bank] Финансовая операция отклонена: " + stall.getMessage());
                 return false;
             }
             available = false;
-            logger.severe("[bank] Неоднозначный сбой финансовой записи; банк остановлен до проверки/restart: " + stall.getMessage());
+            logger.severe("[bank] Финансовая операция требует сверки; банк остановлен до проверки/restart: "
+                    + stall.getMessage() + (priorExternalCommit ? "; внешний callback уже выполнен" : ""));
             return false;
         }
         catch (IOException | RuntimeException error) {
