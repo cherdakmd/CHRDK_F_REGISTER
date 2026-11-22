@@ -165,10 +165,11 @@ public final class CollectionGui implements Listener {
         for (CollectionRewards.Tier tier : plugin.config().collection().rewards()) {
             boolean done = claimed.contains(tier.percent());
             var award=plugin.money().award(player,"percent:"+tier.percent());
-            boolean uncertain=award!=null && award.state()==ru.cherdakmd.chrdkregister.api.FixedMoneyMilestones.State.LEGACY_UNCERTAIN && !done;
+            boolean legacyBoundary=CollectionMoneyMigration.legacyReached(plugin.money().awards(player),tier.percent());
+            boolean uncertain=!done && (legacyBoundary || award!=null && award.state()==ru.cherdakmd.chrdkregister.api.FixedMoneyMilestones.State.LEGACY_UNCERTAIN);
             String reward=award!=null && award.state()==ru.cherdakmd.chrdkregister.api.FixedMoneyMilestones.State.MONEY
                     ? ru.cherdakmd.chrdkregister.api.DiamondMoney.format(award.minor())+" алмазов в /bal"
-                    : plugin.collection().rewardText(tier);
+                    : award!=null || legacyBoundary ? "старый порог · сведения требуют сверки" : plugin.collection().rewardText(tier);
             lore.add(plugin.messages().get("collection-reward-line",
                     "percent", String.valueOf(tier.percent()),
                     "reward", Messages.trusted(reward),

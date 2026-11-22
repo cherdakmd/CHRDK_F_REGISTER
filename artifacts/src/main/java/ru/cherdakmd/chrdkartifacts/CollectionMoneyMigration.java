@@ -16,9 +16,19 @@ final class CollectionMoneyMigration {
             int found=(int)owner.getValue().stream().filter(id->ArtifactRegistry.byId(id)!=null).count();
             int percent=CollectionRewards.percentOf(found,ArtifactRegistry.size());
             if(percent>0){var rows=out.computeIfAbsent(owner.getKey(),unused->new LinkedHashMap<>());
-                for(int i=1;i<=percent;i++)rows.putIfAbsent("percent:"+i,State.LEGACY_UNCERTAIN);}
+                rows.put("legacy-through:"+percent,State.LEGACY_UNCERTAIN);}
         }
         return out;
+    }
+    static boolean legacyReached(Map<String,ru.cherdakmd.chrdkregister.api.FixedMoneyMilestones.Award> awards,int percent){
+        for(var row:awards.entrySet())if(row.getKey().startsWith("legacy-through:")
+                && row.getValue().state()==State.LEGACY_UNCERTAIN) {
+            try {int boundary=Integer.parseInt(row.getKey().substring("legacy-through:".length()));
+                if(boundary<1||boundary>100)throw new IllegalStateException("invalid migration boundary");
+                if(percent<=boundary)return true;
+            }catch(NumberFormatException error){throw new IllegalStateException("invalid migration boundary",error);}
+        }
+        return false;
     }
     private CollectionMoneyMigration(){}
 }

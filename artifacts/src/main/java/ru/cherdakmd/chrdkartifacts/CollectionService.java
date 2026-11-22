@@ -140,7 +140,9 @@ public final class CollectionService {
         List<CollectionRewards.Tier> tiers = CollectionRewards.claimable(
                 plugin.config().collection().rewards(), store.claimed(key(player)), count(player), total());
         int granted = 0;
+        var history=plugin.money().awards(player);
         for (CollectionRewards.Tier tier : tiers) {
+            if(CollectionMoneyMigration.legacyReached(history,tier.percent()))continue;
             var accepted=plugin.money().accept(player,"percent:"+tier.percent(),tier.diamonds(),tier.passHours(),0);
             if(accepted==null || accepted.state()!=ru.cherdakmd.chrdkregister.api.FixedMoneyMilestones.State.MONEY)continue;
             if (!store.markClaimed(key(player), tier.percent())) continue;
