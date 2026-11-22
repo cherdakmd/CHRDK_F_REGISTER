@@ -126,6 +126,8 @@ public final class GeneratorStore {
         int lastSkillRebirth;
         boolean skillRebirthBaseline;
         int requestedSkillRebirth;
+        /** Последний подтверждённый административный цикл Skills; null — старый цикл. */
+        UUID skillResetEpoch;
         CoreTake coreTake;
     }
 
@@ -237,6 +239,11 @@ public final class GeneratorStore {
                     }
                     if (player.has("containerLastMigration") && !player.get("containerLastMigration").isJsonNull()) {
                         MilestoneMigration.uuid(player.get("containerLastMigration").getAsString());
+                    }
+                    if (player.has("skillResetEpoch") && !player.get("skillResetEpoch").isJsonNull()) {
+                        if (!player.get("skillResetEpoch").isJsonPrimitive()
+                                || !player.get("skillResetEpoch").getAsJsonPrimitive().isString()) throw new IOException("skill reset epoch type");
+                        MilestoneMigration.uuid(player.get("skillResetEpoch").getAsString());
                     }
                     if (player.has("containerCore") && !player.get("containerCore").isJsonNull()) {
                         if (!player.get("containerCore").isJsonPrimitive() || !player.get("containerCore").getAsJsonPrimitive().isString()) throw new IOException("container core");
@@ -734,6 +741,34 @@ public final class GeneratorStore {
         if (count > row.lastSkillRebirth && count > row.requestedSkillRebirth) {
             row.requestedSkillRebirth = count; dirty = true;
         }
+        return payoutCheckpoint();
+    }
+
+    /**
+     * Примитив будущего межплагинного сброса. Вызывающая сторона обязана сначала
+     * устойчиво сохранить намерение и завершить расчёт/переносы контейнеров.
+     * Пока этот метод не подключён к команде: сам по себе он не транзакция Skills.
+     */
+    synchronized boolean resetSkillCycle(UUID owner, UUID expectedEpoch, UUID nextEpoch, int expectedCount) {
+        writable();
+        if (owner == null || nextEpoch == null || nextEpoch.equals(expectedEpoch) || expectedCount < 0) return false;
+        List<Row> rows = rows(owner);
+        if (rows == null || rows.isEmpty()) return false;
+        Row primary = rows.get(0);
+        if (nextEpoch.equals(primary.skillResetEpoch)) return payoutCheckpoint();
+        if (!java.util.Objects.equals(expectedEpoch, primary.skillResetEpoch)
+                || !primary.skillRebirthBaseline || primary.lastSkillRebirth != expectedCount
+                || primary.requestedSkillRebirth != 0) return false;
+        for (Row row : rows) {
+            if (row.containerTransition != null || row.containerMigration != null || row.coreTake != null
+                    || (row.bunker > 0 && (row.containerCore == null || row.legacyDrops == null))) return false;
+        }
+        for (Row row : rows) { row.tier = 1; row.modules.clear(); }
+        primary.rebirths = 0;
+        primary.lastSkillRebirth = 0;
+        primary.requestedSkillRebirth = 0;
+        primary.skillResetEpoch = nextEpoch;
+        dirty = true;
         return payoutCheckpoint();
     }
 

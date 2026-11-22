@@ -99,6 +99,34 @@ class GeneratorContainerLifecycleTest {
         assertEquals(0, source().requestedSkillRebirth(owner));
         assertFalse(source().observeSkillRebirth(owner, 5));
     }
+    @Test void adminCycleResetIsIdempotentAndPreservesGeneratorContentsAndMoney() throws Exception {
+        var s = ready(); var t = target();
+        assertTrue(s.observeSkillRebirth(owner, 3));
+        s.setTier(owner, 0, 3);
+        s.setModuleLevel(owner, 0, "luck", 2);
+        s.addMoney(owner, 125);
+        assertEquals(GeneratorContainerLifecycle.Result.READY, GeneratorContainerLifecycle.bind(s, t, owner, 0, null, 0, 100));
+        var core = s.entry(owner, 0).coreItem();
+        var slots = new java.util.ArrayList<GeneratorContainerStore.Stack>(java.util.Collections.nCopies(GeneratorContainerStore.SLOTS, null));
+        slots.set(0, new GeneratorContainerStore.Stack("DIAMOND", 5));
+        assertTrue(t.settle(owner, 0, core, t.view(owner, 0).revision(), slots, 0, 100));
+        UUID epoch = UUID.randomUUID();
+        assertFalse(s.resetSkillCycle(owner, null, epoch, 2));
+        assertEquals(3, s.entry(owner, 0).tier());
+        assertTrue(s.resetSkillCycle(owner, null, epoch, 3));
+        var restored = source();
+        assertEquals(1, restored.entry(owner, 0).tier());
+        assertTrue(restored.entry(owner, 0).modules().isEmpty());
+        assertEquals(0, restored.entry(owner, 0).rebirths());
+        assertEquals(125, restored.entry(owner, 0).money());
+        assertEquals(5, target().view(owner, 0).slots().get(0).amount());
+        restored.setTier(owner, 0, 2);
+        assertTrue(restored.resetSkillCycle(owner, null, epoch, 3));
+        assertEquals(2, source().entry(owner, 0).tier());
+        assertFalse(restored.resetSkillCycle(owner, null, UUID.randomUUID(), 0));
+        assertTrue(restored.resetSkillCycle(owner, epoch, UUID.randomUUID(), 0));
+    }
+
     @Test void oldSourceWithLiveContainerFailsClosed() throws Exception {
         var s = ready(); var t = target();
         Path backup = dir.resolve("backup"); Files.copy(dir.resolve("generator.json"), backup);
