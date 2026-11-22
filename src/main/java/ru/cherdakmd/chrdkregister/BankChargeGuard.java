@@ -36,6 +36,14 @@ final class BankChargeGuard implements Listener {
             actual = null; // Ошибка чтения не выпускает игрока из проверки.
         }
         if (matches(expected,actual)) return true;
+        if (expected == null) {
+            // null — это недоступный банк, а не свидетельство расхождения playerdata.
+            plugin.getLogger().warning("Банк недоступен: нельзя проверить квитанции игрока " + p.getUniqueId()
+                    + "; вход временно приостановлен. Не удаляйте bank.json или playerdata.");
+            try { p.kick(plugin.messages().get("economy.bank-unavailable-lock")); }
+            catch (RuntimeException error) { p.kick(net.kyori.adventure.text.Component.text("Банк временно недоступен; проверка квитанций невозможна. Не удаляйте данные.")); }
+            return false;
+        }
         plugin.getLogger().severe("Банк: playerdata не подтверждает предметную оплату для " + p.getUniqueId()
                 + "; игра заблокирована до сверки. Ожидаемые метки: " + expected + "; фактические метки: " + actual
                 + ". Не удаляйте bank.json или playerdata.");

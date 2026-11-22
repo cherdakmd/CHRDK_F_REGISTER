@@ -204,7 +204,7 @@ public final class BankService implements org.bukkit.event.Listener {
         return store.shopStatus(t);
     }
     private void lockCash(Player player) {
-        try { player.kick(plugin.messages().get("economy.cash-playerdata-lock")); }
+        try { player.kick(plugin.messages().get(store.available() ? "economy.cash-playerdata-lock" : "economy.bank-unavailable-lock")); }
         catch(RuntimeException error) { player.kick(net.kyori.adventure.text.Component.text("Банк: обмен предметов требует сверки playerdata.")); }
     }
     @org.bukkit.event.EventHandler(priority=org.bukkit.event.EventPriority.HIGHEST)

@@ -179,7 +179,28 @@ class BankStoreTest {
     }
 
     @Test
-    void barrierStallStopsBankInsteadOfFreezingServer(@TempDir Path dir) throws Exception {
+    void startedBarrierTimeoutStillQuarantinesBank(@TempDir Path dir) throws Exception {
+        CountDownLatch gate = new CountDownLatch(1);
+        CountDownLatch started = new CountDownLatch(1);
+        StorageIo io = new StorageIo(100L);
+        BankStore store = new BankStore(dir, LOGGER, () -> {
+            started.countDown();
+            try { gate.await(); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+        }, io);
+        store.load();
+        UUID owner = UUID.randomUUID();
+        assertFalse(store.importLegacyAuction(UUID.randomUUID(), owner, 5L));
+        assertTrue(started.await(5, TimeUnit.SECONDS));
+        assertFalse(store.available(), "начатая запись может завершиться после таймаута");
+        assertNull(store.chargeWitnesses(owner));
+        gate.countDown();
+        io.run(() -> { }, 5_000L);
+        assertFalse(store.available(), "поздний успех не снимает неопределённость автоматически");
+        assertEquals(5L, store(dir).balance(owner));
+    }
+
+    @Test
+    void queuedBarrierTimeoutRejectsOperationWithoutQuarantiningBank(@TempDir Path dir) throws Exception {
         StorageIo io = new StorageIo(100L);
         CountDownLatch gate = new CountDownLatch(1);
         CountDownLatch started = new CountDownLatch(1);
@@ -205,9 +226,11 @@ class BankStoreTest {
         store.load();
         UUID owner = UUID.randomUUID();
         assertFalse(store.importLegacyAuction(UUID.randomUUID(), owner, 5L), "финансовая операция отклоняется");
-        assertFalse(store.available(), "банк остановлен по fail-closed сценарию, а не зависает");
+        assertTrue(store.available(), "доказанно не начатая запись не переводит банк в карантин");
         gate.countDown();
+        io.run(() -> { }, 5_000L);
         BankStore fresh = store(dir);
         assertEquals(0L, fresh.balance(owner), "отклонённая запись не попала в файл");
+        assertTrue(store.importLegacyAuction(UUID.randomUUID(), owner, 5L), "после освобождения очереди операция возможна");
     }
 }

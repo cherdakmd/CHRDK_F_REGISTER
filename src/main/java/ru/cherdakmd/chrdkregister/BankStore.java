@@ -42,9 +42,9 @@ import java.util.logging.Logger;
  * Финансовые intents/receipts сохраняются синхронно force+atomic replace.
  * Обычные счётчики без финансового протокола сохраняются штатным autosave.
  * Барьер записи выполняется потоком {@link StorageIo} с ограничением
- * ожидания: диск не ответил за таймаут — операция отклоняется и банк
- * останавливается по fail-closed сценарию (карантин до restart), а главный
- * поток сервера продолжает работать.</p>
+ * ожидания: если операция ещё не начиналась, она отклоняется без карантина;
+ * при таймауте начатой записи исход неизвестен и банк останавливается по
+ * fail-closed сценарию (карантин до restart).</p>
  *
  * <p>Ник — не ключ: игрок может сменить имя, счёт остаётся. Индекс ников нужен
  * только для {@code /pay <ник>} офлайн-игроку и {@code /bal <ник>}; он
@@ -1117,6 +1117,17 @@ public final class BankStore {
     }
     private boolean publishAuction(Envelope next) {
         try { writeStrict(next); }
+        catch (StorageIo.StallException stall) {
+            if (!stall.started()) {
+                // Достоверно ничего не записано этим вызовом: финоперация
+                // отклонена, но неизвестного банковского commit не возникло.
+                logger.warning("[bank] Финансовая операция отклонена: " + stall.getMessage());
+                return false;
+            }
+            available = false;
+            logger.severe("[bank] Неоднозначный сбой финансовой записи; банк остановлен до проверки/restart: " + stall.getMessage());
+            return false;
+        }
         catch (IOException | RuntimeException error) {
             available = false;
             logger.severe("[bank] Неоднозначный сбой финансовой записи; банк остановлен до проверки/restart: " + error.getMessage());

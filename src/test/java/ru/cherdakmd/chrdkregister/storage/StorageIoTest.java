@@ -48,10 +48,11 @@ class StorageIoTest {
         CountDownLatch gate = new CountDownLatch(1);
         AtomicBoolean finished = new AtomicBoolean();
         long startedAt = System.nanoTime();
-        assertThrows(StorageIo.StallException.class, () -> io.run(() -> {
+        var stall = assertThrows(StorageIo.StallException.class, () -> io.run(() -> {
             await(gate);
             finished.set(true);
         }));
+        assertTrue(stall.started(), "операция началась и может закончиться после таймаута");
         assertTrue((System.nanoTime() - startedAt) / 1_000_000L < 5_000L, "вызывающий поток не ждёт диск бесконечно");
         gate.countDown();
         io.run(() -> { }, 5_000L);
@@ -77,7 +78,8 @@ class StorageIoTest {
         blocker.setDaemon(true);
         blocker.start();
         assertTrue(started.await(5, TimeUnit.SECONDS));
-        assertThrows(StorageIo.StallException.class, () -> io.run(() -> cancelledRan.set(true)));
+        var queued = assertThrows(StorageIo.StallException.class, () -> io.run(() -> cancelledRan.set(true)));
+        assertFalse(queued.started(), "задача была отменена до начала операции");
         gate.countDown();
         io.run(() -> { }, 5_000L);
         assertFalse(cancelledRan.get(), "задача, не начавшаяся к моменту таймаута, отменяется и не пишет файл");

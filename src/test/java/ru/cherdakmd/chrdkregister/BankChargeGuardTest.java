@@ -19,6 +19,9 @@ class BankChargeGuardTest {
         String guard=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkregister/BankChargeGuard.java"));
         assertTrue(guard.contains("EventPriority.MONITOR")); assertTrue(guard.contains("getPersistentDataContainer()")); assertTrue(guard.contains("p.kick(reason)"));
         assertTrue(guard.contains("фактические метки: \" + actual")); assertTrue(guard.contains("Не удаляйте bank.json или playerdata"));
+        assertTrue(guard.indexOf("if (expected == null)") < guard.indexOf("playerdata не подтверждает предметную оплату"),
+                "недоступность банка не выдаётся за доказанное расхождение playerdata");
+        assertTrue(guard.contains("economy.bank-unavailable-lock"));
         assertFalse(guard.contains("getStorageContents")); assertFalse(guard.contains("setStorageContents")); assertFalse(guard.contains("saveData"));
         String root=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkregister/RegisterPlugin.java"));
         assertTrue(root.contains("registerEvents(chargeGuard, this)")); assertTrue(root.contains("chargeGuard::checkOnline"));

@@ -23,9 +23,10 @@ import java.util.concurrent.TimeoutException;
  *
  * <p>Семантика успеха не изменилась: когда {@link #run} вернулся без ошибки —
  * данные на диске с force, как и раньше. Изменился только отказ: диск не
- * ответил за таймаут — {@link StallException} (подкласс {@link IOException}),
- * и модуль останавливается по своему fail-closed сценарию (карантин до
- * перезапуска), а не висит. Задача при этом может завершиться позже; исход
+ * ответил за таймаут — {@link StallException} (подкласс {@link IOException}).
+ * Если операция уже началась, модуль обязан перейти в fail-closed карантин;
+ * если она гарантированно не началась, вызывающий может безопасно отклонить
+ * запрос без карантина. Начатая задача может завершиться позже; исход
  * «запись могла состояться» соответствует существующей семантике сбоя после
  * атомарной замены (см. тесты afterRename-ветки).</p>
  *
@@ -48,8 +49,29 @@ public final class StorageIo {
 
     /** Диск не ответил за отведённое время; исход записи неопределённый. */
     public static final class StallException extends IOException {
-        public StallException(String message) {
+        private final boolean started;
+        public StallException(String message) { this(message, true); }
+        public StallException(String message, boolean started) {
             super(message);
+            this.started = started;
+        }
+        /** false только если этот вызов гарантированно не начал свою операцию записи. */
+        public boolean started() { return started; }
+    }
+
+    /** Линейная граница между началом операции и отменой ещё не начатой задачи. */
+    private static final class StartGate {
+        private boolean started;
+        private boolean cancelled;
+        synchronized boolean begin() {
+            if (cancelled) return false;
+            started = true;
+            return true;
+        }
+        synchronized boolean cancelBeforeStart() {
+            if (started) return false;
+            cancelled = true;
+            return true;
         }
     }
 
@@ -87,17 +109,24 @@ public final class StorageIo {
      */
     public void run(IoOperation operation, long timeoutMs) throws IOException {
         Objects.requireNonNull(operation, "operation");
+        StartGate gate = new StartGate();
         Callable<Object> task = () -> {
-            operation.run();
+            if (gate.begin()) operation.run();
             return null;
         };
         Future<?> future = executor.submit(task);
         try {
             future.get(timeoutMs, TimeUnit.MILLISECONDS);
         } catch (TimeoutException stall) {
+            boolean cancelledBeforeStart = gate.cancelBeforeStart();
             future.cancel(false);
-            throw new StallException("Диск не ответил за " + timeoutMs + " мс; запись состояния в неопределённом состоянии");
+            throw new StallException(cancelledBeforeStart
+                    ? "Очередь записи занята более " + timeoutMs + " мс; операция не начиналась"
+                    : "Диск не ответил за " + timeoutMs + " мс; запись состояния в неопределённом состоянии",
+                    !cancelledBeforeStart);
         } catch (InterruptedException interrupted) {
+            gate.cancelBeforeStart();
+            future.cancel(false);
             Thread.currentThread().interrupt();
             throw new IOException("Ожидание записи прервано", interrupted);
         } catch (ExecutionException failed) {
