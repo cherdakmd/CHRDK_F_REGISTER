@@ -1026,6 +1026,37 @@ public final class BankStore {
         return publishAuction(next);
     }
 
+    /**
+     * Непереоцениваемая компенсация замороженного остатка буста. Квитанция и
+     * баланс сохраняются одной барьерной записью; повтор другого владельца или
+     * суммы не считается успехом. Вызывающий обязан сначала долговечно сохранить
+     * собственный intent и не уменьшать остаток до подтверждения банка.
+     */
+    synchronized ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.MoneyGrant creditBoostCompensationOnce(
+            UUID owner, UUID transaction, long minor) {
+        var failed = ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.MoneyGrant.FAILED;
+        if (!available || owner == null || transaction == null || minor <= 0 || minor > MAX_BALANCE * 100L) return failed;
+        String source = "boost-compensation";
+        UUID lineage = UUID.nameUUIDFromBytes("CHRDK:boost-compensation:v1".getBytes(StandardCharsets.UTF_8));
+        UUID registered = entitlementSources.get(source);
+        if (registered != null && !registered.equals(lineage)) return failed;
+        String key = source + ":" + transaction;
+        var previous = entitlementCredits.get(key);
+        if (previous != null) return previous.owner().equals(owner) && previous.credited() == minor && previous.base() == -1
+                ? ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.MoneyGrant.ALREADY : failed;
+        if (cashLocked(owner) || marketSnapshot.minted() > Long.MAX_VALUE - minor) return failed;
+        if (balanceMinor(owner) > MAX_BALANCE * 100L - minor)
+            return ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.MoneyGrant.FULL;
+        var next = envelope();
+        adjustMinor(next.accounts.computeIfAbsent(owner.toString(), ignored -> new Account()), minor);
+        next.entitlementSources.put(source, lineage);
+        next.entitlementCredits.put(key, new Entitlement(owner, minor));
+        next.marketSnapshot = new DiamondExchangePolicy.Snapshot(marketSnapshot.circulation(), marketSnapshot.minted() + minor,
+                marketSnapshot.burned(), marketSnapshot.shopTurnover(), marketSnapshot.auctionTurnover(),
+                marketSnapshot.activeAccounts(), marketSnapshot.onlinePlayers(), marketSnapshot.targetCirculation(), marketSnapshot.targetActiveAccounts());
+        return publishAuction(next) ? ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.MoneyGrant.ADDED : failed;
+    }
+
     /** New base-unit delta is converted once at the current quote; credited history is never revalued. */
     public synchronized boolean creditMarketEntitlement(String source,UUID lineage,String key,UUID owner,long total) {
         if(total<0||total>MAX_BALANCE||creditedEntitlement(source,lineage,key,owner)<0||cashLocked(owner))return false;
