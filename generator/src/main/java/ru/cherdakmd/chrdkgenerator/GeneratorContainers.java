@@ -40,10 +40,7 @@ final class GeneratorContainers {
         var provider = Bukkit.getServicesManager().load(ru.cherdakmd.chrdkregister.api.SkillResetBridge.Skills.class);
         if (provider == null) return false;
         var state = provider.state(owner);
-        if (state.isEmpty() || state.get().resetting()) return false;
-        UUID epoch = plugin.store().skillResetEpoch(owner);
-        String actual = epoch == null ? "legacy" : epoch.toString();
-        if (!actual.equals(state.get().epoch())) return false;
+        if (state.isEmpty() || !GeneratorCycleGate.allows(state.get(), plugin.store().skillResetEpoch(owner))) return false;
         if (plugin.store().entry(owner) == null) return true;
         if (!plugin.store().observeSkillRebirth(owner, state.get().count())) return false;
         int requested = plugin.store().requestedSkillRebirth(owner);

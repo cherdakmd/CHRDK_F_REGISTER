@@ -79,6 +79,18 @@ class FullResetCoordinatorTest {
                 "rebirth:" + EPOCH + ":1", 42L), journal);
     }
 
+    @Test void zeroMarkerIsDurableWithoutAddingToRealJournalTotal() throws Exception {
+        var awards = new ru.cherdakmd.chrdkregister.api.MilestoneStore(folder.resolve("awards"), "skill-rebirth-diamonds");
+        awards.initialize(Map.of());
+        var id = java.util.UUID.fromString(OWNER);
+        assertTrue(awards.reserve(id, "rebirth:1", 42));
+        assertTrue(awards.reserve(id, "reset:" + EPOCH, 0));
+        var reopened = new ru.cherdakmd.chrdkregister.api.MilestoneStore(folder.resolve("awards"), "skill-rebirth-diamonds");
+        assertEquals(42L, reopened.totals().get(id));
+        assertEquals(0, reopened.amount(id, "reset:" + EPOCH));
+        assertEquals(42, reopened.amount(id, "rebirth:1"));
+    }
+
     @Test void missingReceiptOrMarkerMismatchNeverCallsGenerator() {
         var s = ready(); generatorAvailable = false;
         assertFalse(FullResetCoordinator.start(s, OWNER, EPOCH, ledger, generator));

@@ -774,6 +774,7 @@ public final class SkillStore {
         player.prestige.clear();
         player.rebirths = 0;
         player.rebirthConverted = true;
+        player.classConverted = true;
         player.bonusPoints = 0;
         player.pve = 0;
         player.lastBankRebirthCount = 0;

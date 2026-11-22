@@ -109,7 +109,8 @@ class GeneratorContainerLifecycleTest {
         var core = s.entry(owner, 0).coreItem();
         var slots = new java.util.ArrayList<GeneratorContainerStore.Stack>(java.util.Collections.nCopies(GeneratorContainerStore.SLOTS, null));
         slots.set(0, new GeneratorContainerStore.Stack("DIAMOND", 5));
-        assertTrue(t.settle(owner, 0, core, t.view(owner, 0).revision(), slots, 0, 100));
+        slots.set(36, new GeneratorContainerStore.Stack("COAL", 8));
+        assertTrue(t.settle(owner, 0, core, t.view(owner, 0).revision(), slots, 900, 100));
         UUID epoch = UUID.randomUUID();
         assertFalse(s.resetSkillCycle(owner, null, epoch, 2));
         assertEquals(3, s.entry(owner, 0).tier());
@@ -120,6 +121,8 @@ class GeneratorContainerLifecycleTest {
         assertEquals(0, restored.entry(owner, 0).rebirths());
         assertEquals(125, restored.entry(owner, 0).money());
         assertEquals(5, target().view(owner, 0).slots().get(0).amount());
+        assertEquals(8, target().view(owner, 0).slots().get(36).amount());
+        assertEquals(900, target().view(owner, 0).burnMillis());
         restored.setTier(owner, 0, 2);
         assertTrue(restored.resetSkillCycle(owner, null, epoch, 3));
         assertEquals(2, source().entry(owner, 0).tier());

@@ -170,6 +170,7 @@ class RebirthBankPayoutTest {
         assertEquals(0, store.spentAttributes(OWNER));
         assertEquals(0, store.spentBranches(OWNER));
         assertEquals(0, store.bonusPoints(OWNER));
+        assertFalse(store.migrateClassPoints(OWNER, 5), "старые классовые бонусы не должны вернуться после сброса");
         assertEquals(0, store.pve(OWNER));
         assertEquals(0, store.rebirths(OWNER));
         assertTrue(store.claimedRebirthMilestones(OWNER).contains(5));
