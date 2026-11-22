@@ -90,6 +90,7 @@ public final class FixedMoneyMilestones {
     public synchronized boolean healthy(){return healthy;}
     public synchronized UUID lineage(){return data.lineage;}
     public synchronized Award award(UUID owner,String key){var rows=data.awards.get(owner);return rows==null?null:rows.get(key);}
+    public synchronized Map<String,Award> awards(UUID owner){var rows=data.awards.get(owner);return rows==null?Map.of():Map.copyOf(rows);}
     public synchronized Map<UUID,Map<String,Award>> snapshot(){
         var out=new LinkedHashMap<UUID,Map<String,Award>>();data.awards.forEach((id,rows)->out.put(id,Map.copyOf(rows)));return Map.copyOf(out);
     }

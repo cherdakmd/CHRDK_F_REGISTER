@@ -45,6 +45,14 @@ class MilestoneMigrationTest {
         }
     }
 
+    @Test void openedIdsAreValidatedAndRetainedEvenWhenNotClaimed() throws Exception {
+        Files.writeString(file(),data("[]").replace("\"unlocked\":[]","\"unlocked\":[\"first\",\"second\"]"));
+        assertEquals(Set.of("first","second"),MilestoneMigration.progressIds(file(),MilestoneMigration.Kind.ACHIEVEMENTS).get(owner));
+        String duplicate=data("[]").replace("\"unlocked\":[]","\"unlocked\":[\"first\",\"first\"]");
+        Files.writeString(file(),duplicate);
+        assertThrows(IOException.class,()->MilestoneMigration.progressIds(file(),MilestoneMigration.Kind.ACHIEVEMENTS));
+        assertEquals(duplicate,Files.readString(file()));
+    }
     @Test void duplicateFinancialKeysAreNeverSilentlyDiscarded() throws Exception {
         String row="{\"claimed\":[25],\"discovered\":[],\"firstFound\":0,\"lastFound\":0}";
         for(String bad:List.of(

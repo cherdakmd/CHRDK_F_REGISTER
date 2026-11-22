@@ -133,7 +133,7 @@ public final class AchievementCommandHandler implements CommandExecutor, TabComp
             plugin.messages().send(sender, "no-permission");
             return true;
         }
-        if (plugin.awards().admin(sender,args)) return true;
+        if (plugin.money().admin(sender,args) || plugin.awards().admin(sender,args)) return true;
         if (args.length == 1 && args[0].equalsIgnoreCase("reload")) {
             plugin.reloadAchievementsConfig();
             plugin.messages().send(sender, "admin-reloaded");
@@ -150,12 +150,12 @@ public final class AchievementCommandHandler implements CommandExecutor, TabComp
                 plugin.messages().send(sender, "admin-unknown");
                 return true;
             }
+            boolean already=service.isUnlocked(target,def.id());
             boolean fresh = service.grant(target, def);
-            plugin.messages().send(sender, fresh ? "admin-granted" : "admin-already",
-                    "player", target.getName(),
-                    "id", def.id());
-            plugin.getLogger().info("[CHRDK_Achievements] " + sender.getName()
-                    + " выдал достижение " + def.id() + " игроку " + target.getName());
+            plugin.messages().send(sender, fresh ? "admin-granted" : already ? "admin-already" : "admin-award-wait",
+                    "player", target.getName(), "id", def.id());
+            if(fresh) plugin.getLogger().info("[CHRDK_Achievements] " + sender.getName()
+                    + " открыл достижение " + def.id() + " игроку " + target.getName());
             return true;
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("reset")) {

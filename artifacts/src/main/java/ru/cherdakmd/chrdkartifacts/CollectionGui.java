@@ -164,11 +164,16 @@ public final class CollectionGui implements Listener {
         List<net.kyori.adventure.text.Component> lore = new ArrayList<>();
         for (CollectionRewards.Tier tier : plugin.config().collection().rewards()) {
             boolean done = claimed.contains(tier.percent());
+            var award=plugin.money().award(player,"percent:"+tier.percent());
+            boolean uncertain=award!=null && award.state()==ru.cherdakmd.chrdkregister.api.FixedMoneyMilestones.State.LEGACY_UNCERTAIN && !done;
+            String reward=award!=null && award.state()==ru.cherdakmd.chrdkregister.api.FixedMoneyMilestones.State.MONEY
+                    ? ru.cherdakmd.chrdkregister.api.DiamondMoney.format(award.minor())+" алмазов в /bal"
+                    : plugin.collection().rewardText(tier);
             lore.add(plugin.messages().get("collection-reward-line",
                     "percent", String.valueOf(tier.percent()),
-                    "reward", Messages.trusted(plugin.collection().rewardText(tier)),
+                    "reward", Messages.trusted(reward),
                     "status", Messages.trusted(plugin.messages().raw(done
-                            ? "collection-reward-claimed" : "collection-reward-pending"))));
+                            ? "collection-reward-claimed" : uncertain ? "collection-reward-review" : "collection-reward-pending"))));
         }
         meta.lore(lore);
         item.setItemMeta(meta);

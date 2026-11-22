@@ -39,6 +39,8 @@ public final class AchievementsPlugin extends JavaPlugin {
 
     private ru.cherdakmd.chrdkregister.api.MilestoneAwards awards;
     public ru.cherdakmd.chrdkregister.api.MilestoneAwards awards() { return awards; }
+    private ru.cherdakmd.chrdkregister.api.MoneyMilestoneBridge money;
+    public ru.cherdakmd.chrdkregister.api.MoneyMilestoneBridge money() { return money; }
 
     @Override
     public void onEnable() {
@@ -47,8 +49,14 @@ public final class AchievementsPlugin extends JavaPlugin {
         this.store = new AchievementStore(getDataFolder().toPath(), getLogger());
         reloadAchievementsConfig();
         try {
-            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 38) throw new IllegalStateException("Нужен Core API38 (1.4.281-rc.3+)");
-            this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"achievements-awards",ru.cherdakmd.chrdkregister.api.MilestoneMigration.json(getDataFolder().toPath().resolve("achievements.json"),ru.cherdakmd.chrdkregister.api.MilestoneMigration.Kind.ACHIEVEMENTS));
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 51) throw new IllegalStateException("Нужен Core API 51+");
+            var path=getDataFolder().toPath().resolve("achievements.json");
+            var kind=ru.cherdakmd.chrdkregister.api.MilestoneMigration.Kind.ACHIEVEMENTS;
+            var claimed=ru.cherdakmd.chrdkregister.api.MilestoneMigration.json(path,kind);
+            var opened=ru.cherdakmd.chrdkregister.api.MilestoneMigration.progressIds(path,kind);
+            ru.cherdakmd.chrdkregister.api.MoneyMilestoneBridge.requireOldJournalOrFreshInstall(this,coreApi,"achievements-awards");
+            this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"achievements-awards",claimed);
+            this.money = new ru.cherdakmd.chrdkregister.api.MoneyMilestoneBridge(this,this::coreApi,"achievements-money",AchievementMoneyMigration.snapshot(claimed,opened,awards.store().keysSnapshot()));
         } catch (Exception | LinkageError error) {
             getLogger().log(java.util.logging.Level.SEVERE,"Модуль остановлен без сброса прогресса/наград",error);
             this.store = null;
@@ -56,7 +64,7 @@ public final class AchievementsPlugin extends JavaPlugin {
         }
         this.store.load();
         this.service = new AchievementService(this, store);
-        awards.reconciler(player -> service.check(player));
+        money.reconciler(player -> service.check(player));
         this.listener = new AchievementListener(this, service);
         this.gui = new AchievementGui(this, service);
         explorationStore = new ru.cherdakmd.chrdkregister.api.exploration.ExplorationStore(getDataFolder().toPath().resolve("exploration.json"), getLogger());
@@ -129,6 +137,7 @@ public final class AchievementsPlugin extends JavaPlugin {
         if (atlas != null) atlas.close();
         if (gui != null) gui.closeAll();
         if (awards != null) awards.close();
+        if (money != null) money.close();
         if (coreApi != null) {
             try {
                 coreApi.unregisterProfile("achievements");

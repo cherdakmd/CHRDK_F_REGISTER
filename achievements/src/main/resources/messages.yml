@@ -79,6 +79,7 @@ messages:
   admin-unknown: "<red>Неизвестное достижение (см. /achievements list).</red>"
   admin-granted: "<green>Достижение %id% выдано игроку %player%.</green>"
   admin-already: "<gray>У игрока %player% уже открыто %id%.</gray>"
+  admin-award-wait: "<yellow>Достижение не открыто: банк недоступен или старая награда требует сверки.</yellow>"
   admin-reset-badge: "<gray>Бейдж игрока %player% сброшен.</gray>"
   admin-usage: "<yellow>/achadmin <reload|grant <ник> <ид>|reset <ник>></yellow>"
 

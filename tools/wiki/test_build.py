@@ -54,7 +54,7 @@ class WikiBuildTest(unittest.TestCase):
         self.assertEqual(32, len(traits.splitlines()))
         self.assertIn("silnyj-zahvat", traits)
         rewards = book.render_table("artifact_rewards")
-        for row in ("25 | 17 | 1 | 8", "50 | 33 | 2 | 16", "75 | 49 | 3 | 24", "100 | 65 | 7 | 32"):
+        for row in ("25 | 17 | 150 | 8", "50 | 33 | 300 | 16", "75 | 49 | 450 | 24", "100 | 65 | 1050 | 32"):
             self.assertIn(row, rewards)
 
     def test_artifact_missing_details_fail_closed(self):

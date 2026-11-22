@@ -43,6 +43,27 @@ public final class MilestoneMigration {
             return Map.copyOf(out);
         } catch(RuntimeException error) { throw new IOException("Неоднозначный legacy ledger наград: "+file+"; файл не перезаписывается",error); }
     }
+    /** Validated progress IDs, for a conservative one-time migration boundary. */
+    public static Map<UUID,Set<String>> progressIds(Path file,Kind kind) throws IOException {
+        if(kind==Kind.SKILLS)throw new IllegalArgumentException("unsupported progress");
+        json(file,kind); // schema, bounds and duplicate object names
+        if(!Files.exists(file))return Map.of();
+        try {
+            var result=new LinkedHashMap<UUID,Set<String>>();
+            var players=StrictFinancialJson.read(file).getAsJsonObject("players");
+            String field=kind==Kind.ACHIEVEMENTS?"unlocked":"discovered";
+            for(var row:players.entrySet()) {
+                var ids=new LinkedHashSet<String>();
+                for(var item:row.getValue().getAsJsonObject().getAsJsonArray(field)) {
+                    String id=item.getAsString();
+                    if(!ids.add(id))throw new IllegalArgumentException("duplicate progress id");
+                    if(kind==Kind.ACHIEVEMENTS)MilestoneStore.validKey(id);
+                }
+                result.put(uuid(row.getKey()),Set.copyOf(ids));
+            }
+            return Map.copyOf(result);
+        } catch(RuntimeException error){throw new IOException("Неоднозначный старый прогресс; нужна сверка",error);}
+    }
     private static void strings(JsonObject row,String field) {
         if(!row.has(field)||!row.get(field).isJsonArray()) throw new IllegalArgumentException("invalid progress "+field);
         for(var value:row.getAsJsonArray(field)) {

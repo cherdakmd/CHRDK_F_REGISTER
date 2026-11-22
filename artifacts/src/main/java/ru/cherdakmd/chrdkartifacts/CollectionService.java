@@ -130,39 +130,31 @@ public final class CollectionService {
         if (player == null || !enabled()) {
             return 0;
         }
+        // Recover durable accepted awards even if the async collection snapshot lagged.
+        plugin.money().awards(player).forEach((id, award)-> {
+            if(award.state()!=ru.cherdakmd.chrdkregister.api.FixedMoneyMilestones.State.MONEY || !id.startsWith("percent:"))return;
+            try { int percent=Integer.parseInt(id.substring("percent:".length()));
+                if(percent>=1&&percent<=100)store.markClaimed(key(player),percent);
+            } catch(NumberFormatException ignored) { plugin.getLogger().severe("Некорректный ключ денежного порога: "+id); }
+        });
         List<CollectionRewards.Tier> tiers = CollectionRewards.claimable(
-                plugin.config().collection().rewards(), store.claimed(key(player)),
-                count(player), total());
+                plugin.config().collection().rewards(), store.claimed(key(player)), count(player), total());
         int granted = 0;
         for (CollectionRewards.Tier tier : tiers) {
-            if (!plugin.awards().reserve(player,"percent:"+tier.percent(),tier.diamonds())) continue;
-            if (!store.markClaimed(key(player), tier.percent())) {
-                continue;
-            }
-            grant(player, tier);
+            var accepted=plugin.money().accept(player,"percent:"+tier.percent(),tier.diamonds(),tier.passHours(),0);
+            if(accepted==null || accepted.state()!=ru.cherdakmd.chrdkregister.api.FixedMoneyMilestones.State.MONEY)continue;
+            if (!store.markClaimed(key(player), tier.percent())) continue;
             plugin.messages().send(player, "collection-reward-granted",
                     "percent", String.valueOf(tier.percent()),
-                    "reward", Messages.trusted(rewardText(new CollectionRewards.Tier(tier.percent(),tier.passHours(),(int)plugin.awards().amount(player,"percent:"+tier.percent())))));
+                    "reward", Messages.trusted(ru.cherdakmd.chrdkregister.api.DiamondMoney.format(accepted.minor())+" алмазов в /bal (ожидает зачисления)"));
             granted++;
         }
         return granted;
     }
 
-    /** Текст награды для GUI и чата (MiniMessage, собран из messages.yml). */
+    /** Примерная сумма до принятия; после принятия цена фиксируется. */
     public String rewardText(CollectionRewards.Tier tier) {
-        List<String> parts = new ArrayList<>(2);
-        if (tier.passHours() > 0) {
-            parts.add(plugin.messages().raw("collection-reward-hours",
-                    "hours", String.valueOf(tier.passHours())));
-        }
-        if (tier.diamonds() > 0) {
-            parts.add(plugin.messages().raw("collection-reward-diamonds",
-                    "count", String.valueOf(tier.diamonds())));
-        }
-        if (parts.isEmpty()) {
-            return plugin.messages().raw("collection-reward-none");
-        }
-        return String.join(plugin.messages().raw("collection-reward-join"), parts);
+        return plugin.money().preview(tier.diamonds(),tier.passHours(),0);
     }
 
     /** Полоса прогресса для GUI. */
@@ -180,20 +172,6 @@ public final class CollectionService {
 
     public void flush() {
         store.flush();
-    }
-
-    private void grant(Player player, CollectionRewards.Tier tier) {
-        if (tier.passHours() > 0) {
-            if (plugin.coreApi() != null) {
-                plugin.coreApi().grantRewardBoostHours(player.getName(), tier.passHours(),
-                        "artifacts:collection_" + tier.percent());
-            } else {
-                plugin.getLogger().warning("Ядро недоступно: награда за коллекцию "
-                        + tier.percent() + "% (дни ранга) не выдана игроку "
-                        + player.getName() + ".");
-            }
-        }
-
     }
 
     private static List<ItemStack> inventoryItems(Player player) {

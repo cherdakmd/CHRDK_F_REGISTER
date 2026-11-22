@@ -90,11 +90,13 @@ public final class AchievementService {
             return 0;
         }
         String key = key(player);
-        for (String id : store.unlocked(key)) {
-            AchievementDef def = AchievementRegistry.byId(id);
-            if (def == null) def = AchievementRegistry.historicalById(id);
-            if (def != null && !store.claimed(key).contains(id)) pay(player,def);
-        }
+        // The monetary journal is authoritative when the async progress snapshot lagged.
+        plugin.money().awards(player).forEach((id, award) -> {
+            if (award.state() == ru.cherdakmd.chrdkregister.api.FixedMoneyMilestones.State.MONEY) {
+                store.unlock(key, id);
+                store.markClaimed(key, id);
+            }
+        });
         int opened = 0;
         for (int pass = 0; pass < 3; pass++) {
             List<AchievementDef> fresh = AchievementRules.newlyCompleted(
@@ -115,28 +117,20 @@ public final class AchievementService {
 
     /** Админское открытие достижения без проверки порога. */
     public boolean grant(Player player, AchievementDef def) {
-        if (player == null || def == null) {
-            return false;
-        }
-        if (!store.claimed(key(player)).contains(def.id())
-                && !plugin.awards().reserve(player,def.id(),plugin.config().rewardOf(def).diamonds())) return false;
-        boolean fresh = store.unlock(key(player), def.id());
-        store.raise(key(player), AchievementMetric.ACHIEVEMENTS, store.unlocked(key(player)).size());
-        if (fresh) {
-            announce(player, def);
-            pay(player, def);
-        }
-        return fresh;
+        if (player == null || def == null || store.isUnlocked(key(player),def.id())) return false;
+        return unlock(player,def);
     }
 
     private boolean unlock(Player player, AchievementDef def) {
         String key = key(player);
-        if (!plugin.awards().reserve(player,def.id(),plugin.config().rewardOf(def).diamonds())) return false;
-        if (!store.unlock(key, def.id())) {
-            return false;
-        }
-        announce(player, def);
-        pay(player, def);
+        var reward=plugin.config().rewardOf(def);
+        var accepted=plugin.money().accept(player,def.id(),reward.diamonds(),reward.passHours(),
+                def.badge()!=null && plugin.config().badges()?100:0);
+        if(accepted==null || accepted.state()!=ru.cherdakmd.chrdkregister.api.FixedMoneyMilestones.State.MONEY) return false;
+        if(!store.unlock(key,def.id()))return false;
+        store.markClaimed(key,def.id());
+        store.raise(key, AchievementMetric.ACHIEVEMENTS, store.unlocked(key).size());
+        announce(player,def);
         return true;
     }
 
@@ -150,58 +144,23 @@ public final class AchievementService {
         plugin.messages().send(player, "achievement-unlocked",
                 "name", Messages.trusted(name),
                 "category", plugin.messages().mini("category." + def.category().id()));
-        AchievementsConfig.Reward configured = plugin.config().rewardOf(def);
-        AchievementsConfig.Reward reward = new AchievementsConfig.Reward(configured.passHours(),(int)plugin.awards().amount(player,def.id()));
-        if (reward.passHours() > 0 || reward.diamonds() > 0) {
+        var accepted=plugin.money().award(player,def.id());
+        if(accepted!=null && accepted.state()==ru.cherdakmd.chrdkregister.api.FixedMoneyMilestones.State.MONEY && accepted.minor()>0) {
             plugin.messages().send(player, "achievement-reward",
-                    "reward", Messages.trusted(rewardText(reward)));
+                    "reward", Messages.trusted(ru.cherdakmd.chrdkregister.api.DiamondMoney.format(accepted.minor())+" алмазов в /bal (ожидает зачисления)"));
         }
         if (plugin.config().actionbar()) {
             player.sendActionBar(plugin.messages().get("actionbar-unlocked",
                     "name", Messages.trusted(name)));
         }
-        if (plugin.config().announce()) {
-            plugin.messages().send(player, "achievement-hint-badges");
-        }
         player.playSound(player.getLocation(),
                 org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.0f);
     }
 
-    private void pay(Player player, AchievementDef def) {
-        String key = key(player);
-        if (store.claimed(key).contains(def.id()) || !plugin.awards().reserve(player,def.id(),plugin.config().rewardOf(def).diamonds())) return;
-        if (!store.markClaimed(key, def.id())) {
-            // Награда уже была выплачена ранее — не дублируем.
-            return;
-        }
-        AchievementsConfig.Reward reward = plugin.config().rewardOf(def);
-        if (reward.passHours() > 0) {
-            if (plugin.coreApi() != null) {
-                plugin.coreApi().grantRewardBoostHours(player.getName(), reward.passHours(),
-                        "achievements:" + def.id());
-            } else {
-                plugin.getLogger().warning("Ядро недоступно: награда достижения "
-                        + def.id() + " не выдана игроку " + player.getName());
-            }
-        }
-
-    }
-
-    /** Текст награды для чата и GUI. */
-    public String rewardText(AchievementsConfig.Reward reward) {
-        List<String> parts = new ArrayList<>(2);
-        if (reward.passHours() > 0) {
-            parts.add(plugin.messages().raw("reward-hours",
-                    "hours", String.valueOf(reward.passHours())));
-        }
-        if (reward.diamonds() > 0) {
-            parts.add(plugin.messages().raw("reward-diamonds",
-                    "count", String.valueOf(reward.diamonds())));
-        }
-        if (parts.isEmpty()) {
-            return plugin.messages().raw("reward-none");
-        }
-        return String.join(plugin.messages().raw("reward-join"), parts);
+    /** Примерная сумма до принятия; на момент открытия сохраняется точная цена. */
+    public String rewardText(AchievementDef def) {
+        var reward=plugin.config().rewardOf(def);
+        return plugin.money().preview(reward.diamonds(),reward.passHours(),def.badge()!=null && plugin.config().badges()?100:0);
     }
 
     /* --------------------------------- прогресс -------------------------------- */
@@ -259,7 +218,9 @@ public final class AchievementService {
         if (def == null || def.badge() == null) {
             return "badge-unknown";
         }
-        if (!store.isUnlocked(key(player), def.id())) {
+        var old=plugin.money().award(player,def.id());
+        if (!store.isUnlocked(key(player), def.id()) || old == null
+                || old.state()==ru.cherdakmd.chrdkregister.api.FixedMoneyMilestones.State.MONEY) {
             return "badge-locked";
         }
         store.setBadge(key(player), def.badge());

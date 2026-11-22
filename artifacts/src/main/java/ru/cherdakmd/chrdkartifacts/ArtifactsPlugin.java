@@ -42,6 +42,8 @@ public final class ArtifactsPlugin extends JavaPlugin {
 
     private ru.cherdakmd.chrdkregister.api.MilestoneAwards awards;
     public ru.cherdakmd.chrdkregister.api.MilestoneAwards awards() { return awards; }
+    private ru.cherdakmd.chrdkregister.api.MoneyMilestoneBridge money;
+    public ru.cherdakmd.chrdkregister.api.MoneyMilestoneBridge money() { return money; }
 
     @Override
     public void onEnable() {
@@ -56,14 +58,20 @@ public final class ArtifactsPlugin extends JavaPlugin {
         this.feedback = new ArtifactFeedback(this);
         reloadArtifactsConfig();
         try {
-            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 38) throw new IllegalStateException("Нужен Core API 38+");
-            this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"artifact-awards",ru.cherdakmd.chrdkregister.api.MilestoneMigration.json(getDataFolder().toPath().resolve("collection.json"),ru.cherdakmd.chrdkregister.api.MilestoneMigration.Kind.ARTIFACTS));
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 51) throw new IllegalStateException("Нужен Core API 51+");
+            var path=getDataFolder().toPath().resolve("collection.json");
+            var kind=ru.cherdakmd.chrdkregister.api.MilestoneMigration.Kind.ARTIFACTS;
+            var claimed=ru.cherdakmd.chrdkregister.api.MilestoneMigration.json(path,kind);
+            var discovered=ru.cherdakmd.chrdkregister.api.MilestoneMigration.progressIds(path,kind);
+            ru.cherdakmd.chrdkregister.api.MoneyMilestoneBridge.requireOldJournalOrFreshInstall(this,coreApi,"artifact-awards");
+            this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"artifact-awards",claimed);
+            this.money = new ru.cherdakmd.chrdkregister.api.MoneyMilestoneBridge(this,this::coreApi,"artifact-money",CollectionMoneyMigration.snapshot(claimed,awards.store().keysSnapshot(),discovered));
         } catch (Exception | LinkageError error) {
             getLogger().log(java.util.logging.Level.SEVERE,"Модуль остановлен без сброса прогресса/наград",error);
             Bukkit.getPluginManager().disablePlugin(this); return;
         }
         this.collection = new CollectionService(this);
-        awards.reconciler(player -> collection.claim(player));
+        money.reconciler(player -> collection.claim(player));
         this.collectionGui = new CollectionGui(this);
         reloadArtifactsConfig();
 
@@ -109,6 +117,7 @@ public final class ArtifactsPlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         if (awards != null) awards.close();
+        if (money != null) money.close();
         if (apiBridge != null) {
             getServer().getServicesManager().unregister(ChrdkArtifactsApi.class, apiBridge);
             apiBridge = null;

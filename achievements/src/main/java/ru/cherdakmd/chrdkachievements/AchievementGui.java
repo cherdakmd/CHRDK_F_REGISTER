@@ -130,13 +130,15 @@ public final class AchievementGui implements Listener {
                 "goal", String.valueOf(def.goal()),
                 "percent", String.valueOf(percent)));
         AchievementsConfig.Reward reward = plugin.config().rewardOf(def);
-        if (reward.passHours() > 0 || reward.diamonds() > 0) {
+        if (reward.passHours() > 0 || reward.diamonds() > 0 || def.badge() != null && plugin.config().badges()) {
             lore.add(plugin.messages().get("entry-reward",
-                    "reward", Messages.trusted(service.rewardText(reward))));
+                    "reward", Messages.trusted(service.rewardText(def))));
         }
         if (unlocked) {
             lore.add(plugin.messages().get("entry-done"));
-            if (def.badge() != null && plugin.config().badges()) {
+            var award=plugin.money().award(player,def.id());
+            if (def.badge() != null && plugin.config().badges() && award!=null
+                    && award.state()!=ru.cherdakmd.chrdkregister.api.FixedMoneyMilestones.State.MONEY) {
                 boolean worn = def.badge().equals(service.badgeOf(player));
                 lore.add(plugin.messages().get(worn ? "entry-badge-worn" : "entry-badge-click"));
             }

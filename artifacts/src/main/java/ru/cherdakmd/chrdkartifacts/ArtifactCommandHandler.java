@@ -235,7 +235,7 @@ public final class ArtifactCommandHandler implements CommandExecutor, TabComplet
             plugin.messages().send(sender, "no-permission");
             return true;
         }
-        if (plugin.awards().admin(sender,args)) return true;
+        if (plugin.money().admin(sender,args) || plugin.awards().admin(sender,args)) return true;
         if (args.length == 1 && args[0].equalsIgnoreCase("reload")) {
             plugin.reloadArtifactsConfig();
             plugin.messages().send(sender, "admin-reloaded");

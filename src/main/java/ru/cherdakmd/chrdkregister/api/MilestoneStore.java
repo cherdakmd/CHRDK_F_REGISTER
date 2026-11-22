@@ -159,6 +159,11 @@ public final class MilestoneStore {
     /** -1 — веха ещё не принята; ноль также может означать историческую already-paid отметку. */
     public synchronized long amount(UUID owner,String key) { var rows=data.awards.get(owner); return rows==null?-1:rows.getOrDefault(key,-1L); }
     public synchronized Set<String> claimed(UUID owner) { var rows=data.awards.get(owner); return rows==null?Set.of():Set.copyOf(rows.keySet()); }
+    public synchronized Map<UUID,Set<String>> keysSnapshot() {
+        var out=new LinkedHashMap<UUID,Set<String>>();
+        data.awards.forEach((owner,rows)->out.put(owner,Set.copyOf(rows.keySet())));
+        return Map.copyOf(out);
+    }
     public synchronized Map<UUID,Long> totals() {
         var totals=new LinkedHashMap<UUID,Long>();
         data.awards.forEach((owner,rows)->{long total=0; for(long amount:rows.values()) total=Math.addExact(total,amount); if(total>0) totals.put(owner,total);});

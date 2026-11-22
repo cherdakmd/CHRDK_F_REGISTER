@@ -437,8 +437,8 @@ class FactBook:
                          + [("Подходящее рыболовное сокровище", "Дополнительная находка", sources["fishing-treasure-percent"])])
         if name == "artifact_rewards":
             total = len(self.artifact_catalog())
-            return table(["Веха, %", "Нужно разных ID", "Часов буста", "Алмазов в /bal"],
-                         [(percent, (total * int(percent) + 99) // 100, reward.get("boost-hours", 0), reward.get("diamonds", 0))
+            return table(["Веха, %", "Нужно разных ID", "Эквивалент часов в /bal", "Базовые алмазы до курса"],
+                         [(percent, (total * int(percent) + 99) // 100, int(reward.get("boost-hours", 0)) * 150, reward.get("diamonds", 0))
                           for percent, reward in sorted(c["artifacts"]["collection"]["rewards"].items(), key=lambda pair: int(pair[0]))])
         if name == "artifact_traits":
             base = self.root / "artifacts/src/main"
