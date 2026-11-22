@@ -121,9 +121,9 @@
       "text": "eab7f721084103468af18739b15d07adbd8f894c6091fd88a9d81e173a2b866d"
     },
     "quests": {
-      "reason": "Сверены котировки магазина и перевод новых Daily-наград в /bal; старые pending сохранены",
-      "sources": "facba5f629ac5b7a756fbab2a3038e5abe53d4918374570e694ffcea40f7d494",
-      "text": "46bb7e8f6761580ead92ca3dbaf8a2865570975c37fce24503ab2ee39b640f78"
+      "reason": "Сверены денежная выдача квестов, хранение завершений и восстановление сдачи предметов",
+      "sources": "2bdf87c867e8dcffc25d3643985bb8fe5ce4bd16a1ca6593c0ce28d6f61a00e6",
+      "text": "c18aef3fe60e6fe611e65943126c9da3f3ed1799d1ac915efee2a9df085df946"
     },
     "ranks": {
       "reason": "Сверены котировки магазина и перевод новых Daily-наград в /bal; старые pending сохранены",

@@ -243,11 +243,10 @@ public final class QuestsGui implements Listener {
                 "have", String.valueOf(have),
                 "need", String.valueOf(quest.amount())));
         lore.add(plugin.messages().get("menu-quest-reward",
-                "xp", String.valueOf(quest.reward().xp()),
-                "reputation", String.valueOf(quest.reward().reputation())));
+                "amount", plugin.money().preview(quest.reward())));
         if (quest.minRank() > 0) {
             lore.add(plugin.messages().get("menu-quest-rank",
-                    "rank", String.valueOf(quest.minRank())));
+                    "rank", String.valueOf(quest.minRank()), "count", QuestService.requiredCompletions(quest.minRank())));
         }
         lore.add(plugin.messages().get("menu-quest-status",
                 "status", Messages.trusted(plugin.messages().raw(statusKey(availability)))));

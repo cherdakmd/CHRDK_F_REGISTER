@@ -152,11 +152,9 @@ public final class QuestsCommandHandler implements CommandExecutor, TabCompleter
         plugin.messages().send(sender, "info-progress",
                 "have", String.valueOf(have),
                 "need", String.valueOf(quest.amount()));
-        plugin.messages().send(sender, "info-reward",
-                "xp", String.valueOf(quest.reward().xp()),
-                "reputation", String.valueOf(quest.reward().reputation()));
+        plugin.messages().send(sender, "info-reward", "amount", plugin.money().preview(quest.reward()));
         if (quest.minRank() > 0) {
-            plugin.messages().send(sender, "info-rank", "rank", String.valueOf(quest.minRank()));
+            plugin.messages().send(sender, "info-rank", "rank", String.valueOf(quest.minRank()), "count", QuestService.requiredCompletions(quest.minRank()));
         }
         plugin.messages().send(sender, "info-status",
                 "status", Messages.trusted(plugin.messages().raw(statusKey(availability))));
@@ -269,6 +267,7 @@ public final class QuestsCommandHandler implements CommandExecutor, TabCompleter
             plugin.messages().send(sender, "admin-usage");
             return true;
         }
+        if (plugin.money() != null && plugin.money().admin(sender,args)) return true;
         String sub = args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
             case "reload" -> reload(sender);
@@ -350,6 +349,7 @@ public final class QuestsCommandHandler implements CommandExecutor, TabCompleter
             plugin.messages().send(sender, "admin-player-not-found", "player", args[1]);
             return;
         }
+        plugin.money().restoreCompleted(id);
         plugin.requestSave();
         plugin.messages().send(sender, "admin-reset", "player", plugin.store().name(id));
     }
@@ -369,7 +369,7 @@ public final class QuestsCommandHandler implements CommandExecutor, TabCompleter
             plugin.messages().send(sender, "claim-unknown");
             return;
         }
-        plugin.store().markDone(id, quest.id());
+        if (!plugin.money().markAdminDone(id,quest.id())) { plugin.messages().send(sender,"claim-finance-wait"); return; }
         plugin.requestSave();
         plugin.messages().send(sender, "admin-completed",
                 "player", plugin.store().name(id), "name", quest.name());

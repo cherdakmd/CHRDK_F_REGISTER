@@ -15,7 +15,7 @@ commands:
     permission: chrdkquests.use
   questsadmin:
     description: Управление заданиями и репутацией.
-    usage: /questsadmin <reload|info|grant|reset|complete>
+    usage: /questsadmin <reload|info|grant|reset|complete|recovery|resolve>
     permission: chrdkquests.admin
 permissions:
   chrdkquests.use:

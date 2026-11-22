@@ -30,7 +30,7 @@ class QuestMessagesTest {
             "rank.fighter", "rank.veteran", "rank.captain", "rank.marshal", "info-usage",
             "info-header", "info-description", "info-target", "info-progress", "info-reward",
             "info-rank", "info-status", "claim-usage", "claim-ok", "claim-actionbar",
-            "claim-xp", "claim-rep", "claim-dropped", "claim-daily", "claim-not-ready",
+            "claim-money", "claim-finance-wait", "claim-daily", "claim-not-ready",
             "claim-no-items", "claim-done", "claim-locked", "claim-wrong-faction",
             "claim-rank", "claim-unknown", "join-usage", "join-ok", "join-hint", "join-same",
             "join-switch", "join-unknown", "leave-ok", "leave-none", "faction-none",
@@ -83,19 +83,17 @@ class QuestMessagesTest {
         expected.put("info-description", List.of("%description%"));
         expected.put("info-target", List.of("%target%", "%amount%"));
         expected.put("info-progress", List.of("%have%", "%need%"));
-        expected.put("info-reward", List.of("%xp%", "%reputation%"));
-        expected.put("info-rank", List.of("%rank%"));
+        expected.put("info-reward", List.of("%amount%"));
+        expected.put("info-rank", List.of("%rank%", "%count%"));
         expected.put("info-status", List.of("%status%"));
         expected.put("claim-ok", List.of("%name%"));
         expected.put("claim-actionbar", List.of("%name%"));
-        expected.put("claim-xp", List.of("%xp%"));
-        expected.put("claim-rep", List.of("%amount%", "%faction%"));
-        expected.put("claim-dropped", List.of("%item%"));
+        expected.put("claim-money", List.of("%amount%"));
         expected.put("claim-daily", List.of("%limit%"));
         expected.put("claim-not-ready", List.of("%amount%", "%target%"));
         expected.put("claim-no-items", List.of("%amount%", "%have%", "%target%"));
         expected.put("claim-wrong-faction", List.of("%faction%", "%id%"));
-        expected.put("claim-rank", List.of("%rank%"));
+        expected.put("claim-rank", List.of("%rank%", "%count%"));
         expected.put("join-ok", List.of("%faction%"));
         expected.put("join-switch", List.of("%current%"));
         expected.put("join-unknown", List.of("%faction%"));
@@ -122,8 +120,8 @@ class QuestMessagesTest {
         expected.put("menu-quest-description", List.of("%description%"));
         expected.put("menu-quest-target", List.of("%target%"));
         expected.put("menu-quest-progress", List.of("%have%", "%need%"));
-        expected.put("menu-quest-reward", List.of("%xp%", "%reputation%"));
-        expected.put("menu-quest-rank", List.of("%rank%"));
+        expected.put("menu-quest-reward", List.of("%amount%"));
+        expected.put("menu-quest-rank", List.of("%rank%", "%count%"));
         expected.put("menu-quest-status", List.of("%status%"));
         expected.put("profile-faction", List.of("%faction%", "%rank%"));
         expected.put("profile-reputation", List.of("%reputation%", "%next%"));

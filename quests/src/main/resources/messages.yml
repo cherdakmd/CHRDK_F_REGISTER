@@ -18,8 +18,8 @@ quests:
   help-join: "<yellow>/quests join <фракция></yellow> <gray>— вступить во фракцию</gray>"
   help-leave: "<yellow>/quests leave</yellow> <gray>— выйти из фракции (репутация сохранится)</gray>"
   help-faction: "<yellow>/quests faction</yellow> <gray>— ранг и репутация</gray>"
-  help-no-daily-limit: "<gray>Суточного лимита сдач нет. Награда — опыт, предметы и очки фракции.</gray>"
-  help-footer: "<gray>За сутки можно сдать <white>%limit%</white> заданий. Награда — опыт, предметы и очки фракции.</gray>"
+  help-no-daily-limit: "<gray>Суточного лимита сдач нет. Награда начисляется на /bal.</gray>"
+  help-footer: "<gray>За сутки можно сдать <white>%limit%</white> заданий. Награда начисляется на /bal.</gray>"
 
   # -------------------------------- список ----------------------------------
   list-empty: "<gray>Сейчас нет открытых заданий. Загляните в меню: <yellow>/quests</yellow>.</gray>"
@@ -35,7 +35,7 @@ quests:
   status-done: "<dark_gray>закрыто</dark_gray>"
   status-locked: "<dark_gray>сначала предыдущее</dark_gray>"
   status-faction: "<red>нужна другая фракция</red>"
-  status-rank: "<red>нужен ранг выше</red>"
+  status-rank: "<red>нужен ранг или больше выполненных заданий</red>"
 
   # --------------------------------- ранги ----------------------------------
   rank.newcomer: "Новичок"
@@ -50,24 +50,26 @@ quests:
   info-description: "<gray>%description%</gray>"
   info-target: "<gray>Цель:</gray> %target% <dark_gray>·</dark_gray> <white>%amount%</white>"
   info-progress: "<gray>Прогресс:</gray> <white>%have%/%need%</white>"
-  info-reward: "<gray>Награда:</gray> <white>%xp%</white> <gray>опыта</gray>, <white>%reputation%</white> <gray>репутации</gray>"
-  info-rank: "<gray>Нужен ранг фракции:</gray> <white>%rank%</white>"
+  info-reward: "<gray>Награда на /bal:</gray> <white>%amount%</white>"
+  info-rank: "<gray>Ранг фракции %rank% или %count% выполненных заданий.</gray>"
   info-status: "<gray>Статус:</gray> %status%"
 
   # --------------------------------- сдача ----------------------------------
   claim-usage: "<gray>Что сдаём? <yellow>/quests claim <ид></yellow></gray>"
   claim-ok: "<green>Задание «%name%» сдано.</green>"
   claim-actionbar: "<green>Задание сдано:</green> <white>%name%</white>"
-  claim-xp: "<gray>Опыт:</gray> <green>+%xp%</green>"
-  claim-rep: "<gray>Репутация:</gray> <green>+%amount%</green> <gray>(%faction%)</gray>"
-  claim-dropped: "<gray>Инвентарь полон — %item% выпал на землю.</gray>"
+  claim-money: "<green>Награда: %amount% 💠 на /bal. При полном или недоступном банке выплата ожидает автоматического повтора.</green>"
+  claim-finance-wait: "<yellow>Сдача временно недоступна или ожидает сверки. Не повторяйте предметную операцию вручную; обратитесь к администрации.</yellow>"
+  finance-status: "<gray>Журнал: исправен %healthy%, конфликт %conflict%, lineage %lineage%.</gray>"
+  finance-pending: "<yellow>Ожидает подтверждения списания: %owner%, задание %quest%. Проверить playerdata и журнал.</yellow>"
+  finance-resolved: "<green>Подтверждение сохранено; денежная выплата будет повторена автоматически.</green>"
   claim-daily: "<red>На сегодня сдач больше нет (лимит %limit%). Приходите после полуночи UTC.</red>"
   claim-not-ready: "<red>Ещё не всё: нужно %amount% из цели (%target%).</red>"
   claim-no-items: "<red>Не хватает предметов: %have% из %amount% (%target%).</red>"
   claim-done: "<gray>Это задание уже закрыто.</gray>"
   claim-locked: "<gray>Сначала закройте предыдущее задание этой цепочки.</gray>"
   claim-wrong-faction: "<red>Это задание фракции «%faction%». Вступите: <yellow>/quests join %id%</yellow></red>"
-  claim-rank: "<red>Нужен ранг фракции не ниже %rank%.</red>"
+  claim-rank: "<red>Нужен ранг фракции %rank% или %count% выполненных заданий.</red>"
   claim-unknown: "<red>Такого задания нет. Смотрите <yellow>/quests list</yellow>.</red>"
 
   # -------------------------------- фракции ---------------------------------
@@ -115,8 +117,8 @@ quests:
   menu-quest-description: "<gray>%description%</gray>"
   menu-quest-target: "<gray>Цель:</gray> %target%"
   menu-quest-progress: "<gray>Прогресс:</gray> <white>%have%/%need%</white>"
-  menu-quest-reward: "<gray>Награда:</gray> <white>%xp%</white> <gray>опыта</gray>, <white>%reputation%</white> <gray>репутации</gray>"
-  menu-quest-rank: "<gray>Нужен ранг:</gray> <white>%rank%</white>"
+  menu-quest-reward: "<gray>Награда на /bal:</gray> <white>%amount%</white>"
+  menu-quest-rank: "<gray>Ранг %rank% или %count% выполненных заданий.</gray>"
   menu-quest-status: "<gray>Статус:</gray> %status%"
   menu-quest-claim: "<green>Нажмите, чтобы сдать</green>"
   faction-neutral: "нейтральный"
@@ -135,7 +137,7 @@ quests:
   progress-ready: "<green>Задание готово:</green> <white>%name%</white> <dark_gray>·</dark_gray> <gray>/quests claim %id%</gray>"
 
   # ---------------------------------- админ ---------------------------------
-  admin-usage: "<gray>/questsadmin <yellow>reload</yellow> | <yellow>info <ник></yellow> | <yellow>grant <ник> <фракция> <очки></yellow> | <yellow>reset <ник></yellow> | <yellow>complete <ник> <ид></yellow></gray>"
+  admin-usage: "<gray>/questsadmin reload | info <ник> | grant <ник> <фракция> <очки> | reset <ник> | complete <ник> <ид> | recovery | resolve <UUID> <ид> confirm (только после сверки)</gray>"
   admin-reloaded: "<green>Конфиг перечитан.</green> <gray>Фракций: %factions%, персонажей: %npcs%, заданий: %quests%.</gray>"
   admin-info: "<gray>%player%</gray> <dark_gray>·</dark_gray> <gray>фракция:</gray> <white>%faction%</white> <dark_gray>·</dark_gray> <gray>репутация:</gray> <white>%reputation%</white> <dark_gray>·</dark_gray> <gray>заданий:</gray> <white>%done%/%total%</white> <dark_gray>·</dark_gray> <gray>сдач:</gray> <white>%claims%</white>"
   admin-player-not-found: "<red>Игрок «%player%» не найден.</red>"

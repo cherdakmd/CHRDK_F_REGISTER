@@ -13,9 +13,8 @@ import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 /**
  * CHRDK_Quests — задания персонажей и фракции с репутацией (1.4.161).
  *
- * <p>Задания не выдают валюту: награда — опыт, предметы и очки фракции. Так
- * квесты не открывают второй источник алмазов и не обходят суточные потолки
- * охоты, но всё равно ведут игрока по миру: убей, добудь, принеси.</p>
+ * <p>Новые награды фиксируются в денежном журнале до выплаты на /bal.
+ * Сдача предметов подтверждается nonce в данных игрока.</p>
  *
  * <p>Фракция — это выбор, а не класс: вступить можно в одну, репутация каждой
  * хранится отдельно и не сгорает при выходе. Ранг фракции даёт префикс в чате
@@ -32,24 +31,31 @@ public final class QuestsPlugin extends JavaPlugin {
     private BukkitTask queuedSave;
     private boolean saveQueued;
     private ChrdkRegisterApi coreApi;
+    private QuestMoneyCoordinator money;
+    private BukkitTask moneyTask;
+    ChrdkRegisterApi coreApi() { return coreApi; }
+    QuestMoneyCoordinator money() { return money; }
 
     @Override
     public void onEnable() {
         try {
-            if (ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 38) throw new IllegalStateException("Нужен Core API 38+");
+            if (ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 50) throw new IllegalStateException("Нужен Core API 50+");
             saveDefaultConfig();
             ConfigUpgrader.apply(this);
             this.config = QuestConfig.parse(getConfig(), getLogger());
             this.messages = Messages.load(this, config.locale(), getLogger());
             this.store = new QuestStore(getDataFolder().toPath(), getLogger());
             store.load();
+            if (!store.healthy()) throw new IllegalStateException("quests.json повреждён, восстановите согласованную резервную копию");
+            this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
+            this.money = new QuestMoneyCoordinator(this,store);
             this.service = new QuestService(config, store);
             this.gui = new QuestsGui(this);
             getServer().getPluginManager().registerEvents(new QuestsListener(this), this);
             getServer().getPluginManager().registerEvents(gui, this);
             registerCommands();
             registerPlaceholders();
-            this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
+            this.moneyTask = getServer().getScheduler().runTaskTimer(this,money::tick,20L,20L);
             if (coreApi != null) {
                 try {
                     coreApi.registerProfile("quests", new QuestsProfile(this));
@@ -67,7 +73,7 @@ public final class QuestsPlugin extends JavaPlugin {
                     + ", персонажей " + config.npcList().size()
                     + ", заданий " + config.totalQuests()
                     + ", суточного лимита сдач нет.");
-        } catch (ReflectiveOperationException | RuntimeException exception) {
+        } catch (ReflectiveOperationException | java.io.IOException | RuntimeException exception) {
             getLogger().severe("CHRDK_Quests не смог запуститься: " + exception.getMessage());
             exception.printStackTrace();
             getServer().getPluginManager().disablePlugin(this);
@@ -76,6 +82,7 @@ public final class QuestsPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (moneyTask != null) { moneyTask.cancel(); moneyTask = null; }
         if (coreApi != null) {
             try {
                 coreApi.unregisterProfile("quests");
@@ -143,34 +150,25 @@ public final class QuestsPlugin extends JavaPlugin {
         if (player == null || quest == null) {
             return false;
         }
-        String day = today();
-        QuestService.Result result = service.claim(player.getUniqueId(), quest.id(),
-                countItems(player, quest), day);
+        if (money == null || !money.ready(player)) { messages.send(player,"claim-finance-wait"); return false; }
+        try { money.reconcile(player); }
+        catch (java.io.IOException | RuntimeException error) {
+            getLogger().log(java.util.logging.Level.SEVERE,"Сдача ожидает сверки",error);
+            messages.send(player,"claim-finance-wait"); return false;
+        }
+        QuestService.Result result = service.checkClaim(player.getUniqueId(), quest.id(), countItems(player, quest));
         switch (result) {
             case OK -> {
-                if (quest.type() == QuestType.GATHER && !takeItems(player, quest)) {
-                    // Предметы успели уйти между проверкой и списанием: прогресс
-                    // уже закрыт, поэтому возвращаем вещи не требуется — но в лог
-                    // пишем, чтобы расхождение было видно.
-                    getLogger().warning("[CHRDK_Quests] " + player.getName()
-                            + ": не удалось списать предметы для задания " + quest.id() + ".");
-                }
-                giveReward(player, quest);
-                messages.send(player, "claim-ok", "name", quest.name());
-                QuestFaction faction = config.faction(
-                        service.rewardFaction(player.getUniqueId(), quest));
-                if (faction != null && quest.reward().reputation() > 0) {
-                    // Очки уже начислены сервисом; текст только сообщает сумму.
-                    messages.send(player, "claim-rep",
-                            "amount", String.valueOf(quest.reward().reputation()),
-                            "faction", faction.name());
-                }
-                if (quest.reward().xp() > 0) {
-                    messages.send(player, "claim-xp",
-                            "xp", String.valueOf(quest.reward().xp()));
-                }
-                if (config.actionbar()) {
-                    player.sendActionBar(messages.get("claim-actionbar", "name", quest.name()));
+                try {
+                    long amount=money.accept(player,quest);
+                    messages.send(player,"claim-ok","name",quest.name());
+                    messages.send(player,"claim-money","amount",ru.cherdakmd.chrdkregister.api.DiamondMoney.format(amount));
+                    if (config.actionbar()) player.sendActionBar(messages.get("claim-actionbar", "name", quest.name()));
+                    requestSave();
+                    money.tick();
+                } catch (java.io.IOException | RuntimeException error) {
+                    getLogger().log(java.util.logging.Level.WARNING,"[Quests] Сдача не подтверждена; сохраните журналы для сверки",error);
+                    messages.send(player,"claim-finance-wait");return false;
                 }
             }
             case DAILY_LIMIT -> messages.send(player, "claim-daily",
@@ -188,7 +186,7 @@ public final class QuestsPlugin extends JavaPlugin {
                     "faction", factionName(quest),
                     "id", requiredFactionId(quest));
             case RANK -> messages.send(player, "claim-rank",
-                    "rank", String.valueOf(quest.minRank()));
+                    "rank", String.valueOf(quest.minRank()), "count", QuestService.requiredCompletions(quest.minRank()));
             default -> messages.send(player, "claim-unknown");
         }
         return result == QuestService.Result.OK;
@@ -200,53 +198,10 @@ public final class QuestsPlugin extends JavaPlugin {
             return 0;
         }
         int count = 0;
-        for (int slot = 0; slot < player.getInventory().getSize(); slot++) {
-            ItemStack stack = player.getInventory().getItem(slot);
-            if (stack != null && quest.matchesMaterial(stack.getType())) {
-                count += stack.getAmount();
-            }
+        for (ItemStack stack : player.getInventory().getStorageContents()) {
+            if (stack != null && quest.matchesMaterial(stack.getType())) count += stack.getAmount();
         }
         return count;
-    }
-
-    /** Забирает предметы цели; {@code false}, если их не хватило. */
-    public boolean takeItems(Player player, Quest quest) {
-        if (player == null || quest == null) {
-            return false;
-        }
-        if (countItems(player, quest) < quest.amount()) {
-            return false;
-        }
-        int left = quest.amount();
-        for (int slot = 0; slot < player.getInventory().getSize() && left > 0; slot++) {
-            ItemStack stack = player.getInventory().getItem(slot);
-            if (stack == null || !quest.matchesMaterial(stack.getType())) {
-                continue;
-            }
-            int take = Math.min(left, stack.getAmount());
-            stack.setAmount(stack.getAmount() - take);
-            if (stack.getAmount() <= 0) {
-                player.getInventory().setItem(slot, null);
-            }
-            left -= take;
-        }
-        return left <= 0;
-    }
-
-    /** Выдаёт опыт и предметы; если инвентарь полон — бросает под ноги. */
-    public void giveReward(Player player, Quest quest) {
-        QuestReward reward = quest.reward();
-        if (reward.xp() > 0) {
-            player.giveExp(reward.xp());
-        }
-        for (QuestReward.Item item : reward.items()) {
-            ItemStack stack = new ItemStack(item.material(), item.amount());
-            for (ItemStack rest : player.getInventory().addItem(stack).values()) {
-                player.getWorld().dropItemNaturally(player.getLocation(), rest);
-                messages.send(player, "claim-dropped", "item", Messages.trusted(
-                        QuestText.materialTag(rest.getType())));
-            }
-        }
     }
 
     /** Название фракции персонажа задания — для текста «нужна фракция». */

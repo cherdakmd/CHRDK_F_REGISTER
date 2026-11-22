@@ -224,6 +224,9 @@ public final class QuestService {
         return store.done(playerId, npc.quests().get(index - 1).id());
     }
 
+    /** Альтернатива старому фракционному рангу для новых игроков. */
+    public static int requiredCompletions(int rank) { return Math.max(0, rank - 1) * 5; }
+
     /** Полная проверка: можно ли сейчас сдавать задание (без инвентаря). */
     public Availability availability(UUID playerId, Quest quest) {
         if (quest == null) {
@@ -241,7 +244,10 @@ public final class QuestService {
             return Availability.WRONG_FACTION;
         }
         String rankFaction = required.isEmpty() ? store.faction(playerId) : required;
-        if (quest.minRank() > 0 && rankNumber(playerId, rankFaction) < quest.minRank()) {
+        // Репутация больше не является наградой. Старые ранги сохраняют доступ;
+        // иначе цепочку открывает число уже выполненных заданий, без новой валюты репутации.
+        if (quest.minRank() > 0 && rankNumber(playerId, rankFaction) < quest.minRank()
+                && store.doneCount(playerId) < requiredCompletions(quest.minRank())) {
             return Availability.RANK;
         }
         if (quest.type() != QuestType.GATHER && progress(playerId, quest) >= quest.amount()) {
@@ -278,7 +284,7 @@ public final class QuestService {
      * @param availableItems сколько предметов цели есть в инвентаре (для GATHER)
      * @param day            текущий день в UTC ({@code 2026-10-24})
      */
-    public Result claim(UUID playerId, String questId, int availableItems, String day) {
+    public Result checkClaim(UUID playerId, String questId, int availableItems) {
         Quest quest = config.quest(questId);
         if (quest == null) {
             return Result.UNKNOWN;
@@ -303,6 +309,14 @@ public final class QuestService {
         } else if (progress(playerId, quest) < quest.amount()) {
             return Result.NOT_READY;
         }
+        return Result.OK;
+    }
+
+    /** Legacy pure entry point retained for compatibility; production uses durable money journal. */
+    public Result claim(UUID playerId, String questId, int availableItems, String day) {
+        Result result = checkClaim(playerId, questId, availableItems);
+        if (result != Result.OK) return result;
+        Quest quest = config.quest(questId);
         // Счётчик остаётся статистикой; старый конфиг больше не ограничивает сдачи.
         if (!store.countClaim(playerId, day, 0)) {
             return Result.DAILY_LIMIT;

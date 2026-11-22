@@ -206,6 +206,9 @@ class QuestServiceTest {
         assertEquals(1, service.rankNumber(PLAYER), "100 очков — ещё новичок");
         assertSame(QuestService.Availability.RANK, service.availability(PLAYER, ranked));
         assertSame(QuestService.Result.RANK, service.claim(PLAYER, "scout_rank", 0, DAY));
+        for (int i=0;i<4;i++) service.store().markDone(PLAYER,"other_"+i);
+        assertSame(QuestService.Availability.AVAILABLE, service.availability(PLAYER, ranked),
+                "новые игроки открывают порог выполненными заданиями без начисления репутации");
 
         service.store().addReputation(PLAYER, "watch", 150);
         assertEquals(2, service.rankNumber(PLAYER), "250 очков — второй ранг");

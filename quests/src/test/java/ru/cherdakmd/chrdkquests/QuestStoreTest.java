@@ -132,13 +132,14 @@ class QuestStoreTest {
     }
 
     @Test
-    void brokenFileIsIgnored(@TempDir Path dir) throws Exception {
+    void brokenFileIsQuarantined(@TempDir Path dir) throws Exception {
         Files.writeString(dir.resolve("quests.json"), "{это не json", StandardCharsets.UTF_8);
         QuestStore store = new QuestStore(dir, LOGGER);
         store.load();
         assertEquals(0, store.size());
-        store.rename(PLAYER, "Странник");
-        assertEquals("Странник", store.name(PLAYER));
+        assertFalse(store.healthy());
+        store.rename(PLAYER, "Странник"); store.flush();
+        assertEquals("{это не json", Files.readString(dir.resolve("quests.json")));
     }
 
     @Test
@@ -163,15 +164,10 @@ class QuestStoreTest {
                 """, StandardCharsets.UTF_8);
         QuestStore store = new QuestStore(dir, LOGGER);
         store.load();
-        assertEquals(1, store.size(), "битые записи пропущены");
-        assertEquals("Живой", store.name(OTHER));
-        assertEquals("watch", store.faction(OTHER));
-        assertEquals(QuestFaction.MAX_REPUTATION, store.reputation(OTHER, "watch"),
-                "репутация зажата");
-        assertEquals(0, store.progress(OTHER, "q"), "отрицательный прогресс зажат в ноль");
-        assertEquals(Quest.MAX_AMOUNT, store.progress(OTHER, "q2"));
-        assertEquals(2, store.doneCount(OTHER));
-        assertEquals(QuestConfig.MAX_CLAIMS_PER_DAY, store.claims(OTHER, "2026-10-24"));
+        assertFalse(store.healthy(), "любой повреждённый игрок блокирует финансовые операции");
+        String before=Files.readString(dir.resolve("quests.json"));
+        store.flush();
+        assertEquals(before,Files.readString(dir.resolve("quests.json")));
     }
 
     @Test

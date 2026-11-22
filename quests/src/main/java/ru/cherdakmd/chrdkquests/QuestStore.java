@@ -65,6 +65,10 @@ public final class QuestStore {
     private final Logger logger;
     private final Map<UUID, Player> players = new LinkedHashMap<>();
     private boolean dirty;
+    private boolean healthy = true;
+
+    public synchronized boolean healthy() { return healthy; }
+    public synchronized boolean canRetain(UUID owner) { return owner != null && (players.containsKey(owner) || players.size() < MAX_PLAYERS); }
 
     public QuestStore(Path dataFolder, Logger logger) {
         this.file = dataFolder.resolve("quests.json");
@@ -80,18 +84,27 @@ public final class QuestStore {
     /** Читает файл; битые записи пропускаются с предупреждением. */
     public synchronized void load() {
         if (!Files.isRegularFile(file)) {
+            if (Files.exists(file)) healthy = false;
             return;
         }
-        try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
-            Map<String, Object> data = GSON.fromJson(reader, DATA_TYPE);
-            if (data == null) {
+        try {
+            var root = QuestJournalJson.read(file);
+            ru.cherdakmd.chrdkregister.api.FinanceNumbers.requireIntegral(root);
+            if (!root.has("version") || !root.get("version").isJsonPrimitive() || !root.get("version").getAsJsonPrimitive().isNumber()
+                    || root.get("version").getAsBigDecimal().intValueExact() != VERSION || !root.has("players") || !root.get("players").isJsonObject())
+                throw new IllegalArgumentException("quest root/schema");
+            Map<String, Object> data = GSON.fromJson(root, DATA_TYPE);
+            if (data == null || !(data.get("players") instanceof Map<?, ?>)) {
+                healthy = false;
                 return;
             }
             int skipped = 0;
             if (data.get("players") instanceof Map<?, ?> rows) {
                 for (Map.Entry<?, ?> entry : rows.entrySet()) {
                     UUID id = parseUuid(entry.getKey());
-                    if (id == null || !(entry.getValue() instanceof Map<?, ?> row)
+                    var raw = root.getAsJsonObject("players").get(String.valueOf(entry.getKey()));
+                    if (id == null || !id.toString().equals(entry.getKey()) || raw == null || !raw.isJsonObject()
+                            || !validRow(raw.getAsJsonObject()) || !(entry.getValue() instanceof Map<?, ?> row)
                             || players.size() >= MAX_PLAYERS) {
                         skipped++;
                         continue;
@@ -104,15 +117,33 @@ public final class QuestStore {
                     players.put(id, player);
                 }
             }
-            if (skipped > 0 && logger != null) {
-                logger.warning("[CHRDK_Quests] Пропущено записей quests.json: " + skipped + ".");
+            if (skipped > 0) {
+                healthy = false;
+                if (logger != null) logger.severe("[CHRDK_Quests] Некорректных записей quests.json: " + skipped + "; выдачи остановлены.");
             }
         } catch (IOException | RuntimeException error) {
+            healthy = false;
             if (logger != null) {
                 logger.severe("[CHRDK_Quests] Не удалось прочитать " + file + ": "
-                        + error.getMessage() + " — начну с чистого листа.");
+                        + error.getMessage() + " — файл сохранён, выдачи остановлены.");
             }
         }
+    }
+
+    private static boolean validRow(com.google.gson.JsonObject row) {
+        for(String field:List.of("name","faction","claim-day"))
+            if(row.has(field) && (!row.get(field).isJsonPrimitive() || !row.get(field).getAsJsonPrimitive().isString())) return false;
+        if(row.has("claim-count") && (!row.get("claim-count").isJsonPrimitive() || !row.get("claim-count").getAsJsonPrimitive().isNumber())) return false;
+        for(String field:List.of("reputation","progress")) if(row.has(field)) {
+            if(!row.get(field).isJsonObject()) return false;
+            for(var entry:row.getAsJsonObject(field).entrySet())
+                if(entry.getKey().isBlank() || !entry.getValue().isJsonPrimitive() || !entry.getValue().getAsJsonPrimitive().isNumber()) return false;
+        }
+        if(row.has("done")) {
+            if(!row.get("done").isJsonArray()) return false;
+            for(var value:row.getAsJsonArray("done")) if(!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isString() || value.getAsString().isBlank()) return false;
+        }
+        return true;
     }
 
     private static Player readPlayer(UUID id, Map<?, ?> row) {
@@ -263,6 +294,13 @@ public final class QuestStore {
         return of(id).done.size();
     }
 
+    /** Import only already-completed markers; never invent a monetary obligation. */
+    public synchronized Map<UUID, Set<String>> completedSnapshot() {
+        var out=new LinkedHashMap<UUID,Set<String>>();
+        for(var player:players.values()) if(!player.done.isEmpty()) out.put(player.id,Set.copyOf(player.done));
+        return Map.copyOf(out);
+    }
+
     /** Сколько сдач уже было в этот день. */
     public synchronized int claims(UUID id, String day) {
         Player player = of(id);
@@ -374,6 +412,7 @@ public final class QuestStore {
 
     /** Пишет файл, только если были изменения. */
     public void saveNow() {
+        if (!healthy()) return;
         String json;
         synchronized (this) {
             if (!dirty) {
@@ -386,6 +425,7 @@ public final class QuestStore {
 
     /** Немедленная запись без проверки флага (выключение сервера, тесты). */
     public void flush() {
+        if (!healthy()) return;
         write(snapshotJson());
     }
 
