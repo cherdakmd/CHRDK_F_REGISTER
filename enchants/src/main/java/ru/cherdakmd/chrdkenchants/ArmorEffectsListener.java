@@ -59,6 +59,8 @@ public final class ArmorEffectsListener implements Listener {
                     - EnchantParams.percent("fortified", fortified) / 100.0));
         }
 
+        // Zero-damage hits do not consume defensive cooldowns or trigger control effects.
+        if (!DamageEvidence.positive(event.getFinalDamage())) return;
         double healthAfter = victim.getHealth() - event.getFinalDamage();
 
         // Феникс: от меня смертельный урон — воскрешение в пламени
@@ -87,7 +89,7 @@ public final class ArmorEffectsListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onDamaged(EntityDamageByEntityEvent event) {
-        if (!(event.getEntity() instanceof Player victim)) return;
+        if (!(event.getEntity() instanceof Player victim) || !DamageEvidence.positive(event.getFinalDamage())) return;
         if (!(event.getDamager() instanceof LivingEntity attacker) || attacker == victim) return;
         if (processing.contains(victim.getUniqueId())) return;
         Map<String, Integer> enchants = bestArmorEnchants(victim);

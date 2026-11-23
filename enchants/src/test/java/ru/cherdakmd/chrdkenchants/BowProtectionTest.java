@@ -15,7 +15,7 @@ class BowProtectionTest {
         assertFalse(collision.contains("setFreezeTicks"));assertFalse(collision.contains("setGlowing("));
         assertTrue(collision.contains("EventPriority.MONITOR, ignoreCancelled = true"));
         String damage=source.substring(confirmed,death);
-        assertTrue(damage.contains("event.getFinalDamage() <= 0"));
+        assertTrue(damage.contains("!DamageEvidence.positive(event.getFinalDamage())"));
         assertTrue(damage.contains("instanceof Arrow arrow"));
         assertTrue(damage.contains("PotionEffectType.GLOWING"));
         assertTrue(damage.contains("getPotionEffect(PotionEffectType.GLOWING) == null"));
@@ -31,7 +31,7 @@ class BowProtectionTest {
         assertTrue(capture.contains("shooter.isOnline()"));
         assertFalse(capture.contains("createExplosion("));assertFalse(capture.contains(".damage("));
         int damage=source.indexOf("public void onConfirmedArrowDamage(",apply);
-        assertTrue(source.substring(damage).contains("impacts.damage(key,()->!event.isCancelled() && event.getFinalDamage()>0)"));
+        assertTrue(source.substring(damage).contains("impacts.damage(key,()->!event.isCancelled() && DamageEvidence.positive(event.getFinalDamage()))"));
         assertTrue(source.contains("impacts.clear()"));
     }
 }

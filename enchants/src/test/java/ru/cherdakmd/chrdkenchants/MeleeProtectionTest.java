@@ -13,7 +13,7 @@ class MeleeProtectionTest {
         int effects = source.indexOf("private void applyHitEffects");
         assertTrue(monitor > source.indexOf("private void applyDamageModifiers"));
         assertTrue(effects > monitor);
-        assertTrue(source.substring(monitor, effects).contains("event.getFinalDamage() <= 0"));
+        assertTrue(source.substring(monitor, effects).contains("!DamageEvidence.positive(event.getFinalDamage())"));
         assertTrue(source.substring(monitor, effects).contains("processing.contains(attacker.getUniqueId())"));
         assertFalse(source.substring(source.indexOf("private void applyDamageModifiers"), monitor).contains("victim.damage("));
     }

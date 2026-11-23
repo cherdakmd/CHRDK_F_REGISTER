@@ -161,11 +161,11 @@ public final class BowEffectsListener implements Listener {
     /** Direct control effects require an accepted damage event, not merely a projectile collision. */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onConfirmedArrowDamage(EntityDamageByEntityEvent event) {
-        if (!(event.getDamager() instanceof Arrow arrow) || event.getFinalDamage() <= 0) return;
+        if (!(event.getDamager() instanceof Arrow arrow) || !DamageEvidence.positive(event.getFinalDamage())) return;
         Map<String, Integer> enchants = plugin.items().readEntity(arrow);
         if(enchants.getOrDefault("stormarrow",0)>0 || enchants.getOrDefault("explosive",0)>0) {
             var key=new ImpactKey(arrow.getUniqueId(),event.getEntity().getUniqueId());
-            impacts.damage(key,()->!event.isCancelled() && event.getFinalDamage()>0);
+            impacts.damage(key,()->!event.isCancelled() && DamageEvidence.positive(event.getFinalDamage()));
         }
         if (!(event.getEntity() instanceof LivingEntity victim)) return;
         int frost = enchants.getOrDefault("frostarrow", 0);

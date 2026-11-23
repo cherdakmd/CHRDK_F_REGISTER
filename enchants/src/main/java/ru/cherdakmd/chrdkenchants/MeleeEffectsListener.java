@@ -83,7 +83,7 @@ public final class MeleeEffectsListener implements Listener {
     public void onConfirmedHit(EntityDamageByEntityEvent event) {
         if (!(event.getDamager() instanceof Player attacker)
                 || !(event.getEntity() instanceof LivingEntity victim)
-                || event.getFinalDamage() <= 0 || processing.contains(attacker.getUniqueId())) return;
+                || !DamageEvidence.positive(event.getFinalDamage()) || processing.contains(attacker.getUniqueId())) return;
         Map<String, Integer> enchants = plugin.items().read(attacker.getInventory().getItemInMainHand());
         if (enchants.isEmpty()) return;
         processing.add(attacker.getUniqueId());
