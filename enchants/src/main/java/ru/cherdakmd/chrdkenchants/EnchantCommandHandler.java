@@ -62,6 +62,7 @@ public final class EnchantCommandHandler implements TabExecutor {
             plugin.gui().open(player);
             return true;
         }
+        if (args.length == 1 && args[0].equalsIgnoreCase("scribe")) { plugin.scribe().open(player); return true; }
         if (plugin.workshop().command(player, args)) return true;
         if (args.length == 1 && args[0].equalsIgnoreCase("preview")) { plugin.anvil().preview(player); return true; }
         if (catalogCommand(player, args)) return true;
@@ -261,7 +262,7 @@ public final class EnchantCommandHandler implements TabExecutor {
         String prefix = args[args.length - 1].toLowerCase(Locale.ROOT);
         if ("enchants".equalsIgnoreCase(command.getName())) {
             if (!sender.hasPermission("chrdkenchants.use")) return matches;
-            if (args.length == 1) return List.of("help", "guard", "library", "sources", "info", "find", "group", "rarity", "light", "curses", "hand", "sort", "inspect", "preview", "cleanse", "combine", "split", "splitvanilla", "confirm", "cooldowns")
+            if (args.length == 1) return List.of("help", "guard", "library", "sources", "info", "find", "group", "rarity", "light", "curses", "hand", "sort", "inspect", "preview", "scribe", "cleanse", "combine", "split", "splitvanilla", "confirm", "cooldowns")
                     .stream().filter(value -> value.startsWith(prefix)).toList();
             if (args.length == 2) {
                 List<String> values = switch (args[0].toLowerCase(Locale.ROOT)) {

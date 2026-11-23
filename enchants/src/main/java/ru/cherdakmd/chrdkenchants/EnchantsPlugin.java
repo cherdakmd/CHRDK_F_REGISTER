@@ -37,6 +37,8 @@ public final class EnchantsPlugin extends JavaPlugin {
     private TableListener table;
     private AnvilApplyListener anvil;
     private EnchantWorkshop workshop;
+    private ScribeGui scribe;
+    ScribeGui scribe() { return scribe; }
     EnchantWorkshop workshop() { return workshop; }
     AnvilApplyListener anvil() { return anvil; }
     private EnchantLibraryListener library;
@@ -86,6 +88,8 @@ public final class EnchantsPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new VillagerListener(this), this);
         workshop = new EnchantWorkshop(this);
         Bukkit.getPluginManager().registerEvents(workshop, this);
+        scribe = new ScribeGui(this);
+        Bukkit.getPluginManager().registerEvents(scribe, this);
         // 2.0.16: надванильные уровни ванильных чар — ДО AnvilApplyListener (HIGH):
         // наша пара живёт там, этот слушатель трогает только ванильные слияния.
         Bukkit.getPluginManager().registerEvents(new VanillaMergeListener(this), this);
@@ -130,6 +134,7 @@ public final class EnchantsPlugin extends JavaPlugin {
         if (table != null) table.clear();
         if (anvil != null) anvil.clear();
         if (workshop != null) workshop.clear();
+        if (scribe != null) scribe.closeAll();
         if (library != null) library.clear();
         if (tools != null) tools.clear();
         if (miningUtility != null) miningUtility.clear();
@@ -180,6 +185,7 @@ public final class EnchantsPlugin extends JavaPlugin {
                 () -> { if (table != null) table.clear(); },
                 () -> { if (anvil != null) anvil.clear(); },
                 () -> { if (workshop != null) workshop.clear(); },
+                () -> { if (scribe != null) scribe.closeAll(); },
                 () -> { if (library != null) library.clear(); },
                 () -> { if (tools != null) tools.clear(); },
                 () -> { if (miningUtility != null) miningUtility.clear(); },

@@ -21,14 +21,20 @@ final class EnchantWorkshop implements Listener {
     private final Confirmations<Plan> pending = new Confirmations<>();
     EnchantWorkshop(EnchantsPlugin plugin) { this.plugin = plugin; }
     void clear() { pending.clear(); }
-    private boolean allowed(Player player, String action) {
+    boolean allowed(Player player, String action) {
         return plugin.isEnabled() && player.isOnline() && !player.isDead() && player.getGameMode() == GameMode.SURVIVAL
                 && !player.hasMetadata("NPC") && player.hasPermission("chrdkenchants.use") && plugin.coreApi() != null
                 && plugin.coreApi().isAuthenticated(player) && plugin.getConfig().getBoolean("workshop.enabled", true)
                 && plugin.getConfig().getBoolean("workshop." + (action.equals("splitvanilla") ? "split" : action) + ".enabled", true)
                 && player.getOpenInventory().getType() == InventoryType.CRAFTING;
     }
-    boolean command(Player player, String[] args) {
+    boolean command(Player player, String[] args) { return command(player, args, false); }
+    /** Called only after the scribe confirmation window is closed on the next tick. */
+    void confirmedSplit(Player player, String action, String id) {
+        if (!action.equals("split") && !action.equals("splitvanilla")) throw new IllegalArgumentException("split action");
+        command(player, new String[]{action, id}, true);
+    }
+    private boolean command(Player player, String[] args, boolean confirmed) {
         String action = args[0].toLowerCase(Locale.ROOT);
         if (action.equals("confirm")) {
             if (args.length != 2) { fail(player); return true; }
@@ -121,6 +127,7 @@ final class EnchantWorkshop implements Listener {
         var plan = new Plan(action, player.getWorld().getUID(), plugin.sourceGeneration(), slot, before, off, after, nextOff);
         var quote = pending.put(player.getUniqueId(), System.currentTimeMillis(), plan);
         if (quote == null) { fail(player); return true; }
+        if (confirmed) return command(player, new String[]{"confirm", quote.code().toString()}, false);
         plugin.messages().send(player, "workshop-quote", "action", switch (action) { case "cleanse" -> "Очищение"; case "combine" -> "Объединение"; default -> "Разделение"; }, "cost", cost, "code", quote.code());
         if (action.equals("combine")) for (var entry : plugin.items().read(after[slot]).entrySet())
             plugin.messages().send(player, "workshop-result", "name", plugin.messages().mini("en." + entry.getKey() + ".name"), "level", entry.getValue());
