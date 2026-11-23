@@ -37,7 +37,8 @@ final class ScribeGui implements Listener {
         }
         @Override public @NotNull Inventory getInventory() { return inventory; }
     }
-    void open(Player player) {
+    void open(Player player) { plugin.bookWorkshop().open(player,BookWorkshopGui.Mode.SCRIBE); }
+    private void openLegacy(Player player) {
         if (!plugin.workshop().allowed(player,"split")) { plugin.messages().send(player,"workshop-rejected"); return; }
         ItemStack book=player.getInventory().getItemInMainHand();
         if (book.getType()!=Material.ENCHANTED_BOOK || book.getAmount()!=1) { plugin.messages().send(player,"scribe-book-required");return; }

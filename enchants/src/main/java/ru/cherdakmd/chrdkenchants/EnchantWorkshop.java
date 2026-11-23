@@ -22,11 +22,13 @@ final class EnchantWorkshop implements Listener {
     EnchantWorkshop(EnchantsPlugin plugin) { this.plugin = plugin; }
     void clear() { pending.clear(); }
     boolean allowed(Player player, String action) {
+        return permitted(player, action) && player.getOpenInventory().getType() == InventoryType.CRAFTING;
+    }
+    boolean permitted(Player player, String action) {
         return plugin.isEnabled() && player.isOnline() && !player.isDead() && player.getGameMode() == GameMode.SURVIVAL
                 && !player.hasMetadata("NPC") && player.hasPermission("chrdkenchants.use") && plugin.coreApi() != null
                 && plugin.coreApi().isAuthenticated(player) && plugin.getConfig().getBoolean("workshop.enabled", true)
-                && plugin.getConfig().getBoolean("workshop." + (action.equals("splitvanilla") ? "split" : action) + ".enabled", true)
-                && player.getOpenInventory().getType() == InventoryType.CRAFTING;
+                && plugin.getConfig().getBoolean("workshop." + (action.equals("splitvanilla") ? "split" : action) + ".enabled", true);
     }
     boolean command(Player player, String[] args) { return command(player, args, false); }
     /** Called after a GUI confirmation window is closed; rebuild and validate the complete plan. */
@@ -61,69 +63,9 @@ final class EnchantWorkshop implements Listener {
         if (!allowed(player, action) || (action.equals("combine") ? args.length != 1 : args.length != 2)) { fail(player); return true; }
         var inventory = player.getInventory(); int slot = inventory.getHeldItemSlot();
         var before = copy(inventory.getStorageContents()); var off = clone(inventory.getItemInOffHand());
-        var main = before[slot]; var data = plugin.items().validated(main);
-        if (main == null || main.getAmount() != 1 || data == null
-                || (!WorkshopPolicy.valid(data) && !(action.equals("splitvanilla") && data.isEmpty()))) { fail(player); return true; }
-        var after = copy(before); ItemStack nextOff = clone(off); String cost;
-        switch (action) {
-            case "cleanse" -> {
-                var result = WorkshopPolicy.cleanse(data, args[1]);
-                if (result == null) { fail(player); return true; }
-                plugin.items().write(after[slot], result);
-                if (!pay(after, slot, Material.AMETHYST_SHARD, 8) || !pay(after, slot, Material.DIAMOND, 1)) { fail(player); return true; }
-                cost = "8 осколков аметиста + 1 алмаз";
-            }
-            case "combine" -> {
-                if (!book(main) || !book(off) || off.getAmount() != 1 || !main.isSimilar(off)
-                        || vanilla(main) || vanilla(off)) { fail(player); return true; }
-                var result = WorkshopPolicy.combine(data, plugin.items().validated(off));
-                if (result == null || result.keySet().stream().anyMatch(id -> !plugin.config().isEnabled(id))) { fail(player); return true; }
-                plugin.items().write(after[slot], result); plugin.items().stampBook(after[slot], EnchantBookSource.WORKSHOP);
-                nextOff = new ItemStack(Material.AIR);
-                if (!pay(after, slot, Material.LAPIS_LAZULI, 8) || !pay(after, slot, Material.DIAMOND, 1)) { fail(player); return true; }
-                cost = "8 лазурита + 1 алмаз";
-            }
-            case "split" -> {
-                if (!book(main)) { fail(player); return true; }
-                var result = WorkshopPolicy.split(data, args[1], vanilla(main));
-                if (result == null || !plugin.config().isEnabled(args[1])) { fail(player); return true; }
-                plugin.items().write(after[slot], result.remainder()); // Ванильные чары/чужая PDC остаются только здесь.
-                if (!pay(after, slot, Material.BOOK, 1) || !pay(after, slot, Material.LAPIS_LAZULI, 8)) { fail(player); return true; }
-                int empty = -1;
-                for (int i = 0; i < after.length; i++) if (after[i] == null || after[i].getType().isAir()) { empty = i; break; }
-                if (empty < 0) { fail(player); return true; }
-                after[empty] = plugin.items().makeEnchantBook(EnchantRegistry.byId(args[1]), data.get(args[1]), EnchantBookSource.WORKSHOP);
-                cost = "1 книга + 8 лазурита";
-            }
-            case "splitvanilla" -> {
-                if (!book(main) || !(main.getItemMeta() instanceof EnchantmentStorageMeta meta)
-                        || !meta.hasStoredEnchants()) { fail(player); return true; }
-                String id = args[1].toLowerCase(Locale.ROOT);
-                if (!id.contains(":")) id = "minecraft:" + id;
-                org.bukkit.enchantments.Enchantment selected = null;
-                for (var enchantment : meta.getStoredEnchants().keySet()) {
-                    if (enchantment.getKey().toString().equals(id)) { selected = enchantment; break; }
-                }
-                var result = WorkshopPolicy.splitVanilla(meta.getStoredEnchants(), selected);
-                if (result == null || result.remainder().isEmpty() && data.isEmpty()) { fail(player); return true; }
-                // Original book retains all non-selected components, lore and foreign PDC.
-                var originalMeta = (EnchantmentStorageMeta) after[slot].getItemMeta();
-                if (!originalMeta.removeStoredEnchant(selected) || !originalMeta.getStoredEnchants().equals(result.remainder())
-                        || !after[slot].setItemMeta(originalMeta)) { fail(player); return true; }
-                ItemStack extracted = new ItemStack(Material.ENCHANTED_BOOK);
-                if (!(extracted.getItemMeta() instanceof EnchantmentStorageMeta extractedMeta)
-                        || !extractedMeta.addStoredEnchant(selected, result.level(), true)
-                        || !extractedMeta.getStoredEnchants().equals(Map.of(selected, result.level()))
-                        || !extracted.setItemMeta(extractedMeta)) { fail(player); return true; }
-                if (!pay(after, slot, Material.BOOK, 1) || !pay(after, slot, Material.LAPIS_LAZULI, 8)) { fail(player); return true; }
-                int empty = -1;
-                for (int i = 0; i < after.length; i++) if (after[i] == null || after[i].getType().isAir()) { empty = i; break; }
-                if (empty < 0) { fail(player); return true; }
-                after[empty] = extracted;
-                cost = "1 книга + 8 лазурита";
-            }
-            default -> throw new IllegalStateException("Unknown workshop operation");
-        }
+        var built = build(action, args, before, off, slot);
+        if (built == null) { fail(player); return true; }
+        var after = built.after(); var nextOff = built.nextOff(); var cost = built.cost();
         var plan = new Plan(action, player.getWorld().getUID(), plugin.sourceGeneration(), slot, before, off, after, nextOff);
         var quote = pending.put(player.getUniqueId(), System.currentTimeMillis(), plan);
         if (quote == null) { fail(player); return true; }
@@ -133,6 +75,96 @@ final class EnchantWorkshop implements Listener {
             plugin.messages().send(player, "workshop-result", "name", plugin.messages().mini("en." + entry.getKey() + ".name"), "level", entry.getValue());
         else if (action.equals("splitvanilla")) plugin.messages().send(player, "workshop-vanilla-selected", "id", args[1]);
         else plugin.messages().send(player, "workshop-selected", "name", plugin.messages().mini("en." + args[1] + ".name"));
+        return true;
+    }
+    private record Built(ItemStack[] after, ItemStack nextOff, String cost) { }
+    private Built build(String action, String[] args, ItemStack[] before, ItemStack off, int slot) {
+        var main = before[slot]; var data = plugin.items().validated(main);
+        if (main == null || main.getAmount() != 1 || data == null
+                || (!WorkshopPolicy.valid(data) && !(action.equals("splitvanilla") && data.isEmpty()))) { return null; }
+        var after = copy(before); ItemStack nextOff = clone(off); String cost;
+        switch (action) {
+            case "cleanse" -> {
+                var result = WorkshopPolicy.cleanse(data, args[1]);
+                if (result == null) { return null; }
+                plugin.items().write(after[slot], result);
+                if (!pay(after, slot, Material.AMETHYST_SHARD, 8) || !pay(after, slot, Material.DIAMOND, 1)) { return null; }
+                cost = "8 осколков аметиста + 1 алмаз";
+            }
+            case "combine" -> {
+                if (!book(main) || !book(off) || off.getAmount() != 1 || !main.isSimilar(off)
+                        || vanilla(main) || vanilla(off)) { return null; }
+                var result = WorkshopPolicy.combine(data, plugin.items().validated(off));
+                if (result == null || result.keySet().stream().anyMatch(id -> !plugin.config().isEnabled(id))) { return null; }
+                plugin.items().write(after[slot], result); plugin.items().stampBook(after[slot], EnchantBookSource.WORKSHOP);
+                nextOff = new ItemStack(Material.AIR);
+                if (!pay(after, slot, Material.LAPIS_LAZULI, 8) || !pay(after, slot, Material.DIAMOND, 1)) { return null; }
+                cost = "8 лазурита + 1 алмаз";
+            }
+            case "split" -> {
+                if (!book(main)) { return null; }
+                var result = WorkshopPolicy.split(data, args[1], vanilla(main));
+                if (result == null || !plugin.config().isEnabled(args[1])) { return null; }
+                plugin.items().write(after[slot], result.remainder()); // Ванильные чары/чужая PDC остаются только здесь.
+                if (!pay(after, slot, Material.BOOK, 1) || !pay(after, slot, Material.LAPIS_LAZULI, 8)) { return null; }
+                int empty = -1;
+                for (int i = 0; i < after.length; i++) if (after[i] == null || after[i].getType().isAir()) { empty = i; break; }
+                if (empty < 0) { return null; }
+                after[empty] = plugin.items().makeEnchantBook(EnchantRegistry.byId(args[1]), data.get(args[1]), EnchantBookSource.WORKSHOP);
+                cost = "1 книга + 8 лазурита";
+            }
+            case "splitvanilla" -> {
+                if (!book(main) || !(main.getItemMeta() instanceof EnchantmentStorageMeta meta)
+                        || !meta.hasStoredEnchants()) { return null; }
+                String id = args[1].toLowerCase(Locale.ROOT);
+                if (!id.contains(":")) id = "minecraft:" + id;
+                org.bukkit.enchantments.Enchantment selected = null;
+                for (var enchantment : meta.getStoredEnchants().keySet()) {
+                    if (enchantment.getKey().toString().equals(id)) { selected = enchantment; break; }
+                }
+                var result = WorkshopPolicy.splitVanilla(meta.getStoredEnchants(), selected);
+                if (result == null || result.remainder().isEmpty() && data.isEmpty()) { return null; }
+                // Original book retains all non-selected components, lore and foreign PDC.
+                var originalMeta = (EnchantmentStorageMeta) after[slot].getItemMeta();
+                if (!originalMeta.removeStoredEnchant(selected) || !originalMeta.getStoredEnchants().equals(result.remainder())
+                        || !after[slot].setItemMeta(originalMeta)) { return null; }
+                ItemStack extracted = new ItemStack(Material.ENCHANTED_BOOK);
+                if (!(extracted.getItemMeta() instanceof EnchantmentStorageMeta extractedMeta)
+                        || !extractedMeta.addStoredEnchant(selected, result.level(), true)
+                        || !extractedMeta.getStoredEnchants().equals(Map.of(selected, result.level()))
+                        || !extracted.setItemMeta(extractedMeta)) { return null; }
+                if (!pay(after, slot, Material.BOOK, 1) || !pay(after, slot, Material.LAPIS_LAZULI, 8)) { return null; }
+                int empty = -1;
+                for (int i = 0; i < after.length; i++) if (after[i] == null || after[i].getType().isAir()) { empty = i; break; }
+                if (empty < 0) { return null; }
+                after[empty] = extracted;
+                cost = "1 книга + 8 лазурита";
+            }
+            default -> throw new IllegalStateException("Unknown workshop operation");
+        }
+        return new Built(after, nextOff, cost);
+    }
+    /** Build against input slots and storage without moving items into the player's hands. */
+    boolean applyGui(Player player, String action, String id, org.bukkit.inventory.Inventory top, int first, int second) {
+        if (!Set.of("cleanse", "combine", "split", "splitvanilla").contains(action) || !permitted(player, action)) { fail(player); return false; }
+        var original = copy(player.getInventory().getStorageContents());
+        var before = Arrays.copyOf(copy(original), original.length + 1);
+        int slot = original.length;
+        before[slot] = clone(top.getItem(first));
+        ItemStack off = clone(top.getItem(second));
+        String[] args = action.equals("combine") ? new String[]{action} : new String[]{action, id};
+        Built built = build(action, args, before, off, slot);
+        if (built == null) { fail(player); return false; }
+        try {
+            player.getInventory().setStorageContents(Arrays.copyOf(built.after(), original.length));
+            top.setItem(first, clone(built.after()[slot]));
+            if (action.equals("combine")) top.setItem(second, clone(built.nextOff()));
+        } catch (RuntimeException failure) {
+            player.getInventory().setStorageContents(original);
+            top.setItem(first, clone(before[slot])); top.setItem(second, clone(off));
+            throw failure;
+        }
+        plugin.messages().send(player, "workshop-done");
         return true;
     }
     private static boolean book(ItemStack item) { return item != null && item.getType() == Material.ENCHANTED_BOOK; }

@@ -25,13 +25,13 @@ final class EnchantHub implements Listener {
     private static final List<Button> MAIN = List.of(
             new Button(10,Material.ENCHANTED_BOOK,"catalog","enchants catalog",false),
             new Button(11,Material.BOOKSHELF,"library","enchants library",false),
-            new Button(12,Material.WRITABLE_BOOK,"scribe","enchants scribe",true),
+            new Button(12,Material.WRITABLE_BOOK,"scribe","enchants scribe",false),
             new Button(13,Material.SPYGLASS,"inspect","enchants inspect",true),
             new Button(14,Material.IRON_SWORD,"hand","enchants hand",true),
             new Button(15,Material.EMERALD,"sources","enchants sources",false),
             new Button(16,Material.ANVIL,"anvil",null,false),
-            new Button(19,Material.AMETHYST_SHARD,"cleanse",null,true),
-            new Button(20,Material.ENCHANTING_TABLE,"combine",null,true),
+            new Button(19,Material.AMETHYST_SHARD,"cleanse",null,false),
+            new Button(20,Material.ENCHANTING_TABLE,"combine",null,false),
             new Button(21,Material.SHIELD,"guard",null,false),
             new Button(22,Material.CLOCK,"cooldowns","enchants cooldowns",false),
             new Button(23,Material.BOOK,"books","enchants help books",false),
@@ -134,8 +134,8 @@ final class EnchantHub implements Listener {
         if(button.command()!=null){command(player,holder,button.command(),button.handSensitive());return;}
         switch(button.key()) {
             case "guard" -> schedule(player,holder,false,()->show(player,Screen.GUARD,Map.of()));
-            case "cleanse" -> schedule(player,holder,true,()->openCleanse(player));
-            case "combine" -> schedule(player,holder,true,()->show(player,Screen.CONFIRM_COMBINE,Map.of()));
+            case "cleanse" -> schedule(player,holder,false,()->{player.closeInventory();plugin.bookWorkshop().open(player,BookWorkshopGui.Mode.CLEANSE);});
+            case "combine" -> schedule(player,holder,false,()->{player.closeInventory();plugin.bookWorkshop().open(player,BookWorkshopGui.Mode.COMBINE);});
             case "anvil" -> schedule(player,holder,false,()->{
                 player.closeInventory();plugin.messages().sendList(player,"help-anvil");
                 player.sendMessage(plugin.messages().get("hub-anvil-instruction"));

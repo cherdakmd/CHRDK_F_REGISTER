@@ -14,7 +14,7 @@ class EnchantHubTest {
         var keys=new HashSet<String>();buttons.forEach(b->keys.add(b.key()));
         assertTrue(keys.containsAll(Set.of("catalog","library","scribe","inspect","hand","sources","anvil",
                 "cleanse","combine","guard","cooldowns","books","workshop","effects","light","curses","search","help")));
-        assertTrue(buttons.stream().filter(b->Set.of("scribe","cleanse","combine","inspect","hand").contains(b.key())).allMatch(EnchantHub.Button::handSensitive));
+        assertTrue(buttons.stream().filter(b->Set.of("inspect","hand").contains(b.key())).allMatch(EnchantHub.Button::handSensitive));
     }
     @Test void navigationRespectsOwnerAndStalenessAndDelegatesOperations() throws Exception {
         String hub=source("EnchantHub"),command=source("EnchantCommandHandler"),plugin=source("EnchantsPlugin");

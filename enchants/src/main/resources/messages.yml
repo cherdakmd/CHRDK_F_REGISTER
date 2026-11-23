@@ -8,7 +8,7 @@ enchants:
   hub-library: '<gold>Библиотека находок</gold>'
   hub-library-lore: '<gray>Список обнаруженных книг в чате; копии не выдаются.</gray>'
   hub-scribe: '<gold>Стол переписчика</gold>'
-  hub-scribe-lore: '<gray>Смешанную книгу держите в основной руке. Цена: книга и 8 лазурита.</gray>'
+  hub-scribe-lore: '<gray>Положите книгу в ячейку. Цена: книга и 8 лазурита.</gray>'
   hub-inspect: '<gold>Предмет в руке</gold>'
   hub-inspect-lore: '<gray>Описание чар и источник книги в чате.</gray>'
   hub-hand: '<gold>Подходящие для предмета</gold>'
@@ -19,12 +19,12 @@ enchants:
   hub-anvil-lore: '<gray>Справка; расчёт выполняется только при открытой наковальне.</gray>'
   hub-anvil-instruction: '<yellow>Для расчёта откройте наковальню, положите предмет и книгу, затем введите /enchants preview.</yellow>'
   hub-cleanse: '<gold>Очищение проклятия</gold>'
-  hub-cleanse-lore: '<gray>Выберите проклятие на предмете в руке и подтвердите в меню.</gray>'
+  hub-cleanse-lore: '<gray>Положите предмет в ячейку, выберите проклятие и подтвердите в меню.</gray>'
   hub-cleanse-title: '<dark_purple>Очищение проклятия</dark_purple>'
   hub-cleanse-choice: '<gray>Выбрать. Цена: 8 осколков аметиста и 1 алмаз.</gray>'
   hub-cleanse-empty: '<yellow>На предмете в основной руке нет известных проклятий.</yellow>'
   hub-combine: '<gold>Объединение книг</gold>'
-  hub-combine-lore: '<gray>Одинаковые чистые книги в двух руках; подтвердите в меню.</gray>'
+  hub-combine-lore: '<gray>Положите одинаковые чистые книги в две ячейки и подтвердите в меню.</gray>'
   hub-cleanse-confirm-title: '<dark_purple>Подтвердить очищение</dark_purple>'
   hub-cleanse-effect: '<gray>Удаляется только выбранное проклятие.</gray>'
   hub-cleanse-cost: '<yellow>Цена: 8 осколков аметиста и 1 алмаз</yellow>'
@@ -59,6 +59,22 @@ enchants:
   hub-admin-lore: '<gray>Список команд доступен только администраторам.</gray>'
   hub-close: '<red>Закрыть</red>'
   hub-back: '<yellow>Назад</yellow>'
+  slots-scribe-title: '<dark_purple>Переписчик · положите книгу</dark_purple>'
+  slots-cleanse-title: '<dark_purple>Очищение · положите предмет</dark_purple>'
+  slots-combine-title: '<dark_purple>Объединение · две книги</dark_purple>'
+  slots-left: '<yellow>↓ Левая ячейка для предмета</yellow>'
+  slots-right: '<yellow>↓ Правая ячейка для второй книги</yellow>'
+  slots-instructions: '<gold>Ячейки мастерской</gold>'
+  slots-one: '<gray>Положите предмет в левую ячейку, выберите чару ниже.</gray>'
+  slots-two: '<gray>Положите по книге в левую и правую ячейки.</gray>'
+  slots-scribe-cost: '<yellow>Цена: 1 книга и 8 лазурита; нужен свободный слот.</yellow>'
+  slots-choose: '<gray>Нажмите, чтобы выбрать.</gray>'
+  slots-prepare: '<yellow>Проверить и подтвердить</yellow>'
+  slots-confirm: '<green>Нажмите ещё раз для выполнения</green>'
+  slots-cursor: '<yellow>Перед подтверждением положите предмет с курсора в инвентарь.</yellow>'
+  slots-select: '<yellow>Выберите чару в нижнем ряду.</yellow>'
+  slots-input: '<yellow>Положите предметы в ячейки мастерской.</yellow>'
+  slots-changed: '<yellow>Предметы или инвентарь изменились; подтвердите заново.</yellow>'
   scribe-title: '<dark_purple>Стол переписчика</dark_purple>'
   scribe-confirm-title: '<dark_purple>Подтвердить переписывание</dark_purple>'
   scribe-choice: '<gray>Выбрать эту чару для отдельной книги.</gray>'
@@ -693,16 +709,16 @@ enchants:
   - '<gray>Если результата нет: проверьте /enchants inspect, /enchants hand, уровень XP и состав книги.</gray>'
   help-workshop:
   - '<gold>Мастерская: материалы вместо XP</gold>'
-  - <gray>Survival, авторизация, закрытый контейнер; один предмет в основной руке. Материалы — обычные, без метаданных.</gray>
+  - <gray>Survival и авторизация; через меню используйте ячейки, через команды — руки. Материалы обычные, без метаданных.</gray>
   - '<gray>/enchants cleanse &lt;id&gt;: удаляет только указанное проклятие; 8 осколков аметиста + 1 физический алмаз.</gray>'
   - '<gray>/enchants combine: по одной полностью одинаковой чистой кастомной книге в каждой руке.</gray>'
   - <gray>Один ID и одинаковый уровень ниже потолка, без ванильных чар; совпадать должны и метаданные/источник.</gray>
   - <gray>Цена 8 лазурита + 1 физический алмаз; две книги превращаются в одну с уровнем +1.</gray>
-  - '<gray>/enchants scribe: стол переписчика с выбором и подтверждением; книга в основной руке.</gray>'
+  - '<gray>/enchants scribe: положите книгу в ячейку, выберите чару и подтвердите в меню.</gray>'
   - '<gray>/enchants split &lt;id&gt;: смешанная книга в основной руке; 1 обычная книга + 8 лазурита и место.</gray>'
   - <gray>Выбранная чара переносится в новую книгу; прочие кастомные/ванильные остаются. Из снаряжения не извлекается.</gray>
   - '<gray>/enchants splitvanilla &lt;id&gt;: отделяет ванильную чару книги с несколькими чарами за 1 книгу и 8 лазурита.</gray>'
-  - <gray>Сначала получите условия, затем /enchants confirm &lt;код&gt; в течение 30 сек. До подтверждения расхода нет.</gray>
+  - <gray>Прямые команды: /enchants confirm &lt;код&gt; в течение 30 сек. В меню нажмите кнопку подтверждения дважды.</gray>
   - <gray>Не меняйте инвентарь, руки и слот. Выход, смерть, TP, закрытие окна или reload отменяют предложение.</gray>
   - <gray>Мастерская может быть выключена администрацией; баланс /bal вместо материалов не списывается.</gray>
   help-effects:
