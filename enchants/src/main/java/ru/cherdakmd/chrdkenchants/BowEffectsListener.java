@@ -32,10 +32,15 @@ public final class BowEffectsListener implements Listener {
 
     private final EnchantsPlugin plugin;
     private final Map<UUID, Location> arrowOrigins = new HashMap<>();
+    private record ImpactKey(UUID arrow,UUID target) { }
+    private final ImpactEvidenceGate<ImpactKey> impacts;
     private BukkitTask sweepTask;
 
     public BowEffectsListener(EnchantsPlugin plugin) {
         this.plugin = plugin;
+        this.impacts = new ImpactEvidenceGate<>(action -> {
+            var task=Bukkit.getScheduler().runTask(plugin,action);return task::cancel;
+        },4096);
         this.sweepTask = Bukkit.getScheduler().runTaskTimer(plugin, () ->
                 arrowOrigins.entrySet().removeIf(entry -> {
                     Entity arrow = Bukkit.getEntity(entry.getKey());
@@ -49,6 +54,7 @@ public final class BowEffectsListener implements Listener {
             sweepTask = null;
         }
         arrowOrigins.clear();
+        impacts.clear();
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -117,44 +123,51 @@ public final class BowEffectsListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    /** Capture only; an entity impact also requires its own allowed damage event. */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onArrowHit(ProjectileHitEvent event) {
         if (!(event.getEntity() instanceof Arrow arrow)) return;
         Map<String, Integer> enchants = plugin.items().readEntity(arrow);
-        if (enchants.isEmpty()) return;
-        arrowOrigins.remove(arrow.getUniqueId());
-        Player shooter = arrow.getShooter() instanceof Player player ? player : null;
-        Location hit = event.getHitEntity() instanceof LivingEntity victim
-                ? victim.getLocation() : (event.getHitBlock() != null
-                ? event.getHitBlock().getLocation().add(0.5, 0.5, 0.5) : arrow.getLocation());
+        if (enchants.getOrDefault("stormarrow",0)<=0 && enchants.getOrDefault("explosive",0)<=0) return;
+        Entity target=event.getHitEntity();
+        if(target==null && event.getHitBlock()==null)return;
+        Location hit=target!=null?target.getLocation().clone():event.getHitBlock().getLocation().add(0.5,0.5,0.5);
+        if(hit.getWorld()==null)return;
+        Player shooter=arrow.getShooter() instanceof Player player?player:null;
+        UUID world=hit.getWorld().getUID();long generation=plugin.sourceGeneration();
+        var key=new ImpactKey(arrow.getUniqueId(),target==null?null:target.getUniqueId());
+        impacts.collision(key,target!=null,
+                ()->!event.isCancelled() && generation==plugin.sourceGeneration()
+                        && hit.getWorld()!=null && world.equals(hit.getWorld().getUID())
+                        && hit.getWorld().isChunkLoaded(hit.getBlockX()>>4,hit.getBlockZ()>>4)
+                        && shooter!=null && shooter.isOnline() && shooter.getWorld().getUID().equals(world),
+                ()->applyAreaImpact(shooter,hit,enchants));
+    }
 
-        int storm = enchants.getOrDefault("stormarrow", 0);
-        if (storm > 0) {
-            arrow.getWorld().strikeLightningEffect(hit);
-            double damage = EnchantParams.value("stormarrow", storm);
-            for (Entity near : hit.getWorld().getNearbyEntities(hit, 2.0, 2.0, 2.0)) {
-                if (near instanceof LivingEntity target && target != shooter) {
-                    target.damage(damage, shooter == null ? arrow : shooter);
-                }
-            }
+    /** Each damage/explosion remains a Bukkit event for external protection. */
+    private void applyAreaImpact(Player shooter,Location hit,Map<String,Integer> enchants) {
+        int storm=enchants.getOrDefault("stormarrow",0);
+        if(storm>0) {
+            hit.getWorld().strikeLightningEffect(hit);
+            double damage=EnchantParams.value("stormarrow",storm);
+            for(Entity near:hit.getWorld().getNearbyEntities(hit,2.0,2.0,2.0))
+                if(near instanceof LivingEntity target && target!=shooter)
+                    target.damage(damage,shooter);
         }
-
-        int explosive = enchants.getOrDefault("explosive", 0);
-        if (explosive > 0) {
-            float power = 0.8f * EnchantParams.value("explosive", explosive);
-            // без поджога и урона блокам — целёсы улицы, больно врагам
-            hit.getWorld().createExplosion(hit, power, false, false,
-                    shooter);
-        }
-
+        int explosive=enchants.getOrDefault("explosive",0);
+        if(explosive>0)hit.getWorld().createExplosion(hit,0.8f*EnchantParams.value("explosive",explosive),false,false,shooter);
     }
 
     /** Direct control effects require an accepted damage event, not merely a projectile collision. */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onConfirmedArrowDamage(EntityDamageByEntityEvent event) {
-        if (!(event.getDamager() instanceof Arrow arrow)
-                || !(event.getEntity() instanceof LivingEntity victim) || event.getFinalDamage() <= 0) return;
+        if (!(event.getDamager() instanceof Arrow arrow) || event.getFinalDamage() <= 0) return;
         Map<String, Integer> enchants = plugin.items().readEntity(arrow);
+        if(enchants.getOrDefault("stormarrow",0)>0 || enchants.getOrDefault("explosive",0)>0) {
+            var key=new ImpactKey(arrow.getUniqueId(),event.getEntity().getUniqueId());
+            impacts.damage(key,()->!event.isCancelled() && event.getFinalDamage()>0);
+        }
+        if (!(event.getEntity() instanceof LivingEntity victim)) return;
         int frost = enchants.getOrDefault("frostarrow", 0);
         if (frost > 0) {
             int ticks = EnchantParams.seconds("frostarrow", frost) * 20;
