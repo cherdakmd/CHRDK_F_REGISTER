@@ -72,4 +72,28 @@ class PartialBookPlanTest {
             else assertEquals(original,p.remaining(),def.id()+" "+material);
         }
     }
+    @Test void everyValidTwoEnchantBookConservesEntriesAcrossLimitsAndTargets() {
+        var all=new ArrayList<>(EnchantRegistry.all());
+        for(int i=0;i<all.size();i++) for(int j=i+1;j<all.size();j++) {
+            var a=all.get(i);var b=all.get(j);
+            var book=new LinkedHashMap<String,Integer>();
+            book.put(a.id(),a.maxLevel());book.put(b.id(),b.maxLevel());
+            if(!EnchantConflicts.validSet(book))continue;
+            for(String material:List.of("DIAMOND_SWORD","DIAMOND_PICKAXE","ELYTRA","BOW"))
+                for(int max:List.of(0,1,2)) {
+                    var p=plan(material,Map.of(),book,max,1);
+                    assertNotNull(p,a.id()+"/"+b.id());
+                    var combined=new HashMap<>(p.transferred());
+                    p.remaining().forEach((id,level)->assertNull(combined.put(id,level),"duplicate "+id));
+                    assertEquals(book,combined,"lost book entry");
+                    assertEquals(p.remaining().keySet(),p.reasons().keySet());
+                    assertEquals(p.transferred(),p.result());
+                    assertTrue(p.result().size()<=max);
+                    assertTrue(EnchantConflicts.validSet(p.result()));
+                    p.transferred().keySet().forEach(id->assertTrue(EnchantRegistry.byId(id).supports(material)));
+                    assertEquals(2,book.size(),"planner must not mutate its input");
+                }
+        }
+    }
+
 }
