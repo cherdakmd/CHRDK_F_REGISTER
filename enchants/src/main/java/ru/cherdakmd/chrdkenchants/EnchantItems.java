@@ -165,10 +165,11 @@ public final class EnchantItems {
         if (item == null || def == null || EnchantRegistry.retired(def.id())) {
             return false;
         }
-        Map<String, Integer> enchants = new LinkedHashMap<>(read(item));
-        if (!enchants.containsKey(def.id()) && EnchantConflicts.conflictsWith(enchants, def.id())) {
-            return false;
-        }
+        // read() is deliberately tolerant for legacy effects; it must never be
+        // used to rewrite malformed or partially decoded PDC.
+        Map<String, Integer> validated = validated(item);
+        if (!EnchantMutationPolicy.allowed(validated, def)) return false;
+        Map<String, Integer> enchants = new LinkedHashMap<>(validated);
         enchants.put(def.id(), Math.min(def.maxLevel(), Math.max(1, level)));
         write(item, enchants);
         return true;

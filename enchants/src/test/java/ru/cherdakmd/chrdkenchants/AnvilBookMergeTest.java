@@ -72,6 +72,18 @@ class AnvilBookMergeTest {
     }
 
     @Test
+    void vanillaOnlyRejectionAlsoExplainsCustomPartWithoutMutatingInventory() throws Exception {
+        String anvil=source("AnvilApplyListener");
+        int branch=anvil.indexOf("A vanilla incompatibility can reject the pair");
+        int custom=anvil.indexOf("previewRejectedCustom(player,left,right)",branch);
+        int vanilla=anvil.indexOf("previewRejectedVanilla(player,left,right)",custom);
+        assertTrue(branch>=0 && custom>branch && vanilla>custom);
+        String explanation=anvil.substring(branch,vanilla);
+        assertFalse(explanation.contains("setItem"));
+        assertFalse(explanation.contains("applyFromBook"));
+    }
+
+    @Test
     void vanillaMergeCombinesStoredEnchantsOntoBooks() throws Exception {
         String merge = source("VanillaBookMerge");
         assertTrue(merge.contains("boolean bookTarget = source.getType() == Material.ENCHANTED_BOOK"));

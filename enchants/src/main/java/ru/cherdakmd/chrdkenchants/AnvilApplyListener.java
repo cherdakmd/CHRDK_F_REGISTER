@@ -204,6 +204,9 @@ public final class AnvilApplyListener implements Listener {
         }
         if (quote == null && customBook(right) && left != null && player.hasPermission("chrdkenchants.use")
                 && plugin.coreApi()!=null && plugin.coreApi().isAuthenticated(player)) {
+            // A vanilla incompatibility can reject the pair even when the custom
+            // layer itself is valid; show both independent, read-only plans.
+            previewRejectedCustom(player,left,right);
             previewRejectedVanilla(player,left,right);
         }
         if (quote == null || !quote.source(view, left, right, view.getRenameText())
