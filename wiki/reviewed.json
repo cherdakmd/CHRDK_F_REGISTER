@@ -61,9 +61,9 @@
       "text": "047bb7429e3457414b8d62535a1d34e949f854f04c19d9fd2c3af76ccabd3827"
     },
     "enchants": {
-      "reason": "Уточнено главное меню чар и подсказки мастерской",
-      "sources": "0d4c34870f53245765be35d581d1ab04f17521461b4824877a397bf92a7081bc",
-      "text": "c7304908bdb65e4abf1e5dc65acc1fc1cc4f86395d2cac28b4036e7df03bbbc6"
+      "reason": "Сверены GUI мастерской, подтверждение и прежние команды",
+      "sources": "97d3c81a45936b7787c7b190cb34d4d9b6ca3704e7ff102537e2839f0a3e671d",
+      "text": "d13cad3e90e3ce8ad4defb6f16b7e9b7762d7e1846c4dd481a622e3c5f9766ba"
     },
     "faq": {
       "reason": "Добавлено главное меню чар и сохранены существующие операции и команды",
@@ -101,8 +101,8 @@
       "text": "2960ffd74e02312bdc1eded4680afc84d5ae631060360a11af5ddfd607ffb9ea"
     },
     "mmorpg-roadmap": {
-      "reason": "Уточнено главное меню чар и подсказки мастерской",
-      "sources": "f487daa572bf185b4713860513bdcf05a0a3ea416ac69b5f211d1cb1cacee30d",
+      "reason": "Сверены GUI мастерской, подтверждение и прежние команды",
+      "sources": "fcede6347a6de34a289acb1147f666df33d0f92deb13b4531b0a16fe205aec93",
       "text": "c812385dc7c2ecb222169994ea31c68c5840a46c4c3d69d2e51fa831327458ea"
     },
     "mobs": {

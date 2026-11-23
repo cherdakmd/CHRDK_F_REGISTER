@@ -20,7 +20,7 @@ import java.util.*;
 
 /** Navigation only. Existing handlers retain all permissions, prices and confirmation rules. */
 final class EnchantHub implements Listener {
-    enum Screen { MAIN, GUARD, CLEANSE }
+    enum Screen { MAIN, GUARD, CLEANSE, CONFIRM_CLEANSE, CONFIRM_COMBINE }
     record Button(int slot, Material icon, String key, String command, boolean handSensitive) { }
     private static final List<Button> MAIN = List.of(
             new Button(10,Material.ENCHANTED_BOOK,"catalog","enchants catalog",false),
@@ -31,7 +31,7 @@ final class EnchantHub implements Listener {
             new Button(15,Material.EMERALD,"sources","enchants sources",false),
             new Button(16,Material.ANVIL,"anvil",null,false),
             new Button(19,Material.AMETHYST_SHARD,"cleanse",null,true),
-            new Button(20,Material.ENCHANTING_TABLE,"combine","enchants combine",true),
+            new Button(20,Material.ENCHANTING_TABLE,"combine",null,true),
             new Button(21,Material.SHIELD,"guard",null,false),
             new Button(22,Material.CLOCK,"cooldowns","enchants cooldowns",false),
             new Button(23,Material.BOOK,"books","enchants help books",false),
@@ -47,10 +47,10 @@ final class EnchantHub implements Listener {
     EnchantHub(EnchantsPlugin plugin) { this.plugin=plugin; }
     static List<Button> buttons() { return MAIN; }
     private static final class Holder implements InventoryHolder {
-        final UUID owner; final long generation; final Screen screen; final int heldSlot;
+        final UUID owner, world; final long generation; final Screen screen; final int heldSlot;
         final ItemStack hand,off; final Map<Integer,String> choices; Inventory inventory;
         Holder(Player player,long generation,Screen screen,Map<Integer,String> choices) {
-            owner=player.getUniqueId();this.generation=generation;this.screen=screen;
+            owner=player.getUniqueId();world=player.getWorld().getUID();this.generation=generation;this.screen=screen;
             heldSlot=player.getInventory().getHeldItemSlot();hand=player.getInventory().getItemInMainHand().clone();
             off=player.getInventory().getItemInOffHand().clone();this.choices=Map.copyOf(choices);
         }
@@ -64,7 +64,8 @@ final class EnchantHub implements Listener {
     private void show(Player player,Screen screen,Map<Integer,String> choices) {
         var holder=new Holder(player,plugin.sourceGeneration(),screen,choices);
         Inventory inv=Bukkit.createInventory(holder,54,plugin.messages().get(switch(screen){
-            case MAIN -> "hub-title"; case GUARD -> "hub-guard-title"; case CLEANSE -> "hub-cleanse-title"; }));
+            case MAIN -> "hub-title"; case GUARD -> "hub-guard-title"; case CLEANSE -> "hub-cleanse-title";
+            case CONFIRM_CLEANSE -> "hub-cleanse-confirm-title"; case CONFIRM_COMBINE -> "hub-combine-confirm-title"; }));
         holder.inventory=inv;
         if(screen==Screen.MAIN) {
             for(Button button:MAIN)inv.setItem(button.slot(),icon(button.icon(),plugin.messages().get("hub-"+button.key()),
@@ -75,9 +76,20 @@ final class EnchantHub implements Listener {
             GUARD.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(e -> inv.setItem(e.getKey(),
                     icon(Material.SHIELD,e.getValue().equals("auto")?plugin.messages().get("guard-auto")
                             :plugin.messages().get("en."+e.getValue()+".name"),plugin.messages().get("hub-guard-choice"))));
-        } else {
+        } else if(screen==Screen.CLEANSE) {
             choices.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(e->inv.setItem(e.getKey(),
                     icon(Material.SOUL_LANTERN,plugin.messages().get("en."+e.getValue()+".name"),plugin.messages().get("hub-cleanse-choice"))));
+        } else {
+            if(screen==Screen.CONFIRM_CLEANSE) {
+                String id=choices.get(0);
+                inv.setItem(22,icon(Material.SOUL_LANTERN,plugin.messages().get("en."+id+".name"),plugin.messages().get("hub-cleanse-effect")));
+            } else {
+                inv.setItem(20,holder.hand.clone());
+                inv.setItem(24,holder.off.clone());
+                inv.setItem(22,icon(Material.ENCHANTING_TABLE,plugin.messages().get("hub-combine-effect"),plugin.messages().get("hub-combine-requirements")));
+            }
+            inv.setItem(30,icon(Material.LIME_DYE,plugin.messages().get("hub-confirm"),
+                    plugin.messages().get(screen==Screen.CONFIRM_CLEANSE?"hub-cleanse-cost":"hub-combine-cost")));
         }
         inv.setItem(49,icon(Material.BARRIER,plugin.messages().get(screen==Screen.MAIN?"hub-close":"hub-back")));
         player.openInventory(inv);
@@ -85,12 +97,14 @@ final class EnchantHub implements Listener {
     private ItemStack icon(Material type,Component title,Component... lore) {
         ItemStack stack=new ItemStack(type);var meta=stack.getItemMeta();meta.displayName(title);meta.lore(List.of(lore));stack.setItemMeta(meta);return stack;
     }
-    private boolean current(Player player,Holder holder,boolean hand) {
-        return eligible(player) && holder.owner.equals(player.getUniqueId()) && holder.generation==plugin.sourceGeneration()
-                && player.getOpenInventory().getTopInventory().getHolder()==holder
+    private boolean stateValid(Player player,Holder holder,boolean hand) {
+        return eligible(player) && holder.owner.equals(player.getUniqueId()) && holder.world.equals(player.getWorld().getUID()) && holder.generation==plugin.sourceGeneration()
                 && (!hand || holder.heldSlot==player.getInventory().getHeldItemSlot()
                     && Objects.equals(holder.hand,player.getInventory().getItemInMainHand())
                     && Objects.equals(holder.off,player.getInventory().getItemInOffHand()));
+    }
+    private boolean current(Player player,Holder holder,boolean hand) {
+        return stateValid(player,holder,hand) && player.getOpenInventory().getTopInventory().getHolder()==holder;
     }
     @EventHandler(priority=EventPriority.HIGHEST)
     public void click(InventoryClickEvent event) {
@@ -99,13 +113,20 @@ final class EnchantHub implements Listener {
         if(blocked || !(event.getWhoClicked() instanceof Player player) || !current(player,holder,false)
                 || (event.getClick()!=ClickType.LEFT && event.getClick()!=ClickType.RIGHT))return;
         int slot=event.getRawSlot();
-        if(slot==49){ schedule(player,holder,false,()->{if(holder.screen==Screen.MAIN)player.closeInventory();else show(player,Screen.MAIN,Map.of());});return; }
+        if(slot==49){ schedule(player,holder,false,()->{if(holder.screen==Screen.MAIN)player.closeInventory();else if(holder.screen==Screen.CONFIRM_CLEANSE)openCleanse(player);else show(player,Screen.MAIN,Map.of());});return; }
+        if(holder.screen==Screen.CONFIRM_CLEANSE || holder.screen==Screen.CONFIRM_COMBINE) {
+            if(slot==30) schedule(player,holder,true,()->{
+                player.closeInventory();
+                if(stateValid(player,holder,true)) plugin.workshop().confirmedGui(player,holder.screen==Screen.CONFIRM_CLEANSE?"cleanse":"combine",holder.choices.get(0));
+            });
+            return;
+        }
         if(holder.screen==Screen.GUARD) {
             String choice=GUARD.get(slot);if(choice!=null)command(player,holder,"enchants guard "+choice,false);
             return;
         }
         if(holder.screen==Screen.CLEANSE) {
-            String choice=holder.choices.get(slot);if(choice!=null)command(player,holder,"enchants cleanse "+choice,true);
+            String choice=holder.choices.get(slot);if(choice!=null) schedule(player,holder,true,()->show(player,Screen.CONFIRM_CLEANSE,Map.of(0,choice)));
             return;
         }
         if(slot==34 && player.hasPermission("chrdkenchants.admin")){command(player,holder,"enchantsadmin",false);return;}
@@ -114,6 +135,7 @@ final class EnchantHub implements Listener {
         switch(button.key()) {
             case "guard" -> schedule(player,holder,false,()->show(player,Screen.GUARD,Map.of()));
             case "cleanse" -> schedule(player,holder,true,()->openCleanse(player));
+            case "combine" -> schedule(player,holder,true,()->show(player,Screen.CONFIRM_COMBINE,Map.of()));
             case "anvil" -> schedule(player,holder,false,()->{
                 player.closeInventory();plugin.messages().sendList(player,"help-anvil");
                 player.sendMessage(plugin.messages().get("hub-anvil-instruction"));

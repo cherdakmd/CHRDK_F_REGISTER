@@ -17,7 +17,7 @@ class ScribeGuiContractTest {
         assertTrue(gui.contains("holder.generation==plugin.sourceGeneration()"));
         assertTrue(gui.contains("player.getOpenInventory().getTopInventory().getHolder()!=holder"));
         assertTrue(gui.contains("player.closeInventory()"));
-        assertTrue(gui.contains("plugin.workshop().confirmedSplit(player,holder.selected.action(),holder.selected.id())"));
+        assertTrue(gui.contains("plugin.workshop().confirmedGui(player,holder.selected.action(),holder.selected.id())"));
         assertTrue(workshop.contains("if (confirmed) return command(player, new String[]{\"confirm\", quote.code().toString()}, false)"));
         assertFalse(gui.contains("setStorageContents"));
         assertFalse(gui.contains("addItem("));

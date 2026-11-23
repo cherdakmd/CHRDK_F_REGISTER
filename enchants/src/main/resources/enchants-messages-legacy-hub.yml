@@ -10,3 +10,6 @@ enchants:
   - '<gray>Уровни, проклятия и откаты: /enchants help effects.</gray>'
   - '<gray>Предмет в руке: /enchants inspect; подбор новых чар: /enchants hand.</gray>'
   - '<gray>Каталог и библиотека ничего не выдают. Библиотека найденных книг: /enchants library.</gray>'
+  hub-cleanse-lore: '<gray>Выберите проклятие на предмете в руке; подтверждение и цена — в чате.</gray>'
+  hub-cleanse-choice: '<gray>Выбрать. Цена: 8 осколков аметиста и 1 алмаз; подтверждение в чате.</gray>'
+  hub-combine-lore: '<gray>Одинаковые чистые книги в двух руках; условия и подтверждение — в чате.</gray>'

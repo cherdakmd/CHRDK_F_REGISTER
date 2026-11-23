@@ -7,6 +7,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
@@ -28,10 +29,10 @@ final class ScribeGui implements Listener {
     ScribeGui(EnchantsPlugin plugin) { this.plugin=plugin; }
     private record Entry(String action,String id,int level,String label) { }
     private static final class Holder implements InventoryHolder {
-        final UUID owner; final long generation; final int slot,page; final ItemStack book;
+        final UUID owner, world; final long generation; final int slot,page; final ItemStack book;
         final List<Entry> entries; final Entry selected; Inventory inventory;
-        Holder(UUID owner,long generation,int slot,int page,ItemStack book,List<Entry> entries,Entry selected) {
-            this.owner=owner;this.generation=generation;this.slot=slot;this.page=page;this.book=book.clone();
+        Holder(UUID owner,UUID world,long generation,int slot,int page,ItemStack book,List<Entry> entries,Entry selected) {
+            this.owner=owner;this.world=world;this.generation=generation;this.slot=slot;this.page=page;this.book=book.clone();
             this.entries=List.copyOf(entries);this.selected=selected;
         }
         @Override public @NotNull Inventory getInventory() { return inventory; }
@@ -49,7 +50,7 @@ final class ScribeGui implements Listener {
                 .sorted(Comparator.comparing(e->e.getKey().getKey().toString()))
                 .forEach(e->entries.add(new Entry("splitvanilla",e.getKey().getKey().toString(),e.getValue(),e.getKey().getKey().toString())));
         if(entries.size()<2){plugin.messages().send(player,"scribe-book-required");return;}
-        show(player,new Holder(player.getUniqueId(),plugin.sourceGeneration(),player.getInventory().getHeldItemSlot(),0,book,entries,null));
+        show(player,new Holder(player.getUniqueId(),player.getWorld().getUID(),plugin.sourceGeneration(),player.getInventory().getHeldItemSlot(),0,book,entries,null));
     }
     private void show(Player player,Holder holder) {
         Inventory inventory=Bukkit.createInventory(holder,54,plugin.messages().get(holder.selected==null?"scribe-title":"scribe-confirm-title"));
@@ -77,7 +78,7 @@ final class ScribeGui implements Listener {
     private boolean valid(Player player,Holder holder) {
         return player.isOnline() && !player.isDead() && plugin.isEnabled() && plugin.coreApi()!=null
                 && plugin.coreApi().isAuthenticated(player) && player.hasPermission("chrdkenchants.use")
-                && holder.owner.equals(player.getUniqueId()) && holder.generation==plugin.sourceGeneration()
+                && holder.owner.equals(player.getUniqueId()) && holder.world.equals(player.getWorld().getUID()) && holder.generation==plugin.sourceGeneration()
                 && player.getInventory().getHeldItemSlot()==holder.slot
                 && Objects.equals(holder.book,player.getInventory().getItemInMainHand());
     }
@@ -86,6 +87,7 @@ final class ScribeGui implements Listener {
         if (!(event.getView().getTopInventory().getHolder() instanceof Holder holder))return;
         boolean cancelled=event.isCancelled(); event.setCancelled(true);
         if(cancelled || !(event.getWhoClicked() instanceof Player player) || !valid(player,holder)
+                || (event.getClick()!=ClickType.LEFT && event.getClick()!=ClickType.RIGHT)
                 || event.getRawSlot()<0 || event.getRawSlot()>=54)return;
         int slot=event.getRawSlot();
         if(holder.selected==null) {
@@ -98,13 +100,13 @@ final class ScribeGui implements Listener {
             if(!valid(player,holder) || player.getOpenInventory().getTopInventory().getHolder()!=holder)return;
             player.closeInventory();
             // InventoryClickEvent has completed; the existing workshop rebuilds and rechecks the full quote.
-            if(valid(player,holder))plugin.workshop().confirmedSplit(player,holder.selected.action(),holder.selected.id());
+            if(valid(player,holder))plugin.workshop().confirmedGui(player,holder.selected.action(),holder.selected.id());
         });
     }
     private void next(Player player,Holder holder,int page,Entry selected) {
         Bukkit.getScheduler().runTask(plugin,()->{
             if(valid(player,holder) && player.getOpenInventory().getTopInventory().getHolder()==holder)
-                show(player,new Holder(holder.owner,holder.generation,holder.slot,page,holder.book,holder.entries,selected));
+                show(player,new Holder(holder.owner,holder.world,holder.generation,holder.slot,page,holder.book,holder.entries,selected));
         });
     }
     @EventHandler(priority=EventPriority.HIGHEST)

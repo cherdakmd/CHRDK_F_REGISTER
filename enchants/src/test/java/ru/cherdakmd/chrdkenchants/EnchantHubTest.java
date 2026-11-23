@@ -25,11 +25,21 @@ class EnchantHubTest {
         assertFalse(hub.contains("setStorageContents"));assertFalse(hub.contains("addItem("));
         assertTrue(plugin.contains("hub.closeAll()"));
     }
+    @Test void bookActionsUseGuiConfirmationAndWorkshopValidation() throws Exception {
+        String hub=source("EnchantHub"), workshop=source("EnchantWorkshop"), scribe=source("ScribeGui");
+        assertTrue(hub.contains("Screen.CONFIRM_CLEANSE"));
+        assertTrue(hub.contains("Screen.CONFIRM_COMBINE"));
+        assertTrue(hub.contains("holder.world.equals(player.getWorld().getUID())"));
+        assertTrue(hub.contains("plugin.workshop().confirmedGui("));
+        assertTrue(scribe.contains("plugin.workshop().confirmedGui("));
+        assertTrue(workshop.contains("command(player, action.equals(\"combine\")"));
+        assertTrue(workshop.contains("if (confirmed) return command(player, new String[]{\"confirm\""));
+    }
     @Test void instructionsDoNotPretendToPreviewClosedAnvil() throws Exception {
         String hub=source("EnchantHub");assertTrue(hub.contains("hub-anvil-instruction"));
         assertFalse(hub.contains("command(player,holder,\"enchants preview\""));
         String messages=Files.readString(Path.of("src/main/resources/messages.yml"));
-        assertTrue(messages.contains("затем введите /enchants preview"));assertTrue(messages.contains("подтверждение и цена — в чате"));
+        assertTrue(messages.contains("затем введите /enchants preview"));assertTrue(messages.contains("подтвердите в меню"));
         for(var button:EnchantHub.buttons()) {
             assertTrue(messages.contains("hub-"+button.key()+":"),button.key());
             assertTrue(messages.contains("hub-"+button.key()+"-lore:"),button.key());

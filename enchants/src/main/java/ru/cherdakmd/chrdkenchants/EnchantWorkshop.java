@@ -29,10 +29,10 @@ final class EnchantWorkshop implements Listener {
                 && player.getOpenInventory().getType() == InventoryType.CRAFTING;
     }
     boolean command(Player player, String[] args) { return command(player, args, false); }
-    /** Called only after the scribe confirmation window is closed on the next tick. */
-    void confirmedSplit(Player player, String action, String id) {
-        if (!action.equals("split") && !action.equals("splitvanilla")) throw new IllegalArgumentException("split action");
-        command(player, new String[]{action, id}, true);
+    /** Called after a GUI confirmation window is closed; rebuild and validate the complete plan. */
+    void confirmedGui(Player player, String action, String id) {
+        if (!Set.of("split", "splitvanilla", "cleanse", "combine").contains(action)) throw new IllegalArgumentException("workshop action");
+        command(player, action.equals("combine") ? new String[]{action} : new String[]{action, id}, true);
     }
     private boolean command(Player player, String[] args, boolean confirmed) {
         String action = args[0].toLowerCase(Locale.ROOT);

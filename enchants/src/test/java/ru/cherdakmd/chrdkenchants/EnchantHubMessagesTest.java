@@ -16,6 +16,7 @@ class EnchantHubMessagesTest {
         var migrated=load(file);
         assertTrue(migrated.raw("help-overview").contains("/enchants catalog"));
         assertTrue(migrated.raw("usage").contains("catalog"));
+        assertTrue(migrated.raw("hub-cleanse-lore").contains("подтвердите в меню"));
         assertEquals(old,Files.readString(file),"owner file is never rewritten");
         Files.writeString(file,"enchants:\n  usage: '<gray>Свой текст</gray>'\n  help-overview:\n  - '<gray>Своя справка</gray>'\n");
         var custom=load(file);
