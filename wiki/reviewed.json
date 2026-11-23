@@ -61,8 +61,8 @@
       "text": "047bb7429e3457414b8d62535a1d34e949f854f04c19d9fd2c3af76ccabd3827"
     },
     "enchants": {
-      "reason": "Проверены защита данных предметов и диагностика смешанных книг",
-      "sources": "f6e72b63116247b75aa6392080ff32308995f0bd94aee3d591242697e1b9ac1f",
+      "reason": "Сверены условия восстановления частичного переноса",
+      "sources": "2fc66e30232298f1e64dbd02ff107fd315ac99834fbdd42b4ca0efaf0ccb56cd",
       "text": "7002d758a34695f1ea66e0fab3d2c9284432b47fd224680d13b7816da9aa4bd3"
     },
     "faq": {
@@ -101,8 +101,8 @@
       "text": "e15957dfe1e03322c3eac3605586bbf5ed49a6bab2b8cb7664e2119000ef0d17"
     },
     "mmorpg-roadmap": {
-      "reason": "Проверены защита данных предметов и диагностика смешанных книг",
-      "sources": "b478f65659417002f2671df46664e6e29e3e195f5967ad7e6eb81e903da1e7be",
+      "reason": "Сверены условия восстановления частичного переноса",
+      "sources": "5fdee1a3b12ad461eae4895c4311af496da2afccf25467c14aee2cd3004de188",
       "text": "c812385dc7c2ecb222169994ea31c68c5840a46c4c3d69d2e51fa831327458ea"
     },
     "mobs": {
