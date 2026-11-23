@@ -61,8 +61,8 @@
       "text": "047bb7429e3457414b8d62535a1d34e949f854f04c19d9fd2c3af76ccabd3827"
     },
     "enchants": {
-      "reason": "Сверены условия срабатывания ледяной брони",
-      "sources": "9481cade9a729e2892b10ce216d71080b0fcdd270369fb07425df9bd70cda38f",
+      "reason": "Сверены условия эффектов брони и добычи мобов",
+      "sources": "94d996da19c1c06c5ebb3965041d8a750cc9b130b78d5e26980519f5eda58978",
       "text": "6de7a200dbe47dabbdb53ab1f88419771051414e021cdc8b334052d9d330cc15"
     },
     "faq": {
@@ -101,8 +101,8 @@
       "text": "e15957dfe1e03322c3eac3605586bbf5ed49a6bab2b8cb7664e2119000ef0d17"
     },
     "mmorpg-roadmap": {
-      "reason": "Сверены условия срабатывания ледяной брони",
-      "sources": "bf7cbb290558d697f3aa991f54059743618a46aea513c1874d5118a599bbc83a",
+      "reason": "Сверены условия эффектов брони и добычи мобов",
+      "sources": "8c3c5445a3458d529fe695015ec5dd648948767ddfc923c2b0aefd4a324831c1",
       "text": "c812385dc7c2ecb222169994ea31c68c5840a46c4c3d69d2e51fa831327458ea"
     },
     "mobs": {

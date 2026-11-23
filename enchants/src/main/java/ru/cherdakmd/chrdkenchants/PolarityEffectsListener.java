@@ -13,6 +13,7 @@ import org.bukkit.event.player.PlayerItemDamageEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import ru.cherdakmd.chrdkregister.api.MineTreasureLootPolicy;
 
 import java.util.HashMap;
 import java.util.List;
@@ -102,13 +103,21 @@ public final class PolarityEffectsListener implements Listener {
             int prone = enchants.getOrDefault("fire_prone", 0);
             if (prone > 0) {
                 multiplier *= 1 + EnchantParams.percent("fire_prone", prone) / 100.0;
-                victim.setFireTicks(Math.max(victim.getFireTicks(),
-                        20 * (1 + Math.min(3, prone))));
             }
         }
         if (multiplier != 1.0) {
             event.setDamage(event.getDamage() * multiplier);
         }
+    }
+
+    /** Secondary burning only after ordinary damage protections have accepted the event. */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onConfirmedFireDamage(EntityDamageEvent event) {
+        if (!(event.getEntity() instanceof Player victim) || !isFireDamage(event.getCause())
+                || !DamageEvidence.positive(event.getFinalDamage())) return;
+        int prone = bestArmorEnchants(victim).getOrDefault("fire_prone", 0);
+        if (prone > 0) victim.setFireTicks(Math.max(victim.getFireTicks(),
+                20 * (1 + Math.min(3, prone))));
     }
 
     private static boolean isFireDamage(EntityDamageEvent.DamageCause cause) {
@@ -185,29 +194,24 @@ public final class PolarityEffectsListener implements Listener {
         if (killer == null) {
             return;
         }
-        Map<String, Integer> enchants =
-                plugin.items().read(killer.getInventory().getItemInMainHand());
-        if (enchants.isEmpty()) {
-            return;
-        }
-        // Мародёр: с убитых падает больше
-        int plunder = enchants.getOrDefault("plunder", 0);
-        if (plunder > 0) {
+        // Do not multiply a player's inventory or component-bearing plugin rewards.
+        Map<String, Integer> weapon = plugin.items().read(killer.getInventory().getItemInMainHand());
+        int plunder = weapon.getOrDefault("plunder", 0);
+        if (plunder > 0 && !(event.getEntity() instanceof Player)) {
             int percent = EnchantParams.percent("plunder", plunder);
             for (ItemStack drop : event.getDrops()) {
+                if (drop == null || !PlunderPolicy.eligible(false, MineTreasureLootPolicy.isForeignDrop(drop),
+                        drop.getAmount(), drop.getMaxStackSize())) continue;
                 int extra = drop.getAmount() * percent / 100;
-                if (random.nextInt(100) < drop.getAmount() * percent % 100) {
-                    extra++;
-                }
-                if (extra > 0) {
-                    drop.setAmount(Math.min(drop.getMaxStackSize(), drop.getAmount() + extra));
-                }
+                if (random.nextInt(100) < drop.getAmount() * percent % 100) extra++;
+                if (extra > 0) drop.setAmount(Math.min(drop.getMaxStackSize(), drop.getAmount() + extra));
             }
         }
-        // Лёгкая поступь: рывок скорости после убийства
-        int lightfoot = enchants.getOrDefault("lightfoot", 0);
-        if (lightfoot > 0) {
-            killer.addPotionEffect(new PotionEffect(PotionEffectType.SPEED,
+        // The enchant belongs to boots, not to the main-hand weapon. Only PvE is
+        // enabled: activating the previously broken effect in PvP needs approval.
+        if (!(event.getEntity() instanceof Player) && plugin.config().isEnabled("lightfoot")) {
+            int lightfoot = plugin.items().read(killer.getInventory().getBoots()).getOrDefault("lightfoot", 0);
+            if (lightfoot > 0) killer.addPotionEffect(new PotionEffect(PotionEffectType.SPEED,
                     EnchantParams.seconds("lightfoot", lightfoot) * 20,
                     EnchantParams.hasteAmplifier(lightfoot), true, false, false));
         }
