@@ -128,6 +128,8 @@ public final class Messages {
             migrateStockOverrides(defaults, overrides, legacy);
             migrateStockOverrides(defaults, overrides, readResource(plugin,
                     "presentation-legacy-messages-1.4.247.yml", logger));
+            migrateStockOverrides(defaults, overrides, readResource(plugin,
+                    "scribe-messages-legacy.yml", logger));
         }
         // Каждый из затронутых JAR хранит только свои точные старые подсказки.
         migrateStockOverrides(defaults, overrides, readResource(plugin,

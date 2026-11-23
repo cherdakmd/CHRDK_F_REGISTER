@@ -42,7 +42,7 @@ class StreamsRemovalTest {
         assertEquals(8, LabelPreferences.Label.values().length);
         var current = yaml("config.yml");
         var items = current.getMapList("server-menu.items");
-        assertEquals(43, items.size());
+        assertEquals(44, items.size());
         assertEquals(4, items.stream().filter(item -> "social".equals(item.get("category"))).count());
         assertFalse(items.stream().anyMatch(item -> RetiredAddons.command(String.valueOf(item.get("command")))
                 || RetiredAddons.plugin(String.valueOf(item.get("plugin")))));
@@ -129,7 +129,7 @@ class StreamsRemovalTest {
         live.set("auto-messages.enabled", false); live.set("auto-messages.interval-seconds", 777);
         var changes = PresentationMigration.replacements(live, List.of(legacy), current);
         assertTrue(changes.containsAll(List.of("server-menu.items", "auto-messages.messages")));
-        assertEquals(8, legacy.getMapList("server-menu.items").size() - current.getMapList("server-menu.items").size(), "два новых просмотра экономики, два пункта Auction, CHRDK_VK, катастрофы, тиры мобов, генератор и античит сохранены; п.29 вырезал пункт классов; питомцы удалены; заказы удалены; тиры и кузня вырезаны с пунктом «Редкости снаряжения»");
+        assertEquals(7, legacy.getMapList("server-menu.items").size() - current.getMapList("server-menu.items").size(), "два новых просмотра экономики, два пункта Auction, CHRDK_VK, катастрофы, тиры мобов, генератор и античит сохранены; п.29 вырезал пункт классов; питомцы удалены; заказы удалены; тиры и кузня вырезаны с пунктом «Редкости снаряжения»");
         for (String key : changes) live.set(key, current.get(key));
         assertFalse(live.getBoolean("auto-messages.enabled")); assertEquals(777, live.getInt("auto-messages.interval-seconds"));
         assertTrue(PresentationMigration.replacements(live, List.of(legacy), current).isEmpty());

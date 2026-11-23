@@ -29,7 +29,7 @@ class PetsRemovalTest {
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_Pets"));
         assertEquals(19, PluginUpdateService.MODULES.size());
         var stock = yaml("config.yml"); var items = stock.getMapList("server-menu.items");
-        assertEquals(43, items.size());
+        assertEquals(44, items.size());
         assertFalse(items.stream().anyMatch(item -> RetiredAddons.plugin(String.valueOf(item.get("plugin")))
                 || RetiredAddons.command(String.valueOf(item.get("command")))));
         assertFalse(items.stream().anyMatch(item -> String.valueOf(item.get("command")).startsWith("pet")));
@@ -70,7 +70,7 @@ class PetsRemovalTest {
                 .anyMatch(item -> String.valueOf(item.get("command")).startsWith("pet")));
         assertFalse(live.getList("auto-messages.messages").stream()
                 .anyMatch(raw -> String.valueOf(raw).contains("/pet list")));
-        assertEquals(43, live.getMapList("server-menu.items").size());
+        assertEquals(44, live.getMapList("server-menu.items").size());
         assertEquals(36, live.getList("auto-messages.messages").size());
     }
 }
