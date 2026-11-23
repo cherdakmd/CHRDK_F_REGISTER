@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * disk and reconcile the pending record before making any further operation.
  */
 public final class AnvilTransactionJournal {
-    private static final Gson JSON = new Gson();
+    private static final Gson JSON = new GsonBuilder().serializeNulls().create();
     private static final int MAX_PAYLOAD = 4 * 1024 * 1024;
     private static final int MAX_FILE = 8 * 1024 * 1024;
     private static final ConcurrentHashMap<Path, Object> LOCKS = new ConcurrentHashMap<>();
