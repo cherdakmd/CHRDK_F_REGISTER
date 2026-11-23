@@ -117,7 +117,7 @@ class AnvilQuotesTest {
         var source = Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkenchants/AnvilApplyListener.java"));
         var start = source.indexOf("void preview(Player player)");
         var report = source.substring(start, source.indexOf("private void reject", start));
-        for (String guard : java.util.List.of("instanceof AnvilView", "quotes.get", "quote.source", "quote.output", "view.canBypassCost()", "isAuthenticated", "transferBlocked", "quote.surcharge()", "Integer.MAX_VALUE", "AnvilPrice.merge", "player.getLevel() >= quote.cost()")) assertTrue(report.contains(guard), guard);
+        for (String guard : java.util.List.of("instanceof AnvilView", "quotes.get", "quote.source", "quote.output", "view.canBypassCost()", "isAuthenticated", "transferBlocked", "quote.surcharge()", "Integer.MAX_VALUE", "AnvilPrice.merge", "AnvilPrice.previewStatus(quote.cost()")) assertTrue(report.contains(guard), guard);
         for (String forbidden : java.util.List.of("setItem", "setResult", "setLevel", "giveExp", "dispatchCommand", "quotes.put", "items().write")) assertFalse(report.contains(forbidden), forbidden);
     }
 }
