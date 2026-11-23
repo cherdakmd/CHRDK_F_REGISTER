@@ -147,21 +147,28 @@ public final class BowEffectsListener implements Listener {
                     shooter);
         }
 
-        if (event.getHitEntity() instanceof LivingEntity victim) {
-            int frost = enchants.getOrDefault("frostarrow", 0);
-            if (frost > 0) {
-                int ticks = EnchantParams.seconds("frostarrow", frost) * 20;
-                victim.setFreezeTicks(Math.min(victim.getMaxFreezeTicks(),
-                        victim.getFreezeTicks() + ticks));
-                victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, ticks, 0));
-                victim.getWorld().spawnParticle(Particle.SNOWFLAKE, victim.getLocation().add(0, 1, 0),
-                        20, 0.4, 0.6, 0.4, 0.01);
-            }
-            if (enchants.containsKey("tracer")) {
-                victim.setGlowing(true);
-                Bukkit.getScheduler().runTaskLater(plugin, () -> victim.setGlowing(false),
-                        EnchantParams.seconds("tracer", 1) * 20L);
-            }
+    }
+
+    /** Direct control effects require an accepted damage event, not merely a projectile collision. */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onConfirmedArrowDamage(EntityDamageByEntityEvent event) {
+        if (!(event.getDamager() instanceof Arrow arrow)
+                || !(event.getEntity() instanceof LivingEntity victim) || event.getFinalDamage() <= 0) return;
+        Map<String, Integer> enchants = plugin.items().readEntity(arrow);
+        int frost = enchants.getOrDefault("frostarrow", 0);
+        if (frost > 0) {
+            int ticks = EnchantParams.seconds("frostarrow", frost) * 20;
+            victim.setFreezeTicks(Math.min(victim.getMaxFreezeTicks(), victim.getFreezeTicks() + ticks));
+            victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, ticks, 0));
+            victim.getWorld().spawnParticle(Particle.SNOWFLAKE, victim.getLocation().add(0, 1, 0),
+                    20, 0.4, 0.6, 0.4, 0.01);
+        }
+        // Use a timed effect, not a delayed setGlowing(false): the latter can
+        // disable another plugin's or another arrow's existing glow.
+        if (enchants.containsKey("tracer") && !victim.isGlowing()
+                && victim.getPotionEffect(PotionEffectType.GLOWING) == null) {
+            victim.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING,
+                    EnchantParams.seconds("tracer", 1) * 20, 0, true, false, false));
         }
     }
 

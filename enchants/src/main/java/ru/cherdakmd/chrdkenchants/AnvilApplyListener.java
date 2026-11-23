@@ -197,8 +197,14 @@ public final class AnvilApplyListener implements Listener {
                     default -> "preview-unavailable";
                 };
                 plugin.messages().send(player, message);
+                previewRejectedCustom(player, left, right);
+                previewRejectedVanilla(player, left, right);
                 return;
             }
+        }
+        if (quote == null && customBook(right) && left != null && player.hasPermission("chrdkenchants.use")
+                && plugin.coreApi()!=null && plugin.coreApi().isAuthenticated(player)) {
+            previewRejectedVanilla(player,left,right);
         }
         if (quote == null || !quote.source(view, left, right, view.getRenameText())
                 || !quote.output(view.getTopInventory().getItem(2), ru.cherdakmd.chrdkregister.api.AnvilCosts.actual(view), view.getRepairItemCountCost(),
@@ -217,6 +223,52 @@ public final class AnvilApplyListener implements Listener {
             var def = EnchantRegistry.byId(entry.getKey()); int was = before.getOrDefault(def.id(), 0);
             plugin.messages().send(player, "preview-transfer", "name", plugin.messages().mini("en." + def.id() + ".name"),
                     "before", was, "after", AnvilPrice.merge(was, entry.getValue(), def.maxLevel()));
+        }
+    }
+
+    /** Read-only explanation, never a quote or permission for partial item delivery. */
+    private void previewRejectedCustom(Player player,ItemStack left,ItemStack right) {
+        var config=plugin.config(); var target=plugin.items().validated(left); var book=plugin.items().validated(right);
+        if(config==null||target==null||book==null)return;
+        var plan=PartialBookPlan.build(left.getType().name(),left.getType()==Material.ENCHANTED_BOOK,
+                target,book,config::isEnabled,config.maxPerItem(),config.maxLegendaryPerItem());
+        if(plan==null)return;
+        plugin.messages().send(player,"preview-partial-explanation");
+        for(String id:new java.util.TreeSet<>(book.keySet())) {
+            var reason=plan.reasons().get(id);
+            String key=reason==null?"preview-part-compatible":switch(reason) {
+                case DISABLED -> "preview-part-disabled";
+                case MISMATCH -> "preview-part-mismatch";
+                case CONFLICT -> "preview-part-conflict";
+                case LIMIT -> "preview-part-limit";
+                case LEGENDARY_LIMIT -> "preview-part-legendary";
+                case NO_IMPROVEMENT -> "preview-part-no-improvement";
+            };
+            plugin.messages().send(player,"preview-part-line","name",plugin.messages().mini("en."+id+".name"),
+                    "detail",ru.cherdakmd.chrdkregister.Messages.trusted(plugin.messages().raw(key)));
+        }
+    }
+
+    /** The live server registry supplies applicability and symmetric vanilla conflicts. */
+    private void previewRejectedVanilla(Player player,ItemStack left,ItemStack right) {
+        if(plugin.config()==null || !(right.getItemMeta() instanceof EnchantmentStorageMeta storage) || !storage.hasStoredEnchants())return;
+        var plan=PartialVanillaBookPlan.build(VanillaLevels.levels(left),storage.getStoredEnchants(),
+                enchantment->enchantment.getKey().toString(),
+                enchantment->left.getType()==Material.ENCHANTED_BOOK||enchantment.canEnchantItem(left),
+                (a,b)->a.conflictsWith(b),enchantment->Math.max(plugin.config().vanillaLevelCap(),enchantment.getMaxLevel()));
+        if(plan==null || plan.reasons().values().stream().noneMatch(reason->reason!=PartialVanillaBookPlan.Reason.NO_IMPROVEMENT))return;
+        plugin.messages().send(player,"preview-vanilla-explanation");
+        var keys=new java.util.ArrayList<>(storage.getStoredEnchants().keySet());
+        keys.sort(java.util.Comparator.comparing(enchantment->enchantment.getKey().toString()));
+        for(var enchantment:keys){
+            var reason=plan.reasons().get(enchantment);
+            String key=reason==null?"preview-vanilla-compatible":switch(reason){
+                case MISMATCH -> "preview-part-mismatch";
+                case CONFLICT -> "preview-part-conflict";
+                case NO_IMPROVEMENT -> "preview-part-no-improvement";
+            };
+            plugin.messages().send(player,"preview-part-line","name",enchantment.getKey().toString(),
+                    "detail",ru.cherdakmd.chrdkregister.Messages.trusted(plugin.messages().raw(key)));
         }
     }
 

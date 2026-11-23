@@ -19,6 +19,18 @@ class BookIntegrityTest {
         assertEquals(Map.of("seer",1), EnchantCodec.decode("seer:1;broken"));
         assertNull(EnchantBookValidation.read("seer:1;broken"));
     }
+    @Test void automaticRefreshDoesNotRewritePartlyDecodedData() throws Exception {
+        String items=source("EnchantItems");
+        int start=items.indexOf("public void refresh(ItemStack item)");
+        int end=items.indexOf("public boolean repairAttributes(ItemStack item)",start);
+        String refresh=items.substring(start,end);
+        assertTrue(refresh.contains("validated(item)"));
+        assertTrue(refresh.contains("if (enchants == null) return;"));
+        assertFalse(refresh.contains("enchants = read(item)"));
+        int repairEnd=items.indexOf("public boolean apply(ItemStack",end);
+        assertTrue(items.substring(end,repairEnd).contains("enchants == null || enchants.isEmpty()"));
+        assertNull(EnchantBookValidation.read("seer:1;unknown:1"));
+    }
     @Test void unusualFinalVanillaResultsFailClosed() {
         assertFalse(TableListener.validVanilla(Map.of())); assertFalse(TableListener.validVanilla(Map.of("test",0)));
         assertFalse(TableListener.validVanilla(Map.of("test",256))); assertTrue(TableListener.validVanilla(Map.of("test",5)));

@@ -123,7 +123,10 @@ public final class EnchantItems {
         if (meta == null) {
             return;
         }
-        Map<String, Integer> enchants = read(item);
+        // Tolerant decoding is for legacy effects, not for rewriting data: an
+        // invalid PDC must not erase lore or modifiers for the unparsed entries.
+        Map<String, Integer> enchants = validated(item);
+        if (enchants == null) return;
         applyAttributes(item, meta, enchants);
         refreshLore(meta, enchants, item.getType() == Material.ENCHANTED_BOOK);
         item.setItemMeta(meta);
@@ -139,9 +142,9 @@ public final class EnchantItems {
      * @return {@code true} — предмет изменён (инвентарь стоит перерисовать)
      */
     public boolean repairAttributes(ItemStack item) {
-        if (item == null || !item.hasItemMeta() || read(item).isEmpty()) {
-            return false;
-        }
+        if (item == null || !item.hasItemMeta()) return false;
+        var enchants = validated(item);
+        if (enchants == null || enchants.isEmpty()) return false;
         ItemMeta meta = item.getItemMeta();
         if (meta == null || !ItemAttributes.keep(item, meta)) {
             return false;

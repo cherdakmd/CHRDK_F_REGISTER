@@ -54,6 +54,24 @@ class AnvilBookMergeTest {
     }
 
     @Test
+    void rejectedBookExplainsEachCustomEnchantWithoutGrantingAnything() throws Exception {
+        String anvil=source("AnvilApplyListener");
+        assertTrue(anvil.contains("previewRejectedCustom(player, left, right)"));
+        int begin=anvil.indexOf("private void previewRejectedCustom(");
+        int end=anvil.indexOf("private void reject(",begin);
+        String preview=anvil.substring(begin,end);
+        assertTrue(preview.contains("PartialBookPlan.build"));
+        assertTrue(preview.contains("items().validated(left)"));
+        assertTrue(preview.contains("items().validated(right)"));
+        assertFalse(preview.contains("applyFromBook"));
+        assertFalse(preview.contains("setItem"));
+        assertFalse(preview.contains("addItem"));
+        assertTrue(anvil.contains("previewRejectedVanilla(player, left, right)"));
+        assertTrue(preview.contains("PartialVanillaBookPlan.build"));
+        assertTrue(preview.contains("a.conflictsWith(b)"));
+    }
+
+    @Test
     void vanillaMergeCombinesStoredEnchantsOntoBooks() throws Exception {
         String merge = source("VanillaBookMerge");
         assertTrue(merge.contains("boolean bookTarget = source.getType() == Material.ENCHANTED_BOOK"));
