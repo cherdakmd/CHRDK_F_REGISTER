@@ -5,6 +5,7 @@ enchants:
     Не меняйте руки и инвентарь.</gray>'
   workshop-selected: '<gray>Выбранная чара: <light_purple>%name%</light_purple>. Очищение удаляет только её проклятие; разделение переносит её в отдельную книгу без
     копирования.</gray>'
+  workshop-vanilla-selected: '<gray>Выбрана ванильная чара %id%; исходная книга сохранит остальные чары и метаданные.</gray>'
   workshop-result: '<gray>После объединения: <light_purple>%name%</light_purple>, уровень <yellow>%level%</yellow>; две исходные книги расходуются.</gray>'
   workshop-done: <green>Операция завершена. Материалы списаны, результат в инвентаре.</green>
   workshop-rejected: '<red>Операция отклонена, ничего не списано. Нужны Survival, закрытый контейнер, один предмет в основной руке, обычные материалы и место. Объединение:
@@ -44,7 +45,7 @@ enchants:
   anvil-capped: <red>На предмете уже максимум чар (%max%) или они конфликтуют.</red>
   usage: <gray>/enchants — каталог %count% чар; help [books|anvil|workshop|effects], info &lt;id&gt;, find &lt;текст&gt;, group &lt;тип&gt;, rarity &lt;редкость&gt;,
     light, curses, hand, sort &lt;id|name|rarity&gt;, inspect, cooldowns, sources, library [страница], guard [auto|id], preview, cleanse &lt;id&gt;, combine, split
-    &lt;id&gt;, confirm &lt;код&gt;</gray>
+    &lt;id&gt;, splitvanilla &lt;id&gt;, confirm &lt;код&gt;</gray>
   info-header: <light_purple>✦ %name% <gray>(%rarity%, ур. I–%maxlevel%)</gray>
   info-items: '<gray>Накладывается на: <yellow>%items%</yellow></gray>'
   info-conflicts: '<gray>Конфликтует с: <red>%conflicts%</red></gray>'
@@ -632,6 +633,7 @@ enchants:
   - <gray>Цена 8 лазурита + 1 физический алмаз; две книги превращаются в одну с уровнем +1.</gray>
   - '<gray>/enchants split &lt;id&gt;: смешанная книга в основной руке; 1 обычная книга + 8 лазурита и место.</gray>'
   - <gray>Выбранная чара переносится в новую книгу; прочие кастомные/ванильные остаются. Из снаряжения не извлекается.</gray>
+  - '<gray>/enchants splitvanilla &lt;id&gt;: отделяет ванильную чару книги с несколькими чарами за 1 книгу и 8 лазурита.</gray>'
   - <gray>Сначала получите условия, затем /enchants confirm &lt;код&gt; в течение 30 сек. До подтверждения расхода нет.</gray>
   - <gray>Не меняйте инвентарь, руки и слот. Выход, смерть, TP, закрытие окна или reload отменяют предложение.</gray>
   - <gray>Мастерская может быть выключена администрацией; баланс /bal вместо материалов не списывается.</gray>

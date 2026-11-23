@@ -25,7 +25,7 @@ final class EnchantWorkshop implements Listener {
         return plugin.isEnabled() && player.isOnline() && !player.isDead() && player.getGameMode() == GameMode.SURVIVAL
                 && !player.hasMetadata("NPC") && player.hasPermission("chrdkenchants.use") && plugin.coreApi() != null
                 && plugin.coreApi().isAuthenticated(player) && plugin.getConfig().getBoolean("workshop.enabled", true)
-                && plugin.getConfig().getBoolean("workshop." + action + ".enabled", true)
+                && plugin.getConfig().getBoolean("workshop." + (action.equals("splitvanilla") ? "split" : action) + ".enabled", true)
                 && player.getOpenInventory().getType() == InventoryType.CRAFTING;
     }
     boolean command(Player player, String[] args) {
@@ -50,13 +50,14 @@ final class EnchantWorkshop implements Listener {
             }
             plugin.messages().send(player, "workshop-done"); return true;
         }
-        if (!Set.of("cleanse", "combine", "split").contains(action)) return false;
+        if (!Set.of("cleanse", "combine", "split", "splitvanilla").contains(action)) return false;
         pending.remove(player.getUniqueId());
         if (!allowed(player, action) || (action.equals("combine") ? args.length != 1 : args.length != 2)) { fail(player); return true; }
         var inventory = player.getInventory(); int slot = inventory.getHeldItemSlot();
         var before = copy(inventory.getStorageContents()); var off = clone(inventory.getItemInOffHand());
         var main = before[slot]; var data = plugin.items().validated(main);
-        if (main == null || main.getAmount() != 1 || !WorkshopPolicy.valid(data)) { fail(player); return true; }
+        if (main == null || main.getAmount() != 1 || data == null
+                || (!WorkshopPolicy.valid(data) && !(action.equals("splitvanilla") && data.isEmpty()))) { fail(player); return true; }
         var after = copy(before); ItemStack nextOff = clone(off); String cost;
         switch (action) {
             case "cleanse" -> {
@@ -88,6 +89,33 @@ final class EnchantWorkshop implements Listener {
                 after[empty] = plugin.items().makeEnchantBook(EnchantRegistry.byId(args[1]), data.get(args[1]), EnchantBookSource.WORKSHOP);
                 cost = "1 книга + 8 лазурита";
             }
+            case "splitvanilla" -> {
+                if (!book(main) || !(main.getItemMeta() instanceof EnchantmentStorageMeta meta)
+                        || !meta.hasStoredEnchants()) { fail(player); return true; }
+                String id = args[1].toLowerCase(Locale.ROOT);
+                if (!id.contains(":")) id = "minecraft:" + id;
+                org.bukkit.enchantments.Enchantment selected = null;
+                for (var enchantment : meta.getStoredEnchants().keySet()) {
+                    if (enchantment.getKey().toString().equals(id)) { selected = enchantment; break; }
+                }
+                var result = WorkshopPolicy.splitVanilla(meta.getStoredEnchants(), selected);
+                if (result == null || result.remainder().isEmpty() && data.isEmpty()) { fail(player); return true; }
+                // Original book retains all non-selected components, lore and foreign PDC.
+                var originalMeta = (EnchantmentStorageMeta) after[slot].getItemMeta();
+                if (!originalMeta.removeStoredEnchant(selected) || !originalMeta.getStoredEnchants().equals(result.remainder())
+                        || !after[slot].setItemMeta(originalMeta)) { fail(player); return true; }
+                ItemStack extracted = new ItemStack(Material.ENCHANTED_BOOK);
+                if (!(extracted.getItemMeta() instanceof EnchantmentStorageMeta extractedMeta)
+                        || !extractedMeta.addStoredEnchant(selected, result.level(), true)
+                        || !extractedMeta.getStoredEnchants().equals(Map.of(selected, result.level()))
+                        || !extracted.setItemMeta(extractedMeta)) { fail(player); return true; }
+                if (!pay(after, slot, Material.BOOK, 1) || !pay(after, slot, Material.LAPIS_LAZULI, 8)) { fail(player); return true; }
+                int empty = -1;
+                for (int i = 0; i < after.length; i++) if (after[i] == null || after[i].getType().isAir()) { empty = i; break; }
+                if (empty < 0) { fail(player); return true; }
+                after[empty] = extracted;
+                cost = "1 книга + 8 лазурита";
+            }
             default -> throw new IllegalStateException("Unknown workshop operation");
         }
         var plan = new Plan(action, player.getWorld().getUID(), plugin.sourceGeneration(), slot, before, off, after, nextOff);
@@ -96,6 +124,7 @@ final class EnchantWorkshop implements Listener {
         plugin.messages().send(player, "workshop-quote", "action", switch (action) { case "cleanse" -> "Очищение"; case "combine" -> "Объединение"; default -> "Разделение"; }, "cost", cost, "code", quote.code());
         if (action.equals("combine")) for (var entry : plugin.items().read(after[slot]).entrySet())
             plugin.messages().send(player, "workshop-result", "name", plugin.messages().mini("en." + entry.getKey() + ".name"), "level", entry.getValue());
+        else if (action.equals("splitvanilla")) plugin.messages().send(player, "workshop-vanilla-selected", "id", args[1]);
         else plugin.messages().send(player, "workshop-selected", "name", plugin.messages().mini("en." + args[1] + ".name"));
         return true;
     }

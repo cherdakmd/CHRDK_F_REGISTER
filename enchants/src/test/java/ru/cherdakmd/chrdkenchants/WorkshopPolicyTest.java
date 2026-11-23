@@ -66,4 +66,35 @@ class WorkshopPolicyTest {
         for (String guard : List.of("Arrays.equals(plan.before()", "Objects.equals(plan.off()", "plan.generation() !=", "plan.world().equals", "getHeldItemSlot()", "main.isSimilar(off)", "meta.hasStoredEnchants() || meta.hasEnchants()", "!item.hasItemMeta()", "MaterialDebit.plan", "result.remainder()", "EnchantBookSource.WORKSHOP")) assertTrue(source.contains(guard), guard);
         assertFalse(source.contains("dispatchCommand")); assertFalse(source.contains("dropItem"));
     }
+    @Test void vanillaSplitPreservesEachEntryAndAboveVanillaLevel() {
+        var original = new LinkedHashMap<String,Integer>();
+        original.put("minecraft:fortune", 15); original.put("minecraft:mending", 1);
+        for (String selected : original.keySet()) {
+            var split=WorkshopPolicy.splitVanilla(original,selected);
+            assertNotNull(split); assertEquals(original.get(selected),split.level());
+            var combined=new LinkedHashMap<>(split.remainder());
+            assertNull(combined.put(split.extracted(),split.level()));
+            assertEquals(original,combined);
+        }
+        assertEquals(2,original.size());
+        assertNull(WorkshopPolicy.splitVanilla(original,"minecraft:missing"));
+        assertNull(WorkshopPolicy.splitVanilla(Map.of("bad",0),"bad"));
+        var invalid=new HashMap<String,Integer>();invalid.put("bad",null);
+        assertNull(WorkshopPolicy.splitVanilla(invalid,"bad"));
+    }
+    @Test void vanillaSplitKeepsOriginalMetadataAndNeverCopiesItToOutput() throws Exception {
+        var source=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkenchants/EnchantWorkshop.java"));
+        int start=source.indexOf("case \"splitvanilla\" -> {");
+        int end=source.indexOf("default -> throw",start);
+        assertTrue(start>=0 && end>start);
+        var action=source.substring(start,end);
+        assertTrue(action.contains("WorkshopPolicy.splitVanilla(meta.getStoredEnchants(), selected)"));
+        assertTrue(action.contains("originalMeta.getStoredEnchants().equals(result.remainder())"));
+        assertTrue(action.contains("new ItemStack(Material.ENCHANTED_BOOK)"));
+        assertTrue(action.contains("extractedMeta.getStoredEnchants().equals(Map.of(selected, result.level()))"));
+        assertTrue(action.contains("Material.BOOK, 1"));
+        assertTrue(action.contains("Material.LAPIS_LAZULI, 8"));
+        assertFalse(action.contains("dropItem"));
+    }
+
 }

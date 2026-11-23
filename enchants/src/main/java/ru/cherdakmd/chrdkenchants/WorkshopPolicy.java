@@ -32,5 +32,15 @@ final class WorkshopPolicy {
         var next = new LinkedHashMap<>(data); int level = next.remove(id);
         return new Split(Map.copyOf(next), Map.of(id, level));
     }
+    record VanillaSplit<K>(Map<K, Integer> remainder, K extracted, int level) { }
+    /** Preserve every untouched entry exactly, including levels above vanilla maxima. */
+    static <K> VanillaSplit<K> splitVanilla(Map<K, Integer> data, K selected) {
+        if (data == null || data.isEmpty() || selected == null || !data.containsKey(selected)) return null;
+        for (var entry : data.entrySet())
+            if (entry.getKey() == null || entry.getValue() == null || entry.getValue() < 1) return null;
+        var next = new LinkedHashMap<>(data);
+        int level = next.remove(selected);
+        return new VanillaSplit<>(Map.copyOf(next), selected, level);
+    }
     private WorkshopPolicy() { }
 }

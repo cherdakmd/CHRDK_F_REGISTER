@@ -261,7 +261,7 @@ public final class EnchantCommandHandler implements TabExecutor {
         String prefix = args[args.length - 1].toLowerCase(Locale.ROOT);
         if ("enchants".equalsIgnoreCase(command.getName())) {
             if (!sender.hasPermission("chrdkenchants.use")) return matches;
-            if (args.length == 1) return List.of("help", "guard", "library", "sources", "info", "find", "group", "rarity", "light", "curses", "hand", "sort", "inspect", "preview", "cleanse", "combine", "split", "confirm", "cooldowns")
+            if (args.length == 1) return List.of("help", "guard", "library", "sources", "info", "find", "group", "rarity", "light", "curses", "hand", "sort", "inspect", "preview", "cleanse", "combine", "split", "splitvanilla", "confirm", "cooldowns")
                     .stream().filter(value -> value.startsWith(prefix)).toList();
             if (args.length == 2) {
                 List<String> values = switch (args[0].toLowerCase(Locale.ROOT)) {
@@ -270,6 +270,9 @@ public final class EnchantCommandHandler implements TabExecutor {
                     case "library" -> java.util.stream.IntStream.rangeClosed(1, EnchantLibrary.pages(EnchantRegistry.size())).mapToObj(Integer::toString).toList();
                     case "cleanse" -> EnchantRegistry.curses().stream().map(EnchantDef::id).toList();
                     case "info", "find", "split" -> EnchantRegistry.all().stream().map(EnchantDef::id).toList();
+                    case "splitvanilla" -> sender instanceof Player player
+                            && player.getInventory().getItemInMainHand().getItemMeta() instanceof org.bukkit.inventory.meta.EnchantmentStorageMeta storage
+                            ? storage.getStoredEnchants().keySet().stream().map(e -> e.getKey().toString()).sorted().toList() : List.of();
                     case "group" -> java.util.Arrays.stream(ItemGroup.values()).map(value -> value.name().toLowerCase(Locale.ROOT)).toList();
                     case "rarity" -> java.util.Arrays.stream(EnchantDef.Rarity.values()).map(value -> value.name().toLowerCase(Locale.ROOT)).toList();
                     case "sort" -> java.util.Arrays.stream(EnchantCatalog.Sort.values()).map(value -> value.name().toLowerCase(Locale.ROOT)).toList();
