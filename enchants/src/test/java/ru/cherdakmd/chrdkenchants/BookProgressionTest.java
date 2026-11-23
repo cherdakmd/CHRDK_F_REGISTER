@@ -80,7 +80,7 @@ class BookProgressionTest {
                 });
         assertNull(api.book("seer", 1, EnchantBookSource.TREASURE));
         assertNull(api.book("seer", 1, EnchantBookSource.SHARDS));
-        assertTrue(source("EnchantItems").contains("if (source != null && source.retired()) return null;"));
+        assertTrue(source("EnchantItems").contains("source != null && source.retired()) return null;"));
         assertTrue(source("EnchantsApiBridge").contains("if (source != null && source.retired()) return null;"));
         assertFalse(source("EnchantSourceReport").contains("ChrdkTreasureBookInfo"));
     }

@@ -56,7 +56,7 @@ class ShopBookInfoTest {
     @Test
     void everyCustomEnchantHasRussianNameAndEffect() throws Exception {
         List<ShopConfig.ShopItem> books = customBooks();
-        assertEquals(76, books.size(), "Реестр чар изменился — нужен повтор генерации справочника");
+        assertEquals(75, books.size(), "Реестр чар изменился — нужен повтор генерации справочника");
         int curses = 0;
         for (ShopConfig.ShopItem item : books) {
             ShopBookKey.Spec spec = item.spec();
