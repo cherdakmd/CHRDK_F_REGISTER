@@ -34,6 +34,8 @@ public final class EnchantsPlugin extends JavaPlugin {
     private EnchantItems items;
     private EnchantService service;
     private EnchantGui gui;
+    private EnchantHub hub;
+    EnchantHub hub() { return hub; }
     private TableListener table;
     private AnvilApplyListener anvil;
     private EnchantWorkshop workshop;
@@ -71,6 +73,8 @@ public final class EnchantsPlugin extends JavaPlugin {
         this.items = new EnchantItems(this);
         this.service = new EnchantService(this, items);
         this.gui = new EnchantGui(this);
+        this.hub = new EnchantHub(this);
+        Bukkit.getPluginManager().registerEvents(hub, this);
         this.commandHandler = new EnchantCommandHandler(this);
         this.auras = new AuraService(this);
 
@@ -139,6 +143,7 @@ public final class EnchantsPlugin extends JavaPlugin {
         if (tools != null) tools.clear();
         if (miningUtility != null) miningUtility.clear();
         if (gui != null) gui.stop();
+        if (hub != null) hub.closeAll();
         if (pve != null) pve.stop();
         if (utility != null) utility.stop();
         if (auras != null) {
@@ -190,6 +195,7 @@ public final class EnchantsPlugin extends JavaPlugin {
                 () -> { if (tools != null) tools.clear(); },
                 () -> { if (miningUtility != null) miningUtility.clear(); },
                 () -> { if (gui != null) gui.closeAll(); },
+                () -> { if (hub != null) hub.closeAll(); },
                 () -> { if (pve != null) pve.reload(); },
                 () -> { if (utility != null) utility.reload(); });
         return true;

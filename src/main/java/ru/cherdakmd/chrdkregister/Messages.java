@@ -179,6 +179,7 @@ public final class Messages {
         Map<String, String> overrides = checkedOverrides(base, file);
         migrateCheckedStock(defaults, overrides, plugin.getResource("enchants-messages-legacy-1.4.282-rc6.yml"));
         migrateCheckedStock(defaults, overrides, plugin.getResource("enchants-messages-legacy-1.4.282-rc9.yml"));
+        migrateCheckedStock(defaults, overrides, plugin.getResource("enchants-messages-legacy-hub.yml"));
         overrides.replaceAll((key, text) -> GameplayRewardTexts.message(plugin.getName(), key, text));
         return checkedMessages(defaults, overrides, logger);
     }

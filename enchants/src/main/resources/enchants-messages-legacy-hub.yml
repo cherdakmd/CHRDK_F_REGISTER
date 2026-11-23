@@ -1,0 +1,12 @@
+enchants:
+  usage: <gray>/enchants — каталог %count% чар; help [books|anvil|workshop|effects], info &lt;id&gt;, find &lt;текст&gt;, group &lt;тип&gt;, rarity &lt;редкость&gt;,
+    light, curses, hand, sort &lt;id|name|rarity&gt;, inspect, cooldowns, sources, library [страница], guard [auto|id], preview, cleanse &lt;id&gt;, combine, split
+    &lt;id&gt;, splitvanilla &lt;id&gt;, confirm &lt;код&gt;</gray>
+  help-overview:
+  - <gold>Чары CHRDK — справочник</gold>
+  - '<gray>Каталог: /enchants; карточка: /enchants info &lt;id&gt;; поиск: /enchants find &lt;текст&gt;.</gray>'
+  - '<gray>Книги и источники: /enchants help books; действующие шансы: /enchants sources.</gray>'
+  - '<gray>Наложение и цена XP: /enchants help anvil; материалы: /enchants help workshop.</gray>'
+  - '<gray>Уровни, проклятия и откаты: /enchants help effects.</gray>'
+  - '<gray>Предмет в руке: /enchants inspect; подбор новых чар: /enchants hand.</gray>'
+  - '<gray>Каталог и библиотека ничего не выдают. Библиотека найденных книг: /enchants library.</gray>'
