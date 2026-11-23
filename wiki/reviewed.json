@@ -61,8 +61,8 @@
       "text": "047bb7429e3457414b8d62535a1d34e949f854f04c19d9fd2c3af76ccabd3827"
     },
     "enchants": {
-      "reason": "Сверены новые ячейки мастерской и прямые команды",
-      "sources": "1c8653adafb3ae529ef1ba9ceae74657f5232d64adcc703029c2ead6301c1b30",
+      "reason": "Уточнена подпись кнопки и исправлен YAML",
+      "sources": "ebd6e1d98eedb2d9c45b8bfa1328beb41b763dc9a739280739c352cd374792d2",
       "text": "5c3a3950cbc16b0fc7dae47d80ebd51b717e1c4917859af63eb17788620ba673"
     },
     "faq": {
@@ -101,8 +101,8 @@
       "text": "2960ffd74e02312bdc1eded4680afc84d5ae631060360a11af5ddfd607ffb9ea"
     },
     "mmorpg-roadmap": {
-      "reason": "Сверены новые ячейки мастерской и прямые команды",
-      "sources": "7fea2a42ec54c6b0a2f9062b7082e40ba42a77dffc61989fe2182aa59f61ac66",
+      "reason": "Уточнена подпись кнопки и исправлен YAML",
+      "sources": "c18a2cca6fc0b6e0ff1ea85136488f1ebd38ff841b4f6fc38af10a1e23c1188e",
       "text": "c812385dc7c2ecb222169994ea31c68c5840a46c4c3d69d2e51fa831327458ea"
     },
     "mobs": {
