@@ -65,6 +65,9 @@ final class EnchantLibraryListener implements Listener {
         if (!plugin.getConfig().getBoolean("library.enabled", true)) { plugin.messages().send(player, "library-disabled"); return; }
         var entries = read(player);
         if (entries == null) { plugin.messages().send(player, "library-invalid"); return; }
+        // Hide retired entries without deleting the saved library history.
+        entries = entries.entrySet().stream().filter(entry -> !EnchantRegistry.retired(entry.getKey()))
+                .collect(java.util.stream.Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
         int page = Math.clamp((long) requested, 1, EnchantLibrary.pages(entries.size()));
         plugin.messages().send(player, "library-header", "count", entries.size(), "total", EnchantRegistry.size(),
                 "page", page, "pages", EnchantLibrary.pages(entries.size()));

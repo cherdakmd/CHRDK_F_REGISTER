@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class EnchantBookSourcesTest {
     @Test void sourceTiersGateRarityWithoutRemovingTheCatalog() {
-        assertEquals(76, EnchantRegistry.all().size());
+        assertEquals(75, EnchantRegistry.all().size());
         for (EnchantDef def : EnchantRegistry.all()) {
             assertEquals(def.rarity().ordinal() <= 1, EnchantBookPolicy.allows(def.rarity().name(), 1));
             assertEquals(def.rarity().ordinal() <= 2, EnchantBookPolicy.allows(def.rarity().name(), 2));
@@ -44,7 +44,7 @@ class EnchantBookSourcesTest {
             long size = EnchantRegistry.light().stream().filter(def -> EnchantBookPolicy.allows(def.rarity().name(), current)).count();
             assertTrue(size > previous); previous = (int) size;
         }
-        assertEquals(61, previous);
+        assertEquals(60, previous);
     }
     @Test void deferredTableCommitHasCancellationReloadIdentityAndAuthenticationGuards() throws Exception {
         String source = source("TableListener");

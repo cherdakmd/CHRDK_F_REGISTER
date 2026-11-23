@@ -15,9 +15,8 @@ class PassivePotionIntegrationTest {
         assertTrue(enchants.contains("PassivePotions.replace(plugin, player, passive, 20)"));
         assertFalse(enchants.contains("player.addPotionEffect("));
         assertTrue(enchants.contains("GLOWING, 120")); // скан каждые 4×20=80 тиков
-        assertTrue(enchants.contains("feet.getType() != Material.LAVA && support.getType() != Material.LAVA"));
-        assertTrue(enchants.contains("passive.add(new PotionEffect(PotionEffectType.FIRE_RESISTANCE"));
         assertFalse(enchants.contains("lavaCrust"));
+        assertFalse(enchants.contains("walkLava"));
         String artifacts = source("artifacts/src/main/java/ru/cherdakmd/chrdkartifacts/PassiveEffectsService.java");
         assertTrue(artifacts.contains("!type.isInstant()) continuous.add"));
         assertTrue(artifacts.contains("PassivePotions.replace(plugin, player, continuous"));

@@ -14,15 +14,15 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Каталог 1.4.220: 76 чар — 61 светлая и 15 проклятий, уникальные id,
+ * Каталог 1.4.220: 75 чар — 60 светлых и 15 проклятий, уникальные id,
  * валидные группы поддержки, редкости и смешанная конфликтная группа.
  */
 class EnchantRegistryTest {
 
     @Test
-    void seventySixUniqueEnchants() {
+    void seventyFiveUniqueEnchants() {
         List<EnchantDef> all = EnchantRegistry.all();
-        assertEquals(76, all.size());
+        assertEquals(75, all.size());
         Set<String> ids = new HashSet<>();
         all.forEach(def -> {
             assertTrue(ids.add(def.id()), "дубликат id " + def.id());
@@ -35,10 +35,10 @@ class EnchantRegistryTest {
     }
 
     @Test
-    void polaritySplitIsSixtyOneAndFifteen() {
-        assertEquals(61, EnchantRegistry.lightCount());
+    void polaritySplitIsSixtyAndFifteen() {
+        assertEquals(60, EnchantRegistry.lightCount());
         assertEquals(15, EnchantRegistry.curseCount());
-        assertEquals(76, EnchantRegistry.lightCount() + EnchantRegistry.curseCount());
+        assertEquals(75, EnchantRegistry.lightCount() + EnchantRegistry.curseCount());
         EnchantRegistry.light().forEach(def -> assertFalse(def.curse(), def.id()));
         EnchantRegistry.curses().forEach(def -> assertTrue(def.curse(), def.id()));
     }

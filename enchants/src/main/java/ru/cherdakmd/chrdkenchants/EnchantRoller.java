@@ -25,15 +25,17 @@ public final class EnchantRoller {
     public static List<EnchantDef> applicable(List<EnchantDef> enabled, String materialName,
                                               Map<String, Integer> present,
                                               int maxPerItem, int maxLegendaryPerItem) {
-        if (present.size() >= maxPerItem) {
+        if (EnchantRegistry.activeCount(present) >= maxPerItem) {
             return List.of();
         }
         long legendary = present.keySet().stream()
+                .filter(id -> !EnchantRegistry.retired(id))
                 .map(EnchantRegistry::byId)
                 .filter(def -> def != null && def.rarity() == EnchantDef.Rarity.LEGENDARY)
                 .count();
         List<EnchantDef> result = new ArrayList<>();
         for (EnchantDef def : enabled) {
+            if (EnchantRegistry.retired(def.id())) continue;
             if (present.containsKey(def.id())) continue; // уникальность; апгрейд уровней — отдельная механика, не трогаем
             // 1.4.282: единые правила несовместимости, чтобы мега-добыча и прочие
             // группы не проскакивали ни в одном источнике выдачи.

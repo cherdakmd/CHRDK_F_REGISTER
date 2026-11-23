@@ -1,4 +1,4 @@
-# Инвентаризация 76 чар
+# Инвентаризация 75 действующих и одной выведенной чары
 
 Механически собранная карта реестра и буквальных ссылок в Java; наличие ссылки не доказывает корректность эффекта. Конфигурация, зависимости и серверные события требуют отдельной проверки. `ANY` — только группы из `ItemGroup`, а не все предметы.
 
@@ -29,7 +29,7 @@
 | `seer` | Провидец | LIGHT | 1 | HELMET | — | AuraService |
 | `swiftfeet` | Стремительные | LIGHT | 2 | BOOTS | — | AuraService |
 | `froggy` | Лягушачьи лапки | LIGHT | 2 | BOOTS | — | AuraService |
-| `lavawalker` | Лавоступ | LIGHT | 1 | BOOTS | — | AuraService |
+| `lavawalker` | Лавоступ (выведена) | LIGHT | 1 | BOOTS | — | Только чтение старых записей; эффекта и новых источников нет |
 | `autosmelt` | Автоплавка | LIGHT | 1 | PICKAXE | — | ToolEffectsListener |
 | `veinminer` | Жилодробитель | LIGHT | 3 | PICKAXE | megamine | ToolEffectsListener |
 | `excavator` | Дробитель | LIGHT | 2 | PICKAXE, SHOVEL, AXE | megamine | ToolEffectsListener |

@@ -8,7 +8,7 @@ final class EnchantBookValidation {
     static Map<String, Integer> read(String raw) {
         if (raw == null || raw.isBlank() || raw.length() > 4096) return null;
         String[] tokens = raw.split(";", -1);
-        if (tokens.length > EnchantRegistry.size()) return null;
+        if (tokens.length > EnchantRegistry.knownCount()) return null;
         Map<String, Integer> parsed = new LinkedHashMap<>();
         for (String token : tokens) {
             String[] parts = token.split(":", -1);

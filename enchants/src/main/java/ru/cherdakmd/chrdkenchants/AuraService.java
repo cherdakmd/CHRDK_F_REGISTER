@@ -2,10 +2,8 @@ package ru.cherdakmd.chrdkenchants;
 
 import ru.cherdakmd.chrdkregister.api.PassivePotions;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
-import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Monster;
@@ -21,7 +19,7 @@ import java.util.Map;
 
 /**
  * Периодические ауры: стремительные лапки, лягушачьи ноги, провидец (ночное зрение),
- * орлиный глаз (подсветка), лавоступ (огнестойкость в лаве).
+ * орлиный глаз (подсветка).
  *
  * <p>1.4.128: сюда же переехали чары и проклятия, которым нужен «пульс» —
  * «Живучесть» (регенерация), «Старатель» (спешка), «Тупой резец» (усталость),
@@ -157,9 +155,6 @@ public final class AuraService {
             passive.add(new PotionEffect(PotionEffectType.JUMP_BOOST, 50,
                     frog - 1, true, false, false));
         }
-        if (enchants.containsKey("lavawalker")) {
-            walkLava(player, passive);
-        }
     }
 
     /* ------------------------------- шлем ------------------------------- */
@@ -189,16 +184,4 @@ public final class AuraService {
         }
     }
 
-    /* ------------------------------- лавоступ ------------------------------- */
-
-    private void walkLava(Player player, List<PotionEffect> passive) {
-        Block feet = player.getLocation().getBlock();
-        Block support = feet.getRelative(0, -1, 0);
-        if (feet.getType() != Material.LAVA && support.getType() != Material.LAVA) return;
-        // Safety fallback: do not modify the world. A magma crust cannot be safely
-        // restored across crashes or attributed after another plugin replaces it.
-        passive.add(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 60,
-                0, true, false, false));
-        player.setFireTicks(0);
-    }
 }

@@ -20,7 +20,7 @@ class EnchantDescriptionsTest {
     }
     @Test void everyDefinitionHasDetailedRenderableTextSharedByBookAndCatalog() throws Exception {
         var messages = messages();
-        assertEquals(76, EnchantRegistry.size());
+        assertEquals(75, EnchantRegistry.size());
         for (var def : EnchantRegistry.all()) {
             String key = "en." + def.id() + ".lore";
             assertTrue(messages.has(key), key);

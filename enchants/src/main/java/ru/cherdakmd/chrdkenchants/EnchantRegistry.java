@@ -27,7 +27,7 @@ import static ru.cherdakmd.chrdkenchants.EnchantDef.Rarity.LEGENDARY;
 import static ru.cherdakmd.chrdkenchants.EnchantDef.Rarity.RARE;
 
 /**
- * Реестр всех кастомных чар (1.4.220: 76 — 61 светлых и 15 проклятий).
+ * Реестр всех кастомных чар (1.4.220: 75 — 60 светлых и 15 проклятий).
  *
  * <p>Первые 30 — «эпические» чары из 1.4.13 (Громобой, Вампиризм, Феникс…).
  * Волна 18 добавила 15 новых светлых чар (статы: урон, скорость стрел, защита,
@@ -40,6 +40,9 @@ public final class EnchantRegistry {
     private static final Set<ItemGroup> ANY = Collections.unmodifiableSet(EnumSet.allOf(ItemGroup.class));
 
     private static final Map<String, EnchantDef> REGISTRY = new LinkedHashMap<>();
+    // Decode old PDC and library entries without offering or reactivating this retired enchant.
+    private static final EnchantDef RETIRED_LAVAWALKER =
+            new EnchantDef("lavawalker", LEGENDARY, 1, null, Set.of(BOOTS), LIGHT);
 
     static {
         // ------------------------- 30 эпических чар (1.4.13–1.4.124) -------------------------
@@ -68,7 +71,6 @@ public final class EnchantRegistry {
         register("seer", COMMON, 1, null, LIGHT, HELMET);
         register("swiftfeet", RARE, 2, null, LIGHT, BOOTS);
         register("froggy", COMMON, 2, null, LIGHT, BOOTS);
-        register("lavawalker", LEGENDARY, 1, null, LIGHT, BOOTS);
         register("autosmelt", RARE, 1, null, LIGHT, PICKAXE);
         register("veinminer", EPIC, 3, "megamine", LIGHT, PICKAXE);
         register("excavator", EPIC, 2, "megamine", LIGHT, PICKAXE, SHOVEL, AXE);
@@ -151,7 +153,15 @@ public final class EnchantRegistry {
     }
 
     public static EnchantDef byId(String id) {
-        return id == null ? null : REGISTRY.get(id.toLowerCase(java.util.Locale.ROOT).trim());
+        if (id == null) return null;
+        String canonical = id.toLowerCase(java.util.Locale.ROOT).trim();
+        return retired(canonical) ? RETIRED_LAVAWALKER : REGISTRY.get(canonical);
+    }
+
+    static boolean retired(String id) { return "lavawalker".equals(id); }
+    static int knownCount() { return REGISTRY.size() + 1; }
+    static long activeCount(Map<String, Integer> entries) {
+        return entries.keySet().stream().filter(id -> !retired(id)).count();
     }
 
     public static List<EnchantDef> all() {

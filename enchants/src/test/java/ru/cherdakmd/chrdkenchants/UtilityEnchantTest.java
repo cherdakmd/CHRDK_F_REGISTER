@@ -16,7 +16,7 @@ class UtilityEnchantTest {
     private static final Logger LOG = Logger.getLogger("UtilityEnchantTest");
     @Test void sixPositiveImplementedUtilitiesExtendTheCatalogToSeventyFour() {
         assertEquals(7, UtilityEnchant.values().length);
-        assertEquals(76, EnchantRegistry.size()); assertEquals(61, EnchantRegistry.lightCount());
+        assertEquals(75, EnchantRegistry.size()); assertEquals(60, EnchantRegistry.lightCount());
         assertEquals(15, EnchantRegistry.curseCount());
         for (var utility : UtilityEnchant.values()) {
             var def = EnchantRegistry.byId(utility.id);
@@ -38,14 +38,14 @@ class UtilityEnchantTest {
     }
     @Test void utilityMasterIsIndependentOfThePveMasterAndIndividualFlags() {
         var yaml = new YamlConfiguration();
-        assertEquals(76, EnchantsConfig.parse(yaml, LOG).enabledEnchants().size());
+        assertEquals(75, EnchantsConfig.parse(yaml, LOG).enabledEnchants().size());
         yaml.set("utility-effects.enabled", false);
         var disabled = EnchantsConfig.parse(yaml, LOG);
-        assertEquals(69, disabled.enabledEnchants().size());
+        assertEquals(68, disabled.enabledEnchants().size());
         assertTrue(disabled.isEnabled("crippling_edge")); assertTrue(disabled.isEnabled("phoenix"));
         for (var utility : UtilityEnchant.values()) assertFalse(disabled.isEnabled(utility.id));
         yaml.set("pve-effects.enabled", false);
-        assertEquals(60, EnchantsConfig.parse(yaml, LOG).enabledEnchants().size());
+        assertEquals(59, EnchantsConfig.parse(yaml, LOG).enabledEnchants().size());
         yaml.set("utility-effects.enabled", true); yaml.set("enchants.garden_step.enabled", false);
         assertFalse(EnchantsConfig.parse(yaml, LOG).isEnabled("garden_step"));
         assertTrue(EnchantsConfig.parse(yaml, LOG).isEnabled("quiet_step"));

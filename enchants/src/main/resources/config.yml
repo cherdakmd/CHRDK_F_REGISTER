@@ -1,4 +1,4 @@
-# CHRDK_Enchants — 76 кастомных чар: 61 светлая и 15 проклятий. Предметы с ними
+# CHRDK_Enchants — 75 кастомных чар: 60 светлых и 15 проклятий. Предметы с ними
 # живут в NBT (PDC) и сохраняются в инвентарях игроков — отдельного хранилища нет.
 #
 # 1.4.128: проклятия — это отдельный полюс. Они реально мешают (минус к урону,
@@ -77,7 +77,6 @@ enchants:
   seer: {enabled: true}               # Провидец
   swiftfeet: {enabled: true}          # Стремительные
   froggy: {enabled: true}             # Лягушачьи лапки
-  lavawalker: {enabled: true}         # Лавоступ
   autosmelt: {enabled: true}          # Автоплавка
   veinminer: {enabled: true}          # Жилодробитель
   excavator: {enabled: true}          # Дробитель

@@ -150,7 +150,7 @@ class WikiBuildTest(unittest.TestCase):
 
     def test_detailed_enchant_cards_publish_all_game_descriptions_and_conflicts(self):
         details = self.book.enchant_catalog(detailed=True)
-        self.assertEqual(76, len(details))
+        self.assertEqual(75, len(details))
         page = (self.root / "site/enchants.html").read_text()
         for card in details:
             self.assertIn("Несовместимо на одном предмете:", card)

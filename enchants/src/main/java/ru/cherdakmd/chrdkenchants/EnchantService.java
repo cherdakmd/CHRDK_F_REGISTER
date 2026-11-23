@@ -137,12 +137,12 @@ public final class EnchantService {
                     plugin.config().maxPerItem(), plugin.config().maxLegendaryPerItem());
             if (rest.isEmpty()) {
                 if (EnchantConflicts.conflictsWith(hypothetical, id)) return "conflict";
-                if (hypothetical.size() >= plugin.config().maxPerItem()) return "limit";
+                if (EnchantRegistry.activeCount(hypothetical) >= plugin.config().maxPerItem()) return "limit";
                 if (def.rarity() == EnchantDef.Rarity.LEGENDARY) return "legendary-limit";
                 return "blocked";
             }
             // добавление даже при замене существующей той же чары — пересчёт лимита:
-            if (!itemEnchants.containsKey(id) && itemEnchants.size() >= plugin.config().maxPerItem()) {
+            if (!itemEnchants.containsKey(id) && EnchantRegistry.activeCount(itemEnchants) >= plugin.config().maxPerItem()) {
                 return "limit";
             }
             itemEnchants.put(id, bookEnchants.get(id));

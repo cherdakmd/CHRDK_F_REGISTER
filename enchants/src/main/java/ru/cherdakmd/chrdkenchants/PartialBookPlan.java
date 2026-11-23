@@ -36,14 +36,14 @@ final class PartialBookPlan {
         for(String id:new TreeSet<>(book.keySet())) {
             var def=EnchantRegistry.byId(id);int incoming=book.get(id),before=result.getOrDefault(id,0);
             Reason reason=null;
-            if(!enabled.test(id))reason=Reason.DISABLED;
+            if(EnchantRegistry.retired(id)||!enabled.test(id))reason=Reason.DISABLED;
             else if(!bookTarget&&!def.supports(material))reason=Reason.MISMATCH;
             else if(EnchantConflicts.conflictsWith(result,id))reason=Reason.CONFLICT;
             else {
                 var others=new LinkedHashMap<>(result);others.remove(id);
-                if(others.size()>=max)reason=Reason.LIMIT;
+                if(EnchantRegistry.activeCount(others)>=max)reason=Reason.LIMIT;
                 else if(def.rarity()==EnchantDef.Rarity.LEGENDARY && others.keySet().stream()
-                        .map(EnchantRegistry::byId).filter(Objects::nonNull)
+                        .filter(key->!EnchantRegistry.retired(key)).map(EnchantRegistry::byId).filter(Objects::nonNull)
                         .filter(d->d.rarity()==EnchantDef.Rarity.LEGENDARY).count()>=legendaryMax)reason=Reason.LEGENDARY_LIMIT;
                 else if(AnvilPrice.merge(before,incoming,def.maxLevel())<=before)reason=Reason.NO_IMPROVEMENT;
             }

@@ -162,7 +162,7 @@ public final class EnchantItems {
      *         (PDC не тронут)
      */
     public boolean apply(ItemStack item, EnchantDef def, int level) {
-        if (item == null || def == null) {
+        if (item == null || def == null || EnchantRegistry.retired(def.id())) {
             return false;
         }
         Map<String, Integer> enchants = new LinkedHashMap<>(read(item));
@@ -179,7 +179,7 @@ public final class EnchantItems {
         return makeEnchantBook(def, level, ru.cherdakmd.chrdkregister.api.EnchantBookSource.API);
     }
     public ItemStack makeEnchantBook(EnchantDef def, int level, ru.cherdakmd.chrdkregister.api.EnchantBookSource source) {
-        if (source != null && source.retired()) return null;
+        if (def == null || EnchantRegistry.retired(def.id()) || source != null && source.retired()) return null;
         ItemStack book = new ItemStack(Material.ENCHANTED_BOOK);
         var originMeta = book.getItemMeta();
         originMeta.getPersistentDataContainer().set(bookSource, PersistentDataType.STRING,
