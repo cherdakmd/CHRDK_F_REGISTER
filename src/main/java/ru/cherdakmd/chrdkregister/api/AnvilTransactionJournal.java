@@ -56,6 +56,27 @@ public final class AnvilTransactionJournal {
     public boolean healthy() { synchronized (lock) { return healthy; } }
     public Intent pending() { synchronized (lock) { return pending; } }
 
+    /** Store an immutable full-item snapshot. This does not establish escrow. */
+    public void prepareSnapshot(AnvilEscrowSnapshot snapshot) throws IOException {
+        Objects.requireNonNull(snapshot, "snapshot");
+        prepare(new Intent(snapshot.operation(), snapshot.owner(), snapshot.encode()));
+    }
+    /** Decode and bind the snapshot to its journal envelope; malformed data fails closed. */
+    public AnvilEscrowSnapshot pendingSnapshot() throws IOException {
+        synchronized (lock) {
+            if (pending == null) return null;
+            try {
+                var snapshot = AnvilEscrowSnapshot.decode(pending.payload());
+                if (!pending.operation().equals(snapshot.operation()) || !owner.equals(snapshot.owner()))
+                    throw new IllegalArgumentException("anvil snapshot identity");
+                return snapshot;
+            } catch (IllegalArgumentException error) {
+                healthy = false;
+                throw new IOException("Повреждён снимок наковальни; не удаляйте журнал", error);
+            }
+        }
+    }
+
     /** Persist intent before touching input items or any payment. */
     public void prepare(Intent intent) throws IOException {
         synchronized (lock) {
