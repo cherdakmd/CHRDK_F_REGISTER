@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
  * секунду, в том числе асинхронно. Состояние камеры кэшируется тикером.</p>
  *
  * <ul>
- *   <li>{@code %chrdkgenerator_tier%} — тир 1…9, 0 — генератора нет;</li>
+ *   <li>{@code %chrdkgenerator_tier%} — тир 1…15, 0 — генератора нет;</li>
  *   <li>{@code %chrdkgenerator_fill%} — заполненность бункера, % (0…100);</li>
  *   <li>{@code %chrdkgenerator_rate%} — цикл производства, секунд;</li>
  *   <li>{@code %chrdkgenerator_status%} — состояние камеры текстом;</li>

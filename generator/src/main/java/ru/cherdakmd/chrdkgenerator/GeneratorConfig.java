@@ -208,12 +208,12 @@ public final class GeneratorConfig {
         return craft;
     }
 
-    /** Семь тиров по порядку (индекс 0 — тир 1). */
+    /** Пятнадцать тиров по порядку (индекс 0 — тир 1). */
     public List<Tier> tiers() {
         return tiers;
     }
 
-    /** Тир по номеру 1…9. */
+    /** Тир по номеру 1…15. */
     public Tier tier(int tier) {
         return tiers.get(tier - 1);
     }
@@ -286,12 +286,21 @@ public final class GeneratorConfig {
         int payoutPerRankStep = positive(payouts, "daily-cap-per-rank-step");
         int payoutHardMax = positive(payouts, "daily-cap-hard-max");
         Craft craft = parseCraft(root.getConfigurationSection("craft"));
-        List<Tier> tiers = parseTiers(root.getMapList("tiers"));
+        var rawTiers = root.getMapList("tiers");
+        List<Tier> tiers = parseTiers(rawTiers, rawTiers.size() == 9 ? 9 : TIERS);
         ConfigurationSection upgrades = root.getConfigurationSection("upgrades");
         if (upgrades == null) {
             throw new IllegalArgumentException("нет секции generator.upgrades");
         }
-        List<Cost> tierCosts = parseCosts(upgrades.getMapList("tiers"), "upgrades.tiers", TIERS - 1);
+        var rawCosts = upgrades.getMapList("tiers");
+        boolean legacy = rawTiers.size() == 9 && rawCosts.size() == 8;
+        if (rawTiers.size() != TIERS && !legacy)
+            throw new IllegalArgumentException("generator: нужны 15 тиров и 14 цен либо старые 9 и 8");
+        List<Cost> tierCosts = parseCosts(rawCosts, "upgrades.tiers", legacy ? 8 : TIERS - 1);
+        if (legacy) {
+            tiers = expandLegacyTiers(tiers);
+            tierCosts = expandLegacyCosts(tierCosts);
+        }
         List<Cost> moduleCosts = parseCosts(upgrades.getMapList("modules"), "upgrades.modules",
                 GeneratorStore.MAX_LEVEL);
         Cost chunkCost = parseCost(upgrades.get("chunk"), "upgrades.chunk");
@@ -360,9 +369,9 @@ public final class GeneratorConfig {
         return new Craft(enabled, List.copyOf(shape), Map.copyOf(ingredients));
     }
 
-    private static List<Tier> parseTiers(List<?> rows) {
-        if (rows.size() != TIERS) {
-            throw new IllegalArgumentException("generator.tiers: ждём ровно " + TIERS + " тиров");
+    private static List<Tier> parseTiers(List<?> rows, int expected) {
+        if (rows.size() != expected) {
+            throw new IllegalArgumentException("generator.tiers: ждём ровно " + expected + " тиров");
         }
         List<Tier> tiers = new ArrayList<>();
         for (int i = 0; i < rows.size(); i++) {
@@ -415,6 +424,32 @@ public final class GeneratorConfig {
             tiers.add(new Tier(name, unitsPerCycle, money, List.copyOf(drops)));
         }
         return tiers;
+    }
+
+    /** Old 9/8 configurations are adapted in memory, never rewritten. */
+    static List<Tier> expandLegacyTiers(List<Tier> previous) {
+        if (previous.size() != 9) throw new IllegalArgumentException("legacy tiers");
+        var result = new ArrayList<Tier>();
+        for (int i=0; i<15; i++) {
+            int old=i*8/14;
+            Tier tier=previous.get(old);
+            boolean intermediate=i>0 && old==(i-1)*8/14;
+            String name=intermediate ? tier.name()+" II" : tier.name();
+            var drops=new ArrayList<>(tier.drops());
+            if (intermediate) drops.addAll(previous.get(old+1).drops());
+            result.add(new Tier(name,tier.unitsPerCycle(),tier.money(),List.copyOf(drops)));
+        }
+        return List.copyOf(result);
+    }
+    static List<Cost> expandLegacyCosts(List<Cost> previous) {
+        if (previous.size() != 8) throw new IllegalArgumentException("legacy prices");
+        var result = new ArrayList<Cost>();
+        for (int i=0;i<14;i++) {
+            Cost old=previous.get(i*8/14);
+            var resources=old.resources().stream().map(r -> new Resource(r.material(), (r.amount()+19)/20)).toList();
+            result.add(new Cost((old.money()+19)/20,resources));
+        }
+        return List.copyOf(result);
     }
 
     private static List<Cost> parseCosts(List<?> rows, String path, int expected) {

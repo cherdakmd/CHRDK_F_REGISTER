@@ -180,7 +180,7 @@ class GeneratorStoreTest {
         UUID owner = UUID.randomUUID();
         store.install(owner, UUID.randomUUID(), "world", 0, 0, 0, 0L, 3);
         assertThrows(IllegalArgumentException.class, () -> store.setTier(owner, 0, 0));
-        assertThrows(IllegalArgumentException.class, () -> store.setTier(owner, 0, 10),
+        assertThrows(IllegalArgumentException.class, () -> store.setTier(owner, 0, GeneratorStore.MAX_TIER + 1),
                 "за пределами девяти тиров рост невозможен");
         store.setTier(owner, 0, GeneratorStore.MAX_TIER);
         store.setModuleLevel(owner, 0, "speed", 5);

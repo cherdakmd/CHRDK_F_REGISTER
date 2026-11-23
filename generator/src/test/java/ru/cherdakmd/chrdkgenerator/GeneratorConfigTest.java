@@ -53,24 +53,13 @@ class GeneratorConfigTest {
 
         assertEquals(GeneratorConfig.TIERS, config.tiers().size());
         assertEquals("Исток", config.tier(1).name());
-        assertEquals("Сердце", config.tier(7).name());
-        assertEquals("Пульс", config.tier(8).name());
-        assertEquals("Резонанс", config.tier(9).name());
-        assertEquals(List.of(1, 1, 2, 2, 3, 3, 4, 5, 6),
+        assertEquals("Резонанс", config.tier(15).name());
+        assertEquals(List.of(1,1,1,1,2,2,2,3,3,3,3,4,4,5,6),
                 config.tiers().stream().map(GeneratorConfig.Tier::unitsPerCycle).toList());
-        assertEquals(10, config.tier(7).drops().size(), "тир 7 — микс материалов кузни и сердечных");
-        assertTrue(config.tier(7).drops().stream().filter(GeneratorDrops.Drop::rare).count() == 3);
-        assertEquals(8, config.tier(8).drops().size(), "тир 8 — микс с редким лутом");
-        assertTrue(config.tier(8).drops().stream().filter(GeneratorDrops.Drop::rare).count() == 3);
-        assertEquals(8, config.tier(9).drops().size(), "тир 9 — дорогая вершина");
-        assertTrue(config.tier(9).drops().stream().filter(GeneratorDrops.Drop::rare).count() == 3);
-
-        assertEquals(null, config.tier(4).money(), "деньги только с тира 5");
-        assertEquals(0.15, config.tier(5).money().chance());
-        assertEquals(1.0, config.tier(7).money().chance(), "тир 7 — деньги регулярно");
-        assertEquals(4, config.tier(7).money().portion());
-        assertEquals(1.0, config.tier(9).money().chance());
-        assertEquals(6, config.tier(9).money().portion());
+        assertEquals(6, config.tier(2).drops().size(), "промежуточный тир смешивает соседние таблицы");
+        assertEquals(8, config.tier(15).drops().size());
+        assertEquals(1.0, config.tier(15).money().chance());
+        assertEquals(6, config.tier(15).money().portion());
 
         assertEquals(384, config.payoutBase());
         assertEquals(64, config.payoutPerTier());
@@ -78,19 +67,29 @@ class GeneratorConfigTest {
         assertEquals(4096, config.payoutHardMax());
 
         assertEquals(GeneratorConfig.TIERS - 1, config.tierCosts().size());
-        assertEquals(5_000, config.tierCosts().get(0).money());
-        assertEquals(25_000, config.tierCosts().get(1).money());
-        assertEquals("IRON_INGOT", config.tierCosts().get(1).resources().get(0).material());
-        assertEquals(256, config.tierCosts().get(1).resources().get(0).amount());
-        assertEquals(120_000, config.tierCosts().get(3).money());
-        assertEquals(750_000, config.tierCosts().get(6).money(), "переход 7→8 дорогой");
-        assertEquals(8, config.tierCosts().get(6).resources().get(0).amount());
-        assertEquals(1_000_000, config.tierCosts().get(7).money(), "переход 8→9 — вершина цен");
-        assertEquals(32, config.tierCosts().get(7).resources().get(0).amount());
+        assertEquals(250, config.tierCosts().get(0).money());
+        assertEquals(13, config.tierCosts().get(0).resources().get(0).amount());
+        assertEquals(50_000, config.tierCosts().get(13).money());
+        assertEquals(2, config.tierCosts().get(13).resources().get(0).amount());
         assertEquals(GeneratorStore.MAX_LEVEL, config.moduleCosts().size());
         assertEquals(0, config.moduleCosts().get(0).money(), "низкие уровни — ресурсы");
         assertEquals(75_000, config.moduleCosts().get(4).money(), "высшие уровни — деньги");
         assertEquals(50_000, config.chunkCost().money());
+    }
+
+    @Test void legacyNineTiersMigrateInMemoryWithoutChangingConfig() {
+        var in=GeneratorConfigTest.class.getResourceAsStream("/generator-legacy-9.yml");
+        assertNotNull(in);
+        var yaml=YamlConfiguration.loadConfiguration(new InputStreamReader(in,StandardCharsets.UTF_8));
+        var migrated=GeneratorConfig.load(yaml); var fresh=GeneratorConfig.load(resource());
+        assertEquals(9,yaml.getMapList("generator.tiers").size());
+        assertEquals(8,yaml.getMapList("generator.upgrades.tiers").size());
+        assertEquals(fresh.tiers(),migrated.tiers());
+        assertEquals(fresh.tierCosts(),migrated.tierCosts());
+        assertEquals(fresh.moduleCosts(),migrated.moduleCosts());
+        assertEquals(fresh.chunkCost(),migrated.chunkCost());
+        yaml.set("generator.upgrades.tiers",List.of());
+        assertThrows(IllegalArgumentException.class,()->GeneratorConfig.load(yaml));
     }
 
     @Test void malformedGeneratorSectionIsRejected() {

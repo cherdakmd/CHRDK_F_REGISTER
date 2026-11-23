@@ -29,14 +29,14 @@ class GeneratorUpgradesTest {
     @Test void tierStepsMatchDesignExamples() {
         GeneratorConfig config = config();
         GeneratorConfig.Cost tier3 = GeneratorUpgrades.tierCost(config, 3);
-        assertEquals(25_000, tier3.money(), "тир 3 — 25 000 ₽ по дизайну");
-        assertEquals("IRON_INGOT", tier3.resources().get(0).material());
-        assertEquals(256, tier3.resources().get(0).amount());
+        assertEquals(250, tier3.money(), "тир 3 — уменьшенная цена");
+        assertEquals("COBBLESTONE", tier3.resources().get(0).material());
+        assertEquals(13, tier3.resources().get(0).amount());
 
         GeneratorConfig.Cost tier5 = GeneratorUpgrades.tierCost(config, 5);
-        assertEquals(120_000, tier5.money(), "тир 5 — 120 000 ₽ по дизайну");
-        assertEquals("DIAMOND", tier5.resources().get(0).material());
-        assertEquals(64, tier5.resources().get(0).amount());
+        assertEquals(1_250, tier5.money(), "тир 5 — уменьшенная цена");
+        assertEquals("IRON_INGOT", tier5.resources().get(0).material());
+        assertEquals(13, tier5.resources().get(0).amount());
 
         assertThrows(IndexOutOfBoundsException.class, () -> GeneratorUpgrades.tierCost(config, 1),
                 "у тира 1 нет предыдущего шага");
@@ -57,7 +57,7 @@ class GeneratorUpgradesTest {
 
     @Test void describeShowsMoneyAndResources() {
         GeneratorConfig config = config();
-        assertEquals("25000 ₽ + IRON_INGOT × 256",
+        assertEquals("250 ₽ + COBBLESTONE × 13",
                 GeneratorUpgrades.describe(GeneratorUpgrades.tierCost(config, 3)));
         assertEquals("75000 ₽",
                 GeneratorUpgrades.describe(GeneratorUpgrades.moduleCost(config, 5)));

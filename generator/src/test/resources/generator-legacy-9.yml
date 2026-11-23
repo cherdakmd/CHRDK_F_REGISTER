@@ -1,0 +1,187 @@
+# CHRDK_Generator — личный генератор ресурсов (п.31).
+#
+# Игрок крафтит «ядро генератора», ставит его в своём привате и организует
+# камеру с лавой и водой: пока оба блока на месте, генератор производит
+# ресурсы по своему тиру. Продукция копится в бункере, забирается предметами.
+# Прогресс (тир, модули, бункер) хранится в generator.json по UUID игрока.
+#
+# Принцип репозитория: никакого pay-to-win. Деньги за улучшения сжигаются
+# (sink), выдача денег идёт под дневным лимитом, ранги влияют только на
+# потолок лимита — не на производство.
+
+general:
+  # Главный выключатель. При false модуль не производит и не выдаёт ресурсы.
+  enabled: true
+  locale: ru
+
+generator:
+  # Базовый производственный цикл в секундах (модуль «Скорость» короче).
+  cycle-seconds: 30
+  # Базовая ёмкость бункера в условных единицах продукции (модуль «Ёмкость» больше).
+  bunker-base: 256
+  # Часы офлайн-накопления: потолок бункера считается как ёмкость × часы.
+  offline-hours: 8
+  # КПД офлайн-накопления (0.0–1.0). С модулем «Чанк» чанк грузится всегда.
+  offline-efficiency: 0.5
+
+  # Радиус доступа к управлению генератором от ядра в блоках (1…64):
+  # окно /gen, снятие и улучшения работают на чанке ядра или в этом радиусе.
+  menu-range: 16
+
+  # Живое оповещение о полном бункере в чат: не чаще раза в N минут (0 — выключено).
+  # При входе сообщение о полном бункере приходит всегда.
+  bunker-notify-cooldown-minutes: 30
+
+  # Слоты генераторов: базовый один; ещё один слот открывается перерождением
+  # (rebirth-unlock-at перерождений), ещё один — платным рангом (ступень не
+  # ниже paid-rank-min-step). Ноль в пороге — слот выключен. Итого до 3.
+  slots:
+    rebirth-unlock-at: 1
+    paid-rank-min-step: 1
+
+  # Старые настройки оставлены для совместимости: не применяются. Теперь
+  # топливо кладётся в окно генератора; время горения берётся из реестра печи.
+  # Лава и вода в камере остаются условием работы и не расходуются как топливо.
+  fuel:
+    enabled: false
+    cycles-per-bucket: 256
+    auto-refuel: true
+    auto-refuel-price: 256
+
+  # Автопродажа: заполненный бункер продаётся сам — по текущим ценам магазина
+  # алмазов (CHRDK_DiamondShop); позиции вне каталога — по fallback-цене.
+  # Выключено — ручной забор кнопкой.
+  auto-sell:
+    enabled: true
+    # Цена предмета вне каталога магазина (сотые алмаза, minor).
+    fallback-price-per-item: 250
+
+  # Устаревшие настройки совместимости: дневной лимит выплат не применяется.
+  # Обязательства выдаются техническими порциями через журнал generator-payouts.
+  payouts:
+    daily-cap-base: 384
+    daily-cap-per-tier: 64
+    daily-cap-per-rank-step: 32
+    daily-cap-hard-max: 4096
+
+  # Бонус производства за перерождения, % с убывающей отдачей (как XP навыков):
+  # min(cap, percent × (1 − decayⁿ) / (1 − decay)); 1-е перерождение +5%,
+  # 10-е ≈ +32.6%, асимптота +50%. При перерождении тиры и модули сбрасываются.
+  rebirth-percent-per-rebirth: 5.0
+  rebirth-decay: 0.9
+  rebirth-bonus-cap-percent: 50.0
+
+  # Крафт ядра на верстаке: форма 3×3 (каждая строка — до 3 символов)
+  # и ингредиенты-материалы. Выключено — ядро не крафтится вовсе.
+  craft:
+    enabled: true
+    shape: [ABA, BCB, ABA]
+    ingredients:
+      A: IRON_INGOT
+      B: COBBLESTONE
+      C: DIAMOND
+
+  # Тиры производства (ровно 9): название в меню, единиц за цикл и таблица
+  # продукции — чем тир выше, тем больше ценностей и редкостей.
+  tiers:
+    - name: Исток
+      units-per-cycle: 1
+      drops:
+        - {material: COBBLESTONE, weight: 6}
+        - {material: CLAY_BALL, weight: 2}
+        - {material: NETHERRACK, weight: 1}
+    - name: Смесь
+      units-per-cycle: 1
+      drops:
+        - {material: COBBLESTONE, weight: 4}
+        - {material: CLAY_BALL, weight: 2}
+        - {material: GRAVEL, weight: 1}
+    - name: Руда
+      units-per-cycle: 2
+      drops:
+        - {material: RAW_IRON, weight: 2}
+        - {material: RAW_COPPER, weight: 2}
+        - {material: COAL, weight: 1}
+    - name: Жила
+      units-per-cycle: 2
+      drops:
+        - {material: RAW_IRON, weight: 3}
+        - {material: RAW_GOLD, weight: 2}
+        - {material: REDSTONE, weight: 1}
+    - name: Глубина
+      units-per-cycle: 3
+      money: {chance: 0.15, portion: 2}
+      drops:
+        - {material: RAW_GOLD, weight: 3}
+        - {material: LAPIS_LAZULI, weight: 1}
+        - {material: AMETHYST_SHARD, weight: 1}
+    - name: Пучина
+      units-per-cycle: 3
+      money: {chance: 0.25, portion: 3}
+      drops:
+        - {material: DIAMOND, weight: 2}
+        - {material: EMERALD, weight: 2}
+        - {material: QUARTZ, weight: 1}
+    - name: Сердце
+      units-per-cycle: 4
+      money: {chance: 1.0, portion: 4}
+      drops:
+        # Микс редких материалов (§12.3): «сердечные» позиции и редкий лут
+        # мастерской; имена валидны для ItemKind.
+        - {material: DIAMOND, weight: 3}
+        - {material: NETHERITE_INGOT, weight: 2}
+        - {material: AMETHYST_SHARD, weight: 2}
+        - {material: ANCIENT_DEBRIS, weight: 1}
+        - {material: GHAST_TEAR, weight: 1}
+        - {material: PHANTOM_MEMBRANE, weight: 1}
+        - {material: PRISMARINE_CRYSTALS, weight: 1}
+        - {material: HEART_OF_THE_SEA, weight: 1, rare: true}
+        - {material: NETHER_STAR, weight: 1, rare: true}
+        - {material: END_CRYSTAL, weight: 1, rare: true}
+    - name: Пульс
+      units-per-cycle: 5
+      money: {chance: 1.0, portion: 5}
+      drops:
+        - {material: NETHERITE_INGOT, weight: 3}
+        - {material: DIAMOND, weight: 3}
+        - {material: ANCIENT_DEBRIS, weight: 2}
+        - {material: BLAZE_ROD, weight: 2}
+        - {material: GHAST_TEAR, weight: 2}
+        - {material: NETHER_STAR, weight: 1, rare: true}
+        - {material: HEART_OF_THE_SEA, weight: 1, rare: true}
+        - {material: SHULKER_SHELL, weight: 1, rare: true}
+    - name: Резонанс
+      units-per-cycle: 6
+      money: {chance: 1.0, portion: 6}
+      drops:
+        # Дорогая вершина: сигнатурные редкости с редким весом под удачу.
+        - {material: NETHERITE_INGOT, weight: 3}
+        - {material: DIAMOND, weight: 3}
+        - {material: ANCIENT_DEBRIS, weight: 2}
+        - {material: ECHO_SHARD, weight: 2}
+        - {material: SHULKER_SHELL, weight: 2}
+        - {material: BEACON, weight: 1, rare: true}
+        - {material: TOTEM_OF_UNDYING, weight: 1, rare: true}
+        - {material: ELYTRA, weight: 1, rare: true}
+
+  # Улучшения: деньги сжигаются (sink, только банк), ресурсы списываются
+  # из инвентаря. Тиры — 8 шагов (переход 1→2 … 8→9): деньги растут
+  # ступенями, ресурсы — ключевой материал открываемого тира.
+  # Модули — 5 уровней: низкие стоят ресурсов, высшие — денег.
+  upgrades:
+    tiers:
+      - {money: 5000, resources: [{material: COBBLESTONE, amount: 256}]}
+      - {money: 25000, resources: [{material: IRON_INGOT, amount: 256}]}
+      - {money: 60000, resources: [{material: GOLD_INGOT, amount: 256}]}
+      - {money: 120000, resources: [{material: DIAMOND, amount: 64}]}
+      - {money: 250000, resources: [{material: NETHERITE_INGOT, amount: 16}]}
+      - {money: 500000, resources: [{material: NETHER_STAR, amount: 4}]}
+      - {money: 750000, resources: [{material: NETHER_STAR, amount: 8}]}
+      - {money: 1000000, resources: [{material: NETHERITE_INGOT, amount: 32}]}
+    modules:
+      - {money: 0, resources: [{material: IRON_INGOT, amount: 32}]}
+      - {money: 0, resources: [{material: IRON_INGOT, amount: 64}]}
+      - {money: 0, resources: [{material: DIAMOND, amount: 16}]}
+      - {money: 25000, resources: []}
+      - {money: 75000, resources: []}
+    chunk: {money: 50000, resources: [{material: DIAMOND, amount: 32}]}

@@ -26,8 +26,9 @@ final class GeneratorContainerGui implements Listener {
         final UUID owner;
         final UUID core;
         final int slot;
+        final boolean fuel;
         Inventory inventory;
-        Holder(UUID owner, UUID core, int slot) { this.owner = owner; this.core = core; this.slot = slot; }
+        Holder(UUID owner, UUID core, int slot, boolean fuel) { this.owner = owner; this.core = core; this.slot = slot; this.fuel = fuel; }
         @Override public Inventory getInventory() { return inventory; }
     }
     private final GeneratorPlugin plugin;
@@ -39,14 +40,15 @@ final class GeneratorContainerGui implements Listener {
         this.plugin = plugin; this.store = store; this.transfer = transfer; this.access = access;
     }
 
-    void open(Player player, int slot) {
+    void open(Player player, int slot) { open(player, slot, false); }
+    private void open(Player player, int slot, boolean fuel) {
         if (!near(player, slot)) return;
         try {
             if (!access.prepare(player, slot)) { plugin.messages().send(player, "container-unavailable"); return; }
             var view = store.view(player.getUniqueId(), slot);
             if (view == null || view.pending()) { plugin.messages().send(player, "container-unavailable"); return; }
-            var holder = new Holder(player.getUniqueId(), view.core(), slot);
-            holder.inventory = Bukkit.createInventory(holder, 54, plugin.messages().get("container-title"));
+            var holder = new Holder(player.getUniqueId(), view.core(), slot, fuel);
+            holder.inventory = Bukkit.createInventory(holder, 54, plugin.messages().get(fuel ? "fuel-menu-title" : "container-title"));
             render(holder, view);
             player.openInventory(holder.inventory);
         } catch (IOException | RuntimeException error) {
@@ -63,18 +65,55 @@ final class GeneratorContainerGui implements Listener {
 
     private void render(Holder holder, GeneratorContainerStore.View view) {
         holder.inventory.clear();
-        for (int i = 0; i < GeneratorContainerStore.SLOTS; i++) {
-            var stack = view.slots().get(i);
+        int count = holder.fuel ? GeneratorContainerStore.FUEL_SLOTS : GeneratorContainerStore.RESOURCE_SLOTS;
+        for (int i = 0; i < count; i++) {
+            int index = holder.fuel ? i + GeneratorContainerStore.RESOURCE_SLOTS : i;
+            var stack = view.slots().get(index);
             if (stack == null) continue;
             Material material = Material.matchMaterial(stack.material());
             if (material == null || !material.isItem() || material.isAir() || stack.amount() > material.getMaxStackSize())
                 throw new IllegalStateException("invalid container material " + stack.material());
-            holder.inventory.setItem(i, new ItemStack(material, stack.amount()));
+            var shown = new ItemStack(material, stack.amount());
+            if (holder.fuel) {
+                var definition=GeneratorFurnaceFuel.inspect(new ItemStack(material));
+                var meta=shown.getItemMeta();
+                if (definition.isPresent()) {
+                    long one=definition.get().burnMillis();
+                    meta.lore(java.util.List.of(plugin.messages().get("fuel-item-time", "one", duration(one),
+                            "total", duration(Math.multiplyExact(one, stack.amount())))));
+                } else meta.lore(java.util.List.of(plugin.messages().get("fuel-item-remainder")));
+                shown.setItemMeta(meta);
+            }
+            holder.inventory.setItem(i, shown);
+        }
+        if (holder.fuel) {
+            holder.inventory.setItem(13,button(Material.PAPER,"fuel-help"));
+            var budget=GeneratorFurnaceBurn.consume(view.slots(),view.burnMillis(),Long.MAX_VALUE,
+                    GeneratorContainerGui::fuel,GeneratorContainerGui::stackSize);
+            var status = new ItemStack(Material.CLOCK); var meta=status.getItemMeta();
+            meta.displayName(plugin.messages().get("fuel-total-title", "time", duration(budget.usedMillis())));
+            meta.lore(java.util.List.of(plugin.messages().get("fuel-total-lore", "active", duration(view.burnMillis())),
+                    plugin.messages().get("fuel-total-conditions")));
+            status.setItemMeta(meta); holder.inventory.setItem(22,status);
         }
         holder.inventory.setItem(45, button(Material.HOPPER, "container-refresh"));
-        holder.inventory.setItem(47, button(Material.COAL, "container-fuel-help"));
+        holder.inventory.setItem(47, button(holder.fuel ? Material.CHEST : Material.COAL, holder.fuel ? "fuel-back" : "fuel-open"));
         holder.inventory.setItem(49, button(Material.COMPARATOR, "container-settings"));
         holder.inventory.setItem(53, button(Material.BARRIER, "container-close"));
+    }
+    static String duration(long millis) {
+        if (millis < 0) throw new IllegalArgumentException("negative duration");
+        long seconds=millis/1000, hours=seconds/3600, minutes=(seconds%3600)/60, secs=seconds%60, ms=millis%1000;
+        String fraction=ms==0 ? "" : String.format(java.util.Locale.ROOT,".%03d",ms).replaceFirst("0+$", "");
+        return (hours>0?hours+"ч ":"")+(minutes>0?minutes+"м ":"")+secs+fraction+"с";
+    }
+    private static Integer stackSize(String name) {
+        Material m=Material.matchMaterial(name);
+        return m==null || !m.isItem() || m.isAir() ? null : m.getMaxStackSize();
+    }
+    private static GeneratorFurnaceFuel.Fuel fuel(String name) {
+        Material m=Material.matchMaterial(name);
+        return m==null || !m.isItem() || m.isAir() ? null : GeneratorFurnaceFuel.inspect(new ItemStack(m)).orElse(null);
     }
     private ItemStack button(Material material, String key) {
         var item = new ItemStack(material); var meta = item.getItemMeta();
@@ -84,7 +123,9 @@ final class GeneratorContainerGui implements Listener {
     @EventHandler
     public void click(InventoryClickEvent event) {
         if (!(event.getView().getTopInventory().getHolder() instanceof Holder holder)) return;
+        boolean alreadyCancelled=event.isCancelled();
         event.setCancelled(true);
+        if (alreadyCancelled) return;
         if (!(event.getWhoClicked() instanceof Player player) || !holder.owner.equals(player.getUniqueId())
                 || !near(player, holder.slot)) { event.getWhoClicked().closeInventory(); return; }
         try {
@@ -96,23 +137,26 @@ final class GeneratorContainerGui implements Listener {
             var type = event.getClick();
             if (raw >= 45 && raw < 54 && (type == ClickType.LEFT || type == ClickType.RIGHT)) {
                 if (raw == 53) { player.closeInventory(); return; }
-                if (raw == 49) { Bukkit.getScheduler().runTask(plugin, () -> access.settings(player, holder.slot)); return; }
-                if (raw == 45) { Bukkit.getScheduler().runTask(plugin, () -> open(player, holder.slot)); return; }
+                if (raw == 49) { later(player, holder, () -> access.settings(player, holder.slot)); return; }
+                if (raw == 45) { later(player, holder, () -> open(player, holder.slot, holder.fuel)); return; }
+                if (raw == 47) { later(player, holder, () -> open(player, holder.slot, !holder.fuel)); return; }
             }
+            int inputIndex = holder.fuel ? (raw >= 0 && raw < GeneratorContainerStore.FUEL_SLOTS ? raw + GeneratorContainerStore.RESOURCE_SLOTS : -1)
+                    : (raw >= 0 && raw < GeneratorContainerStore.RESOURCE_SLOTS ? raw : -1);
             var beforeClick = store.view(holder.owner, holder.slot);
-            if (raw >= 0 && raw < GeneratorContainerStore.SLOTS) {
+            if (inputIndex >= 0) {
                 var shown = holder.inventory.getItem(raw);
-                var actual = beforeClick.slots().get(raw);
+                var actual = beforeClick.slots().get(inputIndex);
                 boolean same = actual == null ? shown == null || shown.getType().isAir()
                         : shown != null && shown.getType().name().equals(actual.material()) && shown.getAmount() == actual.amount();
                 if (!same) { render(holder, beforeClick); return; }
             }
             InventoryTransfer.Decision result = null;
-            if (raw >= 0 && raw < GeneratorContainerStore.SLOTS
+            if (inputIndex >= 0
                     && (type == ClickType.LEFT || type == ClickType.RIGHT || event.isShiftClick())) {
-                if (store.view(holder.owner, holder.slot).slots().get(raw) != null)
-                    result = transfer.withdraw(player, holder.slot, raw);
-            } else if (raw >= 54 && event.isShiftClick() && event.getSlot() >= 0 && event.getSlot() < 36) {
+                if (beforeClick.slots().get(inputIndex) != null)
+                    result = transfer.withdraw(player, holder.slot, inputIndex);
+            } else if (holder.fuel && raw >= 54 && event.isShiftClick() && event.getSlot() >= 0 && event.getSlot() < 36) {
                 var fuel = GeneratorFurnaceFuel.inspect(player.getInventory().getItem(event.getSlot()));
                 if (fuel.isPresent()) {
                     var view = store.view(holder.owner, holder.slot);
@@ -140,6 +184,13 @@ final class GeneratorContainerGui implements Listener {
             plugin.getLogger().warning("Бункер ожидает восстановления: " + error.getMessage());
             plugin.messages().send(player, "container-unavailable");
         }
+    }
+
+    private void later(Player player, Holder holder, Runnable action) {
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (player.isOnline() && holder.owner.equals(player.getUniqueId()) && near(player,holder.slot)
+                    && player.getOpenInventory().getTopInventory().getHolder() == holder) action.run();
+        });
     }
 
     @EventHandler

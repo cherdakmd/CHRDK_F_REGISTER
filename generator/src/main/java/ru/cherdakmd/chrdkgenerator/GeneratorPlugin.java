@@ -62,6 +62,8 @@ public final class GeneratorPlugin extends JavaPlugin {
         }
         try {
             this.config = GeneratorConfig.load(getConfig());
+            if (getConfig().getMapList("generator.tiers").size() == 9)
+                getLogger().warning("Старые 9 тиров и 8 цен перераспределены в памяти в 15 тиров; цены тиров снижены в 20 раз, config.yml не переписан. Номера установленных тиров сохранены, добыча изменилась.");
         } catch (IllegalArgumentException exception) {
             getLogger().severe("конфигурация генератора не принята: " + exception.getMessage());
             Bukkit.getPluginManager().disablePlugin(this);

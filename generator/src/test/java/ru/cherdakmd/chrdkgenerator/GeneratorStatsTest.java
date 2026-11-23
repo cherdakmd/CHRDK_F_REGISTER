@@ -60,8 +60,8 @@ class GeneratorStatsTest {
         assertEquals(0, GeneratorStats.tierProgressPercent(null, config));
         assertEquals(100, GeneratorStats.tierProgressPercent(
                 moneyEntry(GeneratorConfig.TIERS, 0), config), "на максимуме прогресс полный");
-        // Шаг 3→4 стоит 60000; половина копилки — 50%.
-        assertEquals(50, GeneratorStats.tierProgressPercent(moneyEntry(3, 30_000), config));
+        // Шаг 3→4 стоит 1250; половина копилки — 50%.
+        assertEquals(50, GeneratorStats.tierProgressPercent(moneyEntry(3, 625), config));
     }
 
     @Test void etaCountsTimeUntilBunkerFull() {
