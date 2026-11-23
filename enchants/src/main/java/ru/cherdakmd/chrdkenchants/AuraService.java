@@ -21,7 +21,7 @@ import java.util.Map;
 
 /**
  * Периодические ауры: стремительные лапки, лягушачьи ноги, провидец (ночное зрение),
- * орлиный глаз (поджигает скрытых), лавоступ (магматическая корка по лаве).
+ * орлиный глаз (подсветка), лавоступ (огнестойкость в лаве).
  *
  * <p>1.4.128: сюда же переехали чары и проклятия, которым нужен «пульс» —
  * «Живучесть» (регенерация), «Старатель» (спешка), «Тупой резец» (усталость),
@@ -29,13 +29,9 @@ import java.util.Map;
  */
 public final class AuraService {
 
-    private static final long LAVA_CRUST_MILLIS = 10_000L;
-
     private final EnchantsPlugin plugin;
     private final java.util.Random random = new java.util.Random();
     private BukkitTask task;
-    /** Лава → магма (блок → момент возврата обратно). */
-    private final Map<Block, Long> lavaCrust = new HashMap<>();
     private int tickCounter;
 
     public AuraService(EnchantsPlugin plugin) {
@@ -52,18 +48,10 @@ public final class AuraService {
             task = null;
         }
         PassivePotions.cancel(plugin);
-        // честно возвращаем лаву на место
-        lavaCrust.forEach((block, when) -> {
-            if (block.getType() == Material.MAGMA_BLOCK) {
-                block.setType(Material.LAVA);
-            }
-        });
-        lavaCrust.clear();
     }
 
     private void tick() {
         tickCounter++;
-        revertExpiredCrust();
         for (Player player : Bukkit.getOnlinePlayers()) {
             List<PotionEffect> passive = new java.util.ArrayList<>();
             if (!player.isDead()) {
@@ -206,39 +194,11 @@ public final class AuraService {
     private void walkLava(Player player, List<PotionEffect> passive) {
         Block feet = player.getLocation().getBlock();
         Block support = feet.getRelative(0, -1, 0);
-        boolean ownCrust = support.getType() == Material.MAGMA_BLOCK && lavaCrust.containsKey(support);
-        if (feet.getType() != Material.LAVA && support.getType() != Material.LAVA && !ownCrust) return;
+        if (feet.getType() != Material.LAVA && support.getType() != Material.LAVA) return;
+        // Safety fallback: do not modify the world. A magma crust cannot be safely
+        // restored across crashes or attributed after another plugin replaces it.
         passive.add(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 60,
                 0, true, false, false));
         player.setFireTicks(0);
-        long revertAt = System.currentTimeMillis() + LAVA_CRUST_MILLIS;
-        Block below = feet.getRelative(0, -1, 0);
-        if (below.getType() == Material.LAVA) {
-            below.setType(Material.MAGMA_BLOCK);
-            lavaCrust.put(below, revertAt);
-        }
-        // корка ширину в пару паркетин под ногами
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dz = -1; dz <= 1; dz++) {
-                Block target = below.getRelative(dx, 0, dz);
-                if (target.getType() == Material.LAVA) {
-                    target.setType(Material.MAGMA_BLOCK);
-                    lavaCrust.put(target, revertAt);
-                }
-            }
-        }
-    }
-
-    private void revertExpiredCrust() {
-        long now = System.currentTimeMillis();
-        lavaCrust.entrySet().removeIf(entry -> {
-            if (entry.getValue() > now) {
-                return false;
-            }
-            if (entry.getKey().getType() == Material.MAGMA_BLOCK) {
-                entry.getKey().setType(Material.LAVA);
-            }
-            return true;
-        });
     }
 }
