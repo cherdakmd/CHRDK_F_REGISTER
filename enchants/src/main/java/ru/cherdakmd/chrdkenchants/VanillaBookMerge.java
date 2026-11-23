@@ -66,7 +66,7 @@ final class VanillaBookMerge {
             int after = AnvilPrice.merge(before, incoming,
                     Math.max(levelCap, enchantment.getMaxLevel()));
             if (after > before) {
-                nativeCost += after;
+                nativeCost = AnvilPrice.total(nativeCost, after);
             }
             merged.put(enchantment, after);
         }

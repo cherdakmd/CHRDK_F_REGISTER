@@ -71,6 +71,14 @@ final class AnvilPrice {
         return price >= 0 && (creative || price < maximum);
     }
 
+    /** A Core manual take may use currency, whose price and balance are not available here. */
+    static String previewStatus(int price, int maximum, boolean creative, int level) {
+        if (!allowed(price, maximum, creative)) return "preview-too-expensive";
+        if (creative) return "preview-ready";
+        if (price >= 40) return "preview-core-payment";
+        return level >= price ? "preview-ready" : "preview-too-expensive";
+    }
+
     static int nextWork(int left, int book, boolean cumulative) {
         if (left < 0 || book < 0) throw new IllegalArgumentException("Negative prior work");
         return cumulative ? (int) Math.min(Integer.MAX_VALUE, 2L * Math.max(left, book) + 1) : 0;

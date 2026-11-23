@@ -215,9 +215,8 @@ public final class AnvilApplyListener implements Listener {
         }
         plugin.messages().send(player, "preview-price", "total", quote.cost(), "custom", quote.surcharge(),
                 "native", quote.cost() == Integer.MAX_VALUE ? "не разделяется при насыщении" : Long.toString(Math.max(0L, quote.cost() - quote.surcharge())), "maximum", quote.maximum());
-        boolean allowed = AnvilPrice.allowed(quote.cost(), quote.maximum(), player.getGameMode() == GameMode.CREATIVE);
-        plugin.messages().send(player, allowed && (player.getGameMode() == GameMode.CREATIVE || player.getLevel() >= quote.cost())
-                ? "preview-ready" : "preview-too-expensive");
+        plugin.messages().send(player, AnvilPrice.previewStatus(quote.cost(), quote.maximum(),
+                player.getGameMode() == GameMode.CREATIVE, player.getLevel()));
         var before = plugin.items().read(left);
         for (var entry : plugin.items().read(right).entrySet()) {
             var def = EnchantRegistry.byId(entry.getKey()); int was = before.getOrDefault(def.id(), 0);

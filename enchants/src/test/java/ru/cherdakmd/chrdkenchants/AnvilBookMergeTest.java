@@ -82,6 +82,8 @@ class AnvilBookMergeTest {
                 "перенос на вещь тоже принимает надванильные уровни");
         assertTrue(merge.contains("(!bookTarget && !enchantment.canEnchantItem(result))"),
                 "книга принимает любые хранёные чары, вещь — только применимые");
+        assertTrue(merge.contains("nativeCost = AnvilPrice.total(nativeCost, after)"),
+                "стоимость fallback насыщается, не переполняется");
         assertTrue(merge.contains("existing.conflictsWith(enchantment)"),
                 "ванильные конфликты не пропускаются");
     }

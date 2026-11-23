@@ -92,4 +92,20 @@ class AnvilPriceTest {
         assertThrows(IllegalArgumentException.class, () -> AnvilPrice.nextWork(1, -1, true));
         assertThrows(IllegalArgumentException.class, () -> AnvilPrice.total(-1, 3));
     }
+    @Test void expensivePreviewDoesNotGuessCoreCurrencyOrBalance() {
+        assertEquals("preview-ready", AnvilPrice.previewStatus(39, Integer.MAX_VALUE, false, 39));
+        assertEquals("preview-too-expensive", AnvilPrice.previewStatus(39, Integer.MAX_VALUE, false, 38));
+        assertEquals("preview-core-payment", AnvilPrice.previewStatus(40, Integer.MAX_VALUE, false, 0));
+        assertEquals("preview-core-payment", AnvilPrice.previewStatus(151, Integer.MAX_VALUE, false, 200));
+        assertEquals("preview-ready", AnvilPrice.previewStatus(151, Integer.MAX_VALUE, true, 0));
+        assertEquals("preview-too-expensive", AnvilPrice.previewStatus(40, 40, false, 100));
+    }
+    @Test void repeatedFallbackVanillaChargesSaturateInsteadOfWrapping() {
+        int cost=AnvilPrice.total(0,1_500_000_000);
+        cost=AnvilPrice.total(cost,1_500_000_000);
+        cost=AnvilPrice.total(cost,1_500_000_000);
+        assertEquals(Integer.MAX_VALUE,cost);
+        assertFalse(AnvilPrice.allowed(cost,Integer.MAX_VALUE,false));
+    }
+
 }
