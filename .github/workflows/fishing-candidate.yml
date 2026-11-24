@@ -1,0 +1,88 @@
+name: Fishing closed-server candidate
+
+# Builds a disposable candidate, never a tag or GitHub Release. The fishing
+# plugin remains explicitly 0.0.0-dev until the stable release gates pass.
+on:
+  push:
+    branches: ['arena/**']
+    paths: ['.github/workflows/fishing-candidate.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  candidate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build and test the numbered Core and module candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/prepare_papi.py
+          ./gradlew --no-daemon -Pplugin_version=2.0.26-rc.1 \
+            -Pchrdk.papiJar=build/dependencies/PlaceholderAPI-2.12.3.jar build --continue
+      - name: Verify complete numbered module set
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p candidate/plugins candidate/optional
+          find . -path '*/build/libs/*.jar' -type f \
+            ! -path './fishing/*' ! -path './vk/*' \
+            ! -name '*-sources.jar' ! -name '*-javadoc.jar' ! -name '*-dev.jar' \
+            -exec cp -t candidate/plugins '{}' +
+          printf 'Закрытая проверка; не стабильный релиз.\n' > candidate/plugins/ОБНОВЛЕНИЕ.txt
+          python3 .github/scripts/verify_release.py candidate/plugins 2.0.26-rc.1
+          cp vk/build/libs/chrdk-vk-2.0.26-rc.1.jar candidate/optional/
+          python3 .github/scripts/verify_release.py --standalone \
+            candidate/optional/chrdk-vk-2.0.26-rc.1.jar CHRDK_VK 2.0.26-rc.1
+      - name: Build and test experimental Fishing
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew -p fishing --no-daemon clean test jar
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          jars = list(Path('fishing/build/libs').glob('*.jar'))
+          if len(jars) != 1:
+              raise SystemExit(f'Expected one Fishing JAR: {jars}')
+          with ZipFile(jars[0]) as jar:
+              names = set(jar.namelist())
+              required = {'plugin.yml', 'org/sqlite/JDBC.class', 'META-INF/services/java.sql.Driver',
+                          'ru/cherdakmd/chrdkfishing/bukkit/FishingPlugin.class'}
+              if required - names or any(n.startswith(('org/slf4j/', 'ru/cherdakmd/chrdkskills/')) for n in names):
+                  raise SystemExit('Invalid Fishing JAR contents')
+              descriptor = jar.read('plugin.yml').decode('utf-8').splitlines()
+              if not {'name: CHRDK_Fishing', 'version: 0.0.0-dev', "api-version: '26.3'", 'depend: [CHRDK_Core, CHRDK_Skills]'}.issubset(descriptor):
+                  raise SystemExit('Unexpected Fishing descriptor')
+          PY
+          cp fishing/build/libs/*.jar candidate/plugins/
+      - name: Describe and checksum candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > candidate/README.txt <<'TEXT'
+          КАНДИДАТ ДЛЯ ЗАКРЫТОГО СЕРВЕРА, НЕ СТАБИЛЬНЫЙ РЕЛИЗ.
+          Плагины Core и общие модули: 2.0.26-rc.1; рыбалка: 0.0.0-dev.
+          Purpur 26.3 / Java 25. Не открывать игрокам до проверки.
+          Core и Skills собраны из одного коммита с рыбалкой. VK — отдельно.
+          Полный список проверок и резервного копирования: fishing/STABLE-RELEASE-GATE.md.
+          Это не включает datapacks, ресурс-паки и настройки из релизного workflow.
+          TEXT
+          cp fishing/STABLE-RELEASE-GATE.md candidate/
+          (cd candidate && find plugins optional -type f -name '*.jar' -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt && sha256sum -c SHA256SUMS.txt)
+      - name: Upload closed-server candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: fishing-closed-server-2.0.26-rc.1-${{ github.sha }}
+          path: candidate/
+          if-no-files-found: error
+          retention-days: 14
