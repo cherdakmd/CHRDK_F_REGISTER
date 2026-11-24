@@ -1,4 +1,5 @@
 """The release guard must reject missing, duplicate, broken and mixed-version JARs."""
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -140,6 +141,14 @@ class ReleaseValidationTest(unittest.TestCase):
             "2.0.20-rc.1": ("19 JAR одной версии", "chrdk-vk-2.0.20-rc.1.jar", "Mine Treasure",
                             "ТОЛЬКО тестовый кандидат", "CHRDK_CustomItems", "не проведён"),
         }
+        manifest_path = root / "docs" / "releases" / f"{version}.json"
+        if manifest_path.exists():
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            if manifest.get("kind") == "standalone" and version not in {"2.0.2-rc.7"}:
+                self.assertIn(f"Комплект {version}", current)
+                self.assertIn(f"{manifest['archive']}-{version}.jar", current)
+                self.assertIn("общего ZIP", current)
+                return
         if version in current_kits:
             self.assertIn(f"CHRDK {version}", current)
             for marker in current_kits[version]:
