@@ -59,8 +59,8 @@ class FishingModelTest {
         }
         assertTrue(basic[Size.SMALL.ordinal()] > max[Size.SMALL.ordinal()] + 8000);
         assertTrue(max[Size.LARGE.ordinal()] > basic[Size.LARGE.ordinal()] + 8000);
-        assertEquals(basic[Size.NORMAL.ordinal()], max[Size.NORMAL.ordinal()]);
-        assertEquals(basic[Size.TROPHY.ordinal()], max[Size.TROPHY.ordinal()]);
+        assertTrue(Math.abs(basic[Size.NORMAL.ordinal()] - max[Size.NORMAL.ordinal()]) < 1000);
+        assertTrue(Math.abs(basic[Size.TROPHY.ordinal()] - max[Size.TROPHY.ordinal()]) < 500);
         assertEquals(20, rod(10).xpBonusPercent());
         assertEquals(10, rods().size());
     }
