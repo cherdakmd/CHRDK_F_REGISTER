@@ -35,6 +35,12 @@ public final class FishToken {
         if (id == null || quotedPrice < 1 || quotedPrice > MAX_PRICE_POINTS) throw new IllegalArgumentException("fish issue");
         return new Token(id, fish, quotedPrice, encode(sign(key, payload(id, fish, quotedPrice))));
     }
+    /** Only use for an authenticated, authorised extra-catch event, never for arbitrary item copying. */
+    public static Token duplicateForCatch(byte[] key, Token original, UUID freshId) {
+        if (!verify(key, original) || freshId == null || freshId.equals(original.id()))
+            throw new IllegalArgumentException("invalid extra catch");
+        return issue(key, freshId, original.fish(), original.quotedPrice());
+    }
     public static boolean verify(byte[] key, Token token) {
         validateKey(key);
         if (token == null) return false;

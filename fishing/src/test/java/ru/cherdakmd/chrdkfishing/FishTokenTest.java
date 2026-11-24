@@ -28,4 +28,15 @@ class FishTokenTest {
         assertThrows(IllegalArgumentException.class, () -> FishToken.issue(key, UUID.randomUUID(), fish, 0));
         assertThrows(IllegalArgumentException.class, () -> new FishToken.Token(UUID.randomUUID(), fish, 1, "bad"));
     }
+    @Test void authorisedExtraCatchNeedsFreshIdentityAndValidOriginal() {
+        var first = FishToken.issue(key, UUID.randomUUID(), fish, 100);
+        var second = FishToken.duplicateForCatch(key, first, UUID.randomUUID());
+        assertNotEquals(first.id(), second.id());
+        assertEquals(first.fish(), second.fish()); assertEquals(first.quotedPrice(), second.quotedPrice());
+        assertTrue(FishToken.verify(key, first)); assertTrue(FishToken.verify(key, second));
+        assertThrows(IllegalArgumentException.class, () -> FishToken.duplicateForCatch(key, first, first.id()));
+        var bad = new FishToken.Token(first.id(), first.fish(), 101, first.mac());
+        assertThrows(IllegalArgumentException.class, () -> FishToken.duplicateForCatch(key, bad, UUID.randomUUID()));
+    }
+
 }
