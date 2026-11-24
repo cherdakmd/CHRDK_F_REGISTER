@@ -83,4 +83,14 @@ class GeneratorCoreTakeTest {
         assertEquals(1, s.entry(owner, 0).tier()); assertTrue(s.entry(owner, 0).modules().isEmpty());
     }
 
+    @Test void legacyDetachedProgressIsArchivedInsteadOfGivenToAnUnrelatedCore() throws Exception {
+        var s = open(); s.markRegistered(); s.install(owner, core, "world", 0, 64, 0, 1, 3);
+        s.setTier(owner, 0, 9); s.setModuleLevel(owner, 0, "speed", 4);
+        s.remove(owner, 0, 2); s.flush();
+        s = open(); s.install(owner, UUID.randomUUID(), "world", 1, 64, 0, 3, 3); s.flush();
+        assertEquals(1, open().entry(owner, 0).tier());
+        String json = Files.readString(dir.resolve("generator.json"));
+        assertTrue(json.contains("legacyUnassigned")); assertTrue(json.contains("\"tier\": 9"));
+    }
+
 }

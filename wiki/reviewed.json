@@ -71,8 +71,8 @@
       "text": "47ddad14851508ac6f0c0ea526b035d854b645324715f642041ec2c9e85e45cd"
     },
     "generator": {
-      "reason": "Сверены остановка, выплаты и привязка перенесённого ядра",
-      "sources": "4beb1aeadd0dd7a5d57fdcea554a0bd78a2216bf896ceb49604db2f11fe15a1e",
+      "reason": "Проверены остановка генератора, сверка выплат и восстановление прокачки",
+      "sources": "070d6f4865470bf47ca76a7d1fd682941e1bc6c638fa6ee7af105f4ad9e3ac38",
       "text": "463bc55717f24433a30d1faf817ff0151a0ad10195820edfac32539f191170bd"
     },
     "goals": {

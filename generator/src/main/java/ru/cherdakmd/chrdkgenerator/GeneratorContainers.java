@@ -96,8 +96,7 @@ final class GeneratorContainers {
         if (entry == null || view == null || view.pending()) return false;
         long now = System.currentTimeMillis();
         if (!containers.setPaused(player.getUniqueId(), slot, view.core(), view.revision(), true, now)) return false;
-        payAndSell(entry, now, false, true);
-        return true;
+        return payAndSell(entry, now, false, true);
     }
 
     boolean resume(Player player, int slot) throws IOException {
@@ -145,12 +144,12 @@ final class GeneratorContainers {
                 config.offlineHours() * 3_600_000L, GeneratorStats.capacityUnits(entry, config));
     }
 
-    private void payAndSell(GeneratorStore.Entry entry, long now, boolean backlog, boolean forceDebt) {
+    private boolean payAndSell(GeneratorStore.Entry entry, long now, boolean backlog, boolean forceDebt) {
         Player player = Bukkit.getPlayer(entry.owner());
-        if (player == null || !player.isOnline() || !plugin.coreApi().isAuthenticated(player)) return;
+        if (player == null || !player.isOnline() || !plugin.coreApi().isAuthenticated(player)) return false;
         var view = containers.view(entry.owner(), entry.slot());
         var state = containers.saleState(entry.owner(), entry.slot());
-        if (view == null || state == null) return;
+        if (view == null || state == null) return false;
         long count = view.slots().subList(0, GeneratorContainerStore.RESOURCE_SLOTS).stream()
                 .filter(java.util.Objects::nonNull).mapToLong(GeneratorContainerStore.Stack::amount).sum();
         boolean full = view.slots().subList(0, GeneratorContainerStore.RESOURCE_SLOTS).stream()
@@ -158,7 +157,7 @@ final class GeneratorContainers {
         boolean sell = !forceDebt && !view.paused() && plugin.config().autoSellEnabled() && (backlog || full || count >= GeneratorStats.capacityUnits(entry, plugin.config()));
         String id = entry.owner() + ":" + entry.slot();
         if (!forceDebt && !sell && state.pending() == null && state.moneyDebt() < GeneratorPayoutCoordinator.MAX_OBLIGATION
-                && now < nextMoney.getOrDefault(id, 0L)) return;
+                && now < nextMoney.getOrDefault(id, 0L)) return true;
         nextMoney.put(id, now + 60_000L);
         var result = GeneratorContainerSale.run(containers, entry.owner(), entry.slot(), sell, (material, amount) -> {
             long value = GeneratorShopHook.sellValue(plugin.getLogger(), material, amount);
@@ -167,8 +166,11 @@ final class GeneratorContainers {
             public Map<String, Long> reservations(UUID owner) { return plugin.moneyLoot().reservations(owner); }
             public boolean accept(String key, long amount) { return plugin.moneyLoot().accept(player, key, amount); }
         });
-        if (result == GeneratorContainerSale.Result.CONFLICT)
+        if (result == GeneratorContainerSale.Result.CONFLICT) {
             plugin.getLogger().warning("Автопродажа генератора требует сверки журнала и файлов: " + id);
+            return false;
+        }
+        return true;
     }
 
     private static Integer stackSize(String name) {
