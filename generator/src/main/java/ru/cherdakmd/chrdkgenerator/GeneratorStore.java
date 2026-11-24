@@ -96,6 +96,14 @@ public final class GeneratorStore {
         UUID lineage = UUID.randomUUID();
         boolean registered;
         Map<UUID, List<Row>> players = new LinkedHashMap<>();
+        Map<UUID, Map<UUID, Progress>> carried = new LinkedHashMap<>();
+        // Старые свободные строки не содержали ID ядра: сохраняем их отдельно, не угадывая владельца ядра.
+        Map<UUID, Map<UUID, Progress>> legacyUnassigned = new LinkedHashMap<>();
+    }
+
+    private static final class Progress {
+        int tier;
+        Map<String, Integer> modules = new LinkedHashMap<>();
     }
 
     /** Запись одного генератора (слот = позиция в списке игрока). */
@@ -192,6 +200,25 @@ public final class GeneratorStore {
                 throw new IOException("generator metadata type");
             }
             MilestoneMigration.uuid(row.get("lineage").getAsString());
+            for (String progressField : List.of("carried", "legacyUnassigned")) if (row.has(progressField)) {
+                if (!row.get(progressField).isJsonObject()) throw new IOException("carried map");
+                for (var owner : row.getAsJsonObject(progressField).entrySet()) {
+                    MilestoneMigration.uuid(owner.getKey());
+                    if (!owner.getValue().isJsonObject()) throw new IOException("carried owner");
+                    for (var core : owner.getValue().getAsJsonObject().entrySet()) {
+                        MilestoneMigration.uuid(core.getKey());
+                        if (!core.getValue().isJsonObject()) throw new IOException("carried core");
+                        var progress = core.getValue().getAsJsonObject();
+                        if (!progress.keySet().equals(Set.of("tier", "modules")) || !progress.get("modules").isJsonObject())
+                            throw new IOException("carried fields");
+                        progress.get("tier").getAsBigDecimal().intValueExact();
+                        if (!progress.get("tier").isJsonPrimitive() || !progress.get("tier").getAsJsonPrimitive().isNumber()) throw new IOException("carried tier");
+                        for (var module : progress.getAsJsonObject("modules").entrySet()) {
+                            number(module.getValue()); module.getValue().getAsBigDecimal().intValueExact();
+                        }
+                    }
+                }
+            }
             for (var entry : row.getAsJsonObject("players").entrySet()) {
                 MilestoneMigration.uuid(entry.getKey());
                 JsonElement value = entry.getValue();
@@ -337,11 +364,23 @@ public final class GeneratorStore {
     }
 
     private static void validate(Data state) {
-        if (state == null || state.schema != 1 || state.lineage == null || state.players == null) {
+        if (state == null || state.schema != 1 || state.lineage == null || state.players == null || state.carried == null || state.legacyUnassigned == null) {
             throw new IllegalArgumentException("generator schema");
         }
         if (!state.registered && !state.players.isEmpty()) {
             throw new IllegalArgumentException("generator unregistered");
+        }
+        for (var collection : List.of(state.carried, state.legacyUnassigned)) for (var owner : collection.entrySet()) {
+            if (owner.getKey() == null || !state.players.containsKey(owner.getKey()) || owner.getValue() == null || owner.getValue().size() > 256)
+                throw new IllegalArgumentException("carried owner");
+            for (var core : owner.getValue().entrySet()) {
+                var progress = core.getValue();
+                if (core.getKey() == null || progress == null || progress.tier < 1 || progress.tier > MAX_TIER || progress.modules == null)
+                    throw new IllegalArgumentException("carried progress");
+                for (var module : progress.modules.entrySet())
+                    if (module.getKey() == null || module.getValue() == null || module.getValue() < 0 || module.getValue() > maxLevel(module.getKey()))
+                        throw new IllegalArgumentException("carried module");
+            }
         }
         Set<UUID> cores = new HashSet<>();
         for (var entry : state.players.entrySet()) {
@@ -554,6 +593,17 @@ public final class GeneratorStore {
             slot = rows.size() - 1;
         }
         Row row = rows.get(slot);
+        if (row.tier != 1 || !row.modules.isEmpty()) {
+            var legacy = data.legacyUnassigned.computeIfAbsent(owner, ignored -> new LinkedHashMap<>());
+            if (legacy.size() >= 256) throw new IllegalStateException("legacy generator progress archive full");
+            var archive = new Progress(); archive.tier = row.tier; archive.modules = new LinkedHashMap<>(row.modules);
+            legacy.put(UUID.randomUUID(), archive);
+        }
+        var saved = data.carried.get(owner);
+        var progress = saved == null ? null : saved.remove(coreItem);
+        if (saved != null && saved.isEmpty()) data.carried.remove(owner);
+        row.tier = progress == null ? 1 : progress.tier;
+        row.modules = progress == null ? new LinkedHashMap<>() : new LinkedHashMap<>(progress.modules);
         row.coreItem = coreItem;
         row.world = world;
         row.x = x;
@@ -708,6 +758,7 @@ public final class GeneratorStore {
             row.tier = 1;
             row.modules.clear();
         }
+        resetCarried(owner);
         Row primary = rows.get(0);
         if (primary.rebirths < Integer.MAX_VALUE) {
             primary.rebirths++;
@@ -774,12 +825,20 @@ public final class GeneratorStore {
                     || (row.bunker > 0 && (row.containerCore == null || row.legacyDrops == null))) return false;
         }
         for (Row row : rows) { row.tier = 1; row.modules.clear(); }
+        resetCarried(owner);
         primary.rebirths = 0;
         primary.lastSkillRebirth = 0;
         primary.requestedSkillRebirth = 0;
         primary.skillResetEpoch = nextEpoch;
         dirty = true;
         return payoutCheckpoint();
+    }
+
+    private void resetCarried(UUID owner) {
+        for (var collection : List.of(data.carried, data.legacyUnassigned)) {
+            var saved = collection.get(owner);
+            if (saved != null) for (var progress : saved.values()) { progress.tier = 1; progress.modules.clear(); }
+        }
     }
 
     synchronized UUID skillResetEpoch(UUID owner) {
@@ -805,6 +864,7 @@ public final class GeneratorStore {
                     || (row.bunker > 0 && (row.containerCore == null || row.legacyDrops == null))) return false;
         }
         for (Row row : rows) { row.tier = 1; row.modules.clear(); }
+        resetCarried(owner);
         int delta = primary.skillRebirthBaseline ? skillCount - primary.lastSkillRebirth : 1;
         primary.rebirths = (int) Math.min(Integer.MAX_VALUE, (long) primary.rebirths + delta);
         primary.lastSkillRebirth = skillCount;
@@ -896,6 +956,8 @@ public final class GeneratorStore {
         if (row == null || intent == null || !intent.core().equals(row.coreItem) || row.containerCore != null
                 || row.containerMigration != null || row.containerLastMigration != null || row.bunker != 0 || row.coreTake != null) return false;
         for (Row other : rows(owner)) if (other.coreTake != null) return false;
+        var saved = data.carried.get(owner);
+        if (saved != null && (saved.size() >= 256 || saved.containsKey(intent.core()))) return false;
         row.coreTake = intent; dirty = true;
         return payoutCheckpoint();
     }
@@ -904,6 +966,12 @@ public final class GeneratorStore {
         writable();
         Row row = row(owner, slot);
         if (row == null || row.coreTake == null || !row.coreTake.transaction().equals(transaction) || now < 0) return false;
+        var saved = data.carried.computeIfAbsent(owner, ignored -> new LinkedHashMap<>());
+        if (saved.size() >= 256 || saved.containsKey(row.coreItem)) return false;
+        var progress = new Progress();
+        progress.tier = row.tier; progress.modules = new LinkedHashMap<>(row.modules);
+        saved.put(row.coreItem, progress);
+        row.tier = 1; row.modules.clear();
         row.coreItem = null; row.world = null; row.coreTake = null; row.lastCalcMillis = now; dirty = true;
         return payoutCheckpoint();
     }

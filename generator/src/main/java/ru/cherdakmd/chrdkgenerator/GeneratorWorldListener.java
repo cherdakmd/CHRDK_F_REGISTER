@@ -196,21 +196,8 @@ public final class GeneratorWorldListener implements Listener {
             plugin.messages().send(player, "break-protected");
             return;
         }
-        try {
-            if (!plugin.containers().preparePlayer(player, core.slot())
-                    || GeneratorContainerLifecycle.release(plugin.store(), plugin.containerStore(), core.owner(), core.slot())
-                    != GeneratorContainerLifecycle.Result.READY) {
-                plugin.messages().send(player, "container-not-empty"); return;
-            }
-        } catch (java.io.IOException | RuntimeException error) {
-            plugin.messages().send(player, "container-not-empty"); return;
-        }
-        try {
-            if (!plugin.coreTake().start(player, core.slot())) { plugin.messages().send(player, "container-not-empty"); return; }
-        } catch (java.io.IOException | RuntimeException error) {
-            plugin.messages().send(player, "container-unavailable"); return;
-        }
-        plugin.messages().send(player, "break-ok", "bunker", "0");
+        var result = plugin.take().breakCore(player, core.slot());
+        plugin.take().message(player, result);
     }
 
     /**

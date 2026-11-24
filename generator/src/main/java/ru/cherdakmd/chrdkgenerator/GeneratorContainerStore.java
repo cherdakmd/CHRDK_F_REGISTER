@@ -34,7 +34,7 @@ final class GeneratorContainerStore {
                 throw new IllegalArgumentException("invalid generator container stack");
         }
     }
-    record View(UUID core, long revision, List<Stack> slots, long burnMillis, long lastCalcMillis, boolean pending, UUID lastMigration) {
+    record View(UUID core, long revision, List<Stack> slots, long burnMillis, long lastCalcMillis, boolean pending, UUID lastMigration, boolean paused) {
         View { slots = java.util.Collections.unmodifiableList(new ArrayList<>(slots)); }
     }
 
@@ -65,6 +65,7 @@ final class GeneratorContainerStore {
         long saleSequence;
         Sale salePending;
         long moneyDebt;
+        boolean paused;
         Pending pending;
     }
     private record Retired(UUID release, long saleSequence) {
@@ -138,10 +139,12 @@ final class GeneratorContainerStore {
             if (!entry.getValue().isJsonObject()) throw new IllegalArgumentException("container row type");
             var row = entry.getValue().getAsJsonObject();
             var required = java.util.Set.of("owner", "slot", "core", "revision", "slots", "burnMillis", "lastCalcMillis", "pending");
-            var allowed = java.util.Set.of("owner", "slot", "core", "revision", "slots", "burnMillis", "lastCalcMillis", "pending", "lastMigration", "saleSequence", "salePending", "moneyDebt");
+            var allowed = java.util.Set.of("owner", "slot", "core", "revision", "slots", "burnMillis", "lastCalcMillis", "pending", "lastMigration", "saleSequence", "salePending", "moneyDebt", "paused");
             if (!row.keySet().containsAll(required) || !allowed.containsAll(row.keySet())
                     || row.has("saleSequence") != row.has("salePending"))
                 throw new IllegalArgumentException("container row fields");
+            if (row.has("paused") && (!row.get("paused").isJsonPrimitive() || !row.get("paused").getAsJsonPrimitive().isBoolean()))
+                throw new IllegalArgumentException("container paused flag");
             if (row.has("moneyDebt")) {
                 if (!row.get("moneyDebt").isJsonPrimitive() || !row.get("moneyDebt").getAsJsonPrimitive().isNumber())
                     throw new IllegalArgumentException("container money debt");
@@ -275,7 +278,19 @@ final class GeneratorContainerStore {
     synchronized View view(UUID owner, int slot) {
         Container row = data.containers.get(key(owner, slot));
         return !healthy || row == null ? null : new View(row.core, row.revision, row.slots,
-                row.burnMillis, row.lastCalcMillis, row.pending != null, row.lastMigration);
+                row.burnMillis, row.lastCalcMillis, row.pending != null, row.lastMigration, row.paused);
+    }
+
+    /** Снимок уже рассчитан до переключения; простой не превращается в производство. */
+    synchronized boolean setPaused(UUID owner, int slot, UUID core, long revision, boolean paused, long now) {
+        Container row = data.containers.get(key(owner, slot));
+        if (!healthy || row == null || !row.core.equals(core) || row.pending != null || row.revision != revision
+                || row.revision == Long.MAX_VALUE || now < row.lastCalcMillis) return false;
+        if (row.paused == paused) return true;
+        Data next = copy();
+        Container change = next.containers.get(key(owner, slot));
+        change.paused = paused; change.lastCalcMillis = now; change.revision++;
+        return publish(next);
     }
 
     /** Под release-intent удаляет только пустой контейнер; горящий остаток списывается. */

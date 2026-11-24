@@ -10,7 +10,7 @@ commands:
   generator:
     description: "Статус и управление личным генератором"
     aliases: [gen]
-    usage: "/generator [take | upgrade <tier|speed|capacity|luck|chunk>]"
+    usage: "/generator [take | resume | upgrade <tier|speed|capacity|luck|chunk>]"
   generatoradmin:
     description: "Администрирование генератора"
     permission: chrdkgenerator.admin

@@ -337,19 +337,8 @@ public final class GeneratorGui implements Listener {
     /** Снятие ядра с двухшаговым подтверждением (TTL 30 секунд). */
     private void take(Player player, Holder holder) {
         GeneratorTake.Result result = plugin.take().request(player, holder.slot);
-        switch (result.status()) {
-            case NO_GENERATOR -> plugin.messages().send(player, "take-none");
-            case CONTAINER_NOT_EMPTY -> plugin.messages().send(player, "container-not-empty");
-            case TOO_FAR -> plugin.messages().send(player, "command-too-far",
-                    "range", String.valueOf(plugin.config().menuRange()));
-            case PENDING -> {
-                plugin.messages().send(player, "take-confirm");
-                render(player, holder);
-            }
-            case DONE -> {
-                plugin.messages().send(player, "take-ok", "bunker", String.valueOf(result.units()));
-                player.closeInventory();
-            }
-        }
+        plugin.take().message(player, result);
+        if (result.status() == GeneratorTake.Result.Status.DONE) player.closeInventory();
+        else render(player, holder);
     }
 }

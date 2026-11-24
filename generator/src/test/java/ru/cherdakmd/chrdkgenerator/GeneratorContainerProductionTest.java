@@ -10,7 +10,7 @@ class GeneratorContainerProductionTest {
     private GeneratorContainerStore.View view(long burn, long time, int coal) {
         var slots = new ArrayList<GeneratorContainerStore.Stack>(Collections.nCopies(45, null));
         if (coal > 0) slots.set(36, new GeneratorContainerStore.Stack("COAL", coal));
-        return new GeneratorContainerStore.View(UUID.randomUUID(), 0, slots, burn, time, false, null);
+        return new GeneratorContainerStore.View(UUID.randomUUID(), 0, slots, burn, time, false, null, false);
     }
     private GeneratorContainerProduction.Plan plan(GeneratorContainerStore.View v, long now, long room) {
         return GeneratorContainerProduction.plan(v, now, 1000, 1, 0, true, 0.5, 3_600_000, room,
@@ -41,7 +41,7 @@ class GeneratorContainerProductionTest {
         var v = view(3000, 100, 1);
         var slots = new ArrayList<>(v.slots());
         for (int i = 0; i < 36; i++) slots.set(i, new GeneratorContainerStore.Stack("COBBLESTONE", 64));
-        var full = new GeneratorContainerStore.View(v.core(), 0, slots, 3000, 100, false, null);
+        var full = new GeneratorContainerStore.View(v.core(), 0, slots, 3000, 100, false, null, false);
         var p = plan(full, 5100, 100);
         assertEquals(0, p.units());
         assertEquals(5100, p.lastCalcMillis());

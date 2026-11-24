@@ -39,4 +39,48 @@ class GeneratorCoreTakeTest {
         assertTrue(open().finishCoreTake(owner, 0, tx, 2));
         assertFalse(open().entry(owner, 0).installed());
     }
+    @Test void progressFollowsOwnerAndCoreNotReusedSlot() throws Exception {
+        var s = open(); s.markRegistered();
+        s.install(owner, core, "world", 0, 64, 0, 1, 3);
+        s.setTier(owner, 0, 7); s.setModuleLevel(owner, 0, "speed", 3); s.flush();
+        assertTrue(s.prepareCoreTake(owner, 0, new GeneratorStore.CoreTake(tx, core, "before", "after")));
+        assertTrue(s.finishCoreTake(owner, 0, tx, 2));
+        s = open();
+        var otherCore = UUID.randomUUID();
+        s.install(owner, otherCore, "world", 1, 64, 0, 3, 3);
+        assertEquals(1, s.entry(owner, 0).tier());
+        assertTrue(s.entry(owner, 0).modules().isEmpty());
+        assertEquals(1, s.install(owner, core, "world", 2, 64, 0, 3, 3).slot());
+        assertEquals(7, s.entry(owner, 1).tier());
+        assertEquals(3, s.entry(owner, 1).modules().get("speed").intValue());
+        s.flush(); assertEquals(7, open().entry(owner, 1).tier());
+    }
+
+    @Test void transferDoesNotTransferProgressAndOriginalOwnerCanRecoverIt() throws Exception {
+        var s = open(); s.markRegistered();
+        s.install(owner, core, "world", 0, 64, 0, 1, 3);
+        s.setTier(owner, 0, 8); s.flush();
+        assertTrue(s.prepareCoreTake(owner, 0, new GeneratorStore.CoreTake(tx, core, "before", "after")));
+        assertTrue(s.finishCoreTake(owner, 0, tx, 2));
+        UUID other = UUID.randomUUID();
+        s = open(); s.install(other, core, "world", 1, 64, 0, 3, 3);
+        assertEquals(1, s.entry(other, 0).tier());
+        s.setTier(other, 0, 4);
+        assertTrue(s.prepareCoreTake(other, 0, new GeneratorStore.CoreTake(UUID.randomUUID(), core, "before", "after")));
+        UUID otherTx = s.coreTake(other, 0).transaction();
+        assertTrue(s.finishCoreTake(other, 0, otherTx, 4));
+        s = open(); s.install(owner, core, "world", 2, 64, 0, 5, 3);
+        assertEquals(8, s.entry(owner, 0).tier());
+    }
+
+    @Test void rebirthResetsProgressWhileCoreIsCarried() throws Exception {
+        var s = open(); s.markRegistered(); s.install(owner, core, "world", 0, 64, 0, 1, 3);
+        s.setTier(owner, 0, 8); s.setModuleLevel(owner, 0, "luck", 2); s.flush();
+        assertTrue(s.prepareCoreTake(owner, 0, new GeneratorStore.CoreTake(tx, core, "before", "after")));
+        assertTrue(s.finishCoreTake(owner, 0, tx, 2));
+        assertEquals(0, s.rebirth(owner)); s.flush();
+        s = open(); s.install(owner, core, "world", 0, 64, 0, 3, 3);
+        assertEquals(1, s.entry(owner, 0).tier()); assertTrue(s.entry(owner, 0).modules().isEmpty());
+    }
+
 }

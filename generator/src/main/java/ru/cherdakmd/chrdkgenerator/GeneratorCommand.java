@@ -44,14 +44,17 @@ public final class GeneratorCommand implements CommandExecutor, TabCompleter {
                     return true;
                 }
                 GeneratorTake.Result result = plugin.take().request(player, target.slot());
-                switch (result.status()) {
-                    case NO_GENERATOR -> plugin.messages().send(player, "take-none");
-                    case CONTAINER_NOT_EMPTY -> plugin.messages().send(player, "container-not-empty");
-                    case TOO_FAR -> plugin.messages().send(player, "command-too-far",
-                            "range", String.valueOf(plugin.config().menuRange()));
-                    case PENDING -> plugin.messages().send(player, "take-confirm");
-                    case DONE -> plugin.messages().send(player, "take-ok",
-                            "bunker", String.valueOf(result.units()));
+                plugin.take().message(player, result);
+            }
+            case "resume" -> {
+                var target = requireNearby(player, "take-none");
+                if (target == null) return true;
+                try {
+                    if (plugin.containers().resume(player, target.slot())) plugin.messages().send(player, "take-resumed");
+                    else plugin.messages().send(player, "take-unavailable");
+                } catch (java.io.IOException | RuntimeException failure) {
+                    plugin.getLogger().warning("Возобновление генератора: " + failure.getMessage());
+                    plugin.messages().send(player, "take-unavailable");
                 }
             }
             case "upgrade" -> {
@@ -100,7 +103,7 @@ public final class GeneratorCommand implements CommandExecutor, TabCompleter {
             return List.of();
         }
         if (args.length == 1) {
-            return List.of("take", "upgrade").stream()
+            return List.of("take", "resume", "upgrade").stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase(Locale.ROOT))).toList();
         }
         if (args.length == 2 && "upgrade".equalsIgnoreCase(args[0])) {

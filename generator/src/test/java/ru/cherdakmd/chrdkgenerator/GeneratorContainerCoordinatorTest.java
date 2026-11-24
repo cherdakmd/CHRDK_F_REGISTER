@@ -77,4 +77,22 @@ class GeneratorContainerCoordinatorTest {
         assertEquals(5100, target().view(owner, 0).lastCalcMillis());
         assertEquals(1, target().view(owner, 0).slots().get(36).amount());
     }
+    @Test void pausedProductionSurvivesRestartAndResumeDoesNotAccrueOfflineTime() throws Exception {
+        var s = ready(0); var t = target();
+        assertEquals(GeneratorContainerCoordinator.Result.READY, run(s, t, 100, false));
+        var v = t.view(owner, 0); var slots = new ArrayList<>(v.slots());
+        slots.set(36, new GeneratorContainerStore.Stack("COAL", 2));
+        assertTrue(t.settle(owner, 0, core, v.revision(), slots, 0, 100));
+        v = t.view(owner, 0);
+        assertTrue(t.setPaused(owner, 0, core, v.revision(), true, 100));
+        t = target(); assertTrue(t.view(owner, 0).paused());
+        assertEquals(GeneratorContainerCoordinator.Result.READY, run(s, t, 5100, true));
+        v = target().view(owner, 0);
+        assertEquals(2, v.slots().get(36).amount()); assertNull(v.slots().get(0));
+        assertEquals(0, target().saleState(owner, 0).moneyDebt());
+        t = target(); assertTrue(t.setPaused(owner, 0, core, v.revision(), false, 5100));
+        assertEquals(GeneratorContainerCoordinator.Result.READY, run(s, t, 6100, true));
+        assertEquals(1, target().view(owner, 0).slots().get(0).amount());
+    }
+
 }

@@ -6,7 +6,7 @@ messages:
   # --- общее ---
   player-only: "<red>Эта команда доступна только игрокам.</red>"
   no-permission: "<red>Недостаточно прав.</red>"
-  usage: "<yellow>/generator [take | upgrade <tier|speed|capacity|luck|chunk>]</yellow>"
+  usage: "<yellow>/generator [take | resume | upgrade <tier|speed|capacity|luck|chunk>]</yellow>"
   admin-usage: "<yellow>/generatoradmin <reload|finance|recover|rebase-lost></yellow>"
   reloaded: "<green>Конфиг CHRDK_Generator перезагружен.</green>"
   payout-bank-credit: "<green>+%amount% ⛁ на банковский счёт · генератор</green>"
@@ -108,6 +108,12 @@ messages:
 
   # --- снятие и выдачи ---
   take-none: "<yellow>Генератор не установлен — снимать нечего.</yellow>"
+  take-contents: "<yellow>Генератор остановлен. Заберите продукцию и топливо из обоих окон и повторите снятие. /gen resume — продолжить работу.</yellow>"
+  take-payments: "<yellow>Генератор остановлен: ожидается завершение выплаты. Повторите позже. /gen resume — продолжить работу.</yellow>"
+  take-inventory: "<yellow>Генератор остановлен: освободите ячейку инвентаря и уберите предмет с курсора. /gen resume — продолжить работу.</yellow>"
+  take-unavailable: "<red>Снятие ожидает восстановления или сверки. Проверьте авторизацию, Skills и журнал сервера; не удаляйте файлы.</red>"
+  take-paused-confirm: "<yellow>Генератор остановлен. Повторите снятие в течение 30 секунд. /gen resume — продолжить работу.</yellow>"
+  take-resumed: "<green>Генератор снова может работать.</green>"
   take-confirm: "<yellow>Повторите снятие в течение 30 секунд, чтобы снять генератор.</yellow>"
   take-ok: "<green>Генератор снят: выдано из бункера %bunker%, ядро возвращено.</green>"
   bunker-empty: "<yellow>Бункер пуст.</yellow>"

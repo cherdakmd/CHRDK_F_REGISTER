@@ -29,7 +29,7 @@ final class GeneratorContainerCoordinator {
         if (migration == GeneratorBunkerMigration.Result.CONFLICT) return Result.CONFLICT;
         view = target.view(owner, slot);
         if (view == null || now < view.lastCalcMillis()) return Result.CONFLICT;
-        if (migration == GeneratorBunkerMigration.Result.FULL || !chamberWorking) {
+        if (migration == GeneratorBunkerMigration.Result.FULL || !chamberWorking || view.paused()) {
             if (now == view.lastCalcMillis()) return migration == GeneratorBunkerMigration.Result.FULL ? Result.BACKLOG : Result.READY;
             if (!target.settle(owner, slot, view.core(), view.revision(), view.slots(), view.burnMillis(), now)) return Result.WAIT;
             return migration == GeneratorBunkerMigration.Result.FULL ? Result.BACKLOG : Result.READY;

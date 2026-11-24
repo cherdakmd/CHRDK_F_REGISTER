@@ -89,6 +89,24 @@ final class GeneratorContainers {
         return result == GeneratorContainerCoordinator.Result.READY || result == GeneratorContainerCoordinator.Result.BACKLOG;
     }
 
+    boolean pauseForTake(Player player, int slot) throws IOException {
+        if (!preparePlayer(player, slot)) return false;
+        var entry = plugin.store().entry(player.getUniqueId(), slot);
+        var view = containers.view(player.getUniqueId(), slot);
+        if (entry == null || view == null || view.pending()) return false;
+        long now = System.currentTimeMillis();
+        if (!containers.setPaused(player.getUniqueId(), slot, view.core(), view.revision(), true, now)) return false;
+        payAndSell(entry, now, false, true);
+        return true;
+    }
+
+    boolean resume(Player player, int slot) throws IOException {
+        if (!preparePlayer(player, slot)) return false;
+        var view = containers.view(player.getUniqueId(), slot);
+        return view != null && !view.pending()
+                && containers.setPaused(player.getUniqueId(), slot, view.core(), view.revision(), false, System.currentTimeMillis());
+    }
+
     GeneratorContainerCoordinator.Result tick(GeneratorStore.Entry entry, long now) {
         var world = Bukkit.getWorld(entry.world());
         if (world == null || !world.isChunkLoaded(entry.x() >> 4, entry.z() >> 4)) {
@@ -101,7 +119,7 @@ final class GeneratorContainers {
         plugin.publishState(entry.owner(), entry.slot(), GeneratorCells.stateKey(chamber.state()));
         var result = settle(entry, now, chamber.working());
         if (result == GeneratorContainerCoordinator.Result.READY || result == GeneratorContainerCoordinator.Result.BACKLOG) {
-            payAndSell(entry, now, result == GeneratorContainerCoordinator.Result.BACKLOG);
+            payAndSell(entry, now, result == GeneratorContainerCoordinator.Result.BACKLOG, false);
             plugin.holograms().update(entry.owner(), entry.slot());
         }
         return result;
@@ -127,7 +145,7 @@ final class GeneratorContainers {
                 config.offlineHours() * 3_600_000L, GeneratorStats.capacityUnits(entry, config));
     }
 
-    private void payAndSell(GeneratorStore.Entry entry, long now, boolean backlog) {
+    private void payAndSell(GeneratorStore.Entry entry, long now, boolean backlog, boolean forceDebt) {
         Player player = Bukkit.getPlayer(entry.owner());
         if (player == null || !player.isOnline() || !plugin.coreApi().isAuthenticated(player)) return;
         var view = containers.view(entry.owner(), entry.slot());
@@ -137,9 +155,9 @@ final class GeneratorContainers {
                 .filter(java.util.Objects::nonNull).mapToLong(GeneratorContainerStore.Stack::amount).sum();
         boolean full = view.slots().subList(0, GeneratorContainerStore.RESOURCE_SLOTS).stream()
                 .allMatch(item -> item != null && stackSize(item.material()) != null && item.amount() >= stackSize(item.material()));
-        boolean sell = plugin.config().autoSellEnabled() && (backlog || full || count >= GeneratorStats.capacityUnits(entry, plugin.config()));
+        boolean sell = !forceDebt && !view.paused() && plugin.config().autoSellEnabled() && (backlog || full || count >= GeneratorStats.capacityUnits(entry, plugin.config()));
         String id = entry.owner() + ":" + entry.slot();
-        if (!sell && state.pending() == null && state.moneyDebt() < GeneratorPayoutCoordinator.MAX_OBLIGATION
+        if (!forceDebt && !sell && state.pending() == null && state.moneyDebt() < GeneratorPayoutCoordinator.MAX_OBLIGATION
                 && now < nextMoney.getOrDefault(id, 0L)) return;
         nextMoney.put(id, now + 60_000L);
         var result = GeneratorContainerSale.run(containers, entry.owner(), entry.slot(), sell, (material, amount) -> {
