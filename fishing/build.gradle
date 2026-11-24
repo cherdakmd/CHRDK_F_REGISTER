@@ -8,6 +8,7 @@ dependencies {
     compileOnly 'org.purpurmc.purpur:purpur-api:26.3.build.2647-experimental'
     testImplementation 'org.purpurmc.purpur:purpur-api:26.3.build.2647-experimental'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.11.3'
+    testImplementation 'org.mockito:mockito-core:5.20.0'
     testImplementation 'org.xerial:sqlite-jdbc:3.49.1.0'
     testRuntimeOnly 'org.slf4j:slf4j-nop:2.0.16'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
