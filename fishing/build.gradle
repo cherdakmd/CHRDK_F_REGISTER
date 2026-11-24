@@ -2,6 +2,8 @@ plugins { id 'java' }
 repositories { mavenCentral() }
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.11.3'
+    testImplementation 'org.xerial:sqlite-jdbc:3.49.1.0'
+    testRuntimeOnly 'org.slf4j:slf4j-nop:2.0.16'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 java { toolchain { languageVersion = JavaLanguageVersion.of(25) } }

@@ -1,0 +1,106 @@
+package ru.cherdakmd.chrdkfishing;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import static org.junit.jupiter.api.Assertions.*;
+
+class FishSaleJournalTest {
+    @TempDir Path dir;
+    final UUID owner = UUID.randomUUID(), transaction = UUID.randomUUID();
+    final byte[] key = new byte[32];
+    FishToken.Token fish() {
+        return FishToken.issue(key, UUID.randomUUID(), new FishingModel.Catch("pike", FishingModel.Size.NORMAL, 40), 100);
+    }
+    static final class Bank implements FishSaleJournal.Bank {
+        final Map<UUID, Map<String, Long>> accounts = new HashMap<>();
+        boolean reject, failAfterAccept;
+        public Map<String, Long> receipts(UUID owner) { return Map.copyOf(accounts.getOrDefault(owner, Map.of())); }
+        public boolean accept(UUID owner, String key, long amount) throws IOException {
+            if (reject) return false;
+            var map = accounts.computeIfAbsent(owner, ignored -> new HashMap<>());
+            Long existing = map.putIfAbsent(key, amount);
+            if (existing != null && existing != amount) return false;
+            if (failAfterAccept) { failAfterAccept = false; throw new IOException("uncertain bank response"); }
+            return true;
+        }
+    }
+    static final class Bag implements FishSaleJournal.Inventory {
+        UUID witness; String state = "before"; int removals; boolean failAfterApply, available = true;
+        public FishSaleJournal.TransferResult recover(UUID owner, UUID transaction, String before, String after) throws IOException {
+            if (!available) return FishSaleJournal.TransferResult.WAIT;
+            if (transaction.equals(witness)) return FishSaleJournal.TransferResult.APPLIED;
+            if (!state.equals(before)) return FishSaleJournal.TransferResult.CONFLICT;
+            state = after; witness = transaction; removals++;
+            if (failAfterApply) { failAfterApply = false; throw new IOException("uncertain playerdata result"); }
+            return FishSaleJournal.TransferResult.APPLIED;
+        }
+    }
+    Path file() { return dir.resolve("fishing-sales.db"); }
+    @Test void uncertainPlayerAndBankWritesRecoverWithoutDuplicateCharge() throws Exception {
+        var bank = new Bank(); var bag = new Bag(); var fish = fish(); bag.failAfterApply = true;
+        try (var j = new FishSaleJournal(file(), true)) {
+            assertEquals(FishSaleJournal.Result.WAIT, j.prepare(owner, transaction, "before", "after", List.of(fish), key, bank));
+            assertThrows(IOException.class, () -> j.recover(owner, transaction, bag, bank));
+            assertTrue(bank.receipts(owner).isEmpty());
+        }
+        bank.failAfterAccept = true;
+        try (var j = new FishSaleJournal(file(), false)) {
+            assertThrows(IOException.class, () -> j.recover(owner, transaction, bag, bank));
+            assertEquals(1, bag.removals); assertEquals(100L, bank.receipts(owner).get(FishSaleJournal.receiptKey(transaction)).longValue());
+        }
+        try (var j = new FishSaleJournal(file(), false)) {
+            assertEquals(FishSaleJournal.Result.DONE, j.recover(owner, transaction, bag, bank));
+            assertEquals(FishSaleJournal.Result.DONE, j.recover(owner, transaction, bag, bank));
+            assertEquals(1, bag.removals); assertEquals(1, bank.receipts(owner).size());
+            assertEquals(FishSaleJournal.Result.CONFLICT, j.prepare(owner, UUID.randomUUID(), "before", "after", List.of(fish), key, bank));
+            assertEquals(FishSaleJournal.Result.CONFLICT, j.prepare(UUID.randomUUID(), UUID.randomUUID(), "before", "after", List.of(fish), key, bank));
+        }
+    }
+    @Test void noCreditWithoutWitnessAndOwnerCanHaveOnlyOnePendingSale() throws Exception {
+        var bank = new Bank(); bank.reject = true; var bag = new Bag(); bag.available = false;
+        try (var j = new FishSaleJournal(file(), true)) {
+            assertEquals(FishSaleJournal.Result.WAIT, j.prepare(owner, transaction, "before", "after", List.of(fish()), key, bank));
+            assertEquals(FishSaleJournal.Result.CONFLICT, j.prepare(owner, UUID.randomUUID(), "before", "after", List.of(fish()), key, bank));
+            assertEquals(FishSaleJournal.Result.WAIT, j.recover(owner, transaction, bag, bank));
+            assertTrue(bank.receipts(owner).isEmpty());
+            bag.available = true;
+            assertEquals(FishSaleJournal.Result.WAIT, j.recover(owner, transaction, bag, bank));
+            assertEquals(1, bag.removals); assertTrue(bank.receipts(owner).isEmpty());
+            bank.reject = false;
+            assertEquals(FishSaleJournal.Result.DONE, j.recover(owner, transaction, bag, bank));
+            assertEquals(1, bag.removals);
+        }
+    }
+    @Test void duplicateOrForgedTokensAndHistoryMismatchAreRejected() throws Exception {
+        var bank = new Bank(); var fish = fish();
+        try (var j = new FishSaleJournal(file(), true)) {
+            assertEquals(FishSaleJournal.Result.CONFLICT, j.prepare(owner, transaction, "before", "after", List.of(fish, fish), key, bank));
+            var forged = new FishToken.Token(fish.id(), fish.fish(), 200, fish.mac());
+            assertEquals(FishSaleJournal.Result.CONFLICT, j.prepare(owner, transaction, "before", "after", List.of(forged), key, bank));
+            bank.accounts.computeIfAbsent(owner, ignored -> new HashMap<>()).put(FishSaleJournal.receiptKey(UUID.randomUUID()), 100L);
+            assertEquals(FishSaleJournal.Result.CONFLICT, j.prepare(owner, transaction, "before", "after", List.of(fish), key, bank));
+        }
+    }
+    @Test void missingOrInvalidJournalIsNotSilentlyReinitialized() throws Exception {
+        assertThrows(java.sql.SQLException.class, () -> new FishSaleJournal(file(), false));
+        Files.writeString(file(), "not a database");
+        assertThrows(java.sql.SQLException.class, () -> new FishSaleJournal(file(), true));
+        assertEquals("not a database", Files.readString(file()));
+    }
+    @Test void lostBankReceiptStopsFutureSales() throws Exception {
+        var bank = new Bank(); var bag = new Bag();
+        try (var j = new FishSaleJournal(file(), true)) {
+            assertEquals(FishSaleJournal.Result.WAIT, j.prepare(owner, transaction, "before", "after", List.of(fish()), key, bank));
+            assertEquals(FishSaleJournal.Result.DONE, j.recover(owner, transaction, bag, bank));
+            bank.accounts.clear();
+            assertEquals(FishSaleJournal.Result.CONFLICT, j.prepare(owner, UUID.randomUUID(), "before", "after", List.of(fish()), key, bank));
+        }
+    }
+}
