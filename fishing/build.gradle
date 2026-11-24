@@ -1,10 +1,25 @@
 plugins { id 'java' }
+
+// Compile the Skills service contract for development only; never shade a second copy into the plugin.
+def skillsApiClasses = layout.buildDirectory.dir('skills-api-classes')
+tasks.register('compileSkillsFishingApi', JavaCompile) {
+    source file('../skills/src/main/java/ru/cherdakmd/chrdkskills/FishingCatchBonus.java')
+    classpath = configurations.compileClasspath
+    destinationDirectory = skillsApiClasses
+    options.encoding = 'UTF-8'
+    options.release = 25
+}
+tasks.named('compileJava') { dependsOn tasks.named('compileSkillsFishingApi') }
+tasks.named('compileTestJava') { dependsOn tasks.named('compileSkillsFishingApi') }
+
 repositories {
     mavenCentral()
     maven { url = 'https://repo.purpurmc.org/snapshots' }
     maven { url = 'https://repo.papermc.io/repository/maven-public/' }
 }
 dependencies {
+    compileOnly files(skillsApiClasses)
+    testImplementation files(skillsApiClasses)
     compileOnly 'org.purpurmc.purpur:purpur-api:26.3.build.2647-experimental'
     testImplementation 'org.purpurmc.purpur:purpur-api:26.3.build.2647-experimental'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.11.3'

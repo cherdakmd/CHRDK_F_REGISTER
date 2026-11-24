@@ -80,6 +80,13 @@ public final class FishItemCodec {
             return FishToken.verify(secret, token) ? Optional.of(token) : Optional.empty();
         } catch (IllegalArgumentException error) { return Optional.empty(); }
     }
+    /** Only call from a confirmed extra-catch event; not a general-purpose copy operation. */
+    public Optional<ItemStack> duplicateForCatch(ItemStack original, UUID freshId) {
+        var token = read(original);
+        if (token.isEmpty()) return Optional.empty();
+        try { return Optional.of(build(FishToken.duplicateForCatch(secret, token.get(), freshId))); }
+        catch (IllegalArgumentException invalid) { return Optional.empty(); }
+    }
     private static String sizeName(FishingModel.Size size) {
         return switch (size) {
             case SMALL -> "маленькая";

@@ -2,9 +2,9 @@ name: Fishing model
 on:
   push:
     branches: [main, 'arena/**']
-    paths: ['fishing/**', '.github/workflows/fishing-model.yml', 'gradle/**', 'gradlew']
+    paths: ['fishing/**', '.github/workflows/fishing-model.yml', 'gradle/**', 'gradlew', 'skills/src/main/java/ru/cherdakmd/chrdkskills/FishingCatchBonus.java']
   pull_request:
-    paths: ['fishing/**', '.github/workflows/fishing-model.yml', 'gradle/**', 'gradlew']
+    paths: ['fishing/**', '.github/workflows/fishing-model.yml', 'gradle/**', 'gradlew', 'skills/src/main/java/ru/cherdakmd/chrdkskills/FishingCatchBonus.java']
   workflow_dispatch:
 permissions:
   contents: read

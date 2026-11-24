@@ -425,9 +425,14 @@ public final class SkillListener implements Listener {
             extra = true;
         }
         if (extra) {
-            ItemStack bonus = caught.getItemStack().clone();
-            player.getWorld().dropItemNaturally(player.getLocation(), bonus);
-            plugin.messages().send(player, "extra-catch");
+            ItemStack original = caught.getItemStack();
+            FishingCatchBonus provider = FishingExtraCatch.marked(original)
+                    ? org.bukkit.Bukkit.getServicesManager().load(FishingCatchBonus.class) : null;
+            ItemStack bonus = FishingExtraCatch.extra(player, original, provider);
+            if (bonus != null) {
+                player.getWorld().dropItemNaturally(player.getLocation(), bonus);
+                plugin.messages().send(player, "extra-catch");
+            }
         }
     }
 
