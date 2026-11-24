@@ -31,6 +31,7 @@ public final class FishSaleJournal implements AutoCloseable {
     private static final long MAX_CREDIT = 1_000_000;
     private static final int APPLICATION_ID = 1179206483;
     private static final int SCHEMA_VERSION = 1;
+    private static final String ACTIVE_INDEX = "CREATE UNIQUE INDEX active_sale_owner ON sales(owner) WHERE phase <> 'PAID'";
     private final Connection db;
 
     public enum TransferResult { APPLIED, WAIT, CONFLICT }
@@ -70,7 +71,7 @@ public final class FishSaleJournal implements AutoCloseable {
                 db.setAutoCommit(false);
                 try {
                     s.execute("CREATE TABLE sales (id TEXT PRIMARY KEY, owner TEXT NOT NULL, before_state TEXT NOT NULL, after_state TEXT NOT NULL, amount INTEGER NOT NULL CHECK(amount BETWEEN 1 AND 1000000), phase TEXT NOT NULL CHECK(phase IN ('PREPARED','REMOVED','PAID'))) ");
-                    s.execute("CREATE UNIQUE INDEX active_sale_owner ON sales(owner) WHERE phase <> 'PAID'");
+                    s.execute(ACTIVE_INDEX);
                     s.execute("CREATE TABLE spent_fish (fish_id TEXT PRIMARY KEY, sale_id TEXT NOT NULL REFERENCES sales(id))");
                     s.execute("PRAGMA application_id=" + APPLICATION_ID);
                     s.execute("PRAGMA user_version=" + SCHEMA_VERSION);
@@ -87,11 +88,17 @@ public final class FishSaleJournal implements AutoCloseable {
                 try (ResultSet rs = s.executeQuery("PRAGMA quick_check")) {
                     if (!rs.next() || !"ok".equals(rs.getString(1))) throw new SQLException("sale journal corrupt");
                 }
-                try (ResultSet rs = s.executeQuery("SELECT COUNT(*) FROM sqlite_master WHERE type='index' AND name='active_sale_owner'")) {
-                    if (!rs.next() || rs.getInt(1) != 1) throw new SQLException("sale journal missing index");
+                try (ResultSet rs = s.executeQuery("SELECT sql FROM sqlite_master WHERE type='index' AND name='active_sale_owner'")) {
+                    if (!rs.next() || !ACTIVE_INDEX.equals(rs.getString(1))) throw new SQLException("sale journal index mismatch");
                 }
                 s.executeQuery("SELECT id,owner,before_state,after_state,amount,phase FROM sales LIMIT 0").close();
                 s.executeQuery("SELECT fish_id,sale_id FROM spent_fish LIMIT 0").close();
+                try (ResultSet rs = s.executeQuery("PRAGMA foreign_key_check")) {
+                    if (rs.next()) throw new SQLException("sale journal foreign key mismatch");
+                }
+                try (ResultSet rs = s.executeQuery("SELECT COUNT(*) FROM sales s WHERE NOT EXISTS (SELECT 1 FROM spent_fish f WHERE f.sale_id=s.id)")) {
+                    if (!rs.next() || rs.getLong(1) != 0) throw new SQLException("sale journal missing items");
+                }
             }
         } catch (SQLException error) {
             db.close();

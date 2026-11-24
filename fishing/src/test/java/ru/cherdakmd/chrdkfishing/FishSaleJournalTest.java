@@ -103,4 +103,23 @@ class FishSaleJournalTest {
             assertEquals(FishSaleJournal.Result.CONFLICT, j.prepare(owner, UUID.randomUUID(), "before", "after", List.of(fish()), key, bank));
         }
     }
+    @Test void alteredActiveSaleIndexIsQuarantined() throws Exception {
+        try (var j = new FishSaleJournal(file(), true)) { }
+        try (var db = java.sql.DriverManager.getConnection("jdbc:sqlite:" + file()); var stmt = db.createStatement()) {
+            stmt.execute("DROP INDEX active_sale_owner");
+            stmt.execute("CREATE INDEX active_sale_owner ON sales(owner)");
+        }
+        assertThrows(java.sql.SQLException.class, () -> new FishSaleJournal(file(), false));
+    }
+    @Test void emptyRowsAndLostFishReferencesAreQuarantined() throws Exception {
+        var bank = new Bank();
+        try (var j = new FishSaleJournal(file(), true)) {
+            assertEquals(FishSaleJournal.Result.WAIT, j.prepare(owner, transaction, "before", "after", List.of(fish()), key, bank));
+        }
+        try (var db = java.sql.DriverManager.getConnection("jdbc:sqlite:" + file()); var stmt = db.createStatement()) {
+            stmt.execute("DELETE FROM spent_fish");
+        }
+        assertThrows(java.sql.SQLException.class, () -> new FishSaleJournal(file(), false));
+    }
+
 }
