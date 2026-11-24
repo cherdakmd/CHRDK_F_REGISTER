@@ -48,6 +48,7 @@ class FishSaleJournalTest {
         try (var j = new FishSaleJournal(file(), true)) {
             assertEquals(FishSaleJournal.Result.WAIT, j.prepare(owner, transaction, "before", "after", List.of(fish), key, bank));
             assertThrows(IOException.class, () -> j.recover(owner, transaction, bag, bank));
+            assertEquals(transaction, j.pending(owner));
             assertTrue(bank.receipts(owner).isEmpty());
         }
         bank.failAfterAccept = true;
@@ -57,6 +58,7 @@ class FishSaleJournalTest {
         }
         try (var j = new FishSaleJournal(file(), false)) {
             assertEquals(FishSaleJournal.Result.DONE, j.recover(owner, transaction, bag, bank));
+            assertNull(j.pending(owner));
             assertEquals(FishSaleJournal.Result.DONE, j.recover(owner, transaction, bag, bank));
             assertEquals(1, bag.removals); assertEquals(1, bank.receipts(owner).size());
             assertEquals(FishSaleJournal.Result.CONFLICT, j.prepare(owner, UUID.randomUUID(), "before", "after", List.of(fish), key, bank));

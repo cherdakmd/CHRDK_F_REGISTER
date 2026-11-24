@@ -165,6 +165,23 @@ public final class FishSaleJournal implements AutoCloseable {
         return transition(transaction, "REMOVED", "PAID") ? Result.DONE : Result.WAIT;
     }
 
+    /** Find durable in-flight work after reconnect/restart; null means no active sale. */
+    public synchronized UUID pending(UUID owner) throws SQLException {
+        Objects.requireNonNull(owner, "owner");
+        try (var query = db.prepareStatement("SELECT id FROM sales WHERE owner=? AND phase <> 'PAID'")) {
+            query.setString(1, owner.toString());
+            try (var rows = query.executeQuery()) {
+                if (!rows.next()) return null;
+                String raw = rows.getString(1);
+                try {
+                    UUID id = UUID.fromString(raw);
+                    if (!id.toString().equals(raw) || rows.next()) throw new IllegalArgumentException("sale id");
+                    return id;
+                } catch (RuntimeException error) { throw new SQLException("invalid pending sale", error); }
+            }
+        }
+    }
+
     private boolean historyMatches(UUID owner, Map<String, Long> receipts) throws SQLException {
         if (receipts == null) return false;
         Map<String, Sale> sales = new HashMap<>();
