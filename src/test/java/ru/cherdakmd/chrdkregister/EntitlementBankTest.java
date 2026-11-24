@@ -19,6 +19,21 @@ class EntitlementBankTest {
         assertEquals(lineage, b.incomeSourceLineage("lottery"));
         assertNull(b.incomeSourceLineage("bad source"));
     }
+    @Test void sourceReceiptsIncludeAllOwnersAndSurviveRestart() {
+        var b = source(); UUID second = UUID.randomUUID(), otherLineage = UUID.randomUUID();
+        assertEquals(Map.of(), b.incomeSourceReceipts("lottery", lineage));
+        assertNull(b.incomeSourceReceipts("lottery", otherLineage));
+        assertTrue(b.registerIncomeSource("other", otherLineage));
+        assertTrue(b.creditEntitlementMinor("lottery", lineage, "first", owner, 101));
+        assertTrue(b.creditEntitlementMinor("lottery", lineage, "second", second, 202));
+        assertTrue(b.creditEntitlementMinor("other", otherLineage, "unrelated", owner, 303));
+        b = load();
+        var receipts = b.incomeSourceReceipts("lottery", lineage);
+        assertEquals(Map.of(owner, Map.of("first", 101L), second, Map.of("second", 202L)), receipts);
+        assertEquals(Map.of("first", 101L), b.incomeReceipts("lottery", lineage, owner));
+        assertThrows(UnsupportedOperationException.class, () -> receipts.clear());
+        assertThrows(UnsupportedOperationException.class, () -> receipts.get(owner).clear());
+    }
     @Test void onlyDeltaIsCreditedAcrossSpendingRestartAndFutureIncome() {
         var b=source(); assertTrue(b.creditEntitlement("lottery",lineage,"player",owner,100));
         assertTrue(b.withdraw(owner,90)); b.saveNow(); b=load();

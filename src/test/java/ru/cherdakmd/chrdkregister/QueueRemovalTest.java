@@ -32,7 +32,7 @@ class QueueRemovalTest {
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_Queue"));
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_VK"));
         assertEquals(19, PluginUpdateService.MODULES.size());
-        assertEquals(51,ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
+        assertEquals(52,ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
         var stock = yaml("config.yml");
         assertEquals(44, stock.getMapList("server-menu.items").size());
         assertEquals(36, stock.getList("auto-messages.messages").size());

@@ -84,9 +84,10 @@ final class SkillRebirthServiceTest {
         int boost = award.indexOf("boostExperience(");
         int rebirth = award.indexOf("RebirthMath.xpFactor(rebirths(player)");
         int wisdom = award.indexOf("AttributeMath.xpFactor(");
-        int clamp = award.indexOf("Math.max(0L, Math.min(plugin.config().maxXpPerAction(), gained))");
-        assertTrue(boost >= 0 && rebirth > boost && wisdom > rebirth && clamp > wisdom,
-                "множитель перерождения после бустеров ядра и до клампа действия");
+        int clamp = award.indexOf("Math.max(0L, Math.min(maxAction, gained))");
+        int fishingBonus = award.indexOf("fishingBonus(gained, eventBonusPercent, maxAction,");
+        assertTrue(boost >= 0 && rebirth > boost && wisdom > rebirth && clamp > wisdom && fishingBonus > clamp,
+                "бустеры, перерождение и мудрость предшествуют лимиту; бонус удочки также ограничен");
         assertFalse(award.contains("PrestigeXpGate"), "правило баланса удалено целиком");
     }
 
