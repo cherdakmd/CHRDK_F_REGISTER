@@ -60,7 +60,10 @@ public final class FishItemCodec {
     }
     /** Includes invalid branded items, so callers can fail closed rather than treat them as vanilla cod. */
     public boolean marked(ItemStack item) {
-        return item != null && item.hasItemMeta() && item.getItemMeta().getPersistentDataContainer().has(MARKER);
+        if (item == null || !item.hasItemMeta()) return false;
+        var pdc = item.getItemMeta().getPersistentDataContainer();
+        return pdc.has(MARKER) || pdc.has(ID) || pdc.has(SPECIES) || pdc.has(SIZE)
+                || pdc.has(LENGTH) || pdc.has(PRICE) || pdc.has(MAC);
     }
     public Optional<FishToken.Token> read(ItemStack item) {
         if (item == null || item.getType() != Material.COD || item.getAmount() != 1 || !item.hasItemMeta()) return Optional.empty();

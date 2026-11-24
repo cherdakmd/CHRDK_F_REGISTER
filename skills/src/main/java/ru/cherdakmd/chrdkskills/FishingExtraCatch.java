@@ -16,7 +16,10 @@ final class FishingExtraCatch {
     private static NamespacedKey key(String name) { return new NamespacedKey("chrdk_fishing", name); }
 
     static boolean marked(ItemStack item) {
-        return item != null && item.hasItemMeta() && item.getItemMeta().getPersistentDataContainer().has(KIND);
+        if (item == null || !item.hasItemMeta()) return false;
+        var pdc = item.getItemMeta().getPersistentDataContainer();
+        return pdc.has(KIND) || pdc.has(ID) || pdc.has(SPECIES) || pdc.has(SIZE)
+                || pdc.has(LENGTH) || pdc.has(PRICE) || pdc.has(MAC);
     }
     /** Plain items keep vanilla clone behavior; tagged items need a trusted provider and a distinct ID. */
     static ItemStack extra(Player player, ItemStack original, FishingCatchBonus provider) {

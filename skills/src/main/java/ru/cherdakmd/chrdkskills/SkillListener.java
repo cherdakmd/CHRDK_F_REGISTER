@@ -410,8 +410,15 @@ public final class SkillListener implements Listener {
         if (!honest(player)) {
             return;
         }
-        service.award(player, SkillType.FISHING, 1L);
-        if (plugin.abilities().activeFor(player, SkillType.FISHING)) service.award(player, SkillType.FISHING, 1L);
+        // One existing base award, with an optional verified rod multiplier. The
+        // separate active-ability award remains exactly as before, not duplicated.
+        int rodBonus = 0;
+        try {
+            FishingCatchBonus fishing = org.bukkit.Bukkit.getServicesManager().load(FishingCatchBonus.class);
+            if (fishing != null) rodBonus = Math.clamp(fishing.rodXpBonusPercent(event), 0, 20);
+        } catch (RuntimeException | LinkageError ignored) { rodBonus = 0; }
+        service.award(player, SkillType.FISHING, 1L, rodBonus);
+        if (plugin.abilities().activeFor(player, SkillType.FISHING)) service.award(player, SkillType.FISHING, 1L, rodBonus);
         plugin.xpItems().rollDrop(player, SkillType.FISHING, 1.0);
         SkillPerks.Active perks = service.perksFor(player, SkillType.FISHING);
         // Два независимых шанса: «лишняя рыба» и «клад» на 100-м уровне. Оба

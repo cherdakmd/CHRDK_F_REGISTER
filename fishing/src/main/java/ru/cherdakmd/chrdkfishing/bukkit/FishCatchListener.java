@@ -32,6 +32,8 @@ public final class FishCatchListener implements Listener {
     private final BooleanSupplier integrationReady;
     private final Function<Player, Integer> skillLevel;
     private final Function<Player, Integer> rodLevel;
+    private Function<PlayerFishEvent, Integer> eventRodLevel;
+    private Function<PlayerFishEvent, ru.cherdakmd.chrdkfishing.BaitCatalog.Bait> eventBait = event -> null;
     private final Function<PlayerFishEvent, FishingRules.Context> context;
     private final Function<FishToken.Token, ItemStack> itemFactory;
     private final Supplier<UUID> ids;
@@ -58,6 +60,13 @@ public final class FishCatchListener implements Listener {
         this.random = Objects.requireNonNull(random);
     }
 
+    /** Dev wiring: resolve the rod from the event hand, not merely the player's selected hand. */
+    FishCatchListener useEventRodLevel(Function<PlayerFishEvent, Integer> resolver) {
+        this.eventRodLevel = Objects.requireNonNull(resolver); return this;
+    }
+    FishCatchListener useEventBait(Function<PlayerFishEvent, ru.cherdakmd.chrdkfishing.BaitCatalog.Bait> resolver) {
+        this.eventBait = Objects.requireNonNull(resolver); return this;
+    }
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onFish(PlayerFishEvent event) {
         if (event == null || event.isCancelled() || !integrationReady.getAsBoolean()
@@ -71,8 +80,8 @@ public final class FishCatchListener implements Listener {
                 mode == GameMode.SURVIVAL || mode == GameMode.ADVENTURE, event.isCancelled(), true,
                 before.hasItemMeta(), before.getType().name(), before.getAmount());
         if (!CatchPolicy.replace(attempt, chance, random)) return;
-        int skill = skillLevel.apply(player), rod = rodLevel.apply(player);
-        var fish = FishingModel.roll(random, rod, skill, rules, context.apply(event));
+        int skill = skillLevel.apply(player), rod = eventRodLevel == null ? rodLevel.apply(player) : eventRodLevel.apply(event);
+        var fish = FishingModel.roll(random, rod, skill, rules, context.apply(event), eventBait.apply(event));
         // Provisional points only: server integration must choose and freeze a real currency mapping.
         var token = FishToken.issue(secret, ids.get(), fish, FishingModel.price(fish));
         ItemStack replacement = itemFactory.apply(token);

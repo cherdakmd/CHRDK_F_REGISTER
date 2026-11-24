@@ -204,6 +204,12 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi, IncomeSourceLineag
     @Override public java.util.UUID incomeSourceLineage(String source) { return auctionBankReady() ? bank.incomeSourceLineage(source) : null; }
     @Override public String shopSaleRemainder(java.util.UUID owner) { return auctionBankReady() ? bank.shopSaleRemainder(owner) : null; }
     @Override public java.util.UUID knownBankPlayer(String name) { return auctionBankReady() ? claimAccount(name) : null; }
+    @Override public java.util.Map<java.util.UUID, java.util.Map<String, Long>> incomeSourceReceipts(String source, java.util.UUID lineage) {
+        return auctionBankReady() ? bank.incomeSourceReceipts(source, lineage) : null;
+    }
+    @Override public java.util.Map<String, Long> incomeReceipts(String source, java.util.UUID lineage, java.util.UUID owner) {
+        return auctionBankReady() ? bank.incomeReceipts(source, lineage, owner) : null;
+    }
     @Override public long creditedEntitlement(String source, java.util.UUID lineage, String key, java.util.UUID owner) {
         return auctionBankReady() ? bank.creditedEntitlement(source, lineage, key, owner) : -1L;
     }

@@ -11,4 +11,6 @@ import org.bukkit.inventory.ItemStack;
  */
 public interface FishingCatchBonus {
     ItemStack createExtra(Player player, ItemStack original);
+    /** Optional validated rod multiplier, in whole percent; Skills clamps it and awards once. */
+    default int rodXpBonusPercent(org.bukkit.event.player.PlayerFishEvent event) { return 0; }
 }

@@ -59,6 +59,18 @@ public final class FishingModel {
      * up to 10 points from small to large. Neither modifies total probability.
      */
     public static Catch roll(RandomGenerator random, int rodLevel, int skillLevel, FishingRules rules, FishingRules.Context context) {
+        return roll(random, rodLevel, skillLevel, rules, context, null);
+    }
+
+    /**
+     * Optional bait modifies only the current draw. A paid bait must first be
+     * redeemed through the authoritative journal; this method never spends it.
+     * Rare bait shifts up to five weight units from common to rare only when
+     * both rarities exist in the configured pool; large bait shifts up to five
+     * size points from small to large. Quick bait affects wait time elsewhere.
+     */
+    public static Catch roll(RandomGenerator random, int rodLevel, int skillLevel, FishingRules rules,
+                             FishingRules.Context context, BaitCatalog.Bait bait) {
         Objects.requireNonNull(random, "random");
         Objects.requireNonNull(rules, "rules");
         Objects.requireNonNull(context, "context");
@@ -69,6 +81,12 @@ public final class FishingModel {
         for (Rarity rarity : Rarity.values()) {
             if (FishCatalog.byRarity(rarity).stream().noneMatch(fish -> allowed.isEmpty() || allowed.contains(fish.id())))
                 rarityWeights[rarity.ordinal()] = 0;
+        }
+        if (bait != null && bait.effect() == BaitCatalog.Effect.RARE_FISH
+                && rarityWeights[Rarity.COMMON.ordinal()] > 0 && rarityWeights[Rarity.RARE.ordinal()] > 0) {
+            int shift = Math.min(bait.bonusPercent(), rarityWeights[Rarity.COMMON.ordinal()]);
+            rarityWeights[Rarity.COMMON.ordinal()] -= shift;
+            rarityWeights[Rarity.RARE.ordinal()] += shift;
         }
         Rarity rarity = Rarity.values()[weighted(random, rarityWeights)];
         List<Species> pool = FishCatalog.byRarity(rarity).stream()
@@ -86,6 +104,11 @@ public final class FishingModel {
         weights[Size.SMALL.ordinal()] -= rod.largeBonusPoints() + skillBonus;
         weights[Size.LARGE.ordinal()] += rod.largeBonusPoints();
         weights[Size.TROPHY.ordinal()] += skillBonus;
+        if (bait != null && bait.effect() == BaitCatalog.Effect.LARGE_FISH) {
+            int shift = Math.min(bait.bonusPercent(), weights[Size.SMALL.ordinal()]);
+            weights[Size.SMALL.ordinal()] -= shift;
+            weights[Size.LARGE.ordinal()] += shift;
+        }
         Size size = Size.values()[weighted(random, weights)];
         return new Catch(species.id(), size, species.lengths().get(size.ordinal()).roll(random));
     }

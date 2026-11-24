@@ -36,7 +36,7 @@ import java.util.UUID;
 public interface ChrdkRegisterApi {
 
     /** Версия контракта API. API46: снят мост производителя расходников Кузни — модуль тиров вырезан; API45: Claims source lineage и durable high-water для безопасной сверки; API44: точная minor-экономика; API42: восемь PDC-расходников Кузни, ForgeMarketCatalog, nullable frozen grant в ShopExchange; API41: уведомление AnvilPaidResultEvent после ручной полной оплаты; API40: AnvilCosts/AnvilUse — полная цена без клиентского запрета 40; API39: денежная награда BP once и накопление буста без игрового потолка; API38: MobRewardPolicy временных мобов; API37: общие helpers ExplorationCatalog/ExplorationStore/ExplorationAtlas; API 33: мосты внешних интеграций (слушатели безопасности, уведомлений и глобального чата с фильтром получателей, бонус длительности покупок, заморозка входа и сброс сессий без смены пароля); API 32: общий владелец непрерывных пассивных зелий PassivePotions; API 30: общий helper одноразового согласия с котировкой; API 29: точный остаток выручки магазина; API 28: индекс членства кланов; API 27: снят источник оформления удалённого аддона; API 26: сняты контракты удалённых аддонов; API 25: durable checkpoint игровых наград; API 24 — Claims domain settlement. */
-    int API_VERSION = 51;
+    int API_VERSION = 52;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -305,6 +305,13 @@ public interface ChrdkRegisterApi {
     default UUID knownBankPlayer(String name) { return null; }
     /** API 20: UUID уже известен банку/серверу. Не создаёт игрока по одному имени/неизвестному UUID. */
     default boolean canReceiveBankIncome(UUID owner) { return false; }
+    /** API52: complete immutable bank receipt snapshot for one source/owner, in minor units.
+     * null means unavailable, invalid, or wrong lineage; an empty map is authoritative.
+     * Keys omit the source prefix. Used to detect a source restored behind the bank.
+     */
+    default java.util.Map<String, Long> incomeReceipts(String source, UUID lineage, UUID owner) { return null; }
+    /** API52: all owners' receipts for a source, or null if unavailable/wrong lineage. */
+    default java.util.Map<UUID, java.util.Map<String, Long>> incomeSourceReceipts(String source, UUID lineage) { return null; }
     default long creditedEntitlement(String source, UUID lineage, String key, UUID owner) { return -1L; }
     /** true — total зачислен полностью. false: выплата могла быть частичной/неизвестной; нельзя откатывать source total. */
     default boolean creditEntitlement(String source, UUID lineage, String key, UUID owner, long total) { return false; }

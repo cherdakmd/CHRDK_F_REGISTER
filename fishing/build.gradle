@@ -24,12 +24,20 @@ dependencies {
     testImplementation 'org.purpurmc.purpur:purpur-api:26.3.build.2647-experimental'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.11.3'
     testImplementation 'org.mockito:mockito-core:5.20.0'
-    testImplementation 'org.xerial:sqlite-jdbc:3.49.1.0'
+    implementation 'org.xerial:sqlite-jdbc:3.49.1.0'
     testRuntimeOnly 'org.slf4j:slf4j-nop:2.0.16'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 // Keep the experimental descriptor out of root production module scans.
 processResources { rename 'plugin.yml.in', 'plugin.yml' }
+// Dev JAR includes the SQLite driver and its native binaries, but not a second SLF4J API.
+tasks.named('jar') {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from({ configurations.runtimeClasspath.findAll { it.name.startsWith('sqlite-jdbc-') }.collect { zipTree(it) } }) {
+        include 'org/sqlite/**'
+        include 'META-INF/services/java.sql.Driver'
+    }
+}
 java { toolchain { languageVersion = JavaLanguageVersion.of(25) } }
 test {
     useJUnitPlatform()

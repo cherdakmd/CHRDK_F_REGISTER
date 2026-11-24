@@ -468,6 +468,12 @@ public final class SkillService {
      * @param units сколько действий засчитать (блоки, рыбы, пункты урона)
      */
     public Award award(Player player, SkillType skill, long units) {
+        return award(player, skill, units, 0);
+    }
+    /** Internal event-only additive percentage, applied before the normal per-action cap. */
+    Award award(Player player, SkillType skill, long units, int eventBonusPercent) {
+        if (eventBonusPercent < 0 || eventBonusPercent > 20 || (eventBonusPercent != 0 && skill != SkillType.FISHING))
+            throw new IllegalArgumentException("event XP bonus");
         if (player == null || resetPending(player) || skill == null || units <= 0L || !plugin.config().enabled()) {
             return Award.none(skill);
         }
@@ -495,7 +501,10 @@ public final class SkillService {
         // Маг: интеллект внутри ветки билда — ещё +2% опыта за уровень.
         gained = Math.round(gained * BranchMath.xpMult(
                 branchLevel(player, BuildBranch.MAGE)));
-        gained = Math.max(0L, Math.min(plugin.config().maxXpPerAction(), gained));
+        long maxAction = Math.max(0L, plugin.config().maxXpPerAction());
+        gained = Math.max(0L, Math.min(maxAction, gained));
+        if (eventBonusPercent != 0) gained = fishingBonus(gained, eventBonusPercent, maxAction,
+                java.util.concurrent.ThreadLocalRandom.current().nextInt(100));
         int oldLevel = level(player, skill);
         if (store.xp(key(player), skill) > Long.MAX_VALUE - gained) return Award.none(skill);
         long next = store.xp(key(player), skill) + gained;
@@ -505,6 +514,17 @@ public final class SkillService {
         long total = store.addXp(key(player), skill, gained);
         announceLevels(player, skill, oldLevel, newLevel);
         return new Award(skill, gained, oldLevel, newLevel, granted);
+    }
+
+    /** Unbiased stochastic rounding keeps small rod bonuses meaningful for e.g. 8 XP per catch. */
+    static long fishingBonus(long base, int percent, long cap, int roll) {
+        if (base < 0 || cap < base || percent < 0 || percent > 20 || roll < 0 || roll >= 100)
+            throw new IllegalArgumentException("fishing bonus");
+        long whole = (base / 100) * percent;
+        int fractional = (int) ((base % 100) * percent);
+        whole += fractional / 100;
+        if (roll < fractional % 100) whole++;
+        return whole >= cap - base ? cap : base + whole;
     }
 
     /**

@@ -17,11 +17,18 @@ import ru.cherdakmd.chrdkskills.FishingCatchBonus;
 
 /** Connects dependencies for the experimental prototype; not a production release. */
 final class FishingActivation {
-    record Active(FishCatchRouter router, FishCatchListener listener, FishingBonusProvider provider) { }
+    record Active(FishCatchRouter router, FishCatchListener listener, FishingBonusProvider provider, FishItemCodec codec) { }
     private FishingActivation() { }
     static Active install(Plugin plugin, PluginManager plugins, ServicesManager services,
                           Predicate<Player> authenticated, BooleanSupplier coreAvailable, BooleanSupplier primaryThread,
                           ChrdkSkillsApi skills, byte[] key, int chance, RandomGenerator random) {
+        return install(plugin, plugins, services, authenticated, coreAvailable, primaryThread, skills, key,
+                chance, random, FishingRules.defaults(), FishingActivation::context);
+    }
+    static Active install(Plugin plugin, PluginManager plugins, ServicesManager services,
+                          Predicate<Player> authenticated, BooleanSupplier coreAvailable, BooleanSupplier primaryThread,
+                          ChrdkSkillsApi skills, byte[] key, int chance, RandomGenerator random,
+                          FishingRules rules, java.util.function.Function<PlayerFishEvent, FishingRules.Context> context) {
         Objects.requireNonNull(plugin); Objects.requireNonNull(plugins); Objects.requireNonNull(services);
         Objects.requireNonNull(authenticated); Objects.requireNonNull(coreAvailable); Objects.requireNonNull(primaryThread);
         Objects.requireNonNull(skills);
@@ -34,13 +41,13 @@ final class FishingActivation {
                 () -> primaryThread.getAsBoolean() && coreAvailable.getAsBoolean()
                         && services.load(ChrdkSkillsApi.class) == skills && services.load(FishingCatchBonus.class) == provider,
                 player -> Math.clamp(skills.level(player, "fishing"), 1, 100),
-                player -> 1, FishingActivation::context, codec::build, UUID::randomUUID, key,
-                FishingRules.defaults(), chance, random);
+                player -> 1, context, codec::build, UUID::randomUUID, key,
+                rules, chance, random);
         FishCatchRouter router = new FishCatchRouter(() -> delegate);
         services.register(FishingCatchBonus.class, provider, plugin, ServicePriority.Normal);
         try { plugins.registerEvents(router, plugin); }
         catch (RuntimeException | LinkageError error) { services.unregister(FishingCatchBonus.class, provider); throw error; }
-        return new Active(router, delegate, provider);
+        return new Active(router, delegate, provider, codec);
     }
     private static FishingRules.Context context(PlayerFishEvent event) {
         var world = event.getHook().getWorld();

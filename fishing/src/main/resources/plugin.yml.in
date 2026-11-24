@@ -2,6 +2,15 @@ name: CHRDK_Fishing
 version: 0.0.0-dev
 main: ru.cherdakmd.chrdkfishing.bukkit.FishingPlugin
 api-version: '26.3'
-description: 'Экспериментальный улов для стенда: продажа, удочки и коллекция не готовы.'
+description: 'Экспериментальный улов для стенда: продажа, альбом, готовка и удочки экспериментальны.'
 author: cherdakmd
 depend: [CHRDK_Core, CHRDK_Skills]
+commands:
+  fishing:
+    description: "Меню экспериментальной рыбалки"
+    aliases: [fish]
+    usage: "/fish"
+permissions:
+  chrdkfishing.use:
+    description: "Использование экспериментальной рыбалки"
+    default: true

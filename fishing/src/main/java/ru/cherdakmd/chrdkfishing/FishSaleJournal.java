@@ -16,7 +16,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Experimental sale journal, NOT wired into the server.
+ * Experimental shared sale/cooking journal, wired only into the dev bootstrap.
  *
  * A Bukkit adapter must derive before/after from native inventory itself, check
  * every signed token's presence and amount, and remove exactly those items. An
@@ -30,7 +30,9 @@ public final class FishSaleJournal implements AutoCloseable {
     private static final int MAX_SNAPSHOT = 4 * 1024 * 1024;
     private static final long MAX_CREDIT = 1_000_000;
     private static final int APPLICATION_ID = 1179206483;
-    private static final int SCHEMA_VERSION = 1;
+    private static final int SCHEMA_VERSION = 4;
+    private static final String FIND_INDEX = "CREATE UNIQUE INDEX active_find_owner ON find_rewards(owner) WHERE phase <> 'DONE'";
+    private static final String COOK_INDEX = "CREATE UNIQUE INDEX active_cook_owner ON cooked_fish(owner) WHERE phase <> 'DONE'";
     private static final String ACTIVE_INDEX = "CREATE UNIQUE INDEX active_sale_owner ON sales(owner) WHERE phase <> 'PAID'";
     private final Connection db;
 
@@ -73,6 +75,9 @@ public final class FishSaleJournal implements AutoCloseable {
                     s.execute("CREATE TABLE sales (id TEXT PRIMARY KEY, owner TEXT NOT NULL, before_state TEXT NOT NULL, after_state TEXT NOT NULL, amount INTEGER NOT NULL CHECK(amount BETWEEN 1 AND 1000000), phase TEXT NOT NULL CHECK(phase IN ('PREPARED','REMOVED','PAID'))) ");
                     s.execute(ACTIVE_INDEX);
                     s.execute("CREATE TABLE spent_fish (fish_id TEXT PRIMARY KEY, sale_id TEXT NOT NULL REFERENCES sales(id))");
+                    createCookingSchema(s);
+                    createOrderSchema(s);
+                    createFindSchema(s);
                     s.execute("PRAGMA application_id=" + APPLICATION_ID);
                     s.execute("PRAGMA user_version=" + SCHEMA_VERSION);
                     db.commit();
@@ -82,8 +87,11 @@ public final class FishSaleJournal implements AutoCloseable {
                 try (ResultSet rs = s.executeQuery("PRAGMA application_id")) {
                     if (!rs.next() || rs.getInt(1) != APPLICATION_ID) throw new SQLException("wrong sale journal identity");
                 }
+                int version;
                 try (ResultSet rs = s.executeQuery("PRAGMA user_version")) {
-                    if (!rs.next() || rs.getInt(1) != SCHEMA_VERSION) throw new SQLException("unsupported sale journal schema");
+                    if (!rs.next()) throw new SQLException("missing sale journal version");
+                    version = rs.getInt(1);
+                    if (version < 1 || version > SCHEMA_VERSION) throw new SQLException("unsupported sale journal schema");
                 }
                 try (ResultSet rs = s.executeQuery("PRAGMA quick_check")) {
                     if (!rs.next() || !"ok".equals(rs.getString(1))) throw new SQLException("sale journal corrupt");
@@ -99,10 +107,54 @@ public final class FishSaleJournal implements AutoCloseable {
                 try (ResultSet rs = s.executeQuery("SELECT COUNT(*) FROM sales s WHERE NOT EXISTS (SELECT 1 FROM spent_fish f WHERE f.sale_id=s.id)")) {
                     if (!rs.next() || rs.getLong(1) != 0) throw new SQLException("sale journal missing items");
                 }
+                if (version < SCHEMA_VERSION) {
+                    db.setAutoCommit(false);
+                    try {
+                        if (version == 1) createCookingSchema(s);
+                        if (version < 3) createOrderSchema(s);
+                        createFindSchema(s);
+                        s.execute("PRAGMA user_version=" + SCHEMA_VERSION); db.commit();
+                    }
+                    catch (SQLException error) { db.rollback(); throw error; }
+                    finally { db.setAutoCommit(true); }
+                }
+                try (ResultSet rs = s.executeQuery("SELECT sql FROM sqlite_master WHERE type='index' AND name='active_cook_owner'")) {
+                    if (!rs.next() || !COOK_INDEX.equals(rs.getString(1))) throw new SQLException("cooking journal index mismatch");
+                }
+                s.executeQuery("SELECT fish_id,id,owner,before_state,after_state,phase FROM cooked_fish LIMIT 0").close();
+                s.executeQuery("SELECT owner,order_day,order_slot,sale_id FROM order_claims LIMIT 0").close();
+                try (var rs = s.executeQuery("SELECT sql FROM sqlite_master WHERE type='index' AND name='active_find_owner'")) {
+                    if (!rs.next() || !FIND_INDEX.equals(rs.getString(1))) throw new SQLException("find journal index mismatch");
+                }
+                s.executeQuery("SELECT fish_id,id,owner,before_state,after_state,phase FROM find_rewards LIMIT 0").close();
+                try (ResultSet rs = s.executeQuery("SELECT COUNT(*) FROM cooked_fish c JOIN spent_fish f ON f.fish_id=c.fish_id")) {
+                    if (!rs.next() || rs.getLong(1) != 0) throw new SQLException("fish both sold and cooked");
+                }
             }
         } catch (SQLException error) {
             db.close();
             throw error;
+        }
+    }
+
+    private static void createCookingSchema(Statement s) throws SQLException {
+        s.execute("CREATE TABLE cooked_fish (fish_id TEXT PRIMARY KEY NOT NULL, id TEXT NOT NULL UNIQUE, owner TEXT NOT NULL, before_state TEXT NOT NULL, after_state TEXT NOT NULL, phase TEXT NOT NULL CHECK(phase IN ('PREPARED','DONE'))) STRICT");
+        s.execute(COOK_INDEX);
+    }
+
+    private static void createOrderSchema(Statement s) throws SQLException {
+        s.execute("CREATE TABLE order_claims (owner TEXT NOT NULL, order_day INTEGER NOT NULL CHECK(order_day>=0), order_slot INTEGER NOT NULL CHECK(order_slot BETWEEN 0 AND 2), sale_id TEXT NOT NULL UNIQUE REFERENCES sales(id), PRIMARY KEY(owner,order_day,order_slot)) STRICT");
+    }
+    private static void createFindSchema(Statement s) throws SQLException {
+        s.execute("CREATE TABLE find_rewards (fish_id TEXT PRIMARY KEY NOT NULL, id TEXT NOT NULL UNIQUE, owner TEXT NOT NULL, before_state TEXT NOT NULL, after_state TEXT NOT NULL, phase TEXT NOT NULL CHECK(phase IN ('PREPARED','DONE'))) STRICT");
+        s.execute(FIND_INDEX);
+    }
+    /** A submitted order is reserved immediately, including when its payout needs recovery. */
+    public synchronized boolean orderClaimed(UUID owner, long day, int slot) throws SQLException {
+        if (owner == null || day < 0 || slot < 0 || slot >= 3) throw new IllegalArgumentException("order identity");
+        try (var s = db.prepareStatement("SELECT 1 FROM order_claims WHERE owner=? AND order_day=? AND order_slot=?")) {
+            s.setString(1, owner.toString()); s.setLong(2, day); s.setInt(3, slot);
+            try (var rs = s.executeQuery()) { return rs.next(); }
         }
     }
 
@@ -115,6 +167,17 @@ public final class FishSaleJournal implements AutoCloseable {
      */
     public synchronized Result prepare(UUID owner, UUID transaction, String before, String after,
                                        List<FishToken.Token> fish, byte[] secret, Bank bank) throws Exception {
+        return prepareSale(owner, transaction, before, after, fish, secret, bank, null);
+    }
+    /** One verified fish matching today's published contract, paid via the existing sale receipt. */
+    public synchronized Result prepareOrder(UUID owner, UUID transaction, String before, String after,
+            FishToken.Token fish, byte[] secret, Bank bank, FishingOrders.Order order) throws Exception {
+        if (order == null || order.day() != FishingOrders.utcDay()
+                || !FishingOrders.forDay(order.day()).get(order.slot()).equals(order) || !order.matches(fish)) return Result.CONFLICT;
+        return prepareSale(owner, transaction, before, after, List.of(fish), secret, bank, order);
+    }
+    private Result prepareSale(UUID owner, UUID transaction, String before, String after,
+            List<FishToken.Token> fish, byte[] secret, Bank bank, FishingOrders.Order order) throws Exception {
         if (owner == null || transaction == null || before == null || after == null || before.equals(after)
                 || before.length() > MAX_SNAPSHOT || after.length() > MAX_SNAPSHOT || fish == null || fish.isEmpty()
                 || fish.size() > 36 || bank == null) throw new IllegalArgumentException("sale intent");
@@ -125,7 +188,9 @@ public final class FishSaleJournal implements AutoCloseable {
             amount = Math.addExact(amount, token.quotedPrice());
             if (amount > MAX_CREDIT) return Result.CONFLICT;
         }
-        if (!historyMatches(owner, bank.receipts(owner))) return Result.CONFLICT;
+        if (order != null) amount = order.rewardMinor();
+        if (!historyMatches(owner, bank.receipts(owner)) || pendingCook(owner) != null || pendingFind(owner) != null) return Result.CONFLICT;
+        for (UUID id : ids) if (isCooked(id)) return Result.CONFLICT;
         db.setAutoCommit(false);
         try {
             try (var s = db.prepareStatement("INSERT INTO sales(id,owner,before_state,after_state,amount,phase) VALUES(?,?,?,?,?,'PREPARED')")) {
@@ -136,6 +201,10 @@ public final class FishSaleJournal implements AutoCloseable {
                 for (UUID id : ids) { s.setString(1, id.toString()); s.setString(2, transaction.toString()); s.addBatch(); }
                 s.executeBatch();
             }
+            if (order != null) try (var s = db.prepareStatement("INSERT INTO order_claims(owner,order_day,order_slot,sale_id) VALUES(?,?,?,?)")) {
+                s.setString(1, owner.toString()); s.setLong(2, order.day()); s.setInt(3, order.slot()); s.setString(4, transaction.toString());
+                s.executeUpdate();
+            }
             db.commit();
             return Result.WAIT;
         } catch (SQLException error) {
@@ -143,6 +212,111 @@ public final class FishSaleJournal implements AutoCloseable {
             if (error.getErrorCode() == 19) return Result.CONFLICT;
             throw error;
         } finally { db.setAutoCommit(true); }
+    }
+
+    /** Persist a cooking intent and reserve the fish against both sale and cooking. */
+    public synchronized Result prepareCook(UUID owner, UUID transaction, String before, String after,
+                                           FishToken.Token fish, byte[] secret) throws SQLException {
+        if (owner == null || transaction == null || before == null || after == null || before.equals(after)
+                || before.length() > MAX_SNAPSHOT || after.length() > MAX_SNAPSHOT || !FishToken.verify(secret, fish))
+            throw new IllegalArgumentException("cook intent");
+        if (pending(owner) != null || pendingCook(owner) != null || pendingFind(owner) != null || isSold(fish.id()) || isCooked(fish.id())) return Result.CONFLICT;
+        try (var s = db.prepareStatement("INSERT INTO cooked_fish(fish_id,id,owner,before_state,after_state,phase) VALUES(?,?,?,?,?,'PREPARED')")) {
+            s.setString(1, fish.id().toString()); s.setString(2, transaction.toString()); s.setString(3, owner.toString());
+            s.setString(4, before); s.setString(5, after); s.executeUpdate(); return Result.WAIT;
+        } catch (SQLException error) { if (error.getErrorCode() == 19) return Result.CONFLICT; throw error; }
+    }
+    private boolean isSold(UUID id) throws SQLException {
+        try (var s = db.prepareStatement("SELECT 1 FROM spent_fish WHERE fish_id=?")) {
+            s.setString(1, id.toString()); try (var rs = s.executeQuery()) { return rs.next(); }
+        }
+    }
+    private boolean isCooked(UUID id) throws SQLException {
+        try (var s = db.prepareStatement("SELECT 1 FROM cooked_fish WHERE fish_id=?")) {
+            s.setString(1, id.toString()); try (var rs = s.executeQuery()) { return rs.next(); }
+        }
+    }
+    public synchronized UUID pendingCook(UUID owner) throws SQLException {
+        Objects.requireNonNull(owner);
+        try (var s = db.prepareStatement("SELECT id FROM cooked_fish WHERE owner=? AND phase='PREPARED'")) {
+            s.setString(1, owner.toString());
+            try (var rs = s.executeQuery()) {
+                if (!rs.next()) return null;
+                try { String raw = rs.getString(1); UUID id = UUID.fromString(raw);
+                    if (!id.toString().equals(raw) || rs.next()) throw new IllegalArgumentException("cooking id"); return id;
+                } catch (RuntimeException invalid) { throw new SQLException("cooking journal invalid", invalid); }
+            }
+        }
+    }
+    /** Delivery and consumption must be one witnessed native inventory checkpoint. */
+    public synchronized Result recoverCook(UUID owner, UUID transaction, Inventory inventory) throws Exception {
+        if (owner == null || transaction == null || inventory == null) throw new IllegalArgumentException("cook recovery");
+        String before, after, phase;
+        try (var s = db.prepareStatement("SELECT before_state,after_state,phase FROM cooked_fish WHERE id=? AND owner=?")) {
+            s.setString(1, transaction.toString()); s.setString(2, owner.toString());
+            try (var rs = s.executeQuery()) {
+                if (!rs.next()) return Result.CONFLICT;
+                before = rs.getString(1); after = rs.getString(2); phase = rs.getString(3);
+            }
+        }
+        if (before == null || after == null || before.equals(after) || before.length() > MAX_SNAPSHOT || after.length() > MAX_SNAPSHOT)
+            return Result.CONFLICT;
+        if ("DONE".equals(phase)) return Result.DONE;
+        if (!"PREPARED".equals(phase)) return Result.CONFLICT;
+        TransferResult transfer = inventory.recover(owner, transaction, before, after);
+        if (transfer == null || transfer == TransferResult.CONFLICT) return Result.CONFLICT;
+        if (transfer == TransferResult.WAIT) return Result.WAIT;
+        try (var s = db.prepareStatement("UPDATE cooked_fish SET phase='DONE' WHERE id=? AND owner=? AND phase='PREPARED'")) {
+            s.setString(1, transaction.toString()); s.setString(2, owner.toString());
+            return s.executeUpdate() == 1 ? Result.DONE : Result.CONFLICT;
+        }
+    }
+
+    public synchronized UUID pendingFind(UUID owner) throws SQLException {
+        Objects.requireNonNull(owner);
+        try (var s = db.prepareStatement("SELECT id FROM find_rewards WHERE owner=? AND phase='PREPARED'")) {
+            s.setString(1, owner.toString());
+            try (var rs = s.executeQuery()) {
+                if (!rs.next()) return null;
+                try { String raw = rs.getString(1); UUID id = UUID.fromString(raw);
+                    if (!id.toString().equals(raw) || rs.next()) throw new IllegalArgumentException("find id"); return id;
+                } catch (RuntimeException invalid) { throw new SQLException("find journal invalid", invalid); }
+            }
+        }
+    }
+    /** Caller must verify the catch event and derive the exact reward from native storage. */
+    public synchronized Result prepareFind(UUID owner, UUID transaction, String before, String after,
+                                           FishToken.Token fish, byte[] secret) throws SQLException {
+        if (owner == null || transaction == null || before == null || after == null || before.equals(after)
+                || before.length() > MAX_SNAPSHOT || after.length() > MAX_SNAPSHOT || !FishToken.verify(secret, fish))
+            throw new IllegalArgumentException("find intent");
+        if (pending(owner) != null || pendingCook(owner) != null || pendingFind(owner) != null) return Result.CONFLICT;
+        try (var s = db.prepareStatement("INSERT INTO find_rewards(fish_id,id,owner,before_state,after_state,phase) VALUES(?,?,?,?,?,'PREPARED')")) {
+            s.setString(1, fish.id().toString()); s.setString(2, transaction.toString()); s.setString(3, owner.toString());
+            s.setString(4, before); s.setString(5, after); s.executeUpdate(); return Result.WAIT;
+        } catch (SQLException error) { if (error.getErrorCode() == 19) return Result.CONFLICT; throw error; }
+    }
+    public synchronized Result recoverFind(UUID owner, UUID transaction, Inventory inventory) throws Exception {
+        if (owner == null || transaction == null || inventory == null) throw new IllegalArgumentException("find recovery");
+        String before, after, phase;
+        try (var s = db.prepareStatement("SELECT before_state,after_state,phase FROM find_rewards WHERE id=? AND owner=?")) {
+            s.setString(1, transaction.toString()); s.setString(2, owner.toString());
+            try (var rs = s.executeQuery()) {
+                if (!rs.next()) return Result.CONFLICT;
+                before = rs.getString(1); after = rs.getString(2); phase = rs.getString(3);
+            }
+        }
+        if (before == null || after == null || before.equals(after) || before.length() > MAX_SNAPSHOT || after.length() > MAX_SNAPSHOT)
+            return Result.CONFLICT;
+        if ("DONE".equals(phase)) return Result.DONE;
+        if (!"PREPARED".equals(phase)) return Result.CONFLICT;
+        TransferResult transfer = inventory.recover(owner, transaction, before, after);
+        if (transfer == null || transfer == TransferResult.CONFLICT) return Result.CONFLICT;
+        if (transfer == TransferResult.WAIT) return Result.WAIT;
+        try (var s = db.prepareStatement("UPDATE find_rewards SET phase='DONE' WHERE id=? AND owner=? AND phase='PREPARED'")) {
+            s.setString(1, transaction.toString()); s.setString(2, owner.toString());
+            return s.executeUpdate() == 1 ? Result.DONE : Result.CONFLICT;
+        }
     }
 
     /** Reentrant recovery; no payout happens before durable removal is witnessed. */
@@ -180,6 +354,33 @@ public final class FishSaleJournal implements AutoCloseable {
                 } catch (RuntimeException error) { throw new SQLException("invalid pending sale", error); }
             }
         }
+    }
+
+    /** Full source reconciliation; includes owners absent from an older restored journal. */
+    public synchronized boolean historyMatchesAll(Map<UUID, Map<String, Long>> receipts) throws SQLException {
+        if (receipts == null) return false;
+        Set<UUID> owners = new HashSet<>();
+        try (var s = db.createStatement(); var rows = s.executeQuery("SELECT DISTINCT owner FROM sales")) {
+            while (rows.next()) {
+                String raw = rows.getString(1);
+                try {
+                    UUID owner = UUID.fromString(raw);
+                    if (!owner.toString().equals(raw)) return false;
+                    owners.add(owner);
+                } catch (RuntimeException invalid) { return false; }
+            }
+        }
+        for (UUID owner : receipts.keySet()) if (owner == null) return false;
+        owners.addAll(receipts.keySet());
+        for (UUID owner : owners) {
+            var entries = receipts.get(owner);
+            if (entries == null) {
+                if (receipts.containsKey(owner)) return false;
+                entries = Map.of();
+            }
+            if (!historyMatches(owner, entries)) return false;
+        }
+        return true;
     }
 
     private boolean historyMatches(UUID owner, Map<String, Long> receipts) throws SQLException {

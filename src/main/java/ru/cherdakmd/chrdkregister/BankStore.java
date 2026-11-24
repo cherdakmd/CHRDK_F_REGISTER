@@ -949,6 +949,30 @@ public final class BankStore {
         if (existing != null) return existing.equals(lineage);
         var next = envelope(); next.entitlementSources.put(source, lineage); return publishAuction(next);
     }
+    /** Complete source/owner receipt snapshot, or null when lineage or bank is unavailable. */
+    public synchronized Map<String, Long> incomeReceipts(String source, UUID lineage, UUID owner) {
+        if (owner == null || !incomeSourceAvailable(source, lineage)) return null;
+        String prefix = source + ":";
+        Map<String, Long> result = new LinkedHashMap<>();
+        for (var row : entitlementCredits.entrySet()) {
+            if (row.getKey().startsWith(prefix) && owner.equals(row.getValue().owner()))
+                result.put(row.getKey().substring(prefix.length()), row.getValue().credited());
+        }
+        return Map.copyOf(result);
+    }
+    /** Snapshot for every owner: needed to detect a source journal rolled back behind another player's payout. */
+    public synchronized Map<UUID, Map<String, Long>> incomeSourceReceipts(String source, UUID lineage) {
+        if (!incomeSourceAvailable(source, lineage)) return null;
+        String prefix = source + ":";
+        Map<UUID, Map<String, Long>> result = new LinkedHashMap<>();
+        for (var row : entitlementCredits.entrySet()) {
+            if (row.getKey().startsWith(prefix))
+                result.computeIfAbsent(row.getValue().owner(), ignored -> new LinkedHashMap<>())
+                        .put(row.getKey().substring(prefix.length()), row.getValue().credited());
+        }
+        result.replaceAll((owner, receipts) -> Map.copyOf(receipts));
+        return Map.copyOf(result);
+    }
     /** Возвращает подтверждённую накопительную сумму; -1 означает неизвестность/конфликт, НЕ ноль. */
     public synchronized long creditedEntitlement(String source, UUID lineage, String key, UUID owner) {
         if (!available || !validIncomeSource(source) || !validIncomeKey(key) || lineage == null || owner == null) return -1;
