@@ -77,7 +77,7 @@ public final class FishCatchListener implements Listener {
         // Provisional points only: server integration must choose and freeze a real currency mapping.
         var token = FishToken.issue(secret, ids.get(), fish, FishingModel.price(fish));
         ItemStack replacement = itemFactory.apply(token);
-        if (replacement == null || replacement.getAmount() != 1 || replacement.getType().isAir())
+        if (replacement == null || replacement.getAmount() != 1 || replacement.getType() != org.bukkit.Material.COD)
             throw new IllegalStateException("fish item factory failed");
         caught.setItemStack(replacement);
         // Do not call Skills award here: the existing monitor listener already awards this event.
