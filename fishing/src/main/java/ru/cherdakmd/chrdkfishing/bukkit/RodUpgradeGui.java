@@ -82,9 +82,11 @@ final class RodUpgradeGui implements Listener {
         if (!(event.getWhoClicked() instanceof Player player) || !holder.owner.equals(player.getUniqueId()) || !engine.available(player)) return;
         int slot = event.getRawSlot();
         if (slot >= 0 && slot < 36) {
+            // Invalidate the old selection even if quoting the new rod fails unexpectedly.
+            holder.quote = null;
             try { holder.quote = engine.quote(player, slot); render(holder, player); }
-            catch (IllegalArgumentException error) { holder.quote = null; render(holder, player); player.sendMessage("§cНе удалось подготовить улучшение: проверьте удочку и материалы."); }
-            catch (Exception error) { report(player, error); }
+            catch (IllegalArgumentException error) { render(holder, player); player.sendMessage("§cНе удалось подготовить улучшение: проверьте удочку и материалы."); }
+            catch (Exception error) { render(holder, player); report(player, error); }
         } else if (slot == 49 && holder.quote != null) {
             var plan = holder.quote; holder.quote = null;
             Bukkit.getScheduler().runTask(plugin, () -> {
