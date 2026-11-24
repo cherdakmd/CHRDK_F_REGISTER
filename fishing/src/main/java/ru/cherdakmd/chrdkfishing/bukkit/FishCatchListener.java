@@ -21,7 +21,7 @@ import ru.cherdakmd.chrdkfishing.FishingModel;
 import ru.cherdakmd.chrdkfishing.FishingRules;
 
 /**
- * Staged event adapter, deliberately not registered by a plugin. It must remain
+ * Staged event adapter, not connected to the registered router. It must remain
  * gated until Core authorisation and Skills extra-catch identity handling are
  * correctly wired, item/cooking protection is in place, prices are configured,
  * and a real server integration test proves listener ordering and cancellation.

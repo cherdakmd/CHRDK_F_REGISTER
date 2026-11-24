@@ -1,0 +1,7 @@
+name: CHRDK_Fishing
+version: 0.0.0-dev
+main: ru.cherdakmd.chrdkfishing.bukkit.FishingPlugin
+api-version: '26.3'
+description: 'Неработающий прототип: события зарегистрированы, игровой улов отключён.'
+author: cherdakmd
+depend: [CHRDK_Core, CHRDK_Skills]
