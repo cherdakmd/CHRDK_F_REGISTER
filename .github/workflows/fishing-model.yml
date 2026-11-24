@@ -1,0 +1,21 @@
+name: Fishing model
+on:
+  push:
+    branches: [main, 'arena/**']
+    paths: ['fishing/**', '.github/workflows/fishing-model.yml', 'gradle/**', 'gradlew']
+  pull_request:
+    paths: ['fishing/**', '.github/workflows/fishing-model.yml', 'gradle/**', 'gradlew']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  model:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v4
+      - run: ./gradlew -p fishing test

@@ -1,0 +1,74 @@
+package ru.cherdakmd.chrdkfishing;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import static ru.cherdakmd.chrdkfishing.FishingModel.*;
+
+class FishingModelTest {
+    @Test void catalogIsCompleteAndEachRarityCanBeSelected() {
+        assertEquals(30, FishCatalog.all().size());
+        assertEquals(5, FishCatalog.all().stream().filter(Species::fictional).count());
+        assertEquals(30, new HashSet<>(FishCatalog.all().stream().map(Species::id).toList()).size());
+        for (Rarity rarity : Rarity.values()) assertFalse(FishCatalog.byRarity(rarity).isEmpty());
+        assertThrows(UnsupportedOperationException.class, () -> FishCatalog.all().clear());
+    }
+
+    @Test void eachStoredLengthAndSizeMustMatchTheCatalog() {
+        for (Species species : FishCatalog.all()) {
+            for (Size size : Size.values()) {
+                Range range = species.lengths().get(size.ordinal());
+                assertEquals(species, validate(new Catch(species.id(), size, range.min())));
+                assertEquals(species, validate(new Catch(species.id(), size, range.max())));
+                assertThrows(IllegalArgumentException.class, () -> validate(new Catch(species.id(), size, range.max() + 1)));
+            }
+        }
+        assertThrows(IllegalArgumentException.class, () -> validate(new Catch("unknown", Size.NORMAL, 10)));
+    }
+
+    @Test void priceIsBasedOnCategoryNotExactLength() {
+        assertEquals(90, price(new Catch("whitefish", Size.SMALL, 15)));
+        assertEquals(120, price(new Catch("whitefish", Size.NORMAL, 25)));
+        assertEquals(180, price(new Catch("whitefish", Size.LARGE, 40)));
+        assertEquals(360, price(new Catch("whitefish", Size.TROPHY, 55)));
+        assertEquals(360, price(new Catch("whitefish", Size.TROPHY, 75)));
+        assertEquals(19, price(new Catch("roach", Size.SMALL, 8))); // 18.75 rounds half up
+    }
+
+    @Test void seededRollsProduceOnlyValidFishForEveryRodLevel() {
+        var random = new Random(1839472);
+        for (int rod = 1; rod <= 10; rod++) {
+            for (int i = 0; i < 5000; i++) {
+                Catch fish = roll(random, rod);
+                assertNotNull(validate(fish));
+                assertTrue(price(fish) > 0);
+            }
+        }
+        assertThrows(IllegalArgumentException.class, () -> roll(random, 0));
+        assertThrows(IllegalArgumentException.class, () -> roll(random, 11));
+    }
+
+    @Test void rodTransfersOnlySmallProbabilityToLarge() {
+        var basic = new int[4]; var max = new int[4];
+        var r1 = new Random(2024); var r10 = new Random(2024);
+        for (int i = 0; i < 100_000; i++) {
+            basic[roll(r1, 1).size().ordinal()]++;
+            max[roll(r10, 10).size().ordinal()]++;
+        }
+        assertTrue(basic[Size.SMALL.ordinal()] > max[Size.SMALL.ordinal()] + 8000);
+        assertTrue(max[Size.LARGE.ordinal()] > basic[Size.LARGE.ordinal()] + 8000);
+        assertEquals(basic[Size.NORMAL.ordinal()], max[Size.NORMAL.ordinal()]);
+        assertEquals(basic[Size.TROPHY.ordinal()], max[Size.TROPHY.ordinal()]);
+        assertEquals(20, rod(10).xpBonusPercent());
+        assertEquals(10, rods().size());
+    }
+
+    @Test void invalidDefinitionsAreRejected() {
+        assertThrows(IllegalArgumentException.class, () -> new Range(0, 3));
+        assertThrows(IllegalArgumentException.class, () -> new Species("x", "X", Rarity.COMMON, false, 1,
+                List.of(new Range(1, 2), new Range(2, 3), new Range(4, 5), new Range(6, 7))));
+        assertThrows(IllegalArgumentException.class, () -> new Rod(2, "X", 0, 31));
+    }
+}
