@@ -1,0 +1,8 @@
+{
+  "version": "2.0.25",
+  "kind": "standalone",
+  "prerelease": false,
+  "module": "generator",
+  "plugin": "CHRDK_Generator",
+  "archive": "chrdk-generator"
+}
