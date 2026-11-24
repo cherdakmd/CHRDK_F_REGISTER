@@ -18,4 +18,18 @@ jobs:
           distribution: temurin
           java-version: '25'
       - uses: gradle/actions/setup-gradle@v4
-      - run: ./gradlew -p fishing test
+      - name: Test fishing model
+        shell: bash
+        run: |
+          set +e
+          ./gradlew -p fishing test > fishing-build.log 2>&1
+          result=$?
+          tail -n 80 fishing-build.log
+          if [[ $result -ne 0 ]]; then
+            while IFS= read -r line; do
+              escaped=${line//'%'/'%25'}
+              echo "::error::$escaped"
+            done < <(tail -n 35 fishing-build.log)
+            find fishing/build/test-results -name '*.xml' -print -exec cat {} \; 2>/dev/null | head -c 10000 >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit "$result"
