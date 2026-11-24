@@ -1,7 +1,7 @@
 package ru.cherdakmd.chrdkfishing;
 
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.Objects;
 import java.util.random.RandomGenerator;
 
@@ -47,16 +47,45 @@ public final class FishingModel {
 
     private FishingModel() { }
 
-    /** Location is intentionally absent: the default model has one global pool. */
+    /** Global-pool compatibility overload; no skill or environmental bonuses. */
     public static Catch roll(RandomGenerator random, int rodLevel) {
+        return roll(random, rodLevel, 1, FishingRules.defaults(), new FishingRules.Context(null, null, false, false));
+    }
+
+    /**
+     * Rules select a pool before weights are drawn. If a restricted pool lacks a rarity,
+     * that rarity's weight is removed; remaining rarity weights are renormalized by weighted().
+     * Skill shifts up to 3 percentage points from small to trophy, and the rod shifts
+     * up to 10 points from small to large. Neither modifies total probability.
+     */
+    public static Catch roll(RandomGenerator random, int rodLevel, int skillLevel, FishingRules rules, FishingRules.Context context) {
         Objects.requireNonNull(random, "random");
+        Objects.requireNonNull(rules, "rules");
+        Objects.requireNonNull(context, "context");
+        if (skillLevel < 1 || skillLevel > 100) throw new IllegalArgumentException("skill level");
         Rod rod = rod(rodLevel);
-        Rarity rarity = Rarity.values()[weighted(random, RARITY_WEIGHTS)];
-        List<Species> pool = FishCatalog.byRarity(rarity);
-        Species species = pool.get(random.nextInt(pool.size()));
+        Set<String> allowed = rules.eligible(context.zone(), context.biome());
+        int[] rarityWeights = RARITY_WEIGHTS.clone();
+        for (Rarity rarity : Rarity.values()) {
+            if (FishCatalog.byRarity(rarity).stream().noneMatch(fish -> allowed.isEmpty() || allowed.contains(fish.id())))
+                rarityWeights[rarity.ordinal()] = 0;
+        }
+        Rarity rarity = Rarity.values()[weighted(random, rarityWeights)];
+        List<Species> pool = FishCatalog.byRarity(rarity).stream()
+                .filter(fish -> allowed.isEmpty() || allowed.contains(fish.id())).toList();
+        int[] speciesWeights = new int[pool.size()];
+        for (int i = 0; i < pool.size(); i++) {
+            String id = pool.get(i).id();
+            boolean nightBonus = context.night() && (id.equals("burbot") || id.equals("shadow_burbot"));
+            boolean rainBonus = context.raining() && (id.equals("pike") || id.equals("zander"));
+            speciesWeights[i] = rules.environmentEnabled() && (nightBonus || rainBonus) ? 125 : 100;
+        }
+        Species species = pool.get(weighted(random, speciesWeights));
         int[] weights = SIZE_WEIGHTS.clone();
-        weights[Size.SMALL.ordinal()] -= rod.largeBonusPoints();
+        int skillBonus = (skillLevel - 1) * 3 / 99;
+        weights[Size.SMALL.ordinal()] -= rod.largeBonusPoints() + skillBonus;
         weights[Size.LARGE.ordinal()] += rod.largeBonusPoints();
+        weights[Size.TROPHY.ordinal()] += skillBonus;
         Size size = Size.values()[weighted(random, weights)];
         return new Catch(species.id(), size, species.lengths().get(size.ordinal()).roll(random));
     }
