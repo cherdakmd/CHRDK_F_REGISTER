@@ -10,7 +10,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import ru.cherdakmd.chrdkskills.FishingCatchBonus;
 
-/** Experimental Skills service implementation. Not registered until the module is ready. */
+/** Experimental Skills service, registered only in the non-release dev bootstrap. */
 public final class FishingBonusProvider implements FishingCatchBonus {
     private final FishItemCodec codec;
     private final Predicate<Player> authenticated;

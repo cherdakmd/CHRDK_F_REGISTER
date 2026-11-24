@@ -3,7 +3,7 @@ plugins { id 'java' }
 // Compile the Skills service contract for development only; never shade a second copy into the plugin.
 def skillsApiClasses = layout.buildDirectory.dir('skills-api-classes')
 tasks.register('compileSkillsFishingApi', JavaCompile) {
-    source file('../skills/src/main/java/ru/cherdakmd/chrdkskills/FishingCatchBonus.java')
+    source files('../skills/src/main/java/ru/cherdakmd/chrdkskills/FishingCatchBonus.java', '../skills/src/main/java/ru/cherdakmd/chrdkskills/ChrdkSkillsApi.java')
     classpath = configurations.compileClasspath
     destinationDirectory = skillsApiClasses
     options.encoding = 'UTF-8'
