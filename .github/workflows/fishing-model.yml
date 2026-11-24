@@ -26,6 +26,14 @@ jobs:
           result=$?
           tail -n 80 fishing-build.log
           if [[ $result -ne 0 ]]; then
+            python3 - <<'PYTEST'
+          import glob, xml.etree.ElementTree as ET
+          for path in glob.glob('fishing/build/test-results/test/TEST-*.xml'):
+              for case in ET.parse(path).iter('testcase'):
+                  for failure in case.findall('failure'):
+                      message = f"{case.get('name')}: {failure.get('message')}".replace('%', '%25').replace('\n', '%0A')
+                      print(f"::error::{message}")
+          PYTEST
             while IFS= read -r line; do
               escaped=${line//'%'/'%25'}
               echo "::error::$escaped"
