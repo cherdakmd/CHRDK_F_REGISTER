@@ -28,6 +28,8 @@ dependencies {
     testRuntimeOnly 'org.slf4j:slf4j-nop:2.0.16'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
+// Keep the experimental descriptor out of root production module scans.
+processResources { rename 'plugin.yml.in', 'plugin.yml' }
 java { toolchain { languageVersion = JavaLanguageVersion.of(25) } }
 test {
     useJUnitPlatform()
