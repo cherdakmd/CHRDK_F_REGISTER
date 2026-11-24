@@ -22,7 +22,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          ./gradlew -p fishing test > fishing-build.log 2>&1
+          ./gradlew -p fishing clean test jar > fishing-build.log 2>&1
           result=$?
           tail -n 80 fishing-build.log
           if [[ $result -ne 0 ]]; then
@@ -41,3 +41,40 @@ jobs:
             find fishing/build/test-results -name '*.xml' -print -exec cat {} \; 2>/dev/null | head -c 10000 >> "$GITHUB_STEP_SUMMARY"
           fi
           exit "$result"
+      - name: Verify experimental JAR contents
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          jars = list(Path('fishing/build/libs').glob('*.jar'))
+          if len(jars) != 1:
+              raise SystemExit(f'Expected exactly one fishing JAR, got {jars}')
+          with ZipFile(jars[0]) as jar:
+              names = set(jar.namelist())
+              required = {
+                  'plugin.yml',
+                  'ru/cherdakmd/chrdkfishing/bukkit/FishingPlugin.class',
+                  'org/sqlite/JDBC.class',
+                  'META-INF/services/java.sql.Driver',
+              }
+              if missing := required - names:
+                  raise SystemExit(f'Missing JAR entries: {sorted(missing)}')
+              forbidden = [name for name in names if name.startswith(('ru/cherdakmd/chrdkskills/', 'org/slf4j/'))]
+              if forbidden:
+                  raise SystemExit(f'Unexpected shaded API classes: {forbidden[:10]}')
+              descriptor = jar.read('plugin.yml').decode('utf-8')
+              for expected in ('name: CHRDK_Fishing', 'version: 0.0.0-dev', "api-version: '26.3'", 'depend: [CHRDK_Core, CHRDK_Skills]'):
+                  if expected not in descriptor.splitlines():
+                      raise SystemExit(f'Unexpected descriptor: missing {expected!r}')
+          print(f'Verified dev artifact: {jars[0]}')
+          PY
+          sha256sum fishing/build/libs/*.jar
+      - name: Upload experimental staging JAR (not a release)
+        uses: actions/upload-artifact@v4
+        with:
+          name: fishing-dev-${{ github.sha }}
+          path: fishing/build/libs/*.jar
+          if-no-files-found: error
+          retention-days: 7
