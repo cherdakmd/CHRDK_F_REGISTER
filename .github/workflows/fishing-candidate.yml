@@ -1,7 +1,7 @@
 name: Fishing closed-server candidate
 
 # Builds a disposable candidate, never a tag or GitHub Release. The fishing
-# plugin remains explicitly 0.0.0-dev until the stable release gates pass.
+# Fishing remains experimental even when its RC version matches the bundle.
 on:
   push:
     branches: ['arena/**']
@@ -26,7 +26,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 .github/scripts/prepare_papi.py
-          ./gradlew --no-daemon -Pplugin_version=2.0.26-rc.1 \
+          ./gradlew --no-daemon -Pplugin_version=2.0.26-rc.2 \
             -Pchrdk.papiJar=build/dependencies/PlaceholderAPI-2.12.3.jar build --continue
       - name: Verify complete numbered module set
         shell: bash
@@ -38,15 +38,19 @@ jobs:
             ! -name '*-sources.jar' ! -name '*-javadoc.jar' ! -name '*-dev.jar' \
             -exec cp -t candidate/plugins '{}' +
           printf 'Закрытая проверка; не стабильный релиз.\n' > candidate/plugins/ОБНОВЛЕНИЕ.txt
-          python3 .github/scripts/verify_release.py candidate/plugins 2.0.26-rc.1
-          cp vk/build/libs/chrdk-vk-2.0.26-rc.1.jar candidate/optional/
+          python3 .github/scripts/verify_release.py candidate/plugins 2.0.26-rc.2
+          cp vk/build/libs/chrdk-vk-2.0.26-rc.2.jar candidate/optional/
           python3 .github/scripts/verify_release.py --standalone \
-            candidate/optional/chrdk-vk-2.0.26-rc.1.jar CHRDK_VK 2.0.26-rc.1
+            candidate/optional/chrdk-vk-2.0.26-rc.2.jar CHRDK_VK 2.0.26-rc.2
       - name: Build and test experimental Fishing
         shell: bash
         run: |
           set -euo pipefail
-          ./gradlew -p fishing --no-daemon clean test jar
+          if ./gradlew -p fishing --no-daemon -PfishingVersion=2.0.26 help > /dev/null 2>&1; then
+            echo 'Stable Fishing version was unexpectedly accepted' >&2
+            exit 1
+          fi
+          ./gradlew -p fishing --no-daemon -PfishingVersion=2.0.26-rc.2 clean test jar
           python3 - <<'PY'
           from pathlib import Path
           from zipfile import ZipFile
@@ -61,7 +65,7 @@ jobs:
               if required - names or any(n.startswith(('org/slf4j/', 'ru/cherdakmd/chrdkskills/')) for n in names):
                   raise SystemExit('Invalid Fishing JAR contents')
               descriptor = jar.read('plugin.yml').decode('utf-8').splitlines()
-              if not {'name: CHRDK_Fishing', 'version: 0.0.0-dev', "api-version: '26.3'", 'depend: [CHRDK_Core, CHRDK_Skills]'}.issubset(descriptor):
+              if not {'name: CHRDK_Fishing', 'version: 2.0.26-rc.2', "api-version: '26.3'", 'depend: [CHRDK_Core, CHRDK_Skills]'}.issubset(descriptor):
                   raise SystemExit('Unexpected Fishing descriptor')
           PY
           cp fishing/build/libs/*.jar candidate/plugins/
@@ -71,7 +75,7 @@ jobs:
           set -euo pipefail
           cat > candidate/README.txt <<'TEXT'
           КАНДИДАТ ДЛЯ ЗАКРЫТОГО СЕРВЕРА, НЕ СТАБИЛЬНЫЙ РЕЛИЗ.
-          Плагины Core и общие модули: 2.0.26-rc.1; рыбалка: 0.0.0-dev.
+          Плагины Core, общие модули и экспериментальная рыбалка: 2.0.26-rc.2.
           Purpur 26.3 / Java 25. Не открывать игрокам до проверки.
           Core и Skills собраны из одного коммита с рыбалкой. VK — отдельно.
           Полный список проверок и резервного копирования: fishing/STABLE-RELEASE-GATE.md.
@@ -82,7 +86,7 @@ jobs:
       - name: Upload closed-server candidate
         uses: actions/upload-artifact@v4
         with:
-          name: fishing-closed-server-2.0.26-rc.1-${{ github.sha }}
+          name: fishing-closed-server-2.0.26-rc.2-${{ github.sha }}
           path: candidate/
           if-no-files-found: error
           retention-days: 14

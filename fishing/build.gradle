@@ -1,5 +1,13 @@
 plugins { id 'java' }
 
+// Only dev and explicitly numbered RC builds are allowed until the release gates pass.
+def fishingVersion = (findProperty('fishingVersion') ?: '0.0.0-dev').toString()
+if (fishingVersion != '0.0.0-dev' && !(fishingVersion ==~ /\d+\.\d+\.\d+-rc\.[1-9]\d*/)) {
+    throw new GradleException('Fishing only permits dev or numbered RC versions')
+}
+version = fishingVersion
+base { archivesName = 'chrdk-fishing' }
+
 // Compile the Skills service contract for development only; never shade a second copy into the plugin.
 def skillsApiClasses = layout.buildDirectory.dir('skills-api-classes')
 tasks.register('compileSkillsFishingApi', JavaCompile) {
@@ -29,7 +37,12 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 // Keep the experimental descriptor out of root production module scans.
-processResources { rename 'plugin.yml.in', 'plugin.yml' }
+processResources {
+    inputs.property 'version', fishingVersion
+    filteringCharset = 'UTF-8'
+    filesMatching('plugin.yml.in') { expand version: fishingVersion }
+    rename 'plugin.yml.in', 'plugin.yml'
+}
 // Dev JAR includes the SQLite driver and its native binaries, but not a second SLF4J API.
 tasks.named('jar') {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE

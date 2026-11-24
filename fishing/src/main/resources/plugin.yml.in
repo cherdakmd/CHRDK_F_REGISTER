@@ -1,5 +1,5 @@
 name: CHRDK_Fishing
-version: 0.0.0-dev
+version: ${version}
 main: ru.cherdakmd.chrdkfishing.bukkit.FishingPlugin
 api-version: '26.3'
 description: 'Экспериментальный улов для стенда: продажа, альбом, готовка и удочки экспериментальны.'
