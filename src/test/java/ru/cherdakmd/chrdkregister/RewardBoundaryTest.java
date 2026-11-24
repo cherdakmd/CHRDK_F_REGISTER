@@ -32,7 +32,13 @@ class RewardBoundaryTest {
                 .matcher(Files.readString(Path.of("settings.gradle")));
         while (includes.find()) expected.add(includes.group(1));
         assertFalse(expected.isEmpty());
-        assertEquals(expected, modules, "аудит охватывает все игровые модули сборки, без осиротевших каталогов");
+        // Изолированная рыбалка намеренно ещё не входит в сборку или релиз,
+        // но её источники также должны проходить аудит платных выдач.
+        assertFalse(expected.contains("fishing"), "прототип рыбалки не должен попадать в основной комплект");
+        assertFalse(Files.exists(Path.of("fishing/src/main/resources/plugin.yml")));
+        assertTrue(Files.isRegularFile(Path.of("fishing/src/main/resources/plugin.yml.in")));
+        expected.add("fishing");
+        assertEquals(expected, modules, "аудит охватывает все игровые модули сборки и прототип рыбалки");
     }
 
     @Test void oldAnnouncementsAndMessagesStopPromisingPaidTime() {
