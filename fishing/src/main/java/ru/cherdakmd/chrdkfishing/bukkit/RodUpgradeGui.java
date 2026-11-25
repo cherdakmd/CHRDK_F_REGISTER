@@ -33,7 +33,7 @@ final class RodUpgradeGui implements Listener {
         this.engine = java.util.Objects.requireNonNull(engine);
         this.codec = java.util.Objects.requireNonNull(codec);
     }
-    private static final class Holder implements InventoryHolder {
+    static final class Holder implements InventoryHolder {
         final UUID owner;
         Inventory inventory;
         int selected = -1;
@@ -51,7 +51,7 @@ final class RodUpgradeGui implements Listener {
         holder.inventory = Bukkit.createInventory(holder, 54, Component.text("Улучшение удочки"));
         render(holder, player); player.openInventory(holder.inventory);
     }
-    private void render(Holder holder, Player player) {
+    void render(Holder holder, Player player) {
         holder.inventory.clear();
         ItemStack[] storage = player.getInventory().getStorageContents();
         for (int i = 0; i < Math.min(36, storage.length); i++) {
