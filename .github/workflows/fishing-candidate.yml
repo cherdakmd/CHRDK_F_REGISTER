@@ -21,13 +21,23 @@ jobs:
           distribution: temurin
           java-version: '25'
       - uses: gradle/actions/setup-gradle@v4
+      - name: Prepare verified compile-only API
+        run: python3 .github/scripts/prepare_papi.py
       - name: Build and test the numbered Core and module candidate
         shell: bash
         run: |
-          set -euo pipefail
-          python3 .github/scripts/prepare_papi.py
+          set +e
           ./gradlew --no-daemon -Pplugin_version=2.0.26-rc.15 \
-            -Pchrdk.papiJar=build/dependencies/PlaceholderAPI-2.12.3.jar build --continue
+            -Pchrdk.papiJar=build/dependencies/PlaceholderAPI-2.12.3.jar build --continue > core-build.log 2>&1
+          result=$?
+          tail -n 100 core-build.log
+          if [[ $result -ne 0 ]]; then
+            while IFS= read -r line; do
+              escaped=${line//'%'/'%25'}
+              echo "::error::$escaped"
+            done < <(tail -n 35 core-build.log)
+          fi
+          exit "$result"
       - name: Verify complete numbered module set
         shell: bash
         run: |
@@ -124,7 +134,9 @@ jobs:
           /fish rod: нажмите удочку в инвентаре снизу, проверьте её значок и цену,
           подготовьте и подтвердите сделку; оригинал остаётся в инвентаре.
           /fish rod check: диагностика без оплаты; данные инвентаря не выводятся.
-          Новый режим чистого поколения экспериментальный, не применять без полной сверки.
+          Новый режим чистого поколения экспериментальный, не применять на сервере.
+          Финансовые награды восстанавливаются из банка; это не проверяет неоплаченные требования.
+          Перед переключением обязательны полная сверка старых журналов и тесты восстановления.
           Ожидающие неоплаченные улучшения и покупки приманки не списываются автоматически.
           Для отмены неоплаченного намерения: /fish rod cancel или /fish bait cancel.
           Оплаченные операции могут восстановиться при входе владельца. Сначала бэкап и сверка.
