@@ -61,7 +61,7 @@ final class RodUpgradeGui implements Listener {
         var inventory = player.getInventory(); var storage = inventory.getStorageContents();
         for (int slot = 0; slot < Math.min(storage.length, 36); slot++) {
             ItemStack item = storage[slot]; var token = codec.read(item).orElse(null);
-            if (token == null || engine.rodLevel(item) != token.level()) continue;
+            if (token == null || token.level() < 2 || engine.rodLevel(item) != token.level()) continue;
             ItemStack updated = codec.stamp(item, token);
             if (!updated.equals(item)) inventory.setItem(slot, updated);
         }

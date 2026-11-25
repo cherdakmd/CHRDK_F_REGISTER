@@ -37,6 +37,15 @@ class FishingModelTest {
         assertEquals(190, price(new Catch("roach", Size.SMALL, 8))); // previous 18.75 rounds to 19, then ×10
     }
 
+    @Test void everyNewCatchIsExactlyTenTimesTheOldRoundedPrice() {
+        int[] numerators = {3, 4, 6, 12};
+        for (var species : FishCatalog.all()) for (var size : Size.values()) {
+            var fish = new Catch(species.id(), size, species.lengths().get(size.ordinal()).min());
+            long old = (species.basePrice() * numerators[size.ordinal()] + 2) / 4;
+            assertEquals(old * 10, price(fish), species.id() + " " + size);
+            assertTrue(price(fish) <= FishToken.MAX_PRICE_POINTS);
+        }
+    }
     @Test void oldSignedQuotesStayValidWhenPricesChange() {
         byte[] key = new byte[FishToken.KEY_BYTES];
         var fish = new Catch("whitefish", Size.NORMAL, 25);
