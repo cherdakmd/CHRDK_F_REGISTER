@@ -1,7 +1,7 @@
 name: Fishing closed-server candidate
 
 # Builds a disposable candidate, never a tag or GitHub Release.
-# Fishing remains experimental even when its RC version matches the bundle.
+# Fishing remains experimental even when its RC version matches the bundle; run its GUI tests too.
 on:
   push:
     branches: ['arena/**']

@@ -93,7 +93,11 @@ final class FishSaleGui implements Listener {
     private static boolean simpleClick(ClickType click) {
         return click == ClickType.LEFT || click == ClickType.RIGHT || click == ClickType.SHIFT_LEFT || click == ClickType.SHIFT_RIGHT;
     }
-    private static boolean emptyCursor(ItemStack cursor) { return cursor == null || cursor.getType().isAir(); }
+    private static boolean emptyCursor(ItemStack cursor) {
+        if (cursor == null) return true;
+        Material type = cursor.getType();
+        return type == Material.AIR || type == Material.CAVE_AIR || type == Material.VOID_AIR;
+    }
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void click(InventoryClickEvent event) {
         if (!(event.getView().getTopInventory().getHolder() instanceof Holder holder)) return;
