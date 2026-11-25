@@ -20,8 +20,8 @@ class RodUpgradeJournalTest {
     static final class Bank implements RodUpgradeJournal.Bank {
         long sequence;
         RodUpgradeJournal.Charge receipt;
-        int charges;
-        boolean unavailable, failAfterCommit;
+        int charges, attempts;
+        boolean unavailable, failAfterCommit, rejectCharge;
         @Override public long cursor(UUID lineage) { return unavailable ? -1 : sequence; }
         @Override public RodUpgradeJournal.Status status(RodUpgradeJournal.Charge charge) {
             if (unavailable) return RodUpgradeJournal.Status.UNAVAILABLE;
@@ -30,6 +30,8 @@ class RodUpgradeJournalTest {
         }
         @Override public void charge(RodUpgradeJournal.Charge charge) throws IOException {
             if (charge.sequence() != sequence + 1) throw new AssertionError("duplicate or out-of-order debit");
+            attempts++;
+            if (rejectCharge) return;
             receipt = charge; sequence++; charges++;
             if (failAfterCommit) { failAfterCommit = false; throw new IOException("uncertain debit"); }
         }
@@ -76,6 +78,50 @@ class RodUpgradeJournalTest {
             assertNull(journal.pendingOwner());
             assertTrue(journal.ready(bank)); assertTrue(journal.current(next));
             assertEquals(1, bank.charges); assertEquals(1, inventory.transfers);
+        }
+    }
+
+    @Test void existingUnpaidIntentWaitsAndCanBeCancelledWithoutAutomaticDebit() throws Exception {
+        var bank = new Bank(); var inventory = new Inventory(); var next = token(2);
+        try (var journal = new RodUpgradeJournal(file(), lineage, key, true)) {
+            assertEquals(RodUpgradeJournal.Result.WAIT, prepare(journal, bank, null, next));
+        }
+        try (var journal = new RodUpgradeJournal(file(), lineage, key, false)) {
+            for (int i = 0; i < 3; i++)
+                assertEquals(RodUpgradeJournal.Result.WAIT, journal.recover(bank, inventory, false));
+            assertEquals(0, bank.charges); assertEquals(0, inventory.transfers);
+            assertEquals(owner, journal.pendingOwner());
+            assertEquals(RodUpgradeJournal.Result.DONE, journal.cancelUnpaid(bank));
+            assertEquals(RodUpgradeJournal.Result.DONE, journal.recover(bank, inventory, false));
+            assertNull(journal.pendingOwner()); assertFalse(journal.current(next));
+            assertEquals(0, bank.charges); assertEquals(0, inventory.transfers);
+        }
+    }
+    @Test void failedInitialDebitIsNotRetriedBehindPlayersBack() throws Exception {
+        var bank = new Bank(); var inventory = new Inventory(); bank.rejectCharge = true;
+        try (var journal = new RodUpgradeJournal(file(), lineage, key, true)) {
+            assertEquals(RodUpgradeJournal.Result.WAIT, prepare(journal, bank, null, token(2)));
+            assertEquals(RodUpgradeJournal.Result.WAIT, journal.recover(bank, inventory, true));
+            assertEquals(1, bank.attempts); assertEquals(0, bank.charges);
+            bank.rejectCharge = false;
+            assertEquals(RodUpgradeJournal.Result.WAIT, journal.recover(bank, inventory, false));
+            assertEquals(1, bank.attempts); assertEquals(0, inventory.transfers);
+            assertEquals(RodUpgradeJournal.Result.DONE, journal.cancelUnpaid(bank));
+        }
+    }
+    @Test void backgroundRecoveryCompletesAlreadyCommittedPaymentButNeverChargesAgain() throws Exception {
+        var bank = new Bank(); var inventory = new Inventory(); var next = token(2);
+        bank.failAfterCommit = true;
+        try (var journal = new RodUpgradeJournal(file(), lineage, key, true)) {
+            assertEquals(RodUpgradeJournal.Result.WAIT, prepare(journal, bank, null, next));
+            assertThrows(IOException.class, () -> journal.recover(bank, inventory, true));
+            assertEquals(1, bank.charges); assertEquals(0, inventory.transfers);
+        }
+        try (var journal = new RodUpgradeJournal(file(), lineage, key, false)) {
+            assertEquals(RodUpgradeJournal.Result.CONFLICT, journal.cancelUnpaid(bank));
+            assertEquals(RodUpgradeJournal.Result.DONE, journal.recover(bank, inventory, false));
+            assertEquals(1, bank.charges); assertEquals(1, inventory.transfers);
+            assertTrue(journal.current(next));
         }
     }
 

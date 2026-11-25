@@ -76,9 +76,14 @@ final class RodUpgradeEngine implements AutoCloseable {
         var prepared = journal.prepare(player.getUniqueId(), UUID.randomUUID(), plan.oldToken(), plan.newToken(),
                 plan.cost().minor(), before, after, bank);
         if (prepared != RodUpgradeJournal.Result.WAIT) return prepared;
-        return recover(player);
+        // Only this newly confirmed intent is authorized to initiate a debit.
+        return recover(player, true);
     }
     RodUpgradeJournal.Result recover(Player player) throws Exception {
+        // Login/menu/background recovery may finish a committed payment but never initiate one.
+        return recover(player, false);
+    }
+    private RodUpgradeJournal.Result recover(Player player, boolean allowNewCharge) throws Exception {
         if (!available(player)) return RodUpgradeJournal.Result.WAIT;
         UUID owner = journal.pendingOwner();
         if (owner != null && !owner.equals(player.getUniqueId())) return RodUpgradeJournal.Result.WAIT;
@@ -99,7 +104,7 @@ final class RodUpgradeEngine implements AutoCloseable {
             return id.toString().equals(pdc.get(WITNESS, PersistentDataType.STRING))
                     && (boolean) matches.invoke(null, player.getInventory().getStorageContents(), after)
                     ? RodUpgradeJournal.Transfer.APPLIED : RodUpgradeJournal.Transfer.CONFLICT;
-        });
+        }, allowNewCharge);
     }
     @Override public void close() throws Exception {
         try { journal.close(); } finally { java.util.Arrays.fill(key, (byte) 0); }

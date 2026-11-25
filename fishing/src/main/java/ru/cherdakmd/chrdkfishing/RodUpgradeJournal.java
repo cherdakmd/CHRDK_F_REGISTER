@@ -142,6 +142,10 @@ public final class RodUpgradeJournal implements AutoCloseable {
         }
     }
     public synchronized Result recover(Bank bank, Inventory inventory) throws Exception {
+        return recover(bank, inventory, true);
+    }
+    /** Existing intents must not be charged implicitly during background recovery. */
+    public synchronized Result recover(Bank bank, Inventory inventory, boolean allowNewCharge) throws Exception {
         Objects.requireNonNull(bank); Objects.requireNonNull(inventory);
         Pending p = pending(); long local = cursor(), remote = bank.cursor(lineage);
         if (remote < 0) return Result.WAIT;
@@ -152,6 +156,7 @@ public final class RodUpgradeJournal implements AutoCloseable {
         if (status == Status.CONFLICT || (status == Status.COMMITTED && remote != local + 1)
                 || (status == Status.MISSING && remote != local)) return Result.CONFLICT;
         if (p.phase().equals("PREPARED") && status == Status.MISSING) {
+            if (!allowNewCharge) return Result.WAIT;
             bank.charge(p.charge());
             status = bank.status(p.charge()); remote = bank.cursor(lineage);
             if (status == Status.UNAVAILABLE || status == null || status == Status.MISSING) return Result.WAIT;
