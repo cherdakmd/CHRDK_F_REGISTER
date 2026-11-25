@@ -50,7 +50,7 @@ class AutoMessagesUpdateTest {
     @Test void everyEntryParsesAndTargetsWorkingPlayerCommands() throws Exception {
         var config = yaml("config.yml");
         var entries = stock();
-        assertEquals(36, entries.size());
+        assertEquals(37, entries.size());
         assertEquals(config.getList("auto-messages.messages").size(), entries.size(), "ни один текст не отброшен парсером");
         var core = yaml("plugin.yml");
         var coreCommands = commands(core);
@@ -58,6 +58,7 @@ class AutoMessagesUpdateTest {
         try (var paths = Files.list(Path.of("."))) {
             for (var folder : paths.toList()) {
                 var path = folder.resolve("src/main/resources/plugin.yml");
+                if (!Files.exists(path)) path = folder.resolve("src/main/resources/plugin.yml.in");
                 if (Files.exists(path)) {
                     var descriptor = YamlConfiguration.loadConfiguration(path.toFile());
                     addons.put(descriptor.getString("name"), descriptor);
@@ -154,7 +155,7 @@ class AutoMessagesUpdateTest {
         assertEquals(7, live.getInt("auto-messages.minimum-players"));
         assertEquals("Свой префикс: ", live.getString("auto-messages.prefix"));
         assertEquals(List.of("Owner"), live.getStringList("tablist.pinned-names"));
-        assertEquals(36, ChatConfig.fromBukkitConfig(live).autoMessageEntries().size());
+        assertEquals(37, ChatConfig.fromBukkitConfig(live).autoMessageEntries().size());
         assertTrue(PresentationMigration.replacements(live, List.of(legacy), fresh).isEmpty());
     }
 

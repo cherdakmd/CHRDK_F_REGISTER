@@ -72,7 +72,7 @@
     },
     "fishing": {
       "reason": "Сверены рецепты, бонусы, команды и операции с текущей реализацией Fishing.",
-      "sources": "0c6c055014da0ab0a5e0dd80d4e4e750ea8c90518900a9497b67cd73d5a480a7",
+      "sources": "4428d2de66ba3496d6a205ebd26d3f5d4e287b6ac992b290e89effde575461d1",
       "text": "cbc8b3db30f2c64281e33024681e0e9ff3447e6aae9fe77fb978bf0d88af72b0"
     },
     "generator": {

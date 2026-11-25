@@ -29,7 +29,7 @@ class FishingPresentationMigrationTest {
     }
     @Test void fishingNavigationAndMessagesAreGuarded() throws Exception {
         var fresh = yaml("config.yml");
-        var item = fresh.getMapList("server-menu.items").stream().filter(m -> "fish".equals(m.get("command"))).findFirst().orElseThrow();
+        var item = fresh.getMapList("server-menu.items").stream().filter(m -> "fishing".equals(m.get("command"))).findFirst().orElseThrow();
         assertEquals("CHRDK_Fishing", item.get("plugin")); assertEquals("chrdkfishing.use", item.get("permission"));
         var msg = fresh.getMapList("auto-messages.messages").stream().filter(m -> "CHRDK_Fishing".equals(m.get("plugin"))).findFirst().orElseThrow();
         assertEquals("chrdkfishing.use", msg.get("permission"));
