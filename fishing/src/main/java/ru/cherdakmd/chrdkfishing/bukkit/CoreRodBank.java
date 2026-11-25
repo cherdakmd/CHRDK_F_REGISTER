@@ -17,7 +17,7 @@ final class CoreRodBank implements RodUpgradeJournal.Bank {
     private final String source;
     private final Class<?> api, bankCharge;
     private final Constructor<?> constructor;
-    private final Method sequence, status, commit, hash, decode;
+    private final Method sequence, status, commit, balance, hash, decode;
     CoreRodBank(ServicesManager services, Class<?> api, ClassLoader loader) throws ReflectiveOperationException {
         this(services, api, loader, SOURCE);
     }
@@ -31,6 +31,7 @@ final class CoreRodBank implements RodUpgradeJournal.Bank {
         sequence = api.getMethod("bankChargeSequence", String.class, UUID.class);
         status = api.getMethod("bankChargeStatus", bankCharge);
         commit = api.getMethod("commitBankCharge", Player.class, bankCharge, ItemStack[].class);
+        balance = api.getMethod("spendableBankBalanceMinor", UUID.class);
         hash = Class.forName("ru.cherdakmd.chrdkregister.api.AuctionPayment", true, loader).getMethod("hash", String.class, String.class);
         decode = Class.forName("ru.cherdakmd.chrdkregister.api.ChargeInventory", true, loader).getMethod("decode", String.class);
     }
@@ -39,6 +40,10 @@ final class CoreRodBank implements RodUpgradeJournal.Bank {
         String state = (String) hash.invoke(null, charge.before(), charge.after());
         return constructor.newInstance(source, charge.lineage(), charge.sequence(), charge.transaction(), charge.owner(),
                 charge.minor(), charge.minor(), 0L, 0L, inv, state, true, RATE_BPS);
+    }
+    long spendable(UUID owner) throws Exception {
+        Object service = services.load(api);
+        return service == null ? -1 : (long) balance.invoke(service, owner);
     }
     @Override public long cursor(UUID lineage) throws Exception {
         Object service = services.load(api);

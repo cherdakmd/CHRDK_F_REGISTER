@@ -49,10 +49,20 @@ final class RodUpgradeEngine implements AutoCloseable {
         if (owner != null && !owner.equals(player.getUniqueId())) return RodUpgradeJournal.Result.CONFLICT;
         return journal.cancelUnpaid(bank);
     }
+    static final class InsufficientFunds extends Exception { }
+    static final class BalanceUnavailable extends Exception { }
+    static void requireBalance(long available, long price) throws InsufficientFunds, BalanceUnavailable {
+        if (available < 0) throw new BalanceUnavailable();
+        if (available < price) throw new InsufficientFunds();
+    }
+    private void requireBalance(Player player, long price) throws Exception {
+        requireBalance(bank.spendable(player.getUniqueId()), price);
+    }
     RodUpgradePlanner.Plan quote(Player player, int slot) throws Exception {
         if (!available(player) || journal.pendingOwner() != null) throw new IllegalStateException("upgrade unavailable");
         var plan = RodUpgradePlanner.plan(player.getInventory().getStorageContents(), slot, codec, key, UUID.randomUUID());
         if (plan.oldToken() != null && !journal.current(plan.oldToken())) throw new IllegalArgumentException("rod identity not current");
+        requireBalance(player, plan.cost().minor());
         return plan;
     }
     RodUpgradeJournal.Result confirm(Player player, RodUpgradePlanner.Plan plan) throws Exception {
@@ -61,6 +71,8 @@ final class RodUpgradeEngine implements AutoCloseable {
         String before = (String) encode.invoke(null, (Object) plan.before());
         String after = (String) encode.invoke(null, (Object) plan.after());
         if (!(boolean) matches.invoke(null, player.getInventory().getStorageContents(), before)) return RodUpgradeJournal.Result.CONFLICT;
+        // This preflight is advisory, not a reservation; the journal still handles uncertain commits.
+        requireBalance(player, plan.cost().minor());
         var prepared = journal.prepare(player.getUniqueId(), UUID.randomUUID(), plan.oldToken(), plan.newToken(),
                 plan.cost().minor(), before, after, bank);
         if (prepared != RodUpgradeJournal.Result.WAIT) return prepared;
