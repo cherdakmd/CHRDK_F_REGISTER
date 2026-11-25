@@ -1,5 +1,7 @@
 """Verify pack graph and image files without assuming a running Minecraft client."""
 import json
+import hashlib
+import re
 import struct
 import unittest
 from pathlib import Path
@@ -36,6 +38,25 @@ class FishingResourcePackTest(unittest.TestCase):
                 self.model(name, 'minecraft:item/generated')
                 self.assertEqual({'type': 'minecraft:model', 'model': 'chrdk_fishing:item/' + name},
                                  self.read('items/' + name + '.json')['model'])
+
+    def test_every_catalog_species_has_a_distinct_texture_and_model(self):
+        source = (PACK.parent / 'src/main/java/ru/cherdakmd/chrdkfishing/FishCatalog.java').read_text(encoding='utf-8')
+        base = re.findall(r'fish\("([a-z_]+)","[^"]+",Rarity\.[A-Z_]+,(?:true|false),', source)
+        premium = re.findall(r'new Premium\("([a-z_]+)", "[^"]+", "[a-z_]+"\)', source)
+        species = base + premium
+        self.assertEqual(70, len(species)); self.assertEqual(len(species), len(set(species)))
+        images = set()
+        for species_id in species:
+            with self.subTest(species=species_id):
+                name = 'fish/species/' + species_id
+                self.model(name, 'minecraft:item/generated')
+                self.assertEqual({'type': 'minecraft:model', 'model': 'chrdk_fishing:item/' + name},
+                                 self.read('items/' + name + '.json')['model'])
+                digest = hashlib.sha256((ASSETS / 'textures/item' / (name + '.png')).read_bytes()).hexdigest()
+                self.assertNotIn(digest, images, 'species share a texture')
+                images.add(digest)
+        for kind in ('items', 'models/item', 'textures/item'):
+            self.assertEqual(set(species), {p.stem for p in (ASSETS / kind / 'fish/species').iterdir()})
 
     def test_rods_cover_all_upgrade_levels_and_cast_state(self):
         for level in range(2, 11):

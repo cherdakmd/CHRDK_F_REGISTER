@@ -3,13 +3,15 @@ package ru.cherdakmd.chrdkfishing.bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.junit.jupiter.api.Test;
-import ru.cherdakmd.chrdkfishing.FishingModel;
+import ru.cherdakmd.chrdkfishing.FishCatalog;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class FishingVisualsTest {
-    @Test void modelNamesCoverAllRaritiesAndRodLevels() {
-        assertEquals(new NamespacedKey("chrdk_fishing", "fish/mythic"), FishingVisuals.fish(FishingModel.Rarity.MYTHIC));
+    @Test void modelNamesCoverAllSpeciesAndRodLevels() {
+        for (var species : FishCatalog.all())
+            assertEquals("fish/species/" + species.id(), FishingVisuals.fish(species.id()).getKey());
+        assertThrows(IllegalArgumentException.class, () -> FishingVisuals.fish("unknown"));
         for (int level = 2; level <= 10; level++)
             assertEquals("rod/level_" + level, FishingVisuals.rod(level).getKey());
         assertThrows(IllegalArgumentException.class, () -> FishingVisuals.rod(1));

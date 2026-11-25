@@ -44,7 +44,7 @@ public final class FishItemCodec {
         var species = FishCatalog.byId(token.fish().speciesId());
         var item = new ItemStack(Material.COD, 1);
         ItemMeta meta = item.getItemMeta();
-        if (textures) meta.setItemModel(FishingVisuals.fish(species.rarity()));
+        if (textures) meta.setItemModel(FishingVisuals.fish(species.id()));
         meta.displayName(Component.text(species.name(), NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
         meta.lore(List.of(
                 Component.text("Длина: " + token.fish().lengthCm() + " см", NamedTextColor.GRAY),

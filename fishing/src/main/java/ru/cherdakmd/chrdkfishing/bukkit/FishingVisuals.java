@@ -1,14 +1,14 @@
 package ru.cherdakmd.chrdkfishing.bukkit;
 
-import java.util.Locale;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.meta.ItemMeta;
-import ru.cherdakmd.chrdkfishing.FishingModel;
+import ru.cherdakmd.chrdkfishing.FishCatalog;
 
 /** Opt-in item models. Visuals do not authenticate fish, rods, or their value. */
 final class FishingVisuals {
-    static NamespacedKey fish(FishingModel.Rarity rarity) {
-        return new NamespacedKey("chrdk_fishing", "fish/" + rarity.name().toLowerCase(Locale.ROOT));
+    static NamespacedKey fish(String speciesId) {
+        if (FishCatalog.byId(speciesId) == null) throw new IllegalArgumentException("unknown fish model");
+        return new NamespacedKey("chrdk_fishing", "fish/species/" + speciesId);
     }
     static NamespacedKey rod(int level) {
         if (level < 2 || level > 10) throw new IllegalArgumentException("rod model level");

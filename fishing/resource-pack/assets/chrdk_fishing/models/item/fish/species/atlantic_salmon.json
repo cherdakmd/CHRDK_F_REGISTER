@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "chrdk_fishing:item/fish/species/atlantic_salmon"
+  }
+}
