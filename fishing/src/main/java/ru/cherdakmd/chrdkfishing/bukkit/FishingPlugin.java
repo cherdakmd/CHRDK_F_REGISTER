@@ -102,6 +102,20 @@ public final class FishingPlugin extends JavaPlugin {
                             player.sendMessage(result == ru.cherdakmd.chrdkfishing.RodUpgradeJournal.Result.DONE
                                     ? "§aНеоплаченная покупка отменена." : "§cНельзя отменить: операция оплачена или состояние неизвестно.");
                         }
+                        else if (args.length == 2 && args[0].equalsIgnoreCase("rod") && args[1].equalsIgnoreCase("check")) {
+                            // No item details, signatures, raw snapshots or account amounts are exposed.
+                            try {
+                                var check = rods.diagnose(player); var inv = check.inventory();
+                                player.sendMessage("§eПроверка без оплаты и изменения инвентаря:");
+                                player.sendMessage("§7Банк: " + checkText(check.bankAvailable()) + "; журнал: " + checkText(check.journalReady()));
+                                player.sendMessage("§7Сверка предметов: " + checkText(inv.semanticMatch()) + "; строгая: " + checkText(inv.exactMatch()));
+                                player.sendMessage("§7Стабильность снимка: " + checkText(inv.stableSnapshot()) + "; проверка банка: " + checkText(inv.bankHashMatch()));
+                                player.sendMessage("§7Это проверка текущего состояния, а не гарантия успешной оплаты.");
+                            } catch (Exception error) {
+                                player.sendMessage("§cДиагностика недоступна. Убедитесь, что нет ожидающих операций, и обратитесь к администрации.");
+                                getLogger().warning("Диагностика удочки недоступна; снимки инвентаря и банковские данные не записаны.");
+                            }
+                        }
                         else if (args.length == 2 && args[0].equalsIgnoreCase("rod") && args[1].equalsIgnoreCase("cancel")) {
                             var result = rods.cancelUnpaid(player);
                             player.sendMessage(result == ru.cherdakmd.chrdkfishing.RodUpgradeJournal.Result.DONE
@@ -206,6 +220,8 @@ public final class FishingPlugin extends JavaPlugin {
             getServer().getPluginManager().disablePlugin(this);
         }
     }
+    private static String checkText(boolean ok) { return ok ? "OK" : "ОШИБКА"; }
+
     @Override public void onDisable() {
         if (albumRewards != null) {
             try { albumRewards.close(); }

@@ -58,6 +58,21 @@ final class RodUpgradeEngine implements AutoCloseable {
     private void requireBalance(Player player, long price) throws Exception {
         requireBalance(bank.spendable(player.getUniqueId()), price);
     }
+    record Diagnostic(boolean bankAvailable, boolean journalReady, RodUpgradeDiagnostics.Result inventory) { }
+    /** Diagnostic only: no journal prepare, bank charge, inventory writes or playerdata saves. */
+    Diagnostic diagnose(Player player) throws Exception {
+        if (!available(player)) throw new IllegalStateException("player unavailable");
+        if (journal.pendingOwner() != null) throw new IllegalStateException("pending operation");
+        boolean bankAvailable = bank.spendable(player.getUniqueId()) >= 0;
+        boolean ready = journal.ready(bank);
+        var current = player.getInventory().getStorageContents();
+        var snapshot = RodUpgradeDiagnostics.inspect(current, new RodUpgradeDiagnostics.SnapshotCodec() {
+            @Override public String encode(ItemStack[] items) throws Exception { return (String) encode.invoke(null, (Object) items); }
+            @Override public ItemStack[] decode(String text) throws Exception { return (ItemStack[]) decode.invoke(null, text); }
+            @Override public boolean matches(ItemStack[] items, String text) throws Exception { return (boolean) matches.invoke(null, items, text); }
+        });
+        return new Diagnostic(bankAvailable, ready, snapshot);
+    }
     RodUpgradePlanner.Plan quote(Player player, int slot) throws Exception {
         if (!available(player) || journal.pendingOwner() != null) throw new IllegalStateException("upgrade unavailable");
         var plan = RodUpgradePlanner.plan(player.getInventory().getStorageContents(), slot, codec, key, UUID.randomUUID());
