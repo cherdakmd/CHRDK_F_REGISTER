@@ -31,17 +31,20 @@ public final class FishItemCodec {
     private static final NamespacedKey MAC = key("signature");
     private static final String VERSION = "fish-v1";
     private final byte[] secret;
+    private final boolean textures;
     private static NamespacedKey key(String name) { return new NamespacedKey("chrdk_fishing", name); }
 
-    public FishItemCodec(byte[] secret) {
+    public FishItemCodec(byte[] secret) { this(secret, false); }
+    public FishItemCodec(byte[] secret, boolean textures) {
         if (secret == null || secret.length != FishToken.KEY_BYTES) throw new IllegalArgumentException("fish signing key");
-        this.secret = secret.clone();
+        this.secret = secret.clone(); this.textures = textures;
     }
     public ItemStack build(FishToken.Token token) {
         if (!FishToken.verify(secret, token)) throw new IllegalArgumentException("invalid fish token");
         var species = FishCatalog.byId(token.fish().speciesId());
         var item = new ItemStack(Material.COD, 1);
         ItemMeta meta = item.getItemMeta();
+        if (textures) meta.setItemModel(FishingVisuals.fish(species.rarity()));
         meta.displayName(Component.text(species.name(), NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
         meta.lore(List.of(
                 Component.text("Длина: " + token.fish().lengthCm() + " см", NamedTextColor.GRAY),

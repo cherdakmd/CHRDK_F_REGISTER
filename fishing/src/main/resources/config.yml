@@ -21,3 +21,8 @@ location:
   #     max-z: 100
   #     fish: [perch, pike, whitefish]
   zones: {}
+
+# Включайте только после установки клиентского ресурс-пака CHRDK Fishing.
+# Без него пользовательские модели будут отображаться как отсутствующие текстуры.
+textures:
+  enabled: false

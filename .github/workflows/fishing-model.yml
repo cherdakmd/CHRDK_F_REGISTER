@@ -22,8 +22,12 @@ jobs:
         shell: bash
         run: |
           set +e
-          ./gradlew -p fishing clean test jar > fishing-build.log 2>&1
+          python3 -m unittest discover -s fishing/tests -p 'test_*.py' -v > fishing-build.log 2>&1
           result=$?
+          if [[ $result -eq 0 ]]; then
+            ./gradlew -p fishing clean test jar fishingResourcePack >> fishing-build.log 2>&1
+            result=$?
+          fi
           tail -n 80 fishing-build.log
           if [[ $result -ne 0 ]]; then
             python3 - <<'PYTEST'
@@ -75,6 +79,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: fishing-dev-${{ github.sha }}
-          path: fishing/build/libs/*.jar
+          path: |
+            fishing/build/libs/*.jar
+            fishing/build/resource-packs/chrdk-fishing-resource-pack.zip
           if-no-files-found: error
           retention-days: 7

@@ -1,0 +1,14 @@
+{
+  "model": {
+    "type": "minecraft:condition",
+    "property": "minecraft:fishing_rod/cast",
+    "on_true": {
+      "type": "minecraft:model",
+      "model": "chrdk_fishing:item/rod/level_4_cast"
+    },
+    "on_false": {
+      "type": "minecraft:model",
+      "model": "chrdk_fishing:item/rod/level_4"
+    }
+  }
+}

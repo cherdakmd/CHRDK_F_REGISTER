@@ -29,13 +29,21 @@ final class FishingActivation {
                           Predicate<Player> authenticated, BooleanSupplier coreAvailable, BooleanSupplier primaryThread,
                           ChrdkSkillsApi skills, byte[] key, int chance, RandomGenerator random,
                           FishingRules rules, java.util.function.Function<PlayerFishEvent, FishingRules.Context> context) {
+        return install(plugin, plugins, services, authenticated, coreAvailable, primaryThread, skills, key,
+                chance, random, rules, context, false);
+    }
+    static Active install(Plugin plugin, PluginManager plugins, ServicesManager services,
+                          Predicate<Player> authenticated, BooleanSupplier coreAvailable, BooleanSupplier primaryThread,
+                          ChrdkSkillsApi skills, byte[] key, int chance, RandomGenerator random,
+                          FishingRules rules, java.util.function.Function<PlayerFishEvent, FishingRules.Context> context,
+                          boolean textures) {
         Objects.requireNonNull(plugin); Objects.requireNonNull(plugins); Objects.requireNonNull(services);
         Objects.requireNonNull(authenticated); Objects.requireNonNull(coreAvailable); Objects.requireNonNull(primaryThread);
         Objects.requireNonNull(skills);
         if (!coreAvailable.getAsBoolean() || services.load(ChrdkSkillsApi.class) != skills)
             throw new IllegalStateException("Core/Skills unavailable");
         if (services.load(FishingCatchBonus.class) != null) throw new IllegalStateException("bonus provider already registered");
-        FishItemCodec codec = new FishItemCodec(key);
+        FishItemCodec codec = new FishItemCodec(key, textures);
         FishingBonusProvider provider = new FishingBonusProvider(codec, authenticated, primaryThread, UUID::randomUUID);
         FishCatchListener delegate = new FishCatchListener(authenticated,
                 () -> primaryThread.getAsBoolean() && coreAvailable.getAsBoolean()

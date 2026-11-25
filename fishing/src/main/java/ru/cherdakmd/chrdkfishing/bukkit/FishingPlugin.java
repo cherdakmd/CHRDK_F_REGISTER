@@ -37,13 +37,14 @@ public final class FishingPlugin extends JavaPlugin {
                 albumRewards = AlbumRewardsSetup.open(folder, services, api, core.getClass().getClassLoader(), album, auth::authenticated);
                 sale = FishSaleSetup.open(folder, services, api, core.getClass().getClassLoader(),
                         new FishItemCodec(key), key, auth::authenticated);
-                var rodCodec = new RodItemCodec(key);
+                boolean textures = getConfig().getBoolean("textures.enabled", false);
+                var rodCodec = new RodItemCodec(key, textures);
                 rods = RodUpgradeSetup.open(folder, services, api, core.getClass().getClassLoader(), rodCodec, key, auth::authenticated);
                 var baitCodec = new BaitItemCodec(key);
                 bait = BaitPurchaseSetup.open(folder, services, api, core.getClass().getClassLoader(), baitCodec, key, auth::authenticated);
                 var active = FishingActivation.install(this, getServer().getPluginManager(), services,
                         auth::authenticated, auth::available, Bukkit::isPrimaryThread, skills, key, settings.chance(), new Random(),
-                        settings.rules(), settings::context);
+                        settings.rules(), settings::context, textures);
                 java.util.function.Function<org.bukkit.event.player.PlayerFishEvent, Integer> currentRodLevel = event -> {
                     try {
                         var hand = event.getHand();

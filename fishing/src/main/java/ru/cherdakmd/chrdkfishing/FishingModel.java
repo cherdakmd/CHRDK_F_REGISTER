@@ -7,7 +7,7 @@ import java.util.random.RandomGenerator;
 
 /** Pure, non-integrated domain model. Prices are provisional points, not bank currency. */
 public final class FishingModel {
-    public enum Rarity { COMMON, UNCOMMON, RARE, VERY_RARE, LEGENDARY }
+    public enum Rarity { COMMON, UNCOMMON, RARE, VERY_RARE, LEGENDARY, MYTHIC }
     public enum Size { SMALL, NORMAL, LARGE, TROPHY }
 
     public record Range(int min, int max) {
@@ -41,7 +41,7 @@ public final class FishingModel {
                 throw new IllegalArgumentException("rod");
         }
     }
-    private static final int[] RARITY_WEIGHTS = {55, 28, 12, 4, 1};
+    private static final int[] RARITY_WEIGHTS = {550, 280, 120, 40, 9, 1};
     private static final int[] SIZE_WEIGHTS = {30, 50, 17, 3};
     private static final int[] PRICE_NUMERATORS = {3, 4, 6, 12};
 
@@ -84,7 +84,7 @@ public final class FishingModel {
         }
         if (bait != null && bait.effect() == BaitCatalog.Effect.RARE_FISH
                 && rarityWeights[Rarity.COMMON.ordinal()] > 0 && rarityWeights[Rarity.RARE.ordinal()] > 0) {
-            int shift = Math.min(bait.bonusPercent(), rarityWeights[Rarity.COMMON.ordinal()]);
+            int shift = Math.min(bait.bonusPercent() * 10, rarityWeights[Rarity.COMMON.ordinal()]);
             rarityWeights[Rarity.COMMON.ordinal()] -= shift;
             rarityWeights[Rarity.RARE.ordinal()] += shift;
         }
@@ -128,11 +128,14 @@ public final class FishingModel {
         throw new AssertionError("unreachable");
     }
 
-    /** New catches are priced at ten times the previous rounded amount; old signed quotes remain untouched. */
+    /** New standard catches cost 10x previous rounded prices; premium fish cost 10x their standard reference. Old signed quotes remain untouched. */
     public static long price(Catch fish) {
         Species species = validate(fish);
-        long numerator = Math.multiplyExact(species.basePrice(), PRICE_NUMERATORS[fish.size().ordinal()]);
-        return Math.multiplyExact(Math.addExact(numerator, 2) / 4, 10);
+        Species reference = FishCatalog.priceReference(species.id());
+        long base = reference == null ? species.basePrice() : reference.basePrice();
+        long numerator = Math.multiplyExact(base, PRICE_NUMERATORS[fish.size().ordinal()]);
+        long ordinary = Math.multiplyExact(Math.addExact(numerator, 2) / 4, 10);
+        return reference == null ? ordinary : Math.multiplyExact(ordinary, 10);
     }
 
     public static Species validate(Catch fish) {

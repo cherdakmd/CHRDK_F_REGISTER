@@ -33,15 +33,26 @@ final class FishAlbumGui implements Listener {
     static final class Holder implements InventoryHolder {
         private final java.util.UUID owner;
         private Inventory inventory;
+        private int page;
         Holder(java.util.UUID owner) { this.owner = owner; }
         @Override public Inventory getInventory() { return inventory; }
     }
     void open(Player player) throws SQLException {
-        var records = album.records(player.getUniqueId());
         var holder = new Holder(player.getUniqueId());
         holder.inventory = Bukkit.createInventory(holder, 54, Component.text("Альбом рыбака"));
-        int slot = 0;
-        for (var species : FishCatalog.all()) {
+        render(holder, player); player.openInventory(holder.inventory);
+    }
+    static final int PAGE_SIZE = 45;
+    static int pageCount() { return Math.max(1, (FishCatalog.all().size() + PAGE_SIZE - 1) / PAGE_SIZE); }
+    static List<ru.cherdakmd.chrdkfishing.FishingModel.Species> page(int page) {
+        if (page < 0 || page >= pageCount()) throw new IllegalArgumentException("album page");
+        var all = FishCatalog.all(); int start = page * PAGE_SIZE;
+        return all.subList(start, Math.min(start + PAGE_SIZE, all.size()));
+    }
+    private void render(Holder holder, Player player) throws SQLException {
+        var records = album.records(player.getUniqueId());
+        holder.inventory.clear(); int slot = 0;
+        for (var species : page(holder.page)) {
             var entry = records.get(species.id());
             var icon = new ItemStack(entry == null ? Material.PAPER : Material.COD);
             var meta = icon.getItemMeta();
@@ -66,14 +77,25 @@ final class FishAlbumGui implements Listener {
                         eligible > progress.paidStage() ? "Нажмите, чтобы получить доступную награду." : "Новой награды пока нет."));
             } catch (Exception error) { throw new SQLException("album reward state unavailable", error); }
         }
+        if (holder.page > 0) holder.inventory.setItem(45, FishMainGui.icon(Material.ARROW, "Предыдущая страница", "Страница " + holder.page + "/" + pageCount()));
+        if (holder.page + 1 < pageCount()) holder.inventory.setItem(50, FishMainGui.icon(Material.ARROW, "Следующая страница", "Страница " + (holder.page + 2) + "/" + pageCount()));
+        holder.inventory.setItem(49, FishMainGui.icon(Material.BOOK, "Альбом · страница " + (holder.page + 1) + "/" + pageCount(), "Записи личных уловов. Нажмите стрелки для перехода."));
         if (back != null) holder.inventory.setItem(52, FishMainGui.icon(Material.ARROW, "Назад", "Главное меню рыбалки"));
-        player.openInventory(holder.inventory);
     }
     @EventHandler public void click(InventoryClickEvent event) {
         if (!(event.getView().getTopInventory().getHolder() instanceof Holder holder)) return;
         event.setCancelled(true);
         if (!(event.getWhoClicked() instanceof Player player) || !holder.owner.equals(player.getUniqueId())) return;
-        if (event.getRawSlot() == 48 && rewards != null) {
+        int slot = event.getRawSlot();
+        if ((slot == 45 && holder.page > 0) || (slot == 50 && holder.page + 1 < pageCount())) {
+            try { holder.page += slot == 45 ? -1 : 1; render(holder, player); }
+            catch (SQLException error) {
+                plugin.getLogger().log(java.util.logging.Level.SEVERE, "Ошибка чтения альбома", error);
+                player.sendMessage("§cАльбом недоступен. Обратитесь к администрации.");
+            }
+            return;
+        }
+        if (slot == 48 && rewards != null) {
             Bukkit.getScheduler().runTask(plugin, () -> {
                 if (!player.isOnline() || player.getOpenInventory().getTopInventory().getHolder() != holder) return;
                 try {
@@ -82,7 +104,7 @@ final class FishAlbumGui implements Listener {
                     var after = rewards.progress(player);
                     if (result == ru.cherdakmd.chrdkfishing.AlbumRewardJournal.Result.DONE) {
                         player.sendMessage(after.paidStage() > before.paidStage() ? "§aНаграда альбома зачислена в банк." : "§eПока нет новой награды альбома.");
-                        open(player);
+                        render(holder, player);
                     } else player.sendMessage("§cНаграда ожидает сверки или восстановления. Обратитесь к администрации.");
                 } catch (Exception error) {
                     plugin.getLogger().log(java.util.logging.Level.SEVERE, "Ошибка награды альбома; сохраните журнал и банк", error);

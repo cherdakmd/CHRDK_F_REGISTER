@@ -24,7 +24,7 @@ final class FishingText {
     static String baitEffect(BaitCatalog.Bait bait) {
         return switch (bait.effect()) {
             case WAIT_TIME -> "Ожидание поклёвки: −" + bait.bonusPercent() + "%";
-            case RARE_FISH -> "До +" + bait.bonusPercent() + " веса редкой рыбе вместо обычной";
+            case RARE_FISH -> "В пользу редкой рыбы: до " + bait.bonusPercent() + "% базового веса";
             case LARGE_FISH -> "До +" + bait.bonusPercent() + " веса крупной рыбе вместо маленькой";
         };
     }

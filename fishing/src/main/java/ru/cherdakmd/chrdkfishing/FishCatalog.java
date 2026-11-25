@@ -14,7 +14,7 @@ public final class FishCatalog {
                 new Range(bounds[0], bounds[1]), new Range(bounds[2], bounds[3]),
                 new Range(bounds[4], bounds[5]), new Range(bounds[6], bounds[7])));
     }
-    private static final List<Species> FISH = List.of(
+    private static final List<Species> BASE = List.of(
         fish("ruffe","Ёрш",Rarity.COMMON,false,20,5,9,10,14,15,19,20,25),
         fish("bleak","Уклейка",Rarity.COMMON,false,20,5,9,10,14,15,19,20,24),
         fish("roach","Плотва",Rarity.COMMON,false,25,8,14,15,24,25,34,35,45),
@@ -61,6 +61,52 @@ public final class FishCatalog {
         fish("golden_tench","Золотой линь",Rarity.LEGENDARY,true,520,10,17,18,29,30,44,45,60),
         fish("aurora_salmon","Северное сияние",Rarity.LEGENDARY,true,550,25,39,40,59,60,84,85,120)
     );
+    /** Each premium species is exactly ten times the matching existing species at the same size. */
+    public record Premium(String id, String name, String referenceId) { }
+    private static final List<Premium> PREMIUM = List.of(
+            new Premium("abyss_whitefish", "Глубинный сиг", "whitefish"),
+            new Premium("star_grayling", "Звёздный хариус", "grayling"),
+            new Premium("crystal_trout", "Кристальная форель", "trout"),
+            new Premium("royal_brown_trout", "Королевская кумжа", "brown_trout"),
+            new Premium("azure_palia", "Лазурная палия", "palia"),
+            new Premium("ancient_zander", "Древний судак", "zander"),
+            new Premium("eclipse_perch", "Окунь затмения", "moon_perch"),
+            new Premium("northern_lantern", "Северный фонарник", "ladoga_lanternfish"),
+            new Premium("astral_salmon", "Астральный лосось", "lake_salmon"),
+            new Premium("imperial_salmon", "Императорская сёмга", "atlantic_salmon"),
+            new Premium("polar_char", "Полярный голец", "arctic_char"),
+            new Premium("ancient_sturgeon", "Древний осётр", "sturgeon"),
+            new Premium("ice_crystal", "Ледяной кристальник", "northern_crystal"),
+            new Premium("midnight_burbot", "Полуночный налим", "shadow_burbot"),
+            new Premium("willow_guardian", "Хранитель ивы", "willow_spirit"),
+            new Premium("storm_asp", "Грозовой жерех", "asp"),
+            new Premium("thunder_eel", "Громовой угорь", "eel"),
+            new Premium("pearl_sterlet", "Жемчужная стерлядь", "sterlet"),
+            new Premium("moon_cisco", "Лунный омуль", "arctic_cisco"),
+            new Premium("ancient_taimen", "Древний таймень", "taimen"),
+            new Premium("celestial_nelma", "Небесная нельма", "nelma"),
+            new Premium("glacier_whitefish", "Ледниковый муксун", "arctic_whitefish"),
+            new Premium("sun_tench", "Солнечный линь", "golden_tench"),
+            new Premium("aurora_keeper", "Хранитель сияния", "aurora_salmon"),
+            new Premium("aurora_dragonfish", "Дракон северных вод", "aurora_salmon"));
+    private static final Map<String, String> PREMIUM_REFERENCES = PREMIUM.stream()
+            .collect(Collectors.toUnmodifiableMap(Premium::id, Premium::referenceId));
+    private static final List<Species> FISH = buildCatalog();
+    private static List<Species> buildCatalog() {
+        var all = new java.util.ArrayList<>(BASE);
+        var baseById = BASE.stream().collect(Collectors.toUnmodifiableMap(Species::id, Function.identity()));
+        for (var premium : PREMIUM) {
+            var source = java.util.Objects.requireNonNull(baseById.get(premium.referenceId()), "premium reference");
+            all.add(new Species(premium.id(), premium.name(), Rarity.MYTHIC, true,
+                    Math.multiplyExact(source.basePrice(), 10), source.lengths()));
+        }
+        return List.copyOf(all);
+    }
+    public static List<Premium> premium() { return PREMIUM; }
+    public static Species priceReference(String id) {
+        var reference = PREMIUM_REFERENCES.get(id);
+        return reference == null ? null : BY_ID.get(reference);
+    }
     private static final Map<String, Species> BY_ID = FISH.stream().collect(Collectors.toUnmodifiableMap(Species::id, Function.identity()));
     private FishCatalog() { }
     public static List<Species> all() { return FISH; }

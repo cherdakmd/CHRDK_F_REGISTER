@@ -21,10 +21,12 @@ public final class RodItemCodec {
     private static final String VERSION = "rod-v1";
     private static final String LORE_TAG = "chrdk_fishing:rod_info_v1";
     private final byte[] secret;
+    private final boolean textures;
     private static NamespacedKey key(String name) { return new NamespacedKey("chrdk_fishing", name); }
-    public RodItemCodec(byte[] secret) {
+    public RodItemCodec(byte[] secret) { this(secret, false); }
+    public RodItemCodec(byte[] secret, boolean textures) {
         if (secret == null || secret.length != FishToken.KEY_BYTES) throw new IllegalArgumentException("rod signing key");
-        this.secret = secret.clone();
+        this.secret = secret.clone(); this.textures = textures;
     }
     /** Detect even invalid/partial tagged items; they must never be silently downgraded to vanilla. */
     public boolean marked(ItemStack rod) {
@@ -62,6 +64,7 @@ public final class RodItemCodec {
         if (meta.lore() != null) for (var line : meta.lore())
             if (!LORE_TAG.equals(line.insertion())) lore.add(line);
         var rod = FishingModel.rod(token.level());
+        FishingVisuals.applyRod(meta, token.level(), textures);
         lore.add(info("Рыбалка: уровень " + rod.level() + " · " + rod.name(), NamedTextColor.AQUA));
         lore.add(info("Опыт навыка: +" + rod.xpBonusPercent() + "% (с учётом лимита)", NamedTextColor.GRAY));
         lore.add(info("Вес крупной рыбы: +" + rod.largeBonusPoints() + " вместо маленькой", NamedTextColor.GRAY));

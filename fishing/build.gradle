@@ -56,3 +56,11 @@ test {
     useJUnitPlatform()
     testLogging { events 'failed'; exceptionFormat 'full' }
 }
+
+// Independent, opt-in client pack; no vanilla item definitions are overridden.
+tasks.register('fishingResourcePack', Zip) {
+    archiveFileName = 'chrdk-fishing-resource-pack.zip'
+    destinationDirectory = layout.buildDirectory.dir('resource-packs')
+    from('resource-pack')
+}
+tasks.named('build') { dependsOn tasks.named('fishingResourcePack') }

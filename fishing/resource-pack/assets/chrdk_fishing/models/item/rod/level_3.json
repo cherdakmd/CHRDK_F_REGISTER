@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/handheld_rod",
+  "textures": {
+    "layer0": "chrdk_fishing:item/rod/level_3"
+  }
+}

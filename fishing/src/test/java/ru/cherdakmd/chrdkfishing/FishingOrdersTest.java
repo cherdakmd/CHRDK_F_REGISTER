@@ -9,6 +9,17 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class FishingOrdersTest {
     @TempDir Path dir;
+    @Test void allDailyOrdersStayWithinBankLimitAndIncludePremiumCatalog() {
+        var seen = new java.util.HashSet<String>();
+        for (long day = 1; day <= FishCatalog.all().size(); day++) {
+            var orders = FishingOrders.forDay(day); assertEquals(3, orders.size());
+            for (var order : orders) {
+                seen.add(order.speciesId());
+                assertTrue(order.rewardMinor() > 0 && order.rewardMinor() <= FishToken.MAX_PRICE_POINTS);
+            }
+        }
+        assertTrue(seen.containsAll(FishCatalog.premium().stream().map(FishCatalog.Premium::id).toList()));
+    }
     @Test void dailyOrdersAreStableAndValidateFishAndReservation() throws Exception {
         long day = FishingOrders.utcDay(); var orders = FishingOrders.forDay(day);
         assertEquals(3, orders.size()); assertEquals(orders, FishingOrders.forDay(day));

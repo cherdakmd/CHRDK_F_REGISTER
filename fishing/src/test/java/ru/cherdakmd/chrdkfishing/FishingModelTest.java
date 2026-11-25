@@ -9,9 +9,9 @@ import static ru.cherdakmd.chrdkfishing.FishingModel.*;
 
 class FishingModelTest {
     @Test void catalogIsCompleteAndEachRarityCanBeSelected() {
-        assertEquals(45, FishCatalog.all().size());
-        assertEquals(7, FishCatalog.all().stream().filter(Species::fictional).count());
-        assertEquals(45, new HashSet<>(FishCatalog.all().stream().map(Species::id).toList()).size());
+        assertEquals(70, FishCatalog.all().size());
+        assertEquals(32, FishCatalog.all().stream().filter(Species::fictional).count());
+        assertEquals(70, new HashSet<>(FishCatalog.all().stream().map(Species::id).toList()).size());
         for (Rarity rarity : Rarity.values()) assertFalse(FishCatalog.byRarity(rarity).isEmpty());
         assertThrows(UnsupportedOperationException.class, () -> FishCatalog.all().clear());
     }
@@ -41,9 +41,19 @@ class FishingModelTest {
         int[] numerators = {3, 4, 6, 12};
         for (var species : FishCatalog.all()) for (var size : Size.values()) {
             var fish = new Catch(species.id(), size, species.lengths().get(size.ordinal()).min());
-            long old = (species.basePrice() * numerators[size.ordinal()] + 2) / 4;
-            assertEquals(old * 10, price(fish), species.id() + " " + size);
+            var reference = FishCatalog.priceReference(species.id());
+            long old = ((reference == null ? species.basePrice() : reference.basePrice()) * numerators[size.ordinal()] + 2) / 4;
+            assertEquals(old * (reference == null ? 10 : 100), price(fish), species.id() + " " + size);
             assertTrue(price(fish) <= FishToken.MAX_PRICE_POINTS);
+        }
+    }
+    @Test void premiumFishAreExactlyTenTimesTheirReferenceAtEverySize() {
+        assertEquals(25, FishCatalog.premium().size());
+        for (var item : FishCatalog.premium()) for (var size : Size.values()) {
+            var reference = FishCatalog.byId(item.referenceId());
+            int length = reference.lengths().get(size.ordinal()).min();
+            assertEquals(price(new Catch(reference.id(), size, length)) * 10,
+                    price(new Catch(item.id(), size, length)), item.id() + " " + size);
         }
     }
     @Test void oldSignedQuotesStayValidWhenPricesChange() {

@@ -31,6 +31,8 @@ tasks.register('prototypeResourcePack', Zip) {
     archiveFileName = 'chrdk-custom-items-prototype.zip'
     destinationDirectory = layout.buildDirectory.dir('resource-packs')
     from('resource-pack')
+    // Add namespaced Fishing models; retain the existing pack metadata and vanilla assets.
+    from('../fishing/resource-pack') { exclude 'pack.mcmeta' }
 }
 tasks.named('build') { dependsOn tasks.named('prototypeResourcePack') }
 
