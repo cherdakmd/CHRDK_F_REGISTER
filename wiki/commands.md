@@ -4,6 +4,12 @@ description: "Публичные команды действующих плаг�
 review: [core, claims, teleports, diamond-shop]
 ---
 
+## Рыбалка
+
+При установленном экспериментальном CHRDK_Fishing: `/fish` открывает меню,
+`/fish rod` — улучшения удочек, `/fish sell` — продажу, `/fish album` — альбом.
+Подробнее — [рыбалка](fishing.md).
+
 ## Взносы клана
 
 `/clan dues` — следующий счёт; `/clan dues 20` и повтор с `confirm` — тариф

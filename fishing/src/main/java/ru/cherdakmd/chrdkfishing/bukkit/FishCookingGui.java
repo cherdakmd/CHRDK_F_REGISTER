@@ -59,6 +59,7 @@ final class FishCookingGui implements Listener {
             holder.inventory.setItem(39 + i, FishMainGui.icon(recipe.material(), recipe.title(),
                     (recipe == holder.recipe ? "Выбрано. " : "Выбрать. ") + (recipe.needsBowl() ? "Нужна миска." : "Одна рыба.")));
         }
+        holder.inventory.setItem(45, FishMainGui.icon(Material.BOOK, "Как готовить", "Выберите рецепт ниже, затем рыбу выше.", "Для ухи нужна обычная миска в инвентаре.", "После выбора подтвердите: рыба будет израсходована."));
         if (holder.quote != null) {
             var item = FishMainGui.icon(holder.quote.recipe().material(), "Подтвердить: " + holder.quote.recipe().title(), "Одна рыба → одно блюдо");
             var meta = item.getItemMeta(); meta.lore(java.util.List.of(
@@ -76,8 +77,10 @@ final class FishCookingGui implements Listener {
         if (!(event.getWhoClicked() instanceof Player player) || !holder.owner.equals(player.getUniqueId()) || !engine.available(player)) return;
         int slot = event.getRawSlot();
         if (slot >= 0 && slot < 36) {
+            if (codec.read(player.getInventory().getStorageContents()[slot]).isEmpty()) return;
+            holder.quote = null;
             try { holder.quote = engine.quoteCook(player, slot, holder.recipe); render(holder, player); }
-            catch (IllegalArgumentException invalid) { player.sendMessage("§cПроверьте рыбу и ингредиенты; для ухи нужна обычная миска."); }
+            catch (IllegalArgumentException invalid) { render(holder, player); player.sendMessage("§cПроверьте рыбу и ингредиенты; для ухи нужна обычная миска."); }
             catch (Exception error) { report(player, error); }
         } else if (slot >= 39 && slot <= 41) {
             holder.recipe = FishCookingPlanner.Recipe.values()[slot - 39]; holder.quote = null; render(holder, player);

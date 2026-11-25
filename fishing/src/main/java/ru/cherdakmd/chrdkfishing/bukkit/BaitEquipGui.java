@@ -54,10 +54,11 @@ final class BaitEquipGui implements Listener {
             var token = codec.read(storage[i]); if (token.isEmpty()) continue;
             var bait = BaitCatalog.byId(token.get().kind());
             holder.inventory.setItem(i, FishMainGui.icon(i == holder.selected ? Material.LIME_STAINED_GLASS_PANE : Material.PAPER,
-                    bait.name(), "Выбрать приманку из ячейки " + (i + 1)));
+                    bait.name(), FishingText.baitEffect(bait), "Выбрать приманку из ячейки " + (i + 1)));
         }
+        holder.inventory.setItem(45, FishMainGui.icon(Material.BOOK, "Как выбрать приманку", "Нажмите на приманку выше, затем подтвердите.", "Можно выбрать только одну; она расходуется при успешной ловле."));
         if (holder.token != null) holder.inventory.setItem(49, FishMainGui.icon(Material.EMERALD_BLOCK,
-                "Подтвердить приманку", "Предмет сохранится как выбранная приманка до успешной ловли"));
+                "Подтвердить приманку", "Выбрано: " + BaitCatalog.byId(holder.token.kind()).name(), "Предмет будет выбран до успешной ловли."));
         holder.inventory.setItem(52, FishMainGui.icon(Material.ARROW, "Назад", "Главное меню рыбалки"));
         holder.inventory.setItem(53, FishMainGui.icon(Material.BARRIER, "Закрыть", "Ничего не выбирать"));
     }

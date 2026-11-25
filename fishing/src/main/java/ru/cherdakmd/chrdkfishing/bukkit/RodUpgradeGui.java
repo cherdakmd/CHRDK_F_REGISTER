@@ -1,8 +1,11 @@
 package ru.cherdakmd.chrdkfishing.bukkit;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -15,6 +18,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
+import ru.cherdakmd.chrdkfishing.FishingModel;
 import ru.cherdakmd.chrdkfishing.RodUpgradeJournal;
 
 /** Read-only selector and two-step confirmation, never stores real items. */
@@ -32,6 +36,7 @@ final class RodUpgradeGui implements Listener {
     private static final class Holder implements InventoryHolder {
         final UUID owner;
         Inventory inventory;
+        int selected = -1;
         RodUpgradePlanner.Plan quote;
         Holder(UUID owner) { this.owner = owner; }
         @Override public Inventory getInventory() { return inventory; }
@@ -39,10 +44,8 @@ final class RodUpgradeGui implements Listener {
     void open(Player player) throws Exception {
         if (!engine.available(player)) throw new IllegalStateException("player unavailable");
         UUID owner = engine.pendingOwner();
-        if (owner != null) {
-            if (!owner.equals(player.getUniqueId()) || engine.recover(player) != RodUpgradeJournal.Result.DONE) {
-                player.sendMessage("§cОжидается восстановление предыдущего улучшения. Обратитесь к администрации."); return;
-            }
+        if (owner != null && (!owner.equals(player.getUniqueId()) || engine.recover(player) != RodUpgradeJournal.Result.DONE)) {
+            player.sendMessage("§cОжидается восстановление предыдущего улучшения. Обратитесь к администрации."); return;
         }
         Holder holder = new Holder(player.getUniqueId());
         holder.inventory = Bukkit.createInventory(holder, 54, Component.text("Улучшение удочки"));
@@ -55,25 +58,66 @@ final class RodUpgradeGui implements Listener {
             var item = storage[i];
             if (item == null || item.getType() != Material.FISHING_ROD || item.getAmount() != 1) continue;
             var token = codec.read(item);
-            String level = token.map(t -> Integer.toString(t.level())).orElse(codec.marked(item) ? "повреждена" : "1");
-            holder.inventory.setItem(i, icon(Material.PAPER, "Удочка: ячейка " + (i + 1) + ", уровень " + level));
+            if (codec.marked(item) && token.isEmpty()) {
+                holder.inventory.setItem(i, icon(Material.BARRIER, "Удочка: повреждённая метка", List.of("Обратитесь к администрации.")));
+                continue;
+            }
+            int level = token.map(t -> t.level()).orElse(1);
+            var info = new ArrayList<String>();
+            info.add("Уровень " + level + " · " + FishingModel.rod(level).name());
+            info.add("Опыт навыка: +" + FishingModel.rod(level).xpBonusPercent() + "% (с учётом лимита).");
+            if (level < 10) {
+                var cost = RodUpgradePlanner.costFor(level + 1);
+                info.add("Следующий уровень: " + FishingText.amount(cost.minor()) + " алм. со счёта /bal.");
+                for (var ingredient : cost.ingredients()) info.add(FishingText.material(ingredient.material()) + ": "
+                        + RodUpgradePlanner.available(storage, ingredient.material()) + "/" + ingredient.count());
+                info.add("Нажмите, чтобы узнать детали.");
+            } else info.add("Достигнут максимальный уровень.");
+            holder.inventory.setItem(i, icon(Material.FISHING_ROD, (i == holder.selected ? "✓ " : "") + "Удочка · ячейка " + (i + 1), info));
         }
-        if (holder.quote != null) {
-            var cost = holder.quote.cost();
-            var button = icon(Material.EMERALD_BLOCK, "Подтвердить уровень " + cost.targetLevel());
-            var meta = button.getItemMeta();
-            var lore = new java.util.ArrayList<Component>();
-            lore.add(Component.text("Цена: " + cost.minor() / 100 + "." + String.format(java.util.Locale.ROOT, "%02d", cost.minor() % 100) + " алм.", NamedTextColor.GRAY));
-            for (var ingredient : cost.ingredients()) lore.add(Component.text(ingredient.material().name() + " × " + ingredient.count(), NamedTextColor.GRAY));
-            lore.add(Component.text("Удочка и ресурсы остаются в инвентаре до подтверждения.", NamedTextColor.YELLOW));
-            meta.lore(lore); button.setItemMeta(meta); holder.inventory.setItem(49, button);
+        holder.inventory.setItem(45, icon(Material.BOOK, "Как улучшить", List.of(
+                "Наведите на удочку выше, чтобы увидеть цену и материалы.",
+                "Выберите удочку, затем подготовьте и подтвердите улучшение.",
+                "Материалы должны быть обычными предметами в инвентаре.",
+                "Деньги списываются с банкового счёта /bal.")));
+        if (holder.selected >= 0 && holder.selected < storage.length) {
+            var item = storage[holder.selected];
+            var token = codec.read(item);
+            if (item == null || item.getType() != Material.FISHING_ROD || item.getAmount() != 1
+                    || (codec.marked(item) && token.isEmpty())) {
+                holder.selected = -1; holder.quote = null;
+            } else {
+                int level = token.map(t -> t.level()).orElse(1);
+                if (level < 10) {
+                    var cost = RodUpgradePlanner.costFor(level + 1);
+                    var current = FishingModel.rod(level); var next = FishingModel.rod(level + 1);
+                    var lore = new ArrayList<String>();
+                    lore.add("Уровень " + level + " → " + next.level() + " · " + next.name());
+                    lore.add("Цена: " + FishingText.amount(cost.minor()) + " алм. с /bal.");
+                    for (var ingredient : cost.ingredients()) lore.add(FishingText.material(ingredient.material()) + ": "
+                            + RodUpgradePlanner.available(storage, ingredient.material()) + "/" + ingredient.count());
+                    lore.add("Опыт навыка: +" + current.xpBonusPercent() + "% → +" + next.xpBonusPercent() + "% (с лимитом).");
+                    lore.add("Вес крупного размера: +" + current.largeBonusPoints() + " → +" + next.largeBonusPoints() + " вместо маленького.");
+                    lore.add("Проверка материалов, банка и подлинности — перед оплатой.");
+                    holder.inventory.setItem(40, icon(Material.FISHING_ROD, "Следующее улучшение", lore));
+                    holder.inventory.setItem(49, icon(holder.quote == null ? Material.GOLD_INGOT : Material.EMERALD_BLOCK,
+                            holder.quote == null ? "Подготовить улучшение" : "Подтвердить улучшение", List.of(
+                                    holder.quote == null ? "Проверить материалы и подготовить сделку." : "Списать алмазы и ресурсы, улучшить удочку.",
+                                    "До подтверждения ничего не списывается.")));
+                } else {
+                    holder.quote = null;
+                    holder.inventory.setItem(40, icon(Material.NETHER_STAR, "Максимальный уровень", List.of("Эта удочка уже достигла 10 уровня.")));
+                }
+            }
         }
-        if (back != null) holder.inventory.setItem(52, icon(Material.ARROW, "Назад"));
-        holder.inventory.setItem(53, icon(Material.BARRIER, "Закрыть"));
+        if (back != null) holder.inventory.setItem(52, icon(Material.ARROW, "Назад", List.of("Главное меню рыбалки.")));
+        holder.inventory.setItem(53, icon(Material.BARRIER, "Закрыть", List.of("Без улучшения.")));
     }
-    private static ItemStack icon(Material material, String label) {
+    private static ItemStack icon(Material material, String label, List<String> lines) {
         var item = new ItemStack(material); var meta = item.getItemMeta();
-        meta.displayName(Component.text(label, NamedTextColor.YELLOW)); item.setItemMeta(meta); return item;
+        meta.displayName(Component.text(label, NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
+        meta.lore(lines.stream().map(line -> Component.text(line, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)).toList());
+        item.setItemMeta(meta); return item;
     }
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void click(InventoryClickEvent event) {
@@ -82,11 +126,29 @@ final class RodUpgradeGui implements Listener {
         if (!(event.getWhoClicked() instanceof Player player) || !holder.owner.equals(player.getUniqueId()) || !engine.available(player)) return;
         int slot = event.getRawSlot();
         if (slot >= 0 && slot < 36) {
-            // Invalidate the old selection even if quoting the new rod fails unexpectedly.
-            holder.quote = null;
-            try { holder.quote = engine.quote(player, slot); render(holder, player); }
-            catch (IllegalArgumentException error) { render(holder, player); player.sendMessage("§cНе удалось подготовить улучшение: проверьте удочку и материалы."); }
-            catch (Exception error) { render(holder, player); report(player, error); }
+            var storage = player.getInventory().getStorageContents();
+            if (slot >= storage.length || storage[slot] == null || storage[slot].getType() != Material.FISHING_ROD) return;
+            holder.selected = slot; holder.quote = null; render(holder, player);
+        } else if (slot == 49 && holder.selected >= 0 && holder.quote == null && holder.inventory.getItem(49) != null) {
+            var storage = player.getInventory().getStorageContents();
+            var rod = storage[holder.selected];
+            if (rod == null || rod.getType() != Material.FISHING_ROD || rod.getAmount() != 1 || (codec.marked(rod) && codec.read(rod).isEmpty())) {
+                render(holder, player); player.sendMessage("§cУдочка изменилась или её метка повреждена."); return;
+            }
+            int level = codec.read(rod).map(t -> t.level()).orElse(1);
+            if (level >= 10) { render(holder, player); return; }
+            var missing = RodUpgradePlanner.costFor(level + 1).ingredients().stream()
+                    .filter(part -> RodUpgradePlanner.available(storage, part.material()) < part.count())
+                    .map(part -> FishingText.material(part.material()) + ": " + RodUpgradePlanner.available(storage, part.material()) + "/" + part.count())
+                    .toList();
+            if (!missing.isEmpty()) { render(holder, player); player.sendMessage("§cНе хватает обычных материалов: " + String.join(", ", missing)); return; }
+            try {
+                holder.quote = engine.quote(player, holder.selected); render(holder, player);
+                player.sendMessage("§eПроверьте стоимость и нажмите подтверждение.");
+            } catch (IllegalArgumentException error) {
+                holder.quote = null; render(holder, player);
+                player.sendMessage("§cУлучшение недоступно: проверьте количество обычных материалов и состояние удочки.");
+            } catch (Exception error) { holder.quote = null; render(holder, player); report(player, error); }
         } else if (slot == 49 && holder.quote != null) {
             var plan = holder.quote; holder.quote = null;
             Bukkit.getScheduler().runTask(plugin, () -> {

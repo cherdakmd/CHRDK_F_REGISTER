@@ -46,6 +46,17 @@ public final class RodUpgradePlanner {
         if (targetLevel < 2 || targetLevel > 10) throw new IllegalArgumentException("target level");
         return COSTS.get(targetLevel - 2);
     }
+    /** Counts the same ordinary, valid stacks that the planner is allowed to consume. */
+    static int available(ItemStack[] storage, Material material) {
+        if (storage == null || material == null) throw new IllegalArgumentException("material count");
+        int count = 0;
+        for (ItemStack item : storage) {
+            if (item == null || item.getType() != material || item.hasItemMeta()) continue;
+            if (item.getAmount() < 1 || item.getAmount() > item.getMaxStackSize()) continue;
+            count = Math.addExact(count, item.getAmount());
+        }
+        return count;
+    }
     public static final class Plan {
         private final ItemStack[] before, after;
         private final RodToken.Token oldToken, newToken;

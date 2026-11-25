@@ -62,7 +62,8 @@ final class FishAlbumGui implements Listener {
                 int eligible = ru.cherdakmd.chrdkfishing.AlbumRewardJournal.eligibleStage(records.size());
                 String text = "Открыто " + records.size() + "/30; этап " + progress.paidStage() + "/4";
                 holder.inventory.setItem(48, FishMainGui.icon(Material.GOLD_INGOT, "Награды альбома",
-                        eligible > progress.paidStage() ? text + ". Нажмите, чтобы получить." : text));
+                        text, "Этапы: 5, 10, 20 и 30 видов.", "Суммарно: 0.50 / 1.50 / 3.50 / 8.50 алм. на /bal.",
+                        eligible > progress.paidStage() ? "Нажмите, чтобы получить доступную награду." : "Новой награды пока нет."));
             } catch (Exception error) { throw new SQLException("album reward state unavailable", error); }
         }
         if (back != null) holder.inventory.setItem(52, FishMainGui.icon(Material.ARROW, "Назад", "Главное меню рыбалки"));

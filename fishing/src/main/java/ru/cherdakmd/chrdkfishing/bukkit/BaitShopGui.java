@@ -46,10 +46,10 @@ final class BaitShopGui implements Listener {
         for (int i = 0; i < BaitCatalog.all().size(); i++) {
             var bait = BaitCatalog.all().get(i);
             holder.inventory.setItem(10 + i * 2, FishMainGui.icon(Material.PAPER, bait.name(),
-                    "Цена: " + amount(bait.priceMinor()) + " алм. за штуку"));
+                    "Цена: " + amount(bait.priceMinor()) + " алм. со счёта /bal.", FishingText.baitEffect(bait), "Одна приманка на успешную ловлю. Нажмите для выбора."));
         }
         if (holder.quote != null) holder.inventory.setItem(22, FishMainGui.icon(Material.EMERALD_BLOCK,
-                "Подтвердить покупку", "Списать " + amount(holder.quote.minor()) + " алм. с банкового счёта"));
+                "Подтвердить покупку", "Выбрано: " + BaitCatalog.byId(holder.quote.token().kind()).name(), "Списать " + amount(holder.quote.minor()) + " алм. с /bal; нужно свободное место."));
         holder.inventory.setItem(25, FishMainGui.icon(Material.ARROW, "Назад", "Главное меню рыбалки"));
         holder.inventory.setItem(26, FishMainGui.icon(Material.BARRIER, "Закрыть", "Ничего не покупать"));
     }
@@ -63,7 +63,7 @@ final class BaitShopGui implements Listener {
         if (slot == 10 || slot == 12 || slot == 14) {
             try { holder.quote = engine.quote(player, BaitCatalog.all().get((slot - 10) / 2).id()); render(holder); }
             catch (IllegalArgumentException invalid) { holder.quote = null; render(holder); player.sendMessage("§cОсвободите место в инвентаре."); }
-            catch (Exception error) { report(player, error); }
+            catch (Exception error) { holder.quote = null; render(holder); report(player, error); }
         } else if (slot == 22 && holder.quote != null) {
             var quote = holder.quote; holder.quote = null;
             Bukkit.getScheduler().runTask(plugin, () -> {

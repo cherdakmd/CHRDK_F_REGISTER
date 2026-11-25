@@ -70,6 +70,11 @@
       "sources": "035f5a9ff7839b8b6c47c92d8caa2b4d4cf425b30b051679ba9103cacc054bb3",
       "text": "47ddad14851508ac6f0c0ea526b035d854b645324715f642041ec2c9e85e45cd"
     },
+    "fishing": {
+      "reason": "Сверены рецепты, бонусы, команды и операции с текущей реализацией Fishing.",
+      "sources": "0c6c055014da0ab0a5e0dd80d4e4e750ea8c90518900a9497b67cd73d5a480a7",
+      "text": "cbc8b3db30f2c64281e33024681e0e9ff3447e6aae9fe77fb978bf0d88af72b0"
+    },
     "generator": {
       "reason": "Проверены остановка генератора, сверка выплат и восстановление прокачки",
       "sources": "070d6f4865470bf47ca76a7d1fd682941e1bc6c638fa6ee7af105f4ad9e3ac38",

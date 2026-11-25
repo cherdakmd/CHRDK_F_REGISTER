@@ -37,6 +37,7 @@ groups:
   description: Ремесло, навыки и награды за игру.
   pages:
   - skills
+  - fishing
   - mmorpg-roadmap
   - quests
   - battlepass

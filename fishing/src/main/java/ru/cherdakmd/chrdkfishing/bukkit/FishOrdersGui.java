@@ -60,8 +60,9 @@ final class FishOrdersGui implements Listener {
                         FishMainGui.icon(Material.PAPER, FishCatalog.byId(holder.selected.speciesId()).name(), "Сдать рыбу из ячейки " + (i + 1)));
             }
         }
+        holder.inventory.setItem(45, FishMainGui.icon(Material.BOOK, "Как выполнить заказ", "Выберите заказ ниже, затем подходящую рыбу выше.", "Подтверждение расходует рыбу и зачисляет награду в банк.", "Заказы обновляются по UTC; каждый сдаётся один раз."));
         if (holder.quote != null) holder.inventory.setItem(49, FishMainGui.icon(Material.EMERALD_BLOCK,
-                "Подтвердить заказ", "Награда: " + amount(holder.selected.rewardMinor()) + " алм."));
+                "Подтвердить заказ", "Сдать рыбу и получить " + amount(holder.selected.rewardMinor()) + " алм. на /bal."));
         holder.inventory.setItem(52, FishMainGui.icon(Material.ARROW, "Назад", "Главное меню рыбалки"));
         holder.inventory.setItem(53, FishMainGui.icon(Material.BARRIER, "Закрыть", "Ничего не сдавать"));
     }
@@ -82,6 +83,8 @@ final class FishOrdersGui implements Listener {
                 if (engine.orderClaimed(player, order)) { player.sendMessage("§eЭтот заказ уже сдан."); return; }
                 holder.selected = order; holder.quote = null; render(holder, player);
             } else if (slot >= 0 && slot < 36 && holder.selected != null) {
+                if (codec.read(player.getInventory().getStorageContents()[slot]).filter(holder.selected::matches).isEmpty()) return;
+                holder.quote = null;
                 holder.quote = engine.quoteOrder(player, slot, holder.selected); render(holder, player);
             } else if (slot == 49 && holder.selected != null && holder.quote != null) {
                 var order = holder.selected; var quote = holder.quote; holder.quote = null;
@@ -100,8 +103,9 @@ final class FishOrdersGui implements Listener {
                 if (slot == 52) back.accept(player); else player.closeInventory();
             });
         } catch (IllegalArgumentException | IllegalStateException invalid) {
+            holder.quote = null; holder.inventory.setItem(49, null);
             player.sendMessage("§cРыба не подходит или заказ сейчас недоступен.");
-        } catch (Exception error) { report(player, error); }
+        } catch (Exception error) { holder.quote = null; holder.inventory.setItem(49, null); report(player, error); }
     }
     private void report(Player player, Exception error) {
         plugin.getLogger().log(java.util.logging.Level.SEVERE, "Ошибка рыбного заказа; сохраните журнал и банк", error);
