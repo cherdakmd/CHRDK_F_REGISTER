@@ -7,7 +7,6 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.Set;
 import ru.cherdakmd.chrdkfishing.FishSigningKey;
 
 /** Explicitly isolated, opt-in source generation. Not an automatic reset. */
@@ -40,7 +39,7 @@ final class FishingGeneration {
                 || !expected.equals(Files.readString(file, StandardCharsets.US_ASCII)))
             throw new IOException("invalid generation marker");
     }
-    private static void durableCreate(Path file, String text) throws IOException {
+    static void durableCreate(Path file, String text) throws IOException {
         try (var c = FileChannel.open(file, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)) {
             var bytes = StandardCharsets.US_ASCII.encode(text); while (bytes.hasRemaining()) c.write(bytes); c.force(true);
         }
@@ -55,7 +54,7 @@ final class FishingGeneration {
     void markInitialized(Path folder) throws IOException {
         if (horizons && bootstrapping(folder)) durableCreate(folder.resolve(INITIALIZED), READY_TEXT);
     }
-    /** New generation needs the existing financial reward ledger; it must not create a new one. */
+    /** New generation starts with only its explicit marker and a freshly generated key. */
     byte[] signingKey(Path folder) throws IOException {
         if (!horizons) return FishingPlugin.signingKey(folder);
         if (!Files.isDirectory(folder, LinkOption.NOFOLLOW_LINKS)) throw new IOException("invalid generation folder");
@@ -67,14 +66,10 @@ final class FishingGeneration {
             requireFile(latch, LATCH_TEXT); return FishSigningKey.load(key);
         }
         if (hasLatch) throw new IOException("generation key missing; restore required");
-        Set<String> allowed = Set.of(MARKER, "album-rewards.db", "album-rewards-lineage.txt");
         try (var files = Files.list(folder)) {
-            if (files.anyMatch(p -> !allowed.contains(p.getFileName().toString()) || !Files.isRegularFile(p, LinkOption.NOFOLLOW_LINKS)))
+            if (files.anyMatch(p -> !p.getFileName().toString().equals(MARKER) || !Files.isRegularFile(p, LinkOption.NOFOLLOW_LINKS)))
                 throw new IOException("generation folder is not clean");
         }
-        if (!Files.isRegularFile(folder.resolve("album-rewards.db"), LinkOption.NOFOLLOW_LINKS)
-                || !Files.isRegularFile(folder.resolve("album-rewards-lineage.txt"), LinkOption.NOFOLLOW_LINKS))
-            throw new IOException("existing reward history required");
         durableCreate(latch, LATCH_TEXT); // A failed create permanently requires recovery, never a new key.
         return FishSigningKey.create(key);
     }

@@ -15,11 +15,9 @@ class FishingGenerationTest {
     Path fresh() throws IOException {
         Path folder = dir.resolve("new"); Files.createDirectory(folder);
         Files.writeString(folder.resolve(FishingGeneration.MARKER), "horizons-v1\n");
-        Files.writeString(folder.resolve("album-rewards.db"), "fixture");
-        Files.writeString(folder.resolve("album-rewards-lineage.txt"), "fixture");
         return folder;
     }
-    @Test void explicitMarkerSelectsDifferentSourcesAndPreservesOldRewardHistory() throws Exception {
+    @Test void explicitMarkerSelectsDifferentSourcesAndCreatesFreshKey() throws Exception {
         Path folder = fresh();
         var generation = FishingGeneration.resolve(folder);
         assertSame(FishingGeneration.HORIZONS, generation);
@@ -29,8 +27,7 @@ class FishingGenerationTest {
         assertTrue(generation.bootstrapping(folder));
         byte[] key = generation.signingKey(folder);
         assertArrayEquals(key, generation.signingKey(folder));
-        assertEquals("fixture", Files.readString(folder.resolve("album-rewards.db")));
-        assertEquals("fixture", Files.readString(folder.resolve("album-rewards-lineage.txt")));
+        assertFalse(Files.exists(folder.resolve("album-rewards.db")));
         generation.markInitialized(folder);
         assertFalse(generation.bootstrapping(folder));
         generation.markInitialized(folder); // idempotent
@@ -51,14 +48,15 @@ class FishingGenerationTest {
         assertThrows(IOException.class, () -> g.signingKey(folder));
         assertFalse(Files.exists(folder.resolve("fish-signing.key")));
     }
-    @Test void preexistingDataOrMissingRewardHistoryNeverCreatesKey() throws Exception {
-        Path folder = fresh(); Files.writeString(folder.resolve("old-journal.db"), "old data");
-        var g = FishingGeneration.resolve(folder);
-        assertThrows(IOException.class, () -> g.signingKey(folder));
-        Files.delete(folder.resolve("old-journal.db")); Files.delete(folder.resolve("album-rewards.db"));
-        assertThrows(IOException.class, () -> g.signingKey(folder));
-        assertFalse(Files.exists(folder.resolve("fish-signing.key")));
-        assertFalse(Files.exists(folder.resolve(FishingGeneration.KEY_LATCH)));
+    @Test void preexistingDataIncludingOldRewardHistoryNeverCreatesKey() throws Exception {
+        Path folder = fresh(); var g = FishingGeneration.resolve(folder);
+        for (String old : new String[]{"old-journal.db", "album-rewards.db", "album-rewards-lineage.txt", "config.yml"}) {
+            Files.writeString(folder.resolve(old), "old data");
+            assertThrows(IOException.class, () -> g.signingKey(folder));
+            Files.delete(folder.resolve(old));
+            assertFalse(Files.exists(folder.resolve("fish-signing.key")));
+            assertFalse(Files.exists(folder.resolve(FishingGeneration.KEY_LATCH)));
+        }
     }
     @Test void invalidOrSymlinkedMarkersCannotSelectOrRepairGeneration() throws Exception {
         Path folder = fresh(); var marker = folder.resolve(FishingGeneration.MARKER);

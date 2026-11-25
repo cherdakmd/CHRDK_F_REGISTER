@@ -21,6 +21,38 @@ class AlbumRewardJournalTest {
             return true;
         }
     }
+    @Test void freshJournalReconstructsKnownBankReceiptsWithoutPayingTwice() throws Exception {
+        var path = dir.resolve("new-rewards.db"); var lineage = UUID.randomUUID(); var owner = UUID.randomUUID();
+        var other = UUID.randomUUID(); var bank = new Bank(); bank.values.put(owner, 350L); bank.values.put(other, 50L);
+        try (var journal = new AlbumRewardJournal(path, lineage, true)) {
+            journal.bootstrapFromBank(bank);
+            assertEquals(new AlbumRewardJournal.Progress(3, 3, 350, 350), journal.progress(owner));
+            assertEquals(new AlbumRewardJournal.Progress(1, 1, 50, 50), journal.progress(other));
+            assertFalse(journal.hasUnsettled()); assertTrue(journal.reconciled(bank));
+            assertEquals(AlbumRewardJournal.Result.DONE, journal.claim(owner, 20, bank));
+            assertEquals(350L, bank.values.get(owner));
+            assertThrows(Exception.class, () -> journal.bootstrapFromBank(bank));
+        }
+        try (var journal = new AlbumRewardJournal(path, lineage, false)) {
+            assertTrue(journal.reconciled(bank));
+            assertEquals(AlbumRewardJournal.Result.DONE, journal.claim(owner, 30, bank));
+            assertEquals(850L, bank.values.get(owner));
+        }
+    }
+    @Test void unexpectedBankAmountsAndUnavailableSnapshotNeverBootstrap() throws Exception {
+        var path = dir.resolve("new-rewards.db"); var lineage = UUID.randomUUID(); var owner = UUID.randomUUID(); var bank = new Bank();
+        bank.values.put(owner, 123L);
+        try (var journal = new AlbumRewardJournal(path, lineage, true)) {
+            assertThrows(Exception.class, () -> journal.bootstrapFromBank(bank));
+            assertEquals(new AlbumRewardJournal.Progress(0, 0, 0, 0), journal.progress(owner));
+            assertFalse(journal.reconciled(bank));
+            AlbumRewardJournal.Bank unavailable = new AlbumRewardJournal.Bank() {
+                public Map<UUID, Long> receipts(UUID ignored) { return null; }
+                public boolean credit(UUID l, UUID o, long total) { throw new AssertionError("must not pay"); }
+            };
+            assertThrows(Exception.class, () -> journal.bootstrapFromBank(unavailable));
+        }
+    }
     @Test void interruptedCreditRecoversWithoutPayingTwice() throws Exception {
         var path = dir.resolve("rewards.db"); var lineage = UUID.randomUUID(); var owner = UUID.randomUUID(); var bank = new Bank();
         bank.failAfterWrite = true;

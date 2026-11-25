@@ -106,6 +106,43 @@ public final class AlbumRewardJournal implements AutoCloseable {
         }
         return true;
     }
+    /**
+     * Initialize an empty journal from an authoritative bank snapshot, without paying anyone.
+     * This cannot discover claims not yet recorded by the bank: a separate audit of the
+     * old journal for unsettled claims is mandatory before switching generations.
+     * Only the known exact cumulative schedule can be reconstructed; unknown amounts fail.
+     */
+    public synchronized void bootstrapFromBank(Bank bank) throws Exception {
+        Objects.requireNonNull(bank);
+        var receipts = bank.receipts(lineage);
+        if (receipts == null) throw new SQLException("album bank unavailable");
+        Map<UUID, Integer> stages = new HashMap<>();
+        for (var row : receipts.entrySet()) {
+            if (row.getKey() == null || row.getValue() == null) throw new SQLException("invalid album receipt");
+            int stage = -1;
+            for (int i = 1; i < TOTALS.length; i++) if (TOTALS[i] == row.getValue()) stage = i;
+            if (stage < 0) throw new SQLException("unrecognized album receipt amount");
+            stages.put(row.getKey(), stage);
+        }
+        db.setAutoCommit(false);
+        try {
+            try (var s = db.createStatement(); var r = s.executeQuery("SELECT COUNT(*) FROM rewards")) {
+                if (!r.next() || r.getLong(1) != 0) throw new SQLException("reward journal not empty");
+            }
+            try (var s = db.prepareStatement("INSERT INTO rewards(owner,paid_stage,target_stage,confirmed,target) VALUES(?,?,?,?,?)")) {
+                for (var row : stages.entrySet()) {
+                    int stage = row.getValue(); long total = TOTALS[stage];
+                    s.setString(1, row.getKey().toString()); s.setInt(2, stage); s.setInt(3, stage);
+                    s.setLong(4, total); s.setLong(5, total); s.addBatch();
+                }
+                s.executeBatch();
+            }
+            db.commit();
+        } catch (Exception error) {
+            db.rollback(); throw error;
+        } finally { db.setAutoCommit(true); }
+        if (!reconciled(bank)) throw new SQLException("album bank changed during bootstrap");
+    }
     /** A clean generation must not adopt unresolved financial reward claims. */
     public synchronized boolean hasUnsettled() throws SQLException {
         for (var p : all().values()) if (p.paidStage() != p.targetStage()) return true;
