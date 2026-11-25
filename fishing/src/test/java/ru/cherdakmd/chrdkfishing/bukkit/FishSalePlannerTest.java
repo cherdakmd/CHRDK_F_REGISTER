@@ -27,6 +27,20 @@ class FishSalePlannerTest {
         var edited = plan.after(); edited[10] = null; assertSame(other, plan.after()[10]);
         assertThrows(UnsupportedOperationException.class, () -> plan.fish().clear());
     }
+    @Test void unselectedVisibleCopyOfSelectedFishBlocksSaleAndSingleFishOrders() {
+        var codec = mock(FishItemCodec.class); var a = item(); var copy = item(); var unrelated = item();
+        var storage = new ItemStack[36]; storage[2] = a; storage[21] = copy; storage[34] = unrelated;
+        var token = fish(UUID.randomUUID(), 123); var other = fish(UUID.randomUUID(), 456);
+        when(codec.read(a)).thenReturn(Optional.of(token)); when(codec.read(copy)).thenReturn(Optional.of(token));
+        when(codec.read(unrelated)).thenReturn(Optional.of(other));
+        assertThrows(FishSalePlanner.DuplicateFish.class, () -> FishSalePlanner.plan(storage, List.of(2), codec));
+        assertThrows(FishSalePlanner.DuplicateFish.class, () -> FishSalePlanner.plan(storage, List.of(2, 34), codec));
+        assertSame(a, storage[2]); assertSame(copy, storage[21]); assertSame(unrelated, storage[34]);
+        // Copies of an unrelated fish do not block an otherwise unique selection.
+        when(codec.read(copy)).thenReturn(Optional.of(other));
+        var plan = FishSalePlanner.plan(storage, List.of(2), codec);
+        assertEquals(123, plan.price()); assertNull(plan.after()[2]); assertSame(copy, plan.after()[21]);
+    }
     @Test void invalidSlotsStacksAndDuplicateIdentityAreRejected() {
         var codec = mock(FishItemCodec.class); var a = item(); var b = item(); var storage = new ItemStack[36];
         storage[0] = a; storage[1] = b; var duplicate = fish(UUID.randomUUID(), 70);

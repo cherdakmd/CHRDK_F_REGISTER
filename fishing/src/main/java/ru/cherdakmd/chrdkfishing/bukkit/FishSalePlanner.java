@@ -28,6 +28,10 @@ public final class FishSalePlanner {
         public List<FishToken.Token> fish() { return fish; }
         public long price() { return price; }
     }
+    /** A second visible copy of a selected identity must not be silently left behind. */
+    public static final class DuplicateFish extends IllegalArgumentException {
+        DuplicateFish() { super("duplicate fish identity in storage"); }
+    }
     private FishSalePlanner() { }
     private static ItemStack[] copy(ItemStack[] source) {
         var copy = new ItemStack[source.length];
@@ -44,10 +48,17 @@ public final class FishSalePlanner {
         for (Integer slot : slots) {
             if (slot == null || slot < 0 || slot >= 36 || !selected.add(slot)) throw new IllegalArgumentException("sale slot");
             var token = codec.read(before[slot]).orElseThrow(() -> new IllegalArgumentException("invalid fish"));
-            if (!identities.add(token.id())) throw new IllegalArgumentException("duplicate fish identity");
+            if (!identities.add(token.id())) throw new DuplicateFish();
             total = Math.addExact(total, token.quotedPrice());
             if (total > MAX_AMOUNT) throw new IllegalArgumentException("sale maximum");
             fish.add(token); after[slot] = null;
+        }
+        // A selected ID must occur exactly once throughout visible storage, not merely in the basket.
+        // This cannot detect a copy in a chest, another player's inventory, or a rolled-back world.
+        for (int slot = 0; slot < before.length; slot++) {
+            if (selected.contains(slot) || before[slot] == null) continue;
+            var other = codec.read(before[slot]);
+            if (other.isPresent() && identities.contains(other.get().id())) throw new DuplicateFish();
         }
         return new Plan(before, after, fish, total);
     }

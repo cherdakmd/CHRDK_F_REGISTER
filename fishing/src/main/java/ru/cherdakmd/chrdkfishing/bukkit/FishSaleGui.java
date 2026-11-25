@@ -148,6 +148,10 @@ final class FishSaleGui implements Listener {
                 if (holder.basket.isEmpty()) { player.sendMessage("§eНажмите на рыбу в своём инвентаре снизу, чтобы добавить её."); return; }
                 FishSalePlanner.Plan quote;
                 try { quote = engine.quote(player, holder.basket.slots()); }
+                catch (FishSalePlanner.DuplicateFish duplicate) {
+                    holder.basket.clear(); render(holder);
+                    player.sendMessage("§cОбнаружены копии одной рыбы в инвентаре. Обратитесь к администрации."); return;
+                }
                 catch (IllegalArgumentException changed) {
                     holder.basket.clear(); render(holder);
                     player.sendMessage("§cИнвентарь изменился. Выберите рыбу заново."); return;

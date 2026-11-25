@@ -102,6 +102,9 @@ final class FishOrdersGui implements Listener {
                 if (!player.isOnline() || player.getOpenInventory().getTopInventory().getHolder() != holder) return;
                 if (slot == 52) back.accept(player); else player.closeInventory();
             });
+        } catch (FishSalePlanner.DuplicateFish duplicate) {
+            holder.quote = null; holder.inventory.setItem(49, null);
+            player.sendMessage("§cОбнаружены копии одной рыбы в инвентаре. Обратитесь к администрации.");
         } catch (IllegalArgumentException | IllegalStateException invalid) {
             holder.quote = null; holder.inventory.setItem(49, null);
             player.sendMessage("§cРыба не подходит или заказ сейчас недоступен.");
