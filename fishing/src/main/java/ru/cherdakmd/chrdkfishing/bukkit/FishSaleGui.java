@@ -1,17 +1,17 @@
 package ru.cherdakmd.chrdkfishing.bukkit;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.List;
 import java.util.UUID;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
@@ -20,8 +20,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import ru.cherdakmd.chrdkfishing.FishCatalog;
 import ru.cherdakmd.chrdkfishing.FishSaleJournal;
+import ru.cherdakmd.chrdkfishing.FishToken;
 
-/** Read-only views of inventory slots; real items never enter the menu. */
+/** Chest-like basket of display icons; real fish stay in storage until journaled confirmation. */
 final class FishSaleGui implements Listener {
     private final Plugin plugin;
     private final FishSaleEngine engine;
@@ -33,11 +34,11 @@ final class FishSaleGui implements Listener {
         this.engine = java.util.Objects.requireNonNull(engine);
         this.codec = java.util.Objects.requireNonNull(codec);
     }
-    private static final class Holder implements InventoryHolder {
+    static final class Holder implements InventoryHolder {
         final UUID owner;
-        final Set<Integer> selected = new LinkedHashSet<>();
+        final FishSaleBasket basket = new FishSaleBasket();
         Inventory inventory;
-        FishSalePlanner.Plan quote;
+        boolean submitting;
         Holder(UUID owner) { this.owner = owner; }
         @Override public Inventory getInventory() { return inventory; }
     }
@@ -49,62 +50,117 @@ final class FishSaleGui implements Listener {
             return;
         }
         Holder holder = new Holder(player.getUniqueId());
-        holder.inventory = Bukkit.createInventory(holder, 54, Component.text("Продажа рыбы"));
-        render(holder, player);
+        holder.inventory = Bukkit.createInventory(holder, 54, Component.text("Сундук продажи рыбы"));
+        render(holder);
         player.openInventory(holder.inventory);
     }
-    private void render(Holder holder, Player player) {
+    private void render(Holder holder) {
         holder.inventory.clear();
-        ItemStack[] storage = player.getInventory().getStorageContents();
-        for (int slot = 0; slot < Math.min(36, storage.length); slot++) {
-            var token = codec.read(storage[slot]);
-            if (token.isEmpty()) continue;
-            var fish = token.get();
-            var item = new ItemStack(holder.selected.contains(slot) ? Material.LIME_STAINED_GLASS_PANE : Material.PAPER);
-            var meta = item.getItemMeta();
-            meta.displayName(Component.text(FishCatalog.byId(fish.fish().speciesId()).name(), NamedTextColor.AQUA));
-            meta.lore(java.util.List.of(Component.text("Ячейка: " + (slot + 1), NamedTextColor.GRAY),
-                    Component.text("Размер: " + sizeName(fish.fish().size()) + ", " + fish.fish().lengthCm() + " см", NamedTextColor.GRAY),
-                    Component.text("Цена: " + amount(fish.quotedPrice()) + " алм.", NamedTextColor.GRAY),
-                    Component.text(holder.selected.contains(slot) ? "Выбрано" : "Нажмите, чтобы выбрать", NamedTextColor.YELLOW)));
-            item.setItemMeta(meta); holder.inventory.setItem(slot, item);
+        var entries = holder.basket.entries();
+        for (int slot = 0; slot < entries.size(); slot++) {
+            var entry = entries.get(slot);
+            holder.inventory.setItem(slot, fishIcon(entry.token()));
         }
-        holder.inventory.setItem(45, icon(Material.BOOK, "Проверить продажу"));
-        if (holder.quote != null) holder.inventory.setItem(49, icon(Material.EMERALD_BLOCK,
-                "Подтвердить: " + amount(holder.quote.price()) + " алм."));
-        if (back != null) holder.inventory.setItem(52, icon(Material.ARROW, "Назад"));
-        holder.inventory.setItem(53, icon(Material.BARRIER, "Закрыть"));
+        holder.inventory.setItem(45, icon(Material.BOOK, "Как продать рыбу", List.of(
+                "Нажмите на рыбу в своём инвентаре снизу.",
+                "Она появится в сундуке; нажмите на неё здесь, чтобы убрать.",
+                "До продажи настоящая рыба остаётся в инвентаре.",
+                "Принимается только рыба CHRDK, не обычная ванильная.")));
+        holder.inventory.setItem(47, icon(Material.HOPPER, "Очистить сундук", List.of("Рыба останется в инвентаре.")));
+        holder.inventory.setItem(49, icon(holder.basket.isEmpty() ? Material.GRAY_DYE : Material.EMERALD_BLOCK,
+                holder.basket.isEmpty() ? "Сундук пуст" : "Продать за " + amount(holder.basket.total()) + " алм.",
+                List.of("Выбрано рыб: " + entries.size(), "Нажмите для продажи и зачисления в банк.")));
+        if (back != null) holder.inventory.setItem(52, icon(Material.ARROW, "Назад", List.of("Вернуться к меню рыбалки.")));
+        holder.inventory.setItem(53, icon(Material.BARRIER, "Закрыть", List.of("Без продажи; рыба останется у вас.")));
     }
-    private static ItemStack icon(Material material, String label) {
+    private static ItemStack fishIcon(FishToken.Token fish) {
+        // Never put a signed/duplicable fish item into a virtual menu.
+        return icon(Material.COD, FishCatalog.byId(fish.fish().speciesId()).name(), List.of(
+                "Размер: " + sizeName(fish.fish().size()) + ", " + fish.fish().lengthCm() + " см",
+                "Цена: " + amount(fish.quotedPrice()) + " алм.",
+                "Нажмите, чтобы убрать из продажи."));
+    }
+    private static ItemStack icon(Material material, String label, List<String> lines) {
         var item = new ItemStack(material); var meta = item.getItemMeta();
-        meta.displayName(Component.text(label, NamedTextColor.YELLOW)); item.setItemMeta(meta); return item;
+        meta.displayName(Component.text(label, NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
+        meta.lore(lines.stream().map(line -> Component.text(line, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)).toList());
+        item.setItemMeta(meta); return item;
     }
     private static String sizeName(ru.cherdakmd.chrdkfishing.FishingModel.Size size) {
         return switch (size) { case SMALL -> "маленькая"; case NORMAL -> "обычная"; case LARGE -> "крупная"; case TROPHY -> "трофейная"; };
     }
     private static String amount(long minor) { return (minor / 100) + "." + String.format(java.util.Locale.ROOT, "%02d", minor % 100); }
+    private static boolean simpleClick(ClickType click) {
+        return click == ClickType.LEFT || click == ClickType.RIGHT || click == ClickType.SHIFT_LEFT || click == ClickType.SHIFT_RIGHT;
+    }
+    private static boolean emptyCursor(ItemStack cursor) { return cursor == null || cursor.getType().isAir(); }
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void click(InventoryClickEvent event) {
         if (!(event.getView().getTopInventory().getHolder() instanceof Holder holder)) return;
+        boolean wasCancelled = event.isCancelled();
+        // Freeze both inventories: shift-click, number keys and double-click must not move real items or menu icons.
         event.setCancelled(true);
-        if (!(event.getWhoClicked() instanceof Player player) || !holder.owner.equals(player.getUniqueId())
-                || !engine.available(player)) return;
-        int slot = event.getRawSlot();
+        if (wasCancelled || !(event.getWhoClicked() instanceof Player player) || !holder.owner.equals(player.getUniqueId())
+                || !engine.available(player) || holder.submitting || !simpleClick(event.getClick())) return;
+        int rawSlot = event.getRawSlot();
+        if (rawSlot == 52 && back != null) {
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (player.isOnline() && player.getOpenInventory().getTopInventory().getHolder() == holder) back.accept(player);
+            });
+            return;
+        }
+        if (rawSlot == 53) {
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (player.isOnline() && player.getOpenInventory().getTopInventory().getHolder() == holder) player.closeInventory();
+            });
+            return;
+        }
+        if (!emptyCursor(event.getCursor())) {
+            player.sendMessage("§eУберите предмет с курсора и нажмите на рыбу в инвентаре снизу.");
+            return;
+        }
         try {
-            if (slot >= 0 && slot < 36) {
-                if (codec.read(player.getInventory().getStorageContents()[slot]).isEmpty()) return;
-                if (!holder.selected.add(slot)) holder.selected.remove(slot);
-                holder.quote = null; render(holder, player);
-            } else if (slot == 45) {
-                if (holder.selected.isEmpty()) { player.sendMessage("§eСначала выберите рыбу."); return; }
-                holder.quote = engine.quote(player, new ArrayList<>(holder.selected));
-                render(holder, player);
-                player.sendMessage("§eПроверьте сумму и нажмите подтверждение. Рыба пока остаётся в инвентаре.");
-            } else if (slot == 49 && holder.quote != null) {
-                var quote = holder.quote; holder.quote = null;
-                // Bukkit forbids opening/closing inventories inside InventoryClickEvent.
+            if (event.getClickedInventory() == event.getView().getBottomInventory()) {
+                int storageSlot = event.getSlot();
+                var storage = player.getInventory().getStorageContents();
+                if (storageSlot < 0 || storageSlot >= 36 || storage.length != 36) return;
+                var fish = codec.read(storage[storageSlot]);
+                if (fish.isEmpty()) {
+                    player.sendMessage("§eДля продажи подходит только пойманная рыба CHRDK."); return;
+                }
+                switch (holder.basket.toggle(storageSlot, fish.get())) {
+                    case DUPLICATE -> player.sendMessage("§cЭта рыба уже добавлена: одинаковые идентификаторы не продаются вместе.");
+                    case TOO_EXPENSIVE -> player.sendMessage("§cПревышен лимит одной продажи. Продайте рыбу частями.");
+                    case FULL -> player.sendMessage("§eСундук заполнен.");
+                    case CHANGED -> player.sendMessage("§eРыба в ячейке изменилась; выберите её заново.");
+                    default -> { }
+                }
+                render(holder);
+            } else if (rawSlot >= 0 && rawSlot < FishSaleBasket.CAPACITY) {
+                holder.basket.removeAt(rawSlot); render(holder);
+            } else if (rawSlot == 47) {
+                holder.basket.clear(); render(holder);
+            } else if (rawSlot == 49) {
+                if (holder.basket.isEmpty()) { player.sendMessage("§eНажмите на рыбу в своём инвентаре снизу, чтобы добавить её."); return; }
+                FishSalePlanner.Plan quote;
+                try { quote = engine.quote(player, holder.basket.slots()); }
+                catch (IllegalArgumentException changed) {
+                    holder.basket.clear(); render(holder);
+                    player.sendMessage("§cИнвентарь изменился. Выберите рыбу заново."); return;
+                }
+                if (!holder.basket.matches(quote)) {
+                    holder.basket.clear(); render(holder);
+                    player.sendMessage("§cРыба или цена изменились. Выберите рыбу заново."); return;
+                }
+                holder.submitting = true;
+                // Bukkit forbids closing inventories inside InventoryClickEvent.
                 Bukkit.getScheduler().runTask(plugin, () -> {
-                    if (!engine.available(player) || player.getOpenInventory().getTopInventory().getHolder() != holder) return;
+                    if (!engine.available(player)) {
+                        holder.submitting = false;
+                        if (player.isOnline()) player.sendMessage("§cПродажа сейчас недоступна. Попробуйте позже.");
+                        return;
+                    }
+                    if (player.getOpenInventory().getTopInventory().getHolder() != holder) return;
                     player.closeInventory();
                     try {
                         var result = engine.confirm(player, quote);
@@ -112,14 +168,6 @@ final class FishSaleGui implements Listener {
                         else if (result == FishSaleJournal.Result.WAIT) player.sendMessage("§eПродажа ожидает восстановления; обратитесь к администрации.");
                         else player.sendMessage("§cПродажа не подтверждена: инвентарь или банковая история изменились.");
                     } catch (Exception error) { report(player, error); }
-                });
-            } else if (slot == 52 && back != null) {
-                Bukkit.getScheduler().runTask(plugin, () -> {
-                    if (player.isOnline() && player.getOpenInventory().getTopInventory().getHolder() == holder) back.accept(player);
-                });
-            } else if (slot == 53) {
-                Bukkit.getScheduler().runTask(plugin, () -> {
-                    if (player.isOnline() && player.getOpenInventory().getTopInventory().getHolder() == holder) player.closeInventory();
                 });
             }
         } catch (Exception error) {

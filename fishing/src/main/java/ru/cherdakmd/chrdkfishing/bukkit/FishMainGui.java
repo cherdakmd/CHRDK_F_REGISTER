@@ -45,7 +45,7 @@ final class FishMainGui implements Listener {
         Holder holder = new Holder(player.getUniqueId());
         holder.inventory = Bukkit.createInventory(holder, 27, Component.text("Рыбалка"));
         holder.inventory.setItem(10, icon(Material.BOOK, "Альбом рыбака", "Коллекция и личные рекорды"));
-        holder.inventory.setItem(12, icon(Material.EMERALD, "Продажа рыбы", "Выберите рыбу и подтвердите продажу"));
+        holder.inventory.setItem(12, icon(Material.CHEST, "Продажа рыбы", "Нажмите на рыбу в инвентаре, затем продайте"));
         holder.inventory.setItem(14, icon(Material.FISHING_ROD, "Улучшение удочки", "Уровень, ресурсы и цена"));
         holder.inventory.setItem(16, icon(Material.CHEST, "Магазин приманок", shop == null ? "Пока недоступен" : "Купить приманку за алмазы"));
         holder.inventory.setItem(18, icon(Material.PAPER, "Выбор приманки", baitEquip == null ? "Пока недоступен" : "Выбрать купленную приманку"));

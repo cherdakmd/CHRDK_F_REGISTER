@@ -26,7 +26,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 .github/scripts/prepare_papi.py
-          ./gradlew --no-daemon -Pplugin_version=2.0.26-rc.3 \
+          ./gradlew --no-daemon -Pplugin_version=2.0.26-rc.4 \
             -Pchrdk.papiJar=build/dependencies/PlaceholderAPI-2.12.3.jar build --continue
       - name: Verify complete numbered module set
         shell: bash
@@ -38,10 +38,10 @@ jobs:
             ! -name '*-sources.jar' ! -name '*-javadoc.jar' ! -name '*-dev.jar' \
             -exec cp -t candidate/plugins '{}' +
           printf 'Закрытая проверка; не стабильный релиз.\n' > candidate/plugins/ОБНОВЛЕНИЕ.txt
-          python3 .github/scripts/verify_release.py candidate/plugins 2.0.26-rc.3
-          cp vk/build/libs/chrdk-vk-2.0.26-rc.3.jar candidate/plugins/
+          python3 .github/scripts/verify_release.py candidate/plugins 2.0.26-rc.4
+          cp vk/build/libs/chrdk-vk-2.0.26-rc.4.jar candidate/plugins/
           python3 .github/scripts/verify_release.py --standalone \
-            candidate/plugins/chrdk-vk-2.0.26-rc.3.jar CHRDK_VK 2.0.26-rc.3
+            candidate/plugins/chrdk-vk-2.0.26-rc.4.jar CHRDK_VK 2.0.26-rc.4
       - name: Build and test experimental Fishing
         shell: bash
         run: |
@@ -50,7 +50,7 @@ jobs:
             echo 'Stable Fishing version was unexpectedly accepted' >&2
             exit 1
           fi
-          ./gradlew -p fishing --no-daemon -PfishingVersion=2.0.26-rc.3 clean test jar
+          ./gradlew -p fishing --no-daemon -PfishingVersion=2.0.26-rc.4 clean test jar
           python3 - <<'PY'
           from pathlib import Path
           from zipfile import ZipFile
@@ -65,7 +65,7 @@ jobs:
               if required - names or any(n.startswith(('org/slf4j/', 'ru/cherdakmd/chrdkskills/')) for n in names):
                   raise SystemExit('Invalid Fishing JAR contents')
               descriptor = jar.read('plugin.yml').decode('utf-8').splitlines()
-              if not {'name: CHRDK_Fishing', 'version: 2.0.26-rc.3', "api-version: '26.3'", 'depend: [CHRDK_Core, CHRDK_Skills]'}.issubset(descriptor):
+              if not {'name: CHRDK_Fishing', 'version: 2.0.26-rc.4', "api-version: '26.3'", 'depend: [CHRDK_Core, CHRDK_Skills]'}.issubset(descriptor):
                   raise SystemExit('Unexpected Fishing descriptor')
           PY
           cp fishing/build/libs/*.jar candidate/plugins/
@@ -82,13 +82,13 @@ jobs:
           root = Path.cwd()
           expected = expected_plugins(root) | {'CHRDK_Fishing', 'CHRDK_VK'}
           plugins = Path('candidate/plugins')
-          verify(plugins, '2.0.26-rc.3', expected)
-          pack(plugins, '2.0.26-rc.3', Path('candidate/chrdk-all-2.0.26-rc.3.zip'), expected)
+          verify(plugins, '2.0.26-rc.4', expected)
+          pack(plugins, '2.0.26-rc.4', Path('candidate/chrdk-all-2.0.26-rc.4.zip'), expected)
           PY
           cp datapacks/mine-treasure-ru/mine-treasure-1.6.5-ru.zip candidate/extras/
           cp custom-items/build/resource-packs/chrdk-custom-items-prototype.zip candidate/extras/
           python3 .github/scripts/pack_grim_configs.py anticheat/grim candidate/extras/chrdk-grim-configs.zip
-          for file in candidate/extras/*.zip candidate/chrdk-all-2.0.26-rc.3.zip; do unzip -t "$file"; done
+          for file in candidate/extras/*.zip candidate/chrdk-all-2.0.26-rc.4.zip; do unzip -t "$file"; done
           (cd candidate/extras && sha1sum chrdk-custom-items-prototype.zip > chrdk-custom-items-prototype.sha1)
       - name: Describe and checksum candidate
         shell: bash
@@ -96,9 +96,10 @@ jobs:
           set -euo pipefail
           cat > candidate/README.txt <<'TEXT'
           КАНДИДАТ ДЛЯ ЗАКРЫТОГО СЕРВЕРА, НЕ СТАБИЛЬНЫЙ РЕЛИЗ.
-          Плагины Core, общие модули и экспериментальная рыбалка: 2.0.26-rc.3.
+          Плагины Core, общие модули и экспериментальная рыбалка: 2.0.26-rc.4.
           Purpur 26.3 / Java 25. Не открывать игрокам до проверки.
           Core, Skills, Fishing и CHRDK_VK собраны из одного коммита и лежат в plugins/.
+          /fish sell: нажмите рыбу в нижнем инвентаре, затем кнопку продажи.
           CHRDK_VK обязателен для аккаунтов с включённой VK-2FA; сохранить его настройки.
           Сторонние LuckPerms, Vault, PlaceholderAPI и GrimAC в комплект не входят.
           Полный список проверок и резервного копирования: fishing/STABLE-RELEASE-GATE.md.
@@ -106,11 +107,11 @@ jobs:
           Не меняйте настройки и файлы данных без согласованной резервной копии.
           TEXT
           cp fishing/STABLE-RELEASE-GATE.md candidate/
-          (cd candidate && find plugins extras -type f -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt && sha256sum chrdk-all-2.0.26-rc.3.zip >> SHA256SUMS.txt && sha256sum -c SHA256SUMS.txt)
+          (cd candidate && find plugins extras -type f -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt && sha256sum chrdk-all-2.0.26-rc.4.zip >> SHA256SUMS.txt && sha256sum -c SHA256SUMS.txt)
       - name: Upload closed-server candidate
         uses: actions/upload-artifact@v4
         with:
-          name: fishing-closed-server-2.0.26-rc.3-${{ github.sha }}
+          name: fishing-closed-server-2.0.26-rc.4-${{ github.sha }}
           path: candidate/
           if-no-files-found: error
           retention-days: 14
