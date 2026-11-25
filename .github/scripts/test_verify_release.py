@@ -63,6 +63,19 @@ class ReleaseValidationTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             verify(self.directory, "1.4.189-SNAPSHOT", {"Core"})
 
+    def test_fishing_candidate_requires_vk_and_fishing_at_the_same_version(self):
+        expected = {"CHRDK_Core", "CHRDK_Skills", "CHRDK_Fishing", "CHRDK_VK"}
+        self.jar("core.jar", "CHRDK_Core", "2.0.26-rc.3")
+        self.jar("skills.jar", "CHRDK_Skills", "2.0.26-rc.3")
+        self.jar("fishing.jar", "CHRDK_Fishing", "2.0.26-rc.3")
+        with self.assertRaisesRegex(ValueError, "CHRDK_VK"):
+            verify(self.directory, "2.0.26-rc.3", expected)
+        self.jar("vk.jar", "CHRDK_VK", "2.0.26-rc.2")
+        with self.assertRaisesRegex(ValueError, "version"):
+            verify(self.directory, "2.0.26-rc.3", expected)
+        self.jar("vk.jar", "CHRDK_VK", "2.0.26-rc.3")
+        self.assertEqual(expected, set(verify(self.directory, "2.0.26-rc.3", expected)))
+
     def test_standalone_jar_validation(self):
         self.jar("chrdk-vk-1.4.268.jar", name="CHRDK_VK", version="1.4.268")
         self.assertEqual(
