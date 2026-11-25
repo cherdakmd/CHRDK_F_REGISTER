@@ -54,7 +54,7 @@ final class FishSaleGui implements Listener {
         render(holder);
         player.openInventory(holder.inventory);
     }
-    private void render(Holder holder) {
+    void render(Holder holder) {
         holder.inventory.clear();
         var entries = holder.basket.entries();
         for (int slot = 0; slot < entries.size(); slot++) {

@@ -13,6 +13,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.Plugin;
 import org.junit.jupiter.api.Test;
+import ru.cherdakmd.chrdkfishing.FishToken;
+import ru.cherdakmd.chrdkfishing.FishingModel;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -61,6 +64,25 @@ class FishSaleGuiTest {
         when(player.getInventory()).thenReturn(bottom); var storage = new ItemStack[36]; storage[0] = mock(ItemStack.class);
         when(bottom.getStorageContents()).thenReturn(storage); when(codec.read(storage[0])).thenReturn(Optional.empty());
         gui.click(emptySlot); verify(emptySlot).setCancelled(true);
+        verify(bottom, never()).setStorageContents(any()); verify(bottom, never()).setItem(anyInt(), any());
+    }
+    @Test void bottomClickAddsAndUpperClickRemovesWithoutMovingActualFish() {
+        var screen = spy(gui); doNothing().when(screen).render(holder);
+        var bottom = mock(PlayerInventory.class); var source = mock(ItemStack.class);
+        var storage = new ItemStack[36]; storage[9] = source;
+        var token = FishToken.issue(new byte[32], UUID.randomUUID(),
+                new FishingModel.Catch("pike", FishingModel.Size.NORMAL, 40), 70);
+        when(player.getInventory()).thenReturn(bottom); when(bottom.getStorageContents()).thenReturn(storage);
+        when(codec.read(source)).thenReturn(Optional.of(token)); when(view.getBottomInventory()).thenReturn(bottom);
+        var add = click(ClickType.SHIFT_LEFT);
+        when(add.getClickedInventory()).thenReturn(bottom); when(add.getSlot()).thenReturn(9); when(add.getRawSlot()).thenReturn(54);
+        screen.click(add);
+        verify(add).setCancelled(true); assertEquals(java.util.List.of(9), holder.basket.slots());
+        assertEquals(70, holder.basket.total()); assertSame(source, storage[9]);
+        var remove = click(ClickType.LEFT);
+        when(remove.getClickedInventory()).thenReturn(top); when(remove.getRawSlot()).thenReturn(0);
+        screen.click(remove);
+        verify(remove).setCancelled(true); assertTrue(holder.basket.isEmpty()); assertSame(source, storage[9]);
         verify(bottom, never()).setStorageContents(any()); verify(bottom, never()).setItem(anyInt(), any());
     }
     @Test void allDragsAreCancelledIncludingBottomAndTop() {
