@@ -28,11 +28,16 @@ class AlbumRewardJournalTest {
             assertThrows(IOException.class, () -> journal.claim(owner, 10, bank));
             assertEquals(150, bank.values.get(owner));
             assertEquals(0, journal.progress(owner).paidStage());
+            assertTrue(journal.hasUnsettled());
         }
         try (var journal = new AlbumRewardJournal(path, lineage, false)) {
             assertEquals(AlbumRewardJournal.Result.DONE, journal.recover(owner, bank));
             assertEquals(2, journal.progress(owner).paidStage());
+            assertFalse(journal.hasUnsettled());
             assertEquals(AlbumRewardJournal.Result.DONE, journal.claim(owner, 10, bank));
+            assertEquals(150, bank.values.get(owner));
+            // An empty/new collection must not replay rewards already issued to this owner.
+            assertEquals(AlbumRewardJournal.Result.DONE, journal.claim(owner, 5, bank));
             assertEquals(150, bank.values.get(owner));
             assertEquals(AlbumRewardJournal.Result.DONE, journal.claim(owner, 30, bank));
             assertEquals(850, bank.values.get(owner));

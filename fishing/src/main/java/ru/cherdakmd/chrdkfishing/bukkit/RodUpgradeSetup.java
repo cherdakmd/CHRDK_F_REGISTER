@@ -18,20 +18,20 @@ import ru.cherdakmd.chrdkfishing.RodUpgradeJournal;
 final class RodUpgradeSetup {
     private RodUpgradeSetup() { }
     static RodUpgradeEngine open(Path folder, ServicesManager services, Class<?> api, ClassLoader coreLoader,
-                               RodItemCodec codec, byte[] key, Predicate<Player> authenticated) throws Exception {
+                               RodItemCodec codec, byte[] key, Predicate<Player> authenticated, FishingGeneration generation) throws Exception {
         Object service = services.load(api);
         Class<?> provider = Class.forName("ru.cherdakmd.chrdkregister.api.IncomeSourceLineageProvider", true, coreLoader);
         if (service == null || !provider.isInstance(service)
                 || !Boolean.TRUE.equals(api.getMethod("personalBankAvailable").invoke(service)))
             throw new IOException("Core bank/lineage service unavailable");
         // Resolve required capabilities before creating any persistent source state.
-        var bank = new CoreRodBank(services, api, coreLoader);
+        var bank = new CoreRodBank(services, api, coreLoader, generation.rodSource());
         Class<?> nativeCodec = Class.forName("ru.cherdakmd.chrdkregister.api.ChargeInventory", true, coreLoader);
         nativeCodec.getMethod("encode", org.bukkit.inventory.ItemStack[].class);
         nativeCodec.getMethod("decode", String.class);
         nativeCodec.getMethod("matches", org.bukkit.inventory.ItemStack[].class, String.class);
         var sourceLineage = provider.getMethod("incomeSourceLineage", String.class);
-        UUID registered = (UUID) sourceLineage.invoke(service, CoreRodBank.SOURCE);
+        UUID registered = (UUID) sourceLineage.invoke(service, generation.rodSource());
         Path identity = folder.resolve("rod-lineage.txt"), database = folder.resolve("fishing-rods.db");
         boolean hasIdentity = Files.exists(identity, LinkOption.NOFOLLOW_LINKS);
         boolean hasDatabase = Files.exists(database, LinkOption.NOFOLLOW_LINKS);
@@ -63,7 +63,7 @@ final class RodUpgradeSetup {
         RodUpgradeJournal journal = new RodUpgradeJournal(database, lineage, key, fresh);
         try {
             if (fresh && !Boolean.TRUE.equals(api.getMethod("registerIncomeSource", String.class, UUID.class)
-                    .invoke(service, CoreRodBank.SOURCE, lineage))) throw new IOException("rod source registration failed");
+                    .invoke(service, generation.rodSource(), lineage))) throw new IOException("rod source registration failed");
             if (bank.cursor(lineage) < 0) throw new IOException("rod bank unavailable");
             return new RodUpgradeEngine(journal, bank, codec, key, authenticated, coreLoader);
         } catch (Exception | LinkageError error) {

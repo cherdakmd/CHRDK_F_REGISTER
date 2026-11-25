@@ -18,7 +18,7 @@ import ru.cherdakmd.chrdkfishing.FishSaleJournal;
 final class FishSaleSetup {
     private FishSaleSetup() { }
     static FishSaleEngine open(Path folder, ServicesManager services, Class<?> api, ClassLoader coreLoader,
-                               FishItemCodec codec, byte[] key, Predicate<Player> authenticated) throws Exception {
+                               FishItemCodec codec, byte[] key, Predicate<Player> authenticated, FishingGeneration generation) throws Exception {
         Object service = services.load(api);
         Class<?> provider = Class.forName("ru.cherdakmd.chrdkregister.api.IncomeSourceLineageProvider", true, coreLoader);
         if (service == null || !provider.isInstance(service)
@@ -33,7 +33,7 @@ final class FishSaleSetup {
         nativeCodec.getMethod("decode", String.class);
         nativeCodec.getMethod("matches", org.bukkit.inventory.ItemStack[].class, String.class);
         var sourceLineage = provider.getMethod("incomeSourceLineage", String.class);
-        UUID registered = (UUID) sourceLineage.invoke(service, CoreSaleBank.SOURCE);
+        UUID registered = (UUID) sourceLineage.invoke(service, generation.saleSource());
         Path identity = folder.resolve("sale-lineage.txt"), database = folder.resolve("fishing-sales.db");
         boolean hasIdentity = Files.exists(identity, LinkOption.NOFOLLOW_LINKS);
         boolean hasDatabase = Files.exists(database, LinkOption.NOFOLLOW_LINKS);
@@ -65,8 +65,8 @@ final class FishSaleSetup {
         FishSaleJournal journal = new FishSaleJournal(database, fresh);
         try {
             if (fresh && !Boolean.TRUE.equals(api.getMethod("registerIncomeSource", String.class, UUID.class)
-                    .invoke(service, CoreSaleBank.SOURCE, lineage))) throw new IOException("sale source registration failed");
-            var bank = new CoreSaleBank(services, api, lineage);
+                    .invoke(service, generation.saleSource(), lineage))) throw new IOException("sale source registration failed");
+            var bank = new CoreSaleBank(services, api, lineage, generation.saleSource());
             if (!journal.historyMatchesAll(bank.allReceipts())) throw new IOException("sale history mismatch or bank unavailable");
             return new FishSaleEngine(journal, bank, codec, key, authenticated, coreLoader);
         } catch (Exception | LinkageError error) {

@@ -14,7 +14,8 @@ public record BankCharge(String source, UUID lineage, long sequence, UUID transa
     public static boolean bankOnlySource(String source) {
         return "claim-teleports".equals(source) || "generator-upgrades".equals(source)
                 || "generator-fuel".equals(source) || "fishing-upgrades".equals(source)
-                || "fishing-bait".equals(source);
+                || "fishing-bait".equals(source) || "fishing-horizons-rod".equals(source)
+                || "fishing-horizons-bait".equals(source);
     }
     public static String permission(String source) {
         if(source==null) return null;
@@ -26,7 +27,7 @@ public record BankCharge(String source, UUID lineage, long sequence, UUID transa
             case "skill-xp" -> "chrdkskills.use";
             case "generator-upgrades" -> "chrdkgenerator.use";
             case "generator-fuel" -> "chrdkgenerator.use";
-            case "fishing-upgrades", "fishing-bait" -> "chrdkfishing.use";
+            case "fishing-upgrades", "fishing-bait", "fishing-horizons-rod", "fishing-horizons-bait" -> "chrdkfishing.use";
             default -> null;
         };
     }

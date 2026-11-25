@@ -18,20 +18,20 @@ import ru.cherdakmd.chrdkfishing.BaitPurchaseJournal;
 final class BaitPurchaseSetup {
     private BaitPurchaseSetup() { }
     static BaitPurchaseEngine open(Path folder, ServicesManager services, Class<?> api, ClassLoader coreLoader,
-                               BaitItemCodec codec, byte[] key, Predicate<Player> authenticated) throws Exception {
+                               BaitItemCodec codec, byte[] key, Predicate<Player> authenticated, FishingGeneration generation) throws Exception {
         Object service = services.load(api);
         Class<?> provider = Class.forName("ru.cherdakmd.chrdkregister.api.IncomeSourceLineageProvider", true, coreLoader);
         if (service == null || !provider.isInstance(service)
                 || !Boolean.TRUE.equals(api.getMethod("personalBankAvailable").invoke(service)))
             throw new IOException("Core bank/lineage service unavailable");
         // Resolve required capabilities before creating any persistent source state.
-        var bank = new CoreRodBank(services, api, coreLoader, "fishing-bait");
+        var bank = new CoreRodBank(services, api, coreLoader, generation.baitSource());
         Class<?> nativeCodec = Class.forName("ru.cherdakmd.chrdkregister.api.ChargeInventory", true, coreLoader);
         nativeCodec.getMethod("encode", org.bukkit.inventory.ItemStack[].class);
         nativeCodec.getMethod("decode", String.class);
         nativeCodec.getMethod("matches", org.bukkit.inventory.ItemStack[].class, String.class);
         var sourceLineage = provider.getMethod("incomeSourceLineage", String.class);
-        UUID registered = (UUID) sourceLineage.invoke(service, "fishing-bait");
+        UUID registered = (UUID) sourceLineage.invoke(service, generation.baitSource());
         Path identity = folder.resolve("bait-lineage.txt"), database = folder.resolve("fishing-bait.db");
         boolean hasIdentity = Files.exists(identity, LinkOption.NOFOLLOW_LINKS);
         boolean hasDatabase = Files.exists(database, LinkOption.NOFOLLOW_LINKS);
@@ -63,7 +63,7 @@ final class BaitPurchaseSetup {
         BaitPurchaseJournal journal = new BaitPurchaseJournal(database, lineage, key, fresh);
         try {
             if (fresh && !Boolean.TRUE.equals(api.getMethod("registerIncomeSource", String.class, UUID.class)
-                    .invoke(service, "fishing-bait", lineage))) throw new IOException("bait source registration failed");
+                    .invoke(service, generation.baitSource(), lineage))) throw new IOException("bait source registration failed");
             if (bank.cursor(lineage) < 0) throw new IOException("bait bank unavailable");
             return new BaitPurchaseEngine(journal, bank, codec, key, authenticated, coreLoader);
         } catch (Exception | LinkageError error) {

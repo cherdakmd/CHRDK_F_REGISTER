@@ -40,6 +40,15 @@ class ChargeInventoryBankOnlyTest {
         assertNull(BankCharge.permission("lottery"), "unknown sources stay blocked");
     }
 
+    @Test void horizonsPaymentSourcesAreBankOnlyAndExplicitlyWhitelisted() {
+        for (String source : new String[]{"fishing-horizons-rod", "fishing-horizons-bait"}) {
+            assertEquals("chrdkfishing.use", BankCharge.permission(source));
+            assertTrue(BankCharge.bankOnlySource(source));
+        }
+        assertNull(BankCharge.permission("fishing-horizons-rogue"));
+        assertFalse(BankCharge.bankOnlySource("fishing-horizons-rogue"));
+    }
+
     @Test void bankOnlyPlansNeverTenderPhysicalDiamonds() {
         // Пустой storage: план обязан работать только со счётом и не изымать предметы.
         ItemStack[] inventory=new ItemStack[36];

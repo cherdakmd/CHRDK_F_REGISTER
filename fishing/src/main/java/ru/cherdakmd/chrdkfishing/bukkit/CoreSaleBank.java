@@ -19,9 +19,12 @@ final class CoreSaleBank implements FishSaleJournal.Bank {
     private final ServicesManager services;
     private final Class<?> api;
     private final UUID lineage;
+    private final String source;
     private final Method available, receipts, allReceipts, credited, credit;
 
-    CoreSaleBank(ServicesManager services, Class<?> api, UUID lineage) throws ReflectiveOperationException {
+    CoreSaleBank(ServicesManager services, Class<?> api, UUID lineage, String source) throws ReflectiveOperationException {
+        if (!java.util.Set.of(SOURCE, "fishing-horizons-sale").contains(source)) throw new IllegalArgumentException("sale source");
+        this.source = source;
         this.services = Objects.requireNonNull(services); this.api = Objects.requireNonNull(api);
         this.lineage = Objects.requireNonNull(lineage);
         available = api.getMethod("incomeSourceAvailable", String.class, UUID.class);
@@ -35,7 +38,7 @@ final class CoreSaleBank implements FishSaleJournal.Bank {
     }
     private Object ready() throws ReflectiveOperationException {
         Object service = services.load(api);
-        if (service == null || !Boolean.TRUE.equals(available.invoke(service, SOURCE, lineage))) return null;
+        if (service == null || !Boolean.TRUE.equals(available.invoke(service, source, lineage))) return null;
         return service;
     }
     private static String id(String key) {
@@ -49,7 +52,7 @@ final class CoreSaleBank implements FishSaleJournal.Bank {
         Objects.requireNonNull(owner);
         Object service = ready();
         if (service == null) return null;
-        Object raw = receipts.invoke(service, SOURCE, lineage, owner);
+        Object raw = receipts.invoke(service, source, lineage, owner);
         if (!(raw instanceof Map<?, ?> map)) return null;
         Map<String, Long> out = new LinkedHashMap<>();
         for (var entry : map.entrySet()) {
@@ -64,7 +67,7 @@ final class CoreSaleBank implements FishSaleJournal.Bank {
     Map<UUID, Map<String, Long>> allReceipts() throws Exception {
         Object service = ready();
         if (service == null) return null;
-        Object raw = allReceipts.invoke(service, SOURCE, lineage);
+        Object raw = allReceipts.invoke(service, source, lineage);
         if (!(raw instanceof Map<?, ?> map)) return null;
         Map<UUID, Map<String, Long>> result = new LinkedHashMap<>();
         for (var entry : map.entrySet()) {
@@ -87,9 +90,9 @@ final class CoreSaleBank implements FishSaleJournal.Bank {
         String id = id(key);
         Object service = ready();
         if (service == null) return false;
-        long prior = (long) credited.invoke(service, SOURCE, lineage, id, owner);
+        long prior = (long) credited.invoke(service, source, lineage, id, owner);
         if (prior == amount) return true;
         if (prior != 0) return false;
-        return Boolean.TRUE.equals(credit.invoke(service, SOURCE, lineage, id, owner, amount));
+        return Boolean.TRUE.equals(credit.invoke(service, source, lineage, id, owner, amount));
     }
 }

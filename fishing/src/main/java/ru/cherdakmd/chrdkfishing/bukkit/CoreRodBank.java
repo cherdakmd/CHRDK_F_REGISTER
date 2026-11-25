@@ -23,7 +23,8 @@ final class CoreRodBank implements RodUpgradeJournal.Bank {
     }
     CoreRodBank(ServicesManager services, Class<?> api, ClassLoader loader, String source) throws ReflectiveOperationException {
         this.services = java.util.Objects.requireNonNull(services); this.api = java.util.Objects.requireNonNull(api);
-        if (!SOURCE.equals(source) && !"fishing-bait".equals(source)) throw new IllegalArgumentException("bank source");
+        if (!java.util.Set.of("fishing-upgrades", "fishing-bait", "fishing-horizons-rod", "fishing-horizons-bait").contains(source))
+            throw new IllegalArgumentException("bank source");
         this.source = source;
         bankCharge = Class.forName("ru.cherdakmd.chrdkregister.api.BankCharge", true, loader);
         constructor = bankCharge.getConstructor(String.class, UUID.class, long.class, UUID.class, UUID.class,

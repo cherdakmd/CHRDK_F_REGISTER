@@ -106,6 +106,11 @@ public final class AlbumRewardJournal implements AutoCloseable {
         }
         return true;
     }
+    /** A clean generation must not adopt unresolved financial reward claims. */
+    public synchronized boolean hasUnsettled() throws SQLException {
+        for (var p : all().values()) if (p.paidStage() != p.targetStage()) return true;
+        return false;
+    }
     /** Caller must obtain unique validated album records for this owner; cannot trust client counts. */
     public synchronized Result claim(UUID owner, int uniqueSpecies, Bank bank) throws Exception {
         if (owner == null || bank == null) throw new IllegalArgumentException("claim");

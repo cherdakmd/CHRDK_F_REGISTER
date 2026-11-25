@@ -27,21 +27,25 @@ public final class FishingPlugin extends JavaPlugin {
             var skills = services.load(ChrdkSkillsApi.class);
             if (!auth.available() || skills == null) throw new IllegalStateException("Core/Skills API unavailable");
             Path folder = getDataFolder().toPath();
-            byte[] key = signingKey(folder);
+            var generation = FishingGeneration.resolve(folder);
+            generation.verifyCore(core.getClass().getClassLoader());
+            boolean resetBootstrapping = generation.bootstrapping(folder);
+            byte[] key = generation.signingKey(folder);
             try {
                 saveDefaultConfig();
                 FishingSettings settings = FishingSettings.load(getConfig());
                 Class.forName("org.sqlite.JDBC", true, getClass().getClassLoader());
                 boolean createAlbum = initialiseAlbumMarker(folder);
                 album = new FishAlbum(folder.resolve("fishing-album.db"), createAlbum, key);
-                albumRewards = AlbumRewardsSetup.open(folder, services, api, core.getClass().getClassLoader(), album, auth::authenticated);
+                albumRewards = AlbumRewardsSetup.open(folder, services, api, core.getClass().getClassLoader(), album, auth::authenticated, resetBootstrapping, generation.horizons);
                 sale = FishSaleSetup.open(folder, services, api, core.getClass().getClassLoader(),
-                        new FishItemCodec(key), key, auth::authenticated);
+                        new FishItemCodec(key), key, auth::authenticated, generation);
                 boolean textures = getConfig().getBoolean("textures.enabled", false);
                 var rodCodec = new RodItemCodec(key, textures);
-                rods = RodUpgradeSetup.open(folder, services, api, core.getClass().getClassLoader(), rodCodec, key, auth::authenticated);
+                rods = RodUpgradeSetup.open(folder, services, api, core.getClass().getClassLoader(), rodCodec, key, auth::authenticated, generation);
                 var baitCodec = new BaitItemCodec(key);
-                bait = BaitPurchaseSetup.open(folder, services, api, core.getClass().getClassLoader(), baitCodec, key, auth::authenticated);
+                bait = BaitPurchaseSetup.open(folder, services, api, core.getClass().getClassLoader(), baitCodec, key, auth::authenticated, generation);
+                generation.markInitialized(folder);
                 var active = FishingActivation.install(this, getServer().getPluginManager(), services,
                         auth::authenticated, auth::available, Bukkit::isPrimaryThread, skills, key, settings.chance(), new Random(),
                         settings.rules(), settings::context, textures);
