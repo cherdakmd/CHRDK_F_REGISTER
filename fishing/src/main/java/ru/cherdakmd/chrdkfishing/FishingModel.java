@@ -128,11 +128,11 @@ public final class FishingModel {
         throw new AssertionError("unreachable");
     }
 
-    /** Prices use half-up rounding to a whole provisional point, never floating point. */
+    /** New catches are priced at ten times the previous rounded amount; old signed quotes remain untouched. */
     public static long price(Catch fish) {
         Species species = validate(fish);
         long numerator = Math.multiplyExact(species.basePrice(), PRICE_NUMERATORS[fish.size().ordinal()]);
-        return Math.addExact(numerator, 2) / 4;
+        return Math.multiplyExact(Math.addExact(numerator, 2) / 4, 10);
     }
 
     public static Species validate(Catch fish) {

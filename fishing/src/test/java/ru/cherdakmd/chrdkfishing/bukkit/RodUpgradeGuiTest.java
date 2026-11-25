@@ -38,6 +38,23 @@ class RodUpgradeGuiTest {
         verify(player).sendMessage(contains("Нить: 0/8"));
         verify(inventory, never()).setStorageContents(any());
     }
+    @Test void refreshesOnlySignedCurrentRodsWithoutChangingOtherSlots() throws Exception {
+        var engine = mock(RodUpgradeEngine.class); var codec = mock(RodItemCodec.class);
+        var gui = new RodUpgradeGui(mock(Plugin.class), engine, codec);
+        var player = mock(Player.class); var inventory = mock(PlayerInventory.class);
+        var good = mock(ItemStack.class); var stale = mock(ItemStack.class); var updated = mock(ItemStack.class);
+        var token = ru.cherdakmd.chrdkfishing.RodToken.issue(new byte[32], UUID.randomUUID(), 2);
+        var oldToken = ru.cherdakmd.chrdkfishing.RodToken.issue(new byte[32], UUID.randomUUID(), 3);
+        ItemStack[] storage = new ItemStack[36]; storage[0] = good; storage[1] = stale;
+        when(player.getInventory()).thenReturn(inventory); when(inventory.getStorageContents()).thenReturn(storage);
+        when(codec.read(good)).thenReturn(Optional.of(token)); when(codec.read(stale)).thenReturn(Optional.of(oldToken));
+        when(codec.read(null)).thenReturn(Optional.empty());
+        when(engine.rodLevel(good)).thenReturn(2); when(engine.rodLevel(stale)).thenReturn(1);
+        when(codec.stamp(good, token)).thenReturn(updated);
+        gui.refreshLegacyLore(player);
+        verify(inventory).setItem(0, updated); verify(inventory, never()).setItem(eq(1), any());
+        verify(codec, never()).stamp(stale, oldToken);
+    }
     @Test void selectedRodAndVisibleButtonAreRequired() throws Exception {
         var engine = mock(RodUpgradeEngine.class); var codec = mock(RodItemCodec.class);
         var gui = new RodUpgradeGui(mock(Plugin.class), engine, codec);

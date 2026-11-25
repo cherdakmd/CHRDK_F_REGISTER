@@ -9,9 +9,9 @@ import static ru.cherdakmd.chrdkfishing.FishingModel.*;
 
 class FishingModelTest {
     @Test void catalogIsCompleteAndEachRarityCanBeSelected() {
-        assertEquals(30, FishCatalog.all().size());
-        assertEquals(5, FishCatalog.all().stream().filter(Species::fictional).count());
-        assertEquals(30, new HashSet<>(FishCatalog.all().stream().map(Species::id).toList()).size());
+        assertEquals(45, FishCatalog.all().size());
+        assertEquals(7, FishCatalog.all().stream().filter(Species::fictional).count());
+        assertEquals(45, new HashSet<>(FishCatalog.all().stream().map(Species::id).toList()).size());
         for (Rarity rarity : Rarity.values()) assertFalse(FishCatalog.byRarity(rarity).isEmpty());
         assertThrows(UnsupportedOperationException.class, () -> FishCatalog.all().clear());
     }
@@ -29,12 +29,22 @@ class FishingModelTest {
     }
 
     @Test void priceIsBasedOnCategoryNotExactLength() {
-        assertEquals(90, price(new Catch("whitefish", Size.SMALL, 15)));
-        assertEquals(120, price(new Catch("whitefish", Size.NORMAL, 25)));
-        assertEquals(180, price(new Catch("whitefish", Size.LARGE, 40)));
-        assertEquals(360, price(new Catch("whitefish", Size.TROPHY, 55)));
-        assertEquals(360, price(new Catch("whitefish", Size.TROPHY, 75)));
-        assertEquals(19, price(new Catch("roach", Size.SMALL, 8))); // 18.75 rounds half up
+        assertEquals(900, price(new Catch("whitefish", Size.SMALL, 15)));
+        assertEquals(1200, price(new Catch("whitefish", Size.NORMAL, 25)));
+        assertEquals(1800, price(new Catch("whitefish", Size.LARGE, 40)));
+        assertEquals(3600, price(new Catch("whitefish", Size.TROPHY, 55)));
+        assertEquals(3600, price(new Catch("whitefish", Size.TROPHY, 75)));
+        assertEquals(190, price(new Catch("roach", Size.SMALL, 8))); // previous 18.75 rounds to 19, then ×10
+    }
+
+    @Test void oldSignedQuotesStayValidWhenPricesChange() {
+        byte[] key = new byte[FishToken.KEY_BYTES];
+        var fish = new Catch("whitefish", Size.NORMAL, 25);
+        var old = FishToken.issue(key, java.util.UUID.randomUUID(), fish, 120);
+        var fresh = FishToken.issue(key, java.util.UUID.randomUUID(), fish, price(fish));
+        assertTrue(FishToken.verify(key, old));
+        assertEquals(120, old.quotedPrice());
+        assertEquals(1200, fresh.quotedPrice());
     }
 
     @Test void seededRollsProduceOnlyValidFishForEveryRodLevel() {

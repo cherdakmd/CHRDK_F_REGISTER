@@ -1,12 +1,17 @@
 package ru.cherdakmd.chrdkfishing.bukkit;
 
 import java.util.Optional;
+import java.util.ArrayList;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import java.util.UUID;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import ru.cherdakmd.chrdkfishing.FishToken;
+import ru.cherdakmd.chrdkfishing.FishingModel;
 import ru.cherdakmd.chrdkfishing.RodToken;
 
 /** Draft rod item format; the upgrade transaction must separately preserve and verify every other item property. */
@@ -14,6 +19,7 @@ public final class RodItemCodec {
     private static final NamespacedKey MARKER = key("rod_kind"), ID = key("rod_id"),
             LEVEL = key("rod_level"), MAC = key("rod_signature");
     private static final String VERSION = "rod-v1";
+    private static final String LORE_TAG = "chrdk_fishing:rod_info_v1";
     private final byte[] secret;
     private static NamespacedKey key(String name) { return new NamespacedKey("chrdk_fishing", name); }
     public RodItemCodec(byte[] secret) {
@@ -41,6 +47,9 @@ public final class RodItemCodec {
             return RodToken.verify(secret, token) ? Optional.of(token) : Optional.empty();
         } catch (IllegalArgumentException invalid) { return Optional.empty(); }
     }
+    private static Component info(String text, NamedTextColor color) {
+        return Component.text(text, color).decoration(TextDecoration.ITALIC, false).insertion(LORE_TAG);
+    }
     /** Never mutate the original item. A separate transaction must authorize the token and its delivery. */
     public ItemStack stamp(ItemStack original, RodToken.Token token) {
         if (original == null || original.getType() != Material.FISHING_ROD || original.getAmount() != 1
@@ -48,6 +57,15 @@ public final class RodItemCodec {
         ItemStack clone = original.clone(); var meta = clone.getItemMeta(); var pdc = meta.getPersistentDataContainer();
         pdc.set(MARKER, PersistentDataType.STRING, VERSION); pdc.set(ID, PersistentDataType.STRING, token.id().toString());
         pdc.set(LEVEL, PersistentDataType.INTEGER, token.level()); pdc.set(MAC, PersistentDataType.STRING, token.mac());
+        // Only remove our own tagged lines. Player names, enchants, durability and other lore survive.
+        var lore = new ArrayList<Component>();
+        if (meta.lore() != null) for (var line : meta.lore())
+            if (!LORE_TAG.equals(line.insertion())) lore.add(line);
+        var rod = FishingModel.rod(token.level());
+        lore.add(info("Рыбалка: уровень " + rod.level() + " · " + rod.name(), NamedTextColor.AQUA));
+        lore.add(info("Опыт навыка: +" + rod.xpBonusPercent() + "% (с учётом лимита)", NamedTextColor.GRAY));
+        lore.add(info("Вес крупной рыбы: +" + rod.largeBonusPoints() + " вместо маленькой", NamedTextColor.GRAY));
+        meta.lore(lore);
         clone.setItemMeta(meta); return clone;
     }
 }

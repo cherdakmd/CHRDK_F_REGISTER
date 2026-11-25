@@ -44,7 +44,22 @@ public final class FishCatalog {
         fish("sturgeon","Осётр",Rarity.VERY_RARE,false,350,30,49,50,79,80,119,120,160),
         fish("northern_crystal","Северный кристальник",Rarity.VERY_RARE,true,320,10,19,20,34,35,49,50,70),
         fish("shadow_burbot","Теневой налим",Rarity.VERY_RARE,true,350,15,24,25,44,45,69,70,100),
-        fish("willow_spirit","Ивовый дух",Rarity.LEGENDARY,true,500,10,19,20,34,35,49,50,70)
+        fish("willow_spirit","Ивовый дух",Rarity.LEGENDARY,true,500,10,19,20,34,35,49,50,70),
+        fish("rudd","Краснопёрка",Rarity.COMMON,false,25,8,14,15,22,23,32,33,45),
+        fish("minnow","Гольян",Rarity.COMMON,false,20,4,6,7,9,10,12,13,16),
+        fish("rotan","Ротан",Rarity.COMMON,false,25,6,9,10,15,16,21,22,30),
+        fish("carp","Карп",Rarity.UNCOMMON,false,75,15,24,25,39,40,59,60,90),
+        fish("chub","Голавль",Rarity.UNCOMMON,false,65,12,19,20,34,35,49,50,70),
+        fish("sichel","Чехонь",Rarity.UNCOMMON,false,60,10,16,17,25,26,34,35,50),
+        fish("asp","Жерех",Rarity.RARE,false,140,18,29,30,44,45,64,65,90),
+        fish("eel","Угорь",Rarity.RARE,false,150,20,34,35,54,55,79,80,120),
+        fish("sterlet","Стерлядь",Rarity.RARE,false,150,20,29,30,44,45,64,65,90),
+        fish("arctic_cisco","Омуль",Rarity.RARE,false,150,15,24,25,39,40,54,55,75),
+        fish("taimen","Таймень",Rarity.VERY_RARE,false,370,30,49,50,79,80,119,120,180),
+        fish("nelma","Нельма",Rarity.VERY_RARE,false,360,25,39,40,59,60,89,90,130),
+        fish("arctic_whitefish","Муксун",Rarity.VERY_RARE,false,300,18,29,30,44,45,64,65,90),
+        fish("golden_tench","Золотой линь",Rarity.LEGENDARY,true,520,10,17,18,29,30,44,45,60),
+        fish("aurora_salmon","Северное сияние",Rarity.LEGENDARY,true,550,25,39,40,59,60,84,85,120)
     );
     private static final Map<String, Species> BY_ID = FISH.stream().collect(Collectors.toUnmodifiableMap(Species::id, Function.identity()));
     private FishCatalog() { }

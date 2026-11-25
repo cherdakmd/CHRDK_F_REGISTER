@@ -66,6 +66,11 @@ public final class FishingPlugin extends JavaPlugin {
                 gui.setRewards(albumRewards);
                 saleGui.setBack(mainGui::open);
                 rodGui.setBack(mainGui::open);
+                rodGui.setRefreshGuard(player -> {
+                    var equipped = bait.equipped(player);
+                    return !sale.hasPending(player) && bait.pendingOwner() == null
+                            && (equipped == null || !"PREPARED".equals(equipped.phase()));
+                });
                 cookingGui.setBack(mainGui::open);
                 var baitShop = new BaitShopGui(this, bait, mainGui::open);
                 var baitEquip = new BaitEquipGui(this, bait, baitCodec, mainGui::open);
