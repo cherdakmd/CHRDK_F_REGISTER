@@ -105,11 +105,11 @@ jobs:
           Общая проверка вики ещё не пройдена.
           CHRDK_VK обязателен для аккаунтов с включённой VK-2FA; сохранить его настройки.
           Сторонние LuckPerms, Vault, PlaceholderAPI и GrimAC в комплект не входят.
-          Полный список проверок и резервного копирования: fishing/STABLE-RELEASE-GATE.md.
+          Читайте CLOSED-SERVER-CHECKLIST.md и STABLE-RELEASE-GATE.md в корне комплекта.
           Дополнительно в extras/: Mine Treasure, ресурс-пак CustomItems и конфиги Grim.
           Не меняйте настройки и файлы данных без согласованной резервной копии.
           TEXT
-          cp fishing/STABLE-RELEASE-GATE.md candidate/
+          cp fishing/STABLE-RELEASE-GATE.md fishing/CLOSED-SERVER-CHECKLIST.md candidate/
           (cd candidate && find plugins extras -type f -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt && sha256sum chrdk-all-2.0.26-rc.6.zip >> SHA256SUMS.txt && sha256sum -c SHA256SUMS.txt)
       - name: Upload closed-server candidate
         uses: actions/upload-artifact@v4
