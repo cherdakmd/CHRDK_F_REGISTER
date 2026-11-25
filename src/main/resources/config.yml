@@ -1531,7 +1531,6 @@ auto-messages:
     - {"text": "<gray>Сделайте ник своим: <white>/labels</white> управляет метками и их местами. Ник всегда первый; премиальные цвета покупаются отдельно, в том числе при V ранге.</gray>", "permission": "chrdkregister.labels"}
     - {"text": "<gray>Награда за игру — не платный ранг: отдельный XP-буст усиливает опыт Minecraft и навыков. Запас смотрите в <white>/profile</white>; время расходуется онлайн после входа. Платный ранг не продлевается.</gray>", "permission": "chrdkregister.profile"}
     - {"text": "<gray>Каждое дело оставляет опыт: <white>/skills</white> показывает навыки CHRDK. Читайте требования и откаты в карточках; повторная установка блока не гарантирует новый XP.</gray>", "plugin": "CHRDK_Skills", "permission": "chrdkskills.use"}
-    - {"text": "<gray>Рыбалка: <white>/fish</white> открывает альбом, продажу, готовку, заказы и приманки. В <white>/fish rod</white> наведите на удочку, чтобы заранее увидеть цену и материалы; оплата после подтверждения с /bal.</gray>", "plugin": "CHRDK_Fishing", "permission": "chrdkfishing.use"}
     - {"text": "<gray>Нужна цель для путешествия? <white>/quests menu</white> — задания и фракции. Условия: <white>/quests info id</white>, сдача: <white>/quests claim id</white>. Награды — опыт, предметы и репутация, не алмазы.</gray>", "plugin": "CHRDK_Quests", "permission": "chrdkquests.use"}
     - {"text": "<gray>Сезон — это путь, а не гонка за один вечер. Задания: <white>/battlepass menu</white>, прогресс: <white>/battlepass progress</white>. Перед получением проверьте условия дорожки наград.</gray>", "plugin": "CHRDK_BattlePass", "permission": "chrdkbp.use"}
     - {"text": "<gray>Собирайте историю своих достижений: <white>/achievements menu</white>. Чтобы заслуженный бейдж появился у ника, включите и разместите его через <white>/labels</white>.</gray>", "plugin": "CHRDK_Achievements", "permission": "chrdkachievements.use"}
@@ -1553,6 +1552,7 @@ auto-messages:
     - {"text": "<gray>Читы на CHERDAK ловит античит: движение, бой, пакеты и чат под наблюдением. Срабатывания попадают в журнал доказательств, запрет выносит человек — исключений ни у кого.</gray>", "plugin": "CHRDK_Anticheat", "permission": "chrdkanticheat.use"}
     - {"text": "<gray>На CHERDAK работает <white>Plasmo Voice</white>: голосовой чат с учётом расстояния между игроками. Нужен клиентский мод Plasmo Voice и настроенный микрофон; текстовые каналы и правила общения остаются прежними.</gray>"}
     - {"text": "<gray>Чем дальше от спавна мира, тем опаснее мобы: подпись «Т3 · Зомби» — это тир врага, а убийство сильных приносит деньги на счёт. Границы тиров и награды: <white>/mobtiers</white>.</gray>", "plugin": "CHRDK_Mobs", "permission": "chrdkmobs.use"}
+    - {"text": "<gray>Рыбалка: <white>/fish</white> открывает альбом, продажу, готовку, заказы и приманки. В <white>/fish rod</white> наведите на удочку, чтобы заранее увидеть цену и материалы; оплата после подтверждения с /bal.</gray>", "plugin": "CHRDK_Fishing", "permission": "chrdkfishing.use"}
 
 # ================================================================
 # Админ-панель аудита игроков (/adminpanel). Варны и зеркало банов лежат в
