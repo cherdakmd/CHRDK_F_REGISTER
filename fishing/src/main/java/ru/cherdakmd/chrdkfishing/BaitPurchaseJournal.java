@@ -205,7 +205,9 @@ public final class BaitPurchaseJournal implements AutoCloseable {
             return s.executeUpdate() == 1 ? RodUpgradeJournal.Result.DONE : RodUpgradeJournal.Result.CONFLICT;
         }
     }
-    public synchronized RodUpgradeJournal.Result recover(RodUpgradeJournal.Bank bank, RodUpgradeJournal.Inventory inventory) throws Exception {
+    /** Only an immediately confirmed, newly prepared purchase may initiate a debit. */
+    public synchronized RodUpgradeJournal.Result recover(RodUpgradeJournal.Bank bank, RodUpgradeJournal.Inventory inventory,
+                                                          boolean allowNewCharge) throws Exception {
         Objects.requireNonNull(bank); Objects.requireNonNull(inventory);
         Pending p = pending(); long local = cursor(), remote = bank.cursor(lineage);
         if (remote < 0) return RodUpgradeJournal.Result.WAIT;
@@ -216,6 +218,7 @@ public final class BaitPurchaseJournal implements AutoCloseable {
         if (status == RodUpgradeJournal.Status.CONFLICT || (status == RodUpgradeJournal.Status.COMMITTED && remote != local + 1)
                 || (status == RodUpgradeJournal.Status.MISSING && remote != local)) return RodUpgradeJournal.Result.CONFLICT;
         if (p.phase().equals("PREPARED") && status == RodUpgradeJournal.Status.MISSING) {
+            if (!allowNewCharge) return RodUpgradeJournal.Result.WAIT;
             bank.charge(p.charge()); status = bank.status(p.charge()); remote = bank.cursor(lineage);
             if (status == null || status == RodUpgradeJournal.Status.UNAVAILABLE || status == RodUpgradeJournal.Status.MISSING) return RodUpgradeJournal.Result.WAIT;
             if (status != RodUpgradeJournal.Status.COMMITTED || remote != local + 1) return RodUpgradeJournal.Result.CONFLICT;

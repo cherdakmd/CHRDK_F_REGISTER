@@ -72,7 +72,7 @@ final class BaitShopGui implements Listener {
                 try {
                     var result = engine.confirm(player, quote);
                     if (result == RodUpgradeJournal.Result.DONE) player.sendMessage("§aПриманка куплена.");
-                    else if (result == RodUpgradeJournal.Result.WAIT) player.sendMessage("§eПокупка ожидает восстановления; обратитесь к администрации.");
+                    else if (result == RodUpgradeJournal.Result.WAIT) player.sendMessage("§eПокупка не завершена; проверьте состояние и обратитесь к администрации.");
                     else player.sendMessage("§cПокупка не подтверждена: инвентарь или банк изменились.");
                 } catch (Exception error) { report(player, error); }
             });

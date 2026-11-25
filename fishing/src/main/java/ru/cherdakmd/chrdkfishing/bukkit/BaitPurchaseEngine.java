@@ -57,7 +57,10 @@ final class BaitPurchaseEngine implements AutoCloseable {
         if (!(boolean) matches.invoke(null, player.getInventory().getStorageContents(), before)) return RodUpgradeJournal.Result.CONFLICT;
         var result = journal.prepare(player.getUniqueId(), UUID.randomUUID(), plan.token(), before, after, bank);
         if (result != RodUpgradeJournal.Result.WAIT) return result;
-        return recover(player);
+        // WAIT can also mean the bank was unavailable before an intent was stored.
+        // Do not report success or authorize a charge without a prepared intent.
+        if (!player.getUniqueId().equals(pendingOwner())) return RodUpgradeJournal.Result.WAIT;
+        return recover(player, true);
     }
     BaitPurchaseJournal.Equipped equipped(Player player) throws Exception {
         return player == null ? null : journal.equipped(player.getUniqueId());
@@ -93,10 +96,13 @@ final class BaitPurchaseEngine implements AutoCloseable {
         return journal.finishAttempt(owner, attempt, success);
     }
     RodUpgradeJournal.Result recover(Player player) throws Exception {
+        return recover(player, false);
+    }
+    private RodUpgradeJournal.Result recover(Player player, boolean allowNewCharge) throws Exception {
         if (!available(player)) return RodUpgradeJournal.Result.WAIT;
         UUID owner = pendingOwner();
         if (owner != null && !owner.equals(player.getUniqueId())) return RodUpgradeJournal.Result.WAIT;
-        return journal.recover(bank, inventory(player, WITNESS));
+        return journal.recover(bank, inventory(player, WITNESS), allowNewCharge);
     }
     private RodUpgradeJournal.Inventory inventory(Player player, NamespacedKey witness) {
         return (expected, id, before, after) -> {
