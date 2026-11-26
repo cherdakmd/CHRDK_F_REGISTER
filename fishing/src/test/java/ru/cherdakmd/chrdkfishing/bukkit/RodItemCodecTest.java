@@ -39,6 +39,24 @@ class RodItemCodecTest {
         assertTrue(plain.serialize(lines.get(3)).contains("+3"));
         verify(copy).setItemMeta(meta);
     }
+    @Test void upgradesApplyEachLevelModelOnlyToTheClonedResult() {
+        byte[] secret = new byte[32];
+        for (int level = 2; level <= 10; level++) for (boolean enabled : new boolean[]{false, true}) {
+            var original = mock(ItemStack.class); var copy = mock(ItemStack.class);
+            var meta = mock(ItemMeta.class); var pdc = mock(PersistentDataContainer.class);
+            when(original.getType()).thenReturn(Material.FISHING_ROD); when(original.getAmount()).thenReturn(1);
+            when(original.clone()).thenReturn(copy); when(copy.getItemMeta()).thenReturn(meta);
+            when(meta.getPersistentDataContainer()).thenReturn(pdc);
+            if (level > 2) when(meta.getItemModel()).thenReturn(FishingVisuals.rod(level - 1));
+            var token = RodToken.issue(secret, UUID.randomUUID(), level);
+            assertSame(copy, new RodItemCodec(secret, enabled).stamp(original, token));
+            if (enabled) verify(meta).setItemModel(FishingVisuals.rod(level));
+            else verify(meta, never()).setItemModel(any());
+            verify(original, never()).setItemMeta(any()); verify(copy).setItemMeta(meta);
+            verify(pdc).set(key("rod_level"), PersistentDataType.INTEGER, level);
+            verify(pdc).set(key("rod_signature"), PersistentDataType.STRING, token.mac());
+        }
+    }
     @Test void signedRodCannotBeRetieredOrPassedOffAsVanilla() {
         byte[] secret = new byte[32]; var token = RodToken.issue(secret, UUID.randomUUID(), 4);
         var item = mock(ItemStack.class); var meta = mock(ItemMeta.class); var pdc = mock(PersistentDataContainer.class);

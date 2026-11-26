@@ -39,7 +39,7 @@ public final class FishingPlugin extends JavaPlugin {
                 album = new FishAlbum(folder.resolve("fishing-album.db"), createAlbum, key);
                 albumRewards = AlbumRewardsSetup.open(folder, services, api, core.getClass().getClassLoader(), album, auth::authenticated, resetBootstrapping, generation.horizons);
                 sale = FishSaleSetup.open(folder, services, api, core.getClass().getClassLoader(),
-                        new FishItemCodec(key), key, auth::authenticated, generation);
+                        new FishItemCodec(key), key, auth::authenticated, generation, getConfig().getBoolean("textures.dish-items", false));
                 boolean textures = getConfig().getBoolean("textures.enabled", false);
                 var rodCodec = new RodItemCodec(key, textures);
                 rods = RodUpgradeSetup.open(folder, services, api, core.getClass().getClassLoader(), rodCodec, key, auth::authenticated, generation);
@@ -71,11 +71,6 @@ public final class FishingPlugin extends JavaPlugin {
                 gui.setRewards(albumRewards);
                 saleGui.setBack(mainGui::open);
                 rodGui.setBack(mainGui::open);
-                rodGui.setRefreshGuard(player -> {
-                    var equipped = bait.equipped(player);
-                    return !sale.hasPending(player) && bait.pendingOwner() == null
-                            && (equipped == null || !"PREPARED".equals(equipped.phase()));
-                });
                 cookingGui.setBack(mainGui::open);
                 var baitShop = new BaitShopGui(this, bait, mainGui::open);
                 var baitEquip = new BaitEquipGui(this, bait, baitCodec, mainGui::open);

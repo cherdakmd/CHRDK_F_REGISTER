@@ -29,9 +29,6 @@ final class RodUpgradeGui implements Listener {
     private final RodUpgradeEngine engine;
     private final RodItemCodec codec;
     private java.util.function.Consumer<Player> back;
-    @FunctionalInterface interface RefreshGuard { boolean safe(Player player) throws Exception; }
-    private RefreshGuard refreshGuard = player -> false;
-    void setRefreshGuard(RefreshGuard guard) { refreshGuard = java.util.Objects.requireNonNull(guard); }
     void setBack(java.util.function.Consumer<Player> back) { this.back = java.util.Objects.requireNonNull(back); }
     RodUpgradeGui(Plugin plugin, RodUpgradeEngine engine, RodItemCodec codec) {
         this.plugin = java.util.Objects.requireNonNull(plugin);
@@ -54,21 +51,9 @@ final class RodUpgradeGui implements Listener {
         if (owner != null && (!owner.equals(player.getUniqueId()) || engine.recover(player) != RodUpgradeJournal.Result.DONE)) {
             player.sendMessage("§cОжидается восстановление предыдущего улучшения. Обратитесь к администрации."); return;
         }
-        // Legacy signed rods predate the visible lore. Refresh only after all known
-        // inventory-changing Fishing operations have finished and the ledger verifies them.
-        if (refreshGuard.safe(player)) refreshLegacyLore(player);
         Holder holder = new Holder(player.getUniqueId());
         holder.inventory = Bukkit.createInventory(holder, 27, Component.text("Улучшение удочки"));
         render(holder, player); player.openInventory(holder.inventory);
-    }
-    void refreshLegacyLore(Player player) throws Exception {
-        var inventory = player.getInventory(); var storage = inventory.getStorageContents();
-        for (int slot = 0; slot < Math.min(storage.length, 36); slot++) {
-            ItemStack item = storage[slot]; var token = codec.read(item).orElse(null);
-            if (token == null || token.level() < 2 || engine.rodLevel(item) != token.level()) continue;
-            ItemStack updated = codec.stamp(item, token);
-            if (!updated.equals(item)) inventory.setItem(slot, updated);
-        }
     }
     void render(Holder holder, Player player) {
         holder.inventory.clear();

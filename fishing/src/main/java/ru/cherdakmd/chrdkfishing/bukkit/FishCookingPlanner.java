@@ -45,6 +45,9 @@ public final class FishCookingPlanner {
         return plan(storage, slot, codec, Recipe.FRIED);
     }
     public static Plan plan(ItemStack[] storage, int slot, FishItemCodec codec, Recipe recipe) {
+        return plan(storage, slot, codec, recipe, false);
+    }
+    public static Plan plan(ItemStack[] storage, int slot, FishItemCodec codec, Recipe recipe, boolean dishTextures) {
         Objects.requireNonNull(codec, "codec"); Objects.requireNonNull(recipe, "recipe");
         if (storage == null || storage.length != 36 || slot < 0 || slot >= 36)
             throw new IllegalArgumentException("cooking input");
@@ -69,6 +72,7 @@ public final class FishCookingPlanner {
         }
         var dish = new ItemStack(recipe.material(), 1);
         var meta = dish.getItemMeta();
+        FishingVisuals.applyNewDish(meta, recipe, dishTextures);
         meta.displayName(net.kyori.adventure.text.Component.text(recipe.title(), net.kyori.adventure.text.format.NamedTextColor.GOLD)
                 .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false));
         dish.setItemMeta(meta); after[slot] = dish;

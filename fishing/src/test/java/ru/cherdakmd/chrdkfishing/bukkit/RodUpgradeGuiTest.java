@@ -138,22 +138,21 @@ class RodUpgradeGuiTest {
         assertThrows(RodUpgradeEngine.BalanceUnavailable.class, () -> RodUpgradeEngine.requireBalance(-1, 100));
     }
 
-    @Test void refreshesOnlySignedCurrentRodsWithoutChangingOtherSlots() throws Exception {
+    @Test void openingMenuNeverRewritesExistingRods() throws Exception {
         var engine = mock(RodUpgradeEngine.class); var codec = mock(RodItemCodec.class);
-        var gui = new RodUpgradeGui(mock(Plugin.class), engine, codec);
+        var gui = spy(new RodUpgradeGui(mock(Plugin.class), engine, codec));
         var player = mock(Player.class); var inventory = mock(PlayerInventory.class);
-        var good = mock(ItemStack.class); var stale = mock(ItemStack.class); var updated = mock(ItemStack.class);
-        var token = ru.cherdakmd.chrdkfishing.RodToken.issue(new byte[32], UUID.randomUUID(), 2);
-        var oldToken = ru.cherdakmd.chrdkfishing.RodToken.issue(new byte[32], UUID.randomUUID(), 3);
-        ItemStack[] storage = new ItemStack[36]; storage[0] = good; storage[1] = stale;
-        when(player.getInventory()).thenReturn(inventory); when(inventory.getStorageContents()).thenReturn(storage);
-        when(codec.read(good)).thenReturn(Optional.of(token)); when(codec.read(stale)).thenReturn(Optional.of(oldToken));
-        when(codec.read(null)).thenReturn(Optional.empty());
-        when(engine.rodLevel(good)).thenReturn(2); when(engine.rodLevel(stale)).thenReturn(1);
-        when(codec.stamp(good, token)).thenReturn(updated);
-        gui.refreshLegacyLore(player);
-        verify(inventory).setItem(0, updated); verify(inventory, never()).setItem(eq(1), any());
-        verify(codec, never()).stamp(stale, oldToken);
+        when(player.getInventory()).thenReturn(inventory); when(player.getUniqueId()).thenReturn(UUID.randomUUID());
+        when(engine.available(player)).thenReturn(true);
+        doNothing().when(gui).render(any(), eq(player));
+        try (var bukkit = mockStatic(org.bukkit.Bukkit.class)) {
+            var window = mock(Inventory.class);
+            bukkit.when(() -> org.bukkit.Bukkit.createInventory(any(org.bukkit.inventory.InventoryHolder.class), eq(27), any(net.kyori.adventure.text.Component.class))).thenReturn(window);
+            gui.open(player);
+        }
+        verify(inventory, never()).setItem(anyInt(), any());
+        verify(inventory, never()).setStorageContents(any());
+        verify(codec, never()).stamp(any(), any());
     }
     @Test void selectedRodAndVisibleButtonAreRequired() throws Exception {
         var engine = mock(RodUpgradeEngine.class); var codec = mock(RodItemCodec.class);

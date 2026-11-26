@@ -18,7 +18,7 @@ import ru.cherdakmd.chrdkfishing.FishSaleJournal;
 final class FishSaleSetup {
     private FishSaleSetup() { }
     static FishSaleEngine open(Path folder, ServicesManager services, Class<?> api, ClassLoader coreLoader,
-                               FishItemCodec codec, byte[] key, Predicate<Player> authenticated, FishingGeneration generation) throws Exception {
+                               FishItemCodec codec, byte[] key, Predicate<Player> authenticated, FishingGeneration generation, boolean dishTextures) throws Exception {
         Object service = services.load(api);
         Class<?> provider = Class.forName("ru.cherdakmd.chrdkregister.api.IncomeSourceLineageProvider", true, coreLoader);
         if (service == null || !provider.isInstance(service)
@@ -68,7 +68,7 @@ final class FishSaleSetup {
                     .invoke(service, generation.saleSource(), lineage))) throw new IOException("sale source registration failed");
             var bank = new CoreSaleBank(services, api, lineage, generation.saleSource());
             if (!journal.historyMatchesAll(bank.allReceipts())) throw new IOException("sale history mismatch or bank unavailable");
-            return new FishSaleEngine(journal, bank, codec, key, authenticated, coreLoader);
+            return new FishSaleEngine(journal, bank, codec, key, authenticated, coreLoader, dishTextures);
         } catch (Exception | LinkageError error) {
             journal.close();
             throw error;

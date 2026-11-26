@@ -24,14 +24,15 @@ final class FishSaleEngine implements AutoCloseable {
     private final CoreSaleBank bank;
     private final FishItemCodec codec;
     private final byte[] key;
+    private final boolean dishTextures;
     private final Predicate<Player> authenticated;
     private final Method encode, decode, matches;
 
     FishSaleEngine(FishSaleJournal journal, CoreSaleBank bank, FishItemCodec codec,
-                   byte[] key, Predicate<Player> authenticated, ClassLoader coreLoader) throws ReflectiveOperationException {
+                   byte[] key, Predicate<Player> authenticated, ClassLoader coreLoader, boolean dishTextures) throws ReflectiveOperationException {
         this.journal = Objects.requireNonNull(journal); this.bank = Objects.requireNonNull(bank);
         this.codec = Objects.requireNonNull(codec); this.authenticated = Objects.requireNonNull(authenticated);
-        this.key = Objects.requireNonNull(key).clone();
+        this.key = Objects.requireNonNull(key).clone(); this.dishTextures = dishTextures;
         Class<?> nativeCodec = Class.forName("ru.cherdakmd.chrdkregister.api.ChargeInventory", true, coreLoader);
         encode = nativeCodec.getMethod("encode", ItemStack[].class);
         decode = nativeCodec.getMethod("decode", String.class);
@@ -85,7 +86,7 @@ final class FishSaleEngine implements AutoCloseable {
     }
     FishCookingPlanner.Plan quoteCook(Player player, int slot, FishCookingPlanner.Recipe recipe) throws Exception {
         if (!available(player) || hasPending(player)) throw new IllegalStateException("cooking unavailable");
-        return FishCookingPlanner.plan(player.getInventory().getStorageContents(), slot, codec, recipe);
+        return FishCookingPlanner.plan(player.getInventory().getStorageContents(), slot, codec, recipe, dishTextures);
     }
     FishSaleJournal.Result confirmCook(Player player, FishCookingPlanner.Plan plan) throws Exception {
         if (!available(player)) return FishSaleJournal.Result.WAIT;

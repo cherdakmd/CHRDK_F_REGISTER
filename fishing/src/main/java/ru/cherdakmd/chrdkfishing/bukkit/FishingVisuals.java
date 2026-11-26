@@ -19,6 +19,13 @@ final class FishingVisuals {
         if (enabled && meta != null && meta.getItemModel() == null && !meta.hasCustomModelData())
             meta.setItemModel(bait(kind));
     }
+    static NamespacedKey dish(FishCookingPlanner.Recipe recipe) {
+        return new NamespacedKey("chrdk_fishing", "dish/" + java.util.Objects.requireNonNull(recipe).name().toLowerCase(java.util.Locale.ROOT));
+    }
+    static void applyNewDish(ItemMeta meta, FishCookingPlanner.Recipe recipe, boolean enabled) {
+        if (enabled && meta != null && meta.getItemModel() == null && !meta.hasCustomModelData())
+            meta.setItemModel(dish(recipe));
+    }
     static NamespacedKey rod(int level) {
         if (level < 2 || level > 10) throw new IllegalArgumentException("rod model level");
         return new NamespacedKey("chrdk_fishing", "rod/level_" + level);

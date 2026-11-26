@@ -144,12 +144,31 @@ class FishingResourcePackTest(unittest.TestCase):
         for kind in ('items', 'models/item', 'textures/item'):
             self.assertEqual(ids, {p.stem for p in (ASSETS / kind / 'menu/cooking').iterdir()})
 
+    def test_new_dish_item_models_cover_every_recipe(self):
+        source = (PACK.parent / 'src/main/java/ru/cherdakmd/chrdkfishing/bukkit/FishCookingPlanner.java').read_text(encoding='utf-8')
+        recipes = re.findall(r'^\s*(FRIED|SMOKED|SOUP)\(', source, re.MULTILINE)
+        ids = {x.lower() for x in recipes}
+        self.assertEqual({'fried', 'smoked', 'soup'}, ids); self.assertEqual(3, len(recipes))
+        images = set()
+        for dish in ids:
+            name = 'dish/' + dish
+            self.model(name, 'minecraft:item/generated')
+            self.assertEqual({'type': 'minecraft:model', 'model': 'chrdk_fishing:item/' + name}, self.read('items/' + name + '.json')['model'])
+            digest = hashlib.sha256((ASSETS / 'textures/item' / (name + '.png')).read_bytes()).hexdigest()
+            self.assertNotIn(digest, images); images.add(digest)
+        for folder in ('items', 'models/item', 'textures/item'):
+            self.assertEqual(ids, {p.stem for p in (ASSETS / folder / 'dish').iterdir()})
+
     def test_rods_cover_all_upgrade_levels_and_cast_state(self):
+        images = set()
         for level in range(2, 11):
             with self.subTest(level=level):
                 name = f'rod/level_{level}'
                 self.model(name, 'minecraft:item/handheld_rod')
                 self.model(name + '_cast', 'minecraft:item/handheld_rod')
+                for variant in (name, name + '_cast'):
+                    digest = hashlib.sha256((ASSETS / 'textures/item' / (variant + '.png')).read_bytes()).hexdigest()
+                    self.assertNotIn(digest, images); images.add(digest)
                 item = self.read('items/' + name + '.json')['model']
                 self.assertEqual('minecraft:condition', item['type'])
                 self.assertEqual('minecraft:fishing_rod/cast', item['property'])

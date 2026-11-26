@@ -46,7 +46,6 @@ public final class EnchantsPlugin extends JavaPlugin {
     EnchantWorkshop workshop() { return workshop; }
     AnvilApplyListener anvil() { return anvil; }
     private EnchantLibraryListener library;
-    private BookVisualListener bookVisuals;
     EnchantLibraryListener library() { return library; }
     private EnchantCommandHandler commandHandler;
     private AuraService auras;
@@ -85,9 +84,7 @@ public final class EnchantsPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(table, this);
         this.library = new EnchantLibraryListener(this);
         Bukkit.getPluginManager().registerEvents(library, this);
-        this.bookVisuals = new BookVisualListener(this);
-        Bukkit.getPluginManager().registerEvents(bookVisuals, this);
-        for (var player : Bukkit.getOnlinePlayers()) { library.queue(player); bookVisuals.queue(player); }
+        for (var player : Bukkit.getOnlinePlayers()) library.queue(player);
         this.pve = new PveEffectsListener(this);
         Bukkit.getPluginManager().registerEvents(pve, this);
         Bukkit.getPluginManager().registerEvents(new AnchorListener(this), this);
@@ -148,7 +145,6 @@ public final class EnchantsPlugin extends JavaPlugin {
         if (bookWorkshop != null) bookWorkshop.closeAll();
         if (scribe != null) scribe.closeAll();
         if (library != null) library.clear();
-        if (bookVisuals != null) bookVisuals.clear();
         if (tools != null) tools.clear();
         if (miningUtility != null) miningUtility.clear();
         if (gui != null) gui.stop();
@@ -202,7 +198,6 @@ public final class EnchantsPlugin extends JavaPlugin {
                 () -> { if (bookWorkshop != null) bookWorkshop.closeAll(); },
                 () -> { if (scribe != null) scribe.closeAll(); },
                 () -> { if (library != null) library.clear(); },
-                () -> { if (bookVisuals != null) { bookVisuals.clear(); for (var player : Bukkit.getOnlinePlayers()) bookVisuals.queue(player); } },
                 () -> { if (tools != null) tools.clear(); },
                 () -> { if (miningUtility != null) miningUtility.clear(); },
                 () -> { if (gui != null) gui.closeAll(); },
