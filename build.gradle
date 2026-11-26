@@ -65,6 +65,42 @@ dependencies {
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
 
+// Opt-in integration harness: real Core bank + Fishing journal, never included in any JAR.
+sourceSets {
+    fishingRecoveryTest {
+        java {
+            srcDirs = ['fishing/src/main/java', 'src/fishingRecoveryTest/java']
+            include 'ru/cherdakmd/chrdkfishing/BaitCatalog.java'
+            include 'ru/cherdakmd/chrdkfishing/FishCatalog.java'
+            include 'ru/cherdakmd/chrdkfishing/FishSaleJournal.java'
+            include 'ru/cherdakmd/chrdkfishing/FishToken.java'
+            include 'ru/cherdakmd/chrdkfishing/FishingModel.java'
+            include 'ru/cherdakmd/chrdkfishing/FishingOrders.java'
+            include 'ru/cherdakmd/chrdkfishing/FishingRules.java'
+            include 'ru/cherdakmd/chrdkfishing/bukkit/CoreSaleBank.java'
+            include 'ru/cherdakmd/chrdkfishing/bukkit/FishingBankRecoveryIntegrationTest.java'
+        }
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+configurations {
+    fishingRecoveryTestImplementation.extendsFrom testImplementation
+    fishingRecoveryTestRuntimeOnly.extendsFrom testRuntimeOnly
+}
+dependencies {
+    fishingRecoveryTestImplementation 'org.xerial:sqlite-jdbc:3.49.1.0'
+    fishingRecoveryTestImplementation 'org.mockito:mockito-core:5.20.0'
+    fishingRecoveryTestRuntimeOnly 'org.slf4j:slf4j-nop:2.0.16'
+}
+tasks.register('fishingRecoveryTest', Test) {
+    description = 'Offline integration of real Core bank and Fishing sale journal with simulated inventory.'
+    testClassesDirs = sourceSets.fishingRecoveryTest.output.classesDirs
+    classpath = sourceSets.fishingRecoveryTest.runtimeClasspath
+    useJUnitPlatform()
+    testLogging { events 'failed'; exceptionFormat 'full' }
+}
+
 processResources {
     def pluginVersion = project.version
     inputs.property "version", pluginVersion

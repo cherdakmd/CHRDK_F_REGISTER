@@ -40,6 +40,8 @@ def verify_bundle(directory: Path, version: str) -> None:
             missing = required - set(entries)
             if missing:
                 raise ValueError(f"{kind}: missing required classes: {sorted(missing)}")
+            if kind != "fishing" and any(name.startswith("ru/cherdakmd/chrdkfishing/") for name in entries):
+                raise ValueError(f"{kind}: unexpected Fishing classes in production JAR")
             if kind == "fishing":
                 if any(name.startswith(("ru/cherdakmd/chrdkregister/", "ru/cherdakmd/chrdkskills/", "org/slf4j/")) for name in entries):
                     raise ValueError("fishing: unexpected shaded Core/Skills/SLF4J classes")

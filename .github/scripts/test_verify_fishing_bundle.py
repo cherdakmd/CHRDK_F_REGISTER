@@ -54,6 +54,13 @@ class FishingBundleTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "shaded"):
             verify_bundle(self.directory, self.version)
 
+    def test_recovery_harness_classes_never_ship_in_core_or_skills(self):
+        for kind in ("core", "skills"):
+            self.write_jar(kind, extra=["ru/cherdakmd/chrdkfishing/FishSaleJournal.class"])
+            with self.subTest(kind=kind), self.assertRaisesRegex(ValueError, "unexpected Fishing"):
+                verify_bundle(self.directory, self.version)
+            self.write_jar(kind)
+
     def test_missing_sqlite_is_rejected(self):
         self.write_jar("fishing", missing=["org/sqlite/JDBC.class"])
         with self.assertRaisesRegex(ValueError, "missing required"):
