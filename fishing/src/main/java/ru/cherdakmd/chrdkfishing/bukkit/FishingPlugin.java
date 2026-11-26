@@ -125,7 +125,8 @@ public final class FishingPlugin extends JavaPlugin {
                             var result = rods.cancelUnpaid(player);
                             player.sendMessage(result == ru.cherdakmd.chrdkfishing.RodUpgradeJournal.Result.DONE
                                     ? "§aНеоплаченное улучшение отменено." : "§cНельзя отменить: операция оплачена или состояние неизвестно.");
-                        } else if (args.length == 1 && args[0].equalsIgnoreCase("sell")) saleGui.open(player);
+                        } else if (args.length == 2 && args[0].equalsIgnoreCase("sell") && args[1].equalsIgnoreCase("all")) saleGui.openAll(player);
+                        else if (args.length == 1 && args[0].equalsIgnoreCase("sell")) saleGui.open(player);
                         else if (args.length == 1 && args[0].equalsIgnoreCase("album")) gui.open(player);
                         else if (args.length == 1 && args[0].equalsIgnoreCase("rod")) rodGui.open(player);
                         else player.sendMessage("§e/fish album — альбом; /fish sell — продажа; /fish rod — улучшение удочки.");

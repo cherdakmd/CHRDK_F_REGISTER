@@ -41,6 +41,32 @@ class FishSalePlannerTest {
         var plan = FishSalePlanner.plan(storage, List.of(2), codec);
         assertEquals(123, plan.price()); assertNull(plan.after()[2]); assertSame(copy, plan.after()[21]);
     }
+    @Test void mixedSaleUsesPlainVanillaStacksAndPreservesSignedPrices() {
+        var codec = mock(FishItemCodec.class); var custom = item(); var cod = item(); var salmon = item(); var tagged = item();
+        var token = fish(UUID.randomUUID(), 73); when(codec.read(custom)).thenReturn(Optional.of(token));
+        when(cod.getType()).thenReturn(org.bukkit.Material.COD); when(cod.getAmount()).thenReturn(64); when(cod.getMaxStackSize()).thenReturn(64);
+        when(salmon.getType()).thenReturn(org.bukkit.Material.SALMON); when(salmon.getAmount()).thenReturn(3); when(salmon.getMaxStackSize()).thenReturn(64);
+        when(tagged.getType()).thenReturn(org.bukkit.Material.COD); when(tagged.hasItemMeta()).thenReturn(true);
+        var storage = new ItemStack[36]; storage[1] = custom; storage[3] = cod; storage[8] = salmon; storage[9] = tagged;
+        var plan = FishSalePlanner.plan(storage, List.of(1, 3, 8), codec);
+        assertEquals(743, plan.price()); assertEquals(List.of(token), plan.fish());
+        assertEquals(2, plan.vanilla().size()); assertEquals(64, plan.vanilla().get(0).quantity());
+        assertNull(plan.after()[1]); assertNull(plan.after()[3]); assertNull(plan.after()[8]); assertSame(tagged, plan.after()[9]);
+        assertSame(cod, storage[3]); verify(cod, never()).setAmount(anyInt());
+        assertThrows(IllegalArgumentException.class, () -> FishSalePlanner.plan(storage, List.of(9), codec));
+    }
+    @Test void rawVanillaWhitelistExcludesNamedCustomCookedAndInvalidStacks() {
+        var codec = mock(FishItemCodec.class); var item = item();
+        for (var type : new org.bukkit.Material[]{org.bukkit.Material.COD, org.bukkit.Material.SALMON, org.bukkit.Material.TROPICAL_FISH, org.bukkit.Material.PUFFERFISH}) {
+            when(item.getType()).thenReturn(type); when(item.getAmount()).thenReturn(2); when(item.getMaxStackSize()).thenReturn(64);
+            assertEquals(20, FishSalePlanner.inspect(0, item, codec).orElseThrow().price());
+            when(item.hasItemMeta()).thenReturn(true); assertTrue(FishSalePlanner.inspect(0, item, codec).isEmpty());
+            when(item.hasItemMeta()).thenReturn(false);
+        }
+        when(item.getType()).thenReturn(org.bukkit.Material.COOKED_COD); assertTrue(FishSalePlanner.inspect(0, item, codec).isEmpty());
+        when(item.getType()).thenReturn(org.bukkit.Material.COD); when(item.getAmount()).thenReturn(65);
+        assertTrue(FishSalePlanner.inspect(0, item, codec).isEmpty());
+    }
     @Test void invalidSlotsStacksAndDuplicateIdentityAreRejected() {
         var codec = mock(FishItemCodec.class); var a = item(); var b = item(); var storage = new ItemStack[36];
         storage[0] = a; storage[1] = b; var duplicate = fish(UUID.randomUUID(), 70);

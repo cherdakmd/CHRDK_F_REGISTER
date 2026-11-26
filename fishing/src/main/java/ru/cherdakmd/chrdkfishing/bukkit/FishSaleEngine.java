@@ -59,7 +59,7 @@ final class FishSaleEngine implements AutoCloseable {
         if (!(boolean) matches.invoke(null, player.getInventory().getStorageContents(), before))
             return FishSaleJournal.Result.CONFLICT;
         UUID transaction = UUID.randomUUID();
-        var prepared = journal.prepare(player.getUniqueId(), transaction, before, after, quote.fish(), key, bank);
+        var prepared = journal.prepareMixed(player.getUniqueId(), transaction, before, after, quote.fish(), quote.vanilla(), key, bank);
         if (prepared != FishSaleJournal.Result.WAIT) return prepared;
         return recover(player);
     }

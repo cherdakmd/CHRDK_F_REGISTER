@@ -42,7 +42,9 @@ final class FishSaleGui implements Listener {
         Holder(UUID owner) { this.owner = owner; }
         @Override public Inventory getInventory() { return inventory; }
     }
-    void open(Player player) throws Exception {
+    void open(Player player) throws Exception { open(player, false); }
+    void openAll(Player player) throws Exception { open(player, true); }
+    private void open(Player player, boolean selectAll) throws Exception {
         if (!engine.available(player)) throw new IllegalStateException("player unavailable");
         var pending = engine.recover(player);
         if (pending != FishSaleJournal.Result.DONE) {
@@ -50,26 +52,44 @@ final class FishSaleGui implements Listener {
             return;
         }
         Holder holder = new Holder(player.getUniqueId());
+        if (selectAll) {
+            var storage = player.getInventory().getStorageContents();
+            if (storage.length != 36) throw new IllegalStateException("unexpected storage size");
+            if (!selectAll(holder.basket, storage, codec))
+                player.sendMessage("§cНе удалось выбрать всю рыбу: есть копии или превышен лимит продажи. Выберите вручную.");
+            if (holder.basket.isEmpty()) player.sendMessage("§eПодходящей рыбы не найдено или автоматический выбор отменён.");
+            else player.sendMessage("§eПроверьте выбранную рыбу и сумму. Для продажи подтвердите в меню.");
+        }
         holder.inventory = Bukkit.createInventory(holder, 54, Component.text("Сундук продажи рыбы"));
         render(holder);
         player.openInventory(holder.inventory);
+    }
+    static boolean selectAll(FishSaleBasket basket, ItemStack[] storage, FishItemCodec codec) {
+        if (storage == null || storage.length != 36 || !basket.isEmpty()) throw new IllegalArgumentException("sale storage");
+        for (int slot = 0; slot < storage.length; slot++) {
+            var entry = FishSalePlanner.inspect(slot, storage[slot], codec);
+            if (entry.isEmpty()) continue;
+            if (basket.toggle(entry.get()) != FishSaleBasket.Change.ADDED) { basket.clear(); return false; }
+        }
+        return true;
     }
     void render(Holder holder) {
         holder.inventory.clear();
         var entries = holder.basket.entries();
         for (int slot = 0; slot < entries.size(); slot++) {
             var entry = entries.get(slot);
-            holder.inventory.setItem(slot, fishIcon(entry.token()));
+            holder.inventory.setItem(slot, entry.token() != null ? fishIcon(entry.token()) : vanillaIcon(entry.vanilla()));
         }
         holder.inventory.setItem(45, icon(Material.BOOK, "Как продать рыбу", List.of(
                 "Нажмите на рыбу в своём инвентаре снизу.",
                 "Она появится в сундуке; нажмите на неё здесь, чтобы убрать.",
                 "До продажи настоящая рыба остаётся в инвентаре.",
-                "Принимается только рыба CHRDK, не обычная ванильная.")));
+                "Обычная сырая ванильная рыба: 0.10 алм. за штуку.",
+                "Рыба с чужими метками или именем не принимается.")));
         holder.inventory.setItem(47, icon(Material.HOPPER, "Очистить сундук", List.of("Рыба останется в инвентаре.")));
         holder.inventory.setItem(49, icon(holder.basket.isEmpty() ? Material.GRAY_DYE : Material.EMERALD_BLOCK,
                 holder.basket.isEmpty() ? "Сундук пуст" : "Продать за " + amount(holder.basket.total()) + " алм.",
-                List.of("Выбрано рыб: " + entries.size(), "Нажмите для продажи и зачисления в банк.")));
+                List.of("Выбрано ячеек: " + entries.size(), "Нажмите для продажи и зачисления в банк.")));
         if (back != null) holder.inventory.setItem(52, icon(Material.ARROW, "Назад", List.of("Вернуться к меню рыбалки.")));
         holder.inventory.setItem(53, icon(Material.BARRIER, "Закрыть", List.of("Без продажи; рыба останется у вас.")));
     }
@@ -78,6 +98,16 @@ final class FishSaleGui implements Listener {
         return icon(Material.COD, FishCatalog.byId(fish.fish().speciesId()).name(), List.of(
                 "Размер: " + sizeName(fish.fish().size()) + ", " + fish.fish().lengthCm() + " см",
                 "Цена: " + amount(fish.quotedPrice()) + " алм.",
+                "Нажмите, чтобы убрать из продажи."));
+    }
+    private static ItemStack vanillaIcon(FishSaleJournal.VanillaFish fish) {
+        String name = switch (fish.kind()) {
+            case "COD" -> "Треска"; case "SALMON" -> "Лосось";
+            case "TROPICAL_FISH" -> "Тропическая рыба"; case "PUFFERFISH" -> "Иглобрюх";
+            default -> throw new IllegalArgumentException("vanilla fish");
+        };
+        return icon(Material.valueOf(fish.kind()), name, List.of("Количество: " + fish.quantity(),
+                "Цена: " + amount(fish.quantity() * FishSaleJournal.VANILLA_PRICE_MINOR) + " алм.",
                 "Нажмите, чтобы убрать из продажи."));
     }
     private static ItemStack icon(Material material, String label, List<String> lines) {
@@ -128,11 +158,11 @@ final class FishSaleGui implements Listener {
                 int storageSlot = event.getSlot();
                 var storage = player.getInventory().getStorageContents();
                 if (storageSlot < 0 || storageSlot >= 36 || storage.length != 36) return;
-                var fish = codec.read(storage[storageSlot]);
+                var fish = FishSalePlanner.inspect(storageSlot, storage[storageSlot], codec);
                 if (fish.isEmpty()) {
-                    player.sendMessage("§eДля продажи подходит только пойманная рыба CHRDK."); return;
+                    player.sendMessage("§eПодходит рыба CHRDK или обычная сырая ванильная рыба без меток."); return;
                 }
-                switch (holder.basket.toggle(storageSlot, fish.get())) {
+                switch (holder.basket.toggle(fish.get())) {
                     case DUPLICATE -> player.sendMessage("§cЭта рыба уже добавлена: одинаковые идентификаторы не продаются вместе.");
                     case TOO_EXPENSIVE -> player.sendMessage("§cПревышен лимит одной продажи. Продайте рыбу частями.");
                     case FULL -> player.sendMessage("§eСундук заполнен.");

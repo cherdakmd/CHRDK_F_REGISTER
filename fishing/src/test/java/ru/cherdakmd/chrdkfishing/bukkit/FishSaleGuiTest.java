@@ -85,6 +85,19 @@ class FishSaleGuiTest {
         verify(remove).setCancelled(true); assertTrue(holder.basket.isEmpty()); assertSame(source, storage[9]);
         verify(bottom, never()).setStorageContents(any()); verify(bottom, never()).setItem(anyInt(), any());
     }
+    @Test void allSelectionPreviewsMixedFishWithoutMovingAndRejectsDuplicates() {
+        var storage = new ItemStack[36]; var cod = mock(ItemStack.class); var custom = mock(ItemStack.class);
+        when(cod.getType()).thenReturn(Material.COD); when(cod.getAmount()).thenReturn(20); when(cod.getMaxStackSize()).thenReturn(64);
+        var token = FishToken.issue(new byte[32], UUID.randomUUID(), new FishingModel.Catch("pike", FishingModel.Size.NORMAL, 40), 70);
+        when(codec.read(custom)).thenReturn(Optional.of(token)); storage[1] = cod; storage[7] = custom;
+        var basket = new FishSaleBasket();
+        assertTrue(FishSaleGui.selectAll(basket, storage, codec));
+        assertEquals(java.util.List.of(1, 7), basket.slots()); assertEquals(270, basket.total());
+        assertSame(cod, storage[1]); assertSame(custom, storage[7]);
+        verify(cod, never()).setAmount(anyInt());
+        var copy = mock(ItemStack.class); when(codec.read(copy)).thenReturn(Optional.of(token)); storage[10] = copy;
+        basket.clear(); assertFalse(FishSaleGui.selectAll(basket, storage, codec)); assertTrue(basket.isEmpty());
+    }
     @Test void allDragsAreCancelledIncludingBottomAndTop() {
         var event = mock(InventoryDragEvent.class);
         when(event.getView()).thenReturn(view); when(view.getTopInventory()).thenReturn(top); when(top.getHolder()).thenReturn(holder);

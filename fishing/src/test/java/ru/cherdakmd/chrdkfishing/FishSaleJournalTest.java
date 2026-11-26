@@ -150,6 +150,57 @@ class FishSaleJournalTest {
             assertFalse(j.historyMatchesAll(bank.accounts));
         }
     }
+    @Test void mixedSaleRecoversUncertainTransferAndBankCreditOnlyOnce() throws Exception {
+        var bank = new Bank(); var bag = new Bag(); bag.failAfterApply = true; var token = fish();
+        var vanilla = List.of(new FishSaleJournal.VanillaFish(1, "COD", 64), new FishSaleJournal.VanillaFish(7, "SALMON", 3));
+        try (var j = new FishSaleJournal(file(), true)) {
+            assertEquals(FishSaleJournal.Result.WAIT, j.prepareMixed(owner, transaction, "before", "after", List.of(token), vanilla, key, bank));
+            assertThrows(IOException.class, () -> j.recover(owner, transaction, bag, bank));
+            assertEquals(0, bank.attempts);
+        }
+        bank.failAfterAccept = true;
+        try (var j = new FishSaleJournal(file(), false)) {
+            assertThrows(IOException.class, () -> j.recover(owner, transaction, bag, bank));
+            assertEquals(770L, bank.receipts(owner).get(FishSaleJournal.receiptKey(transaction)));
+        }
+        try (var j = new FishSaleJournal(file(), false)) {
+            assertEquals(FishSaleJournal.Result.DONE, j.recover(owner, transaction, bag, bank));
+            assertEquals(FishSaleJournal.Result.DONE, j.recover(owner, transaction, bag, bank));
+            assertEquals(1, bag.removals); assertEquals(1, bank.receipts(owner).size());
+            assertEquals(FishSaleJournal.Result.CONFLICT, j.prepareMixed(owner, UUID.randomUUID(), "before", "after", List.of(token), List.of(), key, bank));
+        }
+    }
+    @Test void vanillaOnlySaleAndMissingStackRecordAreHandled() throws Exception {
+        var bank = new Bank(); var bag = new Bag();
+        try (var j = new FishSaleJournal(file(), true)) {
+            var stack = new FishSaleJournal.VanillaFish(1, "PUFFERFISH", 4);
+            assertEquals(FishSaleJournal.Result.CONFLICT, j.prepareMixed(owner, UUID.randomUUID(), "before", "after", List.of(), List.of(stack, stack), key, bank));
+            assertEquals(FishSaleJournal.Result.WAIT, j.prepareMixed(owner, transaction, "before", "after", List.of(), List.of(stack), key, bank));
+            assertEquals(FishSaleJournal.Result.DONE, j.recover(owner, transaction, bag, bank));
+            assertEquals(40L, bank.receipts(owner).get(FishSaleJournal.receiptKey(transaction)));
+        }
+        try (var db = java.sql.DriverManager.getConnection("jdbc:sqlite:" + file()); var stmt = db.createStatement()) {
+            stmt.execute("DELETE FROM vanilla_fish");
+        }
+        assertThrows(java.sql.SQLException.class, () -> new FishSaleJournal(file(), false));
+    }
+    @Test void versionFourMigratesWithoutLosingExistingSales() throws Exception {
+        var bank = new Bank(); var bag = new Bag();
+        try (var j = new FishSaleJournal(file(), true)) {
+            assertEquals(FishSaleJournal.Result.WAIT, j.prepare(owner, transaction, "before", "after", List.of(fish()), key, bank));
+            assertEquals(FishSaleJournal.Result.DONE, j.recover(owner, transaction, bag, bank));
+        }
+        try (var db = java.sql.DriverManager.getConnection("jdbc:sqlite:" + file()); var stmt = db.createStatement()) {
+            stmt.execute("DROP TABLE vanilla_fish"); stmt.execute("ALTER TABLE sales DROP COLUMN vanilla_count"); stmt.execute("PRAGMA user_version=4");
+        }
+        try (var j = new FishSaleJournal(file(), false)) {
+            assertTrue(j.historyMatchesAll(bank.accounts));
+            assertEquals(FishSaleJournal.Result.DONE, j.recover(owner, transaction, bag, bank));
+        }
+        try (var db = java.sql.DriverManager.getConnection("jdbc:sqlite:" + file()); var stmt = db.createStatement(); var rs = stmt.executeQuery("PRAGMA user_version")) {
+            assertTrue(rs.next()); assertEquals(5, rs.getInt(1));
+        }
+    }
     @Test void alteredActiveSaleIndexIsQuarantined() throws Exception {
         try (var j = new FishSaleJournal(file(), true)) { }
         try (var db = java.sql.DriverManager.getConnection("jdbc:sqlite:" + file()); var stmt = db.createStatement()) {

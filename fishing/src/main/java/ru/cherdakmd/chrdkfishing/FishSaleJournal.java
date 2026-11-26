@@ -30,7 +30,7 @@ public final class FishSaleJournal implements AutoCloseable {
     private static final int MAX_SNAPSHOT = 4 * 1024 * 1024;
     private static final long MAX_CREDIT = 1_000_000;
     private static final int APPLICATION_ID = 1179206483;
-    private static final int SCHEMA_VERSION = 4;
+    private static final int SCHEMA_VERSION = 5;
     private static final String FIND_INDEX = "CREATE UNIQUE INDEX active_find_owner ON find_rewards(owner) WHERE phase <> 'DONE'";
     private static final String COOK_INDEX = "CREATE UNIQUE INDEX active_cook_owner ON cooked_fish(owner) WHERE phase <> 'DONE'";
     private static final String ACTIVE_INDEX = "CREATE UNIQUE INDEX active_sale_owner ON sales(owner) WHERE phase <> 'PAID'";
@@ -78,6 +78,7 @@ public final class FishSaleJournal implements AutoCloseable {
                     createCookingSchema(s);
                     createOrderSchema(s);
                     createFindSchema(s);
+                    createVanillaSchema(s);
                     s.execute("PRAGMA application_id=" + APPLICATION_ID);
                     s.execute("PRAGMA user_version=" + SCHEMA_VERSION);
                     db.commit();
@@ -104,7 +105,7 @@ public final class FishSaleJournal implements AutoCloseable {
                 try (ResultSet rs = s.executeQuery("PRAGMA foreign_key_check")) {
                     if (rs.next()) throw new SQLException("sale journal foreign key mismatch");
                 }
-                try (ResultSet rs = s.executeQuery("SELECT COUNT(*) FROM sales s WHERE NOT EXISTS (SELECT 1 FROM spent_fish f WHERE f.sale_id=s.id)")) {
+                if (version < 5) try (ResultSet rs = s.executeQuery("SELECT COUNT(*) FROM sales s WHERE NOT EXISTS (SELECT 1 FROM spent_fish f WHERE f.sale_id=s.id)")) {
                     if (!rs.next() || rs.getLong(1) != 0) throw new SQLException("sale journal missing items");
                 }
                 if (version < SCHEMA_VERSION) {
@@ -112,7 +113,8 @@ public final class FishSaleJournal implements AutoCloseable {
                     try {
                         if (version == 1) createCookingSchema(s);
                         if (version < 3) createOrderSchema(s);
-                        createFindSchema(s);
+                        if (version < 4) createFindSchema(s);
+                        if (version < 5) createVanillaSchema(s);
                         s.execute("PRAGMA user_version=" + SCHEMA_VERSION); db.commit();
                     }
                     catch (SQLException error) { db.rollback(); throw error; }
@@ -127,6 +129,11 @@ public final class FishSaleJournal implements AutoCloseable {
                     if (!rs.next() || !FIND_INDEX.equals(rs.getString(1))) throw new SQLException("find journal index mismatch");
                 }
                 s.executeQuery("SELECT fish_id,id,owner,before_state,after_state,phase FROM find_rewards LIMIT 0").close();
+                s.executeQuery("SELECT sale_id,slot,kind,quantity FROM vanilla_fish LIMIT 0").close();
+                try (ResultSet rs = s.executeQuery("SELECT COUNT(*) FROM sales s WHERE s.vanilla_count != (SELECT COALESCE(SUM(v.quantity),0) FROM vanilla_fish v WHERE v.sale_id=s.id) OR (s.vanilla_count=0 AND NOT EXISTS (SELECT 1 FROM spent_fish f WHERE f.sale_id=s.id))")) {
+                    if (!rs.next() || rs.getLong(1) != 0) throw new SQLException("sale journal missing items");
+                }
+
                 try (ResultSet rs = s.executeQuery("SELECT COUNT(*) FROM cooked_fish c JOIN spent_fish f ON f.fish_id=c.fish_id")) {
                     if (!rs.next() || rs.getLong(1) != 0) throw new SQLException("fish both sold and cooked");
                 }
@@ -136,6 +143,19 @@ public final class FishSaleJournal implements AutoCloseable {
             throw error;
         }
     }
+
+    private static void createVanillaSchema(Statement s) throws SQLException {
+        s.execute("ALTER TABLE sales ADD COLUMN vanilla_count INTEGER NOT NULL DEFAULT 0 CHECK(vanilla_count BETWEEN 0 AND 2304)");
+        s.execute("CREATE TABLE vanilla_fish (sale_id TEXT NOT NULL REFERENCES sales(id), slot INTEGER NOT NULL CHECK(slot BETWEEN 0 AND 35), kind TEXT NOT NULL CHECK(kind IN ('COD','SALMON','TROPICAL_FISH','PUFFERFISH')), quantity INTEGER NOT NULL CHECK(quantity BETWEEN 1 AND 64), PRIMARY KEY(sale_id,slot)) STRICT");
+    }
+    /** Plain raw fish only; item metadata is rejected by the native planner. */
+    public record VanillaFish(int slot, String kind, int quantity) {
+        public VanillaFish {
+            if (slot < 0 || slot >= 36 || !Set.of("COD", "SALMON", "TROPICAL_FISH", "PUFFERFISH").contains(kind)
+                    || quantity < 1 || quantity > 64) throw new IllegalArgumentException("vanilla fish");
+        }
+    }
+    public static final long VANILLA_PRICE_MINOR = 10;
 
     private static void createCookingSchema(Statement s) throws SQLException {
         s.execute("CREATE TABLE cooked_fish (fish_id TEXT PRIMARY KEY NOT NULL, id TEXT NOT NULL UNIQUE, owner TEXT NOT NULL, before_state TEXT NOT NULL, after_state TEXT NOT NULL, phase TEXT NOT NULL CHECK(phase IN ('PREPARED','DONE'))) STRICT");
@@ -167,20 +187,25 @@ public final class FishSaleJournal implements AutoCloseable {
      */
     public synchronized Result prepare(UUID owner, UUID transaction, String before, String after,
                                        List<FishToken.Token> fish, byte[] secret, Bank bank) throws Exception {
-        return prepareSale(owner, transaction, before, after, fish, secret, bank, null);
+        return prepareSale(owner, transaction, before, after, fish, List.of(), secret, bank, null);
+    }
+    /** Caller must validate exact plain vanilla stacks and both native inventory snapshots. */
+    public synchronized Result prepareMixed(UUID owner, UUID transaction, String before, String after,
+            List<FishToken.Token> fish, List<VanillaFish> vanilla, byte[] secret, Bank bank) throws Exception {
+        return prepareSale(owner, transaction, before, after, fish, vanilla, secret, bank, null);
     }
     /** One verified fish matching today's published contract, paid via the existing sale receipt. */
     public synchronized Result prepareOrder(UUID owner, UUID transaction, String before, String after,
             FishToken.Token fish, byte[] secret, Bank bank, FishingOrders.Order order) throws Exception {
         if (order == null || order.day() != FishingOrders.utcDay()
                 || !FishingOrders.forDay(order.day()).get(order.slot()).equals(order) || !order.matches(fish)) return Result.CONFLICT;
-        return prepareSale(owner, transaction, before, after, List.of(fish), secret, bank, order);
+        return prepareSale(owner, transaction, before, after, List.of(fish), List.of(), secret, bank, order);
     }
     private Result prepareSale(UUID owner, UUID transaction, String before, String after,
-            List<FishToken.Token> fish, byte[] secret, Bank bank, FishingOrders.Order order) throws Exception {
+            List<FishToken.Token> fish, List<VanillaFish> vanilla, byte[] secret, Bank bank, FishingOrders.Order order) throws Exception {
         if (owner == null || transaction == null || before == null || after == null || before.equals(after)
-                || before.length() > MAX_SNAPSHOT || after.length() > MAX_SNAPSHOT || fish == null || fish.isEmpty()
-                || fish.size() > 36 || bank == null) throw new IllegalArgumentException("sale intent");
+                || before.length() > MAX_SNAPSHOT || after.length() > MAX_SNAPSHOT || fish == null || vanilla == null
+                || (fish.isEmpty() && vanilla.isEmpty()) || fish.size() + vanilla.size() > 36 || bank == null) throw new IllegalArgumentException("sale intent");
         Set<UUID> ids = new HashSet<>();
         long amount = 0;
         for (var token : fish) {
@@ -188,17 +213,31 @@ public final class FishSaleJournal implements AutoCloseable {
             amount = Math.addExact(amount, token.quotedPrice());
             if (amount > MAX_CREDIT) return Result.CONFLICT;
         }
+        int vanillaCount = 0; Set<Integer> slots = new HashSet<>();
+        for (var stack : vanilla) {
+            if (stack == null || !slots.add(stack.slot())) return Result.CONFLICT;
+            vanillaCount = Math.addExact(vanillaCount, stack.quantity());
+        }
+        amount = Math.addExact(amount, Math.multiplyExact((long) vanillaCount, VANILLA_PRICE_MINOR));
+        if (amount > MAX_CREDIT) return Result.CONFLICT;
         if (order != null) amount = order.rewardMinor();
         if (!historyMatches(owner, bank.receipts(owner)) || pendingCook(owner) != null || pendingFind(owner) != null) return Result.CONFLICT;
         for (UUID id : ids) if (isCooked(id)) return Result.CONFLICT;
         db.setAutoCommit(false);
         try {
-            try (var s = db.prepareStatement("INSERT INTO sales(id,owner,before_state,after_state,amount,phase) VALUES(?,?,?,?,?,'PREPARED')")) {
+            try (var s = db.prepareStatement("INSERT INTO sales(id,owner,before_state,after_state,amount,phase,vanilla_count) VALUES(?,?,?,?,?,'PREPARED',?)")) {
                 s.setString(1, transaction.toString()); s.setString(2, owner.toString()); s.setString(3, before);
-                s.setString(4, after); s.setLong(5, amount); s.executeUpdate();
+                s.setString(4, after); s.setLong(5, amount); s.setInt(6, vanillaCount); s.executeUpdate();
             }
             try (var s = db.prepareStatement("INSERT INTO spent_fish(fish_id,sale_id) VALUES(?,?)")) {
                 for (UUID id : ids) { s.setString(1, id.toString()); s.setString(2, transaction.toString()); s.addBatch(); }
+                s.executeBatch();
+            }
+            try (var s = db.prepareStatement("INSERT INTO vanilla_fish(sale_id,slot,kind,quantity) VALUES(?,?,?,?)")) {
+                for (var stack : vanilla) {
+                    s.setString(1, transaction.toString()); s.setInt(2, stack.slot()); s.setString(3, stack.kind());
+                    s.setInt(4, stack.quantity()); s.addBatch();
+                }
                 s.executeBatch();
             }
             if (order != null) try (var s = db.prepareStatement("INSERT INTO order_claims(owner,order_day,order_slot,sale_id) VALUES(?,?,?,?)")) {

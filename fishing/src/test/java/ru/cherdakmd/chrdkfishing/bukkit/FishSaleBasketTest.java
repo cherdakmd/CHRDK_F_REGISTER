@@ -49,6 +49,16 @@ class FishSaleBasketTest {
         assertTrue(basket.matches(FishSalePlanner.plan(storage, basket.slots(), codec)));
         assertSame(item, storage[5]);
     }
+    @Test void changedVanillaQuantityCannotMatchDisplayedBasket() {
+        var codec = mock(FishItemCodec.class); var cod = mock(ItemStack.class); when(cod.clone()).thenReturn(cod);
+        when(cod.getType()).thenReturn(org.bukkit.Material.COD); when(cod.getAmount()).thenReturn(3); when(cod.getMaxStackSize()).thenReturn(64);
+        var storage = new ItemStack[36]; storage[4] = cod; var basket = new FishSaleBasket();
+        assertEquals(FishSaleBasket.Change.ADDED, basket.toggle(FishSalePlanner.inspect(4, cod, codec).orElseThrow()));
+        assertTrue(basket.matches(FishSalePlanner.plan(storage, basket.slots(), codec)));
+        when(cod.getAmount()).thenReturn(4);
+        assertFalse(basket.matches(FishSalePlanner.plan(storage, basket.slots(), codec)));
+        assertEquals(30, basket.total());
+    }
     @Test void quoteMustMatchDisplayedPricesAndOrder() {
         var basket = new FishSaleBasket(); var one = fish(UUID.randomUUID(), 70); var two = fish(UUID.randomUUID(), 100);
         var codec = mock(FishItemCodec.class); var a = mock(ItemStack.class); var b = mock(ItemStack.class);
