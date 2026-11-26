@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 from pathlib import Path
 import re
 import sys
+import tempfile
 import zipfile
 
 from verify_fishing_bundle import JARS, verify_bundle
@@ -30,6 +32,27 @@ def notice(version: str, commit: str) -> bytes:
             "Автоматического садка в этом кандидате нет.\n").encode("utf-8")
 
 
+def verify_resource_pack(data: bytes) -> None:
+    # Validate the exact bytes that are packaged, not a second read of the source.
+    with zipfile.ZipFile(io.BytesIO(data)) as pack:
+        infos = pack.infolist()
+        names = [info.filename for info in infos]
+        if not names or len(names) > 10000 or len(names) != len(set(names)):
+            raise ValueError("resource pack is empty, too large or duplicated")
+        if (sum(info.file_size for info in infos) > MAX_FILE
+                or any(info.file_size > MAX_FILE for info in infos)):
+            raise ValueError("resource pack contents are oversized")
+        if any(name.startswith('/') or '\\' in name or '\x00' in name
+               or any(part in ('.', '..') for part in name.split('/')) for name in names):
+            raise ValueError("unsafe resource pack path")
+        if pack.testzip() is not None:
+            raise ValueError("resource pack is corrupt")
+        files = {info.filename for info in infos if not info.is_dir()}
+        if ("pack.mcmeta" not in files or not any(n.startswith("assets/chrdk_fishing/") for n in files)
+                or not any(n.startswith("assets/chrdk_items/") for n in files)):
+            raise ValueError("resource pack does not contain both Fishing and CustomItems resources")
+
+
 def pack_dry_run(plugins: Path, resource_pack: Path, version: str, commit: str, destination: Path) -> None:
     if not re.fullmatch(r"[0-9a-f]{40}", commit):
         raise ValueError("a full lowercase 40-character commit SHA is required")
@@ -44,13 +67,7 @@ def pack_dry_run(plugins: Path, resource_pack: Path, version: str, commit: str, 
         if not path.is_file() or path.is_symlink() or path.stat().st_size > MAX_FILE:
             raise ValueError(f"missing, symlinked or oversized input: {path}")
         payload[name] = path.read_bytes()
-    with zipfile.ZipFile(resource_pack) as pack:
-        names = pack.namelist()
-        if not names or len(names) != len(set(names)) or pack.testzip() is not None:
-            raise ValueError("resource pack is empty, duplicated or corrupt")
-        if ("pack.mcmeta" not in names or not any(n.startswith("assets/chrdk_fishing/") for n in names)
-                or not any(n.startswith("assets/chrdk_items/") for n in names)):
-            raise ValueError("resource pack does not contain both Fishing and CustomItems resources")
+    verify_resource_pack(payload[f"resources/{PACK_NAME}"])
     payload[NOTICE_NAME] = notice(version, commit)
     manifest = {"format": 1, "kind": "experimental-dry-run", "version": version,
                 "commit": commit, "sha256": {name: digest(data) for name, data in sorted(payload.items())}}
@@ -93,6 +110,15 @@ def verify_dry_run(path: Path, version: str, commit: str) -> None:
         actual = {name: digest(archive.read(name)) for name in sorted(expected - {MANIFEST_NAME})}
         if manifest["sha256"] != actual or archive.read(NOTICE_NAME) != notice(version, commit):
             raise ValueError("checksum or notice mismatch")
+        # Hashes embedded in this same archive are not an authenticity guarantee.
+        # Re-check the packaged bytes as well, even if the manifest was regenerated.
+        verify_resource_pack(archive.read(f"resources/{PACK_NAME}"))
+        with tempfile.TemporaryDirectory(prefix="fishing-dry-run-") as temp:
+            plugins = Path(temp)
+            for name, _, _ in JARS.values():
+                filename = f"{name}-{version}.jar"
+                (plugins / filename).write_bytes(archive.read(f"plugins/{filename}"))
+            verify_bundle(plugins, version)
 
 
 def main() -> None:

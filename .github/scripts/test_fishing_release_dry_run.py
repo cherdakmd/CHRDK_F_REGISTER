@@ -1,10 +1,13 @@
+import hashlib
+import io
 import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 from zipfile import ZipFile
 
-from fishing_release_dry_run import pack_dry_run, verify_dry_run
+from fishing_release_dry_run import pack_dry_run, verify_dry_run, verify_resource_pack
 from verify_fishing_bundle import JARS
 
 
@@ -65,6 +68,46 @@ class FishingDryRunTest(unittest.TestCase):
         self.rewrite(lambda files: files.__setitem__("unexpected.txt", b"unexpected"))
         with self.assertRaisesRegex(ValueError, "unexpected"):
             verify_dry_run(self.output, self.version, self.commit)
+
+    def test_rehashed_archive_still_rechecks_jar_identity_and_pack_contents(self):
+        self.create()
+        jar_name = f"plugins/chrdk-fishing-{self.version}.jar"
+        skills = (self.plugins / f"chrdk-skills-{self.version}.jar").read_bytes()
+
+        def replace_and_rehash(files, name, data):
+            files[name] = data
+            manifest = json.loads(files['MANIFEST.json'])
+            manifest['sha256'][name] = hashlib.sha256(data).hexdigest()
+            files['MANIFEST.json'] = json.dumps(manifest).encode()
+
+        self.rewrite(lambda files: replace_and_rehash(files, jar_name, skills))
+        with self.assertRaisesRegex(ValueError, 'name'):
+            verify_dry_run(self.output, self.version, self.commit)
+        self.output.unlink(); self.create()
+        buffer = io.BytesIO()
+        with ZipFile(buffer, 'w') as pack:
+            pack.writestr('pack.mcmeta', '{}')
+            pack.writestr('assets/chrdk_fishing/item', 'fish')
+        pack_name = 'resources/chrdk-custom-items-fishing.zip'
+        self.rewrite(lambda files: replace_and_rehash(files, pack_name, buffer.getvalue()))
+        with self.assertRaisesRegex(ValueError, 'both Fishing and CustomItems'):
+            verify_dry_run(self.output, self.version, self.commit)
+
+    def test_resource_pack_rejects_unsafe_paths_and_oversized_contents(self):
+        def pack_with(name, contents):
+            buffer = io.BytesIO()
+            with ZipFile(buffer, 'w') as pack:
+                pack.writestr('pack.mcmeta', '{}')
+                pack.writestr('assets/chrdk_fishing/item', 'fish')
+                pack.writestr('assets/chrdk_items/item', 'custom')
+                pack.writestr(name, contents)
+            return buffer.getvalue()
+        for name in ('../escape', '/absolute', 'assets/../escape', r'assets\..\escape'):
+            with self.subTest(name=name), self.assertRaisesRegex(ValueError, 'unsafe'):
+                verify_resource_pack(pack_with(name, 'x'))
+        with patch('fishing_release_dry_run.MAX_FILE', 100):
+            with self.assertRaisesRegex(ValueError, 'oversized'):
+                verify_resource_pack(pack_with('assets/huge', 'x' * 200))
 
     def test_existing_output_is_not_overwritten_and_stable_versions_are_rejected(self):
         self.output.write_bytes(b"previous")
