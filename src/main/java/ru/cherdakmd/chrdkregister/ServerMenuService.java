@@ -61,10 +61,6 @@ public final class ServerMenuService implements Listener {
     private record Button(int slot, Material icon, String name, String lore, String command,
                           String category, Kind kind, NamespacedKey model) {
 
-        static Button command(int slot, Material icon, String name, String lore, String command) {
-            return new Button(slot, icon, name, lore, command, null, Kind.COMMAND, null);
-        }
-
         static Button category(int slot, Material icon, String name, String lore, String id) {
             return new Button(slot, icon, name, lore, null, id, Kind.CATEGORY, ServerMenuVisuals.category(id, icon));
         }
@@ -77,14 +73,10 @@ public final class ServerMenuService implements Listener {
             return new Button(slot, icon, name, "", null, null, Kind.CLOSE, ServerMenuVisuals.close(icon));
         }
 
-        static Button info(int slot, Material icon, String name, String lore) {
-            return new Button(slot, icon, name, lore, null, null, Kind.INFO, null);
-        }
-
-        static Button of(ServerMenuSettings.Entry entry) {
-            return entry.info()
-                    ? info(entry.slot(), entry.icon(), entry.name(), entry.lore())
-                    : command(entry.slot(), entry.icon(), entry.name(), entry.lore(), entry.command());
+        static Button of(ServerMenuSettings.Entry entry, ServerMenuEntryVisuals visuals) {
+            return new Button(entry.slot(), entry.icon(), entry.name(), entry.lore(),
+                    entry.info() ? null : entry.command(), null,
+                    entry.info() ? Kind.INFO : Kind.COMMAND, visuals.model(entry));
         }
     }
 
@@ -93,11 +85,13 @@ public final class ServerMenuService implements Listener {
     }
 
     private final RegisterPlugin plugin;
+    private final ServerMenuEntryVisuals entryVisuals;
     private final AccessManager accessManager;
     private volatile Messages messages;
 
     public ServerMenuService(RegisterPlugin plugin, AccessManager accessManager, Messages messages) {
         this.plugin = plugin;
+        this.entryVisuals = ServerMenuEntryVisuals.load(plugin);
         this.accessManager = accessManager;
         this.messages = messages;
     }
@@ -240,7 +234,7 @@ public final class ServerMenuService implements Listener {
                 : settings.entries();
         for (ServerMenuSettings.Entry entry : loose) {
             if (available(entry, player)) {
-                buttons.add(Button.of(entry));
+                buttons.add(Button.of(entry, entryVisuals));
             }
         }
         return buttons;
@@ -274,7 +268,7 @@ public final class ServerMenuService implements Listener {
         }
         List<Button> buttons = new ArrayList<>();
         for (ServerMenuSettings.Entry entry : entries) {
-            buttons.add(Button.of(entry));
+            buttons.add(Button.of(entry, entryVisuals));
         }
         // «Назад» — обычный пункт с командой /menu и явным слотом.
         buttons.add(Button.back(settings.backSlot(), settings.backIcon(), settings.backName()));

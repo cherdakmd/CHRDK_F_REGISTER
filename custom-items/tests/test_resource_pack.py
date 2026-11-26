@@ -70,8 +70,20 @@ class ResourcePackTest(unittest.TestCase):
 
     def test_menu_icons_have_unique_textures_and_complete_model_links(self):
         root = PACK / 'assets/chrdk_menu'
+        repo = PACK.parents[1]
+        manifest_text = (repo / 'src/main/resources/server-menu-visuals.yml').read_text(encoding='utf-8')
+        manifest = [json.loads(line[line.index('{'):]) for line in manifest_text.splitlines()
+                    if line.lstrip().startswith('- {')]
+        self.assertEqual(45, len(manifest))
+        stock_text = (repo / 'src/main/resources/config.yml').read_text(encoding='utf-8')
+        menu = stock_text.split('server-menu:\n', 1)[1].split('\n# Алмазный банк:', 1)[0]
+        stock = [json.loads(line[line.index('{'):]) for line in menu.splitlines()
+                 if line.lstrip().startswith('- {') and '"id"' not in line]
+        self.assertEqual(stock, [{k: v for k, v in entry.items() if k != 'visual'} for entry in manifest])
+        ids = [entry['visual'] for entry in manifest]
+        self.assertEqual(len(ids), len(set(ids)))
         names = {f'category/{x}' for x in ('account', 'progress', 'economy', 'world', 'gear', 'social')}
-        names |= {'navigation/back', 'navigation/close'}
+        names |= {'navigation/back', 'navigation/close'} | {f'entry/{name}' for name in ids}
         images = set()
         for name in names:
             with self.subTest(name=name):
