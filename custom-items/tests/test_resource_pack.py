@@ -46,6 +46,25 @@ class ResourcePackTest(unittest.TestCase):
                 self.assertEqual(b"\x89PNG\r\n\x1a\n", data[:8])
                 self.assertEqual((64, 64), struct.unpack(">II", data[16:24]))
 
+    def test_mob_loot_models_cover_every_kind(self):
+        source = (PACK.parents[1] / 'mobs/src/main/java/ru/cherdakmd/chrdkmobs/MobLootItems.java').read_text()
+        ids = re.findall(r'^\s*(?:ESSENCE|VARIANT)_[A-Z]+\("([a-z-]+)",', source, re.MULTILINE)
+        self.assertEqual(7, len(ids)); self.assertEqual(7, len(set(ids)))
+        root = PACK / 'assets/chrdk_mobs'; hashes = set()
+        for name in ids:
+            path = 'loot/' + name
+            model = json.loads((root / 'models/item' / (path + '.json')).read_text())
+            item = json.loads((root / 'items' / (path + '.json')).read_text())
+            self.assertEqual('minecraft:item/generated', model['parent'])
+            self.assertEqual('chrdk_mobs:item/' + path, model['textures']['layer0'])
+            self.assertEqual({'type': 'minecraft:model', 'model': 'chrdk_mobs:item/' + path}, item['model'])
+            data = (root / 'textures/item' / (path + '.png')).read_bytes()
+            self.assertEqual(b'\x89PNG\r\n\x1a\n', data[:8])
+            self.assertEqual((32, 32), struct.unpack('>II', data[16:24]))
+            digest = hashlib.sha256(data).hexdigest(); self.assertNotIn(digest, hashes); hashes.add(digest)
+        for folder in ('items', 'models/item', 'textures/item'):
+            self.assertEqual(set(ids), {p.stem for p in (root / folder / 'loot').iterdir()})
+
     def test_skill_crystals_cover_all_skill_ids_with_distinct_original_textures(self):
         repo = PACK.parents[1]
         source = (repo / 'skills/src/main/java/ru/cherdakmd/chrdkskills/SkillType.java').read_text()

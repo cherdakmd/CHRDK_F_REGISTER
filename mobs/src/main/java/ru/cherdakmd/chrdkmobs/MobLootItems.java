@@ -103,6 +103,7 @@ final class MobLootItems implements Listener {
     ItemStack create(Kind kind, int count) {
         ItemStack item = new ItemStack(kind.material, Math.max(1, count));
         ItemMeta meta = item.getItemMeta();
+        MobLootVisuals.applyNew(meta, kind, plugin.getConfig().getBoolean("textures.loot-items", false));
         long xp = kind.variant() ? plugin.config().loot().variantXp() : plugin.config().loot().essenceXp();
         meta.displayName(plugin.messages().get("loot." + kind.id + ".name"));
         meta.lore(plugin.messages().getList("loot." + kind.id + ".lore", "amount", xp));
