@@ -69,6 +69,8 @@ public final class ArtifactItems {
         if (!encoded.isEmpty()) {
             meta.getPersistentDataContainer().set(traitKey, PersistentDataType.STRING, encoded);
         }
+        // Only newly built items: never rewrite inventories or existing artifacts here.
+        ArtifactVisuals.applyNew(meta, def, plugin.getConfig().getBoolean("textures.artifacts", false));
         stack.setItemMeta(meta);
         return stack;
     }

@@ -68,6 +68,29 @@ class ResourcePackTest(unittest.TestCase):
         for directory in ('items', 'models/item', 'textures/item'):
             self.assertEqual(set(skills), {p.stem for p in (root / directory / 'crystal').iterdir()})
 
+    def test_artifact_textures_cover_registry_with_distinct_models(self):
+        repo = PACK.parents[1]
+        source = (repo / 'artifacts/src/main/java/ru/cherdakmd/chrdkartifacts/ArtifactRegistry.java').read_text()
+        ids = re.findall(r'register\("([a-z0-9-]+)",\s*(?:GOOD|CURSED),\s*(?:ACTIVE|PASSIVE),\s*Material\.[A-Z_]+', source)
+        self.assertEqual(65, len(ids)); self.assertEqual(len(ids), len(set(ids)))
+        root = PACK / 'assets/chrdk_artifacts'
+        images = set()
+        for artifact in ids:
+            with self.subTest(artifact=artifact):
+                name = 'artifact/' + artifact
+                item = json.loads((root / f'items/{name}.json').read_text())['model']
+                self.assertEqual({'type': 'minecraft:model', 'model': f'chrdk_artifacts:item/{name}'}, item)
+                model = json.loads((root / f'models/item/{name}.json').read_text())
+                self.assertEqual('minecraft:item/generated', model['parent'])
+                self.assertEqual(f'chrdk_artifacts:item/{name}', model['textures']['layer0'])
+                data = (root / f'textures/item/{name}.png').read_bytes()
+                self.assertEqual(b'\x89PNG\r\n\x1a\n', data[:8])
+                self.assertEqual((32, 32), struct.unpack('>II', data[16:24]))
+                digest = hashlib.sha256(data).hexdigest()
+                self.assertNotIn(digest, images); images.add(digest)
+        for directory in ('items', 'models/item', 'textures/item'):
+            self.assertEqual(set(ids), {p.stem for p in (root / directory / 'artifact').iterdir()})
+
     def test_menu_icons_have_unique_textures_and_complete_model_links(self):
         root = PACK / 'assets/chrdk_menu'
         repo = PACK.parents[1]
