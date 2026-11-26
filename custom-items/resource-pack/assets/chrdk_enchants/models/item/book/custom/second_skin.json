@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "chrdk_enchants:item/book/custom/second_skin"
+  }
+}

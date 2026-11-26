@@ -68,6 +68,36 @@ class ResourcePackTest(unittest.TestCase):
         for directory in ('items', 'models/item', 'textures/item'):
             self.assertEqual(set(skills), {p.stem for p in (root / directory / 'crystal').iterdir()})
 
+    def test_enchant_book_models_cover_catalogue_and_snapshot_without_vanilla_overrides(self):
+        repo = PACK.parents[1]
+        source = (repo / 'enchants/src/main/java/ru/cherdakmd/chrdkenchants/EnchantRegistry.java').read_text()
+        custom = re.findall(r'register\("([a-z0-9_]+)",\s*(?:COMMON|RARE|EPIC|LEGENDARY),\s*\d+,\s*(?:null|"[^"]+"),\s*(?:LIGHT|CURSE)', source)
+        self.assertEqual(75, len(custom)); self.assertEqual(len(custom), len(set(custom)))
+        policy = (repo / 'enchants/src/main/java/ru/cherdakmd/chrdkenchants/BookVisualPolicy.java').read_text()
+        snapshot = policy.split('static final Set<String> VANILLA = Set.of(', 1)[1].split(');', 1)[0]
+        vanilla = re.findall(r'"([a-z_]+)"', snapshot)
+        self.assertEqual(43, len(vanilla)); self.assertEqual(len(vanilla), len(set(vanilla)))
+        reviewed = json.loads((repo / 'enchants/vanilla-enchantments-26.1.json').read_text())
+        self.assertEqual(set(reviewed['ids']), set(vanilla))
+        names = {f'custom/{name}' for name in custom + ['lavawalker']}
+        names |= {f'vanilla/{name}' for name in vanilla} | {'mixed/custom', 'mixed/vanilla', 'mixed/both'}
+        root = PACK / 'assets/chrdk_enchants'
+        images = set()
+        for name in names:
+            with self.subTest(book=name):
+                item = json.loads((root / f'items/book/{name}.json').read_text())['model']
+                self.assertEqual({'type': 'minecraft:model', 'model': f'chrdk_enchants:item/book/{name}'}, item)
+                model = json.loads((root / f'models/item/book/{name}.json').read_text())
+                self.assertEqual('minecraft:item/generated', model['parent'])
+                self.assertEqual(f'chrdk_enchants:item/book/{name}', model['textures']['layer0'])
+                data = (root / f'textures/item/book/{name}.png').read_bytes()
+                self.assertEqual(b'\x89PNG\r\n\x1a\n', data[:8]); self.assertEqual((32, 32), struct.unpack('>II', data[16:24]))
+                digest = hashlib.sha256(data).hexdigest(); self.assertNotIn(digest, images); images.add(digest)
+        for directory in ('items', 'models/item', 'textures/item'):
+            base = root / directory / 'book'
+            self.assertEqual(names, {p.relative_to(base).with_suffix('').as_posix() for p in base.rglob('*') if p.is_file()})
+        self.assertFalse((PACK / 'assets/minecraft/items/enchanted_book.json').exists())
+
     def test_artifact_textures_cover_registry_with_distinct_models(self):
         repo = PACK.parents[1]
         source = (repo / 'artifacts/src/main/java/ru/cherdakmd/chrdkartifacts/ArtifactRegistry.java').read_text()
