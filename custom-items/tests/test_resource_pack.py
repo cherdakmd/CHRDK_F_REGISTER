@@ -46,6 +46,17 @@ class ResourcePackTest(unittest.TestCase):
                 self.assertEqual(b"\x89PNG\r\n\x1a\n", data[:8])
                 self.assertEqual((64, 64), struct.unpack(">II", data[16:24]))
 
+    def test_generator_core_model_is_complete(self):
+        root = PACK / 'assets/chrdk_generator'
+        model = json.loads((root / 'models/item/core.json').read_text())
+        item = json.loads((root / 'items/core.json').read_text())
+        self.assertEqual('minecraft:item/generated', model['parent'])
+        self.assertEqual('chrdk_generator:item/core', model['textures']['layer0'])
+        self.assertEqual({'type': 'minecraft:model', 'model': 'chrdk_generator:item/core'}, item['model'])
+        data = (root / 'textures/item/core.png').read_bytes()
+        self.assertEqual(b'\x89PNG\r\n\x1a\n', data[:8])
+        self.assertEqual((32, 32), struct.unpack('>II', data[16:24]))
+
     def test_mob_loot_models_cover_every_kind(self):
         source = (PACK.parents[1] / 'mobs/src/main/java/ru/cherdakmd/chrdkmobs/MobLootItems.java').read_text()
         ids = re.findall(r'^\s*(?:ESSENCE|VARIANT)_[A-Z]+\("([a-z-]+)",', source, re.MULTILINE)

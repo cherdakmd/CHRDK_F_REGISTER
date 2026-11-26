@@ -25,7 +25,7 @@ final class GeneratorCoreTake {
         int empty = -1;
         for (int i = 0; i < after.length; i++) if (after[i] == null || after[i].getType() == Material.AIR) { empty = i; break; }
         if (empty < 0) return false;
-        after[empty] = plugin.coreItem().build(entry.coreItem());
+        after[empty] = plugin.coreItem().buildRestored(entry.coreItem(), entry.coreTextured());
         var intent = new GeneratorStore.CoreTake(UUID.randomUUID(), entry.coreItem(),
                 ChargeInventory.encode(before), ChargeInventory.encode(after));
         if (!plugin.store().prepareCoreTake(player.getUniqueId(), slot, intent)) return false;

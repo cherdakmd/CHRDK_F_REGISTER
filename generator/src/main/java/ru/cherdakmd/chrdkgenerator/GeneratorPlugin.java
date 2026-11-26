@@ -196,7 +196,7 @@ public final class GeneratorPlugin extends JavaPlugin {
         if (!craft.enabled()) {
             return;
         }
-        ItemStack template = coreItem.build(null);
+        ItemStack template = coreItem.buildNew(null);
         ShapedRecipe recipe = new ShapedRecipe(recipeKey, template);
         recipe.shape(craft.shape().toArray(new String[0]));
         for (var row : craft.ingredients().entrySet()) {
@@ -262,7 +262,7 @@ public final class GeneratorPlugin extends JavaPlugin {
         long concrete = containers.count(entry.owner(), entry.slot());
         long total = entry.bunker() > Long.MAX_VALUE - concrete ? Long.MAX_VALUE : entry.bunker() + concrete;
         return new GeneratorStore.Entry(entry.owner(), entry.slot(), entry.coreItem(), entry.world(), entry.x(), entry.y(), entry.z(),
-                entry.tier(), entry.modules(), total, entry.lastCalcMillis(), entry.rebirths(), entry.fuelUsedMs(), entry.money(), entry.payoutDay());
+                entry.tier(), entry.modules(), total, entry.lastCalcMillis(), entry.rebirths(), entry.fuelUsedMs(), entry.money(), entry.payoutDay(), entry.coreTextured());
     }
 
     public GeneratorConfig config() {

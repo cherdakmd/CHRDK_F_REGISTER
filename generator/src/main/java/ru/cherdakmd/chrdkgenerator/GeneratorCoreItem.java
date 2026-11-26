@@ -40,8 +40,19 @@ public final class GeneratorCoreItem {
 
     /** Собирает ядро; {@code coreId == null} — шаблон рецепта без идентификатора. */
     public ItemStack build(UUID coreId) {
+        return buildRestored(coreId, false);
+    }
+
+    /** New crafting output only; never scan or rewrite previously issued items. */
+    ItemStack buildNew(UUID coreId) {
+        return buildRestored(coreId, plugin.getConfig().getBoolean("textures.core-items", false));
+    }
+
+    /** Recreate the appearance recorded at placement, regardless of the current flag. */
+    ItemStack buildRestored(UUID coreId, boolean textured) {
         ItemStack stack = new ItemStack(Material.LODESTONE);
         ItemMeta meta = stack.getItemMeta();
+        GeneratorCoreVisuals.applyNew(meta, textured);
         Component name = plugin.messages().get("core-item-name");
         meta.displayName(name.decoration(TextDecoration.ITALIC, false));
         List<Component> lore = plugin.messages().getList("core-item-lore");
@@ -55,6 +66,12 @@ public final class GeneratorCoreItem {
         }
         stack.setItemMeta(meta);
         return stack;
+    }
+
+    boolean hasOwnModel(ItemStack item) {
+        if (!isCore(item)) return false;
+        var meta = item.getItemMeta();
+        return GeneratorCoreVisuals.MODEL.equals(meta.getItemModel()) && !meta.hasCustomModelData();
     }
 
     /** Предмет — ядро генератора (с идентификатором или шаблон). */

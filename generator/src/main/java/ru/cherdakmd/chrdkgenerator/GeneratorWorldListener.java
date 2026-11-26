@@ -76,7 +76,7 @@ public final class GeneratorWorldListener implements Listener {
         if (!plugin.recipeKey().equals(keyed.getKey())) {
             return;
         }
-        event.getInventory().setResult(plugin.coreItem().build(UUID.randomUUID()));
+        event.getInventory().setResult(plugin.coreItem().buildNew(UUID.randomUUID()));
     }
 
     /** Смещённый крафт выдаёт копии одного идентификатора — только по одному. */
@@ -130,7 +130,7 @@ public final class GeneratorWorldListener implements Listener {
         try {
             installed = plugin.store().install(player.getUniqueId(), coreId,
                     target.getWorld().getName(), target.getX(), target.getY(), target.getZ(),
-                    System.currentTimeMillis(), plugin.maxSlots(player));
+                    System.currentTimeMillis(), plugin.maxSlots(player), plugin.coreItem().hasOwnModel(item));
         } catch (IllegalArgumentException exception) {
             plugin.messages().send(player, "place-core-busy");
             return;

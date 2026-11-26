@@ -79,9 +79,17 @@ public final class GeneratorStore {
     /** Неизменяемый снимок записи для чтения (GUI, PAPI, команды). */
     public record Entry(UUID owner, int slot, UUID coreItem, String world, int x, int y, int z,
                         int tier, Map<String, Integer> modules, long bunker, long lastCalcMillis,
-                        int rebirths, long fuelUsedMs, long money, long payoutDay) {
+                        int rebirths, long fuelUsedMs, long money, long payoutDay, boolean coreTextured) {
         public Entry {
             modules = Map.copyOf(modules);
+        }
+
+        /** Compatibility constructor for callers that have no appearance information. */
+        public Entry(UUID owner, int slot, UUID coreItem, String world, int x, int y, int z,
+                     int tier, Map<String, Integer> modules, long bunker, long lastCalcMillis,
+                     int rebirths, long fuelUsedMs, long money, long payoutDay) {
+            this(owner, slot, coreItem, world, x, y, z, tier, modules, bunker, lastCalcMillis,
+                    rebirths, fuelUsedMs, money, payoutDay, false);
         }
 
         /** Ядро установлено в мире (бинд активен). */
@@ -109,6 +117,7 @@ public final class GeneratorStore {
     /** Запись одного генератора (слот = позиция в списке игрока). */
     private static final class Row {
         UUID coreItem;
+        boolean coreTextured; // appearance of this installed item, false for legacy rows
         String world;
         int x;
         int y;
@@ -301,6 +310,8 @@ public final class GeneratorStore {
                             drop.get("weight").getAsBigDecimal().intValueExact();
                         }
                     }
+                    if (player.has("coreTextured") && (!player.get("coreTextured").isJsonPrimitive()
+                            || !player.get("coreTextured").getAsJsonPrimitive().isBoolean())) throw new IOException("core appearance type");
                     if (player.has("skillRebirthBaseline") && (!player.get("skillRebirthBaseline").isJsonPrimitive()
                             || !player.get("skillRebirthBaseline").getAsJsonPrimitive().isBoolean())) throw new IOException("rebirth baseline type");
                     if (player.has("coreTake") && !player.get("coreTake").isJsonNull()) {
@@ -448,7 +459,7 @@ public final class GeneratorStore {
                     if (!cores.add(row.coreItem)) {
                         throw new IllegalArgumentException("generator duplicated core");
                     }
-                } else if (row.bunker != 0) {
+                } else if (row.bunker != 0 || row.coreTextured) {
                     throw new IllegalArgumentException("generator detached bunker");
                 }
             }
@@ -548,7 +559,7 @@ public final class GeneratorStore {
     private static Entry snapshot(UUID owner, int slot, Row row, Row primary) {
         return new Entry(owner, slot, row.coreItem, row.world, row.x, row.y, row.z,
                 row.tier, row.modules, row.bunker, row.lastCalcMillis,
-                primary.rebirths, row.fuelUsedMs, primary.money, primary.payoutDay);
+                primary.rebirths, row.fuelUsedMs, primary.money, primary.payoutDay, row.coreTextured);
     }
 
     /**
@@ -559,6 +570,10 @@ public final class GeneratorStore {
      */
     public synchronized InstallResult install(UUID owner, UUID coreItem, String world,
                                               int x, int y, int z, long now, int maxSlots) {
+        return install(owner, coreItem, world, x, y, z, now, maxSlots, false);
+    }
+    public synchronized InstallResult install(UUID owner, UUID coreItem, String world,
+                                              int x, int y, int z, long now, int maxSlots, boolean coreTextured) {
         writable();
         if (owner == null || coreItem == null || world == null || !world.matches(WORLD_PATTERN)) {
             throw new IllegalArgumentException("generator install arguments");
@@ -605,6 +620,7 @@ public final class GeneratorStore {
         row.tier = progress == null ? 1 : progress.tier;
         row.modules = progress == null ? new LinkedHashMap<>() : new LinkedHashMap<>(progress.modules);
         row.coreItem = coreItem;
+        row.coreTextured = coreTextured;
         row.world = world;
         row.x = x;
         row.y = y;
@@ -629,6 +645,7 @@ public final class GeneratorStore {
         }
         long handed = row.bunker;
         row.coreItem = null;
+        row.coreTextured = false;
         row.world = null;
         row.bunker = 0L;
         row.lastCalcMillis = Math.max(0L, now);
@@ -972,7 +989,7 @@ public final class GeneratorStore {
         progress.tier = row.tier; progress.modules = new LinkedHashMap<>(row.modules);
         saved.put(row.coreItem, progress);
         row.tier = 1; row.modules.clear();
-        row.coreItem = null; row.world = null; row.coreTake = null; row.lastCalcMillis = now; dirty = true;
+        row.coreItem = null; row.coreTextured = false; row.world = null; row.coreTake = null; row.lastCalcMillis = now; dirty = true;
         return payoutCheckpoint();
     }
 
