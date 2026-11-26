@@ -455,7 +455,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         lore.add(plugin.messages().get("ability-card-click"));
         meta.lore(lore);
         item.setItemMeta(meta);
-        return item;
+        return visual(item, SkillsMenuVisuals.ability(ability));
     }
 
     private ItemStack perkIcon(SkillPerk perk, int level) {
@@ -649,10 +649,12 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
             inventory.setItem(SKILL_SLOTS[index], potionIcon(player, skills.get(index), shop));
         }
         inventory.setItem(SLOT_SUMMARY, summary(player));
-        inventory.setItem(SLOT_CONTEXT, button(Material.EMERALD, "potion-shop-info",
-                List.of(plugin.messages().get(shop != null && shop.shopEnabled()
+        boolean shopOpen = shop != null && shop.shopEnabled();
+        inventory.setItem(SLOT_CONTEXT, visual(button(Material.EMERALD, "potion-shop-info",
+                List.of(plugin.messages().get(shopOpen
                         ? "potion-shop-price" : "potion-shop-closed",
-                        "cost", String.valueOf(shop == null ? 0 : shop.price())))));
+                        "cost", String.valueOf(shop == null ? 0 : shop.price())))),
+                SkillsMenuVisuals.shop(shopOpen).model()));
     }
 
     private ItemStack potionIcon(Player player, SkillType skill, SkillXpShop shop) {

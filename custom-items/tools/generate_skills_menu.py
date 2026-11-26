@@ -6,7 +6,8 @@ from PIL import Image, ImageDraw
 ROOT = Path(__file__).resolve().parents[1] / 'resource-pack/assets/chrdk_skills'
 TABS = ('skills', 'attributes', 'top', 'rebirth', 'potions', 'builds')
 CONTROLS = ('guide', 'back', 'close', 'steps', 'summary', 'perk_active', 'perk_locked',
-            'reset_attributes', 'confirm_attributes', 'reset_builds', 'confirm_builds')
+            'reset_attributes', 'confirm_attributes', 'reset_builds', 'confirm_builds',
+            'rank_entry', 'rank_empty', 'rebirth_title', 'rebirth_top', 'shop_open', 'shop_closed')
 SKILLS = ('mining', 'woodcutting', 'digging', 'farming', 'fishing', 'combat', 'archery', 'defense', 'alchemy', 'enchanting')
 ATTRIBUTES = ('strength', 'agility', 'stamina', 'wisdom', 'cunning')
 BRANCHES = ('warrior', 'archer', 'mage', 'cleric', 'priest', 'rogue')
@@ -64,6 +65,20 @@ def control_art(name):
         d.polygon([(7, 16), (15, 9), (15, 13), (24, 13), (24, 19), (15, 19), (15, 23)], fill=accent, outline=ink)
     elif name == 'close':
         d.line((10, 10, 22, 22), fill='#ed8279', width=4); d.line((22, 10, 10, 22), fill='#ed8279', width=4)
+    elif name in ('rank_entry', 'rank_empty', 'rebirth_title', 'rebirth_top'):
+        d.polygon([(10, 9), (22, 9), (21, 17), (16, 20), (11, 17)], fill='#dfb968', outline=ink)
+        d.rectangle((14, 20, 18, 23), fill='#dfb968', outline=ink)
+        if name == 'rank_empty':
+            d.line((11, 11, 21, 21), fill='#ddd5d0', width=2); d.line((21, 11, 11, 21), fill='#ddd5d0', width=2)
+        elif name == 'rank_entry': d.ellipse((14, 12, 18, 16), fill=light)
+        elif name == 'rebirth_title':
+            d.polygon([(16, 6), (17, 10), (20, 11), (17, 12), (16, 15), (15, 12), (12, 11), (15, 10)], fill='#e9d7ff')
+        else: d.line((11, 23, 21, 23), fill='#c6a1e2', width=2)
+    elif name in ('shop_open', 'shop_closed'):
+        d.polygon([(16, 7), (22, 12), (19, 22), (13, 22), (10, 12)], fill='#75d2b8', outline=ink)
+        if name == 'shop_open': d.line((11, 17, 14, 20, 21, 12), fill=light, width=2)
+        else:
+            d.line((11, 11, 21, 21), fill='#f2988c', width=2); d.line((21, 11, 11, 21), fill='#f2988c', width=2)
     elif name.startswith('perk_'):
         d.polygon([(16, 7), (23, 11), (22, 20), (16, 24), (10, 20), (9, 11)], fill=accent, outline=ink)
         if name == 'perk_active': d.line((11, 16, 15, 20, 21, 12), fill=light, width=2)
@@ -142,6 +157,15 @@ def card_art(group, name, rebirth=None):
             d.arc((23, 21, 27, 27), 180, 360, fill=light); d.rectangle((22, 25, 28, 29), outline=light)
     return im
 
+def ability_art(name):
+    im = card_art('skill', name)
+    d = ImageDraw.Draw(im)
+    d.ellipse((19, 19, 31, 31), fill='#292b37')
+    d.ellipse((20, 20, 30, 30), fill='#e9b65b')
+    d.polygon([(26, 21), (22, 26), (25, 26), (24, 29), (28, 24), (25, 24)], fill='#fff2cb')
+    return im
+
+
 def save(path, image):
     texture = ROOT / 'textures/item' / (path + '.png'); texture.parent.mkdir(parents=True, exist_ok=True); image.save(texture)
     ref = 'chrdk_skills:item/' + path
@@ -157,8 +181,9 @@ if __name__ == '__main__':
     for name in CONTROLS: save('menu/' + name, control_art(name))
     for name in SKILLS:
         save('menu/skill/' + name, card_art('skill', name))
+        save('menu/ability/' + name, ability_art(name))
         for state, ready in (('waiting', False), ('ready', True)):
             save('menu/rebirth/' + name + '_' + state, card_art('skill', name, ready))
     for name in ATTRIBUTES: save('menu/attribute/' + name, card_art('attribute', name))
     for name in BRANCHES: save('menu/branch/' + name, card_art('branch', name))
-    print('Generated 64 Skills navigation, state and card icons')
+    print('Generated 80 Skills navigation, state and card icons')

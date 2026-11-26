@@ -16,7 +16,7 @@ class SkillsMenuVisualsTest {
             assertTrue(models.add(SkillsMenuVisuals.tab(tab, true)));
         }
         for (var icon : SkillsMenuVisuals.Control.values()) assertTrue(models.add(icon.model()));
-        assertEquals(23, models.size());
+        assertEquals(29, models.size());
         assertEquals(SkillsMenuVisuals.Control.PERK_ACTIVE, SkillsMenuVisuals.perk(true));
         assertEquals(SkillsMenuVisuals.Control.PERK_LOCKED, SkillsMenuVisuals.perk(false));
         assertEquals(SkillsMenuVisuals.Control.RESET_ATTRIBUTES, SkillsMenuVisuals.reset(false, false));
@@ -25,7 +25,12 @@ class SkillsMenuVisualsTest {
         assertEquals(SkillsMenuVisuals.Control.CONFIRM_BUILDS, SkillsMenuVisuals.reset(true, true));
         assertEquals(SkillsMenuVisuals.Control.BACK, SkillsMenuVisuals.button("menu-rebirth-back"));
         assertNull(SkillsMenuVisuals.button("potion-shop-info"));
-        assertNull(SkillsMenuVisuals.button("top-line"));
+        assertEquals(SkillsMenuVisuals.Control.RANK_ENTRY, SkillsMenuVisuals.button("top-line"));
+        assertEquals(SkillsMenuVisuals.Control.RANK_EMPTY, SkillsMenuVisuals.button("top-empty"));
+        assertEquals(SkillsMenuVisuals.Control.REBIRTH_TITLE, SkillsMenuVisuals.button("menu-rebirth-title"));
+        assertEquals(SkillsMenuVisuals.Control.REBIRTH_TOP, SkillsMenuVisuals.button("menu-rebirth-top-button"));
+        assertEquals(SkillsMenuVisuals.Control.SHOP_OPEN, SkillsMenuVisuals.shop(true));
+        assertEquals(SkillsMenuVisuals.Control.SHOP_CLOSED, SkillsMenuVisuals.shop(false));
     }
     @Test void everySkillRebirthAttributeAndBranchHasItsOwnModel() {
         var models = new HashSet<NamespacedKey>();
@@ -40,6 +45,15 @@ class SkillsMenuVisualsTest {
         assertEquals(41, models.size());
         assertEquals("menu/rebirth/mining_ready", SkillsMenuVisuals.rebirth(SkillType.MINING, true).getKey());
         assertEquals("menu/rebirth/mining_waiting", SkillsMenuVisuals.rebirth(SkillType.MINING, false).getKey());
+    }
+    @Test void abilityIconsAreDistinctAndMatchEachSkill() {
+        var keys = new HashSet<NamespacedKey>();
+        for (var ability : SkillAbility.values()) {
+            assertEquals("menu/ability/" + ability.id(), SkillsMenuVisuals.ability(ability).getKey());
+            assertEquals(ability.id(), ability.skill().id());
+            assertTrue(keys.add(SkillsMenuVisuals.ability(ability)));
+        }
+        assertEquals(SkillType.values().length, keys.size());
     }
     @Test void disabledOrForeignMetadataIsNotOverwritten() {
         var meta = mock(ItemMeta.class); var model = SkillsMenuVisuals.Control.GUIDE.model();

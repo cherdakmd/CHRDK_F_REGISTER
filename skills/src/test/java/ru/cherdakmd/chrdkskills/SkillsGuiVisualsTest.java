@@ -108,11 +108,68 @@ class SkillsGuiVisualsTest {
                 gui.onClick(click(view, player, 11));
                 checkModel(slots.get(4), SkillsMenuVisuals.skill(SkillType.MINING), enabled);
                 checkModel(slots.get(10), SkillsMenuVisuals.Control.PERK_ACTIVE.model(), enabled);
+                checkModel(slots.get(31), SkillsMenuVisuals.ability(SkillAbility.MINING), enabled);
                 gui.onClick(click(view, player, 5));
                 checkModel(slots.get(11), SkillsMenuVisuals.rebirth(SkillType.MINING, true), enabled);
                 checkModel(slots.get(12), SkillsMenuVisuals.rebirth(SkillType.WOODCUTTING, false), enabled);
+                checkModel(slots.get(31), SkillsMenuVisuals.Control.REBIRTH_TITLE.model(), enabled);
+                checkModel(slots.get(46), SkillsMenuVisuals.Control.REBIRTH_TOP.model(), enabled);
                 verify(player, never()).getInventory();
                 for (var item : items.constructed()) verify(item.getItemMeta(), never()).getPersistentDataContainer();
+            }
+        }
+    }
+    @Test void rankingAndShopStatesKeepCrystalItemsAndBuyingBehavior() {
+        for (boolean enabled : new boolean[]{false, true}) {
+            var plugin = mock(SkillsPlugin.class); var service = mock(SkillService.class);
+            var fileConfig = new YamlConfiguration(); fileConfig.set("textures.menu", enabled); when(plugin.getConfig()).thenReturn(fileConfig);
+            var config = mock(SkillsConfig.class); when(config.enabled()).thenReturn(true); when(plugin.config()).thenReturn(config);
+            when(plugin.messages()).thenReturn(Messages.from(SkillsGuiVisualsTest.class.getResourceAsStream("/messages.yml"), null, Logger.getAnonymousLogger()));
+            var abilities = mock(SkillAbilities.class); when(plugin.abilities()).thenReturn(abilities);
+            var shop = mock(SkillXpShop.class); when(shop.shopEnabled()).thenReturn(true);
+            when(shop.price()).thenReturn(96); when(shop.stackSize()).thenReturn(64); when(plugin.xpShop()).thenReturn(shop);
+            var xpItems = mock(SkillXpItems.class); when(plugin.xpItems()).thenReturn(xpItems);
+            Map<SkillType, ItemStack> crystals = new java.util.EnumMap<>(SkillType.class);
+            for (var skill : SkillType.values()) {
+                var crystal = mock(ItemStack.class); var meta = mock(ItemMeta.class);
+                when(crystal.getItemMeta()).thenReturn(meta);
+                when(meta.getItemModel()).thenReturn(new org.bukkit.NamespacedKey("other", "existing"));
+                when(xpItems.create(skill)).thenReturn(crystal); crystals.put(skill, crystal);
+            }
+            var player = mock(Player.class); when(player.getUniqueId()).thenReturn(UUID.randomUUID());
+            var inventory = mock(Inventory.class); var holder = new AtomicReference<InventoryHolder>();
+            when(inventory.getHolder()).thenAnswer(c -> holder.get()); when(inventory.getSize()).thenReturn(54);
+            Map<Integer, ItemStack> slots = new HashMap<>();
+            doAnswer(c -> { slots.clear(); return null; }).when(inventory).clear();
+            doAnswer(c -> { slots.put(c.getArgument(0), c.getArgument(1)); return null; }).when(inventory).setItem(anyInt(), nullable(ItemStack.class));
+            when(inventory.getItem(anyInt())).thenAnswer(c -> slots.get(c.getArgument(0)));
+            var view = mock(InventoryView.class); when(view.getTopInventory()).thenReturn(inventory);
+            var gui = new SkillsGui(plugin, service);
+            try (var bukkit = mockStatic(Bukkit.class); var items = mockConstruction(ItemStack.class, (item, context) -> {
+                var meta = mock(ItemMeta.class); when(item.getItemMeta()).thenReturn(meta);
+            })) {
+                bukkit.when(() -> Bukkit.createInventory(any(InventoryHolder.class), eq(54), any(Component.class)))
+                        .thenAnswer(c -> { holder.set(c.getArgument(0)); return inventory; });
+                gui.open(player, SkillsMenuApi.Tab.TOP, 0);
+                checkModel(slots.get(22), SkillsMenuVisuals.Control.RANK_EMPTY.model(), enabled);
+                when(service.top()).thenReturn(java.util.List.of(new SkillService.Entry("Player", 12, 1000)));
+                gui.onClick(click(view, player, 2));
+                checkModel(slots.get(11), SkillsMenuVisuals.Control.RANK_ENTRY.model(), enabled);
+                gui.onClick(click(view, player, 6));
+                checkModel(slots.get(4), SkillsMenuVisuals.Control.SHOP_OPEN.model(), enabled);
+                int[] skillSlots = {11, 12, 13, 14, 15, 20, 21, 22, 23, 24}; int index = 0;
+                for (var skill : SkillRegistry.all()) {
+                    var crystal = crystals.get(skill); assertSame(crystal, slots.get(skillSlots[index++]));
+                    verify(crystal.getItemMeta(), never()).setItemModel(any());
+                    verify(crystal.getItemMeta(), never()).getPersistentDataContainer();
+                }
+                var one = click(view, player, 11); gui.onClick(one); verify(shop).buy(player, SkillType.MINING, 1);
+                var stack = click(view, player, 11); when(stack.isShiftClick()).thenReturn(true);
+                gui.onClick(stack); verify(shop).buy(player, SkillType.MINING, 64);
+                when(shop.shopEnabled()).thenReturn(false); gui.onClick(click(view, player, 6));
+                checkModel(slots.get(4), SkillsMenuVisuals.Control.SHOP_CLOSED.model(), enabled);
+                gui.onClick(click(view, player, 11)); verify(shop, times(1)).buy(player, SkillType.MINING, 1);
+                verify(player, never()).getInventory();
             }
         }
     }

@@ -60,7 +60,8 @@ class ResourcePackTest(unittest.TestCase):
         root = PACK / 'assets/chrdk_skills'
         tabs = ('skills', 'attributes', 'top', 'rebirth', 'potions', 'builds')
         controls = ('guide', 'back', 'close', 'steps', 'summary', 'perk_active', 'perk_locked',
-                    'reset_attributes', 'confirm_attributes', 'reset_builds', 'confirm_builds')
+                    'reset_attributes', 'confirm_attributes', 'reset_builds', 'confirm_builds',
+                    'rank_entry', 'rank_empty', 'rebirth_title', 'rebirth_top', 'shop_open', 'shop_closed')
         paths = {f'menu/tab/{name}{suffix}' for name in tabs for suffix in ('', '_selected')}
         paths.update(f'menu/{name}' for name in controls)
         skills = ('mining', 'woodcutting', 'digging', 'farming', 'fishing',
@@ -68,10 +69,11 @@ class ResourcePackTest(unittest.TestCase):
         attributes = ('strength', 'agility', 'stamina', 'wisdom', 'cunning')
         branches = ('warrior', 'archer', 'mage', 'cleric', 'priest', 'rogue')
         paths.update(f'menu/skill/{name}' for name in skills)
+        paths.update(f'menu/ability/{name}' for name in skills)
         paths.update(f'menu/rebirth/{name}_{state}' for name in skills for state in ('waiting', 'ready'))
         paths.update(f'menu/attribute/{name}' for name in attributes)
         paths.update(f'menu/branch/{name}' for name in branches)
-        self.assertEqual(64, len(paths))
+        self.assertEqual(80, len(paths))
         for cls, ids in [('SkillType', skills), ('PlayerAttribute', attributes), ('BuildBranch', branches)]:
             enum_source = (PACK.parents[1] / f'skills/src/main/java/ru/cherdakmd/chrdkskills/{cls}.java').read_text(encoding='utf-8')
             entries = re.findall(r'^    [A-Z_]+\("([a-z_]+)"', enum_source, re.MULTILINE)

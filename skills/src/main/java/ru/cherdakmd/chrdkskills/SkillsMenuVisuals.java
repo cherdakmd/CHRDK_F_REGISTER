@@ -9,7 +9,9 @@ final class SkillsMenuVisuals {
         GUIDE("guide"), BACK("back"), CLOSE("close"), STEPS("steps"), SUMMARY("summary"),
         PERK_ACTIVE("perk_active"), PERK_LOCKED("perk_locked"),
         RESET_ATTRIBUTES("reset_attributes"), CONFIRM_ATTRIBUTES("confirm_attributes"),
-        RESET_BUILDS("reset_builds"), CONFIRM_BUILDS("confirm_builds");
+        RESET_BUILDS("reset_builds"), CONFIRM_BUILDS("confirm_builds"),
+        RANK_ENTRY("rank_entry"), RANK_EMPTY("rank_empty"), REBIRTH_TITLE("rebirth_title"), REBIRTH_TOP("rebirth_top"),
+        SHOP_OPEN("shop_open"), SHOP_CLOSED("shop_closed");
         private final String id;
         Control(String id) { this.id = id; }
         NamespacedKey model() { return new NamespacedKey("chrdk_skills", "menu/" + id); }
@@ -30,6 +32,9 @@ final class SkillsMenuVisuals {
     static NamespacedKey skill(SkillType skill) {
         return new NamespacedKey("chrdk_skills", "menu/skill/" + skill.id());
     }
+    static NamespacedKey ability(SkillAbility ability) {
+        return new NamespacedKey("chrdk_skills", "menu/ability/" + ability.id());
+    }
     static NamespacedKey rebirth(SkillType skill, boolean ready) {
         return new NamespacedKey("chrdk_skills", "menu/rebirth/" + skill.id() + (ready ? "_ready" : "_waiting"));
     }
@@ -46,10 +51,15 @@ final class SkillsMenuVisuals {
             case "menu-close" -> Control.CLOSE;
             case "detail-back", "menu-rebirth-back" -> Control.BACK;
             case "menu-steps-title" -> Control.STEPS;
+            case "top-line" -> Control.RANK_ENTRY;
+            case "top-empty" -> Control.RANK_EMPTY;
+            case "menu-rebirth-title" -> Control.REBIRTH_TITLE;
+            case "menu-rebirth-top-button" -> Control.REBIRTH_TOP;
             default -> null;
         };
     }
 
+    static Control shop(boolean open) { return open ? Control.SHOP_OPEN : Control.SHOP_CLOSED; }
     static Control perk(boolean active) { return active ? Control.PERK_ACTIVE : Control.PERK_LOCKED; }
     static Control reset(boolean builds, boolean armed) {
         return builds ? (armed ? Control.CONFIRM_BUILDS : Control.RESET_BUILDS)
