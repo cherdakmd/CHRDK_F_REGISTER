@@ -30,7 +30,8 @@ class BookVisualListenerTest {
         when(before.clone()).thenReturn(copy);
         when(inv.getStorageContents()).thenReturn(new ItemStack[]{before}); when(inv.getItem(0)).thenReturn(before);
         var scheduler = mock(BukkitScheduler.class); var queued = new AtomicReference<Runnable>();
-        doAnswer(c -> { queued.set(c.getArgument(1)); return null; }).when(scheduler).runTask(eq(plugin), any(Runnable.class));
+        var task = mock(org.bukkit.scheduler.BukkitTask.class);
+        doAnswer(c -> { queued.set(c.getArgument(1)); return task; }).when(scheduler).runTask(eq(plugin), any(Runnable.class));
         try (var bukkit = mockStatic(Bukkit.class)) {
             bukkit.when(Bukkit::getScheduler).thenReturn(scheduler);
             var safeView = new java.util.concurrent.atomic.AtomicBoolean(false);
