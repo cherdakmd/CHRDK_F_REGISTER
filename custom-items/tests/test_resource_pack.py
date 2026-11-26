@@ -46,6 +46,16 @@ class ResourcePackTest(unittest.TestCase):
                 self.assertEqual(b"\x89PNG\r\n\x1a\n", data[:8])
                 self.assertEqual((64, 64), struct.unpack(">II", data[16:24]))
 
+    def test_shop_book_model_allowlists_match_the_pack(self):
+        source = (PACK.parents[1] / 'diamond-shop/src/main/java/ru/cherdakmd/diamondshop/ShopBookVisuals.java').read_text(encoding='utf-8')
+        for kind, constant in [('custom', 'CUSTOM'), ('vanilla', 'VANILLA')]:
+            match = re.search(r'private static final Set<String> ' + constant + r' = Set.of\((.*?)\);', source, re.DOTALL)
+            self.assertIsNotNone(match)
+            ids = re.findall(r'"([a-z_]+)"', match.group(1))
+            files = {p.stem for p in (PACK / 'assets/chrdk_enchants/items/book' / kind).glob('*.json')}
+            self.assertEqual(len(ids), len(set(ids)))
+            self.assertEqual(files, set(ids))
+
     def test_generator_core_model_is_complete(self):
         root = PACK / 'assets/chrdk_generator'
         model = json.loads((root / 'models/item/core.json').read_text())

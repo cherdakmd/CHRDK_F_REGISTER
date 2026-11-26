@@ -163,7 +163,8 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
         ShopPromoService promos = new ShopPromoService(promoSettings, promoStore);
         this.welcomeGift = new ShopWelcomeGift(getDataFolder().toPath(),getLogger(),
                 getConfig().getBoolean("welcome-gift.enabled",true),getConfig().getLong("welcome-gift.amount",10000));
-        this.shopService = new ShopService(data, store, this::coreApi, this::skillsApi, promos);
+        this.shopService = new ShopService(data, store, this::coreApi, this::skillsApi, promos,
+                () -> getConfig().getBoolean("textures.book-items", false));
     }
 
     /** API ядра; {@code null}, если основной плагин не загружен (очередь загрузки). */

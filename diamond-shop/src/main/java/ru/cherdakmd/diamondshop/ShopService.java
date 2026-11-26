@@ -20,6 +20,7 @@ public final class ShopService {
     private final Map<String,RecipeEconomy.Cost> recipeFloors;
     /** {@code null} в старых вызовах и юнит-тестах — акции честно выключены. */
     private final ShopPromoService promos;
+    private final java.util.function.BooleanSupplier bookTextures;
     public ShopService(ShopConfig.ShopConfigData config, ShopStore store, Supplier<ChrdkRegisterApi> api) {
         this(config, store, api, () -> null, null);
     }
@@ -32,8 +33,13 @@ public final class ShopService {
     public ShopService(ShopConfig.ShopConfigData config, ShopStore store, Supplier<ChrdkRegisterApi> api,
                        Supplier<ru.cherdakmd.chrdkskills.ChrdkSkillsApi> skillsApi,
                        ShopPromoService promos) {
+        this(config, store, api, skillsApi, promos, () -> false);
+    }
+    ShopService(ShopConfig.ShopConfigData config, ShopStore store, Supplier<ChrdkRegisterApi> api,
+                Supplier<ru.cherdakmd.chrdkskills.ChrdkSkillsApi> skillsApi,
+                ShopPromoService promos, java.util.function.BooleanSupplier bookTextures) {
         this.config = config; this.store = store; this.api = api; this.skillsApi = skillsApi;
-        this.promos = promos;
+        this.promos = promos; this.bookTextures = Objects.requireNonNull(bookTextures);
         var minimum = new HashMap<String,RecipeEconomy.Cost>();
         config.currencyRates().forEach((m,v)->minimum.put(m,RecipeEconomy.Cost.of(v)));
         for (var item : config.items()) minimum.put(item.material(), RecipeEconomy.Cost.of(
@@ -306,7 +312,7 @@ public final class ShopService {
             credit=paidMinor-money; change=credit;
             if(wallet-debit>WholeTrades.MAX-credit)return fail("trading.invalid-number",money);
             if (spec != null) {
-                String error = insertBooks(after, spec, units);
+                String error = insertBooks(after, spec, units, bookTextures.getAsBoolean());
                 if (error != null) return fail(error, money);
             } else if (!insert(after, material, units)) {
                 return fail("trading.no-space", money);
@@ -436,11 +442,13 @@ public final class ShopService {
     }
 
     /** {@code null} — успех, иначе ключ ошибки. Книги с NBT не стакаются: по слоту на книгу. */
-    private static String insertBooks(ItemStack[] items, ShopBookKey.Spec spec, long units) {
+    static String insertBooks(ItemStack[] items, ShopBookKey.Spec spec, long units, boolean textures) {
         // Выданная книга называется так же, как иконка в витрине: игрок получает
         // «Громобой III», а не «Книга чар: thunderstrike III».
         ItemStack template = ShopBooks.create(spec, ShopBookInfo.displayName(spec));
         if (template == null) return "trading.unknown-item";
+        var meta = template.getItemMeta();
+        if (ShopBookVisuals.applyNew(meta, spec, textures)) template.setItemMeta(meta);
         long left = units;
         for (int i = 0; i < items.length && left > 0; i++) {
             if (items[i] == null || items[i].getType().isAir()) {
