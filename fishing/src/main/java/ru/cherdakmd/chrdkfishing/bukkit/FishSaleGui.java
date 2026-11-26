@@ -75,30 +75,32 @@ final class FishSaleGui implements Listener {
     }
     void render(Holder holder) {
         holder.inventory.clear();
+        boolean visuals = plugin.getConfig().getBoolean("textures.sale-menu", false);
         var entries = holder.basket.entries();
         for (int slot = 0; slot < entries.size(); slot++) {
             var entry = entries.get(slot);
-            holder.inventory.setItem(slot, entry.token() != null ? fishIcon(entry.token()) : vanillaIcon(entry.vanilla()));
+            holder.inventory.setItem(slot, entry.token() != null ? fishIcon(entry.token(), visuals) : vanillaIcon(entry.vanilla()));
         }
-        holder.inventory.setItem(45, icon(Material.BOOK, "Как продать рыбу", List.of(
+        holder.inventory.setItem(45, FishSaleVisuals.buttonIcon(icon(Material.BOOK, "Как продать рыбу", List.of(
                 "Нажмите на рыбу в своём инвентаре снизу.",
                 "Она появится в сундуке; нажмите на неё здесь, чтобы убрать.",
                 "До продажи настоящая рыба остаётся в инвентаре.",
                 "Обычная сырая ванильная рыба: 0.10 алм. за штуку.",
-                "Рыба с чужими метками или именем не принимается.")));
-        holder.inventory.setItem(47, icon(Material.HOPPER, "Очистить сундук", List.of("Рыба останется в инвентаре.")));
-        holder.inventory.setItem(49, icon(holder.basket.isEmpty() ? Material.GRAY_DYE : Material.EMERALD_BLOCK,
+                "Рыба с чужими метками или именем не принимается.")), FishSaleVisuals.Icon.HELP, visuals));
+        holder.inventory.setItem(47, FishSaleVisuals.buttonIcon(icon(Material.HOPPER, "Очистить сундук", List.of("Рыба останется в инвентаре.")), FishSaleVisuals.Icon.CLEAR, visuals));
+        holder.inventory.setItem(49, FishSaleVisuals.buttonIcon(icon(holder.basket.isEmpty() ? Material.GRAY_DYE : Material.EMERALD_BLOCK,
                 holder.basket.isEmpty() ? "Сундук пуст" : "Продать за " + amount(holder.basket.total()) + " алм.",
-                List.of("Выбрано ячеек: " + entries.size(), "Нажмите для продажи и зачисления в банк.")));
-        if (back != null) holder.inventory.setItem(52, icon(Material.ARROW, "Назад", List.of("Вернуться к меню рыбалки.")));
-        holder.inventory.setItem(53, icon(Material.BARRIER, "Закрыть", List.of("Без продажи; рыба останется у вас.")));
+                List.of("Выбрано ячеек: " + entries.size(), "Нажмите для продажи и зачисления в банк.")),
+                holder.basket.isEmpty() ? FishSaleVisuals.Icon.EMPTY : FishSaleVisuals.Icon.SELL, visuals));
+        if (back != null) holder.inventory.setItem(52, FishSaleVisuals.buttonIcon(icon(Material.ARROW, "Назад", List.of("Вернуться к меню рыбалки.")), FishSaleVisuals.Icon.BACK, visuals));
+        holder.inventory.setItem(53, FishSaleVisuals.buttonIcon(icon(Material.BARRIER, "Закрыть", List.of("Без продажи; рыба останется у вас.")), FishSaleVisuals.Icon.CLOSE, visuals));
     }
-    private static ItemStack fishIcon(FishToken.Token fish) {
+    private static ItemStack fishIcon(FishToken.Token fish, boolean visuals) {
         // Never put a signed/duplicable fish item into a virtual menu.
-        return icon(Material.COD, FishCatalog.byId(fish.fish().speciesId()).name(), List.of(
+        return FishSaleVisuals.fishIcon(icon(Material.COD, FishCatalog.byId(fish.fish().speciesId()).name(), List.of(
                 "Размер: " + sizeName(fish.fish().size()) + ", " + fish.fish().lengthCm() + " см",
                 "Цена: " + amount(fish.quotedPrice()) + " алм.",
-                "Нажмите, чтобы убрать из продажи."));
+                "Нажмите, чтобы убрать из продажи.")), fish.fish().speciesId(), visuals);
     }
     private static ItemStack vanillaIcon(FishSaleJournal.VanillaFish fish) {
         String name = switch (fish.kind()) {

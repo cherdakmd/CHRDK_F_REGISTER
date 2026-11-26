@@ -46,10 +46,12 @@ final class FishOrdersGui implements Listener {
     }
     private void render(Holder holder, Player player) throws Exception {
         holder.inventory.clear(); var orders = FishingOrders.forDay(holder.day);
+        boolean visuals = plugin.getConfig().getBoolean("textures.orders-menu", false);
         for (int i = 0; i < orders.size(); i++) {
             var order = orders.get(i); var name = FishCatalog.byId(order.speciesId()).name();
             boolean done = engine.orderClaimed(player, order);
-            holder.inventory.setItem(36 + i * 2, FishMainGui.icon(done ? Material.GRAY_DYE : Material.BOOK,
+            holder.inventory.setItem(36 + i * 2, FishOrdersVisuals.buttonIcon(
+                    FishOrdersVisuals.order(done, order.equals(holder.selected)), visuals, done ? Material.GRAY_DYE : Material.BOOK,
                     name + " — " + size(order), done ? "Уже сдано" : "Награда: " + amount(order.rewardMinor()) + " алм."));
         }
         if (holder.selected != null) {
@@ -57,14 +59,14 @@ final class FishOrdersGui implements Listener {
             for (int i = 0; i < Math.min(36, contents.length); i++) {
                 var token = codec.read(contents[i]);
                 if (token.isPresent() && holder.selected.matches(token.get())) holder.inventory.setItem(i,
-                        FishMainGui.icon(Material.PAPER, FishCatalog.byId(holder.selected.speciesId()).name(), "Сдать рыбу из ячейки " + (i + 1)));
+                        FishOrdersVisuals.fishIcon(holder.selected.speciesId(), visuals, FishCatalog.byId(holder.selected.speciesId()).name(), "Сдать рыбу из ячейки " + (i + 1)));
             }
         }
-        holder.inventory.setItem(45, FishMainGui.icon(Material.BOOK, "Как выполнить заказ", "Выберите заказ ниже, затем подходящую рыбу выше.", "Подтверждение расходует рыбу и зачисляет награду в банк.", "Заказы обновляются по UTC; каждый сдаётся один раз."));
-        if (holder.quote != null) holder.inventory.setItem(49, FishMainGui.icon(Material.EMERALD_BLOCK,
+        holder.inventory.setItem(45, FishOrdersVisuals.buttonIcon(FishOrdersVisuals.Icon.HELP, visuals, Material.BOOK, "Как выполнить заказ", "Выберите заказ ниже, затем подходящую рыбу выше.", "Подтверждение расходует рыбу и зачисляет награду в банк.", "Заказы обновляются по UTC; каждый сдаётся один раз."));
+        if (holder.quote != null) holder.inventory.setItem(49, FishOrdersVisuals.buttonIcon(FishOrdersVisuals.Icon.CONFIRM, visuals, Material.EMERALD_BLOCK,
                 "Подтвердить заказ", "Сдать рыбу и получить " + amount(holder.selected.rewardMinor()) + " алм. на /bal."));
-        holder.inventory.setItem(52, FishMainGui.icon(Material.ARROW, "Назад", "Главное меню рыбалки"));
-        holder.inventory.setItem(53, FishMainGui.icon(Material.BARRIER, "Закрыть", "Ничего не сдавать"));
+        holder.inventory.setItem(52, FishOrdersVisuals.buttonIcon(FishOrdersVisuals.Icon.BACK, visuals, Material.ARROW, "Назад", "Главное меню рыбалки"));
+        holder.inventory.setItem(53, FishOrdersVisuals.buttonIcon(FishOrdersVisuals.Icon.CLOSE, visuals, Material.BARRIER, "Закрыть", "Ничего не сдавать"));
     }
     private static String amount(long minor) { return minor / 100 + "." + String.format(java.util.Locale.ROOT, "%02d", minor % 100); }
     private static String size(FishingOrders.Order o) {

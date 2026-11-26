@@ -57,18 +57,19 @@ final class RodUpgradeGui implements Listener {
     }
     void render(Holder holder, Player player) {
         holder.inventory.clear();
+        boolean visuals = plugin.getConfig().getBoolean("textures.rod-menu", false);
         ItemStack[] storage = player.getInventory().getStorageContents();
         if (holder.selected >= 0 && (holder.selected >= storage.length || holder.selectedRod == null
                 || !holder.selectedRod.equals(storage[holder.selected]))) clearSelection(holder);
-        holder.inventory.setItem(INFO, icon(Material.BOOK, "Как улучшить", List.of(
+        holder.inventory.setItem(INFO, RodUpgradeVisuals.buttonIcon(icon(Material.BOOK, "Как улучшить", List.of(
                 "Нажмите на удочку в своём инвентаре снизу.",
                 "Её значок появится в окошке; оригинал останется у вас.",
                 "Затем подготовьте и подтвердите улучшение.",
                 "Материалы должны быть обычными предметами в инвентаре.",
-                "Деньги списываются с банкового счёта /bal.")));
-        holder.inventory.setItem(WINDOW, icon(Material.GRAY_STAINED_GLASS_PANE, "Окошко удочки", List.of(
+                "Деньги списываются с банкового счёта /bal.")), RodUpgradeVisuals.Icon.HELP, visuals));
+        holder.inventory.setItem(WINDOW, RodUpgradeVisuals.buttonIcon(icon(Material.GRAY_STAINED_GLASS_PANE, "Окошко удочки", List.of(
                 "Нажмите удочку в своём инвентаре снизу, не беря её на курсор.",
-                "Здесь будет её значок; оригинал останется в инвентаре.")));
+                "Здесь будет её значок; оригинал останется в инвентаре.")), RodUpgradeVisuals.Icon.EMPTY, visuals));
         if (holder.selected >= 0 && holder.selected < storage.length) {
             var item = storage[holder.selected];
             var token = codec.read(item);
@@ -91,19 +92,20 @@ final class RodUpgradeGui implements Listener {
                     lore.add("Опыт навыка: +" + current.xpBonusPercent() + "% → +" + next.xpBonusPercent() + "% (с лимитом).");
                     lore.add("Вес крупного размера: +" + current.largeBonusPoints() + " → +" + next.largeBonusPoints() + " вместо маленького.");
                     lore.add("Проверка материалов, банка и подлинности — перед оплатой.");
-                    holder.inventory.setItem(WINDOW, icon(Material.FISHING_ROD, "Окошко удочки · выбрана", lore));
-                    holder.inventory.setItem(CONFIRM, icon(holder.quote == null ? Material.GOLD_INGOT : Material.EMERALD_BLOCK,
+                    holder.inventory.setItem(WINDOW, RodUpgradeVisuals.rodIcon(icon(Material.FISHING_ROD, "Окошко удочки · выбрана", lore), level, visuals));
+                    holder.inventory.setItem(CONFIRM, RodUpgradeVisuals.buttonIcon(icon(holder.quote == null ? Material.GOLD_INGOT : Material.EMERALD_BLOCK,
                             holder.quote == null ? "Подготовить улучшение" : "Подтвердить улучшение", List.of(
                                     holder.quote == null ? "Проверить материалы и подготовить сделку." : "Списать алмазы и ресурсы, улучшить удочку.",
-                                    "До подтверждения ничего не списывается.")));
+                                    "До подтверждения ничего не списывается.")),
+                            holder.quote == null ? RodUpgradeVisuals.Icon.PREPARE : RodUpgradeVisuals.Icon.CONFIRM, visuals));
                 } else {
                     holder.quote = null;
-                    holder.inventory.setItem(WINDOW, icon(Material.NETHER_STAR, "Максимальный уровень", List.of("Эта удочка уже достигла 10 уровня.")));
+                    holder.inventory.setItem(WINDOW, RodUpgradeVisuals.buttonIcon(icon(Material.NETHER_STAR, "Максимальный уровень", List.of("Эта удочка уже достигла 10 уровня.")), RodUpgradeVisuals.Icon.MAXIMUM, visuals));
                 }
             }
         }
-        if (back != null) holder.inventory.setItem(BACK, icon(Material.ARROW, "Назад", List.of("Главное меню рыбалки.")));
-        holder.inventory.setItem(CLOSE, icon(Material.BARRIER, "Закрыть", List.of("Без улучшения.")));
+        if (back != null) holder.inventory.setItem(BACK, RodUpgradeVisuals.buttonIcon(icon(Material.ARROW, "Назад", List.of("Главное меню рыбалки.")), RodUpgradeVisuals.Icon.BACK, visuals));
+        holder.inventory.setItem(CLOSE, RodUpgradeVisuals.buttonIcon(icon(Material.BARRIER, "Закрыть", List.of("Без улучшения.")), RodUpgradeVisuals.Icon.CLOSE, visuals));
     }
     private static ItemStack icon(Material material, String label, List<String> lines) {
         var item = new ItemStack(material); var meta = item.getItemMeta();

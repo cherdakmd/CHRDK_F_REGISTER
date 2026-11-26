@@ -5,6 +5,10 @@ on:
     branches:
       - main
       - 'arena/**'
+    # Этот файл проверяется отдельным GUI workflow; код и ресурсы по-прежнему
+    # запускают общий Build. Не подменяет полный CI перед выпуском.
+    paths-ignore:
+      - '.github/workflows/fishing-gui.yml'
   pull_request:
   workflow_dispatch:
 

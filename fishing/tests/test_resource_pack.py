@@ -144,6 +144,51 @@ class FishingResourcePackTest(unittest.TestCase):
         for kind in ('items', 'models/item', 'textures/item'):
             self.assertEqual(ids, {p.stem for p in (ASSETS / kind / 'menu/cooking').iterdir()})
 
+    def test_orders_menu_states_and_controls_have_models(self):
+        source = (PACK.parent / 'src/main/java/ru/cherdakmd/chrdkfishing/bukkit/FishOrdersVisuals.java').read_text(encoding='utf-8')
+        ids = re.findall(r'[A-Z_]+\("([a-z_]+)"\)', source)
+        self.assertEqual({'order_available', 'order_selected', 'order_done', 'help', 'confirm', 'back', 'close'}, set(ids))
+        self.assertEqual(len(ids), len(set(ids)))
+        images = set()
+        for model_id in ids:
+            name = 'menu/orders/' + model_id
+            self.model(name, 'minecraft:item/generated')
+            self.assertEqual({'type': 'minecraft:model', 'model': 'chrdk_fishing:item/' + name}, self.read('items/' + name + '.json')['model'])
+            digest = hashlib.sha256((ASSETS / 'textures/item' / (name + '.png')).read_bytes()).hexdigest()
+            self.assertNotIn(digest, images); images.add(digest)
+        for kind in ('items', 'models/item', 'textures/item'):
+            self.assertEqual(set(ids), {p.stem for p in (ASSETS / kind / 'menu/orders').iterdir()})
+
+    def test_sale_menu_states_and_controls_have_models(self):
+        source = (PACK.parent / 'src/main/java/ru/cherdakmd/chrdkfishing/bukkit/FishSaleVisuals.java').read_text(encoding='utf-8')
+        ids = re.findall(r'[A-Z_]+\("([a-z_]+)"\)', source)
+        self.assertEqual({'help', 'clear', 'empty', 'sell', 'back', 'close'}, set(ids))
+        self.assertEqual(len(ids), len(set(ids)))
+        images = set()
+        for model_id in ids:
+            name = 'menu/sale/' + model_id
+            self.model(name, 'minecraft:item/generated')
+            self.assertEqual({'type': 'minecraft:model', 'model': 'chrdk_fishing:item/' + name}, self.read('items/' + name + '.json')['model'])
+            digest = hashlib.sha256((ASSETS / 'textures/item' / (name + '.png')).read_bytes()).hexdigest()
+            self.assertNotIn(digest, images); images.add(digest)
+        for kind in ('items', 'models/item', 'textures/item'):
+            self.assertEqual(set(ids), {p.stem for p in (ASSETS / kind / 'menu/sale').iterdir()})
+
+    def test_rod_upgrade_menu_states_have_models(self):
+        source = (PACK.parent / 'src/main/java/ru/cherdakmd/chrdkfishing/bukkit/RodUpgradeVisuals.java').read_text(encoding='utf-8')
+        ids = re.findall(r'[A-Z_]+\("([a-z_]+)"\)', source)
+        self.assertEqual({'help', 'empty', 'selected', 'maximum', 'prepare', 'confirm', 'back', 'close'}, set(ids))
+        self.assertEqual(len(ids), len(set(ids)))
+        images = set()
+        for model_id in ids:
+            name = 'menu/rod/' + model_id
+            self.model(name, 'minecraft:item/generated')
+            self.assertEqual({'type': 'minecraft:model', 'model': 'chrdk_fishing:item/' + name}, self.read('items/' + name + '.json')['model'])
+            digest = hashlib.sha256((ASSETS / 'textures/item' / (name + '.png')).read_bytes()).hexdigest()
+            self.assertNotIn(digest, images); images.add(digest)
+        for kind in ('items', 'models/item', 'textures/item'):
+            self.assertEqual(set(ids), {p.stem for p in (ASSETS / kind / 'menu/rod').iterdir()})
+
     def test_new_dish_item_models_cover_every_recipe(self):
         source = (PACK.parent / 'src/main/java/ru/cherdakmd/chrdkfishing/bukkit/FishCookingPlanner.java').read_text(encoding='utf-8')
         recipes = re.findall(r'^\s*(FRIED|SMOKED|SOUP)\(', source, re.MULTILINE)
