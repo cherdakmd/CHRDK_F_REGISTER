@@ -23,12 +23,16 @@ final class BookVisualListener implements Listener {
     private final EnchantsPlugin plugin;
     private final MiningTasks pending;
     private final java.util.function.Predicate<ItemStack> update;
+    private final java.util.function.Predicate<Player> safeView;
     BookVisualListener(EnchantsPlugin plugin) {
-        this(plugin, item -> plugin.items().refreshBookVisual(item));
+        this(plugin, item -> plugin.items().refreshBookVisual(item),
+                player -> player.getOpenInventory().getType() == InventoryType.CRAFTING);
     }
-    BookVisualListener(EnchantsPlugin plugin, java.util.function.Predicate<ItemStack> update) {
+    BookVisualListener(EnchantsPlugin plugin, java.util.function.Predicate<ItemStack> update,
+                       java.util.function.Predicate<Player> safeView) {
         this.plugin = plugin;
         this.update = java.util.Objects.requireNonNull(update);
+        this.safeView = java.util.Objects.requireNonNull(safeView);
         pending = new MiningTasks(action -> { var task = Bukkit.getScheduler().runTask(plugin, action); return task::cancel; });
     }
     void clear() { pending.clear(); }
@@ -39,8 +43,7 @@ final class BookVisualListener implements Listener {
         pending.submit(id, id, () -> {
             if (!plugin.isEnabled() || generation != plugin.sourceGeneration() || !player.isOnline() || player.isDead()
                     || !plugin.getConfig().getBoolean("textures.books", false) || !world.equals(player.getWorld().getUID())
-                    || player.getGameMode() == GameMode.CREATIVE
-                    || player.getOpenInventory().getType() != InventoryType.CRAFTING) return;
+                    || player.getGameMode() == GameMode.CREATIVE || !safeView.test(player)) return;
             scan(player);
         });
     }

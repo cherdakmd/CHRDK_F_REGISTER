@@ -104,6 +104,9 @@ class BookVisualsTest {
         assertTrue(anvil.contains("plugin.items().refreshBookVisual(out)"));
         assertTrue(anvil.contains("plugin.items().marked(left)"));
         assertTrue(anvil.contains("plugin.items().marked(right)"));
+        var listener = java.nio.file.Files.readString(java.nio.file.Path.of("src/main/java/ru/cherdakmd/chrdkenchants/BookVisualListener.java"));
+        assertTrue(listener.contains("player.getOpenInventory().getType() == InventoryType.CRAFTING"));
+        assertTrue(listener.contains("before.equals(inventory.getItem(slot))"));
     }
 
     @Test void combineIgnoresOnlyOurModelAndNeverModifiesInputs() {

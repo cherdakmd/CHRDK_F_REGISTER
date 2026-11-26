@@ -7,7 +7,6 @@ import org.bukkit.GameMode;
 import org.bukkit.World;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
@@ -34,11 +33,11 @@ class BookVisualListenerTest {
         doAnswer(c -> { queued.set(c.getArgument(1)); return null; }).when(scheduler).runTask(eq(plugin), any(Runnable.class));
         try (var bukkit = mockStatic(Bukkit.class)) {
             bukkit.when(Bukkit::getScheduler).thenReturn(scheduler);
-            var listener = new BookVisualListener(plugin, item -> item == copy);
-            when(view.getType()).thenReturn(InventoryType.CHEST);
+            var safeView = new java.util.concurrent.atomic.AtomicBoolean(false);
+            var listener = new BookVisualListener(plugin, item -> item == copy, ignored -> safeView.get());
             listener.queue(player); assertNotNull(queued.get()); queued.get().run();
             verify(inv, never()).setItem(anyInt(), any());
-            when(view.getType()).thenReturn(InventoryType.CRAFTING);
+            safeView.set(true);
             when(inv.getItem(0)).thenReturn(changed); listener.queue(player); queued.get().run();
             verify(inv, never()).setItem(anyInt(), any());
             when(inv.getItem(0)).thenReturn(before); listener.queue(player); queued.get().run();
