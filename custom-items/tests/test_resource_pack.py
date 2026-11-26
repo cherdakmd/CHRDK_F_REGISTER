@@ -56,6 +56,18 @@ class ResourcePackTest(unittest.TestCase):
             self.assertEqual(len(ids), len(set(ids)))
             self.assertEqual(files, set(ids))
 
+    def test_guide_book_model_is_complete(self):
+        root = PACK / 'assets/chrdk_core'
+        model = json.loads((root / 'models/item/guide_book.json').read_text())
+        item = json.loads((root / 'items/guide_book.json').read_text())
+        self.assertEqual('minecraft:item/generated', model['parent'])
+        self.assertEqual('chrdk_core:item/guide_book', model['textures']['layer0'])
+        self.assertEqual({'type': 'minecraft:model', 'model': 'chrdk_core:item/guide_book'}, item['model'])
+        image = (root / 'textures/item/guide_book.png').read_bytes()
+        self.assertEqual(b'\x89PNG\r\n\x1a\n', image[:8])
+        self.assertEqual((32, 32), struct.unpack('>II', image[16:24]))
+        self.assertFalse((PACK / 'assets/minecraft/items/written_book.json').exists())
+
     def test_generator_core_model_is_complete(self):
         root = PACK / 'assets/chrdk_generator'
         model = json.loads((root / 'models/item/core.json').read_text())

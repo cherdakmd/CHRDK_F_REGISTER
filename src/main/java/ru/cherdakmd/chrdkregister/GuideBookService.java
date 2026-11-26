@@ -111,7 +111,7 @@ public final class GuideBookService implements Listener {
             logger().warning("[guide] книга не создана: в messages.yml нет guide.title или guide.pages");
             return false;
         }
-        ItemStack book = createBook(content);
+        ItemStack book = createBook(content, plugin.getConfig().getBoolean("guide.textures.book-item", false));
         if (book == null) {
             logger().warning("[guide] не удалось создать письменную книгу (BookMeta недоступен)");
             return false;
@@ -129,6 +129,11 @@ public final class GuideBookService implements Listener {
 
     /** Собирает предмет книги из готового содержимого. Публичный — для тестов и аддонов. */
     public static ItemStack createBook(GuideBookContent content) {
+        return createBook(content, false);
+    }
+
+    /** Включает оформление только при новой выдаче, не меняет содержимое книги. */
+    static ItemStack createBook(GuideBookContent content, boolean textured) {
         ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
         if (!(book.getItemMeta() instanceof BookMeta meta)) {
             return null;
@@ -136,6 +141,7 @@ public final class GuideBookService implements Listener {
         meta.title(Component.text(content.title()));
         meta.author(Component.text(content.author()));
         meta.pages(content.pages());
+        GuideBookVisuals.applyNew(meta, textured);
         book.setItemMeta(meta);
         return book;
     }
