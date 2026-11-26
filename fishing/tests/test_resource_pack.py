@@ -44,7 +44,7 @@ class FishingResourcePackTest(unittest.TestCase):
         base = re.findall(r'fish\("([a-z_]+)","[^"]+",Rarity\.[A-Z_]+,(?:true|false),', source)
         premium = re.findall(r'new Premium\("([a-z_]+)", "[^"]+", "[a-z_]+"\)', source)
         species = base + premium
-        self.assertEqual(70, len(species)); self.assertEqual(len(species), len(set(species)))
+        self.assertEqual(92, len(species)); self.assertEqual(len(species), len(set(species)))
         images = set()
         for species_id in species:
             with self.subTest(species=species_id):

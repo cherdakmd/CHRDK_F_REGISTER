@@ -17,7 +17,7 @@ ASSETS = ROOT / 'resource-pack/assets/chrdk_fishing'
 source = (ROOT / 'src/main/java/ru/cherdakmd/chrdkfishing/FishCatalog.java').read_text(encoding='utf-8')
 base = re.findall(r'fish\("([a-z_]+)","[^"]+",Rarity\.([A-Z_]+),(true|false),', source)
 premium = re.findall(r'new Premium\("([a-z_]+)", "[^"]+", "([a-z_]+)"\)', source)
-assert len(base) == 45 and len(premium) == 25
+assert len(base) == 45 and len(premium) == 47
 
 # Hand-chosen body family and colour (hue, saturation, value); variations
 # include differently shaped fins, scales, stripes, spots and highlights.
@@ -40,6 +40,33 @@ COLORS = {
 'golden_tench':(.12,.70,.84), 'aurora_salmon':(.48,.68,.78),
 }
 assert set(COLORS) == {v[0] for v in base}
+# Bespoke palettes and motifs for the additional expensive fish. Terraria-inspired
+# names are rendered as original pixel art; no Terraria image assets are copied.
+SPECIAL = {
+    'diamond_fish': (.52, .75, .98, 'gem'),
+    'gold_fish': (.12, .88, .98, 'metal'),
+    'silver_fish': (.56, .12, .88, 'metal'),
+    'platinum_fish': (.57, .18, .98, 'metal'),
+    'palladium_fish': (.09, .62, .85, 'metal'),
+    'rhodium_fish': (.76, .27, .92, 'metal'),
+    'terraria_armored_cavefish': (.57, .28, .50, 'armor'),
+    'terraria_chaos_fish': (.83, .75, .85, 'gem'),
+    'terraria_ebonkoi': (.72, .70, .43, 'stripe'),
+    'terraria_hemopiranha': (.99, .87, .78, 'stripe'),
+    'terraria_frost_minnow': (.52, .52, .90, 'gem'),
+    'terraria_prismite': (.80, .56, .93, 'gem'),
+    'terraria_neon_tetra': (.55, .90, .90, 'stripe'),
+    'terraria_obsidifish': (.74, .35, .30, 'armor'),
+    'terraria_flarefin_koi': (.04, .93, .96, 'stripe'),
+    'terraria_princess_fish': (.90, .57, .96, 'crown'),
+    'terraria_crimson_tigerfish': (.01, .83, .72, 'stripe'),
+    'terraria_specular_fish': (.56, .13, .98, 'gem'),
+    'terraria_variegated_lardfish': (.25, .72, .72, 'stripe'),
+    'terraria_honeyfin': (.12, .92, .96, 'stripe'),
+    'terraria_damselfish': (.58, .68, .95, 'gem'),
+    'terraria_double_cod': (.08, .50, .72, 'double'),
+}
+assert set(SPECIAL) <= {v[0] for v in premium}
 THIN = {'pike', 'eel', 'burbot', 'shadow_burbot', 'sichel', 'smelt', 'dace', 'gudgeon', 'minnow'}
 DEEP = {'crucian_carp', 'carp', 'bream', 'silver_bream', 'ide', 'tench', 'golden_tench'}
 SPIKY = {'perch', 'ruffe', 'zander', 'moon_perch'}
@@ -64,6 +91,8 @@ def draw_fish(ident, ref=None):
         # Spectral premium colour, still retaining recognisable reference shape.
         h = (h + .18 + rng.randrange(10) / 100) % 1
         s, v = .50 + rng.randrange(20)/100, .72 + rng.randrange(14)/100
+    if ident in SPECIAL:
+        h, s, v, _ = SPECIAL[ident]
     body = rgb(h,s,v); edge = rgb(h, min(1,s+.18), v*.38)
     fin = rgb(h + (.06 if fantasy else -.025), min(1,s+.12), v*.68)
     belly = rgb(h, s*.46, min(1,v+.22)); shine = rgb(h, s*.25, min(1,v+.38))
@@ -111,6 +140,25 @@ def draw_fish(ident, ref=None):
         if ref:
             d.polygon([(17,upper),(18,upper-5),(20,upper)],fill=shine,outline=fin)
             d.point((10,lower+4),fill=accent)
+    if ident in SPECIAL:
+        motif = SPECIAL[ident][3]
+        if motif in ('gem', 'metal'):
+            # Faceted body and specular glints make gem/metal fish legible at 32px.
+            d.polygon([(15,14),(18,11),(22,14),(19,18)], fill=shine, outline=edge)
+            d.line([(16,14),(19,16),(21,14)], fill=belly)
+            d.point((11,16), fill=shine)
+        elif motif == 'armor':
+            for x in (12, 16, 20, 24):
+                d.line([(x,12),(x-1,17)], fill=shine)
+                d.point((x-1,18), fill=edge)
+        elif motif == 'stripe':
+            for x in (13, 18, 23):
+                d.line([(x,12),(x-2,19)], fill=mark, width=2)
+        elif motif == 'crown':
+            d.polygon([(19,11),(19,6),(21,8),(23,5),(25,8),(27,6),(26,11)], fill=(255,215,72), outline=edge)
+        elif motif == 'double':
+            d.point((23,17), fill=(18,25,30)); d.point((24,17), fill=(255,255,235))
+            d.line([(25,21),(28,20)], fill=edge)
     path=ASSETS / 'textures/item/fish/species' / (ident+'.png'); path.parent.mkdir(parents=True,exist_ok=True); im.save(path)
     name='fish/species/'+ident
     save_json(ASSETS / 'models/item' / (name+'.json'), {'parent':'minecraft:item/generated','textures':{'layer0':'chrdk_fishing:item/'+name}})

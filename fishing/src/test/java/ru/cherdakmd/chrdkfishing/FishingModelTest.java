@@ -9,9 +9,9 @@ import static ru.cherdakmd.chrdkfishing.FishingModel.*;
 
 class FishingModelTest {
     @Test void catalogIsCompleteAndEachRarityCanBeSelected() {
-        assertEquals(70, FishCatalog.all().size());
-        assertEquals(32, FishCatalog.all().stream().filter(Species::fictional).count());
-        assertEquals(70, new HashSet<>(FishCatalog.all().stream().map(Species::id).toList()).size());
+        assertEquals(92, FishCatalog.all().size());
+        assertEquals(54, FishCatalog.all().stream().filter(Species::fictional).count());
+        assertEquals(92, new HashSet<>(FishCatalog.all().stream().map(Species::id).toList()).size());
         for (Rarity rarity : Rarity.values()) assertFalse(FishCatalog.byRarity(rarity).isEmpty());
         assertThrows(UnsupportedOperationException.class, () -> FishCatalog.all().clear());
     }
@@ -48,12 +48,23 @@ class FishingModelTest {
         }
     }
     @Test void premiumFishAreExactlyTenTimesTheirReferenceAtEverySize() {
-        assertEquals(25, FishCatalog.premium().size());
+        assertEquals(47, FishCatalog.premium().size());
         for (var item : FishCatalog.premium()) for (var size : Size.values()) {
             var reference = FishCatalog.byId(item.referenceId());
             int length = reference.lengths().get(size.ordinal()).min();
             assertEquals(price(new Catch(reference.id(), size, length)) * 10,
                     price(new Catch(item.id(), size, length)), item.id() + " " + size);
+        }
+    }
+    @Test void newGemMetalAndTerrariaInspiredFishAreMythicAndUsePremiumPricing() {
+        var added = FishCatalog.all().subList(70, 92);
+        assertEquals(22, added.size());
+        assertEquals(16, added.stream().filter(species -> species.id().startsWith("terraria_")).count());
+        for (String id : List.of("diamond_fish", "gold_fish", "silver_fish", "platinum_fish", "palladium_fish", "rhodium_fish"))
+            assertTrue(added.stream().anyMatch(species -> species.id().equals(id)));
+        for (var species : added) {
+            assertEquals(Rarity.MYTHIC, species.rarity());
+            assertNotNull(FishCatalog.priceReference(species.id()));
         }
     }
     @Test void oldSignedQuotesStayValidWhenPricesChange() {

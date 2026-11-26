@@ -88,7 +88,31 @@ public final class FishCatalog {
             new Premium("glacier_whitefish", "Ледниковый муксун", "arctic_whitefish"),
             new Premium("sun_tench", "Солнечный линь", "golden_tench"),
             new Premium("aurora_keeper", "Хранитель сияния", "aurora_salmon"),
-            new Premium("aurora_dragonfish", "Дракон северных вод", "aurora_salmon"));
+            new Premium("aurora_dragonfish", "Дракон северных вод", "aurora_salmon"),
+            // Gem and precious-metal fish: new species, never a repricing of existing catches.
+            new Premium("diamond_fish", "Алмазная рыба", "aurora_salmon"),
+            new Premium("gold_fish", "Золотая рыба", "golden_tench"),
+            new Premium("silver_fish", "Серебряная рыба", "whitefish"),
+            new Premium("platinum_fish", "Платиновая рыба", "sturgeon"),
+            new Premium("palladium_fish", "Палладиевая рыба", "taimen"),
+            new Premium("rhodium_fish", "Родиевая рыба", "palia"),
+            // Inspired by Terraria fish; original pixel art, not copied game assets.
+            new Premium("terraria_armored_cavefish", "Бронированная пещерная рыба", "sturgeon"),
+            new Premium("terraria_chaos_fish", "Рыба хаоса", "moon_perch"),
+            new Premium("terraria_ebonkoi", "Эбеновый кои", "carp"),
+            new Premium("terraria_hemopiranha", "Гемопиранья", "perch"),
+            new Premium("terraria_frost_minnow", "Морозный гольян", "arctic_cisco"),
+            new Premium("terraria_prismite", "Призмит", "northern_crystal"),
+            new Premium("terraria_neon_tetra", "Неоновая тетра", "grayling"),
+            new Premium("terraria_obsidifish", "Обсидиановая рыба", "shadow_burbot"),
+            new Premium("terraria_flarefin_koi", "Огнепёрый кои", "carp"),
+            new Premium("terraria_princess_fish", "Рыба-принцесса", "palia"),
+            new Premium("terraria_crimson_tigerfish", "Багровая тигровая рыба", "pike"),
+            new Premium("terraria_specular_fish", "Зеркальная рыба", "whitefish"),
+            new Premium("terraria_variegated_lardfish", "Пёстрая жирорыба", "tench"),
+            new Premium("terraria_honeyfin", "Медоплавник", "golden_tench"),
+            new Premium("terraria_damselfish", "Небесная рыба", "lake_salmon"),
+            new Premium("terraria_double_cod", "Двойная треска", "atlantic_salmon"));
     private static final Map<String, String> PREMIUM_REFERENCES = PREMIUM.stream()
             .collect(Collectors.toUnmodifiableMap(Premium::id, Premium::referenceId));
     private static final List<Species> FISH = buildCatalog();
