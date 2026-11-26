@@ -16,17 +16,24 @@ import org.bukkit.inventory.ItemStack;
 /** Prepares a copy for the server's BOOK -> ENCHANTED_BOOK operation, without touching the input. */
 final class NewTableBookVisualListener implements Listener {
     private final BooleanSupplier enabled;
+    private final java.util.function.Function<Map<Enchantment, Integer>, NamespacedKey> selector;
     NewTableBookVisualListener(EnchantsPlugin plugin) {
         this(() -> plugin.getConfig().getBoolean("textures.books", false)
                 && plugin.getConfig().getBoolean("textures.new-table-books", false));
     }
-    NewTableBookVisualListener(BooleanSupplier enabled) { this.enabled = Objects.requireNonNull(enabled); }
+    NewTableBookVisualListener(BooleanSupplier enabled) {
+        this(enabled, enchants -> model(enchants, Enchantment::getKey));
+    }
+    NewTableBookVisualListener(BooleanSupplier enabled, java.util.function.Function<Map<Enchantment, Integer>, NamespacedKey> selector) {
+        this.enabled = Objects.requireNonNull(enabled);
+        this.selector = Objects.requireNonNull(selector);
+    }
 
-    static NamespacedKey model(Map<Enchantment, Integer> enchants) {
+    static <T> NamespacedKey model(Map<T, Integer> enchants, java.util.function.Function<T, NamespacedKey> keyOf) {
         if (enchants == null || enchants.isEmpty() || enchants.size() > BookVisualPolicy.VANILLA.size()) return null;
         Map<String, Integer> vanilla = new LinkedHashMap<>();
         for (var entry : enchants.entrySet()) {
-            var key = entry.getKey() == null ? null : entry.getKey().getKey();
+            var key = entry.getKey() == null ? null : keyOf.apply(entry.getKey());
             if (key == null || entry.getValue() == null || vanilla.put(key.toString(), entry.getValue()) != null) return null;
         }
         return BookVisualPolicy.select(Map.of(), vanilla);
@@ -40,7 +47,7 @@ final class NewTableBookVisualListener implements Listener {
         var meta = original.getItemMeta();
         if (meta == null || meta.getItemModel() != null || meta.hasCustomModelData() || meta.hasDisplayName()
                 || meta.hasLore() || meta.hasEnchants() || !meta.getPersistentDataContainer().getKeys().isEmpty()) return;
-        NamespacedKey model = model(event.getEnchantsToAdd());
+        NamespacedKey model = selector.apply(event.getEnchantsToAdd());
         if (model == null) return;
         ItemStack copy = original.clone();
         var copyMeta = copy.getItemMeta();
