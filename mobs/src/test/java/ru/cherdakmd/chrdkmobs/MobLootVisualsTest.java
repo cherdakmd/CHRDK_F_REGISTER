@@ -34,7 +34,7 @@ class MobLootVisualsTest {
 
     @Test void newLootPreservesIdentityAndOldItemsRemainReadableWithEitherSetting() {
         for (var kind : MobLootItems.Kind.values()) for (boolean enabled : new boolean[]{false, true}) {
-            var plugin = mock(MobsPlugin.class); when(plugin.getName()).thenReturn("CHRDK_Mobs");
+            var plugin = mock(MobsPlugin.class); when(plugin.namespace()).thenReturn("chrdk_mobs");
             var config = new YamlConfiguration(); config.set("textures.loot-items", enabled);
             when(plugin.getConfig()).thenReturn(config);
             var parsed = mock(MobsConfig.class); when(parsed.loot()).thenReturn(new MobsConfig.Loot(40, 60));
