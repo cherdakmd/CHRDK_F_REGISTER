@@ -40,12 +40,13 @@ jobs:
           PYTEST
             python3 - <<'PYLOG'
           from pathlib import Path
-          # Keep the surrounding Gradle error together, even if Actions cannot expose
-          # the downloadable logs. GitHub workflow commands require escaped newlines.
+          # GitHub truncates annotations near 4 KB: prefer the actual failure and
+          # its cause over the preceding successful tests, keeping the first lines.
           lines = Path('fishing-build.log').read_text(encoding='utf-8', errors='replace').splitlines()
-          tail = '\n'.join(lines[-60:])[-12000:]
-          escaped = tail.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
-          print(f'::error::Fishing build log tail:%0A{escaped}')
+          starts = [i for i, line in enumerate(lines) if line.startswith('FAILURE:') or line.startswith('ERROR:')]
+          excerpt = '\n'.join(lines[starts[-1]:] if starts else lines[-40:])[:3200]
+          escaped = excerpt.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+          print(f'::error::Fishing build failure:%0A{escaped}')
           PYLOG
             find fishing/build/test-results -name '*.xml' -print -exec cat {} \; 2>/dev/null | head -c 10000 >> "$GITHUB_STEP_SUMMARY"
           fi
