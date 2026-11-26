@@ -1,0 +1,6 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "chrdk_fishing:item/menu/main/bait_equip"
+  }
+}

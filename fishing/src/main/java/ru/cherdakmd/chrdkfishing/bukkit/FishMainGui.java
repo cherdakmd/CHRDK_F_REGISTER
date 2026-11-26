@@ -44,15 +44,27 @@ final class FishMainGui implements Listener {
         if (!player.isOnline() || !authenticated.test(player)) { player.sendMessage("§cСначала авторизуйтесь."); return; }
         Holder holder = new Holder(player.getUniqueId());
         holder.inventory = Bukkit.createInventory(holder, 27, Component.text("Рыбалка"));
-        holder.inventory.setItem(10, icon(Material.BOOK, "Альбом рыбака", "Коллекция и личные рекорды"));
-        holder.inventory.setItem(12, icon(Material.CHEST, "Продажа рыбы", "Нажмите на рыбу в инвентаре, затем продайте"));
-        holder.inventory.setItem(14, icon(Material.FISHING_ROD, "Улучшение удочки", "Выберите удочку, чтобы увидеть цену, ресурсы и бонусы.", "Оплата с /bal после подтверждения."));
-        holder.inventory.setItem(16, icon(Material.CHEST, "Магазин приманок", shop == null ? "Пока недоступен" : "Купить приманку с банкового счёта /bal"));
-        holder.inventory.setItem(18, icon(Material.PAPER, "Выбор приманки", baitEquip == null ? "Пока недоступен" : "Выбрать купленную приманку"));
-        holder.inventory.setItem(20, icon(Material.WRITABLE_BOOK, "Заказы рыбаку", "Выберите заказ, подходящую рыбу и подтвердите сдачу."));
-        holder.inventory.setItem(22, icon(Material.FURNACE, "Готовка", "Выберите рецепт и рыбу; для ухи нужна миска."));
+        boolean visuals = plugin.getConfig().getBoolean("textures.menu", false);
+        holder.inventory.setItem(10, menuIcon(FishMenuVisuals.Section.ALBUM, true, visuals, Material.BOOK, "Альбом рыбака", "Коллекция и личные рекорды"));
+        holder.inventory.setItem(12, menuIcon(FishMenuVisuals.Section.SALE, true, visuals, Material.CHEST, "Продажа рыбы", "Нажмите на рыбу в инвентаре, затем продайте"));
+        holder.inventory.setItem(14, menuIcon(FishMenuVisuals.Section.ROD, true, visuals, Material.FISHING_ROD, "Улучшение удочки", "Выберите удочку, чтобы увидеть цену, ресурсы и бонусы.", "Оплата с /bal после подтверждения."));
+        holder.inventory.setItem(16, menuIcon(FishMenuVisuals.Section.BAIT_SHOP, shop != null, visuals, Material.CHEST, "Магазин приманок", shop == null ? "Пока недоступен" : "Купить приманку с банкового счёта /bal"));
+        holder.inventory.setItem(18, menuIcon(FishMenuVisuals.Section.BAIT_EQUIP, baitEquip != null, visuals, Material.PAPER, "Выбор приманки", baitEquip == null ? "Пока недоступен" : "Выбрать купленную приманку"));
+        holder.inventory.setItem(20, menuIcon(FishMenuVisuals.Section.ORDERS, orders != null, visuals, Material.WRITABLE_BOOK, "Заказы рыбаку", "Выберите заказ, подходящую рыбу и подтвердите сдачу."));
+        holder.inventory.setItem(22, menuIcon(FishMenuVisuals.Section.COOKING, true, visuals, Material.FURNACE, "Готовка", "Выберите рецепт и рыбу; для ухи нужна миска."));
         player.openInventory(holder.inventory);
     }
+    private static ItemStack menuIcon(FishMenuVisuals.Section section, boolean available, boolean enabled,
+                                      Material material, String name, String... lore) {
+        var item = icon(material, name, lore);
+        if (enabled) {
+            var meta = item.getItemMeta();
+            FishMenuVisuals.apply(meta, section, available, true);
+            if (meta != null) item.setItemMeta(meta);
+        }
+        return item;
+    }
+    // Shared by other Fishing GUIs: keep this helper and their items unchanged.
     static ItemStack icon(Material material, String name, String... lore) {
         var item = new ItemStack(material); var meta = item.getItemMeta();
         meta.displayName(Component.text(name, NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));

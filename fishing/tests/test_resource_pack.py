@@ -58,6 +58,25 @@ class FishingResourcePackTest(unittest.TestCase):
         for kind in ('items', 'models/item', 'textures/item'):
             self.assertEqual(set(species), {p.stem for p in (ASSETS / kind / 'fish/species').iterdir()})
 
+    def test_navigation_icons_and_unavailable_states(self):
+        source = (PACK.parent / 'src/main/java/ru/cherdakmd/chrdkfishing/bukkit/FishMenuVisuals.java').read_text(encoding='utf-8')
+        sections = re.findall(r'[A-Z_]+\("([a-z_]+)", (true|false)\)', source)
+        self.assertEqual(7, len(sections))
+        ids = {name for name, _ in sections} | {name + '_unavailable' for name, state in sections if state == 'true'}
+        self.assertEqual(10, len(ids))
+        images = set()
+        for model_id in ids:
+            name = 'menu/main/' + model_id
+            with self.subTest(model=name):
+                self.model(name, 'minecraft:item/generated')
+                self.assertEqual({'type': 'minecraft:model', 'model': 'chrdk_fishing:item/' + name},
+                                 self.read('items/' + name + '.json')['model'])
+                digest = hashlib.sha256((ASSETS / 'textures/item' / (name + '.png')).read_bytes()).hexdigest()
+                self.assertNotIn(digest, images)
+                images.add(digest)
+        for kind in ('items', 'models/item', 'textures/item'):
+            self.assertEqual(ids, {p.stem for p in (ASSETS / kind / 'menu/main').iterdir()})
+
     def test_rods_cover_all_upgrade_levels_and_cast_state(self):
         for level in range(2, 11):
             with self.subTest(level=level):
