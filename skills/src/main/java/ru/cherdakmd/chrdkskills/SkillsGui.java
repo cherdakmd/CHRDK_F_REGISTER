@@ -292,7 +292,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
                 ? "menu-rebirth-skill-ready" : "menu-rebirth-skill-hint"));
         meta.lore(lore);
         item.setItemMeta(meta);
-        return item;
+        return visual(item, SkillsMenuVisuals.rebirth(skill, level >= max));
     }
 
     private List<Component> rebirthTopLore(Player player) {
@@ -401,7 +401,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         }
         meta.lore(lore);
         item.setItemMeta(meta);
-        return item;
+        return visual(item, SkillsMenuVisuals.skill(skill));
     }
 
     private ItemStack summary(Player player) {
@@ -769,7 +769,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
                 plugin.messages().get("points-gui-hint-add"),
                 plugin.messages().get("points-gui-hint-add5")));
         item.setItemMeta(meta);
-        return item;
+        return visual(item, SkillsMenuVisuals.attribute(attribute));
     }
 
     private ItemStack branchIcon(Player player, BuildBranch branch) {
@@ -800,7 +800,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         lore.add(plugin.messages().get("points-gui-hint-add5"));
         meta.lore(lore);
         item.setItemMeta(meta);
-        return item;
+        return visual(item, SkillsMenuVisuals.branch(branch));
     }
 
     /**

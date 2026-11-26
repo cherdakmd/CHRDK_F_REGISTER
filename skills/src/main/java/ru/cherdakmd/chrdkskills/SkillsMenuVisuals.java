@@ -27,6 +27,19 @@ final class SkillsMenuVisuals {
         return new NamespacedKey("chrdk_skills", "menu/tab/" + id + (selected ? "_selected" : ""));
     }
 
+    static NamespacedKey skill(SkillType skill) {
+        return new NamespacedKey("chrdk_skills", "menu/skill/" + skill.id());
+    }
+    static NamespacedKey rebirth(SkillType skill, boolean ready) {
+        return new NamespacedKey("chrdk_skills", "menu/rebirth/" + skill.id() + (ready ? "_ready" : "_waiting"));
+    }
+    static NamespacedKey attribute(PlayerAttribute attribute) {
+        return new NamespacedKey("chrdk_skills", "menu/attribute/" + attribute.id());
+    }
+    static NamespacedKey branch(BuildBranch branch) {
+        return new NamespacedKey("chrdk_skills", "menu/branch/" + branch.id());
+    }
+
     static Control button(String key) {
         return switch (key) {
             case "menu-guide-button" -> Control.GUIDE;

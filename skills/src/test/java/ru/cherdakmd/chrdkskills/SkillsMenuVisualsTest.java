@@ -27,6 +27,20 @@ class SkillsMenuVisualsTest {
         assertNull(SkillsMenuVisuals.button("potion-shop-info"));
         assertNull(SkillsMenuVisuals.button("top-line"));
     }
+    @Test void everySkillRebirthAttributeAndBranchHasItsOwnModel() {
+        var models = new HashSet<NamespacedKey>();
+        for (var skill : SkillType.values()) {
+            assertEquals("menu/skill/" + skill.id(), SkillsMenuVisuals.skill(skill).getKey());
+            assertTrue(models.add(SkillsMenuVisuals.skill(skill)));
+            assertTrue(models.add(SkillsMenuVisuals.rebirth(skill, false)));
+            assertTrue(models.add(SkillsMenuVisuals.rebirth(skill, true)));
+        }
+        for (var attribute : PlayerAttribute.values()) assertTrue(models.add(SkillsMenuVisuals.attribute(attribute)));
+        for (var branch : BuildBranch.values()) assertTrue(models.add(SkillsMenuVisuals.branch(branch)));
+        assertEquals(41, models.size());
+        assertEquals("menu/rebirth/mining_ready", SkillsMenuVisuals.rebirth(SkillType.MINING, true).getKey());
+        assertEquals("menu/rebirth/mining_waiting", SkillsMenuVisuals.rebirth(SkillType.MINING, false).getKey());
+    }
     @Test void disabledOrForeignMetadataIsNotOverwritten() {
         var meta = mock(ItemMeta.class); var model = SkillsMenuVisuals.Control.GUIDE.model();
         SkillsMenuVisuals.apply(meta, model, false); verifyNoInteractions(meta);

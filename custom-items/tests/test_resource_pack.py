@@ -63,6 +63,19 @@ class ResourcePackTest(unittest.TestCase):
                     'reset_attributes', 'confirm_attributes', 'reset_builds', 'confirm_builds')
         paths = {f'menu/tab/{name}{suffix}' for name in tabs for suffix in ('', '_selected')}
         paths.update(f'menu/{name}' for name in controls)
+        skills = ('mining', 'woodcutting', 'digging', 'farming', 'fishing',
+                  'combat', 'archery', 'defense', 'alchemy', 'enchanting')
+        attributes = ('strength', 'agility', 'stamina', 'wisdom', 'cunning')
+        branches = ('warrior', 'archer', 'mage', 'cleric', 'priest', 'rogue')
+        paths.update(f'menu/skill/{name}' for name in skills)
+        paths.update(f'menu/rebirth/{name}_{state}' for name in skills for state in ('waiting', 'ready'))
+        paths.update(f'menu/attribute/{name}' for name in attributes)
+        paths.update(f'menu/branch/{name}' for name in branches)
+        self.assertEqual(64, len(paths))
+        for cls, ids in [('SkillType', skills), ('PlayerAttribute', attributes), ('BuildBranch', branches)]:
+            enum_source = (PACK.parents[1] / f'skills/src/main/java/ru/cherdakmd/chrdkskills/{cls}.java').read_text(encoding='utf-8')
+            entries = re.findall(r'^    [A-Z_]+\("([a-z_]+)"', enum_source, re.MULTILINE)
+            self.assertEqual(list(ids), entries, cls)
         hashes = set()
         for path in paths:
             reference = 'chrdk_skills:item/' + path
