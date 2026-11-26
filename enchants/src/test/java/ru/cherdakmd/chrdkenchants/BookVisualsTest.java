@@ -59,7 +59,7 @@ class BookVisualsTest {
         b.noCustom(); assertTrue(b.apply(true)); assertNull(b.model.get());
         assertFalse(b.apply(true));
         verify(b.pdc, never()).set(any(), any(), any());
-        verify(b.pdc, never()).remove(any());
+        verify(b.pdc, never()).remove(any(NamespacedKey.class));
         verify(b.meta, never()).addStoredEnchant(any(), anyInt(), anyBoolean());
         verify(b.meta, never()).removeStoredEnchant(any());
     }
