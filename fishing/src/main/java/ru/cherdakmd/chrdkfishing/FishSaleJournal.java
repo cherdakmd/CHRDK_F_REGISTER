@@ -130,7 +130,7 @@ public final class FishSaleJournal implements AutoCloseable {
                 }
                 s.executeQuery("SELECT fish_id,id,owner,before_state,after_state,phase FROM find_rewards LIMIT 0").close();
                 s.executeQuery("SELECT sale_id,slot,kind,quantity FROM vanilla_fish LIMIT 0").close();
-                try (ResultSet rs = s.executeQuery("SELECT COUNT(*) FROM sales s WHERE s.vanilla_count != (SELECT COALESCE(SUM(v.quantity),0) FROM vanilla_fish v WHERE v.sale_id=s.id) OR (s.vanilla_count=0 AND NOT EXISTS (SELECT 1 FROM spent_fish f WHERE f.sale_id=s.id))")) {
+                try (ResultSet rs = s.executeQuery("SELECT COUNT(*) FROM sales s WHERE s.vanilla_count != (SELECT COALESCE(SUM(v.quantity),0) FROM vanilla_fish v WHERE v.sale_id=s.id) OR s.signed_count != (SELECT COUNT(*) FROM spent_fish f WHERE f.sale_id=s.id) OR (s.vanilla_count=0 AND s.signed_count=0)")) {
                     if (!rs.next() || rs.getLong(1) != 0) throw new SQLException("sale journal missing items");
                 }
 
@@ -146,6 +146,8 @@ public final class FishSaleJournal implements AutoCloseable {
 
     private static void createVanillaSchema(Statement s) throws SQLException {
         s.execute("ALTER TABLE sales ADD COLUMN vanilla_count INTEGER NOT NULL DEFAULT 0 CHECK(vanilla_count BETWEEN 0 AND 2304)");
+        s.execute("ALTER TABLE sales ADD COLUMN signed_count INTEGER NOT NULL DEFAULT 0 CHECK(signed_count BETWEEN 0 AND 36)");
+        s.execute("UPDATE sales SET signed_count=(SELECT COUNT(*) FROM spent_fish f WHERE f.sale_id=sales.id)");
         s.execute("CREATE TABLE vanilla_fish (sale_id TEXT NOT NULL REFERENCES sales(id), slot INTEGER NOT NULL CHECK(slot BETWEEN 0 AND 35), kind TEXT NOT NULL CHECK(kind IN ('COD','SALMON','TROPICAL_FISH','PUFFERFISH')), quantity INTEGER NOT NULL CHECK(quantity BETWEEN 1 AND 64), PRIMARY KEY(sale_id,slot)) STRICT");
     }
     /** Plain raw fish only; item metadata is rejected by the native planner. */
@@ -225,9 +227,9 @@ public final class FishSaleJournal implements AutoCloseable {
         for (UUID id : ids) if (isCooked(id)) return Result.CONFLICT;
         db.setAutoCommit(false);
         try {
-            try (var s = db.prepareStatement("INSERT INTO sales(id,owner,before_state,after_state,amount,phase,vanilla_count) VALUES(?,?,?,?,?,'PREPARED',?)")) {
+            try (var s = db.prepareStatement("INSERT INTO sales(id,owner,before_state,after_state,amount,phase,vanilla_count,signed_count) VALUES(?,?,?,?,?,'PREPARED',?,?)")) {
                 s.setString(1, transaction.toString()); s.setString(2, owner.toString()); s.setString(3, before);
-                s.setString(4, after); s.setLong(5, amount); s.setInt(6, vanillaCount); s.executeUpdate();
+                s.setString(4, after); s.setLong(5, amount); s.setInt(6, vanillaCount); s.setInt(7, ids.size()); s.executeUpdate();
             }
             try (var s = db.prepareStatement("INSERT INTO spent_fish(fish_id,sale_id) VALUES(?,?)")) {
                 for (UUID id : ids) { s.setString(1, id.toString()); s.setString(2, transaction.toString()); s.addBatch(); }

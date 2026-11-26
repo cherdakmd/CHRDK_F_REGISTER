@@ -184,6 +184,17 @@ class FishSaleJournalTest {
         }
         assertThrows(java.sql.SQLException.class, () -> new FishSaleJournal(file(), false));
     }
+    @Test void mixedSaleMissingSignedIdentityIsQuarantined() throws Exception {
+        var bank = new Bank();
+        try (var j = new FishSaleJournal(file(), true)) {
+            assertEquals(FishSaleJournal.Result.WAIT, j.prepareMixed(owner, transaction, "before", "after", List.of(fish()),
+                    List.of(new FishSaleJournal.VanillaFish(1, "COD", 2)), key, bank));
+        }
+        try (var db = java.sql.DriverManager.getConnection("jdbc:sqlite:" + file()); var stmt = db.createStatement()) {
+            stmt.execute("DELETE FROM spent_fish");
+        }
+        assertThrows(java.sql.SQLException.class, () -> new FishSaleJournal(file(), false));
+    }
     @Test void versionFourMigratesWithoutLosingExistingSales() throws Exception {
         var bank = new Bank(); var bag = new Bag();
         try (var j = new FishSaleJournal(file(), true)) {
@@ -191,7 +202,8 @@ class FishSaleJournalTest {
             assertEquals(FishSaleJournal.Result.DONE, j.recover(owner, transaction, bag, bank));
         }
         try (var db = java.sql.DriverManager.getConnection("jdbc:sqlite:" + file()); var stmt = db.createStatement()) {
-            stmt.execute("DROP TABLE vanilla_fish"); stmt.execute("ALTER TABLE sales DROP COLUMN vanilla_count"); stmt.execute("PRAGMA user_version=4");
+            stmt.execute("DROP TABLE vanilla_fish"); stmt.execute("ALTER TABLE sales DROP COLUMN vanilla_count");
+            stmt.execute("ALTER TABLE sales DROP COLUMN signed_count"); stmt.execute("PRAGMA user_version=4");
         }
         try (var j = new FishSaleJournal(file(), false)) {
             assertTrue(j.historyMatchesAll(bank.accounts));
