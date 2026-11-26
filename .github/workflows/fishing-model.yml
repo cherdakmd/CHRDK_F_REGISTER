@@ -38,10 +38,15 @@ jobs:
                       message = f"{case.get('name')}: {failure.get('message')}".replace('%', '%25').replace('\n', '%0A')
                       print(f"::error::{message}")
           PYTEST
-            while IFS= read -r line; do
-              escaped=${line//'%'/'%25'}
-              echo "::error::$escaped"
-            done < <(tail -n 35 fishing-build.log)
+            python3 - <<'PYLOG'
+          from pathlib import Path
+          # Keep the surrounding Gradle error together, even if Actions cannot expose
+          # the downloadable logs. GitHub workflow commands require escaped newlines.
+          lines = Path('fishing-build.log').read_text(encoding='utf-8', errors='replace').splitlines()
+          tail = '\n'.join(lines[-60:])[-12000:]
+          escaped = tail.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+          print(f'::error::Fishing build log tail:%0A{escaped}')
+          PYLOG
             find fishing/build/test-results -name '*.xml' -print -exec cat {} \; 2>/dev/null | head -c 10000 >> "$GITHUB_STEP_SUMMARY"
           fi
           exit "$result"
