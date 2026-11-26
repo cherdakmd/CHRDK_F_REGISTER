@@ -56,6 +56,32 @@ class ResourcePackTest(unittest.TestCase):
             self.assertEqual(len(ids), len(set(ids)))
             self.assertEqual(files, set(ids))
 
+    def test_achievement_menu_models_cover_tabs_and_entry_states(self):
+        root = PACK / 'assets/chrdk_achievements'
+        categories = ('path', 'combat', 'craft', 'social')
+        paths = {f'menu/entry/{name}_{state}' for name in categories for state in ('locked', 'unlocked')}
+        paths.update(f'menu/tab/{name}_{state}' for name in (*categories, 'all') for state in ('inactive', 'selected'))
+        paths.update(f'menu/{name}' for name in ('atlas', 'progress', 'prev', 'next', 'close'))
+        self.assertEqual(23, len(paths))
+        source = (PACK.parents[1] / 'achievements/src/main/java/ru/cherdakmd/chrdkachievements/AchievementDef.java').read_text(encoding='utf-8')
+        self.assertEqual(list(categories), re.findall(r'^        [A-Z_]+\("([a-z_]+)"\)', source, re.MULTILINE))
+        hashes = set()
+        for path in paths:
+            reference = 'chrdk_achievements:item/' + path
+            item = json.loads((root / 'items' / (path + '.json')).read_text())
+            model = json.loads((root / 'models/item' / (path + '.json')).read_text())
+            self.assertEqual({'type': 'minecraft:model', 'model': reference}, item['model'])
+            self.assertEqual('minecraft:item/generated', model['parent'])
+            self.assertEqual(reference, model['textures']['layer0'])
+            data = (root / 'textures/item' / (path + '.png')).read_bytes()
+            self.assertEqual(b'\x89PNG\r\n\x1a\n', data[:8]); self.assertEqual((32, 32), struct.unpack('>II', data[16:24]))
+            digest = hashlib.sha256(data).hexdigest(); self.assertNotIn(digest, hashes); hashes.add(digest)
+        for folder, suffix in [('items', '.json'), ('models/item', '.json'), ('textures/item', '.png')]:
+            actual = {str(p.relative_to(root / folder).with_suffix('')) for p in (root / folder / 'menu').rglob('*' + suffix)}
+            self.assertEqual(paths, actual)
+        source = (PACK.parents[1] / 'achievements/src/main/resources/config.yml').read_text(encoding='utf-8')
+        self.assertRegex(source, r'(?m)^textures:\s*\n  menu: false\s*$')
+
     def test_skills_menu_navigation_and_states_are_complete(self):
         root = PACK / 'assets/chrdk_skills'
         tabs = ('skills', 'attributes', 'top', 'rebirth', 'potions', 'builds')

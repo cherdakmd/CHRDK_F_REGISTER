@@ -3,6 +3,7 @@ package ru.cherdakmd.chrdkachievements;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -151,7 +152,7 @@ public final class AchievementGui implements Listener {
         }
         meta.lore(lore);
         item.setItemMeta(meta);
-        return item;
+        return visual(item, AchievementMenuVisuals.entry(def.category(), unlocked));
     }
 
     private String nameOf(AchievementDef def) {
@@ -184,7 +185,7 @@ public final class AchievementGui implements Listener {
         }
         meta.lore(lore);
         item.setItemMeta(meta);
-        return item;
+        return visual(item, AchievementMenuVisuals.Control.PROGRESS.model());
     }
 
     private ItemStack pageButton(Material material, String key, int target, int page, int pages) {
@@ -195,7 +196,8 @@ public final class AchievementGui implements Listener {
         meta.lore(List.of(plugin.messages().get("page-info",
                 "current", String.valueOf(page), "pages", String.valueOf(pages))));
         item.setItemMeta(meta);
-        return item;
+        var icon = AchievementMenuVisuals.page(key);
+        return icon == null ? item : visual(item, icon.model());
     }
 
     private ItemStack tab(Material material, String key, boolean active) {
@@ -203,7 +205,7 @@ public final class AchievementGui implements Listener {
         ItemMeta meta = item.getItemMeta();
         meta.displayName(plugin.messages().get(key));
         item.setItemMeta(meta);
-        return item;
+        return visual(item, AchievementMenuVisuals.tab(key, active));
     }
 
     private ItemStack button(Material material, String key) {
@@ -211,7 +213,19 @@ public final class AchievementGui implements Listener {
         ItemMeta meta = item.getItemMeta();
         meta.displayName(plugin.messages().get(key));
         item.setItemMeta(meta);
-        return item;
+        var icon = AchievementMenuVisuals.button(key);
+        return icon == null ? item : visual(item, icon.model());
+    }
+
+    private ItemStack visual(ItemStack virtual, NamespacedKey model) {
+        if (model != null && plugin.getConfig().getBoolean("textures.menu", false)) {
+            ItemMeta meta = virtual.getItemMeta();
+            if (meta != null) {
+                AchievementMenuVisuals.apply(meta, model, true);
+                virtual.setItemMeta(meta);
+            }
+        }
+        return virtual;
     }
 
     private static Material materialOf(AchievementDef.Category category) {
