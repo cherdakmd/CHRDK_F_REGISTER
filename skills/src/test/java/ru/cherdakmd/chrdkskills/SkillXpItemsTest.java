@@ -49,6 +49,19 @@ class SkillXpItemsTest {
                 "только PDC-зелья конвертируются: чужие зелья не трогаются");
     }
 
+    @Test
+    void optionalVisualsAreOnlyAppliedAtCrystalCreation() throws IOException {
+        String source = Files.readString(
+                Path.of("src/main/java/ru/cherdakmd/chrdkskills/SkillXpItems.java"), StandardCharsets.UTF_8);
+        String config = Files.readString(Path.of("src/main/resources/config.yml"), StandardCharsets.UTF_8);
+        assertTrue(source.contains("getBoolean(\"textures.crystals\", false)"));
+        assertEquals(source.indexOf("SkillCrystalVisuals.applyNew"), source.lastIndexOf("SkillCrystalVisuals.applyNew"));
+        assertTrue(source.contains("SkillCrystalVisuals.applyNew"));
+        assertTrue(source.contains("create(entry.getKey(), false)"),
+                "конвертация зелий не меняет старую совместимость стаков");
+        assertTrue(config.contains("textures:\n  crystals: false"));
+    }
+
     /**
      * Навык на потолке: кристалл не копит мёртвый опыт, а даёт уровень шкалы
      * опыта Minecraft и деньги в /bal (оба бонуса, money-reward).

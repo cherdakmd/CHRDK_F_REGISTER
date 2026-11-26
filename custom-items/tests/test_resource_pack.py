@@ -1,6 +1,8 @@
 """Offline structural checks; Minecraft rendering still requires a client smoke test."""
+import hashlib
 import json
 from pathlib import Path
+import re
 import struct
 import unittest
 
@@ -43,6 +45,28 @@ class ResourcePackTest(unittest.TestCase):
                 data = (root / f"textures/item/{name}.png").read_bytes()
                 self.assertEqual(b"\x89PNG\r\n\x1a\n", data[:8])
                 self.assertEqual((64, 64), struct.unpack(">II", data[16:24]))
+
+    def test_skill_crystals_cover_all_skill_ids_with_distinct_original_textures(self):
+        repo = PACK.parents[1]
+        source = (repo / 'skills/src/main/java/ru/cherdakmd/chrdkskills/SkillType.java').read_text()
+        skills = re.findall(r'^\s*[A-Z]+\("([a-z]+)", Category\.', source, re.MULTILINE)
+        self.assertEqual(10, len(skills)); self.assertEqual(len(skills), len(set(skills)))
+        root = PACK / 'assets/chrdk_skills'
+        images = set()
+        for skill in skills:
+            with self.subTest(skill=skill):
+                item = json.loads((root / f'items/crystal/{skill}.json').read_text())['model']
+                self.assertEqual({'type': 'minecraft:model', 'model': f'chrdk_skills:item/crystal/{skill}'}, item)
+                model = json.loads((root / f'models/item/crystal/{skill}.json').read_text())
+                self.assertEqual('minecraft:item/generated', model['parent'])
+                self.assertEqual(f'chrdk_skills:item/crystal/{skill}', model['textures']['layer0'])
+                data = (root / f'textures/item/crystal/{skill}.png').read_bytes()
+                self.assertEqual(b'\x89PNG\r\n\x1a\n', data[:8])
+                self.assertEqual((32, 32), struct.unpack('>II', data[16:24]))
+                digest = hashlib.sha256(data).hexdigest()
+                self.assertNotIn(digest, images); images.add(digest)
+        for directory in ('items', 'models/item', 'textures/item'):
+            self.assertEqual(set(skills), {p.stem for p in (root / directory / 'crystal').iterdir()})
 
     def test_new_builtin_models_and_bounded_dispatch(self):
         root = PACK / "assets/chrdk_items"

@@ -94,7 +94,9 @@ final class SkillXpItems implements Listener {
     }
 
     /** Кристалл опыта навыка: имя, заряд и подсказка использования. */
-    ItemStack create(SkillType skill) {
+    ItemStack create(SkillType skill) { return create(skill, true); }
+
+    private ItemStack create(SkillType skill, boolean allowTextures) {
         ItemStack item = new ItemStack(materialOf(skill));
         ItemMeta meta = item.getItemMeta();
         String name = plugin.messages().plain("skill." + skill.id() + ".name");
@@ -112,6 +114,8 @@ final class SkillXpItems implements Listener {
                 Component.text("ПКМ — использовать", NamedTextColor.GREEN)
                         .decoration(TextDecoration.ITALIC, false)));
         meta.getPersistentDataContainer().set(token, PersistentDataType.STRING, skill.id());
+        // Creation only: existing crystals are not scanned or rewritten.
+        SkillCrystalVisuals.applyNew(meta, skill, allowTextures && plugin.getConfig().getBoolean("textures.crystals", false));
         item.setItemMeta(meta);
         return item;
     }
@@ -279,7 +283,8 @@ final class SkillXpItems implements Listener {
         for (Map.Entry<SkillType, Integer> entry : legacy.entrySet()) {
             int remaining = entry.getValue();
             while (remaining > 0) {
-                ItemStack crystal = create(entry.getKey());
+                // Preserve old stacking behavior when converting legacy potions.
+                ItemStack crystal = create(entry.getKey(), false);
                 crystal.setAmount(Math.min(remaining, 64));
                 remaining -= crystal.getAmount();
                 crystals.add(crystal);
