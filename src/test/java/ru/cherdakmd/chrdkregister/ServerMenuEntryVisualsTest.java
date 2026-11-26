@@ -21,9 +21,22 @@ class ServerMenuEntryVisualsTest {
         }
     }
 
+    private static String text(Map<?, ?> map, String key) {
+        Object value = map.get(key);
+        return value == null ? "" : value.toString().trim();
+    }
+
+    // Construct entries without Bukkit's live material registry, unavailable in unit tests.
+    private static List<ServerMenuSettings.Entry> stockEntries() throws Exception {
+        return resource("config.yml").getMapList("server-menu.items").stream().map(m ->
+                new ServerMenuSettings.Entry(m.get("slot") instanceof Number n ? n.intValue() : -1,
+                        Material.valueOf(text(m, "icon")), text(m, "name"), text(m, "lore"),
+                        text(m, "command"), text(m, "plugin"), text(m, "permission"), text(m, "category")))
+                .toList();
+    }
+
     @Test void allStockEntriesIncludingHintsHaveDistinctSemanticModels() throws Exception {
-        var config = resource("config.yml");
-        var entries = ServerMenuSettings.from(config).entries();
+        var entries = stockEntries();
         var examples = resource("server-menu-visuals.yml");
         var registry = ServerMenuEntryVisuals.from(examples);
         var raw = examples.getMapList("server-menu.items");
@@ -45,7 +58,7 @@ class ServerMenuEntryVisualsTest {
 
     @Test void changedOwnerFieldsRemainConfiguredButMovedStockEntryIsRecognized() throws Exception {
         var registry = ServerMenuEntryVisuals.from(resource("server-menu-visuals.yml"));
-        var base = ServerMenuSettings.from(resource("config.yml")).entries().get(18);
+        var base = stockEntries().get(18);
         var moved = new ServerMenuSettings.Entry(37, base.icon(), base.name(), base.lore(), base.command(),
                 base.plugin(), base.permission(), base.category());
         assertEquals(registry.model(base), registry.model(moved));

@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Locale;
 import java.util.Set;
 import java.util.logging.Level;
 
@@ -22,6 +23,22 @@ final class ServerMenuEntryVisuals {
         static Signature of(ServerMenuSettings.Entry entry) {
             return new Signature(entry.icon(), entry.name(), entry.lore(), entry.command(),
                     entry.plugin(), entry.permission(), entry.category());
+        }
+
+        static Signature example(Map<?, ?> raw) {
+            // The bundled examples use explicit Bukkit enum names. Do not ask the server
+            // item registry to validate these known material names during startup.
+            String icon = text(raw.get("icon"));
+            String name = text(raw.get("name"));
+            if (icon.isEmpty() || name.isEmpty()) throw new IllegalArgumentException("Invalid menu visual example");
+            Material material = Material.valueOf(icon);
+            return new Signature(material, name, text(raw.get("lore")), text(raw.get("command")),
+                    text(raw.get("plugin")), text(raw.get("permission")),
+                    text(raw.get("category")).toLowerCase(Locale.ROOT));
+        }
+
+        private static String text(Object value) {
+            return value == null ? "" : value.toString().trim();
         }
     }
 
@@ -42,16 +59,14 @@ final class ServerMenuEntryVisuals {
 
     static ServerMenuEntryVisuals from(FileConfiguration config) {
         var raw = config.getMapList("server-menu.items");
-        var entries = ServerMenuSettings.from(config).entries();
-        if (raw.size() != entries.size()) throw new IllegalArgumentException("Invalid menu visual examples");
         Map<Signature, NamespacedKey> models = new HashMap<>();
         Set<String> ids = new HashSet<>();
-        for (int i = 0; i < entries.size(); i++) {
-            Object value = raw.get(i).get("visual");
+        for (Map<?, ?> example : raw) {
+            Object value = example.get("visual");
             if (!(value instanceof String id) || !id.matches("[a-z0-9_]+/[a-z0-9_]+") || !ids.add(id))
                 throw new IllegalArgumentException("Invalid or duplicate menu visual id");
             var model = new NamespacedKey("chrdk_menu", "entry/" + id);
-            if (models.putIfAbsent(Signature.of(entries.get(i)), model) != null)
+            if (models.putIfAbsent(Signature.example(example), model) != null)
                 throw new IllegalArgumentException("Ambiguous menu visual example");
         }
         return new ServerMenuEntryVisuals(models);
