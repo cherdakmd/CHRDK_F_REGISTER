@@ -23,7 +23,8 @@ class AuditError(Exception):
 def open_snapshot(path: Path, app_id: int, versions: set[int]) -> sqlite3.Connection:
     if not path.is_file() or path.is_symlink():
         raise AuditError('database missing or unsafe')
-    if any(Path(str(path) + suffix).exists() for suffix in ('-wal', '-shm', '-journal')):
+    sidecars = (Path(str(path) + suffix) for suffix in ('-wal', '-shm', '-journal'))
+    if any(sidecar.exists() or sidecar.is_symlink() for sidecar in sidecars):
         raise AuditError('database has sidecars; offline reconciliation required')
     conn = sqlite3.connect(path.resolve().as_uri() + '?mode=ro&immutable=1', uri=True)
     try:

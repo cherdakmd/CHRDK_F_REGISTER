@@ -118,6 +118,30 @@ class FishingBankRecoveryIntegrationTest {
             assertEquals(20, reload().balanceMinor(owner));
         }
     }
+    @Test void offlineAuditorReconcilesRealCoreAndFishingFilesAndDetectsOldJournal() throws Exception {
+        var bank = initialize(); var adapter = adapter(bank); var inventory = new Inventory();
+        try (var journal = new FishSaleJournal(database(), true)) { assertTrue(journal.historyMatchesAll(adapter.allReceipts())); }
+        Path previous = directory.resolve("old-sales.db"); Files.copy(database(), previous);
+        try (var journal = new FishSaleJournal(database(), false)) {
+            assertEquals(FishSaleJournal.Result.WAIT, journal.prepareMixed(owner, transaction, "before", "after", List.of(fish()),
+                    List.of(new FishSaleJournal.VanillaFish(4, "COD", 3)), key, adapter));
+            assertEquals(FishSaleJournal.Result.DONE, journal.recover(owner, transaction, inventory, adapter));
+        }
+        Path identity = directory.resolve("sale-lineage.txt"); Files.writeString(identity, lineage + "\n");
+        byte[] bankBefore = Files.readAllBytes(bank.file()); byte[] salesBefore = Files.readAllBytes(database());
+        var script = Path.of("fishing/tools/audit_sale_snapshot.py").toAbsolutePath().toString();
+        var command = List.of("python3", script, "--bank", bank.file().toString(), "--sale", database().toString(),
+                "--lineage", identity.toString(), "--source", SOURCE);
+        var process = new ProcessBuilder(command).redirectErrorStream(true).start();
+        String output = new String(process.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        assertEquals(0, process.waitFor(), output); assertTrue(output.contains("\"requires_review\": false"));
+        assertFalse(output.contains(owner.toString())); assertFalse(output.contains(transaction.toString()));
+        assertArrayEquals(bankBefore, Files.readAllBytes(bank.file())); assertArrayEquals(salesBefore, Files.readAllBytes(database()));
+        var oldCommand = new java.util.ArrayList<>(command); oldCommand.set(5, previous.toString());
+        process = new ProcessBuilder(oldCommand).redirectErrorStream(true).start();
+        output = new String(process.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        assertEquals(2, process.waitFor(), output); assertTrue(output.contains("\"requires_review\": true"));
+    }
     @Test void fullBankWaitsAfterRemovalAndCreditsOnceWhenRoomIsAvailable() throws Exception {
         var bank = initialize(); assertEquals(BankStore.MAX_BALANCE, bank.deposit(owner, "owner", BankStore.MAX_BALANCE)); bank.saveNow();
         var adapter = adapter(bank); var inventory = new Inventory();

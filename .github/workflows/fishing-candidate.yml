@@ -27,7 +27,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          ./gradlew --no-daemon --no-configuration-cache -Pplugin_version=2.0.26-rc.24 \
+          ./gradlew --no-daemon --no-configuration-cache -Pplugin_version=2.0.26-rc.25 \
             -Pchrdk.papiJar=build/dependencies/PlaceholderAPI-2.12.3.jar build --continue > core-build.log 2>&1
           result=$?
           tail -n 100 core-build.log
@@ -41,7 +41,7 @@ jobs:
       - name: Exercise real Core bank with Fishing journal on temporary files
         shell: bash
         run: |
-          ./gradlew --no-daemon --no-configuration-cache -Pplugin_version=2.0.26-rc.24 \
+          ./gradlew --no-daemon --no-configuration-cache -Pplugin_version=2.0.26-rc.25 \
             -Pchrdk.papiJar=build/dependencies/PlaceholderAPI-2.12.3.jar fishingRecoveryTest
           python3 - <<'PY'
           import glob, xml.etree.ElementTree as ET
@@ -51,6 +51,7 @@ jobs:
               'conflictingInventoryDoesNotCreditBank',
               'olderJournalSnapshotIsRejectedAgainstRealNewerBankHistory',
               'fullBankWaitsAfterRemovalAndCreditsOnceWhenRoomIsAvailable',
+              'offlineAuditorReconcilesRealCoreAndFishingFilesAndDetectsOldJournal',
           }
           names = set()
           for path in paths:
@@ -72,10 +73,10 @@ jobs:
             ! -name '*-sources.jar' ! -name '*-javadoc.jar' ! -name '*-dev.jar' \
             -exec cp -t candidate/plugins '{}' +
           printf 'Закрытая проверка; не стабильный релиз.\n' > candidate/plugins/ОБНОВЛЕНИЕ.txt
-          python3 .github/scripts/verify_release.py candidate/plugins 2.0.26-rc.24
-          cp vk/build/libs/chrdk-vk-2.0.26-rc.24.jar candidate/plugins/
+          python3 .github/scripts/verify_release.py candidate/plugins 2.0.26-rc.25
+          cp vk/build/libs/chrdk-vk-2.0.26-rc.25.jar candidate/plugins/
           python3 .github/scripts/verify_release.py --standalone \
-            candidate/plugins/chrdk-vk-2.0.26-rc.24.jar CHRDK_VK 2.0.26-rc.24
+            candidate/plugins/chrdk-vk-2.0.26-rc.25.jar CHRDK_VK 2.0.26-rc.25
       - name: Build and test experimental Fishing
         shell: bash
         run: |
@@ -86,7 +87,7 @@ jobs:
           fi
           python3 -m unittest discover -s fishing/tests -p 'test_*.py' -v
           python3 -m unittest discover -s custom-items/tests -p 'test_resource_pack.py' -v
-          ./gradlew -p fishing --no-daemon -PfishingVersion=2.0.26-rc.24 clean test jar fishingResourcePack
+          ./gradlew -p fishing --no-daemon -PfishingVersion=2.0.26-rc.25 clean test jar fishingResourcePack
           python3 - <<'PY'
           from pathlib import Path
           from zipfile import ZipFile
@@ -101,14 +102,14 @@ jobs:
               if required - names or any(n.startswith(('org/slf4j/', 'ru/cherdakmd/chrdkskills/')) for n in names):
                   raise SystemExit('Invalid Fishing JAR contents')
               descriptor = jar.read('plugin.yml').decode('utf-8').splitlines()
-              if not {'name: CHRDK_Fishing', 'version: 2.0.26-rc.24', "api-version: '26.3'", 'depend: [CHRDK_Core, CHRDK_Skills]'}.issubset(descriptor):
+              if not {'name: CHRDK_Fishing', 'version: 2.0.26-rc.25', "api-version: '26.3'", 'depend: [CHRDK_Core, CHRDK_Skills]'}.issubset(descriptor):
                   raise SystemExit('Unexpected Fishing descriptor')
           PY
           cp fishing/build/libs/*.jar candidate/plugins/
       - name: Verify Fishing's exact Core and Skills capabilities
         run: |
           python3 -m unittest discover -s .github/scripts -p 'test_verify_fishing_bundle.py' -v
-          python3 .github/scripts/verify_fishing_bundle.py candidate/plugins 2.0.26-rc.24
+          python3 .github/scripts/verify_fishing_bundle.py candidate/plugins 2.0.26-rc.25
       - name: Verify and package all CHRDK plugins and extras
         shell: bash
         run: |
@@ -122,8 +123,8 @@ jobs:
           root = Path.cwd()
           expected = expected_plugins(root) | {'CHRDK_Fishing', 'CHRDK_VK'}
           plugins = Path('candidate/plugins')
-          verify(plugins, '2.0.26-rc.24', expected)
-          pack(plugins, '2.0.26-rc.24', Path('candidate/chrdk-all-2.0.26-rc.24.zip'), expected)
+          verify(plugins, '2.0.26-rc.25', expected)
+          pack(plugins, '2.0.26-rc.25', Path('candidate/chrdk-all-2.0.26-rc.25.zip'), expected)
           PY
           cp datapacks/mine-treasure-ru/mine-treasure-1.6.5-ru.zip candidate/extras/
           cp custom-items/build/resource-packs/chrdk-custom-items-prototype.zip candidate/extras/
@@ -147,7 +148,7 @@ jobs:
               print('Verified combined CustomItems + Fishing pack')
           PY
           python3 .github/scripts/pack_grim_configs.py anticheat/grim candidate/extras/chrdk-grim-configs.zip
-          for file in candidate/extras/*.zip candidate/chrdk-all-2.0.26-rc.24.zip; do unzip -t "$file"; done
+          for file in candidate/extras/*.zip candidate/chrdk-all-2.0.26-rc.25.zip; do unzip -t "$file"; done
           (cd candidate/extras && sha1sum chrdk-custom-items-prototype.zip > chrdk-custom-items-prototype.sha1)
       - name: Rehearse Fishing Horizons packaging without publication
         shell: bash
@@ -156,16 +157,16 @@ jobs:
           python3 -m unittest discover -s .github/scripts -p 'test_fishing_release_dry_run.py' -v
           python3 .github/scripts/fishing_release_dry_run.py \
             candidate/plugins candidate/extras/chrdk-custom-items-prototype.zip \
-            2.0.26-rc.24 "$GITHUB_SHA" fishing-horizons-dry-run-2.0.26-rc.24.zip
-          sha256sum fishing-horizons-dry-run-2.0.26-rc.24.zip > fishing-horizons-dry-run-2.0.26-rc.24.zip.sha256
-          sha256sum -c fishing-horizons-dry-run-2.0.26-rc.24.zip.sha256
+            2.0.26-rc.25 "$GITHUB_SHA" fishing-horizons-dry-run-2.0.26-rc.25.zip
+          sha256sum fishing-horizons-dry-run-2.0.26-rc.25.zip > fishing-horizons-dry-run-2.0.26-rc.25.zip.sha256
+          sha256sum -c fishing-horizons-dry-run-2.0.26-rc.25.zip.sha256
       - name: Upload dry-run artifact (not a release)
         uses: actions/upload-artifact@v4
         with:
-          name: fishing-horizons-dry-run-2.0.26-rc.24-${{ github.sha }}
+          name: fishing-horizons-dry-run-2.0.26-rc.25-${{ github.sha }}
           path: |
-            fishing-horizons-dry-run-2.0.26-rc.24.zip
-            fishing-horizons-dry-run-2.0.26-rc.24.zip.sha256
+            fishing-horizons-dry-run-2.0.26-rc.25.zip
+            fishing-horizons-dry-run-2.0.26-rc.25.zip.sha256
           if-no-files-found: error
           retention-days: 14
       - name: Describe and checksum candidate
@@ -174,7 +175,7 @@ jobs:
           set -euo pipefail
           cat > candidate/README.txt <<'TEXT'
           КАНДИДАТ ДЛЯ ЗАКРЫТОГО СЕРВЕРА, НЕ СТАБИЛЬНЫЙ РЕЛИЗ.
-          Плагины Core, общие модули и экспериментальная рыбалка: 2.0.26-rc.24.
+          Плагины Core, общие модули и экспериментальная рыбалка: 2.0.26-rc.25.
           Purpur 26.3 / Java 25. Не открывать игрокам до проверки.
           Core, Skills, Fishing и CHRDK_VK собраны из одного коммита и лежат в plugins/.
           /fish sell: нажмите рыбу в нижнем инвентаре, затем кнопку продажи.
@@ -203,7 +204,7 @@ jobs:
           TEXT
           cp fishing/STABLE-RELEASE-GATE.md fishing/CLOSED-SERVER-CHECKLIST.md candidate/
           cp fishing/README.md candidate/FISHING-README.md
-          (cd candidate && find plugins extras -type f -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt && sha256sum chrdk-all-2.0.26-rc.24.zip README.txt FISHING-README.md CLOSED-SERVER-CHECKLIST.md STABLE-RELEASE-GATE.md >> SHA256SUMS.txt && sha256sum -c SHA256SUMS.txt)
+          (cd candidate && find plugins extras -type f -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt && sha256sum chrdk-all-2.0.26-rc.25.zip README.txt FISHING-README.md CLOSED-SERVER-CHECKLIST.md STABLE-RELEASE-GATE.md >> SHA256SUMS.txt && sha256sum -c SHA256SUMS.txt)
       - name: Pack full candidate for installation
         shell: bash
         run: |
@@ -211,7 +212,7 @@ jobs:
           from pathlib import Path
           from zipfile import ZipFile, ZIP_DEFLATED
           root = Path('candidate')
-          destination = Path('chrdk-closed-server-2.0.26-rc.24.zip')
+          destination = Path('chrdk-closed-server-2.0.26-rc.25.zip')
           with ZipFile(destination, 'w', ZIP_DEFLATED) as out:
               for path in sorted(root.rglob('*')):
                   if path.is_file(): out.write(path, path.relative_to(root))
@@ -219,20 +220,20 @@ jobs:
               bad = archive.testzip()
               if bad: raise SystemExit(f'Corrupt candidate: {bad}')
           PY
-          sha256sum chrdk-closed-server-2.0.26-rc.24.zip > chrdk-closed-server-2.0.26-rc.24.zip.sha256
+          sha256sum chrdk-closed-server-2.0.26-rc.25.zip > chrdk-closed-server-2.0.26-rc.25.zip.sha256
       - name: Upload closed-server candidate ZIP
         uses: actions/upload-artifact@v4
         with:
-          name: chrdk-closed-server-2.0.26-rc.24-${{ github.sha }}
+          name: chrdk-closed-server-2.0.26-rc.25-${{ github.sha }}
           path: |
-            chrdk-closed-server-2.0.26-rc.24.zip
-            chrdk-closed-server-2.0.26-rc.24.zip.sha256
+            chrdk-closed-server-2.0.26-rc.25.zip
+            chrdk-closed-server-2.0.26-rc.25.zip.sha256
           if-no-files-found: error
           retention-days: 14
       - name: Upload closed-server candidate
         uses: actions/upload-artifact@v4
         with:
-          name: fishing-closed-server-2.0.26-rc.24-${{ github.sha }}
+          name: fishing-closed-server-2.0.26-rc.25-${{ github.sha }}
           path: candidate/
           if-no-files-found: error
           retention-days: 14
