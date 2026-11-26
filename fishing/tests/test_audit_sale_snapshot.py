@@ -88,6 +88,52 @@ class SaleAuditTest(unittest.TestCase):
         self.assertEqual(2, run.returncode); self.assertNotIn(self.owner, run.stdout + run.stderr)
         self.assertNotIn(self.transaction, run.stdout + run.stderr)
 
+    def test_vanilla_only_amount_must_equal_recorded_quantity_even_if_bank_agrees(self):
+        with sqlite3.connect(self.db_file) as db:
+            db.execute('delete from spent_fish')
+            db.execute('update sales set signed_count=0,amount=30 where id=?', (self.transaction,))
+        key = self.source + ':' + self.transaction
+        self.bank['entitlementCredits'][key]['credited'] = 30; self.save_bank()
+        self.assertFalse(self.run_audit()['requires_review'])
+        for bad in (29, 31):
+            with self.subTest(amount=bad):
+                with sqlite3.connect(self.db_file) as db:
+                    db.execute('update sales set amount=? where id=?', (bad, self.transaction))
+                self.bank['entitlementCredits'][key]['credited'] = bad; self.save_bank()
+                with self.assertRaises(audit.AuditError): self.run_audit()
+
+    def test_mixed_amount_must_cover_vanilla_and_minimum_signed_price(self):
+        key = self.source + ':' + self.transaction
+        # Three vanilla fish plus one signed token priced at its minimum.
+        with sqlite3.connect(self.db_file) as db:
+            db.execute('update sales set amount=31 where id=?', (self.transaction,))
+        self.bank['entitlementCredits'][key]['credited'] = 31; self.save_bank()
+        self.assertFalse(self.run_audit()['requires_review'])
+        with sqlite3.connect(self.db_file) as db:
+            db.execute('update sales set amount=30 where id=?', (self.transaction,))
+        self.bank['entitlementCredits'][key]['credited'] = 30; self.save_bank()
+        with self.assertRaises(audit.AuditError): self.run_audit()
+        before = self.hash_inputs()
+        cmd = [sys.executable, str(TOOLS / 'audit_sale_snapshot.py'), '--bank', str(self.bank_file), '--sale', str(self.db_file),
+               '--lineage', str(self.lineage_file), '--source', self.source]
+        run = subprocess.run(cmd, text=True, capture_output=True, check=False)
+        self.assertEqual(1, run.returncode)
+        self.assertNotIn(self.owner, run.stdout + run.stderr)
+        self.assertNotIn(self.transaction, run.stdout + run.stderr)
+        self.assertEqual(before, self.hash_inputs())
+
+    def test_more_than_36_signed_items_and_vanilla_stacks_is_impossible(self):
+        with sqlite3.connect(self.db_file) as db:
+            for _ in range(33):
+                db.execute('insert into spent_fish values(?,?)', (uid(), self.transaction))
+            db.execute('update sales set signed_count=34,vanilla_count=4 where id=?', (self.transaction,))
+            db.execute("insert into vanilla_fish values(?,4,'SALMON',1)", (self.transaction,))
+        self.assertFalse(self.run_audit()['requires_review'])  # 34 fish + 2 stacks
+        with sqlite3.connect(self.db_file) as db:
+            db.execute('insert into spent_fish values(?,?)', (uid(), self.transaction))
+            db.execute('update sales set signed_count=35 where id=?', (self.transaction,))
+        with self.assertRaises(audit.AuditError): self.run_audit()
+
     def test_index_tampering_sidecars_and_wrong_source_are_rejected(self):
         with self.assertRaises(audit.AuditError): audit.audit(self.bank_file, self.db_file, self.lineage_file, 'fishing-sale')
         sidecar = Path(str(self.db_file) + '-wal'); sidecar.symlink_to(self.root / 'missing-target')

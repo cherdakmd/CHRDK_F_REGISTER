@@ -85,17 +85,26 @@ def audit(bank_path: Path, database_path: Path, lineage_path: Path, source_name:
                 raise AuditError('duplicate or orphaned fish')
             fish_ids.add(fish_id); signed_counts[tx] += 1
         vanilla_counts = {tx: 0 for tx in sales}
+        vanilla_stacks = {tx: 0 for tx in sales}
         slots = set()
         if version == 5:
             for tx, slot, kind, quantity in db.execute('select sale_id,slot,kind,quantity from vanilla_fish'):
                 tx = canonical_uuid(tx); slot = nonnegative(slot); quantity = nonnegative(quantity)
                 if tx not in sales or slot >= 36 or kind not in KINDS or not 1 <= quantity <= 64 or (tx, slot) in slots:
                     raise AuditError('invalid vanilla stack')
-                slots.add((tx, slot)); vanilla_counts[tx] += quantity
-        for tx, (_, _, _, signed, vanilla) in sales.items():
+                slots.add((tx, slot)); vanilla_counts[tx] += quantity; vanilla_stacks[tx] += 1
+        for tx, (_, amount, _, signed, vanilla) in sales.items():
             count = signed_counts[tx]
             if count > 36 or (version == 5 and (signed != count or vanilla != vanilla_counts[tx])) or count + vanilla_counts[tx] == 0:
                 raise AuditError('sale journal missing items')
+            if version == 5 and vanilla:
+                # Orders have no vanilla stacks. Each signed fish costs at least one minor
+                # unit; the journal does not retain its individual price. A vanilla-only
+                # sale has an exact known amount, including across multiple stacks.
+                vanilla_amount = vanilla * 10
+                if (count + vanilla_stacks[tx] > 36 or amount < vanilla_amount + count
+                        or (count == 0 and amount != vanilla_amount)):
+                    raise AuditError('impossible mixed sale amount or item count')
         if db.execute('select count(*) from cooked_fish c join spent_fish f on f.fish_id=c.fish_id').fetchone()[0]:
             raise AuditError('fish both cooked and sold')
         cooking = dict(db.execute('select phase,count(*) from cooked_fish group by phase'))
