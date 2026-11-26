@@ -32,7 +32,13 @@ final class BookVisuals {
 
     /** Returns true only if a component was changed. Invalid data falls back to default if ours. */
     static boolean apply(ItemMeta meta, NamespacedKey customKey, NamespacedKey sourceKey, boolean enabled) {
-        if (!(meta instanceof EnchantmentStorageMeta storage) || customKey == null || sourceKey == null) return false;
+        if (!(meta instanceof EnchantmentStorageMeta storage)) return false;
+        return apply(meta, customKey, sourceKey, enabled, () -> vanillaLevels(storage));
+    }
+
+    static boolean apply(ItemMeta meta, NamespacedKey customKey, NamespacedKey sourceKey, boolean enabled,
+                         java.util.function.Supplier<Map<String, Integer>> vanillaLevels) {
+        if (!(meta instanceof EnchantmentStorageMeta) || customKey == null || sourceKey == null || vanillaLevels == null) return false;
         NamespacedKey current = meta.getItemModel();
         boolean ours = owned(current);
         if (current != null && !ours) return false;
@@ -46,13 +52,7 @@ final class BookVisuals {
                 custom = data.has(customKey, PersistentDataType.STRING)
                         ? EnchantBookValidation.read(data.get(customKey, PersistentDataType.STRING)) : null;
             }
-            Map<String, Integer> vanilla = new LinkedHashMap<>();
-            boolean valid = true;
-            for (Map.Entry<Enchantment, Integer> entry : storage.getStoredEnchants().entrySet()) {
-                if (entry.getKey() == null || entry.getKey().getKey() == null
-                        || vanilla.put(entry.getKey().getKey().toString(), entry.getValue()) != null) { valid = false; break; }
-            }
-            if (valid) selected = BookVisualPolicy.select(custom, vanilla);
+            selected = BookVisualPolicy.select(custom, vanillaLevels.get());
         }
         if (Objects.equals(current, selected)) return false;
         // Disabled means never adopt an unmodelled item. Already adopted books still
@@ -60,6 +60,15 @@ final class BookVisuals {
         if (!ours && !enabled) return false;
         meta.setItemModel(selected);
         return true;
+    }
+
+    private static Map<String, Integer> vanillaLevels(EnchantmentStorageMeta storage) {
+        Map<String, Integer> vanilla = new LinkedHashMap<>();
+        for (Map.Entry<Enchantment, Integer> entry : storage.getStoredEnchants().entrySet()) {
+            if (entry.getKey() == null || entry.getKey().getKey() == null || entry.getValue() == null
+                    || vanilla.put(entry.getKey().getKey().toString(), entry.getValue()) != null) return null;
+        }
+        return vanilla;
     }
 
     static boolean update(ItemStack item, NamespacedKey customKey, NamespacedKey sourceKey, boolean enabled) {

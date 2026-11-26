@@ -22,8 +22,13 @@ import org.bukkit.inventory.ItemStack;
 final class BookVisualListener implements Listener {
     private final EnchantsPlugin plugin;
     private final MiningTasks pending;
+    private final java.util.function.Predicate<ItemStack> update;
     BookVisualListener(EnchantsPlugin plugin) {
+        this(plugin, item -> plugin.items().refreshBookVisual(item));
+    }
+    BookVisualListener(EnchantsPlugin plugin, java.util.function.Predicate<ItemStack> update) {
         this.plugin = plugin;
+        this.update = java.util.Objects.requireNonNull(update);
         pending = new MiningTasks(action -> { var task = Bukkit.getScheduler().runTask(plugin, action); return task::cancel; });
     }
     void clear() { pending.clear(); }
@@ -46,12 +51,12 @@ final class BookVisualListener implements Listener {
             ItemStack before = contents[slot];
             if (before == null) continue;
             ItemStack copy = before.clone();
-            if (plugin.items().refreshBookVisual(copy) && before.equals(inventory.getItem(slot))) inventory.setItem(slot, copy);
+            if (update.test(copy) && before.equals(inventory.getItem(slot))) inventory.setItem(slot, copy);
         }
         ItemStack before = inventory.getItemInOffHand();
         if (before != null) {
             ItemStack copy = before.clone();
-            if (plugin.items().refreshBookVisual(copy) && before.equals(inventory.getItemInOffHand())) inventory.setItemInOffHand(copy);
+            if (update.test(copy) && before.equals(inventory.getItemInOffHand())) inventory.setItemInOffHand(copy);
         }
     }
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)

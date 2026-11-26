@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import org.bukkit.NamespacedKey;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -24,7 +23,7 @@ class BookVisualsTest {
         final EnchantmentStorageMeta meta = mock(EnchantmentStorageMeta.class);
         final PersistentDataContainer pdc = mock(PersistentDataContainer.class);
         final AtomicReference<NamespacedKey> model = new AtomicReference<>();
-        final Map<Enchantment, Integer> vanilla = new HashMap<>();
+        final Map<String, Integer> vanilla = new HashMap<>();
         final HashSet<NamespacedKey> keys = new HashSet<>();
         String custom;
         boolean validType = true;
@@ -32,7 +31,6 @@ class BookVisualsTest {
             when(meta.getPersistentDataContainer()).thenReturn(pdc);
             when(meta.getItemModel()).thenAnswer(c -> model.get());
             doAnswer(c -> { model.set(c.getArgument(0)); return null; }).when(meta).setItemModel(nullable(NamespacedKey.class));
-            when(meta.getStoredEnchants()).thenReturn(vanilla);
             when(pdc.getKeys()).thenAnswer(c -> keys);
             when(pdc.has(any(NamespacedKey.class))).thenAnswer(c -> keys.contains(c.getArgument(0)));
             when(pdc.has(eq(CUSTOM), eq(PersistentDataType.STRING))).thenAnswer(c -> validType);
@@ -40,11 +38,8 @@ class BookVisualsTest {
         }
         void custom(String value) { keys.add(CUSTOM); custom = value; }
         void noCustom() { keys.remove(CUSTOM); custom = null; }
-        void vanilla(String name, int level) {
-            var enchant = mock(Enchantment.class); when(enchant.getKey()).thenReturn(NamespacedKey.fromString(name));
-            vanilla.put(enchant, level);
-        }
-        boolean apply(boolean enabled) { return BookVisuals.apply(meta, CUSTOM, SOURCE, enabled); }
+        void vanilla(String name, int level) { vanilla.put(name, level); }
+        boolean apply(boolean enabled) { return BookVisuals.apply(meta, CUSTOM, SOURCE, enabled, () -> vanilla); }
         String selected() { return model.get() == null ? null : model.get().toString(); }
     }
 
@@ -93,6 +88,22 @@ class BookVisualsTest {
         assertFalse(BookVisuals.owned(new NamespacedKey("chrdk_enchants", "book/custom/not_registered")));
         assertFalse(BookVisuals.owned(new NamespacedKey("chrdk_enchants", "other")));
         assertFalse(BookVisuals.owned(new NamespacedKey("thirdparty", "book/custom/lifesteal")));
+    }
+
+    @Test void runtimeHooksRecalculateAfterTheActualContentChanges() throws Exception {
+        var visuals = java.nio.file.Files.readString(java.nio.file.Path.of("src/main/java/ru/cherdakmd/chrdkenchants/BookVisuals.java"));
+        assertTrue(visuals.contains("storage.getStoredEnchants().entrySet()"));
+        assertTrue(visuals.contains("entry.getKey().getKey().toString()"));
+        var items = java.nio.file.Files.readString(java.nio.file.Path.of("src/main/java/ru/cherdakmd/chrdkenchants/EnchantItems.java"));
+        assertTrue(items.contains("BookVisuals.apply(meta, key, bookSource"));
+        var workshop = java.nio.file.Files.readString(java.nio.file.Path.of("src/main/java/ru/cherdakmd/chrdkenchants/EnchantWorkshop.java"));
+        assertTrue(workshop.contains("refreshBookVisual(after[slot])"));
+        assertTrue(workshop.contains("refreshBookVisual(extracted)"));
+        assertTrue(workshop.indexOf("refreshBookVisual(after[slot])") > workshop.indexOf("originalMeta.removeStoredEnchant(selected)"));
+        var anvil = java.nio.file.Files.readString(java.nio.file.Path.of("src/main/java/ru/cherdakmd/chrdkenchants/VanillaMergeListener.java"));
+        assertTrue(anvil.contains("plugin.items().refreshBookVisual(out)"));
+        assertTrue(anvil.contains("plugin.items().marked(left)"));
+        assertTrue(anvil.contains("plugin.items().marked(right)"));
     }
 
     @Test void combineIgnoresOnlyOurModelAndNeverModifiesInputs() {

@@ -21,7 +21,6 @@ class BookVisualListenerTest {
     @Test void scansOnlyPlayerStorageAfterClosingOtherViewsAndRechecksSnapshots() {
         var plugin = mock(EnchantsPlugin.class); var config = new YamlConfiguration(); config.set("textures.books", true);
         when(plugin.getConfig()).thenReturn(config); when(plugin.isEnabled()).thenReturn(true);
-        var items = mock(EnchantItems.class); when(plugin.items()).thenReturn(items);
         var player = mock(Player.class); var world = mock(World.class); var view = mock(InventoryView.class);
         var inv = mock(PlayerInventory.class); var id = UUID.randomUUID();
         when(player.getUniqueId()).thenReturn(id); when(player.getWorld()).thenReturn(world);
@@ -29,13 +28,13 @@ class BookVisualListenerTest {
         when(player.getGameMode()).thenReturn(GameMode.SURVIVAL); when(player.getOpenInventory()).thenReturn(view);
         when(player.getInventory()).thenReturn(inv);
         var before = mock(ItemStack.class); var changed = mock(ItemStack.class); var copy = mock(ItemStack.class);
-        when(before.clone()).thenReturn(copy); when(items.refreshBookVisual(copy)).thenReturn(true);
+        when(before.clone()).thenReturn(copy);
         when(inv.getStorageContents()).thenReturn(new ItemStack[]{before}); when(inv.getItem(0)).thenReturn(before);
         var scheduler = mock(BukkitScheduler.class); var queued = new AtomicReference<Runnable>();
         doAnswer(c -> { queued.set(c.getArgument(1)); return null; }).when(scheduler).runTask(eq(plugin), any(Runnable.class));
         try (var bukkit = mockStatic(Bukkit.class)) {
             bukkit.when(Bukkit::getScheduler).thenReturn(scheduler);
-            var listener = new BookVisualListener(plugin);
+            var listener = new BookVisualListener(plugin, item -> item == copy);
             when(view.getType()).thenReturn(InventoryType.CHEST);
             listener.queue(player); assertNotNull(queued.get()); queued.get().run();
             verify(inv, never()).setItem(anyInt(), any());
