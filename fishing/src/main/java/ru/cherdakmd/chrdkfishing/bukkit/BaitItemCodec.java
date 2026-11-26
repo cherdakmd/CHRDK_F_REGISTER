@@ -18,10 +18,13 @@ import ru.cherdakmd.chrdkfishing.FishToken;
 final class BaitItemCodec {
     private static final NamespacedKey KIND = key("bait_kind"), ID = key("bait_id"), MAC = key("bait_signature");
     private final byte[] secret;
+    private final boolean textures;
     private static NamespacedKey key(String name) { return new NamespacedKey("chrdk_fishing", name); }
-    BaitItemCodec(byte[] secret) {
+    BaitItemCodec(byte[] secret) { this(secret, false); }
+    BaitItemCodec(byte[] secret, boolean textures) {
         if (secret == null || secret.length != FishToken.KEY_BYTES) throw new IllegalArgumentException("bait key");
         this.secret = secret.clone();
+        this.textures = textures;
     }
     boolean marked(ItemStack item) {
         if (item == null || !item.hasItemMeta()) return false;
@@ -31,6 +34,8 @@ final class BaitItemCodec {
         if (!BaitToken.verify(secret, token)) throw new IllegalArgumentException("bait signature");
         var bait = BaitCatalog.byId(token.kind());
         var item = new ItemStack(Material.PAPER, 1); var meta = item.getItemMeta();
+        // New deliveries only: pending journal snapshots and existing items are not rewritten.
+        FishingVisuals.applyNewBait(meta, bait.id(), textures);
         meta.displayName(Component.text(bait.name(), NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
         meta.lore(List.of(Component.text("Одноразовая приманка", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)));
         var pdc = meta.getPersistentDataContainer();

@@ -43,7 +43,7 @@ public final class FishingPlugin extends JavaPlugin {
                 boolean textures = getConfig().getBoolean("textures.enabled", false);
                 var rodCodec = new RodItemCodec(key, textures);
                 rods = RodUpgradeSetup.open(folder, services, api, core.getClass().getClassLoader(), rodCodec, key, auth::authenticated, generation);
-                var baitCodec = new BaitItemCodec(key);
+                var baitCodec = new BaitItemCodec(key, getConfig().getBoolean("textures.bait-items", false));
                 bait = BaitPurchaseSetup.open(folder, services, api, core.getClass().getClassLoader(), baitCodec, key, auth::authenticated, generation);
                 generation.markInitialized(folder);
                 var active = FishingActivation.install(this, getServer().getPluginManager(), services,

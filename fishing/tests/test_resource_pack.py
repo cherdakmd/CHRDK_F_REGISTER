@@ -111,6 +111,39 @@ class FishingResourcePackTest(unittest.TestCase):
         for kind in ('items', 'models/item', 'textures/item'):
             self.assertEqual(ids, {p.stem for p in (ASSETS / kind / 'menu/bait').iterdir()})
 
+    def test_bait_item_textures_cover_each_catalog_kind(self):
+        source = (PACK.parent / 'src/main/java/ru/cherdakmd/chrdkfishing/BaitCatalog.java').read_text(encoding='utf-8')
+        ids = re.findall(r'new Bait\("([a-z_]+)",', source)
+        self.assertEqual({'quick', 'rare', 'large'}, set(ids)); self.assertEqual(3, len(ids))
+        images = set()
+        for model_id in ids:
+            name = 'bait/' + model_id
+            with self.subTest(model=name):
+                self.model(name, 'minecraft:item/generated')
+                self.assertEqual({'type': 'minecraft:model', 'model': 'chrdk_fishing:item/' + name},
+                                 self.read('items/' + name + '.json')['model'])
+                data = (ASSETS / 'textures/item' / (name + '.png')).read_bytes()
+                digest = hashlib.sha256(data).hexdigest(); self.assertNotIn(digest, images); images.add(digest)
+        for kind in ('items', 'models/item', 'textures/item'):
+            self.assertEqual(set(ids), {p.stem for p in (ASSETS / kind / 'bait').iterdir()})
+
+    def test_cooking_menu_covers_all_recipes_and_states(self):
+        source = (PACK.parent / 'src/main/java/ru/cherdakmd/chrdkfishing/bukkit/FishCookingPlanner.java').read_text(encoding='utf-8')
+        recipes = re.findall(r'^\s*(FRIED|SMOKED|SOUP)\(', source, re.MULTILINE)
+        self.assertEqual({'FRIED', 'SMOKED', 'SOUP'}, set(recipes)); self.assertEqual(3, len(recipes))
+        ids = {x.lower() for x in recipes} | {x.lower() + '_selected' for x in recipes} | {'confirm', 'back', 'close', 'help'}
+        images = set()
+        for model_id in ids:
+            name = 'menu/cooking/' + model_id
+            with self.subTest(model=name):
+                self.model(name, 'minecraft:item/generated')
+                self.assertEqual({'type': 'minecraft:model', 'model': 'chrdk_fishing:item/' + name},
+                                 self.read('items/' + name + '.json')['model'])
+                data = (ASSETS / 'textures/item' / (name + '.png')).read_bytes()
+                digest = hashlib.sha256(data).hexdigest(); self.assertNotIn(digest, images); images.add(digest)
+        for kind in ('items', 'models/item', 'textures/item'):
+            self.assertEqual(ids, {p.stem for p in (ASSETS / kind / 'menu/cooking').iterdir()})
+
     def test_rods_cover_all_upgrade_levels_and_cast_state(self):
         for level in range(2, 11):
             with self.subTest(level=level):

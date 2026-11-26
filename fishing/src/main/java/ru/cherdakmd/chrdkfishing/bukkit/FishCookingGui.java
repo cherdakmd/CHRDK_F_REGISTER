@@ -47,28 +47,29 @@ final class FishCookingGui implements Listener {
     }
     private void render(Holder holder, Player player) {
         holder.inventory.clear();
+        boolean visuals = plugin.getConfig().getBoolean("textures.cooking-menu", false);
         var storage = player.getInventory().getStorageContents();
         for (int i = 0; i < Math.min(storage.length, 36); i++) {
             var token = codec.read(storage[i]); if (token.isEmpty()) continue;
             var fish = token.get();
-            holder.inventory.setItem(i, FishMainGui.icon(Material.PAPER, FishCatalog.byId(fish.fish().speciesId()).name(),
-                    "Ячейка " + (i + 1) + ": выбрать для готовки"));
+            holder.inventory.setItem(i, FishCookingVisuals.fishIcon(fish.fish().speciesId(), visuals,
+                    FishCatalog.byId(fish.fish().speciesId()).name(), "Ячейка " + (i + 1) + ": выбрать для готовки"));
         }
         for (int i = 0; i < FishCookingPlanner.Recipe.values().length; i++) {
             var recipe = FishCookingPlanner.Recipe.values()[i];
-            holder.inventory.setItem(39 + i, FishMainGui.icon(recipe.material(), recipe.title(),
+            holder.inventory.setItem(39 + i, FishCookingVisuals.recipeIcon(recipe, recipe == holder.recipe, visuals,
                     (recipe == holder.recipe ? "Выбрано. " : "Выбрать. ") + (recipe.needsBowl() ? "Нужна миска." : "Одна рыба.")));
         }
-        holder.inventory.setItem(45, FishMainGui.icon(Material.BOOK, "Как готовить", "Выберите рецепт ниже, затем рыбу выше.", "Для ухи нужна обычная миска в инвентаре.", "После выбора подтвердите: рыба будет израсходована."));
+        holder.inventory.setItem(45, FishCookingVisuals.buttonIcon(FishCookingVisuals.Icon.HELP, visuals, Material.BOOK, "Как готовить", "Выберите рецепт ниже, затем рыбу выше.", "Для ухи нужна обычная миска в инвентаре.", "После выбора подтвердите: рыба будет израсходована."));
         if (holder.quote != null) {
-            var item = FishMainGui.icon(holder.quote.recipe().material(), "Подтвердить: " + holder.quote.recipe().title(), "Одна рыба → одно блюдо");
+            var item = FishCookingVisuals.buttonIcon(FishCookingVisuals.Icon.CONFIRM, visuals, holder.quote.recipe().material(), "Подтвердить: " + holder.quote.recipe().title(), "Одна рыба → одно блюдо");
             var meta = item.getItemMeta(); meta.lore(java.util.List.of(
                     Component.text("Выбранная рыба будет израсходована.", NamedTextColor.GRAY),
                     Component.text("Блюдо заменит её в том же слоте.", NamedTextColor.GRAY)));
             item.setItemMeta(meta); holder.inventory.setItem(49, item);
         }
-        if (back != null) holder.inventory.setItem(52, FishMainGui.icon(Material.ARROW, "Назад", "Главное меню рыбалки"));
-        holder.inventory.setItem(53, FishMainGui.icon(Material.BARRIER, "Закрыть", "Ничего не готовить"));
+        if (back != null) holder.inventory.setItem(52, FishCookingVisuals.buttonIcon(FishCookingVisuals.Icon.BACK, visuals, Material.ARROW, "Назад", "Главное меню рыбалки"));
+        holder.inventory.setItem(53, FishCookingVisuals.buttonIcon(FishCookingVisuals.Icon.CLOSE, visuals, Material.BARRIER, "Закрыть", "Ничего не готовить"));
     }
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void click(InventoryClickEvent event) {
