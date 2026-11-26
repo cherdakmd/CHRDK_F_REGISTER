@@ -113,7 +113,8 @@ public final class FishingPlugin extends JavaPlugin {
                                 player.sendMessage("§eПроверка без оплаты и изменения инвентаря:");
                                 player.sendMessage("§7Банк: " + checkText(check.bankAvailable()) + "; журнал: " + checkText(check.journalReady()));
                                 player.sendMessage("§7Сверка предметов: " + checkText(inv.semanticMatch()) + "; строгая: " + checkText(inv.exactMatch()));
-                                player.sendMessage("§7Стабильность снимка: " + checkText(inv.stableSnapshot()) + "; проверка банка: " + checkText(inv.bankHashMatch()));
+                                player.sendMessage("§7Стабильность снимка: " + checkText(inv.stableSnapshot()) + "; старая сверка банка: " + checkText(inv.bankHashMatch()));
+                                player.sendMessage("§7Новая сверка снимка: " + (check.snapshotChargeSupported() ? "доступна" : "недоступна"));
                                 player.sendMessage("§7Это проверка текущего состояния, а не гарантия успешной оплаты.");
                             } catch (Exception error) {
                                 player.sendMessage("§cДиагностика недоступна. Убедитесь, что нет ожидающих операций, и обратитесь к администрации.");

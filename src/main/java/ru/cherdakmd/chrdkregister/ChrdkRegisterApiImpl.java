@@ -13,7 +13,8 @@ import java.util.Optional;
  * Реализация публичного API, регистрируемая в {@code ServicesManager} при включении плагина.
  * Тонкая обёртка над {@link AccessManager}: аддоны видят только стабильный контракт.
  */
-final class ChrdkRegisterApiImpl implements ChrdkRegisterApi, IncomeSourceLineageProvider, ShopLineageProvider {
+final class ChrdkRegisterApiImpl implements ChrdkRegisterApi, IncomeSourceLineageProvider, ShopLineageProvider,
+        ru.cherdakmd.chrdkregister.api.FishingSnapshotChargeProvider {
 
     private final RegisterPlugin plugin;
     private final java.util.Set<String> blocked = java.util.concurrent.ConcurrentHashMap.newKeySet();
@@ -172,6 +173,27 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi, IncomeSourceLineag
         if (plan == null || plan.debit() != payment.debit() || plan.cash() != payment.cash() || plan.change() != payment.change()
                 || !payment.inventoryHash().equals(ru.cherdakmd.chrdkregister.api.AuctionPayment.hash(
                     ru.cherdakmd.chrdkregister.api.ChargeInventory.encode(expected), ru.cherdakmd.chrdkregister.api.ChargeInventory.encode(plan.after())))) return false;
+        bank.open(payer.getUniqueId(), payer.getName());
+        return bank.settleCharge(payment);
+    }
+    /** Fishing bank-only path: verify the original journal bytes, not a re-encoded snapshot. */
+    @Override public boolean commitFishingSnapshotCharge(Player payer, ru.cherdakmd.chrdkregister.api.BankCharge payment, String snapshot) {
+        if (!auctionBankReady() || !FishingSnapshotChargeGuard.valid(payment, snapshot)
+                || payer == null || !payer.isOnline() || payer.isDead() || !payer.getUniqueId().equals(payment.payer())
+                || payer.hasMetadata("NPC") || !isAuthenticated(payer)
+                || payer.getGameMode() != org.bukkit.GameMode.SURVIVAL && payer.getGameMode() != org.bukkit.GameMode.ADVENTURE)
+            return false;
+        String permission = ru.cherdakmd.chrdkregister.api.BankCharge.permission(payment.source());
+        if (permission == null || !payer.hasPermission(permission)) return false;
+        org.bukkit.inventory.ItemStack[] current = payer.getInventory().getStorageContents();
+        try {
+            if (!ru.cherdakmd.chrdkregister.api.ChargeInventory.matches(current, snapshot)) return false;
+        } catch (RuntimeException invalidSnapshot) { return false; }
+        // A replay of the exact existing receipt remains a no-op even after spending funds.
+        if (bank.bankChargeStatus(payment) == ru.cherdakmd.chrdkregister.api.BankCharge.Status.COMMITTED) return true;
+        var plan = ru.cherdakmd.chrdkregister.api.ChargeInventory.planMinorBankOnly(current, payment.price(),
+                bank.spendableBalanceMinor(payer.getUniqueId()), payment.rateBps());
+        if (plan == null || plan.debit() != payment.debit() || plan.cash() != payment.cash() || plan.change() != payment.change()) return false;
         bank.open(payer.getUniqueId(), payer.getName());
         return bank.settleCharge(payment);
     }

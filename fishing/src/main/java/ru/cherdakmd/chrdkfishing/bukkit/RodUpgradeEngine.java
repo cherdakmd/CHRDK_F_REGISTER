@@ -58,7 +58,7 @@ final class RodUpgradeEngine implements AutoCloseable {
     private void requireBalance(Player player, long price) throws Exception {
         requireBalance(bank.spendable(player.getUniqueId()), price);
     }
-    record Diagnostic(boolean bankAvailable, boolean journalReady, RodUpgradeDiagnostics.Result inventory) { }
+    record Diagnostic(boolean bankAvailable, boolean journalReady, boolean snapshotChargeSupported, RodUpgradeDiagnostics.Result inventory) { }
     /** Diagnostic only: no journal prepare, bank charge, inventory writes or playerdata saves. */
     Diagnostic diagnose(Player player) throws Exception {
         if (!available(player)) throw new IllegalStateException("player unavailable");
@@ -71,7 +71,7 @@ final class RodUpgradeEngine implements AutoCloseable {
             @Override public ItemStack[] decode(String text) throws Exception { return (ItemStack[]) decode.invoke(null, text); }
             @Override public boolean matches(ItemStack[] items, String text) throws Exception { return (boolean) matches.invoke(null, items, text); }
         });
-        return new Diagnostic(bankAvailable, ready, snapshot);
+        return new Diagnostic(bankAvailable, ready, bank.supportsSnapshotCharge(), snapshot);
     }
     RodUpgradePlanner.Plan quote(Player player, int slot) throws Exception {
         if (!available(player) || journal.pendingOwner() != null) throw new IllegalStateException("upgrade unavailable");

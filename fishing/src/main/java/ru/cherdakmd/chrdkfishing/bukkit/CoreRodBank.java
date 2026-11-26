@@ -18,6 +18,8 @@ final class CoreRodBank implements RodUpgradeJournal.Bank {
     private final Class<?> api, bankCharge;
     private final Constructor<?> constructor;
     private final Method sequence, status, commit, balance, hash, decode;
+    private final Class<?> snapshotProvider;
+    private final Method snapshotCommit;
     CoreRodBank(ServicesManager services, Class<?> api, ClassLoader loader) throws ReflectiveOperationException {
         this(services, api, loader, SOURCE);
     }
@@ -35,12 +37,24 @@ final class CoreRodBank implements RodUpgradeJournal.Bank {
         balance = api.getMethod("spendableBankBalanceMinor", UUID.class);
         hash = Class.forName("ru.cherdakmd.chrdkregister.api.AuctionPayment", true, loader).getMethod("hash", String.class, String.class);
         decode = Class.forName("ru.cherdakmd.chrdkregister.api.ChargeInventory", true, loader).getMethod("decode", String.class);
+        Class<?> provider = null; Method snapshot = null;
+        try {
+            provider = Class.forName("ru.cherdakmd.chrdkregister.api.FishingSnapshotChargeProvider", true, loader);
+            snapshot = provider.getMethod("commitFishingSnapshotCharge", Player.class, bankCharge, String.class);
+        } catch (ClassNotFoundException absent) {
+            // Older Core: retain its existing strict path; do not claim semantic compatibility.
+        }
+        snapshotProvider = provider; snapshotCommit = snapshot;
     }
     private Object payment(RodUpgradeJournal.Charge charge) throws ReflectiveOperationException {
         String inv = (String) hash.invoke(null, charge.before(), charge.before());
         String state = (String) hash.invoke(null, charge.before(), charge.after());
         return constructor.newInstance(source, charge.lineage(), charge.sequence(), charge.transaction(), charge.owner(),
                 charge.minor(), charge.minor(), 0L, 0L, inv, state, true, RATE_BPS);
+    }
+    boolean supportsSnapshotCharge() {
+        Object service = services.load(api);
+        return service != null && snapshotProvider != null && snapshotProvider.isInstance(service);
     }
     long spendable(UUID owner) throws Exception {
         Object service = services.load(api);
@@ -61,7 +75,11 @@ final class CoreRodBank implements RodUpgradeJournal.Bank {
     @Override public void charge(RodUpgradeJournal.Charge charge) throws Exception {
         Object service = services.load(api); Player player = Bukkit.getPlayer(charge.owner());
         if (service == null || player == null) return;
-        ItemStack[] expected = (ItemStack[]) decode.invoke(null, charge.before());
-        commit.invoke(service, player, payment(charge), expected);
+        if (snapshotProvider != null && snapshotProvider.isInstance(service)) {
+            snapshotCommit.invoke(service, player, payment(charge), charge.before());
+        } else {
+            ItemStack[] expected = (ItemStack[]) decode.invoke(null, charge.before());
+            commit.invoke(service, player, payment(charge), expected);
+        }
     }
 }
