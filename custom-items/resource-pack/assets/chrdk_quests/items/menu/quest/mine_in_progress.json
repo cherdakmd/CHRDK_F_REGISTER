@@ -1,0 +1,6 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "chrdk_quests:item/menu/quest/mine_in_progress"
+  }
+}

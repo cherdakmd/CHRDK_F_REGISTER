@@ -3,6 +3,7 @@ package ru.cherdakmd.chrdkquests;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -158,7 +159,7 @@ public final class QuestsGui implements Listener {
                 "limit", "∞"));
         lore.add(plugin.messages().get("menu-info-ready",
                 "ready", String.valueOf(plugin.service().readyCount(id))));
-        return item(Material.WRITABLE_BOOK, "menu-info-name", null, lore);
+        return visual(item(Material.WRITABLE_BOOK, "menu-info-name", null, lore), QuestMenuVisuals.Control.INFO.model());
     }
 
     private ItemStack factionItem(Player player, QuestFaction faction) {
@@ -258,7 +259,7 @@ public final class QuestsGui implements Listener {
             case MINE -> Material.IRON_PICKAXE;
             case GATHER -> Material.CHEST;
         };
-        return item(icon, null, quest.name(), lore);
+        return visual(item(icon, null, quest.name(), lore), QuestMenuVisuals.quest(quest.type(), availability));
     }
 
     private String statusKey(QuestService.Availability availability) {
@@ -274,7 +275,24 @@ public final class QuestsGui implements Listener {
     }
 
     private ItemStack button(Material material, String nameKey) {
-        return item(material, nameKey, null, List.of());
+        QuestMenuVisuals.Control icon = switch (nameKey) {
+            case "menu-back" -> QuestMenuVisuals.Control.BACK;
+            case "menu-close" -> QuestMenuVisuals.Control.CLOSE;
+            default -> null;
+        };
+        ItemStack stack = item(material, nameKey, null, List.of());
+        return icon == null ? stack : visual(stack, icon.model());
+    }
+
+    private ItemStack visual(ItemStack virtual, NamespacedKey model) {
+        if (plugin.getConfig().getBoolean("textures.menu", false)) {
+            ItemMeta meta = virtual.getItemMeta();
+            if (meta != null) {
+                QuestMenuVisuals.apply(meta, model, true);
+                virtual.setItemMeta(meta);
+            }
+        }
+        return virtual;
     }
 
     private ItemStack item(Material material, String nameKey, String plainName,
