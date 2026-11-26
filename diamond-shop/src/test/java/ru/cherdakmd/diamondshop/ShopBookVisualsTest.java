@@ -37,13 +37,13 @@ class ShopBookVisualsTest {
         for (boolean enabled : new boolean[]{false, true}) {
             var template = mock(ItemStack.class); var result = mock(ItemStack.class); var meta = mock(ItemMeta.class);
             when(template.getItemMeta()).thenReturn(meta); when(template.clone()).thenReturn(result);
-            var old = mock(ItemStack.class); when(old.getType()).thenReturn(Material.ENCHANTED_BOOK);
-            var items = new ItemStack[36]; items[0] = old;
+            var old = mock(ItemStack.class);
+            var items = new ItemStack[36]; items[1] = old;
             try (var books = mockStatic(ShopBooks.class)) {
                 books.when(() -> ShopBooks.create(eq(spec), any())).thenReturn(template);
                 assertNull(ShopService.insertBooks(items, spec, 1, enabled));
             }
-            assertSame(old, items[0]); assertSame(result, items[1]); verify(old, never()).setItemMeta(any());
+            assertSame(result, items[0]); assertSame(old, items[1]); verify(old, never()).setItemMeta(any());
             if (enabled) { verify(meta).setItemModel(ShopBookVisuals.model(spec)); verify(template).setItemMeta(meta); }
             else { verify(meta, never()).setItemModel(any()); verify(template, never()).setItemMeta(any()); }
         }
