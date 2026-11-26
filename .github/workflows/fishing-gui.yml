@@ -188,6 +188,7 @@ jobs:
           print('Skills GUI visual tests passed; this is not a full release gate.')
           PYTEST
 
+  # The GUI test captures current clamped page boundaries; labels need a separate fix.
   achievements-gui:
     name: Achievements GUI visual checks
     runs-on: ubuntu-latest
