@@ -171,8 +171,8 @@ jobs:
           from pathlib import Path
           import xml.etree.ElementTree as ET
           tests = {
-              'SkillsMenuVisualsTest': {'tabAndStateIconsAreDistinctAndSemanticallyBound', 'disabledOrForeignMetadataIsNotOverwritten', 'everySkillRebirthAttributeAndBranchHasItsOwnModel'},
-              'SkillsGuiVisualsTest': {'navigationAndResetConfirmationKeepExistingBehavior', 'skillCardsAndRebirthStatesFollowTheirExistingLevels'},
+              'SkillsMenuVisualsTest': {'tabAndStateIconsAreDistinctAndSemanticallyBound', 'disabledOrForeignMetadataIsNotOverwritten', 'everySkillRebirthAttributeAndBranchHasItsOwnModel', 'abilityIconsAreDistinctAndMatchEachSkill'},
+              'SkillsGuiVisualsTest': {'navigationAndResetConfirmationKeepExistingBehavior', 'skillCardsAndRebirthStatesFollowTheirExistingLevels', 'rankingAndShopStatesKeepCrystalItemsAndBuyingBehavior'},
           }
           for name, required in tests.items():
               path = Path(f'skills/build/test-results/test/TEST-ru.cherdakmd.chrdkskills.{name}.xml')
