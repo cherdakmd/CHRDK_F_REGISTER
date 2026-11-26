@@ -51,11 +51,13 @@ final class FishAlbumGui implements Listener {
     }
     private void render(Holder holder, Player player) throws SQLException {
         var records = album.records(player.getUniqueId());
+        boolean visuals = plugin != null && plugin.getConfig().getBoolean("textures.album-menu", false);
         holder.inventory.clear(); int slot = 0;
         for (var species : page(holder.page)) {
             var entry = records.get(species.id());
             var icon = new ItemStack(entry == null ? Material.PAPER : Material.COD);
             var meta = icon.getItemMeta();
+            FishAlbumVisuals.entry(meta, species.id(), entry != null, visuals);
             meta.displayName(Component.text(entry == null ? "Не поймано" : species.name(),
                     entry == null ? NamedTextColor.GRAY : NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
             List<Component> lore = new ArrayList<>();
@@ -72,15 +74,26 @@ final class FishAlbumGui implements Listener {
                 var progress = rewards.progress(player);
                 int eligible = ru.cherdakmd.chrdkfishing.AlbumRewardJournal.eligibleStage(records.size());
                 String text = "Открыто " + records.size() + "/" + FishCatalog.all().size() + "; этап " + progress.paidStage() + "/4";
-                holder.inventory.setItem(48, FishMainGui.icon(Material.GOLD_INGOT, "Награды альбома",
+                boolean available = eligible > progress.paidStage();
+                holder.inventory.setItem(48, button(available ? FishAlbumVisuals.Icon.REWARD_AVAILABLE : FishAlbumVisuals.Icon.REWARD_WAITING,
+                        visuals, Material.GOLD_INGOT, "Награды альбома",
                         text, "Этапы: 5, 10, 20 и 30 видов.", "Суммарно: 0.50 / 1.50 / 3.50 / 8.50 алм. на /bal.",
-                        eligible > progress.paidStage() ? "Нажмите, чтобы получить доступную награду." : "Новой награды пока нет."));
+                        available ? "Нажмите, чтобы получить доступную награду." : "Новой награды пока нет."));
             } catch (Exception error) { throw new SQLException("album reward state unavailable", error); }
         }
-        if (holder.page > 0) holder.inventory.setItem(45, FishMainGui.icon(Material.ARROW, "Предыдущая страница", "Страница " + holder.page + "/" + pageCount()));
-        if (holder.page + 1 < pageCount()) holder.inventory.setItem(50, FishMainGui.icon(Material.ARROW, "Следующая страница", "Страница " + (holder.page + 2) + "/" + pageCount()));
-        holder.inventory.setItem(49, FishMainGui.icon(Material.BOOK, "Альбом · страница " + (holder.page + 1) + "/" + pageCount(), "Записи личных уловов. Нажмите стрелки для перехода."));
-        if (back != null) holder.inventory.setItem(52, FishMainGui.icon(Material.ARROW, "Назад", "Главное меню рыбалки"));
+        if (holder.page > 0) holder.inventory.setItem(45, button(FishAlbumVisuals.Icon.PREVIOUS, visuals, Material.ARROW, "Предыдущая страница", "Страница " + holder.page + "/" + pageCount()));
+        if (holder.page + 1 < pageCount()) holder.inventory.setItem(50, button(FishAlbumVisuals.Icon.NEXT, visuals, Material.ARROW, "Следующая страница", "Страница " + (holder.page + 2) + "/" + pageCount()));
+        holder.inventory.setItem(49, button(FishAlbumVisuals.Icon.PAGE, visuals, Material.BOOK, "Альбом · страница " + (holder.page + 1) + "/" + pageCount(), "Записи личных уловов. Нажмите стрелки для перехода."));
+        if (back != null) holder.inventory.setItem(52, button(FishAlbumVisuals.Icon.BACK, visuals, Material.ARROW, "Назад", "Главное меню рыбалки"));
+    }
+    private static ItemStack button(FishAlbumVisuals.Icon visual, boolean enabled, Material material, String name, String... lore) {
+        var item = FishMainGui.icon(material, name, lore);
+        if (enabled) {
+            var meta = item.getItemMeta();
+            FishAlbumVisuals.button(meta, visual, true);
+            if (meta != null) item.setItemMeta(meta);
+        }
+        return item;
     }
     @EventHandler public void click(InventoryClickEvent event) {
         if (!(event.getView().getTopInventory().getHolder() instanceof Holder holder)) return;
