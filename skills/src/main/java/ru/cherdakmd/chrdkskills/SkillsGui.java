@@ -3,6 +3,7 @@ package ru.cherdakmd.chrdkskills;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -430,7 +431,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
                         "count", String.valueOf(service.rebirths(player))),
                 plugin.messages().get("ability-energy", "energy", plugin.abilities().energy(player.getUniqueId()), "max", SkillAbility.MAX_ENERGY)));
         item.setItemMeta(meta);
-        return item;
+        return visual(item, SkillsMenuVisuals.Control.SUMMARY.model());
     }
 
     private ItemStack stepsBook() {
@@ -470,7 +471,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
                 plugin.messages().get(active ? "perk-active" : "perk-locked",
                         "level", String.valueOf(perk.level()))));
         item.setItemMeta(meta);
-        return item;
+        return visual(item, SkillsMenuVisuals.perk(active).model());
     }
 
     private ItemStack tabItem(Holder holder, Tab tab, Material material, String key) {
@@ -480,7 +481,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         meta.displayName(plugin.messages().get(key));
         meta.lore(List.of(plugin.messages().get(selected ? "menu-tab-selected" : "menu-tab-hint")));
         item.setItemMeta(meta);
-        return item;
+        return visual(item, SkillsMenuVisuals.tab(tab, selected));
     }
 
     private ItemStack placeholder(Material material, String key) {
@@ -499,7 +500,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
             meta.lore(lore);
         }
         item.setItemMeta(meta);
-        return item;
+        return buttonVisual(item, key);
     }
 
     private ItemStack button(Material material, String key, List<Component> lore, Object... placeholders) {
@@ -510,7 +511,23 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
             meta.lore(lore);
         }
         item.setItemMeta(meta);
-        return item;
+        return buttonVisual(item, key);
+    }
+
+    private ItemStack buttonVisual(ItemStack virtual, String key) {
+        SkillsMenuVisuals.Control icon = SkillsMenuVisuals.button(key);
+        return icon == null ? virtual : visual(virtual, icon.model());
+    }
+
+    private ItemStack visual(ItemStack virtual, NamespacedKey model) {
+        if (plugin.getConfig().getBoolean("textures.menu", false)) {
+            ItemMeta meta = virtual.getItemMeta();
+            if (meta != null) {
+                SkillsMenuVisuals.apply(meta, model, true);
+                virtual.setItemMeta(meta);
+            }
+        }
+        return virtual;
     }
 
     static Material materialOf(SkillType skill) {
@@ -735,7 +752,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         lore.addAll(extra);
         meta.lore(lore);
         item.setItemMeta(meta);
-        return item;
+        return visual(item, SkillsMenuVisuals.Control.SUMMARY.model());
     }
 
     private ItemStack attributeIcon(Player player, PlayerAttribute attribute) {
@@ -797,7 +814,7 @@ public final class SkillsGui implements Listener, SkillsMenuApi {
         meta.displayName(plugin.messages().get(holder.resetArmed ? confirmKey : nameKey));
         meta.lore(List.of(hint));
         item.setItemMeta(meta);
-        return item;
+        return visual(item, SkillsMenuVisuals.reset(holder.tab == Tab.BUILDS, holder.resetArmed).model());
     }
 
     private void onAttributesClick(Player player, Holder holder, int slot, boolean shift) {

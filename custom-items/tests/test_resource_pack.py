@@ -56,6 +56,32 @@ class ResourcePackTest(unittest.TestCase):
             self.assertEqual(len(ids), len(set(ids)))
             self.assertEqual(files, set(ids))
 
+    def test_skills_menu_navigation_and_states_are_complete(self):
+        root = PACK / 'assets/chrdk_skills'
+        tabs = ('skills', 'attributes', 'top', 'rebirth', 'potions', 'builds')
+        controls = ('guide', 'back', 'close', 'steps', 'summary', 'perk_active', 'perk_locked',
+                    'reset_attributes', 'confirm_attributes', 'reset_builds', 'confirm_builds')
+        paths = {f'menu/tab/{name}{suffix}' for name in tabs for suffix in ('', '_selected')}
+        paths.update(f'menu/{name}' for name in controls)
+        hashes = set()
+        for path in paths:
+            reference = 'chrdk_skills:item/' + path
+            item = json.loads((root / 'items' / (path + '.json')).read_text())
+            model = json.loads((root / 'models/item' / (path + '.json')).read_text())
+            self.assertEqual({'type': 'minecraft:model', 'model': reference}, item['model'])
+            self.assertEqual('minecraft:item/generated', model['parent'])
+            self.assertEqual(reference, model['textures']['layer0'])
+            data = (root / 'textures/item' / (path + '.png')).read_bytes()
+            self.assertEqual(b'\x89PNG\r\n\x1a\n', data[:8])
+            self.assertEqual((32, 32), struct.unpack('>II', data[16:24]))
+            digest = hashlib.sha256(data).hexdigest()
+            self.assertNotIn(digest, hashes); hashes.add(digest)
+        for folder, suffix in [('items', '.json'), ('models/item', '.json'), ('textures/item', '.png')]:
+            actual = {str(p.relative_to(root / folder).with_suffix('')) for p in (root / folder / 'menu').rglob('*' + suffix)}
+            self.assertEqual(paths, actual)
+        source = (PACK.parents[1] / 'skills/src/main/resources/config.yml').read_text(encoding='utf-8')
+        self.assertRegex(source, r'(?ms)^textures:\s*\n.*?^  menu: false\s*$')
+
     def test_quests_menu_models_cover_every_type_and_state(self):
         root = PACK / 'assets/chrdk_quests'
         types = ('kill', 'mine', 'gather')
