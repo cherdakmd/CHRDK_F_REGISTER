@@ -49,6 +49,7 @@ final class RodUpgradeEngine implements AutoCloseable {
         if (owner != null && !owner.equals(player.getUniqueId())) return RodUpgradeJournal.Result.CONFLICT;
         return journal.cancelUnpaid(bank);
     }
+    static final class DuplicateRod extends IllegalArgumentException { }
     static final class InsufficientFunds extends Exception { }
     static final class BalanceUnavailable extends Exception { }
     static void requireBalance(long available, long price) throws InsufficientFunds, BalanceUnavailable {
@@ -77,12 +78,16 @@ final class RodUpgradeEngine implements AutoCloseable {
         if (!available(player) || journal.pendingOwner() != null) throw new IllegalStateException("upgrade unavailable");
         var plan = RodUpgradePlanner.plan(player.getInventory().getStorageContents(), slot, codec, key, UUID.randomUUID());
         if (plan.oldToken() != null && !journal.current(plan.oldToken())) throw new IllegalArgumentException("rod identity not current");
+        if (hasVisibleDuplicate(player, plan)) throw new DuplicateRod();
         requireBalance(player, plan.cost().minor());
         return plan;
     }
     RodUpgradeJournal.Result confirm(Player player, RodUpgradePlanner.Plan plan) throws Exception {
         if (!available(player)) return RodUpgradeJournal.Result.WAIT;
         if (plan == null || journal.pendingOwner() != null) return RodUpgradeJournal.Result.CONFLICT;
+        // Offhand and cursor are not part of the storage snapshot. Check again after
+        // the GUI closes, before preparing a journal entry or contacting the bank.
+        if (hasVisibleDuplicate(player, plan)) return RodUpgradeJournal.Result.CONFLICT;
         String before = (String) encode.invoke(null, (Object) plan.before());
         String after = (String) encode.invoke(null, (Object) plan.after());
         if (!(boolean) matches.invoke(null, player.getInventory().getStorageContents(), before)) return RodUpgradeJournal.Result.CONFLICT;
@@ -93,6 +98,10 @@ final class RodUpgradeEngine implements AutoCloseable {
         if (prepared != RodUpgradeJournal.Result.WAIT) return prepared;
         // Only this newly confirmed intent is authorized to initiate a debit.
         return recover(player, true);
+    }
+    private boolean hasVisibleDuplicate(Player player, RodUpgradePlanner.Plan plan) {
+        return RodDuplicateGuard.hasVisibleDuplicate(plan.oldToken(), codec,
+                player.getInventory().getItemInOffHand(), player.getItemOnCursor());
     }
     RodUpgradeJournal.Result recover(Player player) throws Exception {
         // Login/menu/background recovery may finish a committed payment but never initiate one.

@@ -183,6 +183,9 @@ final class RodUpgradeGui implements Listener {
             } catch (RodUpgradeEngine.BalanceUnavailable error) {
                 holder.quote = null; render(holder, player);
                 player.sendMessage("§cБанк недоступен; улучшение не подготовлено. Попробуйте позже.");
+            } catch (RodUpgradeEngine.DuplicateRod error) {
+                holder.quote = null; render(holder, player);
+                player.sendMessage("§cНайдена удочка с той же меткой во второй руке или на курсоре. Улучшение не запущено.");
             } catch (IllegalArgumentException error) {
                 holder.quote = null; render(holder, player);
                 player.sendMessage("§cУлучшение недоступно: проверьте количество обычных материалов и состояние удочки.");
