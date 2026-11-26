@@ -408,6 +408,7 @@ public final class SkillService {
         }
         ItemStack stack = new ItemStack(material);
         ItemMeta meta = stack.getItemMeta();
+        SkillRewardVisuals.applyNew(meta, item, plugin.getConfig().getBoolean("textures.rebirth-items", false));
         meta.displayName(plugin.messages().markup(item.name()));
         if (!item.lore().isEmpty()) {
             meta.lore(item.lore().stream().map(plugin.messages()::markup).toList());

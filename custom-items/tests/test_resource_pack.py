@@ -57,6 +57,25 @@ class ResourcePackTest(unittest.TestCase):
         self.assertEqual(b'\x89PNG\r\n\x1a\n', data[:8])
         self.assertEqual((32, 32), struct.unpack('>II', data[16:24]))
 
+    def test_rebirth_reward_models_cover_stock_config(self):
+        source = (PACK.parents[1] / 'skills/src/main/resources/config.yml').read_text(encoding='utf-8')
+        section = source.split('  unique-items:', 1)[1].split('\n# Награды навыков', 1)[0]
+        ids = re.findall(r'^\s*- id: ([a-z_]+)', section, re.MULTILINE)
+        self.assertEqual({'heart_of_the_sea', 'nether_star', 'dragon_egg'}, set(ids)); self.assertEqual(3, len(ids))
+        root = PACK / 'assets/chrdk_skills'; hashes = set()
+        for name in ids:
+            path = 'rebirth/' + name
+            model = json.loads((root / 'models/item' / (path + '.json')).read_text())
+            item = json.loads((root / 'items' / (path + '.json')).read_text())
+            self.assertEqual('minecraft:item/generated', model['parent'])
+            self.assertEqual('chrdk_skills:item/' + path, model['textures']['layer0'])
+            self.assertEqual({'type': 'minecraft:model', 'model': 'chrdk_skills:item/' + path}, item['model'])
+            data = (root / 'textures/item' / (path + '.png')).read_bytes()
+            self.assertEqual(b'\x89PNG\r\n\x1a\n', data[:8]); self.assertEqual((32, 32), struct.unpack('>II', data[16:24]))
+            digest = hashlib.sha256(data).hexdigest(); self.assertNotIn(digest, hashes); hashes.add(digest)
+        for folder in ('items', 'models/item', 'textures/item'):
+            self.assertEqual(set(ids), {p.stem for p in (root / folder / 'rebirth').iterdir()})
+
     def test_mob_loot_models_cover_every_kind(self):
         source = (PACK.parents[1] / 'mobs/src/main/java/ru/cherdakmd/chrdkmobs/MobLootItems.java').read_text()
         ids = re.findall(r'^\s*(?:ESSENCE|VARIANT)_[A-Z]+\("([a-z-]+)",', source, re.MULTILINE)
