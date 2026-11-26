@@ -50,17 +50,19 @@ final class BaitEquipGui implements Listener {
     }
     private void render(Holder holder, Player player) {
         holder.inventory.clear(); var storage = player.getInventory().getStorageContents();
+        boolean visuals = plugin.getConfig().getBoolean("textures.bait-menus", false);
         for (int i = 0; i < Math.min(36, storage.length); i++) {
             var token = codec.read(storage[i]); if (token.isEmpty()) continue;
             var bait = BaitCatalog.byId(token.get().kind());
-            holder.inventory.setItem(i, FishMainGui.icon(i == holder.selected ? Material.LIME_STAINED_GLASS_PANE : Material.PAPER,
+            holder.inventory.setItem(i, BaitMenuVisuals.baitIcon(bait.id(), i == holder.selected, visuals,
+                    i == holder.selected ? Material.LIME_STAINED_GLASS_PANE : Material.PAPER,
                     bait.name(), FishingText.baitEffect(bait), "Выбрать приманку из ячейки " + (i + 1)));
         }
-        holder.inventory.setItem(45, FishMainGui.icon(Material.BOOK, "Как выбрать приманку", "Нажмите на приманку выше, затем подтвердите.", "Можно выбрать только одну; она расходуется при успешной ловле."));
-        if (holder.token != null) holder.inventory.setItem(49, FishMainGui.icon(Material.EMERALD_BLOCK,
+        holder.inventory.setItem(45, BaitMenuVisuals.buttonIcon(BaitMenuVisuals.Icon.HELP, visuals, Material.BOOK, "Как выбрать приманку", "Нажмите на приманку выше, затем подтвердите.", "Можно выбрать только одну; она расходуется при успешной ловле."));
+        if (holder.token != null) holder.inventory.setItem(49, BaitMenuVisuals.buttonIcon(BaitMenuVisuals.Icon.CONFIRM, visuals, Material.EMERALD_BLOCK,
                 "Подтвердить приманку", "Выбрано: " + BaitCatalog.byId(holder.token.kind()).name(), "Предмет будет выбран до успешной ловли."));
-        holder.inventory.setItem(52, FishMainGui.icon(Material.ARROW, "Назад", "Главное меню рыбалки"));
-        holder.inventory.setItem(53, FishMainGui.icon(Material.BARRIER, "Закрыть", "Ничего не выбирать"));
+        holder.inventory.setItem(52, BaitMenuVisuals.buttonIcon(BaitMenuVisuals.Icon.BACK, visuals, Material.ARROW, "Назад", "Главное меню рыбалки"));
+        holder.inventory.setItem(53, BaitMenuVisuals.buttonIcon(BaitMenuVisuals.Icon.CLOSE, visuals, Material.BARRIER, "Закрыть", "Ничего не выбирать"));
     }
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void click(InventoryClickEvent event) {

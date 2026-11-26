@@ -43,15 +43,17 @@ final class BaitShopGui implements Listener {
     }
     private void render(Holder holder) {
         holder.inventory.clear();
+        boolean visuals = plugin.getConfig().getBoolean("textures.bait-menus", false);
         for (int i = 0; i < BaitCatalog.all().size(); i++) {
             var bait = BaitCatalog.all().get(i);
-            holder.inventory.setItem(10 + i * 2, FishMainGui.icon(Material.PAPER, bait.name(),
+            holder.inventory.setItem(10 + i * 2, BaitMenuVisuals.baitIcon(bait.id(), holder.quote != null && holder.quote.token().kind().equals(bait.id()),
+                    visuals, Material.PAPER, bait.name(),
                     "Цена: " + amount(bait.priceMinor()) + " алм. со счёта /bal.", FishingText.baitEffect(bait), "Одна приманка на успешную ловлю. Нажмите для выбора."));
         }
-        if (holder.quote != null) holder.inventory.setItem(22, FishMainGui.icon(Material.EMERALD_BLOCK,
+        if (holder.quote != null) holder.inventory.setItem(22, BaitMenuVisuals.buttonIcon(BaitMenuVisuals.Icon.CONFIRM, visuals, Material.EMERALD_BLOCK,
                 "Подтвердить покупку", "Выбрано: " + BaitCatalog.byId(holder.quote.token().kind()).name(), "Списать " + amount(holder.quote.minor()) + " алм. с /bal; нужно свободное место."));
-        holder.inventory.setItem(25, FishMainGui.icon(Material.ARROW, "Назад", "Главное меню рыбалки"));
-        holder.inventory.setItem(26, FishMainGui.icon(Material.BARRIER, "Закрыть", "Ничего не покупать"));
+        holder.inventory.setItem(25, BaitMenuVisuals.buttonIcon(BaitMenuVisuals.Icon.BACK, visuals, Material.ARROW, "Назад", "Главное меню рыбалки"));
+        holder.inventory.setItem(26, BaitMenuVisuals.buttonIcon(BaitMenuVisuals.Icon.CLOSE, visuals, Material.BARRIER, "Закрыть", "Ничего не покупать"));
     }
     private static String amount(long minor) { return minor / 100 + "." + String.format(java.util.Locale.ROOT, "%02d", minor % 100); }
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)

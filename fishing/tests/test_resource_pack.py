@@ -94,6 +94,23 @@ class FishingResourcePackTest(unittest.TestCase):
         for kind in ('items', 'models/item', 'textures/item'):
             self.assertEqual(set(ids), {p.stem for p in (ASSETS / kind / 'menu/album').iterdir()})
 
+    def test_bait_menu_icons_cover_catalogue_selection_and_controls(self):
+        source = (PACK.parent / 'src/main/java/ru/cherdakmd/chrdkfishing/BaitCatalog.java').read_text(encoding='utf-8')
+        bait = re.findall(r'new Bait\("([a-z_]+)",', source)
+        self.assertEqual({'quick', 'rare', 'large'}, set(bait)); self.assertEqual(len(bait), len(set(bait)))
+        ids = set(bait) | {x + '_selected' for x in bait} | {'confirm', 'back', 'close', 'help'}
+        images = set()
+        for model_id in ids:
+            name = 'menu/bait/' + model_id
+            with self.subTest(model=name):
+                self.model(name, 'minecraft:item/generated')
+                self.assertEqual({'type': 'minecraft:model', 'model': 'chrdk_fishing:item/' + name},
+                                 self.read('items/' + name + '.json')['model'])
+                digest = hashlib.sha256((ASSETS / 'textures/item' / (name + '.png')).read_bytes()).hexdigest()
+                self.assertNotIn(digest, images); images.add(digest)
+        for kind in ('items', 'models/item', 'textures/item'):
+            self.assertEqual(ids, {p.stem for p in (ASSETS / kind / 'menu/bait').iterdir()})
+
     def test_rods_cover_all_upgrade_levels_and_cast_state(self):
         for level in range(2, 11):
             with self.subTest(level=level):
