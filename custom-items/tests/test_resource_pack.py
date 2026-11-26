@@ -150,6 +150,9 @@ class ResourcePackTest(unittest.TestCase):
         self.assertEqual(43, len(vanilla)); self.assertEqual(len(vanilla), len(set(vanilla)))
         reviewed = json.loads((repo / 'enchants/vanilla-enchantments-26.1.json').read_text())
         self.assertEqual(set(reviewed['ids']), set(vanilla))
+        paper_api = json.loads((repo / 'enchants/vanilla-enchantments-26.3-api.json').read_text())
+        self.assertEqual(len(paper_api['ids']), len(set(paper_api['ids'])))
+        self.assertEqual(set(paper_api['ids']), set(vanilla))
         names = {f'custom/{name}' for name in custom + ['lavawalker']}
         names |= {f'vanilla/{name}' for name in vanilla} | {'mixed/custom', 'mixed/vanilla', 'mixed/both'}
         root = PACK / 'assets/chrdk_enchants'
