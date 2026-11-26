@@ -2,6 +2,7 @@ package ru.cherdakmd.chrdkregister;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -58,22 +59,26 @@ public final class ServerMenuService implements Listener {
 
     /** Кнопка меню: категория (переход), команда, закрытие или подсказка. */
     private record Button(int slot, Material icon, String name, String lore, String command,
-                          String category, Kind kind) {
+                          String category, Kind kind, NamespacedKey model) {
 
         static Button command(int slot, Material icon, String name, String lore, String command) {
-            return new Button(slot, icon, name, lore, command, null, Kind.COMMAND);
+            return new Button(slot, icon, name, lore, command, null, Kind.COMMAND, null);
         }
 
         static Button category(int slot, Material icon, String name, String lore, String id) {
-            return new Button(slot, icon, name, lore, null, id, Kind.CATEGORY);
+            return new Button(slot, icon, name, lore, null, id, Kind.CATEGORY, ServerMenuVisuals.category(id, icon));
+        }
+
+        static Button back(int slot, Material icon, String name) {
+            return new Button(slot, icon, name, "", "menu", null, Kind.COMMAND, ServerMenuVisuals.back(icon));
         }
 
         static Button close(int slot, Material icon, String name) {
-            return new Button(slot, icon, name, "", null, null, Kind.CLOSE);
+            return new Button(slot, icon, name, "", null, null, Kind.CLOSE, ServerMenuVisuals.close(icon));
         }
 
         static Button info(int slot, Material icon, String name, String lore) {
-            return new Button(slot, icon, name, lore, null, null, Kind.INFO);
+            return new Button(slot, icon, name, lore, null, null, Kind.INFO, null);
         }
 
         static Button of(ServerMenuSettings.Entry entry) {
@@ -272,7 +277,7 @@ public final class ServerMenuService implements Listener {
             buttons.add(Button.of(entry));
         }
         // «Назад» — обычный пункт с командой /menu и явным слотом.
-        buttons.add(Button.command(settings.backSlot(), settings.backIcon(), settings.backName(), "", "menu"));
+        buttons.add(Button.back(settings.backSlot(), settings.backIcon(), settings.backName()));
         // «Закрыть» — отдельное действие: команда не выполняется, инвентарь гаснет.
         if (settings.closeSlot() >= 0 && settings.closeSlot() != settings.backSlot()) {
             buttons.add(Button.close(settings.closeSlot(), settings.closeIcon(), settings.closeName()));
@@ -319,6 +324,7 @@ public final class ServerMenuService implements Listener {
                 meta.lore(java.util.Arrays.stream(button.lore().split("\\R"))
                         .map(line -> messages.renderTemplate(line, placeholders)).toList());
             }
+            ServerMenuVisuals.apply(meta, button.model(), plugin.getConfig().getBoolean("server-menu.textures.enabled", false));
             item.setItemMeta(meta);
         }
         return item;

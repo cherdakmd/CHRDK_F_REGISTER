@@ -1075,6 +1075,10 @@ wiki:
 # %pass_left%, %pass_days%, %trial_days%. Админские команды сюда не ставить.
 server-menu:
   enabled: true
+  # Только стандартные разделы и кнопки навигации; нужен обновлённый общий ресурс-пак.
+  # Если раздел с этим id переименован под другую задачу, оставьте false.
+  textures:
+    enabled: false
   title: "<gold>Меню сервера</gold>"
   # Заголовок раздела: «Меню · <имя категории>» — видно, где игрок находится.
   category-title: "<dark_gray>Меню · </dark_gray><gold>%category%</gold>"

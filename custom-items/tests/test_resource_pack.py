@@ -68,6 +68,27 @@ class ResourcePackTest(unittest.TestCase):
         for directory in ('items', 'models/item', 'textures/item'):
             self.assertEqual(set(skills), {p.stem for p in (root / directory / 'crystal').iterdir()})
 
+    def test_menu_icons_have_unique_textures_and_complete_model_links(self):
+        root = PACK / 'assets/chrdk_menu'
+        names = {f'category/{x}' for x in ('account', 'progress', 'economy', 'world', 'gear', 'social')}
+        names |= {'navigation/back', 'navigation/close'}
+        images = set()
+        for name in names:
+            with self.subTest(name=name):
+                item = json.loads((root / f'items/{name}.json').read_text())['model']
+                self.assertEqual({'type': 'minecraft:model', 'model': f'chrdk_menu:item/{name}'}, item)
+                model = json.loads((root / f'models/item/{name}.json').read_text())
+                self.assertEqual('minecraft:item/generated', model['parent'])
+                self.assertEqual(f'chrdk_menu:item/{name}', model['textures']['layer0'])
+                data = (root / f'textures/item/{name}.png').read_bytes()
+                self.assertEqual(b'\x89PNG\r\n\x1a\n', data[:8])
+                self.assertEqual((32, 32), struct.unpack('>II', data[16:24]))
+                digest = hashlib.sha256(data).hexdigest()
+                self.assertNotIn(digest, images); images.add(digest)
+        for directory in ('items', 'models/item', 'textures/item'):
+            files = (root / directory).rglob('*')
+            self.assertEqual(names, {p.relative_to(root / directory).with_suffix('').as_posix() for p in files if p.is_file()})
+
     def test_new_builtin_models_and_bounded_dispatch(self):
         root = PACK / "assets/chrdk_items"
         for base, name, threshold in [("iron_shovel", "litter_scoop", 810005), ("iron_pickaxe", "weather_gauge", 810003), ("wooden_hoe", "cat_finder", 810003), ("stone_axe", "spawn_guide", 810003)]:
