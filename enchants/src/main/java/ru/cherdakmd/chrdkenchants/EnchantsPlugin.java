@@ -86,6 +86,7 @@ public final class EnchantsPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(library, this);
         Bukkit.getPluginManager().registerEvents(new NewBookLootVisualListener(this), this);
         Bukkit.getPluginManager().registerEvents(new NewVillagerBookVisualListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new NewTableBookVisualListener(this), this);
         for (var player : Bukkit.getOnlinePlayers()) library.queue(player);
         this.pve = new PveEffectsListener(this);
         Bukkit.getPluginManager().registerEvents(pve, this);

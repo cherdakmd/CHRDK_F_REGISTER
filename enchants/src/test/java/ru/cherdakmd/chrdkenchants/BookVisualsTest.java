@@ -105,7 +105,7 @@ class BookVisualsTest {
         assertTrue(anvil.contains("plugin.items().marked(left)"));
         assertTrue(anvil.contains("plugin.items().marked(right)"));
         var plugin = java.nio.file.Files.readString(java.nio.file.Path.of("src/main/java/ru/cherdakmd/chrdkenchants/EnchantsPlugin.java"));
-        assertFalse(plugin.contains("BookVisualListener"));
+        assertFalse(plugin.contains("new BookVisualListener("));
         assertFalse(java.nio.file.Files.exists(java.nio.file.Path.of("src/main/java/ru/cherdakmd/chrdkenchants/BookVisualListener.java")));
     }
 
