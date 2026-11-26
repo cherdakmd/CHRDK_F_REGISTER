@@ -1,0 +1,75 @@
+name: Fishing GUI visual checks
+
+# Narrow visual-only check. This is not the full candidate or release gate.
+# Trigger only by edits to this workflow; app changes continue to trigger their
+# normal workflows unless explicitly deferred, as for this owner's request.
+on:
+  push:
+    branches: ['arena/**']
+    paths: ['.github/workflows/fishing-gui.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gui:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Check resource graph without crash or copy tests
+        run: |
+          python3 -m unittest discover -s fishing/tests -p 'test_resource_pack.py' -v
+          python3 -m unittest discover -s custom-items/tests -p 'test_resource_pack.py' -v
+      - name: Compile and run only the six new GUI visual tests
+        shell: bash
+        run: |
+          set +e
+          ./gradlew -p fishing --no-daemon --no-configuration-cache clean test \
+            --tests ru.cherdakmd.chrdkfishing.bukkit.FishOrdersVisualsTest \
+            --tests ru.cherdakmd.chrdkfishing.bukkit.FishOrdersGuiVisualsTest \
+            --tests ru.cherdakmd.chrdkfishing.bukkit.FishSaleVisualsTest \
+            --tests ru.cherdakmd.chrdkfishing.bukkit.FishSaleGuiVisualsTest \
+            --tests ru.cherdakmd.chrdkfishing.bukkit.RodUpgradeVisualsTest \
+            --tests ru.cherdakmd.chrdkfishing.bukkit.RodUpgradeGuiVisualsTest > gui-build.log 2>&1
+          result=$?
+          tail -n 120 gui-build.log
+          if [[ $result -ne 0 ]]; then
+            python3 - <<'PYTEST'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          for path in Path('fishing/build/test-results/test').glob('TEST-*.xml'):
+              for case in ET.parse(path).getroot().findall('testcase'):
+                  for failure in case.findall('failure') + case.findall('error'):
+                      text = (failure.text or '')[:12000].replace('%', '%25').replace('\n', '%0A').replace('\r', '%0D')
+                      print(f"::error title={case.get('name')}::{text}")
+          PYTEST
+          fi
+          exit "$result"
+      - name: Verify each selected GUI test ran without skips
+        run: |
+          python3 - <<'PYTEST'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          tests = {
+            'FishOrdersVisualsTest': {'orderStatesAndControlsHaveDistinctModels', 'optInAndForeignMetadataArePreserved'},
+            'FishOrdersGuiVisualsTest': {'virtualIconsPreserveSelectionAndExplicitConfirmation'},
+            'FishSaleVisualsTest': {'controlsAndStatesHaveDistinctModels', 'optInAndForeignMetadataAreRespected'},
+            'FishSaleGuiVisualsTest': {'virtualPreviewKeepsSelectionAmountsAndPlainVanillaIcons'},
+            'RodUpgradeVisualsTest': {'statesAndRodLevelsHaveDistinctModels', 'disabledAndForeignMetadataAreNotOverwritten'},
+            'RodUpgradeGuiVisualsTest': {'virtualStatesKeepOriginalRodAndSeparateConfirmation'},
+          }
+          for name, required in tests.items():
+              path = Path(f'fishing/build/test-results/test/TEST-ru.cherdakmd.chrdkfishing.bukkit.{name}.xml')
+              suite = ET.parse(path).getroot()
+              if any(int(suite.get(k, '0')) for k in ('errors', 'failures', 'skipped')):
+                  raise SystemExit(f'{name} failed or was skipped')
+              found = {case.get('name', '').removesuffix('()') for case in suite.findall('testcase')}
+              if not required.issubset(found): raise SystemExit(f'{name} missing: {sorted(required - found)}')
+          print('Six targeted GUI test classes passed; this is not a full build or release gate.')
+          PYTEST
