@@ -8,7 +8,10 @@
 - Сборка и автоматические тесты RC.16 для Core, модулей и Fishing прошли в
   [candidate CI](https://github.com/cherdakmd/CHRDK_F_REGISTER/actions/runs/45726894603);
   [Fishing model CI](https://github.com/cherdakmd/CHRDK_F_REGISTER/actions/runs/45726894617)
-  тоже прошёл. Проверено содержимое кандидата; это не испытание реальных сбоев.
+  тоже прошёл. В последующем [candidate CI RC.17](https://github.com/cherdakmd/CHRDK_F_REGISTER/actions/runs/45737494129)
+  прошла дополнительная проверка состава JAR и наличия нужных классов Core и
+  Skills. Проверка содержимого не доказывает полную совместимость во время работы
+  и не является испытанием реальных сбоев.
 - Пользователь сообщил, что меню новой установки открылось. Диагностика после
   обновления показала доступность новой сверки снимка, а пользователь подтвердил
   покупку и выбор приманки; снимок экрана показывает предмет в инвентаре.
@@ -24,7 +27,7 @@
 
 ## Что ещё блокирует стабильный релиз
 
-- Общий [Build](https://github.com/cherdakmd/CHRDK_F_REGISTER/actions/runs/45726894488)
+- Общий [Build](https://github.com/cherdakmd/CHRDK_F_REGISTER/actions/runs/45737494065)
   не прошёл проверку wiki и offline social. Это не отказ Fishing model CI. Нельзя
   механически утверждать актуальность всех страниц без содержательной проверки.
 - Общий Release workflow пока не включает отдельный Gradle-проект Fishing, а его

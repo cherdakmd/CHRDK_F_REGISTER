@@ -21,8 +21,10 @@ class FishSaleJournalTest {
     static final class Bank implements FishSaleJournal.Bank {
         final Map<UUID, Map<String, Long>> accounts = new HashMap<>();
         boolean reject, failAfterAccept;
+        int attempts;
         public Map<String, Long> receipts(UUID owner) { return Map.copyOf(accounts.getOrDefault(owner, Map.of())); }
         public boolean accept(UUID owner, String key, long amount) throws IOException {
+            attempts++;
             if (reject) return false;
             var map = accounts.computeIfAbsent(owner, ignored -> new HashMap<>());
             Long existing = map.putIfAbsent(key, amount);
@@ -103,6 +105,49 @@ class FishSaleJournalTest {
             assertEquals(FishSaleJournal.Result.DONE, j.recover(owner, transaction, bag, bank));
             bank.accounts.clear();
             assertEquals(FishSaleJournal.Result.CONFLICT, j.prepare(owner, UUID.randomUUID(), "before", "after", List.of(fish()), key, bank));
+        }
+    }
+    @Test void receiptAheadOfPreparedJournalStopsBeforeRemovingFishOrPaying() throws Exception {
+        var bank = new Bank(); var bag = new Bag();
+        try (var j = new FishSaleJournal(file(), true)) {
+            assertEquals(FishSaleJournal.Result.WAIT, j.prepare(owner, transaction, "before", "after", List.of(fish()), key, bank));
+        }
+        bank.accounts.computeIfAbsent(owner, ignored -> new HashMap<>()).put(FishSaleJournal.receiptKey(transaction), 100L);
+        try (var j = new FishSaleJournal(file(), false)) {
+            assertFalse(j.historyMatchesAll(bank.accounts));
+            assertEquals(FishSaleJournal.Result.CONFLICT, j.recover(owner, transaction, bag, bank));
+            assertEquals(transaction, j.pending(owner));
+            assertEquals(0, bag.removals); assertEquals(0, bank.attempts);
+        }
+    }
+    @Test void wrongAmountAfterUncertainCreditQuarantinesRecoveryAcrossRestart() throws Exception {
+        var bank = new Bank(); var bag = new Bag(); bank.failAfterAccept = true;
+        try (var j = new FishSaleJournal(file(), true)) {
+            assertEquals(FishSaleJournal.Result.WAIT, j.prepare(owner, transaction, "before", "after", List.of(fish()), key, bank));
+            assertThrows(IOException.class, () -> j.recover(owner, transaction, bag, bank));
+            assertEquals(1, bag.removals); assertEquals(1, bank.attempts);
+        }
+        bank.accounts.get(owner).put(FishSaleJournal.receiptKey(transaction), 101L);
+        try (var j = new FishSaleJournal(file(), false)) {
+            assertFalse(j.historyMatchesAll(bank.accounts));
+            for (int i = 0; i < 3; i++)
+                assertEquals(FishSaleJournal.Result.CONFLICT, j.recover(owner, transaction, bag, bank));
+            assertEquals(transaction, j.pending(owner));
+            assertEquals(1, bag.removals); assertEquals(1, bank.attempts);
+        }
+    }
+    @Test void globalReconciliationDetectsExtraOwnersAndMissingReceipts() throws Exception {
+        var bank = new Bank(); var bag = new Bag();
+        try (var j = new FishSaleJournal(file(), true)) {
+            assertEquals(FishSaleJournal.Result.WAIT, j.prepare(owner, transaction, "before", "after", List.of(fish()), key, bank));
+            assertEquals(FishSaleJournal.Result.DONE, j.recover(owner, transaction, bag, bank));
+            assertTrue(j.historyMatchesAll(bank.accounts));
+            var other = UUID.randomUUID();
+            bank.accounts.put(other, Map.of(FishSaleJournal.receiptKey(UUID.randomUUID()), 100L));
+            assertFalse(j.historyMatchesAll(bank.accounts));
+            bank.accounts.remove(other);
+            bank.accounts.remove(owner);
+            assertFalse(j.historyMatchesAll(bank.accounts));
         }
     }
     @Test void alteredActiveSaleIndexIsQuarantined() throws Exception {
