@@ -88,19 +88,20 @@ public final class CollectionGui implements Listener {
             holder.inventory.setItem(slot, icon(def, found));
         }
         if (page > 0) {
-            holder.inventory.setItem(SLOT_PREV, button(Material.ARROW, "collection-prev"));
+            holder.inventory.setItem(SLOT_PREV, button(Material.ARROW, "collection-prev", CollectionVisuals.Icon.PREVIOUS));
         }
         holder.inventory.setItem(SLOT_REWARDS, rewardsIcon(player));
         holder.inventory.setItem(SLOT_PROGRESS, progressIcon(player));
-        holder.inventory.setItem(SLOT_CLOSE, button(Material.BARRIER, "collection-close"));
+        holder.inventory.setItem(SLOT_CLOSE, button(Material.BARRIER, "collection-close", CollectionVisuals.Icon.CLOSE));
         if (page + 1 < pages) {
-            holder.inventory.setItem(SLOT_NEXT, button(Material.ARROW, "collection-next"));
+            holder.inventory.setItem(SLOT_NEXT, button(Material.ARROW, "collection-next", CollectionVisuals.Icon.NEXT));
         }
     }
 
     private ItemStack icon(ArtifactDef def, boolean found) {
         ItemStack item = new ItemStack(found ? def.material() : Material.GRAY_DYE);
         ItemMeta meta = item.getItemMeta();
+        CollectionVisuals.entry(meta, def, found, menuTextures());
         if (!found) {
             meta.displayName(plugin.messages().get("collection-unknown-name"));
             meta.lore(List.of(plugin.messages().get("collection-unknown-lore")));
@@ -142,6 +143,7 @@ public final class CollectionGui implements Listener {
         int percent = CollectionRewards.percentOf(found, total);
         ItemStack item = new ItemStack(Material.BOOK);
         ItemMeta meta = item.getItemMeta();
+        CollectionVisuals.button(meta, CollectionVisuals.Icon.PROGRESS, menuTextures());
         meta.displayName(plugin.messages().get("collection-progress-name",
                 "found", String.valueOf(found),
                 "total", String.valueOf(total),
@@ -159,6 +161,7 @@ public final class CollectionGui implements Listener {
     private ItemStack rewardsIcon(Player player) {
         ItemStack item = new ItemStack(Material.DIAMOND);
         ItemMeta meta = item.getItemMeta();
+        CollectionVisuals.button(meta, CollectionVisuals.Icon.REWARDS, menuTextures());
         meta.displayName(plugin.messages().get("collection-rewards-name"));
         Set<Integer> claimed = plugin.collection().claimed(player);
         List<net.kyori.adventure.text.Component> lore = new ArrayList<>();
@@ -181,9 +184,14 @@ public final class CollectionGui implements Listener {
         return item;
     }
 
-    private ItemStack button(Material material, String key) {
+    private boolean menuTextures() {
+        return plugin.getConfig().getBoolean("textures.collection-menu", false);
+    }
+
+    private ItemStack button(Material material, String key, CollectionVisuals.Icon visual) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
+        CollectionVisuals.button(meta, visual, menuTextures());
         meta.displayName(plugin.messages().get(key));
         item.setItemMeta(meta);
         return item;

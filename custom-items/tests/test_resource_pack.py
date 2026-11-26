@@ -98,6 +98,26 @@ class ResourcePackTest(unittest.TestCase):
             self.assertEqual(names, {p.relative_to(base).with_suffix('').as_posix() for p in base.rglob('*') if p.is_file()})
         self.assertFalse((PACK / 'assets/minecraft/items/enchanted_book.json').exists())
 
+    def test_artifact_collection_icons_are_complete_and_distinct(self):
+        root = PACK / 'assets/chrdk_artifacts'
+        names = {'unknown', 'previous', 'next', 'rewards', 'progress', 'close'}
+        images = set()
+        for name in names:
+            with self.subTest(icon=name):
+                key = 'collection/' + name
+                item = json.loads((root / f'items/{key}.json').read_text())['model']
+                self.assertEqual({'type': 'minecraft:model', 'model': f'chrdk_artifacts:item/{key}'}, item)
+                model = json.loads((root / f'models/item/{key}.json').read_text())
+                self.assertEqual('minecraft:item/generated', model['parent'])
+                self.assertEqual(f'chrdk_artifacts:item/{key}', model['textures']['layer0'])
+                data = (root / f'textures/item/{key}.png').read_bytes()
+                self.assertEqual(b'\x89PNG\r\n\x1a\n', data[:8])
+                self.assertEqual((32, 32), struct.unpack('>II', data[16:24]))
+                digest = hashlib.sha256(data).hexdigest()
+                self.assertNotIn(digest, images); images.add(digest)
+        for directory in ('items', 'models/item', 'textures/item'):
+            self.assertEqual(names, {p.stem for p in (root / directory / 'collection').iterdir()})
+
     def test_artifact_textures_cover_registry_with_distinct_models(self):
         repo = PACK.parents[1]
         source = (repo / 'artifacts/src/main/java/ru/cherdakmd/chrdkartifacts/ArtifactRegistry.java').read_text()
