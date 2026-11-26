@@ -63,7 +63,7 @@ class WorkshopPolicyTest {
     @Test void productionCommitsOnlyConfirmedCompleteSnapshotAndKeepsForeignDataOnOriginal() throws Exception {
         var source = Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkenchants/EnchantWorkshop.java"));
         assertTrue(source.indexOf("pending.take(") < source.indexOf("setStorageContents(copy(plan.after()))"));
-        for (String guard : List.of("Arrays.equals(plan.before()", "Objects.equals(plan.off()", "plan.generation() !=", "plan.world().equals", "getHeldItemSlot()", "main.isSimilar(off)", "meta.hasStoredEnchants() || meta.hasEnchants()", "!item.hasItemMeta()", "MaterialDebit.plan", "result.remainder()", "EnchantBookSource.WORKSHOP")) assertTrue(source.contains(guard), guard);
+        for (String guard : List.of("Arrays.equals(plan.before()", "Objects.equals(plan.off()", "plan.generation() !=", "plan.world().equals", "getHeldItemSlot()", "BookVisuals.equivalentForCombine(main, off)", "meta.hasStoredEnchants() || meta.hasEnchants()", "!item.hasItemMeta()", "MaterialDebit.plan", "result.remainder()", "EnchantBookSource.WORKSHOP")) assertTrue(source.contains(guard), guard);
         assertFalse(source.contains("dispatchCommand")); assertFalse(source.contains("dropItem"));
     }
     @Test void vanillaSplitPreservesEachEntryAndAboveVanillaLevel() {

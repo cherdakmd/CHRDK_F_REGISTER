@@ -108,6 +108,8 @@ public final class EnchantItems {
         }
         applyAttributes(item, meta, safe);
         refreshLore(meta, safe, item.getType() == Material.ENCHANTED_BOOK);
+        if (item.getType() == Material.ENCHANTED_BOOK)
+            BookVisuals.apply(meta, key, bookSource, plugin.getConfig().getBoolean("textures.books", false));
         item.setItemMeta(meta);
     }
 
@@ -240,6 +242,11 @@ public final class EnchantItems {
         } else {
             entity.getPersistentDataContainer().set(key, PersistentDataType.STRING, encoded);
         }
+    }
+
+    /** Re-evaluate only the visual model; contents and other components stay untouched. */
+    boolean refreshBookVisual(ItemStack book) {
+        return BookVisuals.update(book, key, bookSource, plugin.getConfig().getBoolean("textures.books", false));
     }
 
     public NamespacedKey key() {

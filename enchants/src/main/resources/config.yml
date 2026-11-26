@@ -8,6 +8,11 @@
 general:
   locale: ru
 
+# Требуется объединённый актуальный ресурс-пак. Включайте после проверки клиента.
+# Меняются только модели книг без чужого ItemModel/CustomModelData или PDC.
+textures:
+  books: false
+
 # Источники получения
 sources:
   table:

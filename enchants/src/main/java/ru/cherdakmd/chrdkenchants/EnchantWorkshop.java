@@ -92,7 +92,7 @@ final class EnchantWorkshop implements Listener {
                 cost = "8 осколков аметиста + 1 алмаз";
             }
             case "combine" -> {
-                if (!book(main) || !book(off) || off.getAmount() != 1 || !main.isSimilar(off)
+                if (!book(main) || !book(off) || off.getAmount() != 1 || !BookVisuals.equivalentForCombine(main, off)
                         || vanilla(main) || vanilla(off)) { return null; }
                 var result = WorkshopPolicy.combine(data, plugin.items().validated(off));
                 if (result == null || result.keySet().stream().anyMatch(id -> !plugin.config().isEnabled(id))) { return null; }
@@ -133,6 +133,8 @@ final class EnchantWorkshop implements Listener {
                         || !extractedMeta.addStoredEnchant(selected, result.level(), true)
                         || !extractedMeta.getStoredEnchants().equals(Map.of(selected, result.level()))
                         || !extracted.setItemMeta(extractedMeta)) { return null; }
+                plugin.items().refreshBookVisual(after[slot]);
+                plugin.items().refreshBookVisual(extracted);
                 if (!pay(after, slot, Material.BOOK, 1) || !pay(after, slot, Material.LAPIS_LAZULI, 8)) { return null; }
                 int empty = -1;
                 for (int i = 0; i < after.length; i++) if (after[i] == null || after[i].getType().isAir()) { empty = i; break; }

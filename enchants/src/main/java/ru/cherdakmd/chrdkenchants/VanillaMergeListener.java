@@ -57,6 +57,17 @@ final class VanillaMergeListener implements Listener {
         }
     }
 
+    /** Pure vanilla book result only. Custom-book quotes are produced by AnvilApplyListener. */
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void visualResult(PrepareAnvilEvent event) {
+        ItemStack left = event.getInventory().getItem(0), right = event.getInventory().getItem(1);
+        ItemStack result = event.getResult();
+        if (result == null || result.getType() != Material.ENCHANTED_BOOK
+                || left != null && plugin.items().marked(left) || right != null && plugin.items().marked(right)) return;
+        ItemStack out = result.clone();
+        if (plugin.items().refreshBookVisual(out)) event.setResult(out);
+    }
+
     /**
      * Нативный результат есть: поднимаем зажатые уровни до наших и гасим
      * результат, который отличается от левой вещи только зажатым падением чар.

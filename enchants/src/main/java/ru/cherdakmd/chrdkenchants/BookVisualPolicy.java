@@ -5,8 +5,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Pure selection only: not yet wired to item mutation or vanilla event handlers.
- * A null result means retain the existing appearance, not alter the book.
+ * Pure selection only. A null result means contents are empty, unknown or invalid;
+ * the caller decides whether an existing owned model must be removed.
  */
 final class BookVisualPolicy {
     // Snapshot of the 26.1 vanilla catalogue; compare with the actual 26.3 registry before release.
