@@ -40,6 +40,10 @@ jobs:
           result=$?
           tail -n 120 gui-build.log
           if [[ $result -ne 0 ]]; then
+            while IFS= read -r line; do
+              escaped=${line//'%'/'%25'}
+              echo "::error::$escaped"
+            done < <(grep -E 'error:|FAILED|FAILURE:|What went wrong|Execution failed|Caused by:|Could not|tests completed|AssertionFailedError' gui-build.log | tail -n 35)
             python3 - <<'PYTEST'
           from pathlib import Path
           import xml.etree.ElementTree as ET
