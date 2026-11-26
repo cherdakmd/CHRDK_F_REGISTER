@@ -53,7 +53,12 @@ class CollectionVisualsTest {
             yaml.set("textures.collection-menu", enabled); when(plugin.getConfig()).thenReturn(yaml);
             var config = mock(ArtifactsConfig.class);
             when(config.collection()).thenReturn(new ArtifactsConfig.Collection(true, List.of())); when(plugin.config()).thenReturn(config);
-            var messages = mock(Messages.class, RETURNS_MOCKS); when(plugin.messages()).thenReturn(messages);
+            var messages = mock(Messages.class, call -> {
+                if (call.getMethod().getName().equals("get")) return Component.text("test");
+                if (call.getMethod().getName().equals("raw")) return "";
+                return RETURNS_DEFAULTS.answer(call);
+            });
+            when(plugin.messages()).thenReturn(messages);
             var collection = mock(CollectionService.class); when(plugin.collection()).thenReturn(collection);
             var def = ArtifactRegistry.bySide(ArtifactDef.Side.GOOD).get(0);
             when(collection.discovered(any())).thenReturn(Set.of(def.id())); when(collection.claimed(any())).thenReturn(Set.of());
