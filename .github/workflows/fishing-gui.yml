@@ -676,7 +676,7 @@ jobs:
           PYTEST
 
   battlepass-missions:
-    name: BattlePass menu and guide checks
+    name: BattlePass menu, guide and expedition checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -697,6 +697,9 @@ jobs:
             --tests ru.cherdakmd.chrdkbp.BattlePassMissionMenuGuiTest \
             --tests ru.cherdakmd.chrdkbp.BattlePassGuideVisualsTest \
             --tests ru.cherdakmd.chrdkbp.BattlePassGuideGuiTest \
+            --tests ru.cherdakmd.chrdkbp.BattlePassExpeditionVisualsTest \
+            --tests ru.cherdakmd.chrdkbp.BattlePassExpeditionGuiTest \
+            --tests ru.cherdakmd.chrdkbp.BattlePassExpeditionRulesTest \
             --tests ru.cherdakmd.chrdkbp.BattlePassMenuLayoutTest \
             --tests ru.cherdakmd.chrdkbp.BattlePassViewTest \
             --tests ru.cherdakmd.chrdkbp.BattlePassMoney282Test \
@@ -730,6 +733,9 @@ jobs:
               'BattlePassMissionMenuGuiTest': {'openingMenuRendersActualMissionAndFilterStatesWithoutClaiming','claimAllRemainsDeferredAndRejectsStaleWindowsAndAccessChanges'},
               'BattlePassGuideVisualsTest': {'allControlsAndRewardStatesUseDistinctFixedModels'},
               'BattlePassGuideGuiTest': {'rewardPreviewsReflectEachRealStateWithoutGrantingAnything','actionsAreOneShotAndDeferredWithAccessAndViewChecks'},
+              'BattlePassExpeditionVisualsTest': {'independentModelsRepresentLicensesEffectsTitlesAndActions'},
+              'BattlePassExpeditionGuiTest': {'windowsReflectRealStatesAndDoNotAlterStoredData','leftNavigationAndRightDeletionRemainDistinctAndDeferred'},
+              'BattlePassExpeditionRulesTest': set(),
               'BattlePassMenuLayoutTest': set(), 'BattlePassViewTest': set(),
               'BattlePassMoney282Test': set(), 'BattlePassPremiumTest': set(),
           }
@@ -745,8 +751,10 @@ jobs:
           assert len(expected) == 165
           guide = {p.relative_to(root).as_posix(): p.read_bytes() for folder in ('items','models/item','textures/item') for p in (root / 'assets/chrdk_battlepass' / folder / 'menu/guide').iterdir() if p.is_file()}
           assert len(guide) == 120
+          expedition = {p.relative_to(root).as_posix(): p.read_bytes() for folder in ('items','models/item','textures/item') for p in (root / 'assets/chrdk_battlepass' / folder / 'menu/expedition').iterdir() if p.is_file()}
+          assert len(expedition) == 63
           with ZipFile('custom-items/build/resource-packs/chrdk-custom-items-prototype.zip') as pack:
-              for path, data in (expected | guide).items(): assert pack.read(path) == data, path
+              for path, data in (expected | guide | expedition).items(): assert pack.read(path) == data, path
               assert any(p.startswith('assets/chrdk_fishing/') for p in pack.namelist())
-          print('Mission and guide menu checks passed; not a full finance or release gate.')
+          print('BattlePass menu checks passed; not a full finance or release gate.')
           PYTEST

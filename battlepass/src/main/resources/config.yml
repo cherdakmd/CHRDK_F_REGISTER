@@ -7,6 +7,8 @@ textures:
   mission-menu: false
   # Главный экран, лента, детали и справка. Не меняет настоящие предметы.
   guide-menu: false
+  # Значки экспедиции, журнала, меток и маршрутов.
+  expedition-menu: false
 
 battlepass:
   season-name: <gold>Сезон «Первая стужа»</gold>

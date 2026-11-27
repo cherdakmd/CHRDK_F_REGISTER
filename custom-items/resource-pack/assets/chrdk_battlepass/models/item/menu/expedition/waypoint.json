@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "chrdk_battlepass:item/menu/expedition/waypoint"
+  }
+}

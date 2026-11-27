@@ -134,8 +134,8 @@ final class BattlePassExpeditions implements Listener, AutoCloseable {
         if (!access(p)) { plugin.messages().send(p, "exp-unavailable"); return; }
         Holder h = new Holder(p, plugin.season()); h.inventory = Bukkit.createInventory(h, 54, plugin.messages().get("exp-menu"));
         int level = store.license(p.getUniqueId());
-        item(h, 11, Material.COMPASS, "exp-title-free", "exp-free-lore", x -> { claim(x, true); open(x); }, "owned", plugin.messages().plain(level >= 1 ? "atlas-yes" : "atlas-no"));
-        item(h, 15, Material.NETHER_STAR, "exp-title-premium", "exp-premium-lore", x -> { claim(x, true); open(x); }, "owned", plugin.messages().plain(level == 2 ? "atlas-yes" : "atlas-no"));
+        itemModel(h, 11, Material.COMPASS, "exp-title-free", "exp-free-lore", x -> { claim(x, true); open(x); }, BattlePassExpeditionVisuals.license(false, level >= 1), "owned", plugin.messages().plain(level >= 1 ? "atlas-yes" : "atlas-no"));
+        itemModel(h, 15, Material.NETHER_STAR, "exp-title-premium", "exp-premium-lore", x -> { claim(x, true); open(x); }, BattlePassExpeditionVisuals.license(true, level == 2), "owned", plugin.messages().plain(level == 2 ? "atlas-yes" : "atlas-no"));
         item(h, 20, Material.LODESTONE, "exp-mark-current", "exp-mark-current-lore", x -> {
             var marks = store.marks(x.getUniqueId());
             String name = freeName("точка", marks.keySet(), 24);
@@ -145,22 +145,31 @@ final class BattlePassExpeditions implements Listener, AutoCloseable {
         item(h, 24, Material.RECOVERY_COMPASS, "exp-marks", "exp-marks-lore", this::marksMenu);
         item(h, 31, Material.MAP, "exp-routes", "exp-routes-lore", this::routesMenu);
         item(h, 22, Material.WRITABLE_BOOK, "exp-journal", "exp-journal-lore", x -> { x.closeInventory(); list(x); });
-        item(h, 30, Material.NAME_TAG, "exp-title-button", "exp-title-lore", x -> {
+        var titleModel = menuTextures() ? BattlePassExpeditionVisuals.title(store.title(p.getUniqueId())) : null;
+        itemModel(h, 30, Material.NAME_TAG, "exp-title-button", "exp-title-lore", x -> {
             String old = store.title(x.getUniqueId());
             String next = old.equals("off") ? "free" : old.equals("free") && store.license(x.getUniqueId()) == 2 ? "premium" : "off";
             result(x, store.setTitle(x.getUniqueId(), next)); open(x);
-        });
-        item(h, 32, Material.GLOWSTONE_DUST, "exp-effect", "exp-effect-lore", x -> { result(x, store.toggleEffect(x.getUniqueId())); open(x); },
-                "state", plugin.messages().plain(store.effect(p.getUniqueId()) ? "atlas-yes" : "atlas-no"));
+        }, titleModel);
+        boolean effect = store.effect(p.getUniqueId());
+        itemModel(h, 32, Material.GLOWSTONE_DUST, "exp-effect", "exp-effect-lore", x -> { result(x, store.toggleEffect(x.getUniqueId())); open(x); },
+                BattlePassExpeditionVisuals.effect(effect), "state", plugin.messages().plain(effect ? "atlas-yes" : "atlas-no"));
         item(h, 34, Material.NAME_TAG, "exp-labels", "exp-labels-lore", x -> { x.closeInventory(); x.performCommand("labels"); });
         item(h, 40, Material.ENDER_CHEST, "exp-claim", "exp-condition", x -> { claim(x, true); open(x); });
         item(h, 45, Material.ARROW, "guide-back", null, x -> plugin.guide().home(x));
         item(h, 49, Material.OAK_DOOR, "menu-close", null, Player::closeInventory);
         p.openInventory(h.inventory);
     }
+    private boolean menuTextures() { return plugin.getConfig().getBoolean("textures.expedition-menu", false); }
     private void item(Holder h, int slot, Material mat, String name, String lore, Consumer<Player> action, Object... params) {
+        itemModel(h, slot, mat, name, lore, action, BattlePassExpeditionVisuals.button(name, lore), params);
+    }
+    private void itemModel(Holder h, int slot, Material mat, String name, String lore, Consumer<Player> action,
+                           NamespacedKey model, Object... params) {
         ItemStack item = new ItemStack(mat); var meta = item.getItemMeta(); meta.displayName(plugin.messages().get(name, params));
-        if (lore != null) meta.lore(plugin.messages().getList(lore, params)); item.setItemMeta(meta); h.inventory.setItem(slot, item); h.actions.put(slot, action);
+        if (lore != null) meta.lore(plugin.messages().getList(lore, params));
+        BattlePassMenuVisuals.apply(meta, model, menuTextures());
+        item.setItemMeta(meta); h.inventory.setItem(slot, item); h.actions.put(slot, action);
     }
     static String freeName(String prefix, Set<String> occupied, int limit) {
         for (int i = 1; i <= limit; i++) if (!occupied.contains(prefix + i)) return prefix + i;
