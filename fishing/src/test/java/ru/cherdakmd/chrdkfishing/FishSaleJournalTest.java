@@ -213,6 +213,61 @@ class FishSaleJournalTest {
             assertTrue(rs.next()); assertEquals(5, rs.getInt(1));
         }
     }
+    private void makeVersionFourWithSales(int sales, int fishPerSale) throws Exception {
+        try (var ignored = new FishSaleJournal(file(), true)) { }
+        try (var db = java.sql.DriverManager.getConnection("jdbc:sqlite:" + file()); var stmt = db.createStatement()) {
+            stmt.execute("DROP TABLE vanilla_fish"); stmt.execute("ALTER TABLE sales DROP COLUMN vanilla_count");
+            stmt.execute("ALTER TABLE sales DROP COLUMN signed_count"); stmt.execute("PRAGMA user_version=4");
+            try (var sale = db.prepareStatement("INSERT INTO sales(id,owner,before_state,after_state,amount,phase) VALUES(?,?,?,?,?,?)");
+                 var spent = db.prepareStatement("INSERT INTO spent_fish(fish_id,sale_id) VALUES(?,?)")) {
+                db.setAutoCommit(false);
+                for (int i = 0; i < sales; i++) {
+                    String id = UUID.randomUUID().toString();
+                    sale.setString(1,id); sale.setString(2,owner.toString());
+                    sale.setString(3,"a".repeat(2500)); sale.setString(4,"b".repeat(2500));
+                    sale.setLong(5,100); sale.setString(6,"PAID"); sale.executeUpdate();
+                    for (int j = 0; j < fishPerSale; j++) {
+                        spent.setString(1,UUID.randomUUID().toString()); spent.setString(2,id); spent.executeUpdate();
+                    }
+                }
+                db.commit();
+            }
+        }
+    }
+    @Test void largeVersionFourMigrationPreservesSalesAndRestoresTempPolicy() throws Exception {
+        makeVersionFourWithSales(500, 1);
+        try (var journal = new FishSaleJournal(file(), false)) {
+            var field = FishSaleJournal.class.getDeclaredField("db"); field.setAccessible(true);
+            var db = (java.sql.Connection) field.get(journal);
+            try (var s = db.createStatement(); var r = s.executeQuery("PRAGMA temp_store")) {
+                assertTrue(r.next()); assertEquals(0, r.getInt(1), "temporary setting must not leak to runtime");
+            }
+            try (var s = db.createStatement(); var r = s.executeQuery("SELECT COUNT(*),SUM(signed_count),SUM(vanilla_count),SUM(amount) FROM sales")) {
+                assertTrue(r.next()); assertEquals(500, r.getInt(1)); assertEquals(500, r.getInt(2));
+                assertEquals(0, r.getInt(3)); assertEquals(50000, r.getInt(4));
+            }
+            try (var s = db.createStatement(); var r = s.executeQuery("PRAGMA synchronous")) {
+                assertTrue(r.next()); assertEquals(2, r.getInt(1), "durable FULL sync remains enabled");
+            }
+        }
+        try (var db = java.sql.DriverManager.getConnection("jdbc:sqlite:" + file()); var s = db.createStatement(); var r = s.executeQuery("PRAGMA user_version")) {
+            assertTrue(r.next()); assertEquals(5, r.getInt(1));
+        }
+    }
+    @Test void failedVersionFourMigrationRollsBackSchemaAndPreservesHistory() throws Exception {
+        makeVersionFourWithSales(1, 37); // violates the new per-sale limit
+        assertThrows(java.sql.SQLException.class, () -> new FishSaleJournal(file(), false));
+        try (var db = java.sql.DriverManager.getConnection("jdbc:sqlite:" + file()); var s = db.createStatement()) {
+            try (var r = s.executeQuery("PRAGMA user_version")) { assertTrue(r.next()); assertEquals(4,r.getInt(1)); }
+            try (var r = s.executeQuery("SELECT COUNT(*) FROM spent_fish")) { assertTrue(r.next()); assertEquals(37,r.getInt(1)); }
+            try (var r = s.executeQuery("SELECT COUNT(*) FROM pragma_table_info('sales') WHERE name IN ('signed_count','vanilla_count')")) {
+                assertTrue(r.next()); assertEquals(0,r.getInt(1));
+            }
+            try (var r = s.executeQuery("SELECT COUNT(*) FROM sqlite_master WHERE name='vanilla_fish'")) {
+                assertTrue(r.next()); assertEquals(0,r.getInt(1));
+            }
+        }
+    }
     @Test void alteredActiveSaleIndexIsQuarantined() throws Exception {
         try (var j = new FishSaleJournal(file(), true)) { }
         try (var db = java.sql.DriverManager.getConnection("jdbc:sqlite:" + file()); var stmt = db.createStatement()) {

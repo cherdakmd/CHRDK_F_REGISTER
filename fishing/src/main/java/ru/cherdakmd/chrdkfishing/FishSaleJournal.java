@@ -109,16 +109,31 @@ public final class FishSaleJournal implements AutoCloseable {
                     if (!rs.next() || rs.getLong(1) != 0) throw new SQLException("sale journal missing items");
                 }
                 if (version < SCHEMA_VERSION) {
-                    db.setAutoCommit(false);
-                    try {
-                        if (version == 1) createCookingSchema(s);
-                        if (version < 3) createOrderSchema(s);
-                        if (version < 4) createFindSchema(s);
-                        if (version < 5) createVanillaSchema(s);
-                        s.execute("PRAGMA user_version=" + SCHEMA_VERSION); db.commit();
+                    // An UPDATE with CHECK constraints can spill its statement journal to the
+                    // host's temp directory even though the database and WAL are writable.
+                    // Keep only migration temporary data in memory; durable WAL and FULL sync
+                    // remain in force. Restore the connection's original policy afterwards.
+                    int originalTempStore;
+                    try (ResultSet rs = s.executeQuery("PRAGMA temp_store")) {
+                        if (!rs.next()) throw new SQLException("missing temp_store setting");
+                        originalTempStore = rs.getInt(1);
+                        if (originalTempStore < 0 || originalTempStore > 2) throw new SQLException("invalid temp_store setting");
                     }
-                    catch (SQLException error) { db.rollback(); throw error; }
-                    finally { db.setAutoCommit(true); }
+                    s.execute("PRAGMA temp_store=MEMORY");
+                    try {
+                        db.setAutoCommit(false);
+                        try {
+                            if (version == 1) createCookingSchema(s);
+                            if (version < 3) createOrderSchema(s);
+                            if (version < 4) createFindSchema(s);
+                            if (version < 5) createVanillaSchema(s);
+                            s.execute("PRAGMA user_version=" + SCHEMA_VERSION); db.commit();
+                        }
+                        catch (SQLException error) { db.rollback(); throw error; }
+                        finally { db.setAutoCommit(true); }
+                    } finally {
+                        s.execute("PRAGMA temp_store=" + originalTempStore);
+                    }
                 }
                 try (ResultSet rs = s.executeQuery("SELECT sql FROM sqlite_master WHERE type='index' AND name='active_cook_owner'")) {
                     if (!rs.next() || !COOK_INDEX.equals(rs.getString(1))) throw new SQLException("cooking journal index mismatch");
