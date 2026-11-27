@@ -120,7 +120,8 @@ final class BattlePassMenu implements Listener {
         inventory.setItem(BattlePassMenuLayout.SLOT_PREMIUM, premium);
         inventory.setItem(BattlePassMenuLayout.SLOT_CLOSE, button(Material.BARRIER, "menu-close"));
         ItemStack filterButton=button(Material.HOPPER,"menu-filter");
-        var filterMeta=filterButton.getItemMeta();filterMeta.displayName(plugin.messages().get("menu-filter","filter",plugin.messages().plain("filter-"+filter.name().toLowerCase(java.util.Locale.ROOT))));filterButton.setItemMeta(filterMeta);
+        var filterMeta=filterButton.getItemMeta();filterMeta.displayName(plugin.messages().get("menu-filter","filter",plugin.messages().plain("filter-"+filter.name().toLowerCase(java.util.Locale.ROOT))));
+        menuModel(filterMeta, BattlePassMenuVisuals.filter(filter));filterButton.setItemMeta(filterMeta);
         inventory.setItem(51,filterButton);
         player.openInventory(inventory);
     }
@@ -182,6 +183,7 @@ final class BattlePassMenu implements Listener {
             meta.setEnchantmentGlintOverride(true);
         }
         meta.lore(lore);
+        menuModel(meta, BattlePassMenuVisuals.mission(mission, entry.unlocked(), view.state()));
         item.setItemMeta(meta);
         return item;
     }
@@ -206,6 +208,7 @@ final class BattlePassMenu implements Listener {
                 "completed", BattlePassScore.completed(season, progress),
                 "claimed", BattlePassScore.claimed(season, claims),
                 "ready", ready));
+        menuModel(meta, BattlePassMenuVisuals.summary());
         item.setItemMeta(meta);
         return item;
     }
@@ -219,9 +222,14 @@ final class BattlePassMenu implements Listener {
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             meta.displayName(plugin.messages().get(key));
+            menuModel(meta, BattlePassMenuVisuals.button(key));
             item.setItemMeta(meta);
         }
         return item;
+    }
+
+    private void menuModel(ItemMeta meta, org.bukkit.NamespacedKey model) {
+        BattlePassMenuVisuals.apply(meta, model, plugin.getConfig().getBoolean("textures.mission-menu", false));
     }
 
     private static Material materialOf(BattlePassConfig.MissionDef mission) {

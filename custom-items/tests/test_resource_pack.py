@@ -56,6 +56,28 @@ class ResourcePackTest(unittest.TestCase):
             self.assertEqual(len(ids), len(set(ids)))
             self.assertEqual(files, set(ids))
 
+    def test_battlepass_mission_menu_models_are_complete_and_distinct(self):
+        root = PACK / 'assets/chrdk_battlepass'
+        types = ('mine', 'kill', 'craft', 'fish', 'place', 'smelt', 'enchant', 'breed')
+        states = ('progress', 'ready', 'vip_locked', 'premium_locked', 'claimed')
+        names = {f'mission_{kind}_{state}' for kind in types for state in states}
+        names.update(('mission_future', 'empty', 'prev', 'next', 'claim_all', 'back', 'summary', 'refresh', 'premium', 'close'))
+        names.update('filter_' + f for f in ('all', 'active', 'ready', 'future', 'done'))
+        self.assertEqual(55, len(names)); hashes = set()
+        for name in names:
+            path = 'menu/' + name; ref = 'chrdk_battlepass:item/' + path
+            item = json.loads((root / 'items' / (path + '.json')).read_text())
+            model = json.loads((root / 'models/item' / (path + '.json')).read_text())
+            self.assertEqual({'type':'minecraft:model','model':ref}, item['model'])
+            self.assertEqual('minecraft:item/generated', model['parent']); self.assertEqual(ref, model['textures']['layer0'])
+            data = (root / 'textures/item' / (path + '.png')).read_bytes()
+            self.assertEqual(b'\x89PNG\r\n\x1a\n', data[:8]); self.assertEqual((32,32), struct.unpack('>II', data[16:24]))
+            digest = hashlib.sha256(data).hexdigest(); self.assertNotIn(digest, hashes); hashes.add(digest)
+        for folder in ('items', 'models/item', 'textures/item'):
+            self.assertEqual(names, {p.stem for p in (root / folder / 'menu').iterdir()})
+        config = (PACK.parents[1] / 'battlepass/src/main/resources/config.yml').read_text(encoding='utf-8')
+        self.assertRegex(config, r'(?m)^  mission-menu: false\s*$')
+
     def test_generator_menu_models_cover_controls_and_states(self):
         root = PACK / 'assets/chrdk_generator'
         names = {f'status_{s}' for s in ('working', 'no_lava', 'no_water', 'no_cells', 'unloaded', 'carried')}
