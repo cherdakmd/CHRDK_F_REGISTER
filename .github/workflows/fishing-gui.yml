@@ -983,7 +983,7 @@ jobs:
           PYTEST
 
   enchants-hub-gui:
-    name: Enchants hub GUI visual checks
+    name: Enchants hub, catalog and workshop GUI checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
