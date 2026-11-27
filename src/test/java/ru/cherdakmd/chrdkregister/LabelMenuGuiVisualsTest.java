@@ -28,8 +28,8 @@ class LabelMenuGuiVisualsTest {
             when(prefs.visible("Alice",LabelPreferences.Label.QUESTS)).thenAnswer(c->questsVisible.get());when(prefs.toggle("Alice",LabelPreferences.Label.QUESTS)).thenAnswer(c->{questsVisible.set(!questsVisible.get());return questsVisible.get();});
             when(prefs.color("Alice")).thenReturn("");var snapshot=new LabelPreferences.Snapshot(0,List.of(),"");when(prefs.presets("Alice")).thenReturn(Map.of("p1",snapshot));
             var rank=LabelPreferences.Label.RANK;var guild=LabelPreferences.Label.GUILDS;var classes=LabelPreferences.Label.CLASSES;
-            var a=new LabelStyleService.Decoration(rank,"rank");var b=new LabelStyleService.Decoration(guild,"guild");var c=new LabelStyleService.Decoration(classes,"classes");
-            var selected=new LabelStyleService.Selection(List.of(a),List.of(b),2,List.of(a,b,c));var style=mock(LabelStyleService.class);when(style.selection("Alice")).thenReturn(selected);
+            var a=new LabelStyleService.Decoration(rank,"rank");var b=new LabelStyleService.Decoration(guild,"guild");var classDecoration=new LabelStyleService.Decoration(classes,"classes");
+            var selected=new LabelStyleService.Selection(List.of(a),List.of(b),2,List.of(a,b,classDecoration));var style=mock(LabelStyleService.class);when(style.selection("Alice")).thenReturn(selected);
             when(style.assignments("Alice")).thenReturn(List.of("rank","","","","","","",""));var chat=mock(ChatService.class);when(chat.labelStyles()).thenReturn(style);when(chat.decoratedName("Alice")).thenReturn("Alice");when(plugin.chatService()).thenReturn(chat);
             when(plugin.purchasedProducts("Alice")).thenReturn(Set.of());when(plugin.effectiveRankLevel("Alice")).thenReturn(0);
             var color=new LabelPalette.Color("custom","Custom","<red>%name%</red>",0,"");var paid=new LabelPalette.Color("premium","Paid","<blue>%name%</blue>",0,"paid-color");var palette=LabelPalette.of(true,List.of(color,paid));

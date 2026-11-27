@@ -856,7 +856,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Prepare pinned compile-only API
         run: python3 .github/scripts/prepare_papi.py
-      - name: Test atlas, account, profile and keypad rules
+      - name: Test atlas, account, profile, keypad and label rules
         shell: bash
         run: |
           set +e
