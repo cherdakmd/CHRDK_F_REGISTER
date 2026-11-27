@@ -760,7 +760,7 @@ jobs:
           PYTEST
 
   guilds-gui:
-    name: Guilds party and GUI safety checks
+    name: Guilds GUI visuals and safety checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -783,6 +783,8 @@ jobs:
             --tests ru.cherdakmd.chrdkguilds.GuildRecruitGuiVisualsTest \
             --tests ru.cherdakmd.chrdkguilds.GuildMainVisualsTest \
             --tests ru.cherdakmd.chrdkguilds.GuildMainGuiVisualsTest \
+            --tests ru.cherdakmd.chrdkguilds.GuildStyleVisualsTest \
+            --tests ru.cherdakmd.chrdkguilds.GuildStyleGuiVisualsTest \
             --tests ru.cherdakmd.chrdkguilds.GuildStyleGuiSafetyTest \
             --tests ru.cherdakmd.chrdkguilds.GuildLeaderStyle282Test \
             --tests ru.cherdakmd.chrdkguilds.GuildRecruitment280Test \
@@ -814,6 +816,8 @@ jobs:
               'GuildRecruitGuiVisualsTest': {'listAndConsentKeepTermsAndOnlyExplicitConfirmationCanJoin'},
               'GuildMainVisualsTest': {'fixedModelsFollowLevelWarAndMetadataFallback'},
               'GuildMainGuiVisualsTest': {'ownedAndEmptyMenusKeepPlayerHeadsAndDoNotMutateGuild'},
+              'GuildStyleVisualsTest': {'everyCurrentPresetAndSelectionStateHasFixedModel','disabledAndForeignAppearanceIsNotOverwritten'},
+              'GuildStyleGuiVisualsTest': {'actualPreviewsShowPersonalAndActiveStatesWithoutChangingChoices'},
               'GuildStyleGuiSafetyTest': {'cancelledForeignAndNonStandardClicksDoNotScheduleAndDeferredRoleIsRechecked','mainMenuStyleOpenRequiresSameWindowAccessAndGuildOnNextTick'},
               'GuildLeaderStyle282Test': set(), 'GuildRecruitment280Test': set(), 'AdventureGroupGuiTest': set(),
           }
@@ -832,8 +836,10 @@ jobs:
           assert len(recruit) == 36
           main = {p.relative_to(root).as_posix(): p.read_bytes() for folder in ('items','models/item','textures/item') for p in (root / 'assets/chrdk_guilds' / folder / 'menu/main').iterdir() if p.is_file()}
           assert len(main) == 66
+          style = {p.relative_to(root).as_posix(): p.read_bytes() for folder in ('items','models/item','textures/item') for p in (root / 'assets/chrdk_guilds' / folder / 'menu/style').iterdir() if p.is_file()}
+          assert len(style) == 408
           with ZipFile('custom-items/build/resource-packs/chrdk-custom-items-prototype.zip') as pack:
-              for path, data in (expected | recruit | main).items(): assert pack.read(path) == data, path
+              for path, data in (expected | recruit | main | style).items(): assert pack.read(path) == data, path
               assert any(p.startswith('assets/chrdk_fishing/') for p in pack.namelist())
           print('Guilds targeted GUI checks passed; not a full finance or release gate.')
           PYTEST

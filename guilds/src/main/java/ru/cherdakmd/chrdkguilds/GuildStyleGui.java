@@ -65,14 +65,14 @@ final class GuildStyleGui implements Listener {
         info.add(plugin.messages().get("style-animation-status", "effect", animation == null
                 ? plugin.messages().plain("style-animation-inactive")
                 : label("animation", animation)));
-        inv.setItem(4, item(Material.WHITE_BANNER, plugin.messages().markup(plugin.styles().name(guild)), info));
+        inv.setItem(4, visual(item(Material.WHITE_BANNER, plugin.messages().markup(plugin.styles().name(guild)), info),GuildStyleVisuals.Control.INFO.model()));
         for (int index = 0; index < KINDS.size(); index++) {
             String kind = KINDS.get(index);
             long until = plugin.coreApi().entitlementUntil(player.getName(), GuildStyleDefs.PRODUCTS.get(kind));
             List<Component> lore = List.of(plugin.messages().get("style-license", "kind", plugin.messages().plain("style-kind-" + kind),
                     "until", until > System.currentTimeMillis() ? GuildPeaceController.time(until) : plugin.messages().plain("style-not-owned")),
                     plugin.messages().get("style-gui-category"));
-            inv.setItem(10 + index, item(icon(kind), plugin.messages().get("style-kind-" + kind), lore));
+            inv.setItem(10 + index, visual(item(icon(kind), plugin.messages().get("style-kind-" + kind), lore),GuildStyleVisuals.category(kind,kind.equals(h.kind))));
         }
         int index = 0;
         for (String preset : GuildStyleDefs.options(h.kind)) {
@@ -86,13 +86,14 @@ final class GuildStyleGui implements Listener {
             lore.add(plugin.messages().get(manager ? "style-gui-apply" : "style-leader-only"));
             if (manager && row != null && !row.guild().equals(guild.id())) lore.add(plugin.messages().get("style-gui-transfer-warning"));
             Component preview = preview(guild, h.kind, preset);
-            inv.setItem(OPTIONS[index], item(material(h.kind, preset), preview, lore));
+            inv.setItem(OPTIONS[index], visual(item(material(h.kind, preset), preview, lore),
+                    GuildStyleVisuals.preset(h.kind,preset,preset.equals(personal),preset.equals(current))));
             if (manager) h.actions.put(OPTIONS[index], new String[]{"style", h.kind, preset});
             index++;
         }
-        if (manager) inv.setItem(46, button(Material.BARRIER, "style-gui-off"));
-        inv.setItem(45, button(Material.ARROW, "style-gui-back"));
-        inv.setItem(49, button(Material.OAK_DOOR, "style-gui-close"));
+        if (manager) inv.setItem(46, visual(button(Material.BARRIER, "style-gui-off"),GuildStyleVisuals.Control.OFF.model()));
+        inv.setItem(45, visual(button(Material.ARROW, "style-gui-back"),GuildStyleVisuals.Control.BACK.model()));
+        inv.setItem(49, visual(button(Material.OAK_DOOR, "style-gui-close"),GuildStyleVisuals.Control.CLOSE.model()));
         plugin.styles().frame(inv, guild);
     }
     private String label(String kind, String preset) { return plugin.messages().plain("style-preset-" + kind + "-" + preset); }
@@ -125,6 +126,12 @@ final class GuildStyleGui implements Listener {
     private ItemStack item(Material type, Component name, List<Component> lore) {
         ItemStack item = new ItemStack(type); var meta = item.getItemMeta();
         meta.displayName(name); meta.lore(lore); item.setItemMeta(meta); return item;
+    }
+    private ItemStack visual(ItemStack item,org.bukkit.NamespacedKey model) {
+        if (!plugin.getConfig().getBoolean("textures.style-menu",false)) return item;
+        var meta=item.getItemMeta(); GuildStyleVisuals.apply(meta,model,true);
+        if (meta!=null) item.setItemMeta(meta);
+        return item;
     }
     @EventHandler(priority = org.bukkit.event.EventPriority.HIGHEST, ignoreCancelled = false) public void click(InventoryClickEvent event) {
         if (!(event.getView().getTopInventory().getHolder() instanceof Holder h)) return;
