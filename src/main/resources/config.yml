@@ -1074,12 +1074,13 @@ wiki:
 # Подстановки: %player%, %rank%, %rank_badge%, %rank_level%, %rank_status%,
 # %pass_left%, %pass_days%, %trial_days%. Админские команды сюда не ставить.
 # Только виртуальные кнопки меню аккаунта; нужен обновлённый общий ресурс-пак.
-# Цифровая клавиатура пароля не меняется и не использует эти модели.
+# У клавиатуры пароля оформляются только постоянные кнопки управления; символы не меняются.
 core-gui-textures:
   pass-menu: false
   donate-menu: false
   rank-menu: false
   profile-menu: false
+  keypad-controls: false
 
 server-menu:
   enabled: true

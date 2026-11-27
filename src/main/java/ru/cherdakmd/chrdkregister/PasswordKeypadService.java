@@ -120,21 +120,30 @@ public final class PasswordKeypadService implements Listener {
                 inventory.setItem(slot, EMPTY);
             }
         }
-        inventory.setItem(SLOT_BACKSPACE, named(Material.ARROW, messages.get("button-login.backspace")));
-        inventory.setItem(SLOT_CLEAR, named(Material.BARRIER, messages.get("button-login.clear")));
-        inventory.setItem(SLOT_PAGE, named(Material.COMPASS,
-                messages.get("button-login.page-button", "page", pageLabel(state.page))));
-        inventory.setItem(SLOT_CANCEL, named(Material.RED_CONCRETE, messages.get("button-login.cancel")));
-        inventory.setItem(SLOT_CONFIRM, named(Material.LIME_CONCRETE, messages.get("button-login.confirm")));
+        inventory.setItem(SLOT_BACKSPACE, control(Material.ARROW, messages.get("button-login.backspace"), KeypadVisuals.Control.BACKSPACE));
+        inventory.setItem(SLOT_CLEAR, control(Material.BARRIER, messages.get("button-login.clear"), KeypadVisuals.Control.CLEAR));
+        inventory.setItem(SLOT_PAGE, control(Material.COMPASS,
+                messages.get("button-login.page-button", "page", pageLabel(state.page)), KeypadVisuals.Control.PAGE));
+        inventory.setItem(SLOT_CANCEL, control(Material.RED_CONCRETE, messages.get("button-login.cancel"), KeypadVisuals.Control.CANCEL));
+        inventory.setItem(SLOT_CONFIRM, control(Material.LIME_CONCRETE, messages.get("button-login.confirm"), KeypadVisuals.Control.CONFIRM));
         ItemStack progress = new ItemStack(Material.BOOK);
         ItemMeta progressMeta = progress.getItemMeta();
         if (progressMeta != null) {
             progressMeta.displayName(messages.get("button-login.footer-name",
                     "entered", state.buffer.size()));
             progressMeta.lore(messages.getList("button-login.footer-lore"));
+            KeypadVisuals.apply(progressMeta,KeypadVisuals.Control.PROGRESS,plugin.getConfig().getBoolean("core-gui-textures.keypad-controls",false));
             progress.setItemMeta(progressMeta);
         }
         inventory.setItem(SLOT_PROGRESS, progress);
+    }
+
+    private ItemStack control(Material material, net.kyori.adventure.text.Component name, KeypadVisuals.Control control) {
+        ItemStack item = named(material, name);
+        if (!plugin.getConfig().getBoolean("core-gui-textures.keypad-controls",false)) return item;
+        ItemMeta meta=item.getItemMeta(); KeypadVisuals.apply(meta,control,true);
+        if (meta!=null) item.setItemMeta(meta);
+        return item;
     }
 
     private ItemStack charItem(char ch) {
