@@ -139,22 +139,22 @@ public final class AdminDonationsGuiService implements Listener {
         holder.bind(inventory);
 
         // управление
-        inventory.setItem(0, control(Material.ARROW,
+        inventory.setItem(0, visual(control(Material.ARROW,
                 messages.get("pass.donationsgui.prev-name"),
                 List.of(messages.get("pass.donationsgui.prev-lore",
-                        "page", data.page() + 1, "pages", data.pages()))));
-        inventory.setItem(1, control(Material.HOPPER,
+                        "page", data.page() + 1, "pages", data.pages()))),AdminDonationVisuals.control(AdminDonationVisuals.Control.PREV)));
+        inventory.setItem(1, visual(control(Material.HOPPER,
                 messages.get("pass.donationsgui.filter-name",
                         "filter", filterLabel(data.filter())),
-                List.of(messages.get("pass.donationsgui.filter-lore"))));
-        inventory.setItem(2, control(Material.REDSTONE,
+                List.of(messages.get("pass.donationsgui.filter-lore"))),AdminDonationVisuals.filter(data.filter())));
+        inventory.setItem(2, visual(control(Material.REDSTONE,
                 messages.get("pass.donationsgui.refresh-name"),
-                List.of(messages.get("pass.donationsgui.refresh-lore"))));
+                List.of(messages.get("pass.donationsgui.refresh-lore"))),AdminDonationVisuals.control(AdminDonationVisuals.Control.REFRESH)));
         inventory.setItem(4, statusIcon());
-        inventory.setItem(8, control(Material.ARROW,
+        inventory.setItem(8, visual(control(Material.ARROW,
                 messages.get("pass.donationsgui.next-name"),
                 List.of(messages.get("pass.donationsgui.next-lore",
-                        "page", data.page() + 1, "pages", data.pages()))));
+                        "page", data.page() + 1, "pages", data.pages()))),AdminDonationVisuals.control(AdminDonationVisuals.Control.NEXT)));
 
         if (!walletFresh() && accessManager.config().donatePayReady()) {
             refreshWallet(); // просроченный кэш — подтянем баланс в фоне
@@ -162,9 +162,9 @@ public final class AdminDonationsGuiService implements Listener {
 
         // записи
         if (data.records().isEmpty()) {
-            inventory.setItem(31, control(Material.PAPER,
+            inventory.setItem(31, visual(control(Material.PAPER,
                     messages.get("pass.donationsgui.empty-name"),
-                    List.of(messages.get("pass.donationsgui.empty-lore"))));
+                    List.of(messages.get("pass.donationsgui.empty-lore"))),AdminDonationVisuals.control(AdminDonationVisuals.Control.EMPTY)));
         }
         for (int i = 0; i < data.records().size(); i++) {
             inventory.setItem(9 + i, donationIcon(data.records().get(i)));
@@ -247,7 +247,8 @@ public final class AdminDonationsGuiService implements Listener {
 
         Material wool = !anyReady || down ? Material.RED_WOOL
                 : flaky ? Material.YELLOW_WOOL : Material.LIME_WOOL;
-        return control(wool, messages.get("pass.donationsgui.status-name"), lore);
+        return visual(control(wool, messages.get("pass.donationsgui.status-name"), lore),
+                AdminDonationVisuals.control(AdminDonationVisuals.health(anyReady,flaky,down)));
     }
 
     private static boolean anyDonatePayReady(List<AccessManager.DonateHealthCard> cards) {
@@ -356,6 +357,13 @@ public final class AdminDonationsGuiService implements Listener {
         return label.isEmpty() ? "все" : label;
     }
 
+    private ItemStack visual(ItemStack item,org.bukkit.NamespacedKey model) {
+        if (!plugin.getConfig().getBoolean("core-gui-textures.admin-donations",false)) return item;
+        var meta=item.getItemMeta();AdminDonationVisuals.apply(meta,model,true);
+        if (meta!=null) item.setItemMeta(meta);
+        return item;
+    }
+
     private ItemStack control(Material material, net.kyori.adventure.text.Component name,
                               List<net.kyori.adventure.text.Component> lore) {
         ItemStack item = new ItemStack(material);
@@ -396,7 +404,7 @@ public final class AdminDonationsGuiService implements Listener {
                         "id", record.id,
                         "amount", DonateMenuService.formatRubles(record.amountKopecks)),
                 lore);
-        return item;
+        return visual(item,AdminDonationVisuals.status(status));
     }
 
     private String statusLabel(RegistrationStore.DonationStatus status) {

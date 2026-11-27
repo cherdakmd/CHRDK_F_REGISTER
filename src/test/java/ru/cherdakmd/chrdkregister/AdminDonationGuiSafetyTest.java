@@ -25,7 +25,7 @@ class AdminDonationGuiSafetyTest {
             var store=mock(RegistrationStore.class);when(access.store()).thenReturn(store);
             var first=record(101,"PENDING_REVIEW");var second=record(102,"PENDING_AMOUNT");if(scenario.equals("historical"))first.status="GRANTED";
             var rows=new AtomicReference<List<RegistrationStore.DonationRecord>>(List.of(first,second));when(store.listDonations(isNull(),eq(0))).thenAnswer(c->rows.get());
-            var messages=Messages.from(getClass().getResourceAsStream("/messages.yml"),null,Logger.getAnonymousLogger());var plugin=mock(Plugin.class);
+            var messages=Messages.from(getClass().getResourceAsStream("/messages.yml"),null,Logger.getAnonymousLogger());var plugin=mock(Plugin.class);when(plugin.getConfig()).thenReturn(new org.bukkit.configuration.file.YamlConfiguration());
             var player=mock(Player.class);when(player.getUniqueId()).thenReturn(UUID.randomUUID());when(player.hasPermission("chrdkregister.admin")).thenReturn(true);
             var inv=mock(Inventory.class);var holder=new AtomicReference<InventoryHolder>();when(inv.getHolder()).thenAnswer(c->holder.get());var view=mock(InventoryView.class);when(view.getTopInventory()).thenReturn(inv);
             var scheduler=mock(BukkitScheduler.class);when(scheduler.runTaskLater(eq(plugin),any(Runnable.class),eq(4L))).thenReturn(mock(BukkitTask.class));

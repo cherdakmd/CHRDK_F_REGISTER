@@ -1082,6 +1082,7 @@ core-gui-textures:
   profile-menu: false
   keypad-controls: false
   labels-menu: false
+  admin-donations: false
 
 server-menu:
   enabled: true
