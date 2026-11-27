@@ -1,0 +1,117 @@
+name: Publish verified Horizons RC.61
+
+# One explicitly approved prerelease of an already verified branch candidate.
+# No workflow_dispatch, no stable release, no VK announcement, no overwrite.
+on:
+  push:
+    branches: ['arena/a18c6cc7-chrdk-f-register']
+    paths: ['.github/workflows/publish-horizons-rc61.yml']
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    if: github.repository == 'cherdakmd/CHRDK_F_REGISTER'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_SHA: d012ed78caa37a5ecd82f379a41f177ab9bcd994
+      VERSION: 2.0.26-rc.61
+      TAG: fishing-horizons-2.0.26-rc.61
+      RUN_ID: '46067235450'
+    steps:
+      - name: Checkout publication notes and verification tools
+        uses: actions/checkout@v5
+
+      - name: Require the exact successful candidate and unused tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh run view "$RUN_ID" --json conclusion,headSha,headBranch,workflowName \
+            --jq '[.conclusion, .headSha, .headBranch, .workflowName] | @tsv' > run.txt
+          IFS=$'\t' read -r outcome source branch workflow < run.txt
+          [[ "$outcome" == success && "$source" == "$SOURCE_SHA" && "$branch" == 'arena/a18c6cc7-chrdk-f-register' && "$workflow" == 'Fishing closed-server candidate' ]]
+          git fetch --no-tags --depth=1 origin "$SOURCE_SHA"
+          # Only the immutable build commit is tagged; the publication commit contains notes.
+          gh api graphql -f query='query($owner:String!, $repo:String!, $tag:String!, $ref:String!) { repository(owner:$owner, name:$repo) { ref(qualifiedName:$ref) { id } release(tagName:$tag) { id } } }' \
+            -f owner=cherdakmd -f repo=CHRDK_F_REGISTER -f tag="$TAG" -f ref="refs/tags/$TAG" \
+            --jq '.data.repository | (.ref == null and .release == null)' | grep -Fx true
+
+      - name: Download verified closed-server candidate
+        uses: actions/download-artifact@v4
+        with:
+          name: chrdk-closed-server-2.0.26-rc.61-d012ed78caa37a5ecd82f379a41f177ab9bcd994
+          run-id: 46067235450
+          github-token: ${{ github.token }}
+          path: candidate-download
+
+      - name: Verify archive, plugin set, embedded pack and checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          (cd candidate-download && sha256sum -c "chrdk-closed-server-$VERSION.zip.sha256")
+          python3 - <<'PY'
+          import os, stat, zipfile
+          from pathlib import Path
+          source = Path('candidate-download') / f"chrdk-closed-server-{os.environ['VERSION']}.zip"
+          with zipfile.ZipFile(source) as z:
+              entries = z.infolist()
+              names = [i.filename for i in entries]
+              if not entries or len(names) != len(set(names)) or z.testzip() is not None:
+                  raise SystemExit('duplicate or corrupt candidate archive')
+              if sum(i.file_size for i in entries) > 256 * 1024 * 1024:
+                  raise SystemExit('candidate too large')
+              for i in entries:
+                  n = i.filename
+                  if (not n or n.startswith('/') or '\\' in n or
+                      any(p in ('', '.', '..') for p in n.rstrip('/').split('/')) or
+                      stat.S_ISLNK(i.external_attr >> 16) or i.file_size > 64 * 1024 * 1024):
+                      raise SystemExit(f'unsafe candidate entry: {n}')
+              z.extractall('candidate')
+          PY
+          (cd candidate && sha256sum -c SHA256SUMS.txt)
+          python3 -m unittest discover -s .github/scripts -p 'test_verify_combined_pack.py' -v
+          python3 .github/scripts/verify_combined_pack.py candidate/extras/chrdk-custom-items-prototype.zip \
+            --jar "candidate/plugins/chrdk-custom-items-$VERSION.jar"
+          python3 .github/scripts/verify_fishing_bundle.py candidate/plugins "$VERSION"
+          python3 - <<'PY'
+          import os, sys
+          from pathlib import Path
+          from zipfile import ZipFile
+          sys.path.insert(0, '.github/scripts')
+          from verify_release import expected_plugins, verify
+          root = Path.cwd(); plugins = root / 'candidate/plugins'; version = os.environ['VERSION']
+          expected = expected_plugins(root) | {'CHRDK_Fishing', 'CHRDK_VK'}
+          verify(plugins, version, expected)
+          archive = root / f'candidate/chrdk-all-{version}.zip'
+          paths = list(plugins.glob('*.jar')) + [plugins / 'ОБНОВЛЕНИЕ.txt']
+          with ZipFile(archive) as z:
+              names = z.namelist()
+              if len(names) != len(set(names)) or set(names) != {p.name for p in paths} or z.testzip() is not None:
+                  raise SystemExit('plugin ZIP contents mismatch')
+              for p in paths:
+                  if z.read(p.name) != p.read_bytes(): raise SystemExit(f'plugin ZIP differs: {p.name}')
+          PY
+          mkdir -p release-assets
+          cp "candidate-download/chrdk-closed-server-$VERSION.zip" release-assets/
+          cp candidate/extras/chrdk-custom-items-prototype.zip "release-assets/chrdk-resource-pack-$VERSION.zip"
+          (cd release-assets && sha1sum "chrdk-resource-pack-$VERSION.zip" > "chrdk-resource-pack-$VERSION.sha1")
+          (cd release-assets && sha256sum "chrdk-closed-server-$VERSION.zip" "chrdk-resource-pack-$VERSION.zip" "chrdk-resource-pack-$VERSION.sha1" > SHA256SUMS.txt && sha256sum -c SHA256SUMS.txt && sha1sum -c "chrdk-resource-pack-$VERSION.sha1")
+
+      - name: Publish explicitly labelled prerelease
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create "$TAG" --target "$SOURCE_SHA" --draft --prerelease --latest=false \
+            --title 'CHRDK Fishing Horizons 2.0.26-rc.61 — предварительный выпуск' \
+            --notes-file docs/releases/fishing-horizons-2.0.26-rc.61.md \
+            "release-assets/chrdk-closed-server-$VERSION.zip" \
+            "release-assets/chrdk-resource-pack-$VERSION.zip" \
+            "release-assets/chrdk-resource-pack-$VERSION.sha1" \
+            release-assets/SHA256SUMS.txt
+          gh release view "$TAG" --json isDraft,isPrerelease,assets \
+            --jq '.isDraft == true and .isPrerelease == true and ([.assets[].name] | sort) == (["SHA256SUMS.txt", "chrdk-closed-server-2.0.26-rc.61.zip", "chrdk-resource-pack-2.0.26-rc.61.sha1", "chrdk-resource-pack-2.0.26-rc.61.zip"] | sort)' | grep -Fx true
+          gh release edit "$TAG" --draft=false --prerelease --latest=false
+          gh release view "$TAG" --json url,isDraft,isPrerelease,tagName
