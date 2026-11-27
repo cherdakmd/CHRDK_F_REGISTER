@@ -47,7 +47,7 @@ class ClaimMenuGuiVisualsTest {
             when(service.ownedSorted("Player")).thenReturn(List.copyOf(claims));
             var all = new ArrayList<>(claims); all.add(sale); all.add(access); when(store.all()).thenReturn(all);
             when(store.claimAt(anyString(), anyInt(), anyInt())).thenAnswer(c -> all.stream().filter(cl -> cl.world.equals(c.getArgument(0)) && cl.x == (int)c.getArgument(1) && cl.z == (int)c.getArgument(2)).findFirst().orElse(null));
-            when(store.territory(any(Claim.class))).thenAnswer(c -> List.of(c.getArgument(0)));
+            when(store.territory(any(Claim.class))).thenAnswer(c -> List.of((Claim) c.getArgument(0)));
             var server = mock(Server.class); var scheduler = mock(BukkitScheduler.class); when(plugin.getServer()).thenReturn(server); when(server.getScheduler()).thenReturn(scheduler);
             var scheduled = new AtomicReference<Runnable>(); doAnswer(c -> { scheduled.set(c.getArgument(1)); return mock(BukkitTask.class); }).when(scheduler).runTask(eq(plugin), any(Runnable.class));
             var slots = new HashMap<Integer, ItemStack>(); var holder = new AtomicReference<InventoryHolder>();
