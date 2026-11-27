@@ -798,7 +798,7 @@ jobs:
           PYTEST
           fi
           exit "$result"
-      - name: Verify tests ran without skips
+      - name: Verify Guilds tests and combined party pack
         run: |
           python3 - <<'PYTEST'
           from pathlib import Path
