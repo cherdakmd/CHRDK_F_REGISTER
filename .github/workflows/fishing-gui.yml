@@ -548,7 +548,9 @@ jobs:
             :claims:clean :custom-items:prototypeResourcePack :claims:test \
             --tests ru.cherdakmd.chrdkclaims.ClaimMenuVisualsTest \
             --tests ru.cherdakmd.chrdkclaims.ClaimMenuGuiVisualsTest \
+            --tests ru.cherdakmd.chrdkclaims.ClaimMenuSafetyTest \
             --tests ru.cherdakmd.chrdkclaims.ClaimMenuModelTest \
+            --tests ru.cherdakmd.chrdkclaims.ClaimTeleportFinanceTest \
             --tests ru.cherdakmd.chrdkclaims.PaginationTest > claims-gui-build.log 2>&1
           result=$?
           tail -n 120 claims-gui-build.log
@@ -577,6 +579,8 @@ jobs:
           tests = {
               'ClaimMenuVisualsTest': {'controlsTabsAndEntriesHaveDistinctFixedModels', 'optInPreservesForeignMetadataAndNeverAddsIdentity'},
               'ClaimMenuGuiVisualsTest': {'virtualStatesPagesAndTeleportRequestsPreserveBehavior'},
+              'ClaimMenuSafetyTest': {'ownerAndDeferredActionsRecheckCurrentViewAndAccess'},
+              'ClaimTeleportFinanceTest': {'defaultAndConfiguredZeroAreNeverFree', 'lateChunkCallbackMustOwnLeaseAndRevalidateClaimBeforePayment'},
               'ClaimMenuModelTest': {'mineTabKeepsOnlyOwnClaims', 'saleTabKeepsOnlyOffersIncludingOwn', 'menuPagesHoldTwentyEightCards'},
               'PaginationTest': set(),
           }
