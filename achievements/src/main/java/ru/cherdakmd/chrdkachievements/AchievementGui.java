@@ -80,7 +80,7 @@ public final class AchievementGui implements Listener {
         List<AchievementDef> defs = service.byCategory(category);
         int pages = Math.max(1, (defs.size() + PAGE_SIZE - 1) / PAGE_SIZE);
         int current = Math.clamp(page, 1, pages);
-        Holder holder = new Holder(player.getUniqueId(), category, current);
+        Holder holder = new Holder(player.getUniqueId(), category, current, pages);
         String categoryName = category == null
                 ? plugin.messages().raw("category.all")
                 : plugin.messages().raw("category." + category.id());
@@ -265,8 +265,8 @@ public final class AchievementGui implements Listener {
             case SLOT_CRAFT -> open(player, AchievementDef.Category.CRAFT);
             case SLOT_SOCIAL -> open(player, AchievementDef.Category.SOCIAL);
             case SLOT_ALL -> open(player, null, holder.page);
-            case SLOT_PREV -> open(player, holder.category, holder.page - 1);
-            case SLOT_NEXT -> open(player, holder.category, holder.page + 1);
+            case SLOT_PREV -> open(player, holder.category, holder.page <= 1 ? holder.pages : holder.page - 1);
+            case SLOT_NEXT -> open(player, holder.category, holder.page >= holder.pages ? 1 : holder.page + 1);
             case SLOT_CLOSE -> player.closeInventory();
             default -> {
                 if (slot < SLOTS) {
@@ -311,12 +311,14 @@ public final class AchievementGui implements Listener {
         private final UUID owner;
         private final AchievementDef.Category category;
         private final int page;
+        private final int pages;
         private Inventory inventory;
 
-        private Holder(UUID owner, AchievementDef.Category category, int page) {
+        private Holder(UUID owner, AchievementDef.Category category, int page, int pages) {
             this.owner = owner;
             this.category = category;
             this.page = page;
+            this.pages = pages;
         }
 
         @Override

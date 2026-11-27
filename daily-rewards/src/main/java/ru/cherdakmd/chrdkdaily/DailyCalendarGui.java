@@ -75,16 +75,16 @@ public final class DailyCalendarGui implements Listener {
             ItemStack icon;
             if (index < todayIndex) {
                 icon = pane(Material.LIME_STAINED_GLASS_PANE, "daily.gui.claimed-name",
-                        day.day(), day, progress, vip, "daily.gui.lore-claimed", 0);
+                        day.day(), day, progress, vip, "daily.gui.lore-claimed", 0, DailyMenuVisuals.Icon.CLAIMED);
             } else if (index == todayIndex && !claimedToday) {
                 icon = pane(Material.CHEST, "daily.gui.today-name",
-                        day.day(), day, progress, vip, "daily.gui.lore-today", 0);
+                        day.day(), day, progress, vip, "daily.gui.lore-today", 0, DailyMenuVisuals.Icon.TODAY);
             } else if (index == todayIndex) {
                 icon = pane(Material.GREEN_STAINED_GLASS_PANE, "daily.gui.claimed-name",
-                        day.day(), day, progress, vip, "daily.gui.lore-claimed", 0);
+                        day.day(), day, progress, vip, "daily.gui.lore-claimed", 0, DailyMenuVisuals.Icon.CLAIMED_TODAY);
             } else {
                 icon = pane(Material.GRAY_STAINED_GLASS_PANE, "daily.gui.locked-name",
-                        day.day(), day, progress, vip, "daily.gui.lore-locked", index - todayIndex);
+                        day.day(), day, progress, vip, "daily.gui.lore-locked", index - todayIndex, DailyMenuVisuals.Icon.LOCKED);
             }
             inventory.setItem(slot, icon);
         }
@@ -93,6 +93,7 @@ public final class DailyCalendarGui implements Listener {
         if (headerMeta != null) {
             headerMeta.displayName(plugin.messages().get("daily.gui.footer-name",
                     "streak", progress.streak));
+            DailyMenuVisuals.apply(headerMeta, DailyMenuVisuals.Icon.HEADER, plugin.getConfig().getBoolean("textures.menu", false));
             header.setItemMeta(headerMeta);
         }
         inventory.setItem(HEADER_SLOT, header);
@@ -100,7 +101,7 @@ public final class DailyCalendarGui implements Listener {
 
     private ItemStack pane(Material material, String nameKey, int dayNum,
                            DailyConfig.DayReward day, DailyStore.Progress progress,
-                           boolean vip, String loreKey, int opensIn) {
+                           boolean vip, String loreKey, int opensIn, DailyMenuVisuals.Icon visual) {
         ItemStack icon = new ItemStack(material);
         ItemMeta meta = icon.getItemMeta();
         if (meta != null) {
@@ -117,6 +118,7 @@ public final class DailyCalendarGui implements Listener {
                     "streak", progress.streak,
                     "days", opensIn,
                     "rewards", rewardText));
+            DailyMenuVisuals.apply(meta, visual, plugin.getConfig().getBoolean("textures.menu", false));
             icon.setItemMeta(meta);
         }
         return icon;

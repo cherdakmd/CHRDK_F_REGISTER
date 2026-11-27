@@ -1,0 +1,6 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "chrdk_daily:item/menu/claimed_today"
+  }
+}

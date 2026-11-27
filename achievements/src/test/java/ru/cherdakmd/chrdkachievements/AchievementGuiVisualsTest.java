@@ -72,9 +72,10 @@ class AchievementGuiVisualsTest {
                 gui.onClick(click(view, player, 52));
                 assertEquals(12, slots.size()); // two entries plus the ten bottom/navigation items
                 checkModel(slots.get(0), AchievementMenuVisuals.entry(AchievementDef.Category.PATH, false), enabled);
-                // Existing click handler clamps at the last page, even though the button label
-                // advertises wrapping. Visual work must not change that separate behavior.
+                // Both boundary buttons wrap, matching their displayed target pages.
                 gui.onClick(click(view, player, 52));
+                checkModel(slots.get(0), AchievementMenuVisuals.entry(AchievementDef.Category.PATH, true), enabled);
+                gui.onClick(click(view, player, 51));
                 checkModel(slots.get(0), AchievementMenuVisuals.entry(AchievementDef.Category.PATH, false), enabled);
                 gui.onClick(click(view, player, 51));
                 checkModel(slots.get(0), AchievementMenuVisuals.entry(AchievementDef.Category.PATH, true), enabled);

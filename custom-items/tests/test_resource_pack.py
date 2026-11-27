@@ -56,6 +56,25 @@ class ResourcePackTest(unittest.TestCase):
             self.assertEqual(len(ids), len(set(ids)))
             self.assertEqual(files, set(ids))
 
+    def test_daily_calendar_models_cover_every_state(self):
+        root = PACK / 'assets/chrdk_daily'
+        names = ('header', 'claimed', 'claimed_today', 'today', 'locked')
+        hashes = set()
+        for name in names:
+            path = 'menu/' + name; reference = 'chrdk_daily:item/' + path
+            item = json.loads((root / 'items' / (path + '.json')).read_text())
+            model = json.loads((root / 'models/item' / (path + '.json')).read_text())
+            self.assertEqual({'type': 'minecraft:model', 'model': reference}, item['model'])
+            self.assertEqual('minecraft:item/generated', model['parent'])
+            self.assertEqual(reference, model['textures']['layer0'])
+            data = (root / 'textures/item' / (path + '.png')).read_bytes()
+            self.assertEqual(b'\x89PNG\r\n\x1a\n', data[:8]); self.assertEqual((32, 32), struct.unpack('>II', data[16:24]))
+            digest = hashlib.sha256(data).hexdigest(); self.assertNotIn(digest, hashes); hashes.add(digest)
+        for folder in ('items', 'models/item', 'textures/item'):
+            self.assertEqual(set(names), {p.stem for p in (root / folder / 'menu').iterdir()})
+        source = (PACK.parents[1] / 'daily-rewards/src/main/resources/config.yml').read_text(encoding='utf-8')
+        self.assertRegex(source, r'(?m)^textures:\s*\n  menu: false\s*$')
+
     def test_achievement_menu_models_cover_tabs_and_entry_states(self):
         root = PACK / 'assets/chrdk_achievements'
         categories = ('path', 'combat', 'craft', 'social')
