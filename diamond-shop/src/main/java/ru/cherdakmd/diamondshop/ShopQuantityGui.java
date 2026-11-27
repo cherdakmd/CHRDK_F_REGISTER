@@ -39,9 +39,9 @@ public final class ShopQuantityGui implements Listener {
             &&TradeAmounts.minimumSale(h.batch,h.price)>0;
     }
     private int units(Holder h,int next){return Math.max(1,Math.min(TradeAmounts.MAX_UNITS,next));}
-    private ItemStack named(Material material,String key,Object... values){
+    private ItemStack named(String visual,Material material,String key,Object... values){
         var icon=new ItemStack(material);var meta=icon.getItemMeta();
-        if(meta!=null){meta.displayName(plugin.messages().get(key,values));icon.setItemMeta(meta);}return icon;
+        if(meta!=null){meta.displayName(plugin.messages().get(key,values));ShopQuantityVisuals.apply(meta,visual,plugin.getConfig().getBoolean("textures.quantity-menu",false));icon.setItemMeta(meta);}return icon;
     }
     /** Ключ книги не является Bukkit Material: для неё считаем помеченные предметы, а не тип. */
     private long have(Player player,Holder h,Material material){
@@ -60,20 +60,20 @@ public final class ShopQuantityGui implements Listener {
         }
         icon.setAmount(Math.min(h.units,Math.max(1,icon.getMaxStackSize())));inv.setItem(4,icon);
         int[] slots={10,11,12,14,15,16};int[] changes={-64,-8,-1,1,8,64};
-        for(int i=0;i<slots.length;i++)inv.setItem(slots[i],named(changes[i]<0?Material.RED_DYE:Material.LIME_DYE,"quantity.change","amount",(changes[i]>0?"+":"")+changes[i]));
-        int[] presets={1,8,16,32,64};for(int i=0;i<presets.length;i++)inv.setItem(28+i,named(Material.PAPER,"quantity.preset","amount",presets[i]));
+        for(int i=0;i<slots.length;i++)inv.setItem(slots[i],named(ShopQuantityVisuals.delta(changes[i]),changes[i]<0?Material.RED_DYE:Material.LIME_DYE,"quantity.change","amount",(changes[i]>0?"+":"")+changes[i]));
+        int[] presets={1,8,16,32,64};for(int i=0;i<presets.length;i++)inv.setItem(28+i,named("preset_"+presets[i],Material.PAPER,"quantity.preset","amount",presets[i]));
         int minimum=TradeAmounts.minimumSale(h.batch,h.price);
-        if(!h.buy)inv.setItem(33,named(Material.GOLD_NUGGET,"quantity.minimum","minimum",minimum));
+        if(!h.buy)inv.setItem(33,named("minimum",Material.GOLD_NUGGET,"quantity.minimum","minimum",minimum));
         long money=TradeAmounts.quote(h.batch,h.price,h.units,h.buy);
-        var quote=named(Material.PAPER,"quantity.total","amount",h.units,"money",money<0?"—":ShopMoney.text(money));
+        var quote=named(h.buy?"total_buy":"total_sell",Material.PAPER,"quantity.total","amount",h.units,"money",money<0?"—":ShopMoney.text(money));
         ItemMeta meta=quote.getItemMeta();
         if(meta!=null){
             var lines=plugin.messages().getList(h.buy?"quantity.buy-details":"quantity.details","batch",h.batch,"price",ShopMoney.text(h.price),"minimum",minimum,"have",have(player,h,material),"balance",h.service.balanceText(player),"physical",h.service.physical(player));
             meta.lore(lines);quote.setItemMeta(meta);
         }inv.setItem(22,quote);
-        inv.setItem(40,named(money>0?Material.LIME_DYE:Material.BARRIER,money>0?"quantity.confirm":"quantity.unavailable"));
-        inv.setItem(45,named(Material.ARROW,"quantity.back"));
-        if(!h.buy)inv.setItem(49,named(Material.CHEST,"quantity.maximum"));
+        inv.setItem(40,named(money>0?"confirm":"unavailable",money>0?Material.LIME_DYE:Material.BARRIER,money>0?"quantity.confirm":"quantity.unavailable"));
+        inv.setItem(45,named("back",Material.ARROW,"quantity.back"));
+        if(!h.buy)inv.setItem(49,named("maximum",Material.CHEST,"quantity.maximum"));
     }
     @EventHandler(ignoreCancelled=true)
     public void click(InventoryClickEvent event){
