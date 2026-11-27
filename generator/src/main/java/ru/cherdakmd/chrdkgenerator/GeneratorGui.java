@@ -170,6 +170,7 @@ public final class GeneratorGui implements Listener {
                 "state", Messages.trusted(plugin.messages().raw(state)))
                 .decoration(TextDecoration.ITALIC, false));
         meta.lore(lines("menu-status-lore"));
+        menuModel(meta, GeneratorMenuVisuals.status(state));
         item.setItemMeta(meta);
         return item;
     }
@@ -183,6 +184,7 @@ public final class GeneratorGui implements Listener {
                 .decoration(TextDecoration.ITALIC, false));
         meta.lore(lines("menu-tier-lore", "units",
                 String.valueOf(plugin.config().tier(entry.tier()).unitsPerCycle())));
+        menuModel(meta, GeneratorMenuVisuals.tier(entry.tier()));
         item.setItemMeta(meta);
         return item;
     }
@@ -197,6 +199,7 @@ public final class GeneratorGui implements Listener {
                 "fill", String.valueOf(GeneratorStats.fillPercent(entry, plugin.config())))
                 .decoration(TextDecoration.ITALIC, false));
         meta.lore(lines("menu-bunker-lore"));
+        menuModel(meta, GeneratorMenuVisuals.bunker(entry.bunker(), GeneratorStats.capacityUnits(entry, plugin.config())));
         item.setItemMeta(meta);
         return item;
     }
@@ -212,6 +215,7 @@ public final class GeneratorGui implements Listener {
                 "bonus", String.format(java.util.Locale.ROOT, "%.1f", bonus))
                 .decoration(TextDecoration.ITALIC, false));
         meta.lore(lines("menu-rebirth-lore"));
+        menuModel(meta, GeneratorMenuVisuals.Control.REBIRTH.model());
         item.setItemMeta(meta);
         return item;
     }
@@ -229,8 +233,8 @@ public final class GeneratorGui implements Listener {
             effect = current.name() + " → " + next.name() + ": "
                     + current.unitsPerCycle() + " → " + next.unitsPerCycle() + " ед./цикл";
         }
-        return button(Material.LADDER, "menu-upgrade-tier", "menu-upgrade-lore",
-                "cost", cost, "effect", effect);
+        return visual(button(Material.LADDER, "menu-upgrade-tier", "menu-upgrade-lore",
+                "cost", cost, "effect", effect), GeneratorMenuVisuals.upgradeTier(entry.tier()));
     }
 
     private ItemStack moduleItem(String name, GeneratorStore.Entry entry) {
@@ -252,6 +256,7 @@ public final class GeneratorGui implements Listener {
         meta.lore(lines("menu-module-lore",
                 "cost", cost, "max", String.valueOf(GeneratorStore.MAX_LEVEL),
                 "effect", effect));
+        menuModel(meta, GeneratorMenuVisuals.module(name, level));
         item.setItemMeta(meta);
         return item;
     }
@@ -275,7 +280,8 @@ public final class GeneratorGui implements Listener {
 
     private ItemStack chunkItem(GeneratorStore.Entry entry) {
         String cost = GeneratorUpgrades.describe(plugin.config().chunkCost());
-        return button(Material.ENDER_PEARL, "menu-chunk", "menu-chunk-lore", "cost", cost);
+        return visual(button(Material.ENDER_PEARL, "menu-chunk", "menu-chunk-lore", "cost", cost),
+                GeneratorMenuVisuals.chunk(entry.modules().getOrDefault("chunk", 0)));
     }
 
     private ItemStack button(Material material, String nameKey, String loreKey, String... placeholders) {
@@ -286,7 +292,21 @@ public final class GeneratorGui implements Listener {
         if (loreKey != null) {
             meta.lore(lines(loreKey, placeholders));
         }
+        var visual = GeneratorMenuVisuals.button(nameKey);
+        if (visual != null) menuModel(meta, visual.model());
         item.setItemMeta(meta);
+        return item;
+    }
+
+    private void menuModel(ItemMeta meta, org.bukkit.NamespacedKey model) {
+        GeneratorMenuVisuals.apply(meta, model, plugin.getConfig().getBoolean("textures.menu", false));
+    }
+
+    private ItemStack visual(ItemStack item, org.bukkit.NamespacedKey model) {
+        if (model != null && plugin.getConfig().getBoolean("textures.menu", false)) {
+            ItemMeta meta = item.getItemMeta();
+            if (meta != null) { menuModel(meta, model); item.setItemMeta(meta); }
+        }
         return item;
     }
 

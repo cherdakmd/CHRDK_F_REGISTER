@@ -56,6 +56,28 @@ class ResourcePackTest(unittest.TestCase):
             self.assertEqual(len(ids), len(set(ids)))
             self.assertEqual(files, set(ids))
 
+    def test_generator_menu_models_cover_controls_and_states(self):
+        root = PACK / 'assets/chrdk_generator'
+        names = {f'status_{s}' for s in ('working', 'no_lava', 'no_water', 'no_cells', 'unloaded', 'carried')}
+        names.update(f'tier_{i}' for i in range(1, 16))
+        names.update(f'module_{m}_{state}' for m in ('speed','capacity','luck') for state in ('available','max'))
+        names.update(('upgrade_tier_available','upgrade_tier_max','chunk_available','chunk_owned','bunker_empty','bunker_partial','bunker_full'))
+        names.update(('rebirth','take','close','fuel_help','fuel_total','container_refresh','fuel_open','fuel_back','container_settings','container_close'))
+        self.assertEqual(44,len(names)); hashes=set()
+        for name in names:
+            path = 'menu/' + name; ref = 'chrdk_generator:item/' + path
+            item = json.loads((root / 'items' / (path + '.json')).read_text())
+            model = json.loads((root / 'models/item' / (path + '.json')).read_text())
+            self.assertEqual({'type':'minecraft:model','model':ref},item['model'])
+            self.assertEqual('minecraft:item/generated',model['parent']); self.assertEqual(ref,model['textures']['layer0'])
+            data=(root / 'textures/item' / (path + '.png')).read_bytes()
+            self.assertEqual(b'\x89PNG\r\n\x1a\n',data[:8]); self.assertEqual((32,32),struct.unpack('>II',data[16:24]))
+            digest=hashlib.sha256(data).hexdigest(); self.assertNotIn(digest,hashes); hashes.add(digest)
+        for folder in ('items','models/item','textures/item'):
+            self.assertEqual(names,{p.stem for p in (root / folder / 'menu').iterdir()})
+        config=(PACK.parents[1] / 'generator/src/main/resources/config.yml').read_text(encoding='utf-8')
+        self.assertRegex(config,r'(?m)^  menu: false\s*$')
+
     def test_claim_menu_icons_have_complete_models(self):
         root = PACK / 'assets/chrdk_claims'
         names = {'info', 'prev', 'next', 'clan', 'close', 'empty_mine', 'empty_sale', 'entry_mine', 'entry_other_world', 'entry_sale', 'entry_access'}

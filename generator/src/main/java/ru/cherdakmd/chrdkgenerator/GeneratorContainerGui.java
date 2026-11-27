@@ -94,6 +94,7 @@ final class GeneratorContainerGui implements Listener {
             meta.displayName(plugin.messages().get("fuel-total-title", "time", duration(budget.usedMillis())));
             meta.lore(java.util.List.of(plugin.messages().get("fuel-total-lore", "active", duration(view.burnMillis())),
                     plugin.messages().get("fuel-total-conditions")));
+            GeneratorMenuVisuals.apply(meta, GeneratorMenuVisuals.Control.FUEL_TOTAL.model(), plugin.getConfig().getBoolean("textures.menu", false));
             status.setItemMeta(meta); holder.inventory.setItem(22,status);
         }
         holder.inventory.setItem(45, button(Material.HOPPER, "container-refresh"));
@@ -117,7 +118,10 @@ final class GeneratorContainerGui implements Listener {
     }
     private ItemStack button(Material material, String key) {
         var item = new ItemStack(material); var meta = item.getItemMeta();
-        meta.displayName(plugin.messages().get(key)); item.setItemMeta(meta); return item;
+        meta.displayName(plugin.messages().get(key));
+        var visual = GeneratorMenuVisuals.button(key);
+        if (visual != null) GeneratorMenuVisuals.apply(meta, visual.model(), plugin.getConfig().getBoolean("textures.menu", false));
+        item.setItemMeta(meta); return item;
     }
 
     @EventHandler
