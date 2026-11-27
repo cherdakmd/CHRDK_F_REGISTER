@@ -472,7 +472,7 @@ jobs:
         run: |
           set +e
           ./gradlew --no-daemon --no-configuration-cache -Pchrdk.papiJar=build/dependencies/PlaceholderAPI-2.12.3.jar \
-            :vk:clean :vk:test :custom-items:prototypeResourcePack \
+            :vk:clean :custom-items:prototypeResourcePack :vk:test \
             --tests ru.cherdakmd.chrdkvk.VkMenuVisualsTest \
             --tests ru.cherdakmd.chrdkvk.VkMenuGuiVisualsTest > vk-gui-build.log 2>&1
           result=$?
