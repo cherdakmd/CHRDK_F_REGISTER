@@ -300,7 +300,17 @@ final class GuildsGui implements Listener {
         if (guild == null) {
             return;
         }
-        if(slot==STYLE_SLOT){Bukkit.getScheduler().runTask(plugin, () -> plugin.styles().command(player,new String[]{"style"}));return;}
+        if(slot==STYLE_SLOT){
+            String guildId = guild.id();
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (!player.isOnline() || player.isDead() || player.hasMetadata("NPC") || !plugin.visible(player)
+                        || player.getOpenInventory().getTopInventory().getHolder() != holder) return;
+                Guild current = plugin.service().guildOf(player.getUniqueId());
+                if (current == null || !guildId.equals(current.id())) return;
+                plugin.styles().command(player,new String[]{"style"});
+            });
+            return;
+        }
         if(slot==DUES_SLOT){player.performCommand("clan dues");return;}
         if(slot==MODE_SLOT) {
             if(event.isRightClick() && guild.leader().equals(player.getUniqueId()))

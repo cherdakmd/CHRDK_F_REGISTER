@@ -43,7 +43,8 @@ final class GuildStyleGui implements Listener {
         player.openInventory(holder.inventory);
     }
     private boolean allowed(Player player) {
-        return player != null && plugin.visible(player) && player.hasPermission("chrdkguilds.use") && plugin.config().enabled();
+        return player != null && player.isOnline() && !player.isDead() && !player.hasMetadata("NPC")
+                && plugin.visible(player) && player.hasPermission("chrdkguilds.use") && plugin.config().enabled();
     }
     private void fill(Player player, Guild guild, Holder h) {
         Inventory inv = h.inventory;
@@ -125,9 +126,11 @@ final class GuildStyleGui implements Listener {
         ItemStack item = new ItemStack(type); var meta = item.getItemMeta();
         meta.displayName(name); meta.lore(lore); item.setItemMeta(meta); return item;
     }
-    @EventHandler public void click(InventoryClickEvent event) {
+    @EventHandler(priority = org.bukkit.event.EventPriority.HIGHEST, ignoreCancelled = false) public void click(InventoryClickEvent event) {
         if (!(event.getView().getTopInventory().getHolder() instanceof Holder h)) return;
+        boolean alreadyCancelled = event.isCancelled();
         event.setCancelled(true);
+        if (alreadyCancelled) return;
         if (!(event.getWhoClicked() instanceof Player player) || !h.owner.equals(player.getUniqueId())) return;
         Guild guild = plugin.service().guildOf(player.getUniqueId());
         if (!allowed(player) || guild == null || !guild.id().equals(h.guild)) { player.closeInventory(); return; }
