@@ -52,6 +52,7 @@ jobs:
           python3 -m unittest discover -s .github/scripts -p 'test_release_spec.py' -v
           python3 -m unittest discover -s .github/scripts -p 'test_gradle_build.py' -v
           python3 -m unittest discover -s .github/scripts -p 'test_prepare_papi.py' -v
+          python3 -m unittest discover -s .github/scripts -p 'test_verify_combined_pack.py' -v
 
       - name: Verify TradeMC kit and regression tests
         run: |
@@ -136,6 +137,14 @@ jobs:
           path: build/clan-preview/
           retention-days: 14
           if-no-files-found: error
+
+      - name: Verify built and embedded combined resource pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(sed -n 's/^plugin_version=//p' gradle.properties)"
+          python3 .github/scripts/verify_combined_pack.py custom-items/build/resource-packs/chrdk-custom-items-prototype.zip \
+            --jar "custom-items/build/libs/chrdk-custom-items-${version}.jar"
 
       - name: Upload experimental item resource pack
         uses: actions/upload-artifact@v4

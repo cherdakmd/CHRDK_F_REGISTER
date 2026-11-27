@@ -88,6 +88,7 @@ jobs:
           python3 -m unittest discover -s .github/scripts -p 'test_release_spec.py' -v
           python3 -m unittest discover -s .github/scripts -p 'test_gradle_build.py' -v
           python3 -m unittest discover -s .github/scripts -p 'test_prepare_papi.py' -v
+          python3 -m unittest discover -s .github/scripts -p 'test_verify_combined_pack.py' -v
           python3 .github/scripts/check_messages.py
           python3 tools/datapacks/build_mine_treasure.py --check
 
@@ -200,6 +201,8 @@ jobs:
           # Отдельный клиентский ресурс-пак; сохраняем SHA-1 для server config.
           cp custom-items/build/resource-packs/chrdk-custom-items-prototype.zip "chrdk-custom-items-pack-${version}.zip"
           unzip -t "chrdk-custom-items-pack-${version}.zip"
+          python3 .github/scripts/verify_combined_pack.py "chrdk-custom-items-pack-${version}.zip" \
+            --jar "release/chrdk-custom-items-${version}.jar"
           sha1sum "chrdk-custom-items-pack-${version}.zip" > "chrdk-custom-items-pack-${version}.sha1"
           sha1sum -c "chrdk-custom-items-pack-${version}.sha1"
           sha256sum "chrdk-custom-items-pack-${version}.zip" "chrdk-custom-items-pack-${version}.sha1" >> "$checksums"
