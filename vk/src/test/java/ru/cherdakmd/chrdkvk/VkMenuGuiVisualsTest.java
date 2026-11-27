@@ -34,7 +34,10 @@ class VkMenuGuiVisualsTest {
             var api = mock(ChrdkRegisterApi.class); when(plugin.coreApi()).thenReturn(api);
             var service = mock(VkService.class); var store = mock(VkStore.class); when(service.store()).thenReturn(store);
             var commands = mock(VkCommandHandler.class); var player = mock(Player.class);
-            when(player.getName()).thenReturn("Player"); var id = UUID.randomUUID(); when(player.getUniqueId()).thenReturn(id);
+            when(player.getName()).thenReturn("Player");
+            // Standalone Paper API has no sound registry; stop at the sound call and render explicitly below.
+            when(player.getLocation()).thenThrow(new UnsupportedOperationException("No server sound registry"));
+            var id = UUID.randomUUID(); when(player.getUniqueId()).thenReturn(id);
             when(api.isAuthenticated(player)).thenReturn(true); when(store.byPlayer("Player")).thenReturn(Optional.empty());
             var slots = new HashMap<Integer, ItemStack>(); var holder = new AtomicReference<InventoryHolder>();
             var inventory = mock(Inventory.class); when(inventory.getHolder()).thenAnswer(c -> holder.get());
@@ -68,17 +71,18 @@ class VkMenuGuiVisualsTest {
                 check(slots.get(16), VkMenuVisuals.Icon.SECURITY_FROZEN, enabled);
                 verify(slots.get(10).getItemMeta()).displayName(messages.get("vk.gui-link-linked-name", "vk_id", "12345"));
                 gui.onClick(click(inventory, player, 10, ClickType.LEFT)); verify(commands).showStatus(player, api, parsed);
-                gui.onClick(click(inventory, player, 12, ClickType.LEFT)); verify(commands).toggleNotify(player);
-                gui.onClick(click(inventory, player, 13, ClickType.LEFT)); verify(commands).toggleGroupChatVisibility(player);
-                gui.onClick(click(inventory, player, 13, ClickType.RIGHT)); verify(commands).toggleMentions(player);
+                assertThrows(UnsupportedOperationException.class, () -> gui.onClick(click(inventory, player, 12, ClickType.LEFT))); verify(commands).toggleNotify(player);
+                assertThrows(UnsupportedOperationException.class, () -> gui.onClick(click(inventory, player, 13, ClickType.LEFT))); verify(commands).toggleGroupChatVisibility(player);
+                assertThrows(UnsupportedOperationException.class, () -> gui.onClick(click(inventory, player, 13, ClickType.RIGHT))); verify(commands).toggleMentions(player);
                 gui.onClick(click(inventory, player, 16, ClickType.LEFT)); verify(commands, never()).performUnlinkConfirmed(any(), any());
-                var arm = click(inventory, player, 16, ClickType.SHIFT_LEFT); gui.onClick(arm);
+                var arm = click(inventory, player, 16, ClickType.SHIFT_LEFT);
+                assertThrows(UnsupportedOperationException.class, () -> gui.onClick(arm)); gui.open(player);
                 check(slots.get(16), VkMenuVisuals.Icon.UNLINK_CONFIRM, enabled);
                 verify(slots.get(16).getItemMeta()).displayName(messages.get("vk.gui-unlink-confirm-name"));
                 verify(commands, never()).performUnlinkConfirmed(any(), any());
                 gui.onClick(click(inventory, player, 16, ClickType.LEFT)); verify(commands).performUnlinkConfirmed(player, api);
                 // An expired armed prompt must not execute an unlink.
-                gui.onClick(click(inventory, player, 16, ClickType.SHIFT_LEFT));
+                assertThrows(UnsupportedOperationException.class, () -> gui.onClick(click(inventory, player, 16, ClickType.SHIFT_LEFT)));
                 var field = VkMenuGui.class.getDeclaredField("unlinkArmedUntil"); field.setAccessible(true);
                 @SuppressWarnings("unchecked") var pending = (Map<UUID, Long>) field.get(gui); pending.put(id, 1L);
                 gui.onClick(click(inventory, player, 16, ClickType.LEFT)); verify(commands, times(1)).performUnlinkConfirmed(any(), any());
