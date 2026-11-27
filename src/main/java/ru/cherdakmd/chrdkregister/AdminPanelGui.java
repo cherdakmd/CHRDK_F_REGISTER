@@ -204,28 +204,18 @@ public final class AdminPanelGui implements Listener {
 
         inventory.setItem(SLOT_PLAYERS, icon(Material.PLAYER_HEAD,
                 messages.get("admin.button-players"), List.of()));
-        inventory.setItem(SLOT_MODERATORS, icon(Material.NAME_TAG,
-                messages.get("admin.button-moderators"), List.of()));
-        inventory.setItem(SLOT_JOURNAL, icon(Material.BOOK,
-                messages.get("admin.button-journal"), List.of()));
-        inventory.setItem(SLOT_MUTES, icon(Material.NAME_TAG,
-                messages.get("admin.button-mutes"), List.of()));
-        inventory.setItem(SLOT_HONORS, icon(Material.NETHER_STAR,
-                messages.get("admin.button-honors"), List.of()));
-        inventory.setItem(SLOT_FILTER, icon(Material.HOPPER,
-                messages.get("admin.button-filter", "filter",
+        inventory.setItem(SLOT_MODERATORS, icon(AdminPanelVisuals.Icon.MODERATORS, Material.NAME_TAG, messages.get("admin.button-moderators"), List.of()));
+        inventory.setItem(SLOT_JOURNAL, icon(AdminPanelVisuals.Icon.JOURNAL, Material.BOOK, messages.get("admin.button-journal"), List.of()));
+        inventory.setItem(SLOT_MUTES, icon(AdminPanelVisuals.Icon.MUTES, Material.NAME_TAG, messages.get("admin.button-mutes"), List.of()));
+        inventory.setItem(SLOT_HONORS, icon(AdminPanelVisuals.Icon.HONORS, Material.NETHER_STAR, messages.get("admin.button-honors"), List.of()));
+        inventory.setItem(SLOT_FILTER, icon(AdminPanelVisuals.Icon.FILTER, Material.HOPPER, messages.get("admin.button-filter", "filter",
                         holder.filter.isEmpty() ? messages.plain("admin.value-none") : holder.filter),
                 List.of()));
-        inventory.setItem(SLOT_REFRESH, icon(Material.CLOCK,
-                messages.get("admin.button-refresh"), List.of()));
-        inventory.setItem(SLOT_PREV, icon(Material.ARROW,
-                messages.get("admin.button-prev", "page", holder.index + 1), List.of()));
-        inventory.setItem(SLOT_NEXT, icon(Material.ARROW,
-                messages.get("admin.button-next", "page", holder.index + 1), List.of()));
-        inventory.setItem(SLOT_CLOSE, icon(Material.BARRIER,
-                messages.get("admin.button-close"), List.of()));
-        inventory.setItem(SLOT_BACK, icon(Material.CHEST,
-                messages.get("admin.button-back"), List.of()));
+        inventory.setItem(SLOT_REFRESH, icon(AdminPanelVisuals.Icon.REFRESH, Material.CLOCK, messages.get("admin.button-refresh"), List.of()));
+        inventory.setItem(SLOT_PREV, icon(AdminPanelVisuals.Icon.PREV, Material.ARROW, messages.get("admin.button-prev", "page", holder.index + 1), List.of()));
+        inventory.setItem(SLOT_NEXT, icon(AdminPanelVisuals.Icon.NEXT, Material.ARROW, messages.get("admin.button-next", "page", holder.index + 1), List.of()));
+        inventory.setItem(SLOT_CLOSE, icon(AdminPanelVisuals.Icon.CLOSE, Material.BARRIER, messages.get("admin.button-close"), List.of()));
+        inventory.setItem(SLOT_BACK, icon(AdminPanelVisuals.Icon.BACK, Material.CHEST, messages.get("admin.button-back"), List.of()));
 
         switch (holder.page) {
             case PLAYERS -> paintPlayers(viewer, holder);
@@ -240,8 +230,7 @@ public final class AdminPanelGui implements Listener {
 
     private void paintInfo(Player viewer, Holder holder, List<String> players) {
         Messages messages = plugin.messages();
-        holder.inventory.setItem(SLOT_INFO, icon(Material.NETHER_STAR,
-                messages.get("admin.panel-info", "page", switch (holder.page) {
+        holder.inventory.setItem(SLOT_INFO, icon(AdminPanelVisuals.Icon.INFO, Material.NETHER_STAR, messages.get("admin.panel-info", "page", switch (holder.page) {
                     case PLAYERS -> messages.plain("admin.page-players");
                     case PROFILE -> messages.plain("admin.page-profile");
                     case MODERATORS -> messages.plain("admin.page-moderators");
@@ -298,27 +287,25 @@ public final class AdminPanelGui implements Listener {
         holder.displayedBan = BanSnapshot.of(service.ledger().banOf(name));
         holder.displayedRole = service.ledger().moderators().stream().filter(m -> m.name.equalsIgnoreCase(name))
                 .map(ModeratorSnapshot::of).findFirst().orElse(null);
-        holder.inventory.setItem(SLOT_WARN, icon(Material.WRITABLE_BOOK,
-                messages.get("admin.button-warn", "player", name, "count", service.warnCount(name),
+        holder.inventory.setItem(SLOT_WARN, icon(AdminPanelVisuals.Icon.WARN, Material.WRITABLE_BOOK, messages.get("admin.button-warn", "player", name, "count", service.warnCount(name),
                         "limit", service.warnLimit()), List.of()));
         Component banName = banned
                 ? messages.get("admin.button-unban", "player", name)
                 : messages.get("admin.button-ban", "player", name);
         holder.inventory.setItem(SLOT_BAN,
-                icon(banned ? Material.EMERALD : Material.REDSTONE_BLOCK, banName, List.of()));
+                icon(banned ? AdminPanelVisuals.Icon.UNBAN : AdminPanelVisuals.Icon.BAN, banned ? Material.EMERALD : Material.REDSTONE_BLOCK, banName, List.of()));
         Component roleName = staff
                 ? messages.get("admin.button-role-remove", "player", name)
                 : messages.get("admin.button-role-add", "player", name);
-        holder.inventory.setItem(SLOT_ROLE, icon(Material.GOLDEN_AXE, roleName, List.of()));
-        inventorySet(holder, SLOT_PUNISH, icon(Material.GOLDEN_AXE,
-                messages.get("admin.button-punish", "player", name), List.of()));
+        holder.inventory.setItem(SLOT_ROLE, icon(staff ? AdminPanelVisuals.Icon.ROLE_REMOVE : AdminPanelVisuals.Icon.ROLE_ADD, Material.GOLDEN_AXE, roleName, List.of()));
+        inventorySet(holder, SLOT_PUNISH, icon(AdminPanelVisuals.Icon.PUNISH, Material.GOLDEN_AXE, messages.get("admin.button-punish", "player", name), List.of()));
 
         List<ModerationLedger.Warn> history = service.ledger().warnHistory(name);
         paintSlots(viewer, holder, history.size(), (slot, offset) -> {
             ModerationLedger.Warn warn = history.get(offset);
             holder.displayed.put(slot,WarnSnapshot.of(warn));
             boolean removed = warn.removedAt > 0;
-            return icon(removed ? Material.PAPER : Material.ENCHANTED_BOOK,
+            return icon(removed ? AdminPanelVisuals.Icon.WARN_REMOVED : AdminPanelVisuals.Icon.WARN_ACTIVE, removed ? Material.PAPER : Material.ENCHANTED_BOOK,
                     messages.get("admin.warn-entry", "id", warn.id, "reason", warn.reason),
                     messages.getList("admin.warn-entry-lore",
                             "actor", warn.issuer, "at", date(warn.at),
@@ -339,13 +326,12 @@ public final class AdminPanelGui implements Listener {
         paintSlots(viewer, holder, staff.size(), (slot, offset) -> {
             ModerationLedger.Moderator moderator = staff.get(offset);
             holder.displayed.put(slot,ModeratorSnapshot.of(moderator));
-            return icon(Material.NAME_TAG,
-                    messages.get("admin.moderator-entry", "player", moderator.name),
+            return icon(AdminPanelVisuals.Icon.MODERATOR_ENTRY, Material.NAME_TAG, messages.get("admin.moderator-entry", "player", moderator.name),
                     messages.getList("admin.moderator-entry-lore",
                             "actor", moderator.addedBy, "at", date(moderator.addedAt),
                             "hint", messages.plain("admin.button-role-remove")));
         });
-        inventorySet(holder, SLOT_ADD_MODERATOR, icon(Material.EMERALD,
+        inventorySet(holder, SLOT_ADD_MODERATOR, icon(AdminPanelVisuals.Icon.ROLE_ADD, Material.EMERALD,
                 messages.get("admin.button-role-add", "player", messages.plain("admin.value-none")), List.of()));
         if (staff.isEmpty()) {
             empty(holder, Material.PAPER, messages.get("admin.moderators-empty"));
@@ -360,8 +346,7 @@ public final class AdminPanelGui implements Listener {
                 : service.ledger().journal(holder.filter, service.config().journalLimit());
         paintSlots(viewer, holder, entries.size(), (slot, offset) -> {
             ModerationLedger.JournalEntry entry = entries.get(offset);
-            return icon(Material.PAPER,
-                    messages.get("admin.journal-entry", "id", entry.id, "action", entry.action),
+            return icon(AdminPanelVisuals.Icon.JOURNAL_ENTRY, Material.PAPER, messages.get("admin.journal-entry", "id", entry.id, "action", entry.action),
                     messages.getList("admin.journal-entry-lore",
                             "at", date(entry.at), "actor", entry.actor,
                             "target", entry.target.isEmpty() ? messages.plain("admin.value-none") : entry.target,
@@ -388,8 +373,7 @@ public final class AdminPanelGui implements Listener {
             holder.displayed.put(slot,MuteSnapshot.of(mute));
             String name = mute.playerName == null || mute.playerName.isBlank()
                     ? messages.plain("admin.value-none") : mute.playerName;
-            return icon(Material.BOOK,
-                    messages.get("admin.mutes-entry", "player", name),
+            return icon(AdminPanelVisuals.Icon.MUTE_ENTRY, Material.BOOK, messages.get("admin.mutes-entry", "player", name),
                     messages.getList("admin.mutes-entry-lore",
                             "remaining", AccessManager.describeRemaining(mute.remainingMillis(now)),
                             "reason", muteReason(mute).isBlank()
@@ -407,8 +391,7 @@ public final class AdminPanelGui implements Listener {
         String name = holder.target;
         paintInfo(viewer, holder, players());
         String ipBan = service.ipBanReason(name);
-        holder.inventory.setItem(SLOT_INFO, icon(Material.GOLDEN_AXE,
-                messages.get("admin.punish-head", "player", name),
+        holder.inventory.setItem(SLOT_INFO, icon(AdminPanelVisuals.Icon.PUNISH_INFO, Material.GOLDEN_AXE, messages.get("admin.punish-head", "player", name),
                 messages.getList("admin.punish-head-lore",
                         "mute", currentMuteText(name),
                         "ip", ipBan.isEmpty() ? messages.plain("admin.value-none") : ipBan,
@@ -419,22 +402,16 @@ public final class AdminPanelGui implements Listener {
         holder.displayedPresets = presets;
         for (int i = 0; i < presets.size() && i < ENTRY_SLOTS.length - 1; i++) {
             long minutes = presets.get(i);
-            inventorySet(holder, ENTRY_SLOTS[i], icon(Material.CLOCK,
-                    messages.get("admin.button-mute-preset", "duration",
+            inventorySet(holder, ENTRY_SLOTS[i], icon(AdminPanelVisuals.Icon.MUTE_PRESET, Material.CLOCK, messages.get("admin.button-mute-preset", "duration",
                             AccessManager.describeRemaining(minutes * 60_000L)), List.of()));
         }
         inventorySet(holder, ENTRY_SLOTS[Math.min(presets.size(), ENTRY_SLOTS.length - 1)],
-                icon(Material.WRITABLE_BOOK, messages.get("admin.button-mute-custom"), List.of()));
-        inventorySet(holder, PUNISH_UNMUTE, icon(Material.EMERALD,
-                messages.get("admin.button-unmute"), List.of()));
-        inventorySet(holder, PUNISH_KICK, icon(Material.ARROW,
-                messages.get("admin.button-kick", "player", name), List.of()));
-        inventorySet(holder, PUNISH_IP_BAN, icon(Material.REDSTONE_BLOCK,
-                messages.get("admin.button-ip-ban", "player", name), List.of()));
-        inventorySet(holder, PUNISH_IP_UNBAN, icon(Material.LIME_DYE,
-                messages.get("admin.button-ip-unban"), List.of()));
-        inventorySet(holder, PUNISH_CHAT, icon(Material.PAPER,
-                messages.get("admin.button-chat-history", "player", name), List.of()));
+                icon(AdminPanelVisuals.Icon.MUTE_CUSTOM, Material.WRITABLE_BOOK, messages.get("admin.button-mute-custom"), List.of()));
+        inventorySet(holder, PUNISH_UNMUTE, icon(AdminPanelVisuals.Icon.UNMUTE, Material.EMERALD, messages.get("admin.button-unmute"), List.of()));
+        inventorySet(holder, PUNISH_KICK, icon(AdminPanelVisuals.Icon.KICK, Material.ARROW, messages.get("admin.button-kick", "player", name), List.of()));
+        inventorySet(holder, PUNISH_IP_BAN, icon(AdminPanelVisuals.Icon.IP_BAN, Material.REDSTONE_BLOCK, messages.get("admin.button-ip-ban", "player", name), List.of()));
+        inventorySet(holder, PUNISH_IP_UNBAN, icon(AdminPanelVisuals.Icon.IP_UNBAN, Material.LIME_DYE, messages.get("admin.button-ip-unban"), List.of()));
+        inventorySet(holder, PUNISH_CHAT, icon(AdminPanelVisuals.Icon.CHAT_HISTORY, Material.PAPER, messages.get("admin.button-chat-history", "player", name), List.of()));
     }
 
     private static String muteReason(RegistrationStore.MuteEntry mute) {
@@ -463,7 +440,7 @@ public final class AdminPanelGui implements Listener {
         paintSlots(viewer, holder, lines.size(), (slot, offset) -> {
             String line = lines.get(offset);
             if (line.length() > 64) line = line.substring(0, 64) + "…";
-            return icon(Material.PAPER, messages.get("admin.chat-entry", "line", line), List.of());
+            return icon(AdminPanelVisuals.Icon.CHAT_ENTRY, Material.PAPER, messages.get("admin.chat-entry", "line", line), List.of());
         });
         if (lines.isEmpty()) {
             empty(holder, Material.PAPER,
@@ -486,15 +463,14 @@ public final class AdminPanelGui implements Listener {
         }
         Messages messages = plugin.messages();
         int pages = Math.max(1, (total + ENTRY_SLOTS.length - 1) / ENTRY_SLOTS.length);
-        inventorySet(holder, 46, icon(Material.BOOK,
-                messages.get("admin.button-pages", "page", holder.index + 1, "pages", pages, "total", total),
+        inventorySet(holder, 46, icon(AdminPanelVisuals.Icon.PAGES, Material.BOOK, messages.get("admin.button-pages", "page", holder.index + 1, "pages", pages, "total", total),
                 List.of()));
     }
 
     private void empty(Holder holder, Material material, Component name) {
         // Центр списка: подсказка «пусто» вместо стеклянной рамки.
         holder.inventory.setItem(ENTRY_SLOTS[ENTRY_SLOTS.length / 2],
-                icon(material, name, List.of()));
+                icon(AdminPanelVisuals.Icon.EMPTY, material, name, List.of()));
     }
 
     private void inventorySet(Holder holder, int slot, ItemStack item) {
@@ -890,18 +866,23 @@ public final class AdminPanelGui implements Listener {
         return millis <= 0 ? "—" : DATE.format(Instant.ofEpochMilli(millis));
     }
 
-    private static ItemStack icon(Material material, Component name, List<Component> lore) {
+    private ItemStack icon(Material material, Component name, List<Component> lore) {
+        return icon(null, material, name, lore);
+    }
+
+    private ItemStack icon(AdminPanelVisuals.Icon visual, Material material, Component name, List<Component> lore) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             meta.displayName(name == null ? Component.empty() : name);
             if (lore != null && !lore.isEmpty()) meta.lore(lore);
+            AdminPanelVisuals.apply(meta, visual, visual != null && plugin.getConfig().getBoolean("core-gui-textures.admin-panel", false));
             item.setItemMeta(meta);
         }
         return item;
     }
 
-    private static ItemStack filler() {
+    private ItemStack filler() {
         return icon(Material.GRAY_STAINED_GLASS_PANE, Component.empty(), List.of());
     }
 }

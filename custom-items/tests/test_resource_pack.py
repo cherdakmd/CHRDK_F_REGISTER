@@ -78,6 +78,18 @@ class ResourcePackTest(unittest.TestCase):
         config = (PACK.parents[1] / 'battlepass/src/main/resources/config.yml').read_text(encoding='utf-8')
         self.assertRegex(config, r'(?m)^  mission-menu: false\s*$')
 
+    def test_core_admin_panel_models_and_opt_in(self):
+        root=PACK/'assets/chrdk_core';names={'moderators','journal','mutes','honors','filter','refresh','prev','next','close','back','info','warn','ban','unban','role_add','role_remove','punish','warn_active','warn_removed','moderator_entry','journal_entry','mute_entry','punish_info','mute_preset','mute_custom','unmute','kick','ip_ban','ip_unban','chat_history','chat_entry','pages','empty'};hashes=set()
+        for name in names:
+            path='menu/admin_panel/'+name;ref='chrdk_core:item/'+path
+            item=json.loads((root/'items'/(path+'.json')).read_text());model=json.loads((root/'models/item'/(path+'.json')).read_text())
+            self.assertEqual({'type':'minecraft:model','model':ref},item['model']);self.assertEqual('minecraft:item/generated',model['parent']);self.assertEqual(ref,model['textures']['layer0'])
+            data=(root/'textures/item'/(path+'.png')).read_bytes();self.assertEqual(b'\x89PNG\r\n\x1a\n',data[:8]);self.assertEqual((32,32),struct.unpack('>II',data[16:24]))
+            digest=hashlib.sha256(data).hexdigest();self.assertNotIn(digest,hashes,name);hashes.add(digest)
+        for folder in ('items','models/item','textures/item'):
+            self.assertEqual(names,{p.stem for p in (root/folder/'menu/admin_panel').iterdir() if p.is_file()})
+        config=(PACK.parents[1]/'src/main/resources/config.yml').read_text(encoding='utf-8');self.assertRegex(config,r'(?m)^  admin-panel: false\s*$')
+
     def test_core_honor_models_and_opt_in(self):
         root=PACK/'assets/chrdk_core';names={'definitions','grants','filter','refresh','prev','next','back','close','info','create','definition','grant_entry','name','format','badge','level','description','join','delete','pages','empty_definitions','empty_grants'};hashes=set()
         for name in names:
