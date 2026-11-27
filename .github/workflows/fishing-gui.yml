@@ -1,6 +1,6 @@
 name: Fishing GUI visual checks
 
-# Narrow visual-only check. This is not the full candidate or release gate.
+# Narrow GUI checks. This is not the full candidate or release gate.
 # Trigger only by edits to this workflow; app changes continue to trigger their
 # normal workflows unless explicitly deferred, as for this owner's request.
 on:
