@@ -856,7 +856,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Prepare pinned compile-only API
         run: python3 .github/scripts/prepare_papi.py
-      - name: Test atlas and existing storage rules
+      - name: Test atlas, account menus and existing storage rules
         shell: bash
         run: |
           set +e
@@ -885,7 +885,7 @@ jobs:
           PYTEST
           fi
           exit "$result"
-      - name: Verify executed tests and combined atlas models
+      - name: Verify executed tests and combined Core GUI models
         run: |
           python3 - <<'PYTEST'
           from pathlib import Path
