@@ -28,6 +28,7 @@ class GuildStyleGuiVisualsTest {
             var service=mock(GuildService.class);when(plugin.service()).thenReturn(service);var styles=mock(GuildStyleController.class);when(plugin.styles()).thenReturn(styles);
             var player=mock(Player.class);var id=UUID.randomUUID();when(player.getUniqueId()).thenReturn(id);when(player.getName()).thenReturn("Alice");when(player.isOnline()).thenReturn(true);when(player.hasPermission("chrdkguilds.use")).thenReturn(true);when(plugin.visible(player)).thenReturn(true);
             var guild=new Guild("clan","Alpha","AA",id,1000);when(service.guildOf(id)).thenReturn(guild);when(styles.name(guild)).thenReturn("Alpha");when(styles.active(guild,"name")).thenReturn("blue");
+            var store=mock(GuildStore.class);when(plugin.store()).thenReturn(store);when(store.guild("clan")).thenReturn(guild);
             var row=new GuildStyleStore.Row(id,"Alice","clan",0,Map.of("name",new GuildStyleStore.Choice("gold",1)));when(styles.selection(id)).thenReturn(row);
             var inventory=mock(Inventory.class);var slots=new HashMap<Integer,ItemStack>();var holder=new AtomicReference<GuildStyleGui.Holder>();
             doAnswer(c->{slots.clear();return null;}).when(inventory).clear();doAnswer(c->{slots.put(c.getArgument(0),c.getArgument(1));return null;}).when(inventory).setItem(anyInt(),any(ItemStack.class));
