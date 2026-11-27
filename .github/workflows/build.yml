@@ -5,9 +5,6 @@ on:
     branches:
       - main
       - 'arena/**'
-    # Temporary: run targeted GUI checks without unrelated recovery checks.
-    paths-ignore:
-      - '.github/workflows/fishing-gui.yml'
   pull_request:
   workflow_dispatch:
 
