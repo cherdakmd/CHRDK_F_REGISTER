@@ -119,12 +119,12 @@ public final class ClaimMenuGui implements Listener {
 
         inventory.setItem(SLOT_INFO, infoIcon(player, holder, entries.size(), pages));
         if (holder.page > 1) {
-            inventory.setItem(SLOT_PREV, item(Material.ARROW, "menu-prev-name",
-                    "menu-prev-lore", "page", String.valueOf(holder.page - 1)));
+            inventory.setItem(SLOT_PREV, visual(item(Material.ARROW, "menu-prev-name",
+                    "menu-prev-lore", "page", String.valueOf(holder.page - 1)), ClaimMenuVisuals.Icon.PREV.model()));
         }
         if (holder.page < pages) {
-            inventory.setItem(SLOT_NEXT, item(Material.ARROW, "menu-next-name",
-                    "menu-next-lore", "page", String.valueOf(holder.page + 1)));
+            inventory.setItem(SLOT_NEXT, visual(item(Material.ARROW, "menu-next-name",
+                    "menu-next-lore", "page", String.valueOf(holder.page + 1)), ClaimMenuVisuals.Icon.NEXT.model()));
         }
         inventory.setItem(SLOT_TAB_MINE, tabIcon(ClaimMenuModel.Tab.MINE,
                 holder.tab == ClaimMenuModel.Tab.MINE));
@@ -133,8 +133,8 @@ public final class ClaimMenuGui implements Listener {
                     holder.tab == ClaimMenuModel.Tab.FOR_SALE));
         }
         inventory.setItem(SLOT_TAB_ACCESS, tabIcon(ClaimMenuModel.Tab.ACCESSIBLE, holder.tab == ClaimMenuModel.Tab.ACCESSIBLE));
-        inventory.setItem(SLOT_CLAN, item(Material.WHITE_BANNER, "menu-clan-name", "menu-clan-lore"));
-        inventory.setItem(SLOT_CLOSE, item(Material.BARRIER, "menu-close-name", null));
+        inventory.setItem(SLOT_CLAN, visual(item(Material.WHITE_BANNER, "menu-clan-name", "menu-clan-lore"), ClaimMenuVisuals.Icon.CLAN.model()));
+        inventory.setItem(SLOT_CLOSE, visual(item(Material.BARRIER, "menu-close-name", null), ClaimMenuVisuals.Icon.CLOSE.model()));
     }
 
     private ItemStack filler() {
@@ -151,20 +151,20 @@ public final class ClaimMenuGui implements Listener {
         int limit = plugin.service().limitOf(player.getName());
         int balance = plugin.store().treasuryOf(player.getName());
         int own = plugin.store().count(player.getName());
-        return item(Material.BOOK, "menu-info-name", "finance.menu-info-lore",
+        return visual(item(Material.BOOK, "menu-info-name", "finance.menu-info-lore",
                 "tab", plugin.messages().plain(ClaimMenuModel.titleKey(holder.tab)),
                 "count", String.valueOf(total),
                 "page", String.valueOf(holder.page),
                 "pages", String.valueOf(pages),
                 "limit", String.valueOf(limit),
                 "free", String.valueOf(Math.max(0, limit - own)),
-                "balance", String.valueOf(balance));
+                "balance", String.valueOf(balance)), ClaimMenuVisuals.Icon.INFO.model());
     }
 
     private ItemStack emptyIcon(MenuHolder holder) {
-        return item(Material.PAPER,
+        return visual(item(Material.PAPER,
                 holder.tab == ClaimMenuModel.Tab.FOR_SALE ? "menu-empty-sale" : "menu-empty-mine",
-                null);
+                null), (holder.tab == ClaimMenuModel.Tab.FOR_SALE ? ClaimMenuVisuals.Icon.EMPTY_SALE : ClaimMenuVisuals.Icon.EMPTY_MINE).model());
     }
 
     private ItemStack entryIcon(Player player, ClaimMenuModel.Entry entry) {
@@ -179,14 +179,14 @@ public final class ClaimMenuGui implements Listener {
         Object sale = entry.salePrice() > 0
                 ? plugin.messages().mini("list-sale", "price", String.valueOf(entry.salePrice()))
                 : "";
-        return item(material, "menu-entry-name", "menu-entry-lore",
+        return visual(item(material, "menu-entry-name", "menu-entry-lore",
                 "world", entry.world(),
                 "x", String.valueOf(entry.x()),
                 "z", String.valueOf(entry.z()),
                 "owner", entry.owner(),
                 "chunks", plugin.store().territory(plugin.store().claimAt(entry.world(), entry.x(), entry.z())).size(),
                 "paid", plugin.service().formatDate(entry.paidUntil()),
-                "sale", sale);
+                "sale", sale), ClaimMenuVisuals.entry(entry, player.getWorld().getName()).model());
     }
 
     private ItemStack tabIcon(ClaimMenuModel.Tab tab, boolean selected) {
@@ -195,7 +195,7 @@ public final class ClaimMenuGui implements Listener {
             ItemStack stack = item(Material.OAK_DOOR, "menu-tab-access-name", "menu-tab-access-lore");
             ItemMeta meta = stack.getItemMeta();
             if (selected && meta != null) { meta.setEnchantmentGlintOverride(true); stack.setItemMeta(meta); }
-            return stack;
+            return visual(stack, ClaimMenuVisuals.tab(tab, selected));
         }
         ItemStack stack = item(mine ? Material.MAP : Material.GOLD_INGOT,
                 mine ? "menu-tab-mine-name" : "menu-tab-sale-name",
@@ -205,6 +205,17 @@ public final class ClaimMenuGui implements Listener {
             // Подсветка выбранной вкладки без «фальшивого» зачарования в подсказке.
             meta.setEnchantmentGlintOverride(true);
             stack.setItemMeta(meta);
+        }
+        return visual(stack, ClaimMenuVisuals.tab(tab, selected));
+    }
+
+    private ItemStack visual(ItemStack stack, org.bukkit.NamespacedKey key) {
+        if (plugin.getConfig().getBoolean("textures.menu", false)) {
+            ItemMeta meta = stack.getItemMeta();
+            if (meta != null) {
+                ClaimMenuVisuals.apply(meta, key, true);
+                stack.setItemMeta(meta);
+            }
         }
         return stack;
     }

@@ -56,6 +56,25 @@ class ResourcePackTest(unittest.TestCase):
             self.assertEqual(len(ids), len(set(ids)))
             self.assertEqual(files, set(ids))
 
+    def test_claim_menu_icons_have_complete_models(self):
+        root = PACK / 'assets/chrdk_claims'
+        names = {'info', 'prev', 'next', 'clan', 'close', 'empty_mine', 'empty_sale', 'entry_mine', 'entry_other_world', 'entry_sale', 'entry_access'}
+        names.update(f'tab_{tab}_{state}' for tab in ('mine', 'sale', 'access') for state in ('normal', 'selected'))
+        self.assertEqual(17, len(names)); hashes = set()
+        for name in names:
+            path = 'menu/' + name; ref = 'chrdk_claims:item/' + path
+            item = json.loads((root / 'items' / (path + '.json')).read_text())
+            model = json.loads((root / 'models/item' / (path + '.json')).read_text())
+            self.assertEqual({'type': 'minecraft:model', 'model': ref}, item['model'])
+            self.assertEqual('minecraft:item/generated', model['parent']); self.assertEqual(ref, model['textures']['layer0'])
+            data = (root / 'textures/item' / (path + '.png')).read_bytes()
+            self.assertEqual(b'\x89PNG\r\n\x1a\n', data[:8]); self.assertEqual((32, 32), struct.unpack('>II', data[16:24]))
+            digest = hashlib.sha256(data).hexdigest(); self.assertNotIn(digest, hashes); hashes.add(digest)
+        for folder in ('items', 'models/item', 'textures/item'):
+            self.assertEqual(names, {p.stem for p in (root / folder / 'menu').iterdir()})
+        config = (PACK.parents[1] / 'claims/src/main/resources/config.yml').read_text(encoding='utf-8')
+        self.assertRegex(config, r'(?m)^textures:\s*\n  menu: false\s*$')
+
     def test_vk_menu_icons_have_complete_fixed_models(self):
         root = PACK / 'assets/chrdk_vk'
         names = {'link_unlinked', 'link_linked', 'notify_unlinked', 'notify_off', 'notify_on', 'chat_hidden',
