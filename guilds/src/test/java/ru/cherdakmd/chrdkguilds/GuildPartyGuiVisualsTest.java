@@ -53,4 +53,9 @@ class GuildPartyGuiVisualsTest {
             }
         }
     }
+    private static void check(ItemStack item,GuildPartyVisuals.Control control,boolean enabled) {
+        assertNotNull(item);
+        if(enabled) verify(item.getItemMeta()).setItemModel(control.model());
+        else verify(item.getItemMeta(),never()).setItemModel(any());
+    }
 }
