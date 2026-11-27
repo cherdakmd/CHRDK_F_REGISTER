@@ -78,40 +78,40 @@ public final class VkMenuGui implements Listener {
 
         // Слот 10 — Статус привязки / Получить код
         if (!linked) {
-            inv.setItem(SLOT_LINK, item(
+            inv.setItem(SLOT_LINK, visual(item(
                     Material.TRIPWIRE_HOOK,
                     messages.get("vk.gui-link-unlinked-name"),
                     messages.getList("vk.gui-link-unlinked-lore",
                             "link_hours", Integer.toString(cfg.linkBoostHours()),
                             "member_hours", Integer.toString(cfg.memberBoostHours()))
-            ));
+            ), VkMenuVisuals.Icon.LINK_UNLINKED));
         } else {
             VkStore.LinkSnapshot link = opt.get();
             boolean donutActive = store.donutPerkActive(player.getName(), now, cfg.donutGraceHours());
-            inv.setItem(SLOT_LINK, item(
+            inv.setItem(SLOT_LINK, visual(item(
                     Material.EMERALD,
                     messages.get("vk.gui-link-linked-name", "vk_id", Long.toString(link.vkUserId())),
                     messages.getList("vk.gui-link-linked-lore",
                             "member", link.member() ? messages.mini("vk.state-yes") : messages.mini("vk.state-no"),
                             "donut", donutActive ? messages.mini("vk.state-yes") : messages.mini("vk.state-no"))
-            ));
+            ), VkMenuVisuals.Icon.LINK_LINKED));
         }
 
         // Слот 12 — Уведомления о входах в ЛС ВК
         boolean notifyOn = opt.map(VkStore.LinkSnapshot::notifyLogins).orElse(false);
-        inv.setItem(SLOT_NOTIFY, item(
+        inv.setItem(SLOT_NOTIFY, visual(item(
                 linked && notifyOn ? Material.BELL : Material.GRAY_DYE,
                 messages.get("vk.gui-notify-name"),
                 messages.getList("vk.gui-notify-lore",
                         "state", !linked
                                 ? messages.mini("vk.state-no")
                                 : (notifyOn ? messages.mini("vk.state-on") : messages.mini("vk.state-off")))
-        ));
+        ), VkMenuVisuals.notify(linked, notifyOn)));
 
         // Слот 13 — Беседа ВК и анонсы стены (/vk chat и /vk mentions)
         boolean receiveChat = store.receivesGroupChat(player.getName());
         boolean mentionsOn = opt.map(VkStore.LinkSnapshot::allowVkChatMentions).orElse(false);
-        inv.setItem(SLOT_CHAT, item(
+        inv.setItem(SLOT_CHAT, visual(item(
                 receiveChat ? Material.WRITABLE_BOOK : Material.BOOK,
                 messages.get("vk.gui-chat-name"),
                 messages.getList("vk.gui-chat-lore",
@@ -121,17 +121,17 @@ public final class VkMenuGui implements Listener {
                         "mentions", !linked
                                 ? messages.mini("vk.state-no")
                                 : (mentionsOn ? messages.mini("vk.state-on") : messages.mini("vk.state-off")))
-        ));
+        ), receiveChat ? VkMenuVisuals.Icon.CHAT_VISIBLE : VkMenuVisuals.Icon.CHAT_HIDDEN));
 
         // Слот 14 — Косметический значок у ника (/labels)
         boolean donutActive = linked && store.donutPerkActive(player.getName(), now, cfg.donutGraceHours());
         String badgePreview = donutActive ? cfg.donutTag() : cfg.memberTag();
-        inv.setItem(SLOT_BADGE, item(
+        inv.setItem(SLOT_BADGE, visual(item(
                 Material.NAME_TAG,
                 messages.get("vk.gui-badge-name"),
                 messages.getList("vk.gui-badge-lore",
                         "badge", Messages.trusted(badgePreview))
-        ));
+        ), VkMenuVisuals.Icon.BADGE));
 
         // Слот 16 — Безопасность и двухшаговая отвязка
         Long armedUntil = unlinkArmedUntil.get(player.getUniqueId());
@@ -140,27 +140,27 @@ public final class VkMenuGui implements Listener {
             unlinkArmedUntil.remove(player.getUniqueId());
         }
         if (armed) {
-            inv.setItem(SLOT_SECURITY, item(
+            inv.setItem(SLOT_SECURITY, visual(item(
                     Material.RED_STAINED_GLASS_PANE,
                     messages.get("vk.gui-unlink-confirm-name"),
                     messages.getList("vk.gui-unlink-confirm-lore")
-            ));
+            ), VkMenuVisuals.Icon.UNLINK_CONFIRM));
         } else {
             boolean frozen = api != null && api.isLoginFrozen(player.getName());
-            inv.setItem(SLOT_SECURITY, item(
+            inv.setItem(SLOT_SECURITY, visual(item(
                     Material.SHIELD,
                     messages.get("vk.gui-security-name"),
                     messages.getList("vk.gui-security-lore",
                             "frozen", frozen ? messages.mini("vk.state-frozen") : messages.mini("vk.state-active"))
-            ));
+            ), frozen ? VkMenuVisuals.Icon.SECURITY_FROZEN : VkMenuVisuals.Icon.SECURITY_ACTIVE));
         }
 
         // Слот 22 — Закрыть
-        inv.setItem(SLOT_CLOSE, item(
+        inv.setItem(SLOT_CLOSE, visual(item(
                 Material.BARRIER,
                 messages.get("vk.gui-close-name"),
                 List.of()
-        ));
+        ), VkMenuVisuals.Icon.CLOSE));
     }
 
     @EventHandler
@@ -243,6 +243,17 @@ public final class VkMenuGui implements Listener {
         if (event.getInventory().getHolder() instanceof Holder) {
             event.setCancelled(true);
         }
+    }
+
+    private ItemStack visual(ItemStack virtual, VkMenuVisuals.Icon icon) {
+        if (plugin.getConfig().getBoolean("textures.menu", false)) {
+            ItemMeta meta = virtual.getItemMeta();
+            if (meta != null) {
+                VkMenuVisuals.apply(meta, icon, true);
+                virtual.setItemMeta(meta);
+            }
+        }
+        return virtual;
     }
 
     private static void playClick(Player player) {

@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "chrdk_vk:item/menu/notify_unlinked"
+  }
+}
