@@ -53,6 +53,7 @@ class ShopGuiSafetyTest {
     private static final class Fixture implements AutoCloseable {
         final DiamondShopPlugin plugin=mock(DiamondShopPlugin.class);final ShopService service=mock(ShopService.class);final ShopOverrides live=ShopOverrides.EMPTY.copy();final Player player=mock(Player.class);final UUID owner=UUID.randomUUID();final Inventory inv=mock(Inventory.class);final InventoryView view=mock(InventoryView.class);final InventoryClickEvent event=mock(InventoryClickEvent.class);final AtomicReference<InventoryHolder> holder=new AtomicReference<>();final org.mockito.MockedStatic<Bukkit> bukkit;final org.mockito.MockedConstruction<ItemStack> items;final ShopAdminGui gui;
         Fixture() throws Exception {
+            when(plugin.getConfig()).thenReturn(new org.bukkit.configuration.file.YamlConfiguration());
             when(plugin.overrides()).thenReturn(live);when(plugin.shopService()).thenReturn(service);when(plugin.isEnabled()).thenReturn(true);when(service.config()).thenReturn(new ShopConfig.ShopConfigData(Map.of(),0,0,1,2,List.of(),0,0,1,1000));
             when(plugin.messages()).thenReturn(Messages.from(java.nio.file.Files.newInputStream(java.nio.file.Path.of("src/main/resources/messages.yml")),null,Logger.getAnonymousLogger()));
             when(player.getUniqueId()).thenReturn(owner);when(player.isOnline()).thenReturn(true);when(player.hasPermission("chrdkshop.admin")).thenReturn(true);when(player.getOpenInventory()).thenReturn(view);when(view.getTopInventory()).thenReturn(inv);when(inv.getHolder()).thenAnswer(c->holder.get());

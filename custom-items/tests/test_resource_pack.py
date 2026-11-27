@@ -78,6 +78,18 @@ class ResourcePackTest(unittest.TestCase):
         config = (PACK.parents[1] / 'battlepass/src/main/resources/config.yml').read_text(encoding='utf-8')
         self.assertRegex(config, r'(?m)^  mission-menu: false\s*$')
 
+    def test_shop_admin_models_and_opt_in(self):
+        root=PACK/'assets/chrdk_diamondshop';names={'empty','close','save','prev','next','back','restore','remove','remove_confirm','price_down_small','price_down','price_up','price_up_small','stock_down','stock_up','sell_enabled','sell_disabled','category','tariff_down','tariff_up'};hashes=set()
+        for name in names:
+            path='menu/admin/'+name;ref='chrdk_diamondshop:item/'+path
+            item=json.loads((root/'items'/(path+'.json')).read_text());model=json.loads((root/'models/item'/(path+'.json')).read_text())
+            self.assertEqual({'type':'minecraft:model','model':ref},item['model']);self.assertEqual('minecraft:item/generated',model['parent']);self.assertEqual(ref,model['textures']['layer0'])
+            data=(root/'textures/item'/(path+'.png')).read_bytes();self.assertEqual(b'\x89PNG\r\n\x1a\n',data[:8]);self.assertEqual((32,32),struct.unpack('>II',data[16:24]))
+            digest=hashlib.sha256(data).hexdigest();self.assertNotIn(digest,hashes,name);hashes.add(digest)
+        for folder in ('items','models/item','textures/item'):
+            self.assertEqual(names,{p.stem for p in (root/folder/'menu/admin').iterdir() if p.is_file()})
+        config=(PACK.parents[1]/'diamond-shop/src/main/resources/config.yml').read_text(encoding='utf-8');self.assertRegex(config,r'(?m)^  admin-menu: false\s*$')
+
     def test_shop_market_models_and_opt_in(self):
         root=PACK/'assets/chrdk_diamondshop';names={'all','sellall','guide','promo','gift','gift_claimed','balance','close','admin','empty','prev','back','next'}|{'category_'+category+suffix for category in ('all','blocks','wood','minerals','mobs','food','utility','misc') for suffix in ('','_selected')};hashes=set()
         for name in names:

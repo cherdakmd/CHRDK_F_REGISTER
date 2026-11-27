@@ -65,9 +65,15 @@ public final class ShopAdminGui implements Listener {
     private static final int ED_SAVE = 26;
 
     private final DiamondShopPlugin plugin;
+    private final java.util.function.BiFunction<String,Material,Material> materials;
 
-    public ShopAdminGui(DiamondShopPlugin plugin) {
-        this.plugin = plugin;
+    public ShopAdminGui(DiamondShopPlugin plugin) { this(plugin,ShopAdminGui::material); }
+    ShopAdminGui(DiamondShopPlugin plugin,java.util.function.BiFunction<String,Material,Material> materials) {
+        this.plugin=plugin; this.materials=java.util.Objects.requireNonNull(materials);
+    }
+    private static Material material(String name,Material fallback) {
+        Material result=Material.matchMaterial(name);
+        return result==null || !result.isItem() ? fallback : result;
     }
 
     private Messages msg() {
@@ -207,10 +213,7 @@ public final class ShopAdminGui implements Listener {
 
     private ItemStack listIcon(ShopConfig.ShopItem item, ShopOverrides draft) {
         Material material = item.isBook() ? Material.ENCHANTED_BOOK
-                : Material.matchMaterial(item.material());
-        if (material == null || !material.isItem()) {
-            material = Material.PAPER;
-        }
+                : materials.apply(item.material(),Material.PAPER);
         ItemStack icon = new ItemStack(material);
         ItemMeta meta = icon.getItemMeta();
         if (meta != null) {
@@ -254,10 +257,7 @@ public final class ShopAdminGui implements Listener {
     private void render(Inventory inventory, EditorHolder holder, ShopConfig.ShopItem item) {
         inventory.clear();
         Material material = item.isBook() ? Material.ENCHANTED_BOOK
-                : Material.matchMaterial(item.material());
-        if (material == null || !material.isItem()) {
-            material = Material.PAPER;
-        }
+                : materials.apply(item.material(),Material.PAPER);
         ItemStack icon = new ItemStack(material);
         ItemMeta meta = icon.getItemMeta();
         if (meta != null) {
@@ -310,6 +310,7 @@ public final class ShopAdminGui implements Listener {
         ItemMeta meta = icon.getItemMeta();
         if (meta != null) {
             meta.displayName(msg().get(key, values));
+            ShopAdminVisuals.apply(meta,ShopAdminVisuals.key(key,material),plugin.getConfig().getBoolean("textures.admin-menu",false));
             icon.setItemMeta(meta);
         }
         return icon;
