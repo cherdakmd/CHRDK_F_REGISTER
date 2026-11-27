@@ -78,6 +78,25 @@ class ResourcePackTest(unittest.TestCase):
         config = (PACK.parents[1] / 'battlepass/src/main/resources/config.yml').read_text(encoding='utf-8')
         self.assertRegex(config, r'(?m)^  mission-menu: false\s*$')
 
+    def test_guild_main_models_cover_controls_and_states(self):
+        root = PACK / 'assets/chrdk_guilds'
+        names = {'recruit_list','recruit_open','recruit_closed','claims','mode_peaceful','mode_battle','personal','dues','style','back','close',
+                 'info_none','info_peaceful','info_battle','invite','treasury','upgrade_available','upgrade_max','war_none','war_cooldown','war_pending','war_active'}
+        self.assertEqual(22,len(names)); hashes=set()
+        for name in names:
+            path = 'menu/main/' + name; ref = 'chrdk_guilds:item/' + path
+            item = json.loads((root / 'items' / (path + '.json')).read_text())
+            model = json.loads((root / 'models/item' / (path + '.json')).read_text())
+            self.assertEqual({'type':'minecraft:model','model':ref}, item['model'])
+            self.assertEqual('minecraft:item/generated', model['parent']); self.assertEqual(ref, model['textures']['layer0'])
+            data=(root / 'textures/item' / (path + '.png')).read_bytes()
+            self.assertEqual(b'\x89PNG\r\n\x1a\n',data[:8]); self.assertEqual((32,32),struct.unpack('>II',data[16:24]))
+            digest=hashlib.sha256(data).hexdigest();self.assertNotIn(digest,hashes);hashes.add(digest)
+        for folder in ('items','models/item','textures/item'):
+            self.assertEqual(names,{p.stem for p in (root / folder / 'menu/main').iterdir() if p.is_file()})
+        config=(PACK.parents[1]/'guilds/src/main/resources/config.yml').read_text(encoding='utf-8')
+        self.assertRegex(config,r'(?m)^  guild-menu: false\s*$')
+
     def test_guild_recruit_models_cover_lists_and_consent(self):
         root = PACK / 'assets/chrdk_guilds'
         names = {'heading','empty','open','closed','open_invited','closed_invited','terms','confirm','cancel','back','prev','next'}

@@ -159,6 +159,7 @@ final class GuildsGui implements Listener {
                 "lost", String.valueOf(guild.warsLost())));
         lore.add(plugin.messages().get(guild.peaceful()?"menu-mode-peaceful":"menu-mode-battle"));
         ItemStack card = item(guild.peaceful()?Material.GREEN_BANNER:Material.RED_BANNER, "menu-info-title", lore);
+        visual(card,GuildMainVisuals.info(guild.peaceful()));
         var meta = card.getItemMeta();
         if (plugin.styles().active(guild,"name") != null || plugin.styles().active(guild,"emblem") != null)
             meta.displayName(plugin.messages().markup(plugin.styles().name(guild)));
@@ -209,7 +210,7 @@ final class GuildsGui implements Listener {
         } else {
             lore.add(plugin.messages().get("menu-upgrade-max"));
         }
-        return item(Material.ANVIL, "menu-upgrade-name", lore);
+        return visual(item(Material.ANVIL, "menu-upgrade-name", lore),GuildMainVisuals.upgrade(guild.level()));
     }
 
     private ItemStack warItem(Guild guild) {
@@ -238,7 +239,7 @@ final class GuildsGui implements Listener {
                         "time", GuildMath.clock(war.secondsLeft(System.currentTimeMillis()))));
             }
         }
-        return item(Material.CROSSBOW, "menu-war-name", lore);
+        return visual(item(Material.CROSSBOW, "menu-war-name", lore),GuildMainVisuals.war(war,guild.warCooldownUntil() > System.currentTimeMillis()));
     }
 
     private ItemStack item(Material material, String nameKey, List<Component> lore) {
@@ -249,8 +250,16 @@ final class GuildsGui implements Listener {
             if (!lore.isEmpty()) {
                 meta.lore(lore);
             }
+            GuildMainVisuals.apply(meta,GuildMainVisuals.button(nameKey),plugin.getConfig().getBoolean("textures.guild-menu",false));
             stack.setItemMeta(meta);
         }
+        return stack;
+    }
+
+    private ItemStack visual(ItemStack stack,GuildMainVisuals.Control control) {
+        if (!plugin.getConfig().getBoolean("textures.guild-menu",false)) return stack;
+        var meta=stack.getItemMeta(); GuildMainVisuals.apply(meta,control,true);
+        if (meta!=null) stack.setItemMeta(meta);
         return stack;
     }
 

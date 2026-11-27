@@ -1,0 +1,6 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "chrdk_guilds:item/menu/main/invite"
+  }
+}
