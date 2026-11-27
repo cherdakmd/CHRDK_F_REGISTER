@@ -1078,6 +1078,7 @@ wiki:
 core-gui-textures:
   pass-menu: false
   donate-menu: false
+  rank-menu: false
 
 server-menu:
   enabled: true

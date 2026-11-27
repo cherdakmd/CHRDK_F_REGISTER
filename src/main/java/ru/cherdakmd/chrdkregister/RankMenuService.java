@@ -104,10 +104,10 @@ public final class RankMenuService implements Listener {
             }
             inventory.setItem(CARD_SLOTS[index], card(level, tier, current, player));
         }
-        inventory.setItem(SLOT_MY, button(Material.PLAYER_HEAD, messages.get("rank.button-my")));
-        inventory.setItem(SLOT_TOP, button(Material.WRITABLE_BOOK, messages.get("rank.button-top")));
-        inventory.setItem(SLOT_RULES, button(Material.BOOK, messages.get("rank.button-rules")));
-        inventory.setItem(SLOT_CLOSE, button(Material.BARRIER, messages.get("rank.button-close")));
+        inventory.setItem(SLOT_MY, button(Material.PLAYER_HEAD, messages.get("rank.button-my"), RankMenuVisuals.Button.MY));
+        inventory.setItem(SLOT_TOP, button(Material.WRITABLE_BOOK, messages.get("rank.button-top"), RankMenuVisuals.Button.TOP));
+        inventory.setItem(SLOT_RULES, button(Material.BOOK, messages.get("rank.button-rules"), RankMenuVisuals.Button.RULES));
+        inventory.setItem(SLOT_CLOSE, button(Material.BARRIER, messages.get("rank.button-close"), RankMenuVisuals.Button.CLOSE));
     }
 
     /** Карточка ступени: иконка, цена, возможности и статус игрока. */
@@ -145,6 +145,7 @@ public final class RankMenuService implements Listener {
             lore.add(messages.get("rank.card-how-renew", "player", player.getName()));
         }
         meta.lore(lore);
+        RankMenuVisuals.apply(meta, RankMenuVisuals.card(level,current), plugin.getConfig().getBoolean("core-gui-textures.rank-menu", false));
         item.setItemMeta(meta);
         return item;
     }
@@ -161,11 +162,12 @@ public final class RankMenuService implements Listener {
         };
     }
 
-    private ItemStack button(Material material, Component name) {
+    private ItemStack button(Material material, Component name, RankMenuVisuals.Button button) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             meta.displayName(name);
+            RankMenuVisuals.apply(meta, button.model(), plugin.getConfig().getBoolean("core-gui-textures.rank-menu", false));
             item.setItemMeta(meta);
         }
         return item;
