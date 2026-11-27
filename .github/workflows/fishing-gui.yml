@@ -474,7 +474,10 @@ jobs:
           ./gradlew --no-daemon --no-configuration-cache -Pchrdk.papiJar=build/dependencies/PlaceholderAPI-2.12.3.jar \
             :vk:clean :custom-items:prototypeResourcePack :vk:test \
             --tests ru.cherdakmd.chrdkvk.VkMenuVisualsTest \
-            --tests ru.cherdakmd.chrdkvk.VkMenuGuiVisualsTest > vk-gui-build.log 2>&1
+            --tests ru.cherdakmd.chrdkvk.VkMenuGuiVisualsTest \
+            --tests ru.cherdakmd.chrdkvk.VkUnlinkSafetyTest \
+            --tests ru.cherdakmd.chrdkvk.VkStoreTest \
+            --tests ru.cherdakmd.chrdkvk.VkMessagesTest > vk-gui-build.log 2>&1
           result=$?
           tail -n 120 vk-gui-build.log
           if [[ $result -ne 0 ]]; then
@@ -502,6 +505,9 @@ jobs:
           tests = {
               'VkMenuVisualsTest': {'fixedModelsCoverAllDisplayStatesWithoutPersonalData', 'modelIsOptInAndDoesNotOverrideMetadataOrAddIdentity'},
               'VkMenuGuiVisualsTest': {'linkTogglesAndUnlinkConfirmationBehaveTheSameWithAndWithoutModels'},
+              'VkUnlinkSafetyTest': {'destructiveOperationAlwaysRechecksTwoFactor', 'ownerCancellationSessionAndTwoFactorAreCheckedBeforeActions'},
+              'VkStoreTest': {'enforcesAccountLimitPersistsLinksAndBlocksDuplicateRewardFarming'},
+              'VkMessagesTest': set(),
           }
           for name, required in tests.items():
               path = Path(f'vk/build/test-results/test/TEST-ru.cherdakmd.chrdkvk.{name}.xml')
