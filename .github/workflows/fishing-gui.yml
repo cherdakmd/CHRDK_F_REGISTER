@@ -467,7 +467,7 @@ jobs:
         run: python3 -m unittest discover -s custom-items/tests -p 'test_resource_pack.py' -v
       - name: Prepare pinned compile-only API
         run: python3 .github/scripts/prepare_papi.py
-      - name: Test VK menu visuals and mock account actions
+      - name: Test VK menu visuals and mocked account actions
         shell: bash
         run: |
           set +e
