@@ -674,7 +674,7 @@ jobs:
           PYTEST
 
   battlepass-missions:
-    name: BattlePass mission menu checks
+    name: BattlePass menu and guide checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -693,6 +693,8 @@ jobs:
             :battlepass:clean :custom-items:prototypeResourcePack :battlepass:test \
             --tests ru.cherdakmd.chrdkbp.BattlePassMissionMenuVisualsTest \
             --tests ru.cherdakmd.chrdkbp.BattlePassMissionMenuGuiTest \
+            --tests ru.cherdakmd.chrdkbp.BattlePassGuideVisualsTest \
+            --tests ru.cherdakmd.chrdkbp.BattlePassGuideGuiTest \
             --tests ru.cherdakmd.chrdkbp.BattlePassMenuLayoutTest \
             --tests ru.cherdakmd.chrdkbp.BattlePassViewTest \
             --tests ru.cherdakmd.chrdkbp.BattlePassMoney282Test \
@@ -724,6 +726,8 @@ jobs:
           tests = {
               'BattlePassMissionMenuVisualsTest': {'allTypesAndStatesHaveIndependentModelsAndCustomIconsSurvive','disabledAndForeignModelsRemainUntouched'},
               'BattlePassMissionMenuGuiTest': {'openingMenuRendersActualMissionAndFilterStatesWithoutClaiming','claimAllRemainsDeferredAndRejectsStaleWindowsAndAccessChanges'},
+              'BattlePassGuideVisualsTest': {'allControlsAndRewardStatesUseDistinctFixedModels'},
+              'BattlePassGuideGuiTest': {'rewardPreviewsReflectEachRealStateWithoutGrantingAnything','actionsAreOneShotAndDeferredWithAccessAndViewChecks'},
               'BattlePassMenuLayoutTest': set(), 'BattlePassViewTest': set(),
               'BattlePassMoney282Test': set(), 'BattlePassPremiumTest': set(),
           }
@@ -735,10 +739,12 @@ jobs:
               found = {case.get('name', '').removesuffix('()') for case in suite.findall('testcase')}
               if not required.issubset(found): raise SystemExit(f'{name} missing {sorted(required - found)}')
           root = Path('custom-items/resource-pack')
-          expected = {p.relative_to(root).as_posix(): p.read_bytes() for folder in ('items','models/item','textures/item') for p in (root / 'assets/chrdk_battlepass' / folder / 'menu').iterdir()}
+          expected = {p.relative_to(root).as_posix(): p.read_bytes() for folder in ('items','models/item','textures/item') for p in (root / 'assets/chrdk_battlepass' / folder / 'menu').iterdir() if p.is_file()}
           assert len(expected) == 165
+          guide = {p.relative_to(root).as_posix(): p.read_bytes() for folder in ('items','models/item','textures/item') for p in (root / 'assets/chrdk_battlepass' / folder / 'menu/guide').iterdir() if p.is_file()}
+          assert len(guide) == 120
           with ZipFile('custom-items/build/resource-packs/chrdk-custom-items-prototype.zip') as pack:
-              for path, data in expected.items(): assert pack.read(path) == data, path
+              for path, data in (expected | guide).items(): assert pack.read(path) == data, path
               assert any(p.startswith('assets/chrdk_fishing/') for p in pack.namelist())
-          print('Mission menu and combined pack checks passed; not a full finance or release gate.')
+          print('Mission and guide menu checks passed; not a full finance or release gate.')
           PYTEST

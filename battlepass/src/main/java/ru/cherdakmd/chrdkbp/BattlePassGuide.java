@@ -28,8 +28,14 @@ final class BattlePassGuide implements Listener {
         Holder h=new Holder(p.getUniqueId(),plugin.season());h.inventory=Bukkit.createInventory(h,54,plugin.messages().get(title));return h;
     }
     private void put(Holder h,int slot,Material material,String title,String lore,Consumer<Player> action,Object... args) {
+        putModel(h,slot,material,title,lore,action,BattlePassGuideVisuals.button(title),args);
+    }
+    private void putModel(Holder h,int slot,Material material,String title,String lore,Consumer<Player> action,
+                          org.bukkit.NamespacedKey model,Object... args) {
         ItemStack item=new ItemStack(material);var meta=item.getItemMeta();meta.displayName(plugin.messages().get(title,args));
-        if(lore!=null)meta.lore(plugin.messages().getList(lore,args));item.setItemMeta(meta);h.inventory.setItem(slot,item);
+        if(lore!=null)meta.lore(plugin.messages().getList(lore,args));
+        BattlePassMenuVisuals.apply(meta,model,plugin.getConfig().getBoolean("textures.guide-menu",false));
+        item.setItemMeta(meta);h.inventory.setItem(slot,item);
         if(action!=null)h.actions.put(slot,action);
     }
     private void controls(Holder h) {
@@ -102,10 +108,10 @@ final class BattlePassGuide implements Listener {
         boolean unlocked=BattlePassConfig.isUnlocked(h.season,found.weekIndex(),System.currentTimeMillis());
         boolean claimed=BattlePassClaims.claimed(plugin.store(),p.getUniqueId(),m,track);
         String state=hours==0&&m.diamonds(track)==0?"guide-no-reward":claimed?"guide-received":!unlocked?"guide-future":!access?"guide-access-locked":plugin.store().progressOf(p.getUniqueId(),m.id())<m.target()?"guide-in-progress":"guide-ready";
-        put(h,slot,claimed?Material.GRAY_DYE:state.equals("guide-ready")?Material.LIME_CONCRETE:access?Material.EXPERIENCE_BOTTLE:Material.BARRIER,
+        putModel(h,slot,claimed?Material.GRAY_DYE:state.equals("guide-ready")?Material.LIME_CONCRETE:access?Material.EXPERIENCE_BOTTLE:Material.BARRIER,
                 "guide-track-reward",claim?"guide-track-claim-lore":"guide-track-lore",x->{
                     if(claim)plugin.claims().claimTrack(x,m.id(),track);detail(x,m.id());
-                },"track",plugin.messages().plain("guide-"+track.toLowerCase(Locale.ROOT)),
+                },BattlePassGuideVisuals.track(track,state),"track",plugin.messages().plain("guide-"+track.toLowerCase(Locale.ROOT)),
                 "hours",hours,"diamonds",m.diamonds(track),"state",plugin.messages().plain(state));
     }
     void detail(Player p,String id) {
@@ -126,7 +132,7 @@ final class BattlePassGuide implements Listener {
                 else {var mat=Material.matchMaterial(key);if(mat!=null)targets.add(Component.translatable(mat.getTranslationKey()));}
             } catch(IllegalArgumentException ignored){targets.add(Component.text(key));}
         }
-        ItemStack target=new ItemStack(Material.SPYGLASS);var meta=target.getItemMeta();meta.displayName(plugin.messages().get("guide-targets"));meta.lore(targets);target.setItemMeta(meta);h.inventory.setItem(15,target);
+        ItemStack target=new ItemStack(Material.SPYGLASS);var meta=target.getItemMeta();meta.displayName(plugin.messages().get("guide-targets"));meta.lore(targets);BattlePassMenuVisuals.apply(meta,BattlePassGuideVisuals.button("guide-targets"),plugin.getConfig().getBoolean("textures.guide-menu",false));target.setItemMeta(meta);h.inventory.setItem(15,target);
         track(h,p,m,"FREE",m.freeHours(),true,20,true);track(h,p,m,"VIP",m.vipHours(),plugin.vipActive(p),22,true);track(h,p,m,"PREMIUM",m.premiumHours(),plugin.premiumActive(p),24,true);
         put(h,31,Material.ENDER_CHEST,"guide-claim-one","guide-claim-lore",x->{plugin.claims().claimOne(x,id);detail(x,id);});
         controls(h);put(h,45,Material.ARROW,"guide-tasks",null,x->plugin.menu().missions(x,0));p.openInventory(h.inventory);

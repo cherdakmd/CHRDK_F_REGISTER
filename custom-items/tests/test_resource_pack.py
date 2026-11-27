@@ -74,9 +74,31 @@ class ResourcePackTest(unittest.TestCase):
             self.assertEqual(b'\x89PNG\r\n\x1a\n', data[:8]); self.assertEqual((32,32), struct.unpack('>II', data[16:24]))
             digest = hashlib.sha256(data).hexdigest(); self.assertNotIn(digest, hashes); hashes.add(digest)
         for folder in ('items', 'models/item', 'textures/item'):
-            self.assertEqual(names, {p.stem for p in (root / folder / 'menu').iterdir()})
+            self.assertEqual(names, {p.stem for p in (root / folder / 'menu').iterdir() if p.is_file()})
         config = (PACK.parents[1] / 'battlepass/src/main/resources/config.yml').read_text(encoding='utf-8')
         self.assertRegex(config, r'(?m)^  mission-menu: false\s*$')
+
+    def test_battlepass_guide_models_cover_buttons_tracks_and_states(self):
+        root = PACK / 'assets/chrdk_battlepass'
+        names = {'season', 'tasks', 'rewards', 'help', 'claim_all', 'premium', 'atlas', 'expeditions', 'bank',
+                 'recommended', 'close', 'reward_page', 'free', 'vip', 'premium_label', 'mission', 'back', 'prev',
+                 'next', 'claim_one', 'fair', 'targets'}
+        names.update(f'track_{track}_{state}' for track in ('free', 'vip', 'premium')
+                     for state in ('no_reward', 'received', 'future', 'access_locked', 'in_progress', 'ready'))
+        self.assertEqual(40, len(names)); hashes = set()
+        for name in names:
+            path = 'menu/guide/' + name; ref = 'chrdk_battlepass:item/' + path
+            item = json.loads((root / 'items' / (path + '.json')).read_text())
+            model = json.loads((root / 'models/item' / (path + '.json')).read_text())
+            self.assertEqual({'type':'minecraft:model','model':ref}, item['model'])
+            self.assertEqual('minecraft:item/generated', model['parent']); self.assertEqual(ref, model['textures']['layer0'])
+            data = (root / 'textures/item' / (path + '.png')).read_bytes()
+            self.assertEqual(b'\x89PNG\r\n\x1a\n', data[:8]); self.assertEqual((32,32), struct.unpack('>II', data[16:24]))
+            digest = hashlib.sha256(data).hexdigest(); self.assertNotIn(digest, hashes); hashes.add(digest)
+        for folder in ('items', 'models/item', 'textures/item'):
+            self.assertEqual(names, {p.stem for p in (root / folder / 'menu/guide').iterdir() if p.is_file()})
+        config = (PACK.parents[1] / 'battlepass/src/main/resources/config.yml').read_text(encoding='utf-8')
+        self.assertRegex(config, r'(?m)^  guide-menu: false\s*$')
 
     def test_generator_menu_models_cover_controls_and_states(self):
         root = PACK / 'assets/chrdk_generator'
