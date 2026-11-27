@@ -1,6 +1,7 @@
 package ru.cherdakmd.chrdkskills;
 
 import org.bukkit.Material;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -10,6 +11,7 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * Кристаллы опыта навыков: стакуемые материалы и использование правым кликом.
@@ -53,13 +55,14 @@ class SkillXpItemsTest {
     void optionalVisualsAreOnlyAppliedAtCrystalCreation() throws IOException {
         String source = Files.readString(
                 Path.of("src/main/java/ru/cherdakmd/chrdkskills/SkillXpItems.java"), StandardCharsets.UTF_8);
-        String config = Files.readString(Path.of("src/main/resources/config.yml"), StandardCharsets.UTF_8);
+        var config = YamlConfiguration.loadConfiguration(Path.of("src/main/resources/config.yml").toFile());
         assertTrue(source.contains("getBoolean(\"textures.crystals\", false)"));
         assertEquals(source.indexOf("SkillCrystalVisuals.applyNew"), source.lastIndexOf("SkillCrystalVisuals.applyNew"));
         assertTrue(source.contains("SkillCrystalVisuals.applyNew"));
         assertTrue(source.contains("create(entry.getKey(), false)"),
                 "конвертация зелий не меняет старую совместимость стаков");
-        assertTrue(config.contains("textures:\n  crystals: false"));
+        assertTrue(config.isBoolean("textures.crystals"));
+        assertFalse(config.getBoolean("textures.crystals", true), "оформление кристаллов по умолчанию выключено");
     }
 
     /**

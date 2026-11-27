@@ -154,7 +154,8 @@ jobs:
           ./gradlew --no-daemon --no-configuration-cache -Pchrdk.papiJar=build/dependencies/PlaceholderAPI-2.12.3.jar \
             :skills:clean :skills:test \
             --tests ru.cherdakmd.chrdkskills.SkillsMenuVisualsTest \
-            --tests ru.cherdakmd.chrdkskills.SkillsGuiVisualsTest > skills-gui-build.log 2>&1
+            --tests ru.cherdakmd.chrdkskills.SkillsGuiVisualsTest \
+            --tests ru.cherdakmd.chrdkskills.SkillXpItemsTest > skills-gui-build.log 2>&1
           result=$?
           tail -n 120 skills-gui-build.log
           if [[ $result -ne 0 ]]; then
@@ -177,6 +178,7 @@ jobs:
           tests = {
               'SkillsMenuVisualsTest': {'tabAndStateIconsAreDistinctAndSemanticallyBound', 'disabledOrForeignMetadataIsNotOverwritten', 'everySkillRebirthAttributeAndBranchHasItsOwnModel', 'abilityIconsAreDistinctAndMatchEachSkill'},
               'SkillsGuiVisualsTest': {'navigationAndResetConfirmationKeepExistingBehavior', 'skillCardsAndRebirthStatesFollowTheirExistingLevels', 'rankingAndShopStatesKeepCrystalItemsAndBuyingBehavior'},
+              'SkillXpItemsTest': {'optionalVisualsAreOnlyAppliedAtCrystalCreation', 'crystalsAreUsedByRightClickAndLegacyPotionsConvertOnJoin'},
           }
           for name, required in tests.items():
               path = Path(f'skills/build/test-results/test/TEST-ru.cherdakmd.chrdkskills.{name}.xml')
