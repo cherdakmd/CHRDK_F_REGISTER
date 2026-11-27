@@ -540,7 +540,7 @@ jobs:
         run: python3 -m unittest discover -s custom-items/tests -p 'test_resource_pack.py' -v
       - name: Prepare pinned compile-only API
         run: python3 .github/scripts/prepare_papi.py
-      - name: Test Claims menu visuals and mocked navigation behavior
+      - name: Test Claims menu visuals and mocked menu behavior
         shell: bash
         run: |
           set +e
