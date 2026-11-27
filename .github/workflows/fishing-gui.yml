@@ -845,7 +845,7 @@ jobs:
           PYTEST
 
   core-atlas:
-    name: Core atlas visual and navigation checks
+    name: Core atlas and account GUI checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -864,7 +864,10 @@ jobs:
             :custom-items:prototypeResourcePack :test \
             --tests ru.cherdakmd.chrdkregister.api.exploration.ExplorationAtlasVisualsTest \
             --tests ru.cherdakmd.chrdkregister.api.exploration.ExplorationAtlasGuiVisualsTest \
-            --tests ru.cherdakmd.chrdkregister.api.exploration.ExplorationStoreTest > core-atlas-build.log 2>&1
+            --tests ru.cherdakmd.chrdkregister.api.exploration.ExplorationStoreTest \
+            --tests ru.cherdakmd.chrdkregister.PassMenuServiceTest \
+            --tests ru.cherdakmd.chrdkregister.PassMenuVisualsTest \
+            --tests ru.cherdakmd.chrdkregister.PassMenuGuiVisualsTest > core-atlas-build.log 2>&1
           result=$?
           tail -n 120 core-atlas-build.log
           if [[ $result -ne 0 ]]; then
@@ -896,9 +899,21 @@ jobs:
               assert int(suite.get('tests','0')) and not any(int(suite.get(k,'0')) for k in ('errors','failures','skipped')),name
               found={case.get('name','').removesuffix('()') for case in suite.findall('testcase')}
               assert required.issubset(found),(name,required-found)
+          for name,required in {
+              'PassMenuServiceTest': set(),
+              'PassMenuVisualsTest': {'eachActionHasFixedModelAndForeignMetadataSurvives'},
+              'PassMenuGuiVisualsTest': {'actualLayoutsAndCommandsDoNotChangeWithModels'},
+          }.items():
+              suite=ET.parse(Path(f'build/test-results/test/TEST-ru.cherdakmd.chrdkregister.{name}.xml')).getroot()
+              assert int(suite.get('tests','0')) and not any(int(suite.get(k,'0')) for k in ('errors','failures','skipped')),name
+              found={case.get('name','').removesuffix('()') for case in suite.findall('testcase')}
+              assert required.issubset(found),(name,required-found)
           root=Path('custom-items/resource-pack')
           expected={p.relative_to(root).as_posix():p.read_bytes() for folder in ('items','models/item','textures/item') for p in (root/'assets/chrdk_core'/folder/'menu/atlas').iterdir() if p.is_file()}
           assert len(expected)==33
+          account={p.relative_to(root).as_posix():p.read_bytes() for folder in ('items','models/item','textures/item') for p in (root/'assets/chrdk_core'/folder/'menu/pass').iterdir() if p.is_file()}
+          assert len(account)==21
+          expected.update(account)
           with ZipFile('custom-items/build/resource-packs/chrdk-custom-items-prototype.zip') as pack:
               for path,data in expected.items():assert pack.read(path)==data,path
               assert any(p.startswith('assets/chrdk_fishing/') for p in pack.namelist())

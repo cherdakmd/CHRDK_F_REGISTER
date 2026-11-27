@@ -108,6 +108,7 @@ public final class RegisterPlugin extends JavaPlugin {
         this.chatModeration = new ChatModerationService(this, this::messages,
                 player -> accessManager.getStage(player) == AccessManager.PlayerStage.AUTHENTICATED);
         this.passMenuService = new PassMenuService(accessManager, messages);
+        this.passMenuService.setVisualModels(() -> getConfig().getBoolean("core-gui-textures.pass-menu", false));
         this.donateMenuService = new DonateMenuService(accessManager, messages);
         this.serverMenuService = new ServerMenuService(this, accessManager, messages);
         this.rankMenuService = new RankMenuService(this, accessManager, messages);

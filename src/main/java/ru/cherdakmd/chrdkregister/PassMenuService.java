@@ -48,10 +48,15 @@ public final class PassMenuService implements Listener {
 
     private final AccessManager accessManager;
     private volatile Messages messages;
+    private volatile java.util.function.BooleanSupplier visualModels = () -> false;
 
     public PassMenuService(AccessManager accessManager, Messages messages) {
         this.accessManager = accessManager;
         this.messages = messages;
+    }
+
+    void setVisualModels(java.util.function.BooleanSupplier enabled) {
+        visualModels = java.util.Objects.requireNonNull(enabled);
     }
 
     /** Обновляет тексты после {@code /pass reload}. */
@@ -106,6 +111,7 @@ public final class PassMenuService implements Listener {
         if (meta != null) {
             meta.displayName(messages.get(keyOf(action) + "-name"));
             meta.lore(List.of(messages.get(keyOf(action) + "-lore")));
+            PassMenuVisuals.apply(meta, action, visualModels.getAsBoolean());
             item.setItemMeta(meta);
         }
         return item;

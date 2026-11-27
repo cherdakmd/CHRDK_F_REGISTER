@@ -78,6 +78,19 @@ class ResourcePackTest(unittest.TestCase):
         config = (PACK.parents[1] / 'battlepass/src/main/resources/config.yml').read_text(encoding='utf-8')
         self.assertRegex(config, r'(?m)^  mission-menu: false\s*$')
 
+    def test_core_pass_models_and_opt_in(self):
+        root=PACK/'assets/chrdk_core';names={'status','payment','tiers','two_factor','password','sessions','stats'};hashes=set()
+        for name in names:
+            path='menu/pass/'+name;ref='chrdk_core:item/'+path
+            item=json.loads((root/'items'/(path+'.json')).read_text());model=json.loads((root/'models/item'/(path+'.json')).read_text())
+            self.assertEqual({'type':'minecraft:model','model':ref},item['model']);self.assertEqual('minecraft:item/generated',model['parent']);self.assertEqual(ref,model['textures']['layer0'])
+            data=(root/'textures/item'/(path+'.png')).read_bytes();self.assertEqual(b'\x89PNG\r\n\x1a\n',data[:8]);self.assertEqual((32,32),struct.unpack('>II',data[16:24]))
+            digest=hashlib.sha256(data).hexdigest();self.assertNotIn(digest,hashes);hashes.add(digest)
+        for folder in ('items','models/item','textures/item'):
+            self.assertEqual(names,{p.stem for p in (root/folder/'menu/pass').iterdir() if p.is_file()})
+        config=(PACK.parents[1]/'src/main/resources/config.yml').read_text(encoding='utf-8')
+        self.assertRegex(config,r'(?m)^core-gui-textures:\s*\n  pass-menu: false\s*$')
+
     def test_core_atlas_models_and_owner_opt_in(self):
         root=PACK/'assets/chrdk_core';names={'unknown','visited','complete','summary','task_progress','task_done','study','prev','next','back','close'};hashes=set()
         for name in names:
