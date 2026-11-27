@@ -4,6 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Меню приватов (1.4.120): сетка карточек с постраничной навигацией и двумя
@@ -66,7 +68,7 @@ public final class ClaimMenuGui implements Listener {
             plugin.messages().send(player, "no-permission");
             return;
         }
-        MenuHolder holder = new MenuHolder();
+        MenuHolder holder = new MenuHolder(player.getUniqueId());
         holder.tab = tab == null ? ClaimMenuModel.Tab.MINE : tab;
         holder.page = page;
         // Заголовок окна не зависит от вкладки: вкладки перерисовываются на месте,
@@ -85,6 +87,7 @@ public final class ClaimMenuGui implements Listener {
         if (inventory == null) {
             return;
         }
+        holder.revision++;
         if (holder.tab == ClaimMenuModel.Tab.FOR_SALE && !plugin.config().menuShowForSale) {
             holder.tab = ClaimMenuModel.Tab.MINE;
         }
@@ -236,29 +239,25 @@ public final class ClaimMenuGui implements Listener {
 
     // -------------------------------------------------------- обработчики --
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void onInventoryClick(InventoryClickEvent event) {
-        if (!(event.getView().getTopInventory().getHolder() instanceof MenuHolder holder)) {
-            return;
-        }
+        if (!(event.getView().getTopInventory().getHolder() instanceof MenuHolder holder)) return;
+        boolean cancelled = event.isCancelled();
         event.setCancelled(true);
-        if (event.getClickedInventory() != event.getView().getTopInventory()) {
-            return;
-        }
-        if (!(event.getWhoClicked() instanceof Player player)) {
-            return;
-        }
-        if (!plugin.service().isAllowed(player)) { player.closeInventory(); return; }
+        if (cancelled || event.getClickedInventory() != event.getView().getTopInventory()
+                || !(event.getWhoClicked() instanceof Player player)
+                || !ownsOpenView(player, holder)) return;
+        if (!allowed(player, holder)) { player.closeInventory(); return; }
         int slot = event.getSlot();
         if (slot == SLOT_CLAN) {
             boolean clanMenu = event.isRightClick();
-            plugin.getServer().getScheduler().runTask(plugin, () -> {
+            defer(player, holder, () -> {
                 player.closeInventory(); player.performCommand(clanMenu ? "clan menu" : "claim clan");
             });
             return;
         }
         if (slot == SLOT_CLOSE) {
-            plugin.getServer().getScheduler().runTask(plugin, () -> player.closeInventory());
+            defer(player, holder, player::closeInventory);
             return;
         }
         boolean left = event.isLeftClick();
@@ -267,10 +266,8 @@ public final class ClaimMenuGui implements Listener {
             ClaimMenuModel.Tab target = slot == SLOT_TAB_MINE
                     ? ClaimMenuModel.Tab.MINE
                     : slot == SLOT_TAB_ACCESS ? ClaimMenuModel.Tab.ACCESSIBLE : ClaimMenuModel.Tab.FOR_SALE;
-            if (target == holder.tab) {
-                return;
-            }
-            plugin.getServer().getScheduler().runTask(plugin, () -> {
+            if (target == holder.tab) return;
+            defer(player, holder, () -> {
                 holder.tab = target;
                 holder.page = 1;
                 render(player, holder);
@@ -278,28 +275,39 @@ public final class ClaimMenuGui implements Listener {
             return;
         }
         if (slot == SLOT_PREV || slot == SLOT_NEXT) {
-            if (!left && !right) {
-                return;
-            }
+            if (!left && !right) return;
             int delta = slot == SLOT_NEXT ? 1 : -1;
-            plugin.getServer().getScheduler().runTask(plugin, () -> {
+            defer(player, holder, () -> {
                 holder.page += delta;
                 render(player, holder);
             });
             return;
         }
         ClaimMenuModel.Entry entry = holder.entries.get(slot);
-        if (entry == null) {
-            return;
-        }
-        if (right) {
-            showInfo(player, entry);
-            return;
-        }
-        if (!left) {
-            return;
-        }
-        plugin.getServer().getScheduler().runTask(plugin, () -> teleport(player, entry));
+        if (entry == null) return;
+        if (right) { showInfo(player, entry); return; }
+        if (!left) return;
+        Claim snapshot = plugin.store().claimAt(entry.world(), entry.x(), entry.z());
+        defer(player, holder, () -> teleport(player, entry, snapshot));
+    }
+
+    private boolean ownsOpenView(Player player, MenuHolder holder) {
+        return player.isOnline() && holder.owner.equals(player.getUniqueId())
+                && player.getOpenInventory().getTopInventory().getHolder() == holder;
+    }
+
+    private boolean allowed(Player player, MenuHolder holder) {
+        return plugin.config().menuEnabled && player.hasPermission("chrdkclaims.menu")
+                && (holder.tab != ClaimMenuModel.Tab.FOR_SALE || plugin.config().menuShowForSale)
+                && plugin.service().isAllowed(player);
+    }
+
+    /** Only the active owner may execute one action from the same rendered revision. */
+    private void defer(Player player, MenuHolder holder, Runnable action) {
+        long revision = holder.revision;
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            if (holder.revision == revision && ownsOpenView(player, holder) && allowed(player, holder)) action.run();
+        });
     }
 
     /** Правый клик: короткая сводка по карточке, меню остаётся открытым. */
@@ -322,10 +330,10 @@ public final class ClaimMenuGui implements Listener {
     }
 
     /** Левый клик: закрываем меню и просим телепорт — приват мог измениться за время показа. */
-    private void teleport(Player player, ClaimMenuModel.Entry entry) {
+    private void teleport(Player player, ClaimMenuModel.Entry entry, Claim snapshot) {
         Claim claim = plugin.store().claimAt(entry.world(), entry.x(), entry.z());
         player.closeInventory();
-        if (claim == null) {
+        if (claim == null || claim != snapshot || claim.owner == null || !claim.owner.equalsIgnoreCase(entry.owner())) {
             plugin.messages().send(player, "menu-stale");
             return;
         }
@@ -342,7 +350,10 @@ public final class ClaimMenuGui implements Listener {
     /** Маркер-держатель меню: вкладка, страница и карточки текущей страницы. */
     private static final class MenuHolder implements InventoryHolder {
 
+        private final UUID owner;
         private Inventory inventory;
+        private long revision;
+        private MenuHolder(UUID owner) { this.owner = owner; }
         private ClaimMenuModel.Tab tab = ClaimMenuModel.Tab.MINE;
         private int page = 1;
         private final Map<Integer, ClaimMenuModel.Entry> entries = new HashMap<>();

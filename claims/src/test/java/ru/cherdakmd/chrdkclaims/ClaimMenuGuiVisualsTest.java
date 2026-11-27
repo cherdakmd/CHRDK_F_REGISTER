@@ -35,7 +35,7 @@ class ClaimMenuGuiVisualsTest {
             when(plugin.messages()).thenReturn(Messages.from(getClass().getResourceAsStream("/messages.yml"), null, Logger.getAnonymousLogger()));
             var service = mock(ClaimsService.class); var store = mock(ClaimStore.class); var teleports = mock(ClaimTeleportService.class);
             when(plugin.service()).thenReturn(service); when(plugin.store()).thenReturn(store); when(plugin.teleports()).thenReturn(teleports);
-            var player = mock(Player.class); when(player.getName()).thenReturn("Player"); when(player.hasPermission("chrdkclaims.menu")).thenReturn(true);
+            var player = mock(Player.class); when(player.getUniqueId()).thenReturn(java.util.UUID.randomUUID()); when(player.isOnline()).thenReturn(true); when(player.getName()).thenReturn("Player"); when(player.hasPermission("chrdkclaims.menu")).thenReturn(true);
             when(service.isAllowed(player)).thenReturn(true); when(service.formatDate(anyLong())).thenReturn("date");
             var world = mock(World.class); when(world.getName()).thenReturn("world"); when(player.getWorld()).thenReturn(world);
             var location = mock(Location.class); when(player.getLocation()).thenReturn(location);
@@ -53,7 +53,7 @@ class ClaimMenuGuiVisualsTest {
             var slots = new HashMap<Integer, ItemStack>(); var holder = new AtomicReference<InventoryHolder>();
             var inventory = mock(Inventory.class); when(inventory.getHolder()).thenAnswer(c -> holder.get());
             doAnswer(c -> { slots.put(c.getArgument(0), c.getArgument(1)); return null; }).when(inventory).setItem(anyInt(), any(ItemStack.class));
-            var view = mock(InventoryView.class); when(view.getTopInventory()).thenReturn(inventory);
+            var view = mock(InventoryView.class); when(view.getTopInventory()).thenReturn(inventory); when(player.getOpenInventory()).thenReturn(view);
             var gui = new ClaimMenuGui(plugin);
             try (var bukkit = mockStatic(Bukkit.class); var items = mockConstruction(ItemStack.class, (item, context) -> when(item.getItemMeta()).thenReturn(mock(ItemMeta.class)))) {
                 bukkit.when(() -> Bukkit.createInventory(any(InventoryHolder.class), eq(54), any(Component.class))).thenAnswer(c -> { holder.set(c.getArgument(0)); return inventory; });
