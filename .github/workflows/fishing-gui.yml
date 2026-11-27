@@ -845,7 +845,7 @@ jobs:
           PYTEST
 
   core-atlas:
-    name: Core atlas and account GUI checks
+    name: Core atlas, account and profile GUI checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
