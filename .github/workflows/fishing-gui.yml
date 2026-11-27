@@ -779,6 +779,8 @@ jobs:
             :guilds:clean :custom-items:prototypeResourcePack :guilds:test \
             --tests ru.cherdakmd.chrdkguilds.GuildPartyVisualsTest \
             --tests ru.cherdakmd.chrdkguilds.GuildPartyGuiVisualsTest \
+            --tests ru.cherdakmd.chrdkguilds.GuildRecruitVisualsTest \
+            --tests ru.cherdakmd.chrdkguilds.GuildRecruitGuiVisualsTest \
             --tests ru.cherdakmd.chrdkguilds.GuildStyleGuiSafetyTest \
             --tests ru.cherdakmd.chrdkguilds.GuildLeaderStyle282Test \
             --tests ru.cherdakmd.chrdkguilds.GuildRecruitment280Test \
@@ -806,6 +808,8 @@ jobs:
           tests = {
               'GuildPartyVisualsTest': {'controlsAreFixedAndForeignAppearanceIsPreserved'},
               'GuildPartyGuiVisualsTest': {'controlsChangeAppearanceButPlayerEntriesAndActionsDoNot'},
+              'GuildRecruitVisualsTest': {'controlsAreDistinctAndCustomItemMetadataIsPreserved'},
+              'GuildRecruitGuiVisualsTest': {'listAndConsentKeepTermsAndOnlyExplicitConfirmationCanJoin'},
               'GuildStyleGuiSafetyTest': {'cancelledForeignAndNonStandardClicksDoNotScheduleAndDeferredRoleIsRechecked','mainMenuStyleOpenRequiresSameWindowAccessAndGuildOnNextTick'},
               'GuildLeaderStyle282Test': set(), 'GuildRecruitment280Test': set(), 'AdventureGroupGuiTest': set(),
           }
@@ -820,8 +824,10 @@ jobs:
           root = Path('custom-items/resource-pack')
           expected = {p.relative_to(root).as_posix(): p.read_bytes() for folder in ('items','models/item','textures/item') for p in (root / 'assets/chrdk_guilds' / folder / 'menu/party').iterdir() if p.is_file()}
           assert len(expected) == 30
+          recruit = {p.relative_to(root).as_posix(): p.read_bytes() for folder in ('items','models/item','textures/item') for p in (root / 'assets/chrdk_guilds' / folder / 'menu/recruit').iterdir() if p.is_file()}
+          assert len(recruit) == 36
           with ZipFile('custom-items/build/resource-packs/chrdk-custom-items-prototype.zip') as pack:
-              for path, data in expected.items(): assert pack.read(path) == data, path
+              for path, data in (expected | recruit).items(): assert pack.read(path) == data, path
               assert any(p.startswith('assets/chrdk_fishing/') for p in pack.namelist())
           print('Guilds targeted GUI checks passed; not a full finance or release gate.')
           PYTEST

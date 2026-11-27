@@ -60,6 +60,7 @@ final class GuildRecruitmentGui implements Listener {
             lore.add(plugin.messages().get(guild.recruitmentOpen()?"recruit-open-hint":"recruit-closed"));
             if(invited)lore.add(plugin.messages().get("recruit-invited"));
             ItemStack entry=item(guild.recruitmentOpen()?Material.LIME_BANNER:Material.GRAY_BANNER,"recruit-entry",lore,"name",guild.name(),"tag",guild.tag());
+            visual(entry,GuildRecruitVisuals.listing(guild.recruitmentOpen(),invited));
             h.inventory.setItem(SLOTS[i],entry);h.targets.put(SLOTS[i],guild.id());
         }
         h.inventory.setItem(45,item(Material.ARROW,"recruit-back",List.of()));
@@ -101,7 +102,9 @@ final class GuildRecruitmentGui implements Listener {
             lore.add(plugin.messages().get("recruit-peace-head"));
         }
         lore.add(plugin.messages().get("recruit-consent-time"));
-        h.inventory.setItem(13,item(Material.WHITE_BANNER,"recruit-entry",lore,"name",terms.name(),"tag",terms.tag()));
+        ItemStack termsItem=item(Material.WHITE_BANNER,"recruit-entry",lore,"name",terms.name(),"tag",terms.tag());
+        visual(termsItem,GuildRecruitVisuals.Control.TERMS);
+        h.inventory.setItem(13,termsItem);
         h.inventory.setItem(30,item(Material.LIME_CONCRETE,"recruit-confirm-button",List.of(plugin.messages().get("recruit-pay-now","cost",terms.fee()))));
         h.inventory.setItem(32,item(Material.RED_CONCRETE,"recruit-cancel",List.of()));
         player.openInventory(h.inventory);
@@ -170,6 +173,13 @@ final class GuildRecruitmentGui implements Listener {
     }
     private ItemStack item(Material type,String key,List<Component> lore,Object... placeholders) {
         ItemStack result=new ItemStack(type);var meta=result.getItemMeta();
-        meta.displayName(plugin.messages().get(key,placeholders));meta.lore(lore);result.setItemMeta(meta);return result;
+        meta.displayName(plugin.messages().get(key,placeholders));meta.lore(lore);
+        GuildRecruitVisuals.apply(meta,GuildRecruitVisuals.button(key),plugin.getConfig().getBoolean("textures.recruit-menu",false));
+        result.setItemMeta(meta);return result;
+    }
+    private void visual(ItemStack item,GuildRecruitVisuals.Control control) {
+        if (!plugin.getConfig().getBoolean("textures.recruit-menu",false)) return;
+        var meta=item.getItemMeta(); GuildRecruitVisuals.apply(meta,control,true);
+        if (meta!=null) item.setItemMeta(meta);
     }
 }
