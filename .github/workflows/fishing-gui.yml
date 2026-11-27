@@ -613,7 +613,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Prepare pinned compile-only API
         run: python3 .github/scripts/prepare_papi.py
-      - name: Test GUI click guards and existing prices
+      - name: Test Generator click guards and existing prices
         shell: bash
         run: |
           set +e
