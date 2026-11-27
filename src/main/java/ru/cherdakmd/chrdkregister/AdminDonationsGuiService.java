@@ -6,6 +6,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Администраторское GUI-меню журнала донатов ({@code /pass donationsgui} или
@@ -59,6 +61,17 @@ public final class AdminDonationsGuiService implements Listener {
     /** Страница записей для отображения. */
     private record Page(List<RegistrationStore.DonationRecord> records, Filter filter,
                         int page, int pages) {
+    }
+
+    /** A row as displayed, not a mutable journal object or an index into a fresh list. */
+    private record DonationSnapshot(long id, String donorName, String source, long amountKopecks,
+                                    String amountRaw, long createdAt, String status, String note,
+                                    String decidedBy, long decidedAt, String grantedTo, int days,
+                                    String suggestedName, long detectedAt) {
+        static DonationSnapshot of(RegistrationStore.DonationRecord r) {
+            return new DonationSnapshot(r.id,r.donorName,r.source,r.amountKopecks,r.amountRaw,r.createdAt,
+                    r.status,r.note,r.decidedBy,r.decidedAt,r.grantedTo,r.days,r.suggestedName,r.detectedAt);
+        }
     }
 
     /** Сколько живёт кэш кошелька DonatePay (не дёргаем /user на каждое открытие меню). */
@@ -118,7 +131,8 @@ public final class AdminDonationsGuiService implements Listener {
             return;
         }
         Page data = page(filter, page);
-        DonationsGuiHolder holder = new DonationsGuiHolder(data.filter(), data.page());
+        DonationsGuiHolder holder = new DonationsGuiHolder(player.getUniqueId(), data.filter(), data.page(),
+                data.records().stream().map(DonationSnapshot::of).toList());
         Inventory inventory = Bukkit.createInventory(holder, INVENTORY_SIZE,
                 messages.get("pass.donationsgui.title",
                         "page", data.page() + 1, "pages", data.pages()));
@@ -401,6 +415,10 @@ public final class AdminDonationsGuiService implements Listener {
         if (!(event.getInventory().getHolder() instanceof DonationsGuiHolder holder)) return;
         event.setCancelled(true);
         if (!(event.getWhoClicked() instanceof Player player)) return;
+        if (!holder.owner().equals(player.getUniqueId()) || !player.hasPermission("chrdkregister.admin")) {
+            player.closeInventory();
+            return;
+        }
         if (!holder.getInventory().equals(event.getClickedInventory())) return;
         int slot = event.getRawSlot();
 
@@ -449,20 +467,25 @@ public final class AdminDonationsGuiService implements Listener {
 
         // запись (9..53) → индекс в странице
         if (slot < 9 || slot >= INVENTORY_SIZE) return;
-        Page data = page(holder.filter(), holder.page());
         int recordIndex = slot - 9;
-        if (recordIndex >= data.records().size()) return;
-        RegistrationStore.DonationRecord record = data.records().get(recordIndex);
-        RegistrationStore.DonationStatus status = RegistrationStore.DonationStatus.parse(record.status);
-        if (status == RegistrationStore.DonationStatus.GRANTED
-                || status == RegistrationStore.DonationStatus.REJECTED) {
-            return; // исторические записи не кликабельны — просто справка
+        if (recordIndex >= holder.records().size()) return;
+        if (event.getClick() != ClickType.LEFT && event.getClick() != ClickType.RIGHT) return;
+        DonationSnapshot shown = holder.records().get(recordIndex);
+        RegistrationStore.DonationStatus shownStatus = RegistrationStore.DonationStatus.parse(shown.status());
+        if (!shownStatus.isPending()) return;
+        // The journal can change while a menu is open. Never approve a different or changed row.
+        List<RegistrationStore.DonationRecord> matching = accessManager.store().listDonations(null, 0).stream()
+                .filter(record -> record.id == shown.id()).toList();
+        if (matching.size() != 1 || !shown.equals(DonationSnapshot.of(matching.getFirst()))) {
+            messages.send(player, "pass.donationsgui.changed");
+            openMenu(player, holder.filter(), holder.page());
+            return;
         }
         player.closeInventory();
-        if (event.getClick().isRightClick()) {
-            player.performCommand("pass reject " + record.id);
+        if (event.getClick() == ClickType.RIGHT) {
+            player.performCommand("pass reject " + shown.id());
         } else {
-            player.performCommand("pass approve " + record.id);
+            player.performCommand("pass approve " + shown.id());
         }
         // после действия меню обновляется само (отчёт уже ушёл в чат командой)
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
@@ -481,14 +504,20 @@ public final class AdminDonationsGuiService implements Listener {
 
     /** Маркержолдер: фильтр и страница текущего вида (для кликов и перерисовки). */
     static final class DonationsGuiHolder implements InventoryHolder {
+        private final UUID owner;
         private final Filter filter;
         private final int page;
+        private final List<DonationSnapshot> records;
         private Inventory inventory;
 
-        DonationsGuiHolder(Filter filter, int page) {
+        DonationsGuiHolder(UUID owner, Filter filter, int page, List<DonationSnapshot> records) {
+            this.owner = owner;
             this.filter = filter;
             this.page = page;
+            this.records = List.copyOf(records);
         }
+        UUID owner() { return owner; }
+        private List<DonationSnapshot> records() { return records; }
 
         void bind(Inventory inventory) {
             this.inventory = inventory;

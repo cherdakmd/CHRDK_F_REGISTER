@@ -667,6 +667,7 @@ messages:
       "item-line-donor": "<dark_gray>донатер: %donor% → %player% · %days% дн.</dark_gray>"
       "item-lore-approve": "<green>ЛКМ — выдать ранг</green>"
       "item-lore-reject": "<red>ПКМ — отклонить</red>"
+      "changed": "<yellow>Запись доната изменилась. Журнал обновлён: проверьте её перед действием.</yellow>"
       "status-name": "<gold><bold>Сервисы и баланс</bold></gold>"
       "status-line": "<gray>%service%: %state% · курсор #%cursor% · ~%latency% мс</gray>"
       "status-off": "<dark_gray>%service% — не настроен или выключен</dark_gray>"

@@ -845,7 +845,7 @@ jobs:
           PYTEST
 
   core-atlas:
-    name: Core atlas, account, profile and label GUI checks
+    name: Core atlas, account, labels and donation safety checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -881,7 +881,9 @@ jobs:
             --tests ru.cherdakmd.chrdkregister.LabelsMenuServiceTest \
             --tests ru.cherdakmd.chrdkregister.LabelsStyleMenuServiceTest \
             --tests ru.cherdakmd.chrdkregister.LabelMenuVisualsTest \
-            --tests ru.cherdakmd.chrdkregister.LabelMenuGuiVisualsTest > core-atlas-build.log 2>&1
+            --tests ru.cherdakmd.chrdkregister.LabelMenuGuiVisualsTest \
+            --tests ru.cherdakmd.chrdkregister.AdminDonationsGuiTest \
+            --tests ru.cherdakmd.chrdkregister.AdminDonationGuiSafetyTest > core-atlas-build.log 2>&1
           result=$?
           tail -n 120 core-atlas-build.log
           if [[ $result -ne 0 ]]; then
@@ -931,6 +933,8 @@ jobs:
               'LabelsStyleMenuServiceTest': set(),
               'LabelMenuVisualsTest': {'allLabelsStatesAndControlsHaveDistinctFixedModels','disabledOrForeignMetadataIsNeverOverwritten'},
               'LabelMenuGuiVisualsTest': {'labelsAndPersonalStylesKeepStatesPaidChecksAndActions'},
+              'AdminDonationsGuiTest': set(),
+              'AdminDonationGuiSafetyTest': {'displayedDonationIsVerifiedAgainstChangesAndCurrentPermissions'},
           }.items():
               suite=ET.parse(Path(f'build/test-results/test/TEST-ru.cherdakmd.chrdkregister.{name}.xml')).getroot()
               assert int(suite.get('tests','0')) and not any(int(suite.get(k,'0')) for k in ('errors','failures','skipped')),name
