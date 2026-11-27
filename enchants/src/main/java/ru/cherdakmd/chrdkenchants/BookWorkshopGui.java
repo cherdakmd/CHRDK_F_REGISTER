@@ -24,7 +24,11 @@ final class BookWorkshopGui implements Listener {
     enum Mode { SCRIBE, CLEANSE, COMBINE }
     private static final int FIRST=10, SECOND=16, START=27, PAGE=18;
     private final EnchantsPlugin plugin;
-    BookWorkshopGui(EnchantsPlugin plugin) { this.plugin=plugin; }
+    private final java.util.function.Function<ItemStack, Map<String,Integer>> validateItem;
+    BookWorkshopGui(EnchantsPlugin plugin) { this(plugin, item -> plugin.items().validated(item)); }
+    BookWorkshopGui(EnchantsPlugin plugin, java.util.function.Function<ItemStack, Map<String,Integer>> validateItem) {
+        this.plugin=plugin; this.validateItem=Objects.requireNonNull(validateItem);
+    }
     private record Choice(String action, String id, int level, String label) { }
     private static final class Holder implements InventoryHolder {
         final UUID owner, world; final long generation; final Mode mode;
@@ -64,7 +68,7 @@ final class BookWorkshopGui implements Listener {
         inv.setItem(13,icon(BookWorkshopVisuals.cost(h.mode),Material.ANVIL,plugin.messages().get(h.mode==Mode.SCRIBE?"slots-scribe-cost":h.mode==Mode.CLEANSE?"hub-cleanse-cost":"hub-combine-cost")));
         if(h.mode!=Mode.COMBINE) {
             ItemStack item=inv.getItem(FIRST); var entries=new ArrayList<Choice>();
-            var data=plugin.items().validated(item);
+            var data=validateItem.apply(item);
             if(item!=null && item.getAmount()==1 && data!=null) {
                 data.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(e->{
                     var def=EnchantRegistry.byId(e.getKey());
