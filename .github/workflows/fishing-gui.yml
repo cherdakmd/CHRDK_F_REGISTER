@@ -771,7 +771,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Prepare pinned compile-only API
         run: python3 .github/scripts/prepare_papi.py
-      - name: Check party rendering, style safety and recruitment rules
+      - name: Check Guilds menus, style safety and recruitment rules
         shell: bash
         run: |
           set +e
@@ -804,7 +804,7 @@ jobs:
           PYTEST
           fi
           exit "$result"
-      - name: Verify Guilds tests and combined party pack
+      - name: Verify Guilds tests and combined menu pack
         run: |
           python3 - <<'PYTEST'
           from pathlib import Path
