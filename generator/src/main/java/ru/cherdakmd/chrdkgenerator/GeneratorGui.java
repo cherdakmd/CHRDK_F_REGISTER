@@ -11,6 +11,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -32,11 +33,13 @@ public final class GeneratorGui implements Listener {
     private static final class Holder implements InventoryHolder {
         private final UUID owner;
         private final int slot;
+        private final UUID core;
         private Inventory inventory;
 
-        private Holder(UUID owner, int slot) {
+        private Holder(UUID owner, int slot, UUID core) {
             this.owner = owner;
             this.slot = slot;
+            this.core = core;
         }
 
         @Override
@@ -105,9 +108,9 @@ public final class GeneratorGui implements Listener {
             return;
         }
         Holder holder = currentHolder(player);
-        boolean fresh = holder == null || holder.slot != slot;
+        boolean fresh = holder == null || holder.slot != slot || !java.util.Objects.equals(holder.core, entry.coreItem());
         if (fresh) {
-            holder = new Holder(player.getUniqueId(), slot);
+            holder = new Holder(player.getUniqueId(), slot, entry.coreItem());
             holder.inventory = Bukkit.createInventory(holder, 54, plugin.messages().get("menu-title"));
         }
         render(player, holder);
@@ -295,23 +298,22 @@ public final class GeneratorGui implements Listener {
 
     /* ---------------------------------- клики ---------------------------------- */
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void onClick(InventoryClickEvent event) {
-        if (!(event.getView().getTopInventory().getHolder() instanceof Holder holder)) {
-            return;
-        }
+        if (!(event.getView().getTopInventory().getHolder() instanceof Holder holder)) return;
+        boolean cancelled = event.isCancelled();
         event.setCancelled(true);
-        if (!(event.getWhoClicked() instanceof Player player)
-                || !holder.owner.equals(player.getUniqueId())) {
-            return;
-        }
+        if (cancelled || !(event.getWhoClicked() instanceof Player player)
+                || !currentView(player, holder)) return;
         int slot = event.getRawSlot();
-        if (slot < 0 || slot >= holder.inventory.getSize()) {
-            return;
-        }
+        if (slot < 0 || slot >= holder.inventory.getSize()) return;
+        if (slot == SLOT_CLOSE) { player.closeInventory(); return; }
+        // Purchases, withdrawal and navigation use only the left click promised by their lore.
+        if (event.getClick() != ClickType.LEFT || !eligible(player, holder)) return;
         switch (slot) {
-            case SLOT_CLOSE -> player.closeInventory();
-            case SLOT_BUNKER -> Bukkit.getScheduler().runTask(plugin, () -> plugin.containerGui().open(player, holder.slot));
+            case SLOT_BUNKER -> Bukkit.getScheduler().runTask(plugin, () -> {
+                if (currentView(player, holder) && eligible(player, holder)) plugin.containerGui().open(player, holder.slot);
+            });
             case SLOT_UPGRADE_TIER -> buy(player, holder, () -> plugin.upgrades().upgradeTier(player, holder.slot));
             case SLOT_SPEED -> buy(player, holder, () -> plugin.upgrades().upgradeModule(player, holder.slot, "speed"));
             case SLOT_CAPACITY -> buy(player, holder, () -> plugin.upgrades().upgradeModule(player, holder.slot, "capacity"));
@@ -320,6 +322,18 @@ public final class GeneratorGui implements Listener {
             case SLOT_TAKE -> take(player, holder);
             default -> { }
         }
+    }
+
+    private boolean currentView(Player player, Holder holder) {
+        return player.isOnline() && holder.owner.equals(player.getUniqueId())
+                && player.getOpenInventory().getTopInventory().getHolder() == holder;
+    }
+
+    private boolean eligible(Player player, Holder holder) {
+        if (!player.hasPermission("chrdkgenerator.use") || plugin.coreApi() == null
+                || !plugin.coreApi().isAuthenticated(player)) return false;
+        var entry = plugin.store().entry(holder.owner, holder.slot);
+        return entry != null && java.util.Objects.equals(holder.core, entry.coreItem());
     }
 
     @EventHandler
