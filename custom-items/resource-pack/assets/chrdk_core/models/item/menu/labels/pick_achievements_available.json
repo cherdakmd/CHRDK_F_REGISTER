@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "chrdk_core:item/menu/labels/pick_achievements_available"
+  }
+}

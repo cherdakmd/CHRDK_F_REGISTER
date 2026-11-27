@@ -132,10 +132,10 @@ public final class LabelsStyleMenuService implements Listener {
             case PRESETS -> paintPresets(player, inventory);
             case PICKER -> paintPicker(player, inventory, holder.place);
         }
-        inventory.setItem(BACK_SLOT, button(Material.ARROW,
-                plugin.messages().get("labels.style-back")));
-        inventory.setItem(CLOSE_SLOT, button(Material.BARRIER,
-                plugin.messages().get("labels.menu-close")));
+        inventory.setItem(BACK_SLOT, visual(button(Material.ARROW,
+                plugin.messages().get("labels.style-back")),LabelMenuVisuals.control(LabelMenuVisuals.Control.BACK)));
+        inventory.setItem(CLOSE_SLOT, visual(button(Material.BARRIER,
+                plugin.messages().get("labels.menu-close")),LabelMenuVisuals.control(LabelMenuVisuals.Control.CLOSE)));
     }
 
     /* ---------------------------------- цвета ---------------------------------- */
@@ -152,11 +152,11 @@ public final class LabelsStyleMenuService implements Listener {
             inventory.setItem(CONTENT_SLOTS[index],
                     colorTile(player, color, allowed, active, level, owned));
         }
-        inventory.setItem(INFO_SLOT, button(Material.PAPER,
+        inventory.setItem(INFO_SLOT, visual(button(Material.PAPER,
                 plugin.messages().get("labels.color-info",
-                        "level", String.valueOf(level))));
-        inventory.setItem(RESET_SLOT, button(Material.MILK_BUCKET,
-                plugin.messages().get("labels.color-reset")));
+                        "level", String.valueOf(level))),LabelMenuVisuals.control(LabelMenuVisuals.Control.INFO)));
+        inventory.setItem(RESET_SLOT, visual(button(Material.MILK_BUCKET,
+                plugin.messages().get("labels.color-reset")),LabelMenuVisuals.control(LabelMenuVisuals.Control.RESET)));
     }
 
     private ItemStack colorTile(Player player, LabelPalette.Color color, boolean allowed,
@@ -211,8 +211,8 @@ public final class LabelsStyleMenuService implements Listener {
                     plugin.messages().get("labels.order-preview", "nick", Messages.trusted(samplePreview(player)))));
             info.setItemMeta(meta);
         }
-        inventory.setItem(INFO_SLOT, info);
-        inventory.setItem(RESET_SLOT, button(Material.MILK_BUCKET, plugin.messages().get("labels.order-reset")));
+        inventory.setItem(INFO_SLOT, visual(info,LabelMenuVisuals.control(LabelMenuVisuals.Control.INFO)));
+        inventory.setItem(RESET_SLOT, visual(button(Material.MILK_BUCKET, plugin.messages().get("labels.order-reset")),LabelMenuVisuals.control(LabelMenuVisuals.Control.RESET)));
     }
 
     private void paintPicker(Player player, Inventory inventory, int place) {
@@ -238,7 +238,8 @@ public final class LabelsStyleMenuService implements Listener {
                 meta.lore(lore);
                 tile.setItemMeta(meta);
             }
-            inventory.setItem(CONTENT_SLOTS[i], tile);
+            var state = label.id().equals(chosen) ? LabelMenuVisuals.Pick.SELECTED : obtained ? LabelMenuVisuals.Pick.AVAILABLE : LabelMenuVisuals.Pick.UNAVAILABLE;
+            inventory.setItem(CONTENT_SLOTS[i], visual(tile,LabelMenuVisuals.picker(label,state)));
         }
         ItemStack info = button(Material.PAPER, plugin.messages().get("labels.slot-title", "number", place + 1));
         ItemMeta meta = info.getItemMeta();
@@ -247,8 +248,8 @@ public final class LabelsStyleMenuService implements Listener {
                     plugin.messages().get("labels.slot-no-fallback")));
             info.setItemMeta(meta);
         }
-        inventory.setItem(INFO_SLOT, info);
-        inventory.setItem(RESET_SLOT, button(Material.BARRIER, plugin.messages().get("labels.slot-clear")));
+        inventory.setItem(INFO_SLOT, visual(info,LabelMenuVisuals.control(LabelMenuVisuals.Control.INFO)));
+        inventory.setItem(RESET_SLOT, visual(button(Material.BARRIER, plugin.messages().get("labels.slot-clear")),LabelMenuVisuals.control(LabelMenuVisuals.Control.RESET)));
     }
 
     /** Текущий ник целиком: по нему видно, как перестановка меняет строку. */
@@ -270,11 +271,11 @@ public final class LabelsStyleMenuService implements Listener {
             LabelPreferences.Snapshot snapshot = presets.get(slot);
             inventory.setItem(CONTENT_SLOTS[index], presetTile(slot, index + 1, snapshot));
         }
-        inventory.setItem(INFO_SLOT, button(Material.PAPER,
+        inventory.setItem(INFO_SLOT, visual(button(Material.PAPER,
                 plugin.messages().get("labels.preset-info",
-                        "slots", String.valueOf(slots))));
-        inventory.setItem(RESET_SLOT, button(Material.MILK_BUCKET,
-                plugin.messages().get("labels.menu-reset")));
+                        "slots", String.valueOf(slots))),LabelMenuVisuals.control(LabelMenuVisuals.Control.INFO)));
+        inventory.setItem(RESET_SLOT, visual(button(Material.MILK_BUCKET,
+                plugin.messages().get("labels.menu-reset")),LabelMenuVisuals.control(LabelMenuVisuals.Control.RESET)));
     }
 
     private ItemStack presetTile(String slot, int number, LabelPreferences.Snapshot snapshot) {
@@ -302,6 +303,7 @@ public final class LabelsStyleMenuService implements Listener {
             lore.add(plugin.messages().get("labels.preset-delete-hint"));
         }
         meta.lore(lore);
+        LabelMenuVisuals.apply(meta,LabelMenuVisuals.preset(snapshot!=null),visualsEnabled());
         item.setItemMeta(meta);
         return item;
     }
@@ -523,6 +525,14 @@ public final class LabelsStyleMenuService implements Listener {
             case "pearl" -> Material.PRISMARINE_CRYSTALS;
             default -> Material.NAME_TAG;
         };
+    }
+
+    private boolean visualsEnabled() { return plugin.getConfig().getBoolean("core-gui-textures.labels-menu",false); }
+    private ItemStack visual(ItemStack item,org.bukkit.NamespacedKey model) {
+        if (!visualsEnabled()) return item;
+        var meta=item.getItemMeta(); LabelMenuVisuals.apply(meta,model,true);
+        if (meta!=null) item.setItemMeta(meta);
+        return item;
     }
 
     private ItemStack button(Material material, Component name) {

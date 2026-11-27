@@ -78,6 +78,23 @@ class ResourcePackTest(unittest.TestCase):
         config = (PACK.parents[1] / 'battlepass/src/main/resources/config.yml').read_text(encoding='utf-8')
         self.assertRegex(config, r'(?m)^  mission-menu: false\s*$')
 
+    def test_core_label_models_and_opt_in(self):
+        root=PACK/'assets/chrdk_core'
+        labels=('rank','classes','guilds','quests','achievements','vk','header','expeditions')
+        names={'preview','color','order','presets','enable','disable','profile','reset','cosmetics','close','back','info','place_locked','place_empty','place_assigned','preset_empty','preset_filled'}
+        names.update(f'label_{label}_{state}' for label in labels for state in ('on','off','unavailable','waiting','unassigned'))
+        names.update(f'pick_{label}_{state}' for label in labels if label!='header' for state in ('available','selected','unavailable'))
+        self.assertEqual(78,len(names));hashes=set()
+        for name in names:
+            path='menu/labels/'+name;ref='chrdk_core:item/'+path
+            item=json.loads((root/'items'/(path+'.json')).read_text());model=json.loads((root/'models/item'/(path+'.json')).read_text())
+            self.assertEqual({'type':'minecraft:model','model':ref},item['model']);self.assertEqual('minecraft:item/generated',model['parent']);self.assertEqual(ref,model['textures']['layer0'])
+            data=(root/'textures/item'/(path+'.png')).read_bytes();self.assertEqual(b'\x89PNG\r\n\x1a\n',data[:8]);self.assertEqual((32,32),struct.unpack('>II',data[16:24]))
+            digest=hashlib.sha256(data).hexdigest();self.assertNotIn(digest,hashes,name);hashes.add(digest)
+        for folder in ('items','models/item','textures/item'):
+            self.assertEqual(names,{p.stem for p in (root/folder/'menu/labels').iterdir() if p.is_file()})
+        config=(PACK.parents[1]/'src/main/resources/config.yml').read_text(encoding='utf-8');self.assertRegex(config,r'(?m)^  labels-menu: false\s*$')
+
     def test_core_keypad_control_models_are_fixed_and_opt_in(self):
         root=PACK/'assets/chrdk_core';names={'backspace','clear','page','cancel','confirm','progress'};hashes=set()
         for name in names:

@@ -116,7 +116,7 @@ public final class LabelsMenuService implements Listener {
         }
         LabelStyleService.Selection selection = selectionOf(plugin, player.getName());
         inventory.setItem(HEAD_SLOT, head(player, selection));
-        inventory.setItem(PREVIEW_SLOT, preview(player));
+        inventory.setItem(PREVIEW_SLOT, visual(preview(player),LabelMenuVisuals.control(LabelMenuVisuals.Control.PREVIEW)));
         for (int i = 0; i < PLACE_SLOTS.length; i++) inventory.setItem(PLACE_SLOTS[i], placeTile(player, i));
         // Шапка TAB — отдельный переключатель, не место возле ника.
         List<LabelPreferences.Label> tiles = List.of(LabelPreferences.Label.values());
@@ -124,24 +124,17 @@ public final class LabelsMenuService implements Listener {
             inventory.setItem(ENTRY_SLOTS[index], tile(player, tiles.get(index), selection));
         }
         if (styleMenu != null) {
-            inventory.setItem(COLORS_SLOT, colorButton(player));
-            inventory.setItem(ORDER_SLOT, button(Material.ARROW,
-                    plugin.messages().get("labels.menu-order")));
-            inventory.setItem(PRESETS_SLOT, button(Material.BOOK,
-                    plugin.messages().get("labels.menu-presets")));
+            inventory.setItem(COLORS_SLOT, visual(colorButton(player),LabelMenuVisuals.control(LabelMenuVisuals.Control.COLOR)));
+            inventory.setItem(ORDER_SLOT, visual(button(Material.ARROW, plugin.messages().get("labels.menu-order")),LabelMenuVisuals.control(LabelMenuVisuals.Control.ORDER)));
+            inventory.setItem(PRESETS_SLOT, visual(button(Material.BOOK, plugin.messages().get("labels.menu-presets")),LabelMenuVisuals.control(LabelMenuVisuals.Control.PRESETS)));
         }
-        inventory.setItem(ENABLE_ALL_SLOT, button(Material.LIME_DYE,
-                plugin.messages().get("labels.menu-enable-all")));
-        inventory.setItem(DISABLE_ALL_SLOT, button(Material.GRAY_DYE,
-                plugin.messages().get("labels.menu-disable-all")));
-        inventory.setItem(PROFILE_SLOT, button(Material.PLAYER_HEAD,
-                plugin.messages().get("labels.menu-profile")));
-        inventory.setItem(RESET_SLOT, button(Material.MILK_BUCKET,
-                plugin.messages().get("labels.menu-reset")));
+        inventory.setItem(ENABLE_ALL_SLOT, visual(button(Material.LIME_DYE, plugin.messages().get("labels.menu-enable-all")),LabelMenuVisuals.control(LabelMenuVisuals.Control.ENABLE)));
+        inventory.setItem(DISABLE_ALL_SLOT, visual(button(Material.GRAY_DYE, plugin.messages().get("labels.menu-disable-all")),LabelMenuVisuals.control(LabelMenuVisuals.Control.DISABLE)));
+        inventory.setItem(PROFILE_SLOT, visual(button(Material.PLAYER_HEAD, plugin.messages().get("labels.menu-profile")),LabelMenuVisuals.control(LabelMenuVisuals.Control.PROFILE)));
+        inventory.setItem(RESET_SLOT, visual(button(Material.MILK_BUCKET, plugin.messages().get("labels.menu-reset")),LabelMenuVisuals.control(LabelMenuVisuals.Control.RESET)));
         if (Bukkit.getPluginManager().isPluginEnabled("CHRDK_Cosmetics"))
-            inventory.setItem(COSMETICS_SLOT, button(Material.FIREWORK_ROCKET, plugin.messages().get("labels.menu-cosmetics")));
-        inventory.setItem(CLOSE_SLOT, button(Material.BARRIER,
-                plugin.messages().get("labels.menu-close")));
+            inventory.setItem(COSMETICS_SLOT, visual(button(Material.FIREWORK_ROCKET, plugin.messages().get("labels.menu-cosmetics")),LabelMenuVisuals.control(LabelMenuVisuals.Control.COSMETICS)));
+        inventory.setItem(CLOSE_SLOT, visual(button(Material.BARRIER, plugin.messages().get("labels.menu-close")),LabelMenuVisuals.control(LabelMenuVisuals.Control.CLOSE)));
     }
 
     /** Кнопка «Цвет»: подпись показывает выбранный цвет или «как у ранга». */
@@ -229,6 +222,7 @@ public final class LabelsMenuService implements Listener {
                 stateOf(plugin.messages(), preferences, player.getName(), label, selection)));
         lore.add(plugin.messages().get("labels.menu-lore-click"));
         meta.lore(lore);
+        LabelMenuVisuals.apply(meta,LabelMenuVisuals.label(label,LabelMenuVisuals.state(visible,label,selection)),visualsEnabled());
         item.setItemMeta(meta);
         return item;
     }
@@ -283,6 +277,8 @@ public final class LabelsMenuService implements Listener {
         }
         lore.add(plugin.messages().get("labels.slot-no-fallback"));
         meta.lore(lore);
+        var state = !open ? LabelMenuVisuals.Place.LOCKED : chosen == null ? LabelMenuVisuals.Place.EMPTY : LabelMenuVisuals.Place.ASSIGNED;
+        LabelMenuVisuals.apply(meta,LabelMenuVisuals.place(state),visualsEnabled());
         item.setItemMeta(meta);
         return item;
     }
@@ -339,6 +335,14 @@ public final class LabelsMenuService implements Listener {
             case EXPEDITIONS -> Material.COMPASS;
             case HEADER -> Material.PAPER;
         };
+    }
+
+    private boolean visualsEnabled() { return plugin.getConfig().getBoolean("core-gui-textures.labels-menu",false); }
+    private ItemStack visual(ItemStack item,org.bukkit.NamespacedKey model) {
+        if (!visualsEnabled()) return item;
+        var meta=item.getItemMeta(); LabelMenuVisuals.apply(meta,model,true);
+        if (meta!=null) item.setItemMeta(meta);
+        return item;
     }
 
     private ItemStack button(Material material, Component name) {

@@ -1081,6 +1081,7 @@ core-gui-textures:
   rank-menu: false
   profile-menu: false
   keypad-controls: false
+  labels-menu: false
 
 server-menu:
   enabled: true
