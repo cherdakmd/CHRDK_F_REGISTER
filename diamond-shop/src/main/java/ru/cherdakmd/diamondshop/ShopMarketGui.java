@@ -31,8 +31,12 @@ public final class ShopMarketGui implements Listener {
     private static final int[] HOME_SECTIONS = {10,11,12,13,14,15,16};
 
     private final DiamondShopPlugin plugin;
+    private final java.util.function.BiFunction<String,Material,Material> materials;
 
-    public ShopMarketGui(DiamondShopPlugin plugin) { this.plugin = plugin; }
+    public ShopMarketGui(DiamondShopPlugin plugin) { this(plugin, ShopMarketGui::material); }
+    ShopMarketGui(DiamondShopPlugin plugin, java.util.function.BiFunction<String,Material,Material> materials) {
+        this.plugin=plugin; this.materials=java.util.Objects.requireNonNull(materials);
+    }
 
     /** /shop всегда открывает новую главную. */
     public void open(Player player, int ignoredPage) {
@@ -109,14 +113,14 @@ public final class ShopMarketGui implements Listener {
         lore.add(Component.empty());
         lore.add(plugin.messages().get("market.section.count","count",count));
         lore.add(plugin.messages().get("market.section.open"));
-        ItemStack icon=button(material(category.icon(),Material.CHEST),category.messageKey(),lore);
+        ItemStack icon=button(materials.apply(category.icon(),Material.CHEST),category.messageKey(),lore);
         return decorate(icon,ShopMarketVisuals.category(category,false));
     }
 
     private ItemStack tabIcon(ShopCategory category,boolean selected,int count) {
         List<Component> lore=new ArrayList<>(); lore.add(plugin.messages().get("trading.gui.tab-lore","count",count));
         if(selected) lore.add(plugin.messages().get("trading.gui.tab-current"));
-        ItemStack icon=button(material(category.icon(),Material.PAPER),category.messageKey(),lore);
+        ItemStack icon=button(materials.apply(category.icon(),Material.PAPER),category.messageKey(),lore);
         if(selected) { var meta=icon.getItemMeta(); if(meta!=null) {meta.setEnchantmentGlintOverride(true);icon.setItemMeta(meta);} }
         return decorate(icon,ShopMarketVisuals.category(category,selected));
     }
@@ -124,7 +128,7 @@ public final class ShopMarketGui implements Listener {
     private ItemStack itemCard(ShopConfig.ShopItem item,Offer offer) {
         var spec=item.spec(); ItemStack icon;
         if(spec!=null) { icon=ShopBooks.create(spec,ShopBookInfo.displayName(spec)); if(icon==null)icon=new ItemStack(Material.BARRIER); }
-        else icon=new ItemStack(material(item.material(),Material.BARRIER));
+        else icon=new ItemStack(materials.apply(item.material(),Material.BARRIER));
         var meta=icon.getItemMeta(); if(meta==null)return icon;
         ShopService service=plugin.shopService(); long now=System.currentTimeMillis();
         long stock=service.store().stockOf(item,now,service.config().stockRecoveryPerHour());
