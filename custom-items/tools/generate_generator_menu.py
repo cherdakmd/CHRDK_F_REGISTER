@@ -52,7 +52,7 @@ def art(name):
         elif module == 'capacity': d.rectangle((11,11,20,21), fill=light, outline=ink); d.line((11,15,20,15), fill=ink)
         else: d.polygon([(16,9),(18,14),(23,15),(19,18),(20,22),(16,20),(12,22),(13,18),(9,15),(14,14)], fill=light, outline=ink)
         d.rectangle((22,21,26,26), fill='#e4c06b' if state=='max' else '#80c99a', outline=ink)
-        d.line((23,23,25,23),fill=light); 
+        d.line((23,23,25,23),fill=light);
         if state=='available': d.line((24,22,24,24),fill=light)
     elif name.startswith('upgrade_tier_'):
         d.polygon([(16,7),(23,15),(19,15),(19,23),(13,23),(13,15),(9,15)], fill='#99d395', outline=ink)

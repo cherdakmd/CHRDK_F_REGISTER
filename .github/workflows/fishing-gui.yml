@@ -618,7 +618,10 @@ jobs:
         run: |
           set +e
           ./gradlew --no-daemon --no-configuration-cache -Pchrdk.papiJar=build/dependencies/PlaceholderAPI-2.12.3.jar \
-            :generator:clean :generator:test \
+            :generator:clean :custom-items:prototypeResourcePack :generator:test \
+            --tests ru.cherdakmd.chrdkgenerator.GeneratorMenuVisualsTest \
+            --tests ru.cherdakmd.chrdkgenerator.GeneratorGuiVisualsTest \
+            --tests ru.cherdakmd.chrdkgenerator.GeneratorContainerGuiVisualsTest \
             --tests ru.cherdakmd.chrdkgenerator.GeneratorGuiSafetyTest \
             --tests ru.cherdakmd.chrdkgenerator.GeneratorUpgradesTest \
             --tests ru.cherdakmd.chrdkgenerator.GeneratorFuelGuiTest > generator-gui-build.log 2>&1
@@ -646,6 +649,9 @@ jobs:
           from pathlib import Path
           import xml.etree.ElementTree as ET
           tests = {
+              'GeneratorMenuVisualsTest': {'fixedModelsCoverStatesTiersModulesAndButtons', 'disabledAndForeignMetadataAreNotOverwritten'},
+              'GeneratorGuiVisualsTest': {'mainMenuUsesOnlyVirtualModelsAndPreservesStatusAndLevel'},
+              'GeneratorContainerGuiVisualsTest': {'controlsNeverRestyleContainerContentsOrChangeTransfers'},
               'GeneratorGuiSafetyTest': {'rejectedClicksCannotInitiateUpgradesOrTakeAndLeftClickStillRoutes', 'deferredBunkerRechecksOwnerViewPermissionAuthenticationAndCore'},
               'GeneratorUpgradesTest': {'tierStepsMatchDesignExamples', 'moduleCostsSplitResourcesAndMoney', 'paymentsUseWhitelistedSourceWithBankOnlyBurn'},
               'GeneratorFuelGuiTest': {'displaysActualFurnaceTimeIncludingFractions', 'splitViewsStillUseJournalledTransferAndBurnModel'},
@@ -657,5 +663,12 @@ jobs:
                   raise SystemExit(f'{name} missing, failed or skipped')
               found = {case.get('name', '').removesuffix('()') for case in suite.findall('testcase')}
               if not required.issubset(found): raise SystemExit(f'{name} missing {sorted(required - found)}')
-          print('Targeted GUI safety checks passed; this is not a full finance or release gate.')
+          from zipfile import ZipFile
+          root = Path('custom-items/resource-pack')
+          expected = {p.relative_to(root).as_posix(): p.read_bytes() for folder in ('items', 'models/item', 'textures/item') for p in (root / 'assets/chrdk_generator' / folder / 'menu').iterdir()}
+          assert len(expected) == 132
+          with ZipFile('custom-items/build/resource-packs/chrdk-custom-items-prototype.zip') as pack:
+              for path, data in expected.items(): assert pack.read(path) == data, path
+              assert any(p.startswith('assets/chrdk_fishing/') for p in pack.namelist())
+          print('Generator GUI and combined pack checks passed; not a full finance or release gate.')
           PYTEST
