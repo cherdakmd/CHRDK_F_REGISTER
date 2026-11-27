@@ -80,6 +80,10 @@ class ClaimMenuGuiVisualsTest {
                 check(slots.get(11), ClaimMenuVisuals.Icon.ENTRY_ACCESS.model(), enabled);
                 when(service.isAllowed(player)).thenReturn(false); gui.onInventoryClick(click(view, inventory, player, 10, true, false));
                 assertNull(scheduled.get()); verify(player, atLeastOnce()).closeInventory();
+                when(service.ownedSorted("Player")).thenReturn(List.of()); when(store.all()).thenReturn(List.of());
+                gui.open(player, ClaimMenuModel.Tab.MINE, 1); check(slots.get(22), ClaimMenuVisuals.Icon.EMPTY_MINE.model(), enabled);
+                gui.open(player, ClaimMenuModel.Tab.FOR_SALE, 1); check(slots.get(22), ClaimMenuVisuals.Icon.EMPTY_SALE.model(), enabled);
+                gui.open(player, ClaimMenuModel.Tab.ACCESSIBLE, 1); check(slots.get(22), ClaimMenuVisuals.Icon.EMPTY_MINE.model(), enabled);
                 verify(player, never()).getInventory();
                 for (var item : items.constructed()) verify(item.getItemMeta(), never()).getPersistentDataContainer();
             }
