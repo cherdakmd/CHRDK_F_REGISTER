@@ -981,3 +981,66 @@ jobs:
               assert any(p.startswith('assets/chrdk_fishing/') for p in pack.namelist())
           print('Core atlas GUI checks passed; client and full release checks remain.')
           PYTEST
+
+  enchants-hub-gui:
+    name: Enchants hub GUI visual checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Prepare pinned compile-only API
+        run: python3 .github/scripts/prepare_papi.py
+      - name: Test virtual hub icons and existing navigation contracts
+        shell: bash
+        run: |
+          set +e
+          ./gradlew --no-daemon --no-configuration-cache -Pchrdk.papiJar=build/dependencies/PlaceholderAPI-2.12.3.jar \
+            :custom-items:prototypeResourcePack :enchants:test \
+            --tests ru.cherdakmd.chrdkenchants.EnchantHubVisualsTest \
+            --tests ru.cherdakmd.chrdkenchants.EnchantHubGuiVisualsTest \
+            --tests ru.cherdakmd.chrdkenchants.EnchantHubTest \
+            --tests ru.cherdakmd.chrdkenchants.EnchantHubMessagesTest \
+            --tests ru.cherdakmd.chrdkenchants.BookWorkshopGuiTest > enchants-hub-build.log 2>&1
+          result=$?
+          tail -n 120 enchants-hub-build.log
+          if [[ $result -ne 0 ]]; then
+            while IFS= read -r line; do escaped=${line//'%'/'%25'}; echo "::error::$escaped"; done < <(grep -E 'error:|FAILED|FAILURE:|What went wrong|Execution failed|Caused by:|Could not|tests completed|AssertionFailedError' enchants-hub-build.log | tail -n 35)
+            python3 - <<'PYTEST'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          for path in Path('enchants/build/test-results/test').glob('TEST-*.xml'):
+              for case in ET.parse(path).getroot().findall('testcase'):
+                  for failure in case.findall('failure') + case.findall('error'):
+                      text=(failure.text or '')[:12000].replace('%','%25').replace('\n','%0A').replace('\r','%0D')
+                      print(f"::error title={case.get('name')}::{text}")
+          PYTEST
+          fi
+          exit "$result"
+      - name: Verify selected tests and combined resource pack
+        run: |
+          python3 - <<'PYTEST'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import xml.etree.ElementTree as ET
+          tests={
+              'EnchantHubVisualsTest': {'modelsAreUniqueAndForeignMetadataIsPreserved'},
+              'EnchantHubGuiVisualsTest': {'screensKeepRealItemSnapshotsAndUseOptInModels'},
+              'EnchantHubTest': set(), 'EnchantHubMessagesTest': set(), 'BookWorkshopGuiTest': set(),
+          }
+          for name,required in tests.items():
+              suite=ET.parse(Path(f'enchants/build/test-results/test/TEST-ru.cherdakmd.chrdkenchants.{name}.xml')).getroot()
+              if not int(suite.get('tests','0')) or any(int(suite.get(k,'0')) for k in ('errors','failures','skipped')): raise SystemExit(f'{name} failed or skipped')
+              found={case.get('name','').removesuffix('()') for case in suite.findall('testcase')}
+              if not required.issubset(found): raise SystemExit(f'{name} missing {sorted(required-found)}')
+          root=Path('custom-items/resource-pack')
+          expected={p.relative_to(root).as_posix():p.read_bytes() for folder in ('items','models/item','textures/item') for p in (root/'assets/chrdk_enchants'/folder/'menu/hub').iterdir() if p.is_file()}
+          assert len(expected)==93
+          with ZipFile('custom-items/build/resource-packs/chrdk-custom-items-prototype.zip') as pack:
+              for path,data in expected.items(): assert pack.read(path)==data,path
+              assert any(p.startswith('assets/chrdk_fishing/') for p in pack.namelist())
+          print('Enchants hub checks passed; remaining GUIs, live client and release gate not checked.')
+          PYTEST

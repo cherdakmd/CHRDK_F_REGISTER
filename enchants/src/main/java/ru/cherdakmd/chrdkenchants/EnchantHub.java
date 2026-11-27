@@ -68,34 +68,36 @@ final class EnchantHub implements Listener {
             case CONFIRM_CLEANSE -> "hub-cleanse-confirm-title"; case CONFIRM_COMBINE -> "hub-combine-confirm-title"; }));
         holder.inventory=inv;
         if(screen==Screen.MAIN) {
-            for(Button button:MAIN)inv.setItem(button.slot(),icon(button.icon(),plugin.messages().get("hub-"+button.key()),
+            for(Button button:MAIN)inv.setItem(button.slot(),icon(button.key(),button.icon(),plugin.messages().get("hub-"+button.key()),
                     plugin.messages().get("hub-"+button.key()+"-lore")));
-            if(player.hasPermission("chrdkenchants.admin"))inv.setItem(34,icon(Material.COMMAND_BLOCK,
+            if(player.hasPermission("chrdkenchants.admin"))inv.setItem(34,icon("admin",Material.COMMAND_BLOCK,
                     plugin.messages().get("hub-admin"),plugin.messages().get("hub-admin-lore")));
         } else if(screen==Screen.GUARD) {
             GUARD.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(e -> inv.setItem(e.getKey(),
-                    icon(Material.SHIELD,e.getValue().equals("auto")?plugin.messages().get("guard-auto")
+                    icon("guard-"+e.getValue(),Material.SHIELD,e.getValue().equals("auto")?plugin.messages().get("guard-auto")
                             :plugin.messages().get("en."+e.getValue()+".name"),plugin.messages().get("hub-guard-choice"))));
         } else if(screen==Screen.CLEANSE) {
             choices.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(e->inv.setItem(e.getKey(),
-                    icon(Material.SOUL_LANTERN,plugin.messages().get("en."+e.getValue()+".name"),plugin.messages().get("hub-cleanse-choice"))));
+                    icon("cleanse-choice",Material.SOUL_LANTERN,plugin.messages().get("en."+e.getValue()+".name"),plugin.messages().get("hub-cleanse-choice"))));
         } else {
             if(screen==Screen.CONFIRM_CLEANSE) {
                 String id=choices.get(0);
-                inv.setItem(22,icon(Material.SOUL_LANTERN,plugin.messages().get("en."+id+".name"),plugin.messages().get("hub-cleanse-effect")));
+                inv.setItem(22,icon("cleanse-effect",Material.SOUL_LANTERN,plugin.messages().get("en."+id+".name"),plugin.messages().get("hub-cleanse-effect")));
             } else {
                 inv.setItem(20,holder.hand.clone());
                 inv.setItem(24,holder.off.clone());
-                inv.setItem(22,icon(Material.ENCHANTING_TABLE,plugin.messages().get("hub-combine-effect"),plugin.messages().get("hub-combine-requirements")));
+                inv.setItem(22,icon("combine-effect",Material.ENCHANTING_TABLE,plugin.messages().get("hub-combine-effect"),plugin.messages().get("hub-combine-requirements")));
             }
-            inv.setItem(30,icon(Material.LIME_DYE,plugin.messages().get("hub-confirm"),
+            inv.setItem(30,icon("confirm",Material.LIME_DYE,plugin.messages().get("hub-confirm"),
                     plugin.messages().get(screen==Screen.CONFIRM_CLEANSE?"hub-cleanse-cost":"hub-combine-cost")));
         }
-        inv.setItem(49,icon(Material.BARRIER,plugin.messages().get(screen==Screen.MAIN?"hub-close":"hub-back")));
+        inv.setItem(49,icon(screen==Screen.MAIN?"close":"back",Material.BARRIER,plugin.messages().get(screen==Screen.MAIN?"hub-close":"hub-back")));
         player.openInventory(inv);
     }
-    private ItemStack icon(Material type,Component title,Component... lore) {
-        ItemStack stack=new ItemStack(type);var meta=stack.getItemMeta();meta.displayName(title);meta.lore(List.of(lore));stack.setItemMeta(meta);return stack;
+    private ItemStack icon(String visual,Material type,Component title,Component... lore) {
+        ItemStack stack=new ItemStack(type);var meta=stack.getItemMeta();meta.displayName(title);meta.lore(List.of(lore));
+        EnchantHubVisuals.apply(meta,visual,plugin.getConfig().getBoolean("textures.hub-menu",false));
+        stack.setItemMeta(meta);return stack;
     }
     private boolean stateValid(Player player,Holder holder,boolean hand) {
         return eligible(player) && holder.owner.equals(player.getUniqueId()) && holder.world.equals(player.getWorld().getUID()) && holder.generation==plugin.sourceGeneration()
