@@ -38,13 +38,14 @@ public final class ShopMarketGui implements Listener {
     public void open(Player player, int ignoredPage) {
         if (!plugin.shopService().ready(player)) { plugin.messages().send(player,"trading.unavailable"); return; }
         ShopService service=plugin.shopService();
-        Holder holder=new Holder(null,0,service,true);
+        Holder holder=new Holder(player.getUniqueId(),null,0,service,true);
         Inventory inventory=Bukkit.createInventory(holder,ShopLayout.SIZE,plugin.messages().get("market.home.title"));
         holder.bind(inventory);
         fill(inventory);
         List<ShopCategory> sections=ShopCatalog.tabs(service.config().items()).stream().filter(c->c!=ShopCategory.ALL).toList();
         for(int i=0;i<sections.size()&&i<HOME_SECTIONS.length;i++) {
             ShopCategory category=sections.get(i);
+            holder.sections.put(HOME_SECTIONS[i],category);
             inventory.setItem(HOME_SECTIONS[i],sectionCard(category,ShopCatalog.filter(service.config().items(),category).size()));
         }
         inventory.setItem(HOME_ALL,button(Material.CHEST,"market.home.all",List.of(plugin.messages().get("market.home.all-lore"))));
@@ -81,11 +82,11 @@ public final class ShopMarketGui implements Listener {
         ShopCategory current=category==null||!tabs.contains(category)?ShopCategory.ALL:category;
         List<ShopConfig.ShopItem> view=ShopCatalog.filter(all,current);
         int pages=ShopLayout.pages(view.size()),safePage=ShopLayout.clampPage(page,view.size());
-        Holder holder=new Holder(current,safePage,service,false);
+        Holder holder=new Holder(player.getUniqueId(),current,safePage,service,false);
         Component title=plugin.messages().get("market.category.title","category",plugin.messages().mini(current.messageKey()),"page",safePage+1,"pages",pages);
         Inventory inventory=Bukkit.createInventory(holder,ShopLayout.SIZE,title); holder.bind(inventory);
         for(int i=0;i<tabs.size()&&i<ShopLayout.MAX_TABS;i++) {
-            ShopCategory tab=tabs.get(i); inventory.setItem(i,tabIcon(tab,tab==current,ShopCatalog.filter(all,tab).size()));
+            ShopCategory tab=tabs.get(i); holder.sections.put(i,tab); inventory.setItem(i,tabIcon(tab,tab==current,ShopCatalog.filter(all,tab).size()));
         }
         inventory.setItem(ShopLayout.SLOT_CLOSE,button(Material.BARRIER,"trading.gui.close-name",List.of()));
         int from=safePage*ShopLayout.ITEMS_PER_PAGE;
@@ -160,25 +161,29 @@ public final class ShopMarketGui implements Listener {
     @EventHandler(ignoreCancelled=true)
     public void onInventoryClick(InventoryClickEvent event) {
         if(!(event.getInventory().getHolder() instanceof Holder holder))return;
+        if(event.isCancelled()) return;
         if(event.getClickedInventory()!=event.getView().getTopInventory()) {
             if(event.getClick().isShiftClick()||event.getClick()==ClickType.DOUBLE_CLICK||event.getClick()==ClickType.NUMBER_KEY)event.setCancelled(true);
             return;
         }
         event.setCancelled(true); if(!(event.getWhoClicked() instanceof Player player))return;
+        if(!holder.owner.equals(player.getUniqueId()) || !plugin.isEnabled() || !player.isOnline()
+                || player.getOpenInventory().getTopInventory().getHolder()!=holder || holder.service!=plugin.shopService()
+                || !holder.service.ready(player) || !ordinaryClick(event.getClick())) return;
         int slot=event.getRawSlot();
         if(slot==ShopLayout.SLOT_CLOSE){player.closeInventory();return;}
         if(slot==ShopAdminGui.SHOP_EDIT_SLOT){if(player.hasPermission("chrdkshop.admin")&&plugin.shopAdminGui()!=null)plugin.shopAdminGui().open(player,0);return;}
         if(holder.home) {
             if(slot==HOME_GIFT){claimGift(player);return;}
-            List<ShopCategory> sections=ShopCatalog.tabs(plugin.shopService().config().items()).stream().filter(c->c!=ShopCategory.ALL).toList();
-            for(int i=0;i<sections.size()&&i<HOME_SECTIONS.length;i++)if(slot==HOME_SECTIONS[i]){reopen(player,sections.get(i),0);return;}
+            ShopCategory section=holder.sections.get(slot);
+            if(section!=null){reopen(player,section,0);return;}
             if(slot==HOME_ALL){reopen(player,ShopCategory.ALL,0);return;}
             if(slot==HOME_SELL_ALL){player.closeInventory();player.performCommand("shop sellall");return;}
             return;
         }
         if(ShopLayout.isTabSlot(slot)) {
-            List<ShopCategory> tabs=ShopCatalog.tabs(plugin.shopService().config().items());
-            if(slot<tabs.size())reopen(player,tabs.get(slot),0);return;
+            ShopCategory tab=holder.sections.get(slot);
+            if(tab!=null)reopen(player,tab,0);return;
         }
         if(slot==ShopLayout.SLOT_PREV){if(holder.page>0)reopen(player,holder.category,holder.page-1);else reopenHome(player);return;}
         if(slot==ShopLayout.SLOT_NEXT){reopen(player,holder.category,holder.page+1);return;}
@@ -189,8 +194,8 @@ public final class ShopMarketGui implements Listener {
                 ||offer.ask()!=service.askPrice(item)||offer.bid()!=service.bidPrice(item)) {
             plugin.messages().send(player,"trading.price-changed");reopen(player,holder.category,holder.page);return;
         }
-        ClickType click=event.getClick();if(click==ClickType.NUMBER_KEY||click==ClickType.DROP||click==ClickType.CONTROL_DROP||(!click.isLeftClick()&&!click.isRightClick()))return;
-        boolean buy=click.isLeftClick();if(!buy&&!item.sellEnabled()){plugin.messages().send(player,"quantity.buy-only");return;}
+        ClickType click=event.getClick();
+        boolean buy=click==ClickType.LEFT;if(!buy&&!item.sellEnabled()){plugin.messages().send(player,"quantity.buy-only");return;}
         Inventory expected=player.getOpenInventory().getTopInventory();
         plugin.getServer().getScheduler().runTask(plugin,()->{
             if(plugin.isEnabled()&&player.isOnline()&&sameInventory(player,expected))
@@ -233,11 +238,14 @@ public final class ShopMarketGui implements Listener {
     private void reopenHome(Player player) {Inventory expected=player.getOpenInventory().getTopInventory();plugin.getServer().getScheduler().runTask(plugin,()->{if(plugin.isEnabled()&&player.isOnline()&&sameInventory(player,expected))open(player,0);});}
     public void closeAll() {for(var player:Bukkit.getOnlinePlayers())if(player.getOpenInventory().getTopInventory().getHolder() instanceof Holder||ShopQuantityGui.owns(player.getOpenInventory().getTopInventory()))player.closeInventory();}
 
+    static boolean ordinaryClick(ClickType click) { return click==ClickType.LEFT || click==ClickType.RIGHT; }
     private record Offer(String id,int batch,long ask,long bid) { }
     private static final class Holder implements InventoryHolder {
+        private final java.util.UUID owner;
         private final ShopCategory category; private final int page; private final ShopService service; private final boolean home;
+        private final Map<Integer,ShopCategory> sections=new java.util.HashMap<>();
         private final Map<Integer,Offer> offers=new java.util.HashMap<>(); private Inventory inventory;
-        private Holder(ShopCategory category,int page,ShopService service,boolean home){this.category=category;this.page=page;this.service=service;this.home=home;}
+        private Holder(java.util.UUID owner,ShopCategory category,int page,ShopService service,boolean home){this.owner=owner;this.category=category;this.page=page;this.service=service;this.home=home;}
         private void bind(Inventory inventory){this.inventory=inventory;}
         @Override public @NotNull Inventory getInventory(){return inventory;}
     }

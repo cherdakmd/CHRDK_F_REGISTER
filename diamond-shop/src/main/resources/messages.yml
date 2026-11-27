@@ -233,6 +233,7 @@ messages:
       "player-only": "<yellow>Редактор каталога доступен только игроку.</yellow>"
       "invalid": "<red>Значение вышло за допустимые границы; поле не изменено.</red>"
       "saved": "<green>Правки сохранены в shop-overrides.json; config.yml не изменён. Каталог перечитан.</green>"
+      "stale": "<yellow>Каталог или права изменились. Черновик не сохранён; откройте редактор заново.</yellow>"
       "removed": "<yellow>%material% помечен к удалению. Нажмите «Сохранить», чтобы записать.</yellow>"
       "restored": "<yellow>%material%: черновик правок сброшен. Нажмите «Сохранить», чтобы записать.</yellow>"
       "price-down-small": "<red>Цена −25% → %price% алм.</red>"

@@ -34,7 +34,8 @@ class ShopMarketGuiTest {
     @Test void homeSectionsUseHolderSafeSectionNavigationWithoutBooks() throws Exception {
         String gui=Files.readString(Path.of("src/main/java/ru/cherdakmd/diamondshop/ShopMarketGui.java"));
         assertTrue(gui.contains("HOME_SECTIONS = {10,11,12,13,14,15,16}"));
-        assertTrue(gui.contains("if(slot==HOME_SECTIONS[i]){reopen(player,sections.get(i),0);return;}"));
+        assertTrue(gui.contains("holder.sections.put(HOME_SECTIONS[i],category)"));
+        assertTrue(gui.contains("ShopCategory section=holder.sections.get(slot)"));
         // Книги чар сняты с продажи (2.0.5): их разделов в каталоге нет.
         for (ShopCategory category : ShopCategory.values()) {
             assertFalse(category.id().startsWith("books-"), category.id());

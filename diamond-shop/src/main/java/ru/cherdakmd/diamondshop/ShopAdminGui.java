@@ -7,6 +7,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -79,16 +80,29 @@ public final class ShopAdminGui implements Listener {
 
     /* ------------------------------- список товаров ------------------------------- */
 
+    /** Immutable baseline: a stale draft must not overwrite newer catalog overrides. */
+    private record EditSession(java.util.UUID owner, ShopService service,
+                               Map<String,ShopOverrides.Change> changes, java.util.Set<String> removed) {
+        boolean current(Player player, DiamondShopPlugin plugin) {
+            ShopOverrides live=plugin.overrides();
+            return player!=null && owner.equals(player.getUniqueId()) && plugin.isEnabled()
+                    && player.isOnline() && service==plugin.shopService() && live!=null
+                    && changes.equals(live.changes()) && removed.equals(live.removed());
+        }
+    }
+
     /** Holder списка: страница, слот → материал и общий черновик правок. */
     private static final class ListHolder implements InventoryHolder {
         private final int page;
         private final Map<Integer, String> slots = new HashMap<>();
         private final ShopOverrides draft;
+        private final EditSession session;
         private Inventory inventory;
 
-        ListHolder(int page, ShopOverrides draft) {
+        ListHolder(int page, ShopOverrides draft, EditSession session) {
             this.page = page;
             this.draft = draft;
+            this.session = session;
         }
 
         void bind(Inventory inventory) {
@@ -106,13 +120,15 @@ public final class ShopAdminGui implements Listener {
         private final String material;
         private final ShopOverrides draft;
         private final int listPage;
+        private final EditSession session;
         private boolean confirmRemove;
         private Inventory inventory;
 
-        EditorHolder(String material, ShopOverrides draft, int listPage) {
+        EditorHolder(String material, ShopOverrides draft, int listPage, EditSession session) {
             this.material = material;
             this.draft = draft;
             this.listPage = listPage;
+            this.session = session;
         }
 
         void bind(Inventory inventory) {
@@ -127,18 +143,22 @@ public final class ShopAdminGui implements Listener {
 
     /** Открыть список со свежим черновиком (обычный вход по команде). */
     public void open(Player player, int page) {
-        open(player, page, plugin.overrides().copy());
+        if (!allowed(player)) { msg().send(player,"tools.permission"); return; }
+        ShopOverrides live=plugin.overrides();
+        EditSession session=new EditSession(player.getUniqueId(),plugin.shopService(),live.changes(),live.removed());
+        open(player, page, live.copy(), session);
     }
 
-    private void open(Player player, int page, ShopOverrides draft) {
+    private void open(Player player, int page, ShopOverrides draft, EditSession session) {
         if (!allowed(player)) {
             msg().send(player, "tools.permission");
             return;
         }
+        if (!session.current(player,plugin)) { stale(player); return; }
         List<ShopConfig.ShopItem> all = catalog(draft);
         int pages = Math.max(1, (all.size() + PER_PAGE - 1) / PER_PAGE);
         int safePage = Math.clamp(page, 0, pages - 1);
-        ListHolder holder = new ListHolder(safePage, draft);
+        ListHolder holder = new ListHolder(safePage, draft, session);
         Inventory inventory = Bukkit.createInventory(holder, SIZE,
                 msg().get("admin.gui.title", "page", safePage + 1, "pages", pages));
         holder.bind(inventory);
@@ -211,18 +231,19 @@ public final class ShopAdminGui implements Listener {
 
     /* ------------------------------- карточка товара ------------------------------- */
 
-    private void openEditor(Player player, String material, ShopOverrides draft, int listPage) {
+    private void openEditor(Player player, String material, ShopOverrides draft, int listPage, EditSession session) {
         if (!allowed(player)) {
             msg().send(player, "tools.permission");
             return;
         }
+        if (!session.current(player,plugin)) { stale(player); return; }
         ShopConfig.ShopItem item = effective(draft, material);
         if (item == null) {
             msg().send(player, "trading.unknown-item", "material", material.toLowerCase(Locale.ROOT));
-            open(player, listPage, draft);
+            open(player, listPage, draft, session);
             return;
         }
-        EditorHolder holder = new EditorHolder(material, draft, listPage);
+        EditorHolder holder = new EditorHolder(material, draft, listPage, session);
         Inventory inventory = Bukkit.createInventory(holder, EDITOR_SIZE,
                 msg().get("admin.gui.editor-title", "material", material.toLowerCase(Locale.ROOT)));
         holder.bind(inventory);
@@ -306,13 +327,16 @@ public final class ShopAdminGui implements Listener {
         if (!(holder instanceof ListHolder) && !(holder instanceof EditorHolder)) {
             return;
         }
+        if (event.isCancelled()) return;
         event.setCancelled(true);
         if (!(event.getWhoClicked() instanceof Player player) || !allowed(player)) {
             return;
         }
-        if (event.getClickedInventory() != event.getView().getTopInventory()) {
-            return;
-        }
+        if (event.getClickedInventory() != event.getView().getTopInventory()
+                || player.getOpenInventory().getTopInventory().getHolder()!=holder
+                || (event.getClick()!=ClickType.LEFT && event.getClick()!=ClickType.RIGHT)) return;
+        EditSession session = holder instanceof ListHolder list ? list.session : ((EditorHolder) holder).session;
+        if (!session.current(player,plugin)) { stale(player); return; }
         int slot = event.getRawSlot();
         if (holder instanceof ListHolder list) {
             handleList(player, list, slot);
@@ -335,16 +359,16 @@ public final class ShopAdminGui implements Listener {
             return;
         }
         if (slot == LIST_SAVE) {
-            commit(player, holder.draft, holder.page);
+            commit(player, holder.draft, holder.page, holder.session);
             return;
         }
         if (slot == LIST_PREV || slot == LIST_NEXT) {
-            open(player, holder.page + (slot == LIST_NEXT ? 1 : -1), holder.draft);
+            open(player, holder.page + (slot == LIST_NEXT ? 1 : -1), holder.draft, holder.session);
             return;
         }
         String material = holder.slots.get(slot);
         if (material != null) {
-            openEditor(player, material, holder.draft, holder.page);
+            openEditor(player, material, holder.draft, holder.page, holder.session);
         }
     }
 
@@ -352,7 +376,7 @@ public final class ShopAdminGui implements Listener {
         String material = holder.material;
         ShopConfig.ShopItem item = effective(holder.draft, material);
         if (item == null) {
-            open(player, holder.listPage, holder.draft);
+            open(player, holder.listPage, holder.draft, holder.session);
             return;
         }
         String value;
@@ -386,12 +410,12 @@ public final class ShopAdminGui implements Listener {
             return;
         }
         switch (slot) {
-            case ED_BACK -> open(player, holder.listPage, holder.draft);
-            case ED_SAVE -> commit(player, holder.draft, holder.listPage);
+            case ED_BACK -> open(player, holder.listPage, holder.draft, holder.session);
+            case ED_SAVE -> commit(player, holder.draft, holder.listPage, holder.session);
             case ED_RESTORE -> {
                 holder.draft.restore(material);
                 msg().send(player, "admin.gui.restored", "material", material.toLowerCase(Locale.ROOT));
-                open(player, holder.listPage, holder.draft);
+                open(player, holder.listPage, holder.draft, holder.session);
             }
             case ED_REMOVE -> {
                 if (!holder.confirmRemove) {
@@ -400,7 +424,7 @@ public final class ShopAdminGui implements Listener {
                 } else {
                     holder.draft.remove(material);
                     msg().send(player, "admin.gui.removed", "material", material.toLowerCase(Locale.ROOT));
-                    open(player, holder.listPage, holder.draft);
+                    open(player, holder.listPage, holder.draft, holder.session);
                 }
             }
             default -> { }
@@ -410,14 +434,20 @@ public final class ShopAdminGui implements Listener {
     private void refresh(Player player, EditorHolder holder) {
         ShopConfig.ShopItem item = effective(holder.draft, holder.material);
         if (item == null) {
-            open(player, holder.listPage, holder.draft);
+            open(player, holder.listPage, holder.draft, holder.session);
             return;
         }
         render(holder.getInventory(), holder, item);
         player.updateInventory();
     }
 
-    private void commit(Player player, ShopOverrides draft, int page) {
+    private void stale(Player player) {
+        msg().send(player,"admin.gui.stale");
+        player.closeInventory();
+    }
+
+    private void commit(Player player, ShopOverrides draft, int page, EditSession session) {
+        if (!allowed(player) || !session.current(player,plugin)) { stale(player); return; }
         plugin.applyOverrides(draft);
         msg().send(player, "admin.gui.saved");
         // applyOverrides перечитывает конфиг и закрывает наши окна — открываем список заново.

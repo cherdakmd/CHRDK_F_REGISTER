@@ -78,9 +78,10 @@ public final class ShopQuantityGui implements Listener {
     @EventHandler(ignoreCancelled=true)
     public void click(InventoryClickEvent event){
         if(!(event.getView().getTopInventory().getHolder() instanceof Holder h))return;
+        if(event.isCancelled())return;
         event.setCancelled(true);
         if(!(event.getWhoClicked() instanceof Player player)||!h.session.editable(player.getUniqueId())
-            ||event.getClickedInventory()!=h.inventory||(!event.getClick().isLeftClick()&&!event.getClick().isRightClick()))return;
+            ||event.getClickedInventory()!=h.inventory||!ShopMarketGui.ordinaryClick(event.getClick()))return;
         if(!current(player,h)){plugin.messages().send(player,"trading.price-changed");navigate(player,h);return;}
         int slot=event.getRawSlot();
         if(slot==45){navigate(player,h);return;}
