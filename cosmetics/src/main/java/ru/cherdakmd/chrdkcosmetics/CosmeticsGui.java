@@ -4,6 +4,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -85,8 +86,9 @@ final class CosmeticsGui implements Listener {
             var lore = plugin.messages().getList("gui-trail-lore", "state", plugin.messages().mini(!valid ? "gui-unavailable"
                     : !open ? (chosen ? "gui-suspended" : "gui-access-no") : chosen ? "gui-selected" : "gui-access-yes"),
                     "rank", def.rank(), "product", def.product().isBlank() ? "—" : def.product(), "id", def.id());
-            holder.inventory.setItem(slot, tile(open && valid ? icon(def.id()) : Material.GRAY_DYE,
-                    plugin.messages().markup(def.displayName()), lore, chosen && open && valid));
+            holder.inventory.setItem(slot, visual(tile(open && valid ? icon(def.id()) : Material.GRAY_DYE,
+                    plugin.messages().markup(def.displayName()), lore, chosen && open && valid),
+                    CosmeticsMenuVisuals.trail(def, open, chosen, valid)));
             holder.actions.put(slot, new Action(Kind.SELECT, def.id()));
         }
         if (defs.isEmpty()) put(holder, 22, Material.PAPER, "gui-empty", null);
@@ -102,8 +104,20 @@ final class CosmeticsGui implements Listener {
             case "gold" -> Material.GOLD_NUGGET; case "aurora" -> Material.NETHER_STAR; default -> Material.FIREWORK_STAR; };
     }
     private void put(Holder holder, int slot, Material icon, String key, Action action, Object... values) {
-        holder.inventory.setItem(slot, tile(icon, plugin.messages().get(key, values), plugin.messages().has(key + "-lore") ? plugin.messages().getList(key + "-lore", values) : List.of(), false));
+        ItemStack virtual = tile(icon, plugin.messages().get(key, values), plugin.messages().has(key + "-lore") ? plugin.messages().getList(key + "-lore", values) : List.of(), false);
+        var visual = CosmeticsMenuVisuals.button(key);
+        holder.inventory.setItem(slot, visual == null ? virtual : visual(virtual, visual.model()));
         if (action != null) holder.actions.put(slot, action);
+    }
+    private ItemStack visual(ItemStack virtual, NamespacedKey model) {
+        if (model != null && plugin.getConfig().getBoolean("textures.menu", false)) {
+            var meta = virtual.getItemMeta();
+            if (meta != null) {
+                CosmeticsMenuVisuals.apply(meta, model, true);
+                virtual.setItemMeta(meta);
+            }
+        }
+        return virtual;
     }
     private ItemStack tile(Material material, Component name, List<Component> lore, boolean glow) {
         ItemStack item = new ItemStack(material); var meta = item.getItemMeta();

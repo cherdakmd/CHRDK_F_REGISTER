@@ -56,6 +56,30 @@ class ResourcePackTest(unittest.TestCase):
             self.assertEqual(len(ids), len(set(ids)))
             self.assertEqual(files, set(ids))
 
+    def test_cosmetics_gui_stock_states_and_controls(self):
+        root = PACK / 'assets/chrdk_cosmetics'
+        trails = ('flame', 'hearts', 'notes', 'sparkles', 'magic', 'gold', 'aurora')
+        states = ('available', 'selected', 'locked', 'suspended', 'unavailable')
+        controls = ('summary', 'trails', 'join', 'colors', 'labels', 'slots', 'presets', 'hat', 'pets',
+                    'menu', 'close', 'empty', 'prev', 'next', 'back', 'clear', 'trails_info')
+        paths = {f'menu/trail/{name}/{state}' for name in trails for state in states}
+        paths.update(f'menu/{name}' for name in controls)
+        self.assertEqual(52, len(paths)); hashes = set()
+        for path in paths:
+            reference = 'chrdk_cosmetics:item/' + path
+            item = json.loads((root / 'items' / (path + '.json')).read_text())
+            model = json.loads((root / 'models/item' / (path + '.json')).read_text())
+            self.assertEqual({'type': 'minecraft:model', 'model': reference}, item['model'])
+            self.assertEqual('minecraft:item/generated', model['parent']); self.assertEqual(reference, model['textures']['layer0'])
+            data = (root / 'textures/item' / (path + '.png')).read_bytes()
+            self.assertEqual(b'\x89PNG\r\n\x1a\n', data[:8]); self.assertEqual((32, 32), struct.unpack('>II', data[16:24]))
+            digest = hashlib.sha256(data).hexdigest(); self.assertNotIn(digest, hashes); hashes.add(digest)
+        for folder, suffix in [('items', '.json'), ('models/item', '.json'), ('textures/item', '.png')]:
+            actual = {str(p.relative_to(root / folder).with_suffix('')) for p in (root / folder / 'menu').rglob('*' + suffix)}
+            self.assertEqual(paths, actual)
+        source = (PACK.parents[1] / 'cosmetics/src/main/resources/config.yml').read_text(encoding='utf-8')
+        self.assertRegex(source, r'(?m)^textures:\s*\n  menu: false\s*$')
+
     def test_daily_calendar_models_cover_every_state(self):
         root = PACK / 'assets/chrdk_daily'
         names = ('header', 'claimed', 'claimed_today', 'today', 'locked')
