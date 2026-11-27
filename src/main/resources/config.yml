@@ -1079,6 +1079,7 @@ core-gui-textures:
   pass-menu: false
   donate-menu: false
   rank-menu: false
+  profile-menu: false
 
 server-menu:
   enabled: true

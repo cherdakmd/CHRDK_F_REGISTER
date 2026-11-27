@@ -607,6 +607,7 @@ public final class ProfileService implements Listener {
         }
         meta.displayName(plugin.messages().get("labels.profile-button"));
         meta.lore(List.of(plugin.messages().get("labels.profile-button-lore")));
+        ProfileMenuVisuals.apply(meta,ProfileMenuVisuals.Button.LABELS,plugin.getConfig().getBoolean("core-gui-textures.profile-menu",false));
         item.setItemMeta(meta);
         return item;
     }
@@ -621,6 +622,7 @@ public final class ProfileService implements Listener {
         if (loreKey != null) {
             meta.lore(List.of(plugin.messages().get(loreKey)));
         }
+        ProfileMenuVisuals.apply(meta,ProfileMenuVisuals.button(nameKey),plugin.getConfig().getBoolean("core-gui-textures.profile-menu",false));
         item.setItemMeta(meta);
         return item;
     }
