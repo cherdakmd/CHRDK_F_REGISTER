@@ -56,6 +56,25 @@ class ResourcePackTest(unittest.TestCase):
             self.assertEqual(len(ids), len(set(ids)))
             self.assertEqual(files, set(ids))
 
+    def test_catalog_navigation_icons_are_complete_and_distinct(self):
+        root = PACK / 'assets/chrdk_items'
+        names = {f'{category}_{state}' for category in ('all', 'weapon', 'armor', 'tool', 'consumable') for state in ('normal', 'selected')}
+        names.update(('prev', 'next', 'close'))
+        self.assertEqual(13, len(names)); hashes = set()
+        for name in names:
+            path = 'menu/catalog/' + name; ref = 'chrdk_items:item/' + path
+            item = json.loads((root / 'items' / (path + '.json')).read_text())
+            model = json.loads((root / 'models/item' / (path + '.json')).read_text())
+            self.assertEqual({'type': 'minecraft:model', 'model': ref}, item['model'])
+            self.assertEqual('minecraft:item/generated', model['parent']); self.assertEqual(ref, model['textures']['layer0'])
+            image = (root / 'textures/item' / (path + '.png')).read_bytes()
+            self.assertEqual(b'\x89PNG\r\n\x1a\n', image[:8]); self.assertEqual((32, 32), struct.unpack('>II', image[16:24]))
+            digest = hashlib.sha256(image).hexdigest(); self.assertNotIn(digest, hashes); hashes.add(digest)
+        for folder in ('items', 'models/item', 'textures/item'):
+            self.assertEqual(names, {p.stem for p in (root / folder / 'menu/catalog').iterdir()})
+        config = (PACK.parents[1] / 'custom-items/src/main/resources/config.yml').read_text(encoding='utf-8')
+        self.assertRegex(config, r'(?m)^textures:\s*\n  catalog-menu: false\s*$')
+
     def test_cosmetics_gui_stock_states_and_controls(self):
         root = PACK / 'assets/chrdk_cosmetics'
         trails = ('flame', 'hearts', 'notes', 'sparkles', 'magic', 'gold', 'aurora')

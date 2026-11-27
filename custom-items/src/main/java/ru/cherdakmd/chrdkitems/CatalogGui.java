@@ -40,11 +40,11 @@ final class CatalogGui implements Listener {
         if (page < 1 || page > data.pages()) return;
         var holder = new Holder(player.getUniqueId(), category, page);
         holder.inventory = Bukkit.createInventory(holder, SIZE, Component.text("Каталог предметов · " + page + "/" + data.pages()));
-        holder.inventory.setItem(9, icon(Material.NETHER_STAR, "Все предметы", "Посмотреть все категории"));
-        holder.inventory.setItem(10, icon(Material.IRON_SWORD, "Оружие", "Выбрать категорию"));
-        holder.inventory.setItem(11, icon(Material.IRON_CHESTPLATE, "Броня", "Выбрать категорию"));
-        holder.inventory.setItem(12, icon(Material.IRON_PICKAXE, "Инструменты", "Выбрать категорию"));
-        holder.inventory.setItem(13, icon(Material.PAPER, "Расходники", "Выбрать категорию"));
+        holder.inventory.setItem(9, icon(Material.NETHER_STAR, "Все предметы", "Посмотреть все категории", CatalogMenuVisuals.Control.ALL, category == null));
+        holder.inventory.setItem(10, icon(Material.IRON_SWORD, "Оружие", "Выбрать категорию", CatalogMenuVisuals.Control.WEAPON, category == ItemCatalog.Category.WEAPON));
+        holder.inventory.setItem(11, icon(Material.IRON_CHESTPLATE, "Броня", "Выбрать категорию", CatalogMenuVisuals.Control.ARMOR, category == ItemCatalog.Category.ARMOR));
+        holder.inventory.setItem(12, icon(Material.IRON_PICKAXE, "Инструменты", "Выбрать категорию", CatalogMenuVisuals.Control.TOOL, category == ItemCatalog.Category.TOOL));
+        holder.inventory.setItem(13, icon(Material.PAPER, "Расходники", "Выбрать категорию", CatalogMenuVisuals.Control.CONSUMABLE, category == ItemCatalog.Category.CONSUMABLE));
         for (int i=0; i<data.items().size(); i++) {
             var def=data.items().get(i);
             var display = new ItemStack(def.material());
@@ -63,18 +63,20 @@ final class CatalogGui implements Listener {
             if (model != null && (BuiltinItems.isBuiltin(def) || plugin.getConfig().getBoolean("prototype-textures",false))) meta.setCustomModelData(model);
             display.setItemMeta(meta); holder.inventory.setItem(itemSlot(i),display);
         }
-        if(page>1) holder.inventory.setItem(45,icon(Material.ARROW,"Назад","Предыдущая страница"));
-        if(page<data.pages()) holder.inventory.setItem(53,icon(Material.ARROW,"Далее","Следующая страница"));
-        holder.inventory.setItem(49,icon(Material.BARRIER,"Закрыть","Каталог не выдаёт предметы"));
+        if(page>1) holder.inventory.setItem(45,icon(Material.ARROW,"Назад","Предыдущая страница", CatalogMenuVisuals.Control.PREV, false));
+        if(page<data.pages()) holder.inventory.setItem(53,icon(Material.ARROW,"Далее","Следующая страница", CatalogMenuVisuals.Control.NEXT, false));
+        holder.inventory.setItem(49,icon(Material.BARRIER,"Закрыть","Каталог не выдаёт предметы", CatalogMenuVisuals.Control.CLOSE, false));
         player.openInventory(holder.inventory);
     }
     void closeAll() {
         for (Player player : Bukkit.getOnlinePlayers())
             if (player.getOpenInventory().getTopInventory().getHolder() instanceof Holder) player.closeInventory();
     }
-    private static ItemStack icon(Material material, String name, String line) {
+    private ItemStack icon(Material material, String name, String line, CatalogMenuVisuals.Control control, boolean selected) {
         var item = new ItemStack(material); var meta=item.getItemMeta();
-        meta.displayName(Component.text(name)); meta.lore(java.util.List.of(Component.text(line))); item.setItemMeta(meta); return item;
+        meta.displayName(Component.text(name)); meta.lore(java.util.List.of(Component.text(line)));
+        CatalogMenuVisuals.apply(meta, control.model(selected), plugin.getConfig().getBoolean("textures.catalog-menu", false));
+        item.setItemMeta(meta); return item;
     }
     @EventHandler(priority=EventPriority.HIGHEST, ignoreCancelled=false)
     public void click(InventoryClickEvent event) {
