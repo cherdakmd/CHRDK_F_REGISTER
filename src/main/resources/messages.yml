@@ -1596,6 +1596,7 @@ messages:
     "input-moderator": "<gold>Ник нового модератора:</gold> <gray>напишите одним сообщением в чат или «отмена».</gray>"
     "input-filter": "<gold>Фильтр журнала:</gold> <gray>ник, автор или действие; напишите в чат или «отмена».</gray>"
     "input-cancelled": "<gray>Ввод отменён, панель открыта снова.</gray>"
+    "panel-changed": "<yellow>Данные изменились. Панель обновлена; проверьте запись перед действием.</yellow>"
     "button-players": "<gold>Игроки</gold>"
     "button-moderators": "<aqua>Модераторы</aqua>"
     "button-journal": "<yellow>Журнал действий</yellow>"

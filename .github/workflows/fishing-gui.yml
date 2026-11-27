@@ -888,7 +888,8 @@ jobs:
             --tests ru.cherdakmd.chrdkregister.AdminDonationGuiVisualsTest \
             --tests ru.cherdakmd.chrdkregister.HonorGuiSafetyTest \
             --tests ru.cherdakmd.chrdkregister.HonorMenuVisualsTest \
-            --tests ru.cherdakmd.chrdkregister.HonorMenuGuiVisualsTest > core-atlas-build.log 2>&1
+            --tests ru.cherdakmd.chrdkregister.HonorMenuGuiVisualsTest \
+            --tests ru.cherdakmd.chrdkregister.AdminPanelGuiSafetyTest > core-atlas-build.log 2>&1
           result=$?
           tail -n 120 core-atlas-build.log
           if [[ $result -ne 0 ]]; then
@@ -945,6 +946,7 @@ jobs:
               'HonorGuiSafetyTest': {'actionsUseDisplayedRecordsAndRevalidateChatInputs'},
               'HonorMenuVisualsTest': {'uniqueModelsAndForeignMetadataAreRespected'},
               'HonorMenuGuiVisualsTest': {'pagesUseOptInModelsWithoutReplacingHeadsOrChangingActions'},
+              'AdminPanelGuiSafetyTest': {'listActionsStayBoundToDisplayedRecords', 'togglesAndMutePresetsRejectStaleState'},
           }.items():
               suite=ET.parse(Path(f'build/test-results/test/TEST-ru.cherdakmd.chrdkregister.{name}.xml')).getroot()
               assert int(suite.get('tests','0')) and not any(int(suite.get(k,'0')) for k in ('errors','failures','skipped')),name

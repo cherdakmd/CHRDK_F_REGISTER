@@ -8,6 +8,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -95,6 +96,11 @@ public final class AdminPanelGui implements Listener {
         private String target = "";
         private int index;
         private String filter = "";
+        private final Map<Integer, Object> displayed = new java.util.HashMap<>();
+        private List<Long> displayedPresets = List.of();
+        private boolean displayedBanned;
+        private BanSnapshot displayedBan;
+        private ModeratorSnapshot displayedRole;
         private Inventory inventory;
 
         Holder(UUID owner, Page page, String target) {
@@ -111,6 +117,19 @@ public final class AdminPanelGui implements Listener {
 
         @Override
         public @NotNull Inventory getInventory() { return inventory; }
+    }
+
+    private record WarnSnapshot(long id, String target, String issuer, String reason, long at, String removedBy, long removedAt) {
+        static WarnSnapshot of(ModerationLedger.Warn w) { return new WarnSnapshot(w.id,w.target,w.issuer,w.reason,w.at,w.removedBy,w.removedAt); }
+    }
+    private record ModeratorSnapshot(String name, String addedBy, long addedAt) {
+        static ModeratorSnapshot of(ModerationLedger.Moderator m) { return new ModeratorSnapshot(m.name,m.addedBy,m.addedAt); }
+    }
+    private record BanSnapshot(String target, String reason, String by, long at) {
+        static BanSnapshot of(ModerationLedger.Ban b) { return b == null ? null : new BanSnapshot(b.target,b.reason,b.by,b.at); }
+    }
+    private record MuteSnapshot(String player, String reason, String author, long createdAt, long until) {
+        static MuteSnapshot of(RegistrationStore.MuteEntry m) { return new MuteSnapshot(m.playerName,m.reason,m.author,m.createdAt,m.until); }
     }
 
     private record Pending(Input type, Page page, String target, int index, String filter, long minutes) {
@@ -180,6 +199,7 @@ public final class AdminPanelGui implements Listener {
     private void paint(Player viewer, Holder holder) {
         Messages messages = plugin.messages();
         Inventory inventory = holder.inventory;
+        holder.displayed.clear(); holder.displayedPresets = List.of();
         for (int slot = 0; slot < SIZE; slot++) inventory.setItem(slot, filler());
 
         inventory.setItem(SLOT_PLAYERS, icon(Material.PLAYER_HEAD,
@@ -246,6 +266,7 @@ public final class AdminPanelGui implements Listener {
         List<String> visible = filter(players, holder.filter);
         paintSlots(viewer, holder, visible.size(), (slot, offset) -> {
             String name = visible.get(offset);
+            holder.displayed.put(slot,name);
             boolean online = Bukkit.getPlayerExact(name) != null;
             int warns = service.warnCount(name);
             return icon(Material.PLAYER_HEAD,
@@ -273,6 +294,10 @@ public final class AdminPanelGui implements Listener {
 
         boolean banned = service.isBanned(name);
         boolean staff = service.ledger().isModerator(name);
+        holder.displayedBanned = banned;
+        holder.displayedBan = BanSnapshot.of(service.ledger().banOf(name));
+        holder.displayedRole = service.ledger().moderators().stream().filter(m -> m.name.equalsIgnoreCase(name))
+                .map(ModeratorSnapshot::of).findFirst().orElse(null);
         holder.inventory.setItem(SLOT_WARN, icon(Material.WRITABLE_BOOK,
                 messages.get("admin.button-warn", "player", name, "count", service.warnCount(name),
                         "limit", service.warnLimit()), List.of()));
@@ -291,6 +316,7 @@ public final class AdminPanelGui implements Listener {
         List<ModerationLedger.Warn> history = service.ledger().warnHistory(name);
         paintSlots(viewer, holder, history.size(), (slot, offset) -> {
             ModerationLedger.Warn warn = history.get(offset);
+            holder.displayed.put(slot,WarnSnapshot.of(warn));
             boolean removed = warn.removedAt > 0;
             return icon(removed ? Material.PAPER : Material.ENCHANTED_BOOK,
                     messages.get("admin.warn-entry", "id", warn.id, "reason", warn.reason),
@@ -312,6 +338,7 @@ public final class AdminPanelGui implements Listener {
         List<ModerationLedger.Moderator> staff = filterModerators(service.ledger().moderators(), holder.filter);
         paintSlots(viewer, holder, staff.size(), (slot, offset) -> {
             ModerationLedger.Moderator moderator = staff.get(offset);
+            holder.displayed.put(slot,ModeratorSnapshot.of(moderator));
             return icon(Material.NAME_TAG,
                     messages.get("admin.moderator-entry", "player", moderator.name),
                     messages.getList("admin.moderator-entry-lore",
@@ -358,6 +385,7 @@ public final class AdminPanelGui implements Listener {
                 .toList();
         paintSlots(viewer, holder, mutes.size(), (slot, offset) -> {
             RegistrationStore.MuteEntry mute = mutes.get(offset);
+            holder.displayed.put(slot,MuteSnapshot.of(mute));
             String name = mute.playerName == null || mute.playerName.isBlank()
                     ? messages.plain("admin.value-none") : mute.playerName;
             return icon(Material.BOOK,
@@ -387,7 +415,8 @@ public final class AdminPanelGui implements Listener {
                         "rights", service.canPunish(viewer)
                                 ? messages.plain("admin.value-yes") : messages.plain("admin.value-no"))));
 
-        List<Long> presets = service.config().mutePresets();
+        List<Long> presets = List.copyOf(service.config().mutePresets());
+        holder.displayedPresets = presets;
         for (int i = 0; i < presets.size() && i < ENTRY_SLOTS.length - 1; i++) {
             long minutes = presets.get(i);
             inventorySet(holder, ENTRY_SLOTS[i], icon(Material.CLOCK,
@@ -571,7 +600,9 @@ public final class AdminPanelGui implements Listener {
     public void onClick(InventoryClickEvent event) {
         Inventory top = event.getView().getTopInventory();
         if (!(top.getHolder() instanceof Holder holder)) return;
+        boolean wasCancelled = event.isCancelled();
         event.setCancelled(true);
+        if (wasCancelled) return;
         if (!(event.getWhoClicked() instanceof Player viewer)
                 || !holder.owner.equals(viewer.getUniqueId())) return;
         if (!service.isStaff(viewer)) {
@@ -579,6 +610,8 @@ public final class AdminPanelGui implements Listener {
             plugin.messages().send(viewer, "admin.no-permission");
             return;
         }
+        ClickType click = event.getClick();
+        if (click != ClickType.LEFT && click != ClickType.RIGHT) return;
         int slot = event.getRawSlot();
         if (slot < 0 || slot >= SIZE) return;
 
@@ -622,7 +655,11 @@ public final class AdminPanelGui implements Listener {
             return;
         }
         if (slot == SLOT_BAN && holder.page == Page.PROFILE) {
-            if (service.isBanned(holder.target)) {
+            if (holder.displayedBanned != service.isBanned(holder.target)
+                    || !java.util.Objects.equals(holder.displayedBan, BanSnapshot.of(service.ledger().banOf(holder.target)))) {
+                stale(viewer,holder); return;
+            }
+            if (holder.displayedBanned) {
                 service.unban(viewer, holder.target);
                 paint(viewer, holder);
             } else {
@@ -631,7 +668,10 @@ public final class AdminPanelGui implements Listener {
             return;
         }
         if (slot == SLOT_ROLE && holder.page == Page.PROFILE) {
-            if (service.ledger().isModerator(holder.target)) {
+            ModeratorSnapshot current = service.ledger().moderators().stream().filter(m -> m.name.equalsIgnoreCase(holder.target))
+                    .map(ModeratorSnapshot::of).findFirst().orElse(null);
+            if (!java.util.Objects.equals(holder.displayedRole,current)) { stale(viewer,holder); return; }
+            if (holder.displayedRole != null) {
                 service.removeModerator(viewer, holder.target);
             } else {
                 service.addModerator(viewer, holder.target);
@@ -648,14 +688,16 @@ public final class AdminPanelGui implements Listener {
             return;
         }
         if (holder.page == Page.PUNISH) {
-            List<Long> presets = service.config().mutePresets();
+            List<Long> presets = holder.displayedPresets;
             for (int i = 0; i < presets.size() && i < ENTRY_SLOTS.length - 1; i++) {
                 if (slot == ENTRY_SLOTS[i]) {
+                    if (!presets.equals(service.config().mutePresets())) { stale(viewer,holder); return; }
                     startInput(viewer, Input.MUTE_REASON, holder, presets.get(i));
                     return;
                 }
             }
             if (slot == ENTRY_SLOTS[Math.min(presets.size(), ENTRY_SLOTS.length - 1)]) {
+                if (!presets.equals(service.config().mutePresets())) { stale(viewer,holder); return; }
                 startInput(viewer, Input.MUTE_CUSTOM_DURATION, holder);
                 return;
             }
@@ -685,42 +727,40 @@ public final class AdminPanelGui implements Listener {
 
         int entry = entryIndex(slot);
         if (entry < 0) return;
-        int offset = holder.index * ENTRY_SLOTS.length + entry;
+        Object shown = holder.displayed.get(slot);
+        if (shown == null) return;
         switch (holder.page) {
             case PLAYERS -> {
-                List<String> visible = filter(players(), holder.filter);
-                if (offset < visible.size()) open(viewer, Page.PROFILE, visible.get(offset));
+                if (shown instanceof String name && players().contains(name)) open(viewer, Page.PROFILE, name);
+                else stale(viewer,holder);
             }
             case PROFILE -> {
-                List<ModerationLedger.Warn> history = service.ledger().warnHistory(holder.target);
-                if (offset < history.size()) {
-                    ModerationLedger.Warn warn = history.get(offset);
-                    if (warn.removedAt <= 0) service.removeWarn(viewer, warn.id);
-                    paint(viewer, holder);
-                }
+                if (!(shown instanceof WarnSnapshot warn)) return;
+                long matches = service.ledger().warnHistory(holder.target).stream().map(WarnSnapshot::of).filter(warn::equals).count();
+                if (matches != 1) { stale(viewer,holder); return; }
+                if (warn.removedAt() <= 0) service.removeWarn(viewer, warn.id());
+                paint(viewer, holder);
             }
             case MODERATORS -> {
-                List<ModerationLedger.Moderator> staff =
-                        filterModerators(service.ledger().moderators(), holder.filter);
-                if (offset < staff.size()) {
-                    service.removeModerator(viewer, staff.get(offset).name);
-                    paint(viewer, holder);
-                }
+                if (!(shown instanceof ModeratorSnapshot moderator)) return;
+                long matches = service.ledger().moderators().stream().map(ModeratorSnapshot::of).filter(moderator::equals).count();
+                if (matches != 1) { stale(viewer,holder); return; }
+                service.removeModerator(viewer, moderator.name());
+                paint(viewer, holder);
             }
             case MUTES -> {
-                String needle = holder.filter.toLowerCase(Locale.ROOT);
-                List<RegistrationStore.MuteEntry> mutes = service.activeMutes().stream()
-                        .filter(mute -> needle.isEmpty()
-                                || (mute.playerName != null
-                                && mute.playerName.toLowerCase(Locale.ROOT).contains(needle))
-                                || muteReason(mute).toLowerCase(Locale.ROOT).contains(needle))
-                        .toList();
-                if (offset < mutes.size() && mutes.get(offset).playerName != null) {
-                    open(viewer, Page.PROFILE, mutes.get(offset).playerName);
-                }
+                if (!(shown instanceof MuteSnapshot mute) || mute.player() == null || mute.player().isBlank()) return;
+                long matches = service.activeMutes().stream().map(MuteSnapshot::of).filter(mute::equals).count();
+                if (matches != 1) { stale(viewer,holder); return; }
+                open(viewer, Page.PROFILE, mute.player());
             }
             case JOURNAL, PUNISH, CHAT_HISTORY -> { /* только чтение либо кнопки выше */ }
         }
+    }
+
+    private void stale(Player viewer, Holder holder) {
+        plugin.messages().send(viewer,"admin.panel-changed");
+        paint(viewer,holder);
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -772,6 +812,11 @@ public final class AdminPanelGui implements Listener {
 
     private void applyInput(Player player, Pending request, String raw) {
         if (!player.isOnline() || !service.isStaff(player)) return;
+        if (request.type == Input.BAN && service.isBanned(request.target)) {
+            plugin.messages().send(player,"admin.panel-changed");
+            reopen(player,request);
+            return;
+        }
         String text = raw == null ? "" : raw.trim();
         if (text.isEmpty() || text.equalsIgnoreCase("отмена") || text.equalsIgnoreCase("cancel")) {
             plugin.messages().send(player, "admin.input-cancelled");
