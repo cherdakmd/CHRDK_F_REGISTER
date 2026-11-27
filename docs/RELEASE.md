@@ -41,8 +41,9 @@ gh workflow run release.yml --ref main -f version=1.5.2
 ```
 
 Ручной запуск выполняет тот же Gradle build и тесты; для полного комплекта
-проверяет ровно 20 общих JAR, отдельно `CHRDK_VK`/`CHRDK_Disasters` и Mine Treasure,
-ZIP CRC, plugin.yml, версии, manifest и SHA-256, но
+проверяет состав общих JAR по `settings.gradle` и `verify_release.py` (сейчас
+19), отдельный `CHRDK_VK` и Mine Treasure, ZIP CRC, plugin.yml, версии,
+manifest и SHA-256, но
 **не создает тег, Release и не загружает публичные ассеты**. Результат сохраняется как временный artifact
 `release-candidate-<версия>-<sha>`.
 
@@ -53,9 +54,19 @@ sha256sum -c chrdk-1.5.2-SHA256SUMS.txt
 unzip -t chrdk-plugins-1.5.2.zip
 ```
 
-Архив должен содержать ровно 20 JAR одной версии и `ОБНОВЛЕНИЕ.txt`.
-`chrdk-vk-<версия>.jar`, `chrdk-disasters-<версия>.jar` и
-`mine-treasure-1.6.5-ru.zip` остаются отдельными файлами.
+Архив должен содержать весь проверенный набор общих JAR одной версии и
+`ОБНОВЛЕНИЕ.txt`. `chrdk-vk-<версия>.jar`, Mine Treasure, настройки Grim и
+клиентский ресурс-пак остаются отдельными файлами. Текущий workflow не собирает
+и не прикладывает `CHRDK_Disasters`. Для manifest `standalone` вместо полного
+комплекта подготавливаются выбранный JAR и его SHA-256.
+
+Важно: Fishing — отдельный Gradle-проект и в обычный `Release` не входит,
+несмотря на наличие его ресурсов в общем CustomItems-паке. Экспериментальный
+закрытый комплект с Fishing строится отдельным `Fishing closed-server candidate`
+workflow и не является релизным dry-run или разрешением на stable. Перед выпуском
+Fishing требуется решить состав и способ публикации и выполнить его отдельный
+`fishing/STABLE-RELEASE-GATE.md`; не считать общий Release совместимым комплектом
+Fishing автоматически.
 
 ## 3. Провести обязательный staging gate
 
@@ -87,9 +98,13 @@ unzip -t chrdk-plugins-1.5.2.zip
 4. Опубликовать Release. Workflow ещё раз соберёт tagged source и прикрепит:
    - `chrdk-plugins-<версия>.zip`;
    - `chrdk-vk-<версия>.jar`;
-   - `chrdk-disasters-<версия>.jar`;
    - `mine-treasure-1.6.5-ru.zip`;
+   - `chrdk-grim-configs-<версия>.zip`;
+   - `chrdk-custom-items-pack-<версия>.zip` и `.sha1`;
    - `chrdk-<версия>-SHA256SUMS.txt`.
+
+   Этот список относится к manifest `full`; для `standalone` прикладываются
+   только выбранный JAR и файл его SHA-256.
 5. Дождаться успешного Release workflow и сверить размер/число ассетов,
    контрольные суммы и ZIP. Не переписывать опубликованный стабильный тег.
 
