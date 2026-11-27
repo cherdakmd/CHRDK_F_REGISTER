@@ -6,6 +6,7 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -20,10 +21,8 @@ import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Интерактивное меню {@code /vk} (27 слотов): статус привязки ВКонтакте, выдача кода в один клик,
@@ -44,7 +43,6 @@ public final class VkMenuGui implements Listener {
     private final VkPlugin plugin;
     private final VkService service;
     private final VkCommandHandler commands;
-    private final Map<UUID, Long> unlinkArmedUntil = new ConcurrentHashMap<>();
 
     public VkMenuGui(VkPlugin plugin, VkService service, VkCommandHandler commands) {
         this.plugin = plugin;
@@ -54,7 +52,7 @@ public final class VkMenuGui implements Listener {
 
     public void open(Player player) {
         Messages messages = plugin.messages();
-        Holder holder = new Holder();
+        Holder holder = new Holder(player.getUniqueId());
         Inventory inv = Bukkit.createInventory(holder, SIZE, messages.get("vk.gui-title"));
         holder.inventory = inv;
         render(player, inv);
@@ -134,11 +132,9 @@ public final class VkMenuGui implements Listener {
         ), VkMenuVisuals.Icon.BADGE));
 
         // Слот 16 — Безопасность и двухшаговая отвязка
-        Long armedUntil = unlinkArmedUntil.get(player.getUniqueId());
-        boolean armed = linked && armedUntil != null && armedUntil > now;
-        if (!armed && armedUntil != null) {
-            unlinkArmedUntil.remove(player.getUniqueId());
-        }
+        Holder holder = (Holder) inv.getHolder();
+        boolean armed = linked && holder.armedUntil > now && holder.armedVkId == opt.get().vkUserId();
+        if (!armed) holder.clearConfirmation();
         if (armed) {
             inv.setItem(SLOT_SECURITY, visual(item(
                     Material.RED_STAINED_GLASS_PANE,
@@ -163,13 +159,16 @@ public final class VkMenuGui implements Listener {
         ), VkMenuVisuals.Icon.CLOSE));
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void onClick(InventoryClickEvent event) {
-        if (!(event.getInventory().getHolder() instanceof Holder)) {
+        if (!(event.getInventory().getHolder() instanceof Holder holder)) {
             return;
         }
+        boolean wasCancelled = event.isCancelled();
         event.setCancelled(true);
-        if (!(event.getWhoClicked() instanceof Player player)) {
+        if (wasCancelled || !(event.getWhoClicked() instanceof Player player)
+                || !holder.owner.equals(player.getUniqueId())
+                || player.getOpenInventory().getTopInventory().getHolder() != holder) {
             return;
         }
         ClickType click = event.getClick();
@@ -214,21 +213,29 @@ public final class VkMenuGui implements Listener {
                 player.performCommand("labels");
             }
             case SLOT_SECURITY -> {
-                if (service.store().byPlayer(player.getName()).isEmpty()) {
+                var link = service.store().byPlayer(player.getName());
+                if (link.isEmpty()) {
+                    holder.clearConfirmation();
                     plugin.messages().send(player, "vk.not-linked");
                     return;
                 }
+                if (api.vkTwoFactorEnabled(player.getName())) {
+                    holder.clearConfirmation();
+                    plugin.messages().send(player, "vk.factor-unlink-blocked");
+                    return;
+                }
                 long now = System.currentTimeMillis();
-                Long armedUntil = unlinkArmedUntil.get(player.getUniqueId());
-                if (armedUntil != null && armedUntil > now) {
-                    unlinkArmedUntil.remove(player.getUniqueId());
+                if (holder.armedUntil > now && holder.armedVkId == link.get().vkUserId()) {
+                    holder.clearConfirmation();
                     player.closeInventory();
                     commands.performUnlinkConfirmed(player, api);
                 } else if (event.isShiftClick()) {
-                    unlinkArmedUntil.put(player.getUniqueId(), now + UNLINK_ARM_MILLIS);
+                    holder.armedUntil = now + UNLINK_ARM_MILLIS;
+                    holder.armedVkId = link.get().vkUserId();
                     playClick(player);
                     render(player, event.getInventory());
                 } else {
+                    holder.clearConfirmation();
                     plugin.messages().send(player, "vk.gui-security-shift-hint");
                 }
             }
@@ -236,6 +243,12 @@ public final class VkMenuGui implements Listener {
             default -> {
             }
         }
+    }
+
+    @EventHandler
+    public void onClose(org.bukkit.event.inventory.InventoryCloseEvent event) {
+        if (event.getInventory().getHolder() instanceof Holder holder
+                && holder.owner.equals(event.getPlayer().getUniqueId())) holder.clearConfirmation();
     }
 
     @EventHandler
@@ -286,7 +299,13 @@ public final class VkMenuGui implements Listener {
     }
 
     private static final class Holder implements InventoryHolder {
+        private final UUID owner;
         private Inventory inventory;
+        private long armedUntil;
+        private long armedVkId;
+
+        private Holder(UUID owner) { this.owner = owner; }
+        private void clearConfirmation() { armedUntil = 0L; armedVkId = 0L; }
 
         @Override
         public @NotNull Inventory getInventory() {

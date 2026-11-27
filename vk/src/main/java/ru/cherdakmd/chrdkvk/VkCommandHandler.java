@@ -213,6 +213,11 @@ public final class VkCommandHandler implements CommandExecutor, TabCompleter {
 
     void performUnlinkConfirmed(Player player, ChrdkRegisterApi api) {
         Messages messages = plugin.messages();
+        // All self-service callers (including GUI) must recheck at the actual destructive step.
+        if (api == null || api.vkTwoFactorEnabled(player.getName())) {
+            messages.send(player, api == null ? "vk.no-api" : "vk.factor-unlink-blocked");
+            return;
+        }
         Optional<VkStore.LinkSnapshot> removed = service.store().unlink(player.getName());
         if (removed.isEmpty()) {
             messages.send(player, "vk.not-linked");

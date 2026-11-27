@@ -15,6 +15,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.junit.jupiter.api.Test;
@@ -41,6 +42,7 @@ class VkMenuGuiVisualsTest {
             when(api.isAuthenticated(player)).thenReturn(true); when(store.byPlayer("Player")).thenReturn(Optional.empty());
             var slots = new HashMap<Integer, ItemStack>(); var holder = new AtomicReference<InventoryHolder>();
             var inventory = mock(Inventory.class); when(inventory.getHolder()).thenAnswer(c -> holder.get());
+            var view = mock(InventoryView.class); when(view.getTopInventory()).thenReturn(inventory); when(player.getOpenInventory()).thenReturn(view);
             doAnswer(c -> { slots.put(c.getArgument(0), c.getArgument(1)); return null; }).when(inventory).setItem(anyInt(), any(ItemStack.class));
             var gui = new VkMenuGui(plugin, service, commands);
             try (var bukkit = mockStatic(Bukkit.class); var items = mockConstruction(ItemStack.class, (item, context) -> {
@@ -76,15 +78,15 @@ class VkMenuGuiVisualsTest {
                 assertThrows(UnsupportedOperationException.class, () -> gui.onClick(click(inventory, player, 13, ClickType.RIGHT))); verify(commands).toggleMentions(player);
                 gui.onClick(click(inventory, player, 16, ClickType.LEFT)); verify(commands, never()).performUnlinkConfirmed(any(), any());
                 var arm = click(inventory, player, 16, ClickType.SHIFT_LEFT);
-                assertThrows(UnsupportedOperationException.class, () -> gui.onClick(arm)); gui.open(player);
+                assertThrows(UnsupportedOperationException.class, () -> gui.onClick(arm));
+                var render = VkMenuGui.class.getDeclaredMethod("render", Player.class, Inventory.class); render.setAccessible(true); render.invoke(gui, player, inventory);
                 check(slots.get(16), VkMenuVisuals.Icon.UNLINK_CONFIRM, enabled);
                 verify(slots.get(16).getItemMeta()).displayName(messages.get("vk.gui-unlink-confirm-name"));
                 verify(commands, never()).performUnlinkConfirmed(any(), any());
                 gui.onClick(click(inventory, player, 16, ClickType.LEFT)); verify(commands).performUnlinkConfirmed(player, api);
                 // An expired armed prompt must not execute an unlink.
                 assertThrows(UnsupportedOperationException.class, () -> gui.onClick(click(inventory, player, 16, ClickType.SHIFT_LEFT)));
-                var field = VkMenuGui.class.getDeclaredField("unlinkArmedUntil"); field.setAccessible(true);
-                @SuppressWarnings("unchecked") var pending = (Map<UUID, Long>) field.get(gui); pending.put(id, 1L);
+                var field = holder.get().getClass().getDeclaredField("armedUntil"); field.setAccessible(true); field.setLong(holder.get(), 1L);
                 gui.onClick(click(inventory, player, 16, ClickType.LEFT)); verify(commands, times(1)).performUnlinkConfirmed(any(), any());
                 when(store.byPlayer("Player")).thenReturn(Optional.of(new VkStore.LinkSnapshot("player", "Player", 12345L, 0L, true, false, 0L, false, false)));
                 gui.open(player); check(slots.get(12), VkMenuVisuals.Icon.NOTIFY_OFF, enabled);
