@@ -18,7 +18,7 @@ import static org.mockito.Mockito.*;
 
 class HonorGuiSafetyTest {
     @Test void actionsUseDisplayedRecordsAndRevalidateChatInputs() {
-        var plugin=mock(RegisterPlugin.class);var messages=Messages.from(getClass().getResourceAsStream("/messages.yml"),null,Logger.getAnonymousLogger());when(plugin.messages()).thenReturn(messages);
+        var plugin=mock(RegisterPlugin.class);when(plugin.getConfig()).thenReturn(new org.bukkit.configuration.file.YamlConfiguration());var messages=Messages.from(getClass().getResourceAsStream("/messages.yml"),null,Logger.getAnonymousLogger());when(plugin.messages()).thenReturn(messages);
         var input=mock(GuiChatInput.class);when(plugin.chatInput()).thenReturn(input);var ledger=HonorLedger.withDefaults();var service=mock(HonorService.class);when(service.ledger()).thenReturn(ledger);when(service.canViewGui(any())).thenReturn(true);when(service.canEdit(any())).thenReturn(true);
         var player=mock(Player.class);when(player.getUniqueId()).thenReturn(UUID.randomUUID());when(player.isOnline()).thenReturn(true);when(player.getName()).thenReturn("Admin");var inv=mock(Inventory.class);var view=mock(InventoryView.class);when(view.getTopInventory()).thenReturn(inv);var holder=new AtomicReference<InventoryHolder>();when(inv.getHolder()).thenAnswer(c->holder.get());
         var event=mock(InventoryClickEvent.class);when(event.getView()).thenReturn(view);when(event.getWhoClicked()).thenReturn(player);when(event.getClick()).thenReturn(ClickType.LEFT);

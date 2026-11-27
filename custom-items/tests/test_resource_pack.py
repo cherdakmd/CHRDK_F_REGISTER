@@ -78,6 +78,18 @@ class ResourcePackTest(unittest.TestCase):
         config = (PACK.parents[1] / 'battlepass/src/main/resources/config.yml').read_text(encoding='utf-8')
         self.assertRegex(config, r'(?m)^  mission-menu: false\s*$')
 
+    def test_core_honor_models_and_opt_in(self):
+        root=PACK/'assets/chrdk_core';names={'definitions','grants','filter','refresh','prev','next','back','close','info','create','definition','grant_entry','name','format','badge','level','description','join','delete','pages','empty_definitions','empty_grants'};hashes=set()
+        for name in names:
+            path='menu/honor/'+name;ref='chrdk_core:item/'+path
+            item=json.loads((root/'items'/(path+'.json')).read_text());model=json.loads((root/'models/item'/(path+'.json')).read_text())
+            self.assertEqual({'type':'minecraft:model','model':ref},item['model']);self.assertEqual('minecraft:item/generated',model['parent']);self.assertEqual(ref,model['textures']['layer0'])
+            data=(root/'textures/item'/(path+'.png')).read_bytes();self.assertEqual(b'\x89PNG\r\n\x1a\n',data[:8]);self.assertEqual((32,32),struct.unpack('>II',data[16:24]))
+            digest=hashlib.sha256(data).hexdigest();self.assertNotIn(digest,hashes,name);hashes.add(digest)
+        for folder in ('items','models/item','textures/item'):
+            self.assertEqual(names,{p.stem for p in (root/folder/'menu/honor').iterdir() if p.is_file()})
+        config=(PACK.parents[1]/'src/main/resources/config.yml').read_text(encoding='utf-8');self.assertRegex(config,r'(?m)^  honor-menu: false\s*$')
+
     def test_core_admin_donation_models_and_opt_in(self):
         root=PACK/'assets/chrdk_core';names={'prev','next','refresh','empty','status_ok','status_flaky','status_down','filter_all','filter_pending','filter_granted','filter_rejected','record_pending_name','record_pending_amount','record_pending_review','record_granted','record_rejected'};hashes=set()
         for name in names:

@@ -1083,6 +1083,7 @@ core-gui-textures:
   keypad-controls: false
   labels-menu: false
   admin-donations: false
+  honor-menu: false
 
 server-menu:
   enabled: true

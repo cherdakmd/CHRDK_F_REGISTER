@@ -191,25 +191,25 @@ public final class HonorGui implements Listener {
         holder.entries.clear(); holder.detailSnapshot = null;
         for (int slot = 0; slot < SIZE; slot++) inv.setItem(slot, filler());
 
-        inv.setItem(SLOT_DEFINITIONS, icon(Material.BOOK,
+        inv.setItem(SLOT_DEFINITIONS, icon(HonorMenuVisuals.Icon.DEFINITIONS, Material.BOOK,
                 messages.get("honor.gui.button-definitions"), List.of()));
-        inv.setItem(SLOT_GRANTS, icon(Material.NAME_TAG,
+        inv.setItem(SLOT_GRANTS, icon(HonorMenuVisuals.Icon.GRANTS, Material.NAME_TAG,
                 messages.get("honor.gui.button-grants"), List.of()));
-        inv.setItem(SLOT_FILTER, icon(Material.HOPPER,
+        inv.setItem(SLOT_FILTER, icon(HonorMenuVisuals.Icon.FILTER, Material.HOPPER,
                 messages.get("honor.gui.button-filter", "filter",
                         holder.filter.isEmpty() ? "—" : holder.filter), List.of()));
-        inv.setItem(SLOT_REFRESH, icon(Material.CLOCK,
+        inv.setItem(SLOT_REFRESH, icon(HonorMenuVisuals.Icon.REFRESH, Material.CLOCK,
                 messages.get("honor.gui.button-refresh"), List.of()));
         // На карточке звания слоты 45–47 отданы кнопкам редактора, а не листанию.
         if (holder.page != Page.DETAIL) {
-            inv.setItem(SLOT_PREV, icon(Material.ARROW,
-                    messages.get("honor.gui.button-prev", "page", holder.index + 1), List.of()));
-            inv.setItem(SLOT_NEXT, icon(Material.ARROW,
-                    messages.get("honor.gui.button-next", "page", holder.index + 1), List.of()));
+            inv.setItem(SLOT_PREV, icon(HonorMenuVisuals.Icon.PREV, Material.ARROW,
+                messages.get("honor.gui.button-prev", "page", holder.index + 1), List.of()));
+            inv.setItem(SLOT_NEXT, icon(HonorMenuVisuals.Icon.NEXT, Material.ARROW,
+                messages.get("honor.gui.button-next", "page", holder.index + 1), List.of()));
         }
-        inv.setItem(SLOT_BACK, icon(Material.CHEST,
+        inv.setItem(SLOT_BACK, icon(HonorMenuVisuals.Icon.BACK, Material.CHEST,
                 messages.get("honor.gui.button-back"), List.of()));
-        inv.setItem(SLOT_CLOSE, icon(Material.BARRIER,
+        inv.setItem(SLOT_CLOSE, icon(HonorMenuVisuals.Icon.CLOSE, Material.BARRIER,
                 messages.get("honor.gui.button-close"), List.of()));
 
         switch (holder.page) {
@@ -222,15 +222,15 @@ public final class HonorGui implements Listener {
     private void paintDefinitions(Player viewer, Holder holder) {
         Messages messages = plugin.messages();
         List<HonorDefinition> defs = filterDefinitions(holder.filter);
-        holder.inventory.setItem(SLOT_INFO, icon(Material.NETHER_STAR,
+        holder.inventory.setItem(SLOT_INFO, icon(HonorMenuVisuals.Icon.INFO, Material.NETHER_STAR,
                 messages.get("honor.gui.info-title"),
                 messages.getList("honor.gui.info",
                         "definitions", defs.size(),
                         "grants", honors.ledger().allGrants().size(),
                         "actor", viewer.getName())));
         if (holder.player.isEmpty()) {
-            holder.inventory.setItem(SLOT_NAME, icon(Material.EMERALD,
-                    messages.get("honor.gui.button-create"), List.of()));
+            holder.inventory.setItem(SLOT_NAME, icon(HonorMenuVisuals.Icon.CREATE, Material.EMERALD,
+                messages.get("honor.gui.button-create"), List.of()));
             holder.inventory.setItem(SLOT_FORMAT, icon(Material.PLAYER_HEAD,
                     messages.get("honor.gui.button-grant"), List.of()));
         } else {
@@ -242,8 +242,8 @@ public final class HonorGui implements Listener {
             HonorDefinition def = defs.get(offset);
             holder.entries.put(slot,def);
             int granted = honors.ledger().grantsOfHonor(def.id()).size();
-            return icon(Material.PAPER,
-                    messages.get("honor.gui.definition-entry",
+            return icon(HonorMenuVisuals.Icon.DEFINITION, Material.PAPER,
+                messages.get("honor.gui.definition-entry",
                             "name", def.name(), "id", def.id(),
                             "level", def.grantLevel(), "players", granted),
                     List.of(Component.text(def.description()),
@@ -251,7 +251,7 @@ public final class HonorGui implements Listener {
                             Component.text(messages.plain("honor.gui.definition-hint"))));
         }, true);
         if (defs.isEmpty()) {
-            empty(holder, Material.PAPER, messages.get("honor.gui.empty-definitions"));
+            empty(holder, HonorMenuVisuals.Icon.EMPTY_DEFINITIONS, Material.PAPER, messages.get("honor.gui.empty-definitions"));
         }
     }
 
@@ -260,7 +260,7 @@ public final class HonorGui implements Listener {
         HonorDefinition def = honors.ledger().definition(holder.target);
         if (def == null) {
             // Звание удалили в другой панели: не переоткрываем инвентарь изнутри отрисовки.
-            empty(holder, Material.PAPER, messages.get("honor.gui.empty-definitions"));
+            empty(holder, HonorMenuVisuals.Icon.EMPTY_DEFINITIONS, Material.PAPER, messages.get("honor.gui.empty-definitions"));
             return;
         }
         holder.detailSnapshot = def;
@@ -271,19 +271,19 @@ public final class HonorGui implements Listener {
                         "name", def.name(), "id", def.id(), "level", def.grantLevel(),
                         "badge", def.badge(), "listed", def.listed() ? "да" : "нет",
                         "description", def.description())));
-        holder.inventory.setItem(SLOT_NAME, icon(Material.NAME_TAG,
+        holder.inventory.setItem(SLOT_NAME, icon(HonorMenuVisuals.Icon.NAME, Material.NAME_TAG,
                 messages.get("honor.gui.button-name", "value", def.name()), List.of()));
-        holder.inventory.setItem(SLOT_FORMAT, icon(Material.LIME_DYE,
+        holder.inventory.setItem(SLOT_FORMAT, icon(HonorMenuVisuals.Icon.FORMAT, Material.LIME_DYE,
                 messages.get("honor.gui.button-format", "value", def.format()), List.of()));
-        holder.inventory.setItem(SLOT_BADGE, icon(Material.GOLD_NUGGET,
+        holder.inventory.setItem(SLOT_BADGE, icon(HonorMenuVisuals.Icon.BADGE, Material.GOLD_NUGGET,
                 messages.get("honor.gui.button-badge", "value", def.badge()), List.of()));
-        holder.inventory.setItem(SLOT_LEVEL, icon(Material.DIAMOND,
+        holder.inventory.setItem(SLOT_LEVEL, icon(HonorMenuVisuals.Icon.LEVEL, Material.DIAMOND,
                 messages.get("honor.gui.button-level", "level", def.grantLevel()), List.of()));
-        holder.inventory.setItem(SLOT_DESCRIPTION, icon(Material.WRITABLE_BOOK,
+        holder.inventory.setItem(SLOT_DESCRIPTION, icon(HonorMenuVisuals.Icon.DESCRIPTION, Material.WRITABLE_BOOK,
                 messages.get("honor.gui.button-description"), List.of()));
-        holder.inventory.setItem(SLOT_JOIN, icon(Material.OAK_DOOR,
+        holder.inventory.setItem(SLOT_JOIN, icon(HonorMenuVisuals.Icon.JOIN, Material.OAK_DOOR,
                 messages.get("honor.gui.button-join"), List.of()));
-        holder.inventory.setItem(SLOT_DELETE, icon(Material.BARRIER,
+        holder.inventory.setItem(SLOT_DELETE, icon(HonorMenuVisuals.Icon.DELETE, Material.BARRIER,
                 messages.get("honor.gui.button-delete"), List.of()));
         paintSlots(holder, grants.size(), (slot, offset) -> {
             HonorGrant grant = grants.get(offset);
@@ -308,7 +308,7 @@ public final class HonorGui implements Listener {
                         || honors.ledger().display(grant.honorId()).toLowerCase(Locale.ROOT)
                                 .contains(holder.filter.toLowerCase(Locale.ROOT)))
                 .toList();
-        holder.inventory.setItem(SLOT_INFO, icon(Material.BOOK,
+        holder.inventory.setItem(SLOT_INFO, icon(HonorMenuVisuals.Icon.INFO, Material.BOOK,
                 messages.get("honor.gui.info-title"),
                 messages.getList("honor.gui.info",
                         "definitions", honors.ledger().definitions().size(),
@@ -316,8 +316,8 @@ public final class HonorGui implements Listener {
         paintSlots(holder, grants.size(), (slot, offset) -> {
             HonorGrant grant = grants.get(offset);
             holder.entries.put(slot,grant);
-            return icon(Material.NAME_TAG,
-                    messages.get("honor.gui.grant-entry",
+            return icon(HonorMenuVisuals.Icon.GRANT_ENTRY, Material.NAME_TAG,
+                messages.get("honor.gui.grant-entry",
                             "player", grant.player(),
                             "honor", honors.ledger().display(grant.honorId()),
                             "date", date(grant.grantedAt()),
@@ -325,7 +325,7 @@ public final class HonorGui implements Listener {
                     List.of(Component.text(messages.plain("honor.gui.revoke-hint"))));
         }, true);
         if (grants.isEmpty()) {
-            empty(holder, Material.NAME_TAG, messages.get("honor.gui.empty-grants"));
+            empty(holder, HonorMenuVisuals.Icon.EMPTY_GRANTS, Material.NAME_TAG, messages.get("honor.gui.empty-grants"));
         }
     }
 
@@ -354,8 +354,8 @@ public final class HonorGui implements Listener {
         if (showPages) {
             Messages messages = plugin.messages();
             int pages = Math.max(1, (total + ENTRY_SLOTS.length - 1) / ENTRY_SLOTS.length);
-            holder.inventory.setItem(SLOT_PAGES, icon(Material.BOOK,
-                    messages.get("honor.gui.button-pages",
+            holder.inventory.setItem(SLOT_PAGES, icon(HonorMenuVisuals.Icon.PAGES, Material.BOOK,
+                messages.get("honor.gui.button-pages",
                             "page", holder.index + 1, "pages", pages, "total", total), List.of()));
         }
     }
@@ -607,23 +607,32 @@ public final class HonorGui implements Listener {
         return millis <= 0 ? "—" : DATE.format(Instant.ofEpochMilli(millis));
     }
 
-    private static void empty(Holder holder, Material material, Component name) {
-        holder.inventory.setItem(ENTRY_SLOTS[ENTRY_SLOTS.length / 2],
-                icon(material, name, List.of()));
+    private void empty(Holder holder, Material material, Component name) {
+        empty(holder, null, material, name);
     }
 
-    private static ItemStack icon(Material material, Component name, List<Component> lore) {
+    private void empty(Holder holder, HonorMenuVisuals.Icon visual, Material material, Component name) {
+        holder.inventory.setItem(ENTRY_SLOTS[ENTRY_SLOTS.length / 2],
+                icon(visual, material, name, List.of()));
+    }
+
+    private ItemStack icon(Material material, Component name, List<Component> lore) {
+        return icon(null, material, name, lore);
+    }
+
+    private ItemStack icon(HonorMenuVisuals.Icon visual, Material material, Component name, List<Component> lore) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             meta.displayName(name == null ? Component.empty() : name);
             if (lore != null && !lore.isEmpty()) meta.lore(lore);
+            HonorMenuVisuals.apply(meta, visual, visual != null && plugin.getConfig().getBoolean("core-gui-textures.honor-menu", false));
             item.setItemMeta(meta);
         }
         return item;
     }
 
-    private static ItemStack filler() {
+    private ItemStack filler() {
         return icon(Material.GRAY_STAINED_GLASS_PANE, Component.empty(), List.of());
     }
 }
