@@ -74,11 +74,21 @@ class CosmeticsGuiVisualsTest {
                 var stranger = mock(Player.class); when(stranger.getUniqueId()).thenReturn(UUID.randomUUID());
                 var foreign = click(view, stranger, 2); gui.click(foreign); verify(foreign).setCancelled(true); assertNull(scheduled.get());
                 var drag = mock(InventoryDragEvent.class); when(drag.getView()).thenReturn(view); gui.drag(drag); verify(drag).setCancelled(true);
+                var cancelled = click(view, player, 2); when(cancelled.isCancelled()).thenReturn(true); gui.click(cancelled);
+                when(plugin.eligible(player)).thenReturn(false); gui.click(click(view, player, 2));
+                when(plugin.eligible(player)).thenReturn(true); gui.click(click(view, player, 54));
+                assertNull(scheduled.get());
                 var choose = click(view, player, 2); gui.click(choose); verify(choose).setCancelled(true);
                 assertNotNull(scheduled.get()); verify(plugin, never()).select(any(), any());
+                gui.click(click(view, player, 0)); // another pending click must not replace the first
+                verify(scheduler, times(1)).runTask(eq(plugin), any(Runnable.class));
                 var replaced = new CosmeticsPlugin.CosmeticsConfig(true, true, java.util.List.of(), defs, 5, CosmeticsDefs.JoinEffect.disabled(), 4);
                 when(plugin.config()).thenReturn(replaced); scheduled.getAndSet(null).run(); verify(plugin, never()).select(any(), any());
                 when(plugin.config()).thenReturn(snapshot); gui.click(click(view, player, 2));
+                var otherInventory = mock(Inventory.class); var otherView = mock(InventoryView.class);
+                when(otherView.getTopInventory()).thenReturn(otherInventory); when(player.getOpenInventory()).thenReturn(otherView);
+                scheduled.getAndSet(null).run(); verify(plugin, never()).select(any(), any());
+                when(player.getOpenInventory()).thenReturn(view); gui.click(click(view, player, 2));
                 when(store.selectionOf(owner)).thenReturn("notes"); scheduled.getAndSet(null).run();
                 verify(plugin).select(player, "notes");
                 checkModel(slots.get(2), CosmeticsMenuVisuals.trail(stock.get(2), true, true, true), enabled);
