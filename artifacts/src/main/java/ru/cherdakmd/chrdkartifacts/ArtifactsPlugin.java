@@ -48,6 +48,7 @@ public final class ArtifactsPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        ru.cherdakmd.chrdkregister.api.VisualConfigMigration.apply(this);
         ConfigUpgrader.apply(this);
         this.items = new ArtifactItems(this);
         this.cooldowns = new Cooldowns();

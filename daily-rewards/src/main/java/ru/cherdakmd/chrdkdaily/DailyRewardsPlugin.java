@@ -34,6 +34,7 @@ public final class DailyRewardsPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        ru.cherdakmd.chrdkregister.api.VisualConfigMigration.apply(this);
         ConfigUpgrader.apply(this);
         reloadDailyConfig(); // coreApi, messages, config
         this.store = new DailyStore(getDataFolder().toPath(), getLogger());

@@ -45,6 +45,7 @@ public final class AchievementsPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        ru.cherdakmd.chrdkregister.api.VisualConfigMigration.apply(this);
         ConfigUpgrader.apply(this);
         this.store = new AchievementStore(getDataFolder().toPath(), getLogger());
         reloadAchievementsConfig();

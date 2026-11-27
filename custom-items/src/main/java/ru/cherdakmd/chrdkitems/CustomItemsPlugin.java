@@ -21,6 +21,7 @@ public final class CustomItemsPlugin extends JavaPlugin {
 
     @Override public void onEnable() {
         saveDefaultConfig();
+        ru.cherdakmd.chrdkregister.api.VisualConfigMigration.apply(this);
         saveResource("catalog.yml", false);
         saveResource(ResourcePackSettings.PACK_FILE, false);
         var yaml = new YamlConfiguration();

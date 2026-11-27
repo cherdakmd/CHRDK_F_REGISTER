@@ -59,6 +59,7 @@ public final class EnchantsPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        ru.cherdakmd.chrdkregister.api.VisualConfigMigration.apply(this);
         ConfigUpgrader.apply(this);
         if (!tryReloadEnchantsConfig()) {
             Bukkit.getPluginManager().disablePlugin(this);

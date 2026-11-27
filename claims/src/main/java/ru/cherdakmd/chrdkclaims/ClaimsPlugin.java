@@ -86,6 +86,7 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        ru.cherdakmd.chrdkregister.api.VisualConfigMigration.apply(this);
         ConfigUpgrader.apply(this);
         reloadClaimsConfig();
         try {

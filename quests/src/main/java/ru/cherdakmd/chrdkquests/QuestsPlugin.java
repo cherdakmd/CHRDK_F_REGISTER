@@ -41,6 +41,7 @@ public final class QuestsPlugin extends JavaPlugin {
         try {
             if (ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 50) throw new IllegalStateException("Нужен Core API 50+");
             saveDefaultConfig();
+            ru.cherdakmd.chrdkregister.api.VisualConfigMigration.apply(this);
             ConfigUpgrader.apply(this);
             this.config = QuestConfig.parse(getConfig(), getLogger());
             this.messages = Messages.load(this, config.locale(), getLogger());

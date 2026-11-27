@@ -59,6 +59,7 @@ public final class SkillsPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        ru.cherdakmd.chrdkregister.api.VisualConfigMigration.apply(this);
         ConfigUpgrader.apply(this);
         this.store = new SkillStore(getDataFolder().toPath(), getLogger());
         // Конфиг читается до создания листенера: антинакрутка берёт из него TTL.

@@ -45,6 +45,7 @@ public final class GuildsPlugin extends JavaPlugin {
     public void onEnable() {
         try {
             saveDefaultConfig();
+            ru.cherdakmd.chrdkregister.api.VisualConfigMigration.apply(this);
             ConfigUpgrader.apply(this);
             this.config = GuildConfig.parse(getConfig(), getLogger());
             this.messages = Messages.load(this, config.locale(), getLogger());

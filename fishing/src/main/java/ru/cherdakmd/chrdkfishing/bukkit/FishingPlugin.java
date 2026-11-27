@@ -33,6 +33,7 @@ public final class FishingPlugin extends JavaPlugin {
             byte[] key = generation.signingKey(folder);
             try {
                 saveDefaultConfig();
+                ru.cherdakmd.chrdkregister.api.VisualConfigMigration.apply(this);
                 FishingSettings settings = FishingSettings.load(getConfig());
                 Class.forName("org.sqlite.JDBC", true, getClass().getClassLoader());
                 boolean createAlbum = initialiseAlbumMarker(folder);

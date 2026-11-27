@@ -24,6 +24,7 @@ public final class MobsPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        ru.cherdakmd.chrdkregister.api.VisualConfigMigration.apply(this);
         ConfigUpgrader.apply(this);
         reloadMobs();
         if (coreApi != null) {

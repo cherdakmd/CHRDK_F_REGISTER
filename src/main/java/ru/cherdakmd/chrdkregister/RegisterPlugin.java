@@ -85,6 +85,7 @@ public final class RegisterPlugin extends JavaPlugin {
     public void onEnable() {
         migrateLegacyDataFolder();
         saveDefaultConfig();
+        ru.cherdakmd.chrdkregister.api.VisualConfigMigration.apply(this);
         migrateEconomyConfig();
         OptionalTotpMigration.apply(this);
         PresentationMigration.apply(this);

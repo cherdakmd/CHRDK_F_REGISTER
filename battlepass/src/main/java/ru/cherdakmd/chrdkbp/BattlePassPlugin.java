@@ -80,6 +80,7 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        ru.cherdakmd.chrdkregister.api.VisualConfigMigration.apply(this);
         ConfigUpgrader.apply(this);
         this.store = new BattlePassStore(getDataFolder().toPath(), getLogger());
         store.load();

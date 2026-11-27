@@ -47,6 +47,7 @@ public final class CosmeticsPlugin extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        ru.cherdakmd.chrdkregister.api.VisualConfigMigration.apply(this);
         ConfigUpgrader.apply(this);
         this.store = new SelectionStore(getDataFolder().toPath(), getLogger());
         store.load();
