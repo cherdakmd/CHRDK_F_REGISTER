@@ -42,8 +42,10 @@ final class BookWorkshopGui implements Listener {
         }));
         render(h); player.openInventory(h.inv);
     }
-    private ItemStack icon(Material m,Component title,Component... lore) {
-        var result=new ItemStack(m); var meta=result.getItemMeta(); meta.displayName(title); meta.lore(List.of(lore)); result.setItemMeta(meta); return result;
+    private ItemStack icon(String visual,Material m,Component title,Component... lore) {
+        var result=new ItemStack(m); var meta=result.getItemMeta(); meta.displayName(title); meta.lore(List.of(lore));
+        BookWorkshopVisuals.apply(meta,visual,plugin.getConfig().getBoolean("textures.workshop-menu",false));
+        result.setItemMeta(meta); return result;
     }
     private static ItemStack clone(ItemStack s) { return s==null?null:s.clone(); }
     private static ItemStack[] copy(ItemStack[] items) { return Arrays.stream(items).map(BookWorkshopGui::clone).toArray(ItemStack[]::new); }
@@ -56,10 +58,10 @@ final class BookWorkshopGui implements Listener {
     private void render(Holder h) {
         Inventory inv=h.inv;
         for(int i=0;i<54;i++) if(i!=FIRST && i!=SECOND) inv.setItem(i,null);
-        inv.setItem(4,icon(Material.PAPER,plugin.messages().get("slots-instructions"),plugin.messages().get(h.mode==Mode.COMBINE?"slots-two":"slots-one")));
-        inv.setItem(1,icon(Material.HOPPER,plugin.messages().get("slots-left")));
-        if(h.mode==Mode.COMBINE) inv.setItem(7,icon(Material.HOPPER,plugin.messages().get("slots-right")));
-        inv.setItem(13,icon(Material.ANVIL,plugin.messages().get(h.mode==Mode.SCRIBE?"slots-scribe-cost":h.mode==Mode.CLEANSE?"hub-cleanse-cost":"hub-combine-cost")));
+        inv.setItem(4,icon("instructions",Material.PAPER,plugin.messages().get("slots-instructions"),plugin.messages().get(h.mode==Mode.COMBINE?"slots-two":"slots-one")));
+        inv.setItem(1,icon("left",Material.HOPPER,plugin.messages().get("slots-left")));
+        if(h.mode==Mode.COMBINE) inv.setItem(7,icon("right",Material.HOPPER,plugin.messages().get("slots-right")));
+        inv.setItem(13,icon(BookWorkshopVisuals.cost(h.mode),Material.ANVIL,plugin.messages().get(h.mode==Mode.SCRIBE?"slots-scribe-cost":h.mode==Mode.CLEANSE?"hub-cleanse-cost":"hub-combine-cost")));
         if(h.mode!=Mode.COMBINE) {
             ItemStack item=inv.getItem(FIRST); var entries=new ArrayList<Choice>();
             var data=plugin.items().validated(item);
@@ -76,13 +78,13 @@ final class BookWorkshopGui implements Listener {
             h.choices=List.copyOf(entries); h.page=Math.max(0,Math.min(h.page,Math.max(0,(entries.size()-1)/PAGE)));
             for(int i=0;i<PAGE && h.page*PAGE+i<entries.size();i++) {
                 Choice c=entries.get(h.page*PAGE+i);
-                inv.setItem(START+i,icon(c.equals(h.selected)?Material.ENCHANTED_BOOK:Material.BOOK,Component.text(c.label()+" · "+c.level()),plugin.messages().get("slots-choose")));
+                inv.setItem(START+i,icon(c.equals(h.selected)?"selected":"choice",c.equals(h.selected)?Material.ENCHANTED_BOOK:Material.BOOK,Component.text(c.label()+" · "+c.level()),plugin.messages().get("slots-choose")));
             }
-            if(h.page>0) inv.setItem(45,icon(Material.ARROW,plugin.messages().get("scribe-prev")));
-            if((h.page+1)*PAGE<entries.size()) inv.setItem(53,icon(Material.ARROW,plugin.messages().get("scribe-next")));
-        } else inv.setItem(22,icon(Material.BOOKSHELF,plugin.messages().get("hub-combine-effect"),plugin.messages().get("hub-combine-requirements")));
-        inv.setItem(49,icon(h.armed?Material.LIME_DYE:Material.YELLOW_DYE,plugin.messages().get(h.armed?"slots-confirm":"slots-prepare")));
-        inv.setItem(50,icon(Material.BARRIER,plugin.messages().get("hub-close")));
+            if(h.page>0) inv.setItem(45,icon("prev",Material.ARROW,plugin.messages().get("scribe-prev")));
+            if((h.page+1)*PAGE<entries.size()) inv.setItem(53,icon("next",Material.ARROW,plugin.messages().get("scribe-next")));
+        } else inv.setItem(22,icon("combine",Material.BOOKSHELF,plugin.messages().get("hub-combine-effect"),plugin.messages().get("hub-combine-requirements")));
+        inv.setItem(49,icon(h.armed?"confirm":"prepare",h.armed?Material.LIME_DYE:Material.YELLOW_DYE,plugin.messages().get(h.armed?"slots-confirm":"slots-prepare")));
+        inv.setItem(50,icon("close",Material.BARRIER,plugin.messages().get("hub-close")));
     }
     private void reset(Holder h) { h.armed=false;h.input1=null;h.input2=null;h.storage=null; }
     static boolean safeAction(InventoryAction action) {

@@ -78,6 +78,18 @@ class ResourcePackTest(unittest.TestCase):
         config = (PACK.parents[1] / 'battlepass/src/main/resources/config.yml').read_text(encoding='utf-8')
         self.assertRegex(config, r'(?m)^  mission-menu: false\s*$')
 
+    def test_enchants_workshop_models_and_opt_in(self):
+        root=PACK/'assets/chrdk_enchants';names={'instructions','left','right','cost_scribe','cost_cleanse','cost_combine','choice','selected','prev','next','combine','prepare','confirm','close'};hashes=set()
+        for name in names:
+            path='menu/workshop/'+name;ref='chrdk_enchants:item/'+path
+            item=json.loads((root/'items'/(path+'.json')).read_text());model=json.loads((root/'models/item'/(path+'.json')).read_text())
+            self.assertEqual({'type':'minecraft:model','model':ref},item['model']);self.assertEqual('minecraft:item/generated',model['parent']);self.assertEqual(ref,model['textures']['layer0'])
+            data=(root/'textures/item'/(path+'.png')).read_bytes();self.assertEqual(b'\x89PNG\r\n\x1a\n',data[:8]);self.assertEqual((32,32),struct.unpack('>II',data[16:24]))
+            digest=hashlib.sha256(data).hexdigest();self.assertNotIn(digest,hashes,name);hashes.add(digest)
+        for folder in ('items','models/item','textures/item'):
+            self.assertEqual(names,{p.stem for p in (root/folder/'menu/workshop').iterdir() if p.is_file()})
+        config=(PACK.parents[1]/'enchants/src/main/resources/config.yml').read_text(encoding='utf-8');self.assertRegex(config,r'(?m)^  workshop-menu: false\s*$')
+
     def test_enchants_catalog_models_and_opt_in(self):
         root=PACK/'assets/chrdk_enchants';names={'empty','prev','next','result','clear','group_all','group_sword','group_axe','group_bow','group_crossbow','group_helmet','group_chestplate','group_leggings','group_boots','group_pickaxe','group_shovel','group_hoe','rarity_all','rarity_common','rarity_rare','rarity_epic','rarity_legendary','polarity_all','polarity_light','polarity_curse','hand_on','hand_off','sort_id','sort_name','sort_rarity'};hashes=set()
         for name in names:
