@@ -45,16 +45,16 @@ final class AdventureGroupGui implements Listener {
         var h=new Holder(p.getUniqueId(),false,0);
         h.inventory=Bukkit.createInventory(h,SIZE,Component.text("Пати"));
         List<UUID> members=plugin.adventureGroups().menuMembers(p.getUniqueId());
-        h.inventory.setItem(4,icon(Material.BOOK,"Пати",members.isEmpty()?"Вы пока не состоите в подтверждённой группе.":"Участников: "+members.size()));
+        h.inventory.setItem(4,control(Material.BOOK,"Пати",members.isEmpty()?"Вы пока не состоите в подтверждённой группе.":"Участников: "+members.size(),members.isEmpty()?GuildPartyVisuals.Control.EMPTY:GuildPartyVisuals.Control.GROUP));
         for (int i=0;i<members.size() && i<16;i++) {
             Player member=Bukkit.getPlayer(members.get(i));
             if(member!=null && p.canSee(member)) h.inventory.setItem(memberSlot(i),icon(Material.PLAYER_HEAD,member.getName(),i==0?"Лидер пати":"Участник пати"));
         }
-        h.inventory.setItem(37,icon(Material.LIME_DYE,"Пригласить игрока","Выбрать игрока онлайн"));
-        h.inventory.setItem(39,icon(Material.LIME_CONCRETE,"Принять приглашение","Приглашение действует 60 секунд"));
-        h.inventory.setItem(41,icon(Material.RED_CONCRETE,"Отклонить приглашение","Отклонить последнее приглашение"));
-        h.inventory.setItem(43,icon(Material.OAK_DOOR,"Покинуть пати","Лидер распускает группу при выходе"));
-        h.inventory.setItem(49,icon(Material.BARRIER,"Закрыть",""));
+        h.inventory.setItem(37,control(Material.LIME_DYE,"Пригласить игрока","Выбрать игрока онлайн",GuildPartyVisuals.Control.INVITE));
+        h.inventory.setItem(39,control(Material.LIME_CONCRETE,"Принять приглашение","Приглашение действует 60 секунд",GuildPartyVisuals.Control.ACCEPT));
+        h.inventory.setItem(41,control(Material.RED_CONCRETE,"Отклонить приглашение","Отклонить последнее приглашение",GuildPartyVisuals.Control.DECLINE));
+        h.inventory.setItem(43,control(Material.OAK_DOOR,"Покинуть пати","Лидер распускает группу при выходе",GuildPartyVisuals.Control.LEAVE));
+        h.inventory.setItem(49,control(Material.BARRIER,"Закрыть","",GuildPartyVisuals.Control.CLOSE));
         p.openInventory(h.inventory);
     }
     private void invitations(Player p,int page) {
@@ -72,9 +72,9 @@ final class AdventureGroupGui implements Listener {
             h.inventory.setItem(slot,icon(Material.PLAYER_HEAD,other.getName(),"Отправить приглашение на 60 секунд"));
             h.targets.put(slot,other.getUniqueId());
         }
-        if(actual>0)h.inventory.setItem(45,icon(Material.ARROW,"Назад","Предыдущая страница"));
-        h.inventory.setItem(49,icon(Material.OAK_DOOR,"Вернуться","Меню пати"));
-        if(actual+1<pages)h.inventory.setItem(53,icon(Material.ARROW,"Далее","Следующая страница"));
+        if(actual>0)h.inventory.setItem(45,control(Material.ARROW,"Назад","Предыдущая страница",GuildPartyVisuals.Control.PREV));
+        h.inventory.setItem(49,control(Material.OAK_DOOR,"Вернуться","Меню пати",GuildPartyVisuals.Control.BACK));
+        if(actual+1<pages)h.inventory.setItem(53,control(Material.ARROW,"Далее","Следующая страница",GuildPartyVisuals.Control.NEXT));
         p.openInventory(h.inventory);
     }
     void closeAll() {
@@ -84,6 +84,14 @@ final class AdventureGroupGui implements Listener {
     private static ItemStack icon(Material mat,String name,String lore) {
         var item=new ItemStack(mat);var meta=item.getItemMeta();meta.displayName(Component.text(name));
         if(!lore.isEmpty())meta.lore(List.of(Component.text(lore)));item.setItemMeta(meta);return item;
+    }
+    private ItemStack control(Material mat,String name,String lore,GuildPartyVisuals.Control control) {
+        ItemStack item=icon(mat,name,lore);
+        if (plugin.getConfig().getBoolean("textures.party-menu",false)) {
+            var meta=item.getItemMeta(); GuildPartyVisuals.apply(meta,control,true);
+            if (meta!=null) item.setItemMeta(meta);
+        }
+        return item;
     }
     @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=false)
     public void click(InventoryClickEvent event) {

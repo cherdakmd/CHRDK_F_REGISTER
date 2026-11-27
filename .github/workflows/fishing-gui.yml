@@ -760,7 +760,7 @@ jobs:
           PYTEST
 
   guilds-gui:
-    name: Guilds GUI safety checks
+    name: Guilds party and GUI safety checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -776,7 +776,9 @@ jobs:
         run: |
           set +e
           ./gradlew --no-daemon --no-configuration-cache -Pchrdk.papiJar=build/dependencies/PlaceholderAPI-2.12.3.jar \
-            :guilds:clean :guilds:test \
+            :guilds:clean :custom-items:prototypeResourcePack :guilds:test \
+            --tests ru.cherdakmd.chrdkguilds.GuildPartyVisualsTest \
+            --tests ru.cherdakmd.chrdkguilds.GuildPartyGuiVisualsTest \
             --tests ru.cherdakmd.chrdkguilds.GuildStyleGuiSafetyTest \
             --tests ru.cherdakmd.chrdkguilds.GuildLeaderStyle282Test \
             --tests ru.cherdakmd.chrdkguilds.GuildRecruitment280Test \
@@ -802,6 +804,8 @@ jobs:
           from pathlib import Path
           import xml.etree.ElementTree as ET
           tests = {
+              'GuildPartyVisualsTest': {'controlsAreFixedAndForeignAppearanceIsPreserved'},
+              'GuildPartyGuiVisualsTest': {'controlsChangeAppearanceButPlayerEntriesAndActionsDoNot'},
               'GuildStyleGuiSafetyTest': {'cancelledForeignAndNonStandardClicksDoNotScheduleAndDeferredRoleIsRechecked','mainMenuStyleOpenRequiresSameWindowAccessAndGuildOnNextTick'},
               'GuildLeaderStyle282Test': set(), 'GuildRecruitment280Test': set(), 'AdventureGroupGuiTest': set(),
           }
@@ -812,5 +816,12 @@ jobs:
                   raise SystemExit(f'{name} missing, failed or skipped')
               found = {case.get('name', '').removesuffix('()') for case in suite.findall('testcase')}
               if not required.issubset(found): raise SystemExit(f'{name} missing {sorted(required - found)}')
+          from zipfile import ZipFile
+          root = Path('custom-items/resource-pack')
+          expected = {p.relative_to(root).as_posix(): p.read_bytes() for folder in ('items','models/item','textures/item') for p in (root / 'assets/chrdk_guilds' / folder / 'menu/party').iterdir() if p.is_file()}
+          assert len(expected) == 30
+          with ZipFile('custom-items/build/resource-packs/chrdk-custom-items-prototype.zip') as pack:
+              for path, data in expected.items(): assert pack.read(path) == data, path
+              assert any(p.startswith('assets/chrdk_fishing/') for p in pack.namelist())
           print('Guilds targeted GUI checks passed; not a full finance or release gate.')
           PYTEST
