@@ -77,4 +77,22 @@ class VisualConfigMigrationTest {
         assertEquals("textures:\n  crystals: false\n",Files.readString(config));
         org.mockito.Mockito.verify(plugin, org.mockito.Mockito.never()).reloadConfig();
     }
+    @Test void optedInPluginMigratesOnceAndThenRespectsOptOut() throws Exception {
+        Path core = dir.resolve("CHRDK_Core"), skill = dir.resolve("CHRDK_Skills");
+        Files.createDirectories(core); Files.createDirectories(skill);
+        Files.writeString(core.resolve(VisualConfigMigration.OPT_IN), "");
+        Path config = skill.resolve("config.yml"); Files.writeString(config, "textures:\n  crystals: false\n");
+        var plugin = org.mockito.Mockito.mock(org.bukkit.plugin.java.JavaPlugin.class);
+        org.mockito.Mockito.when(plugin.getName()).thenReturn("CHRDK_Skills");
+        org.mockito.Mockito.when(plugin.getDataFolder()).thenReturn(skill.toFile());
+        org.mockito.Mockito.when(plugin.getLogger()).thenReturn(java.util.logging.Logger.getLogger("visual-test"));
+        VisualConfigMigration.apply(plugin);
+        var yaml = YamlConfiguration.loadConfiguration(config.toFile());
+        assertTrue(yaml.getBoolean("textures.crystals"));
+        org.mockito.Mockito.verify(plugin, org.mockito.Mockito.times(1)).reloadConfig();
+        yaml.set("textures.crystals", false); yaml.save(config.toFile());
+        VisualConfigMigration.apply(plugin);
+        assertFalse(YamlConfiguration.loadConfiguration(config.toFile()).getBoolean("textures.crystals"));
+        org.mockito.Mockito.verify(plugin, org.mockito.Mockito.times(1)).reloadConfig();
+    }
 }
