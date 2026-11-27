@@ -1081,6 +1081,8 @@ jobs:
             :custom-items:prototypeResourcePack :diamond-shop:test \
             --tests ru.cherdakmd.diamondshop.ShopQuantityVisualsTest \
             --tests ru.cherdakmd.diamondshop.ShopQuantityGuiVisualsTest \
+            --tests ru.cherdakmd.diamondshop.ShopMarketVisualsTest \
+            --tests ru.cherdakmd.diamondshop.ShopMarketGuiVisualsTest \
             --tests ru.cherdakmd.diamondshop.ShopGuiSafetyTest \
             --tests ru.cherdakmd.diamondshop.ShopMarketGuiTest \
             --tests ru.cherdakmd.diamondshop.QuantitySessionTest \
@@ -1107,7 +1109,7 @@ jobs:
           python3 - <<'PYTEST'
           from pathlib import Path
           import xml.etree.ElementTree as ET
-          tests={'ShopQuantityVisualsTest': {'controlModelsAreDistinctAndDoNotOverwriteMetadata'}, 'ShopQuantityGuiVisualsTest': {'buyAndSellStatesPreserveItemAndQuoteAndNeverTradeOnRender'}, 'ShopGuiSafetyTest': {'marketClickTypesAndOwnerAreCheckedBeforeMoneyActions','quantityConfirmRejectsNonOrdinaryOrCancelledClicksBeforeSubmission','adminDraftCannotOverwriteNewerChangesAndRequiresOwnerAndOrdinaryClick'},'ShopMarketGuiTest':set(),'QuantitySessionTest':set(),'ShopOverridesTest':set(),'ShopServiceEconomyTest':set(),'TradeAmountsTest':set()}
+          tests={'ShopQuantityVisualsTest': {'controlModelsAreDistinctAndDoNotOverwriteMetadata'}, 'ShopQuantityGuiVisualsTest': {'buyAndSellStatesPreserveItemAndQuoteAndNeverTradeOnRender'}, 'ShopMarketVisualsTest': {'categoryAndControlModelsAreDistinctAndSafe'}, 'ShopMarketGuiVisualsTest': {'marketStatesAreOptInAndProductCardsRemainUnchanged'}, 'ShopGuiSafetyTest': {'marketClickTypesAndOwnerAreCheckedBeforeMoneyActions','quantityConfirmRejectsNonOrdinaryOrCancelledClicksBeforeSubmission','adminDraftCannotOverwriteNewerChangesAndRequiresOwnerAndOrdinaryClick'},'ShopMarketGuiTest':set(),'QuantitySessionTest':set(),'ShopOverridesTest':set(),'ShopServiceEconomyTest':set(),'TradeAmountsTest':set()}
           for name,required in tests.items():
               suite=ET.parse(Path(f'diamond-shop/build/test-results/test/TEST-ru.cherdakmd.diamondshop.{name}.xml')).getroot()
               if not int(suite.get('tests','0')) or any(int(suite.get(k,'0')) for k in ('errors','failures','skipped')): raise SystemExit(f'{name} failed or skipped')
@@ -1117,8 +1119,10 @@ jobs:
           root=Path('custom-items/resource-pack')
           expected={p.relative_to(root).as_posix():p.read_bytes() for folder in ('items','models/item','textures/item') for p in (root/'assets/chrdk_diamondshop'/folder/'menu/quantity').iterdir() if p.is_file()}
           assert len(expected)==54
+          market={p.relative_to(root).as_posix():p.read_bytes() for folder in ('items','models/item','textures/item') for p in (root/'assets/chrdk_diamondshop'/folder/'menu/market').iterdir() if p.is_file()}
+          assert len(market)==87
           with ZipFile('custom-items/build/resource-packs/chrdk-custom-items-prototype.zip') as pack:
-              for path,data in expected.items(): assert pack.read(path)==data,path
+              for path,data in (expected | market).items(): assert pack.read(path)==data,path
               assert any(p.startswith('assets/chrdk_fishing/') for p in pack.namelist())
           print('DiamondShop GUI safety and quantity visuals passed; not a full finance or release audit.')
           PYTEST

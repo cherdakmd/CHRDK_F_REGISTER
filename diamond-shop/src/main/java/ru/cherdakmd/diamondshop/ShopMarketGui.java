@@ -109,7 +109,8 @@ public final class ShopMarketGui implements Listener {
         lore.add(Component.empty());
         lore.add(plugin.messages().get("market.section.count","count",count));
         lore.add(plugin.messages().get("market.section.open"));
-        return button(material(category.icon(),Material.CHEST),category.messageKey(),lore);
+        ItemStack icon=button(material(category.icon(),Material.CHEST),category.messageKey(),lore);
+        return decorate(icon,ShopMarketVisuals.category(category,false));
     }
 
     private ItemStack tabIcon(ShopCategory category,boolean selected,int count) {
@@ -117,7 +118,7 @@ public final class ShopMarketGui implements Listener {
         if(selected) lore.add(plugin.messages().get("trading.gui.tab-current"));
         ItemStack icon=button(material(category.icon(),Material.PAPER),category.messageKey(),lore);
         if(selected) { var meta=icon.getItemMeta(); if(meta!=null) {meta.setEnchantmentGlintOverride(true);icon.setItemMeta(meta);} }
-        return icon;
+        return decorate(icon,ShopMarketVisuals.category(category,selected));
     }
 
     private ItemStack itemCard(ShopConfig.ShopItem item,Offer offer) {
@@ -149,7 +150,13 @@ public final class ShopMarketGui implements Listener {
 
     private ItemStack button(Material material,String nameKey,List<Component> lore) {
         ItemStack icon=new ItemStack(material); var meta=icon.getItemMeta();
-        if(meta!=null) {meta.displayName(plugin.messages().get(nameKey));if(!lore.isEmpty())meta.lore(lore);icon.setItemMeta(meta);}
+        if(meta!=null) {meta.displayName(plugin.messages().get(nameKey));if(!lore.isEmpty())meta.lore(lore);
+            ShopMarketVisuals.apply(meta,ShopMarketVisuals.control(nameKey),plugin.getConfig().getBoolean("textures.market-menu",false));icon.setItemMeta(meta);}
+        return icon;
+    }
+    private ItemStack decorate(ItemStack icon,org.bukkit.NamespacedKey model) {
+        var meta=icon.getItemMeta();
+        if(meta!=null) { ShopMarketVisuals.apply(meta,model,plugin.getConfig().getBoolean("textures.market-menu",false)); icon.setItemMeta(meta); }
         return icon;
     }
     private static Material material(String name,Material fallback) { Material value=Material.matchMaterial(name);return value==null||!value.isItem()?fallback:value; }
