@@ -61,6 +61,7 @@ dependencies {
     testImplementation "com.github.MilkBowl:VaultAPI:1.7.1"
     testImplementation "net.luckperms:api:5.4"
     testImplementation "com.google.code.gson:gson:2.11.0"
+    testImplementation "org.mockito:mockito-core:5.20.0"
     testImplementation "org.junit.jupiter:junit-jupiter:5.11.3"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
