@@ -1782,6 +1782,7 @@ messages:
       "empty-grants": "<gray>Реестр выдач пуст.</gray>"
       "no-permission": "<red>Нет доступа к редактору званий.</red>"
       "read-only": "<yellow>Просмотр доступен, изменения — только администраторам.</yellow>"
+      "changed": "<yellow>Данные звания изменились. Окно обновлено, проверьте запись перед действием.</yellow>"
       "input-create-id": "<gold>id нового звания:</gold> <gray>латиницей, например old-citrus; «отмена» — выход.</gray>"
       "input-create-name": "<gold>Название звания:</gold> <gray>напишите в чат или «отмена».</gray>"
       "input-name": "<gold>Новое название:</gold> <gray>напишите в чат или «отмена».</gray>"

@@ -8,6 +8,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -89,6 +90,8 @@ public final class HonorGui implements Listener {
         private String player = "";
         private int index;
         private String filter = "";
+        private HonorDefinition detailSnapshot;
+        private final java.util.Map<Integer, Object> entries = new java.util.HashMap<>();
         private Inventory inventory;
 
         Holder(UUID owner, Page page, String target, String player) {
@@ -109,9 +112,13 @@ public final class HonorGui implements Listener {
     }
 
     private record Pending(Input type, Page page, String target, String player,
-                           int index, String filter, String extra) {
+                           int index, String filter, String extra,
+                           HonorDefinition definition, HonorGrant grant) {
+        Pending(Input type, Page page, String target, String player, int index, String filter, String extra) {
+            this(type,page,target,player,index,filter,extra,null,null);
+        }
         Pending withFilter(String value) {
-            return new Pending(type, page, target, player, index, value, extra);
+            return new Pending(type, page, target, player, index, value, extra, definition, grant);
         }
     }
 
@@ -181,6 +188,7 @@ public final class HonorGui implements Listener {
     private void paint(Player viewer, Holder holder) {
         Messages messages = plugin.messages();
         Inventory inv = holder.inventory;
+        holder.entries.clear(); holder.detailSnapshot = null;
         for (int slot = 0; slot < SIZE; slot++) inv.setItem(slot, filler());
 
         inv.setItem(SLOT_DEFINITIONS, icon(Material.BOOK,
@@ -232,6 +240,7 @@ public final class HonorGui implements Listener {
         }
         paintSlots(holder, defs.size(), (slot, offset) -> {
             HonorDefinition def = defs.get(offset);
+            holder.entries.put(slot,def);
             int granted = honors.ledger().grantsOfHonor(def.id()).size();
             return icon(Material.PAPER,
                     messages.get("honor.gui.definition-entry",
@@ -254,6 +263,7 @@ public final class HonorGui implements Listener {
             empty(holder, Material.PAPER, messages.get("honor.gui.empty-definitions"));
             return;
         }
+        holder.detailSnapshot = def;
         List<HonorGrant> grants = honors.ledger().grantsOfHonor(def.id());
         holder.inventory.setItem(SLOT_INFO, icon(Material.PLAYER_HEAD,
                 messages.get("honor.gui.button-grant-to"),
@@ -277,6 +287,7 @@ public final class HonorGui implements Listener {
                 messages.get("honor.gui.button-delete"), List.of()));
         paintSlots(holder, grants.size(), (slot, offset) -> {
             HonorGrant grant = grants.get(offset);
+            holder.entries.put(slot,grant);
             return icon(Material.PLAYER_HEAD,
                     messages.get("honor.gui.detail-entry",
                             "player", grant.player(), "date", date(grant.grantedAt()),
@@ -304,6 +315,7 @@ public final class HonorGui implements Listener {
                         "grants", grants.size(), "actor", viewer.getName())));
         paintSlots(holder, grants.size(), (slot, offset) -> {
             HonorGrant grant = grants.get(offset);
+            holder.entries.put(slot,grant);
             return icon(Material.NAME_TAG,
                     messages.get("honor.gui.grant-entry",
                             "player", grant.player(),
@@ -353,7 +365,9 @@ public final class HonorGui implements Listener {
     @EventHandler(priority = EventPriority.HIGH)
     public void onClick(InventoryClickEvent event) {
         if (!(event.getView().getTopInventory().getHolder() instanceof Holder holder)) return;
+        boolean alreadyCancelled = event.isCancelled();
         event.setCancelled(true);
+        if (alreadyCancelled) return;
         if (!(event.getWhoClicked() instanceof Player viewer)
                 || !holder.owner.equals(viewer.getUniqueId())) return;
         if (!honors.canViewGui(viewer)) {
@@ -361,6 +375,8 @@ public final class HonorGui implements Listener {
             plugin.messages().send(viewer, "honor.gui.no-permission");
             return;
         }
+        ClickType click=event.getClick();
+        if (click != ClickType.LEFT && click != ClickType.RIGHT && click != ClickType.SHIFT_LEFT && click != ClickType.SHIFT_RIGHT) return;
         int slot = event.getRawSlot();
         if (slot < 0 || slot >= SIZE) return;
         boolean change = honors.canEdit(viewer);
@@ -394,6 +410,9 @@ public final class HonorGui implements Listener {
         }
 
         if (holder.page == Page.DETAIL) {
+            if (holder.detailSnapshot == null || !holder.detailSnapshot.equals(honors.ledger().definition(holder.target))) {
+                stale(viewer,holder); return;
+            }
             if (slot == SLOT_INFO) {
                 if (!change) { readOnly(viewer); return; }
                 startInput(viewer, Input.GRANT_PLAYER, holder, ""); return;
@@ -429,55 +448,40 @@ public final class HonorGui implements Listener {
 
         int index = entryIndex(slot);
         if (index < 0) return;
-        int offset = holder.index * ENTRY_SLOTS.length + index;
         if (!change) { readOnly(viewer); return; }
+        Object shown=holder.entries.get(slot);
+        if (shown == null) return;
         switch (holder.page) {
             case DEFINITIONS -> {
-                List<HonorDefinition> defs = filterDefinitions(holder.filter);
-                if (offset >= defs.size()) return;
-                HonorDefinition def = defs.get(offset);
+                if (!(shown instanceof HonorDefinition def) || !def.equals(honors.ledger().definition(def.id()))) {
+                    stale(viewer,holder); return;
+                }
                 if (!holder.player.isEmpty()) {
-                    // Ручной выбор звания для конкретного игрока: сначала причина.
-                    startInput(viewer, Input.GRANT_REASON, holder, def.id());
+                    queueInput(viewer, new Pending(Input.GRANT_REASON, holder.page, holder.target, holder.player,
+                            holder.index, holder.filter, def.id(),def,null));
                 } else {
                     open(viewer, Page.DETAIL, def.id(), "", 0, holder.filter);
                 }
             }
-            case DETAIL -> {
-                List<HonorGrant> grants = honors.ledger().grantsOfHonor(holder.target);
-                if (offset < grants.size()) {
-                    HonorGrant grant = grants.get(offset);
-                    if (event.getClick().isShiftClick()) {
-                        queueInput(viewer, new Pending(Input.GRANT_REASON_EDIT, holder.page,
-                                grant.player(), holder.player, holder.index, holder.filter,
-                                grant.honorId()));
-                        return;
-                    }
-                    honors.revoke(viewer, grant.player(), holder.target);
-                    paint(viewer, holder);
+            case DETAIL, GRANTS -> {
+                if (!(shown instanceof HonorGrant grant) || !grant.equals(honors.ledger().grantOf(grant.player()))) {
+                    stale(viewer,holder); return;
                 }
-            }
-            case GRANTS -> {
-                List<HonorGrant> grants = honors.ledger().allGrants().stream()
-                        .filter(grant -> holder.filter.isEmpty()
-                                || grant.player().toLowerCase(Locale.ROOT).contains(holder.filter.toLowerCase(Locale.ROOT))
-                                || grant.reason().toLowerCase(Locale.ROOT).contains(holder.filter.toLowerCase(Locale.ROOT))
-                                || honors.ledger().display(grant.honorId()).toLowerCase(Locale.ROOT)
-                                        .contains(holder.filter.toLowerCase(Locale.ROOT)))
-                        .toList();
-                if (offset < grants.size()) {
-                    HonorGrant grant = grants.get(offset);
-                    if (event.getClick().isShiftClick()) {
-                        queueInput(viewer, new Pending(Input.GRANT_REASON_EDIT, holder.page,
-                                grant.player(), holder.player, holder.index, holder.filter,
-                                grant.honorId()));
-                        return;
-                    }
-                    honors.revoke(viewer, grant.player(), grant.honorId());
-                    paint(viewer, holder);
+                if (event.getClick().isShiftClick()) {
+                    queueInput(viewer, new Pending(Input.GRANT_REASON_EDIT, holder.page,
+                            grant.player(), holder.player, holder.index, holder.filter,
+                            grant.honorId(), holder.detailSnapshot, grant));
+                    return;
                 }
+                honors.revoke(viewer, grant.player(), grant.honorId());
+                paint(viewer, holder);
             }
         }
+    }
+
+    private void stale(Player viewer,Holder holder) {
+        plugin.messages().send(viewer,"honor.gui.changed");
+        paint(viewer,holder);
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -506,7 +510,7 @@ public final class HonorGui implements Listener {
 
     private void startInput(Player viewer, Input type, Holder holder, String extra) {
         queueInput(viewer, new Pending(type, holder.page, holder.target,
-                holder.player, holder.index, holder.filter, extra));
+                holder.player, holder.index, holder.filter, extra,holder.detailSnapshot,null));
     }
 
     /** Подсказка и регистрация ожидания в общем координаторе ввода. */
@@ -536,6 +540,12 @@ public final class HonorGui implements Listener {
 
     private void applyInput(Player player, Pending request, String raw) {
         if (!player.isOnline() || !honors.canEdit(player)) return;
+        if ((request.definition()!=null && !request.definition().equals(honors.ledger().definition(request.definition().id())))
+                || (request.grant()!=null && !request.grant().equals(honors.ledger().grantOf(request.grant().player())))) {
+            plugin.messages().send(player,"honor.gui.changed");
+            reopen(player,request);
+            return;
+        }
         String text = raw == null ? "" : raw.trim();
         if (text.isEmpty() || text.equalsIgnoreCase("отмена") || text.equalsIgnoreCase("cancel")) {
             plugin.messages().send(player, "honor.gui.input-cancelled");

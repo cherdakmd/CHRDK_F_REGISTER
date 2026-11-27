@@ -885,7 +885,8 @@ jobs:
             --tests ru.cherdakmd.chrdkregister.AdminDonationsGuiTest \
             --tests ru.cherdakmd.chrdkregister.AdminDonationGuiSafetyTest \
             --tests ru.cherdakmd.chrdkregister.AdminDonationVisualsTest \
-            --tests ru.cherdakmd.chrdkregister.AdminDonationGuiVisualsTest > core-atlas-build.log 2>&1
+            --tests ru.cherdakmd.chrdkregister.AdminDonationGuiVisualsTest \
+            --tests ru.cherdakmd.chrdkregister.HonorGuiSafetyTest > core-atlas-build.log 2>&1
           result=$?
           tail -n 120 core-atlas-build.log
           if [[ $result -ne 0 ]]; then
@@ -939,6 +940,7 @@ jobs:
               'AdminDonationGuiSafetyTest': {'displayedDonationIsVerifiedAgainstChangesAndCurrentPermissions'},
               'AdminDonationVisualsTest': {'controlsFiltersAndAllRecordStatesHaveDistinctModels'},
               'AdminDonationGuiVisualsTest': {'journalShowsOriginalStatusesAndFilterWithoutExecutingDecisions'},
+              'HonorGuiSafetyTest': {'actionsUseDisplayedRecordsAndRevalidateChatInputs'},
           }.items():
               suite=ET.parse(Path(f'build/test-results/test/TEST-ru.cherdakmd.chrdkregister.{name}.xml')).getroot()
               assert int(suite.get('tests','0')) and not any(int(suite.get(k,'0')) for k in ('errors','failures','skipped')),name
