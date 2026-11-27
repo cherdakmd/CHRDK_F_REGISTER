@@ -1002,6 +1002,9 @@ jobs:
             :custom-items:prototypeResourcePack :enchants:test \
             --tests ru.cherdakmd.chrdkenchants.EnchantHubVisualsTest \
             --tests ru.cherdakmd.chrdkenchants.EnchantHubGuiVisualsTest \
+            --tests ru.cherdakmd.chrdkenchants.EnchantCatalogVisualsTest \
+            --tests ru.cherdakmd.chrdkenchants.EnchantCatalogGuiVisualsTest \
+            --tests ru.cherdakmd.chrdkenchants.EnchantCatalogTest \
             --tests ru.cherdakmd.chrdkenchants.EnchantHubTest \
             --tests ru.cherdakmd.chrdkenchants.EnchantHubMessagesTest \
             --tests ru.cherdakmd.chrdkenchants.BookWorkshopGuiTest > enchants-hub-build.log 2>&1
@@ -1029,6 +1032,9 @@ jobs:
           tests={
               'EnchantHubVisualsTest': {'modelsAreUniqueAndForeignMetadataIsPreserved'},
               'EnchantHubGuiVisualsTest': {'screensKeepRealItemSnapshotsAndUseOptInModels'},
+              'EnchantCatalogVisualsTest': {'filterAndIndividualEntryModelsAreDistinctAndSafe'},
+              'EnchantCatalogGuiVisualsTest': {'pagesFiltersAndEmptyResultsUseModelsWithoutGivingItems'},
+              'EnchantCatalogTest': set(),
               'EnchantHubTest': set(), 'EnchantHubMessagesTest': set(), 'BookWorkshopGuiTest': set(),
           }
           for name,required in tests.items():
@@ -1039,8 +1045,12 @@ jobs:
           root=Path('custom-items/resource-pack')
           expected={p.relative_to(root).as_posix():p.read_bytes() for folder in ('items','models/item','textures/item') for p in (root/'assets/chrdk_enchants'/folder/'menu/hub').iterdir() if p.is_file()}
           assert len(expected)==93
+          catalog={p.relative_to(root).as_posix():p.read_bytes() for folder in ('items','models/item','textures/item') for p in (root/'assets/chrdk_enchants'/folder/'menu/catalog').iterdir() if p.is_file()}
+          assert len(catalog)==90
+          books={p.relative_to(root).as_posix():p.read_bytes() for folder in ('items','models/item','textures/item') for p in (root/'assets/chrdk_enchants'/folder/'book/custom').iterdir() if p.is_file()}
+          assert len(books)==228
           with ZipFile('custom-items/build/resource-packs/chrdk-custom-items-prototype.zip') as pack:
-              for path,data in expected.items(): assert pack.read(path)==data,path
+              for path,data in (expected | catalog | books).items(): assert pack.read(path)==data,path
               assert any(p.startswith('assets/chrdk_fishing/') for p in pack.namelist())
           print('Enchants hub checks passed; remaining GUIs, live client and release gate not checked.')
           PYTEST

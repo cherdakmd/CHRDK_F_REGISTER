@@ -47,29 +47,30 @@ public final class EnchantGui implements Listener {
                 "page", page + 1, "pages", EnchantCatalog.pages(selected.size())));
         holder.inventory = inventory;
         for (int slot = 0; slot < items.size(); slot++) inventory.setItem(slot, enchantIcon(items.get(slot)));
-        if (items.isEmpty()) inventory.setItem(22, button(Material.PAPER, "catalog-empty"));
-        if (page > 0) inventory.setItem(45, button(Material.ARROW, "gui-prev"));
-        if (page + 1 < EnchantCatalog.pages(selected.size())) inventory.setItem(53, button(Material.ARROW, "gui-next"));
-        inventory.setItem(46, button(Material.HOPPER, "catalog-group", "value", Messages.trusted(query.group() == null
+        if (items.isEmpty()) inventory.setItem(22, button(Material.PAPER, "catalog-empty", EnchantCatalogVisuals.control("empty")));
+        if (page > 0) inventory.setItem(45, button(Material.ARROW, "gui-prev", EnchantCatalogVisuals.control("prev")));
+        if (page + 1 < EnchantCatalog.pages(selected.size())) inventory.setItem(53, button(Material.ARROW, "gui-next", EnchantCatalogVisuals.control("next")));
+        inventory.setItem(46, button(Material.HOPPER, "catalog-group", EnchantCatalogVisuals.group(query.group()), "value", Messages.trusted(query.group() == null
                 ? plugin.messages().raw("catalog-all") : groupLabel(query.group()))));
-        inventory.setItem(47, button(Material.AMETHYST_SHARD, "catalog-rarity", "value", query.rarity() == null
+        inventory.setItem(47, button(Material.AMETHYST_SHARD, "catalog-rarity", EnchantCatalogVisuals.rarity(query.rarity()), "value", query.rarity() == null
                 ? plugin.messages().mini("catalog-all") : plugin.messages().mini(query.rarity().labelKey())));
-        inventory.setItem(48, button(Material.SOUL_LANTERN, "catalog-polarity", "value", query.polarity() == null
+        inventory.setItem(48, button(Material.SOUL_LANTERN, "catalog-polarity", EnchantCatalogVisuals.polarity(query.polarity()), "value", query.polarity() == null
                 ? plugin.messages().mini("catalog-all") : plugin.messages().mini(query.polarity().labelKey())));
-        inventory.setItem(49, button(Material.BOOK, "catalog-result", "count", selected.size(), "total", EnchantRegistry.size(),
+        inventory.setItem(49, button(Material.BOOK, "catalog-result", EnchantCatalogVisuals.control("result"), "count", selected.size(), "total", EnchantRegistry.size(),
                 "search", query.search().isEmpty() ? "—" : query.search()));
-        inventory.setItem(50, button(Material.ANVIL, "catalog-hand", "value", query.hand()
+        inventory.setItem(50, button(Material.ANVIL, "catalog-hand", EnchantCatalogVisuals.hand(query.hand()), "value", query.hand()
                 ? plugin.messages().mini("catalog-on") : plugin.messages().mini("catalog-off")));
-        inventory.setItem(51, button(Material.COMPARATOR, "catalog-sort", "value", plugin.messages().mini("catalog-sort-" + query.sort().name().toLowerCase(java.util.Locale.ROOT))));
-        inventory.setItem(52, button(Material.BARRIER, "catalog-clear"));
+        inventory.setItem(51, button(Material.COMPARATOR, "catalog-sort", EnchantCatalogVisuals.sort(query.sort()), "value", plugin.messages().mini("catalog-sort-" + query.sort().name().toLowerCase(java.util.Locale.ROOT))));
+        inventory.setItem(52, button(Material.BARRIER, "catalog-clear", EnchantCatalogVisuals.control("clear")));
         player.openInventory(inventory);
     }
-    private ItemStack button(Material material, String key, Object... args) {
+    private ItemStack button(Material material, String key, org.bukkit.NamespacedKey model, Object... args) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             meta.displayName(plugin.messages().get(key, args));
             meta.lore(List.of(plugin.messages().get(key.equals("catalog-result") ? "catalog-help" : "catalog-hint")));
+            EnchantCatalogVisuals.apply(meta,model,plugin.getConfig().getBoolean("textures.catalog-menu",false));
             item.setItemMeta(meta);
         }
         return item;
@@ -111,6 +112,7 @@ public final class EnchantGui implements Listener {
             lore.addAll(plugin.messages().getList("en." + def.id() + ".lore"));
             lore.add(plugin.messages().get("catalog-detail"));
             meta.lore(lore);
+            EnchantCatalogVisuals.apply(meta,EnchantCatalogVisuals.entry(def),plugin.getConfig().getBoolean("textures.catalog-menu",false));
             item.setItemMeta(meta);
         }
         return item;
