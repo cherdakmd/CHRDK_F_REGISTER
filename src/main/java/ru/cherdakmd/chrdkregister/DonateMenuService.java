@@ -58,11 +58,16 @@ public final class DonateMenuService implements Listener {
 
     private final AccessManager accessManager;
     private volatile Messages messages;
+    private volatile java.util.function.BooleanSupplier visualModels = () -> false;
     private volatile java.util.function.Consumer<Player> adminJournalOpener;
 
     public DonateMenuService(AccessManager accessManager, Messages messages) {
         this.accessManager = accessManager;
         this.messages = messages;
+    }
+
+    void setVisualModels(java.util.function.BooleanSupplier enabled) {
+        visualModels = java.util.Objects.requireNonNull(enabled);
     }
 
     /** Куда вести админа по кнопке «Журнал» (по умолчанию — чат-команда, ядро — GUI). */
@@ -115,7 +120,7 @@ public final class DonateMenuService implements Listener {
 
     private ItemStack icon(Player player, MenuEntry entry, List<PluginConfig.PassTier> tiers,
                            List<RegistrationStore.DonationRecord> history) {
-        return switch (entry.kind()) {
+        ItemStack result = switch (entry.kind()) {
             case PAY -> item(Material.EMERALD,
                     messages.get("pass.donate.pay-name"),
                     List.of(messages.get("pass.donate.pay-lore")));
@@ -154,6 +159,18 @@ public final class DonateMenuService implements Listener {
                                         "days", record.days)));
             }
         };
+        DonateMenuVisuals.Icon visual = switch (entry.kind()) {
+            case PAY -> DonateMenuVisuals.Icon.PAY;
+            case ADMIN_JOURNAL -> DonateMenuVisuals.Icon.ADMIN;
+            case TIER -> DonateMenuVisuals.tier(entry.index());
+            case HISTORY -> entry.index() < 0 ? DonateMenuVisuals.Icon.EMPTY
+                    : DonateMenuVisuals.history(RegistrationStore.DonationStatus.parse(history.get(entry.index()).status));
+        };
+        if (visualModels.getAsBoolean()) {
+            var meta = result.getItemMeta(); DonateMenuVisuals.apply(meta, visual, true);
+            if (meta != null) result.setItemMeta(meta);
+        }
+        return result;
     }
 
     private String statusLabel(RegistrationStore.DonationRecord record) {

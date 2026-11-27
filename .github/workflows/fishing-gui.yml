@@ -867,7 +867,9 @@ jobs:
             --tests ru.cherdakmd.chrdkregister.api.exploration.ExplorationStoreTest \
             --tests ru.cherdakmd.chrdkregister.PassMenuServiceTest \
             --tests ru.cherdakmd.chrdkregister.PassMenuVisualsTest \
-            --tests ru.cherdakmd.chrdkregister.PassMenuGuiVisualsTest > core-atlas-build.log 2>&1
+            --tests ru.cherdakmd.chrdkregister.PassMenuGuiVisualsTest \
+            --tests ru.cherdakmd.chrdkregister.DonateMenuVisualsTest \
+            --tests ru.cherdakmd.chrdkregister.DonateMenuGuiVisualsTest > core-atlas-build.log 2>&1
           result=$?
           tail -n 120 core-atlas-build.log
           if [[ $result -ne 0 ]]; then
@@ -903,6 +905,8 @@ jobs:
               'PassMenuServiceTest': set(),
               'PassMenuVisualsTest': {'eachActionHasFixedModelAndForeignMetadataSurvives'},
               'PassMenuGuiVisualsTest': {'actualLayoutsAndCommandsDoNotChangeWithModels'},
+              'DonateMenuVisualsTest': {'fixedTierAndHistoryIconsRespectMetadata'},
+              'DonateMenuGuiVisualsTest': {'tierLinksAndPrivateHistoryRemainUnchanged'},
           }.items():
               suite=ET.parse(Path(f'build/test-results/test/TEST-ru.cherdakmd.chrdkregister.{name}.xml')).getroot()
               assert int(suite.get('tests','0')) and not any(int(suite.get(k,'0')) for k in ('errors','failures','skipped')),name
@@ -913,7 +917,9 @@ jobs:
           assert len(expected)==33
           account={p.relative_to(root).as_posix():p.read_bytes() for folder in ('items','models/item','textures/item') for p in (root/'assets/chrdk_core'/folder/'menu/pass').iterdir() if p.is_file()}
           assert len(account)==21
-          expected.update(account)
+          donate={p.relative_to(root).as_posix():p.read_bytes() for folder in ('items','models/item','textures/item') for p in (root/'assets/chrdk_core'/folder/'menu/donate').iterdir() if p.is_file()}
+          assert len(donate)==39
+          expected.update(account); expected.update(donate)
           with ZipFile('custom-items/build/resource-packs/chrdk-custom-items-prototype.zip') as pack:
               for path,data in expected.items():assert pack.read(path)==data,path
               assert any(p.startswith('assets/chrdk_fishing/') for p in pack.namelist())

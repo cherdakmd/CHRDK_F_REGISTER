@@ -1077,6 +1077,7 @@ wiki:
 # Цифровая клавиатура пароля не меняется и не использует эти модели.
 core-gui-textures:
   pass-menu: false
+  donate-menu: false
 
 server-menu:
   enabled: true

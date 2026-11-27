@@ -110,6 +110,7 @@ public final class RegisterPlugin extends JavaPlugin {
         this.passMenuService = new PassMenuService(accessManager, messages);
         this.passMenuService.setVisualModels(() -> getConfig().getBoolean("core-gui-textures.pass-menu", false));
         this.donateMenuService = new DonateMenuService(accessManager, messages);
+        this.donateMenuService.setVisualModels(() -> getConfig().getBoolean("core-gui-textures.donate-menu", false));
         this.serverMenuService = new ServerMenuService(this, accessManager, messages);
         this.rankMenuService = new RankMenuService(this, accessManager, messages);
         this.bankStore = new BankStore(getDataFolder().toPath(), getLogger());
