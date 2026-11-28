@@ -52,7 +52,8 @@ public final class ArtifactLootListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEntityDeath(EntityDeathEvent event) {
-        if (ru.cherdakmd.chrdkregister.api.MobRewardPolicy.temporary(event.getEntity())) return;
+        if (event.getEntity() instanceof Player
+                || ru.cherdakmd.chrdkregister.api.MobRewardPolicy.temporary(event.getEntity())) return;
         Player killer = event.getEntity().getKiller();
         if (killer == null) {
             return;

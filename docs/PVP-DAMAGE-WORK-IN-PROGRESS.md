@@ -19,6 +19,8 @@ These decisions specify the target behavior, not completed implementation or evi
 
 Cleave, volley and bolt now have a candidate player-damage path: player targets require fresh read-only Claims and Guilds policies, and a real attributed damage event remains visible to other listeners. The new context prevents this ability hit from being mistaken for an ordinary weapon strike by CHRDK Skills and Enchants. Existing mob damage remains unattributed and unchanged. Backstab gives the caster Strength rather than direct area damage. Area lightning, chain lightning and arrow explosions also use collateral checks; for arrows Guilds requires the original projectile's owner and launch-peace markers. Both providers must be present and enabled: missing, unknown, unauthenticated, or unavailable evidence fails closed. Consequently player collateral is unavailable if either updated module is absent or its policy cannot answer. These changes require a coordinated update of Core, Claims, Guilds, Skills and Enchants; do not mix with old JARs.
 
+The candidate also excludes player deaths from the BattlePass PvE kill receipt/progress path, Common Goals PvE receipts and artifact mob-drop rolls. This means a custom BattlePass KILL mission explicitly targeting PLAYER will no longer progress; explicitly configured Quests PLAYER targets are not changed. Existing generic kill-trigger enchant/artifact combat effects and the Guilds PvP war score remain separate from mob rewards.
+
 The focused tests use mocks: they check formulas, no combat XP, preflight providers, exclusions, source context and cancellation logic. They are not an integration test of Bukkit/Purpur damage, claims, guilds, other plugins, or client gameplay.
 
 ## Known outstanding work and safety gates

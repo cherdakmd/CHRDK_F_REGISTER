@@ -79,6 +79,15 @@ class PvpSkillDamageTest {
         verify(f.service, never()).perksFor(any(), any());
     }
 
+    @Test void attributedAreaAbilityDoesNotBecomeAMeleeWeaponHit() {
+        var f = new Fixture(); when(f.event.getDamager()).thenReturn(f.attacker);
+        ru.cherdakmd.chrdkregister.api.AreaDamageContext.run(f.attacker, f.victim,
+                () -> f.listener.onMelee(f.event));
+        assertEquals(10, f.damage.get());
+        verify(f.service, never()).perksFor(any(), any());
+        verify(f.service, never()).award(any(), any(), anyLong());
+    }
+
     @Test void mobDamageKeepsStrongFoeAndTierPressureAndAwardsCombatXp() {
         var f = new Fixture(); var mob = mock(org.bukkit.entity.Monster.class);
         var data = mock(org.bukkit.persistence.PersistentDataContainer.class);
