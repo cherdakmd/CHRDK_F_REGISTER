@@ -17,5 +17,5 @@ jobs:
           java-version: '25'
       - uses: gradle/actions/setup-gradle@v4
       - run: python3 .github/scripts/prepare_papi.py
-      - name: Build and test all modules including PvP reward exclusions (no release)
+      - name: Build and test all modules and PvP reward exclusions (no release)
         run: ./gradlew --no-daemon --no-configuration-cache -Pchrdk.papiJar=build/dependencies/PlaceholderAPI-2.12.3.jar build --continue

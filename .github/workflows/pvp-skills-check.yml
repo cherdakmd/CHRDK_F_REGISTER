@@ -2,7 +2,7 @@ name: PvP skill damage checks
 on:
   push:
     branches: ['arena/**']
-    paths: ['.github/workflows/pvp-skills-check.yml', 'src/**', 'skills/src/**', 'claims/src/**', 'guilds/src/**', 'enchants/src/**']
+    paths: ['.github/workflows/pvp-skills-check.yml', 'src/**', 'skills/src/**', 'claims/src/**', 'guilds/src/**', 'enchants/src/**', 'battlepass/**', 'common-goals/**', 'artifacts/**']
   workflow_dispatch:
 permissions:
   contents: read
