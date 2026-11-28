@@ -166,6 +166,20 @@ public final class ClaimProtectionListener implements Listener {
         return claim.allows(player.getName(), required) || plugin.isBypassing(player);
     }
 
+    /** Read-only counterpart of onDamage; never sends denial messages or changes claims. */
+    ru.cherdakmd.chrdkregister.api.AreaPvpPolicy.Verdict areaPvp(Player attacker, Player target) {
+        var unknown = ru.cherdakmd.chrdkregister.api.AreaPvpPolicy.Verdict.UNKNOWN;
+        if (attacker == null || target == null || plugin.config() == null || plugin.store() == null) return unknown;
+        try {
+            if (!plugin.config().pvp) return ru.cherdakmd.chrdkregister.api.AreaPvpPolicy.Verdict.ALLOW;
+            Claim claim = claimAt(target.getLocation().getBlock());
+            return may(attacker, claim) ? ru.cherdakmd.chrdkregister.api.AreaPvpPolicy.Verdict.ALLOW
+                    : ru.cherdakmd.chrdkregister.api.AreaPvpPolicy.Verdict.DENY;
+        } catch (RuntimeException | LinkageError error) {
+            return unknown;
+        }
+    }
+
     /** Первый чужой приват среди блоков (для ведра: клик и соседняя клетка). */
     private Claim foreignAt(Player player, Block... blocks) {
         for (Block block : blocks) {

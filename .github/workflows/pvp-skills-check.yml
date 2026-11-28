@@ -17,4 +17,10 @@ jobs:
           java-version: '25'
       - uses: gradle/actions/setup-gradle@v4
       - run: python3 .github/scripts/prepare_papi.py
-      - run: ./gradlew --no-daemon --no-configuration-cache -Pchrdk.papiJar=build/dependencies/PlaceholderAPI-2.12.3.jar :skills:test --tests 'ru.cherdakmd.chrdkskills.PvpSkillDamageTest' --tests 'ru.cherdakmd.chrdkskills.AttributeMathTest'
+      - name: Test area protection and combat in each module
+        run: |
+          ./gradlew --no-daemon --no-configuration-cache -Pchrdk.papiJar=build/dependencies/PlaceholderAPI-2.12.3.jar :test --tests 'ru.cherdakmd.chrdkregister.api.AreaPvpGateTest'
+          ./gradlew --no-daemon --no-configuration-cache -Pchrdk.papiJar=build/dependencies/PlaceholderAPI-2.12.3.jar :skills:test --tests 'ru.cherdakmd.chrdkskills.PvpSkillDamageTest' --tests 'ru.cherdakmd.chrdkskills.AttributeMathTest' --tests 'ru.cherdakmd.chrdkskills.BranchAreaDamageTest'
+          ./gradlew --no-daemon --no-configuration-cache -Pchrdk.papiJar=build/dependencies/PlaceholderAPI-2.12.3.jar :claims:test --tests 'ru.cherdakmd.chrdkclaims.AreaClaimPvpPolicyTest'
+          ./gradlew --no-daemon --no-configuration-cache -Pchrdk.papiJar=build/dependencies/PlaceholderAPI-2.12.3.jar :guilds:test --tests 'ru.cherdakmd.chrdkguilds.AreaGuildPvpPolicyTest'
+          ./gradlew --no-daemon --no-configuration-cache -Pchrdk.papiJar=build/dependencies/PlaceholderAPI-2.12.3.jar :enchants:test --tests 'ru.cherdakmd.chrdkenchants.ArrowExplosionGuardTest' --tests 'ru.cherdakmd.chrdkenchants.BowProtectionTest'

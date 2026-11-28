@@ -6,7 +6,6 @@ import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -38,6 +37,7 @@ public final class MeleeEffectsListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
+        if (ru.cherdakmd.chrdkregister.api.AreaDamageContext.isAbilityDamage(event)) return;
         if (!(event.getDamager() instanceof Player attacker)
                 || !(event.getEntity() instanceof LivingEntity victim)) {
             return;
@@ -81,6 +81,7 @@ public final class MeleeEffectsListener implements Listener {
     /** Побочные эффекты запускаются после защит на HIGH/HIGHEST, а не до их отмены. */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onConfirmedHit(EntityDamageByEntityEvent event) {
+        if (ru.cherdakmd.chrdkregister.api.AreaDamageContext.isAbilityDamage(event)) return;
         if (!(event.getDamager() instanceof Player attacker)
                 || !(event.getEntity() instanceof LivingEntity victim)
                 || !DamageEvidence.positive(event.getFinalDamage()) || processing.contains(attacker.getUniqueId())) return;
@@ -114,8 +115,8 @@ public final class MeleeEffectsListener implements Listener {
             for (Entity nearby : victim.getNearbyEntities(3.5, 2.5, 3.5)) {
                 if (extra <= 0) break;
                 if (nearby instanceof LivingEntity target && target != victim
-                        && target != attacker && !(target instanceof Player
-                        && !canHit(attacker, target))) {
+                        && target != attacker && !(target instanceof Player player
+                        && !ru.cherdakmd.chrdkregister.api.AreaPvpGate.allows(attacker, player))) {
                     target.damage(arcDamage, attacker);
                     victim.getWorld().spawnParticle(Particle.ELECTRIC_SPARK,
                             midpoint(victim, target), 12, 0.1, 0.1, 0.1, 0.05);
@@ -188,11 +189,6 @@ public final class MeleeEffectsListener implements Listener {
         double max = player.getAttribute(Attribute.MAX_HEALTH) != null
                 ? player.getAttribute(Attribute.MAX_HEALTH).getValue() : 20;
         player.setHealth(Math.min(max, player.getHealth() + Math.max(0.5, amount)));
-    }
-
-    /** Не цепим игроков, если уязвлён только PvE-состав (безопасность для союзников). */
-    private static boolean canHit(Player attacker, LivingEntity target) {
-        return target instanceof Monster || target instanceof Player victim && victim != attacker;
     }
 
     private static Location midpoint(LivingEntity from, LivingEntity to) {

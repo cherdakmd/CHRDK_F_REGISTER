@@ -65,6 +65,8 @@ public final class GuildsPlugin extends JavaPlugin {
             Bukkit.getServicesManager().register(ru.cherdakmd.chrdkregister.api.PersonalDebtIndex.class,
                     peace::reserved,this,org.bukkit.plugin.ServicePriority.Normal);
             getServer().getPluginManager().registerEvents(new GuildPeaceListener(this),this);
+            Bukkit.getServicesManager().register(ru.cherdakmd.chrdkregister.api.AreaPvpPolicy.class,
+                    this::areaPvp, this, org.bukkit.plugin.ServicePriority.Normal);
             this.styles = new GuildStyleController(this);
             this.gui = new GuildsGui(this);
             this.recruitment = new GuildRecruitmentGui(this);
@@ -262,6 +264,28 @@ public final class GuildsPlugin extends JavaPlugin {
             return adventureGroups.groupRelation(first, second);
         } catch (RuntimeException | LinkageError error) {
             return AdventureGroupRelation.UNKNOWN;
+        }
+    }
+
+    /** Collateral targeting check: no attack(), combat mark or financial sanction. */
+    ru.cherdakmd.chrdkregister.api.AreaPvpPolicy.Verdict areaPvp(org.bukkit.entity.Player attacker,
+                                                                 org.bukkit.entity.Player target) {
+        var unknown = ru.cherdakmd.chrdkregister.api.AreaPvpPolicy.Verdict.UNKNOWN;
+        var deny = ru.cherdakmd.chrdkregister.api.AreaPvpPolicy.Verdict.DENY;
+        try {
+            if (!Bukkit.isPrimaryThread() || !isEnabled() || config == null || !config.enabled()
+                    || service == null || peace == null || adventureGroups == null || payments == null || payments.paused()
+                    || coreApi == null || !authenticated(attacker) || !authenticated(target)) return unknown;
+            var guild = service.relation(attacker.getUniqueId(), target.getUniqueId());
+            var group = adventureGroups.areaRelation(attacker.getUniqueId(), target.getUniqueId());
+            if (guild == null || group == null || guild == GuildRelation.UNKNOWN
+                    || group == AdventureGroupRelation.UNKNOWN) return unknown;
+            if (guild == GuildRelation.SAME_GUILD || group == AdventureGroupRelation.SAME_GROUP
+                    || peace.peaceful(attacker.getUniqueId())
+                    || peace.protects(target.getUniqueId(), System.currentTimeMillis())) return deny;
+            return ru.cherdakmd.chrdkregister.api.AreaPvpPolicy.Verdict.ALLOW;
+        } catch (RuntimeException | LinkageError error) {
+            return unknown;
         }
     }
 

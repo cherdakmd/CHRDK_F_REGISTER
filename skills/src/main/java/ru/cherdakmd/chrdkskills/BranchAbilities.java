@@ -150,9 +150,18 @@ final class BranchAbilities {
     }
 
 
-    private static void damageAround(Player player, double radius, double damage) {
+    static void damageAround(Player player, double radius, double damage) {
         for (LivingEntity mob : nearbyEnemies(player, radius)) {
             mob.damage(damage);
+        }
+        // Preflight is read-only, because a trial hit could cause guild sanctions.
+        // Each accepted victim still receives a real attributed damage event.
+        for (var entity : player.getNearbyEntities(radius, radius, radius)) {
+            if (entity instanceof Player target
+                    && ru.cherdakmd.chrdkregister.api.AreaPvpGate.allows(player, target)) {
+                ru.cherdakmd.chrdkregister.api.AreaDamageContext.run(player, target,
+                        () -> target.damage(damage, player));
+            }
         }
     }
 

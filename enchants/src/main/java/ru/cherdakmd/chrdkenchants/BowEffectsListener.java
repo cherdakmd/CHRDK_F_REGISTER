@@ -34,10 +34,12 @@ public final class BowEffectsListener implements Listener {
     private final Map<UUID, Location> arrowOrigins = new HashMap<>();
     private record ImpactKey(UUID arrow,UUID target) { }
     private final ImpactEvidenceGate<ImpactKey> impacts;
+    private final ArrowExplosionGuard explosionGuard;
     private BukkitTask sweepTask;
 
-    public BowEffectsListener(EnchantsPlugin plugin) {
+    public BowEffectsListener(EnchantsPlugin plugin, ArrowExplosionGuard explosionGuard) {
         this.plugin = plugin;
+        this.explosionGuard = explosionGuard;
         this.impacts = new ImpactEvidenceGate<>(action -> {
             var task=Bukkit.getScheduler().runTask(plugin,action);return task::cancel;
         },4096);
@@ -151,11 +153,14 @@ public final class BowEffectsListener implements Listener {
             hit.getWorld().strikeLightningEffect(hit);
             double damage=EnchantParams.value("stormarrow",storm);
             for(Entity near:hit.getWorld().getNearbyEntities(hit,2.0,2.0,2.0))
-                if(near instanceof LivingEntity target && target!=shooter)
+                if(near instanceof LivingEntity target && target!=shooter
+                        && (!(target instanceof Player player)
+                        || ru.cherdakmd.chrdkregister.api.AreaPvpGate.allows(shooter, player)))
                     target.damage(damage,shooter);
         }
         int explosive=enchants.getOrDefault("explosive",0);
-        if(explosive>0)hit.getWorld().createExplosion(hit,0.8f*EnchantParams.value("explosive",explosive),false,false,shooter);
+        if(explosive>0) explosionGuard.explode(shooter, () ->
+                hit.getWorld().createExplosion(hit,0.8f*EnchantParams.value("explosive",explosive),false,false,shooter));
     }
 
     /** Direct control effects require an accepted damage event, not merely a projectile collision. */

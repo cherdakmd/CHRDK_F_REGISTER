@@ -49,6 +49,16 @@ final class AdventureGroupController implements Listener {
         return groups.relation(first, second);
     }
 
+    /** Conservative, side-effect-free collateral check: an unverified shared roster is still excluded. */
+    AdventureGroupRelation areaRelation(UUID first, UUID second) {
+        if (!plugin.isEnabled() || plugin.config() == null || !plugin.config().enabled()
+                || plugin.payments() == null || plugin.payments().paused() || groups == null
+                || first == null || second == null || !availablePlayer(first) || !availablePlayer(second)) {
+            return AdventureGroupRelation.UNKNOWN;
+        }
+        return groups.snapshot(first).contains(second) ? AdventureGroupRelation.SAME_GROUP : AdventureGroupRelation.DIFFERENT;
+    }
+
     private GuildRelation relation(UUID a, UUID b) {
         if (!plugin.isEnabled() || plugin.config() == null || !plugin.config().enabled()
                 || plugin.payments() == null || plugin.payments().paused() || plugin.service() == null) {

@@ -109,7 +109,9 @@ public final class EnchantsPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(anvil, this);
         Bukkit.getPluginManager().registerEvents(new GrindstoneListener(this), this);
         Bukkit.getPluginManager().registerEvents(new MeleeEffectsListener(this), this);
-        this.bowEffects = new BowEffectsListener(this);
+        var arrowExplosionGuard = new ArrowExplosionGuard();
+        Bukkit.getPluginManager().registerEvents(arrowExplosionGuard, this);
+        this.bowEffects = new BowEffectsListener(this, arrowExplosionGuard);
         Bukkit.getPluginManager().registerEvents(bowEffects, this);
         Bukkit.getPluginManager().registerEvents(new ArmorEffectsListener(this), this);
         MiningOrigin origin = new MiningOrigin(this);

@@ -168,7 +168,10 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         }
 
         this.noticesKey = new NamespacedKey(this, "notices");
-        Bukkit.getPluginManager().registerEvents(new ClaimProtectionListener(this), this);
+        var protection = new ClaimProtectionListener(this);
+        Bukkit.getPluginManager().registerEvents(protection, this);
+        Bukkit.getServicesManager().register(ru.cherdakmd.chrdkregister.api.AreaPvpPolicy.class,
+                protection::areaPvp, this, org.bukkit.plugin.ServicePriority.Normal);
         // Меню приватов и телепорт к ним: оба слушателя живут до выключения плагина.
         this.menu = new ClaimMenuGui(this);
         this.teleports = new ClaimTeleportService(this);
@@ -218,6 +221,7 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        Bukkit.getServicesManager().unregisterAll(this);
         if(financeTask!=null) financeTask.cancel();
         if (teleportFinanceTask!=null) teleportFinanceTask.cancel();
         if (coreApi != null) {

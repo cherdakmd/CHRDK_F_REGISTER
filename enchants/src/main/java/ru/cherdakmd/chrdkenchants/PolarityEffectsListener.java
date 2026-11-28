@@ -41,6 +41,7 @@ public final class PolarityEffectsListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onMelee(EntityDamageByEntityEvent event) {
+        if (ru.cherdakmd.chrdkregister.api.AreaDamageContext.isAbilityDamage(event)) return;
         if (!(event.getDamager() instanceof Player attacker)) {
             return;
         }
