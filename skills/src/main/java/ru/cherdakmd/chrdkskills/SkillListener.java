@@ -73,6 +73,7 @@ public final class SkillListener implements Listener {
     private final SkillService service;
     private PlacedBlocks placedBlocks;
     private final Random random = new Random();
+    private final Map<EntityDamageByEntityEvent, Double> pvpLifesteal = new java.util.WeakHashMap<>();
     private record PendingBlockReward(SkillType skill, Material material) { }
     private final Map<BlockBreakEvent, PendingBlockReward> pendingBlockRewards = new java.util.WeakHashMap<>();
     /** Кто открыл варочную стойку: ключ блока → uuid и время. */
@@ -259,12 +260,13 @@ public final class SkillListener implements Listener {
     public void onMelee(EntityDamageByEntityEvent event) {
         if (!(event.getDamager() instanceof Player player)
                 || !(event.getEntity() instanceof LivingEntity victim)
-                || victim instanceof Player || !hostile(victim)) {
+                || !combatTarget(player, victim)) {
             return;
         }
         if (!honest(player)) {
             return;
         }
+        boolean pvp = victim instanceof Player;
         SkillPerks.Active perks = service.perksFor(player, SkillType.COMBAT);
         double bonus = perks.value(SkillPerk.Kind.MELEE_DAMAGE);
         if (bonus > 0.0) {
@@ -272,7 +274,7 @@ public final class SkillListener implements Listener {
         }
         // Атрибуты: сила и хитрость, с бонусом против мобов выше своего ранга
         // и штрафом давления тира за недобор атрибутов зоны.
-        int mobTier = mobTier(victim);
+        int mobTier = pvp ? 0 : mobTier(victim);
         double factor = AttributeMath.meleeFactor(
                 service.attribute(player, PlayerAttribute.STRENGTH),
                 service.attribute(player, PlayerAttribute.CUNNING),
@@ -282,11 +284,14 @@ public final class SkillListener implements Listener {
         factor *= BranchMath.meleeMult(service.branchLevel(player, BuildBranch.WARRIOR));
         factor *= BranchMath.rogueDamageMult(service.branchLevel(player, BuildBranch.ROGUE));
         event.setDamage(event.getDamage() * factor);
-        long units = Math.min(MAX_COMBAT_UNITS, Math.max(1L, (long) Math.ceil(event.getFinalDamage())));
-        if (!ru.cherdakmd.chrdkregister.api.MobRewardPolicy.temporary(victim)) service.award(player, SkillType.COMBAT, units);
         double lifesteal = perks.value(SkillPerk.Kind.LIFESTEAL);
-        if (lifesteal > 0.0) {
-            heal(player, event.getFinalDamage() * lifesteal);
+        if (pvp) {
+            // Побочное лечение — только после завершения всех обработчиков защиты.
+            if (lifesteal > 0.0) pvpLifesteal.put(event, lifesteal);
+        } else {
+            long units = Math.min(MAX_COMBAT_UNITS, Math.max(1L, (long) Math.ceil(event.getFinalDamage())));
+            if (!ru.cherdakmd.chrdkregister.api.MobRewardPolicy.temporary(victim)) service.award(player, SkillType.COMBAT, units);
+            if (lifesteal > 0.0) heal(player, event.getFinalDamage() * lifesteal);
         }
     }
 
@@ -295,18 +300,19 @@ public final class SkillListener implements Listener {
         if (!(event.getDamager() instanceof AbstractArrow arrow)
                 || !(arrow.getShooter() instanceof Player player)
                 || !(event.getEntity() instanceof LivingEntity victim)
-                || victim instanceof Player || !hostile(victim)) {
+                || !combatTarget(player, victim)) {
             return;
         }
         if (!honest(player)) {
             return;
         }
+        boolean pvp = victim instanceof Player;
         double bonus = service.perksFor(player, SkillType.ARCHERY).value(SkillPerk.Kind.ARROW_DAMAGE);
         if (bonus > 0.0) {
             event.setDamage(event.getDamage() * (1.0 + bonus));
         }
         // Атрибуты: хитрость в дальнем бою, с бонусом против сильных и давлением тира.
-        int mobTier = mobTier(victim);
+        int mobTier = pvp ? 0 : mobTier(victim);
         double factor = AttributeMath.rangedFactor(
                 service.attribute(player, PlayerAttribute.CUNNING),
                 mobTier, service.attributeSum(player));
@@ -315,8 +321,28 @@ public final class SkillListener implements Listener {
         factor *= BranchMath.rangedMult(service.branchLevel(player, BuildBranch.ARCHER));
         factor *= BranchMath.rogueDamageMult(service.branchLevel(player, BuildBranch.ROGUE));
         event.setDamage(event.getDamage() * factor);
-        long units = Math.min(MAX_COMBAT_UNITS, Math.max(1L, (long) Math.ceil(event.getFinalDamage())));
-        if (!ru.cherdakmd.chrdkregister.api.MobRewardPolicy.temporary(victim)) service.award(player, SkillType.ARCHERY, units);
+        if (!pvp) {
+            long units = Math.min(MAX_COMBAT_UNITS, Math.max(1L, (long) Math.ceil(event.getFinalDamage())));
+            if (!ru.cherdakmd.chrdkregister.api.MobRewardPolicy.temporary(victim)) service.award(player, SkillType.ARCHERY, units);
+        }
+    }
+
+    private static boolean combatTarget(Player attacker, LivingEntity victim) {
+        if (!(victim instanceof Player target)) return hostile(victim);
+        return attacker != target && !attacker.getUniqueId().equals(target.getUniqueId())
+                && !attacker.hasMetadata("NPC") && !target.hasMetadata("NPC")
+                && target.getWorld().getPVP();
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPvpLifesteal(EntityDamageByEntityEvent event) {
+        Double fraction = pvpLifesteal.remove(event);
+        if (fraction == null || event.isCancelled() || !(event.getDamager() instanceof Player player)) return;
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            double damage = event.getFinalDamage();
+            if (!event.isCancelled() && Double.isFinite(damage) && damage > 0.0
+                    && player.isOnline() && !player.isDead()) heal(player, damage * fraction);
+        });
     }
 
     /** Тир моба из метки CHRDK_Mobs ({@code tier-v1}); без метки — первый тир. */
