@@ -1,3 +1,4 @@
+# Full candidate verification after deferred PvP enchant effect changes.
 name: PvP full candidate checks
 on:
   push:
