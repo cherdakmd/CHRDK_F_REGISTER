@@ -1,4 +1,4 @@
-# Full candidate verification after deferred PvP enchant effect changes.
+# Full candidate verification after cross-module PvP retaliation changes.
 name: PvP full candidate checks
 on:
   push:
