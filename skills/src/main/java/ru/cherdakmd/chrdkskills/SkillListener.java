@@ -272,14 +272,18 @@ public final class SkillListener implements Listener {
         if (bonus > 0.0) {
             event.setDamage(event.getDamage() * (1.0 + bonus));
         }
-        // Атрибуты: сила и хитрость, с бонусом против мобов выше своего ранга
-        // и штрафом давления тира за недобор атрибутов зоны.
-        int mobTier = pvp ? 0 : mobTier(victim);
-        double factor = AttributeMath.meleeFactor(
-                service.attribute(player, PlayerAttribute.STRENGTH),
-                service.attribute(player, PlayerAttribute.CUNNING),
-                mobTier, service.attributeSum(player));
-        factor *= 1.0 - AttributeMath.pressure(mobTier, service.attributeSum(player));
+        int strength = service.attribute(player, PlayerAttribute.STRENGTH);
+        int cunning = service.attribute(player, PlayerAttribute.CUNNING);
+        double factor;
+        if (pvp) {
+            factor = AttributeMath.meleePvpFactor(strength, cunning);
+        } else {
+            // Тир и давление относятся только к мобам.
+            int mobTier = mobTier(victim);
+            int attributeSum = service.attributeSum(player);
+            factor = AttributeMath.meleeFactor(strength, cunning, mobTier, attributeSum)
+                    * (1.0 - AttributeMath.pressure(mobTier, attributeSum));
+        }
         // Ветки билда: Воин усиливает ближний бой, Разбойник — урон в целом.
         factor *= BranchMath.meleeMult(service.branchLevel(player, BuildBranch.WARRIOR));
         factor *= BranchMath.rogueDamageMult(service.branchLevel(player, BuildBranch.ROGUE));
@@ -311,12 +315,16 @@ public final class SkillListener implements Listener {
         if (bonus > 0.0) {
             event.setDamage(event.getDamage() * (1.0 + bonus));
         }
-        // Атрибуты: хитрость в дальнем бою, с бонусом против сильных и давлением тира.
-        int mobTier = pvp ? 0 : mobTier(victim);
-        double factor = AttributeMath.rangedFactor(
-                service.attribute(player, PlayerAttribute.CUNNING),
-                mobTier, service.attributeSum(player));
-        factor *= 1.0 - AttributeMath.pressure(mobTier, service.attributeSum(player));
+        int cunning = service.attribute(player, PlayerAttribute.CUNNING);
+        double factor;
+        if (pvp) {
+            factor = AttributeMath.rangedPvpFactor(cunning);
+        } else {
+            int mobTier = mobTier(victim);
+            int attributeSum = service.attributeSum(player);
+            factor = AttributeMath.rangedFactor(cunning, mobTier, attributeSum)
+                    * (1.0 - AttributeMath.pressure(mobTier, attributeSum));
+        }
         // Ветки билда: Стрелок усиливает дальний бой, Разбойник — урон в целом.
         factor *= BranchMath.rangedMult(service.branchLevel(player, BuildBranch.ARCHER));
         factor *= BranchMath.rogueDamageMult(service.branchLevel(player, BuildBranch.ROGUE));

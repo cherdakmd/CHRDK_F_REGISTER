@@ -2,6 +2,17 @@
 
 Goal: apply the server's player-origin PvE damage mechanics in PvP without bypassing protections or giving PvE rewards for player targets. This is not yet implemented completely or tested on a real server. Do not deploy this branch as a finished PvP update.
 
+## Player's balance decisions (12-question survey)
+
+* Direct skill/build damage bonuses, area ability damage, secondary enchantment damage and lifesteal use 100% of the PvE values. Damaging effects over time keep their PvE strength and duration.
+* Apply base strength/cunning in PvP, with neither the mob strong-foe multiplier nor mob-tier pressure.
+* Area damage must exclude guildmates and members of the same temporary group. Existing PvP, peace and territory protections remain in force.
+* Keep the existing stacking order, defenses, cooldowns and energy costs. Do not add a separate PvP damage cap. This can make high-level PvP damage very high.
+* The user reports only CHRDK PvP/territory protections. This is not proof of the complete installed plugin list; other enabled restriction listeners must still be respected.
+* Player targets must never grant PvE contribution, combat/archery XP, or mob-specific rewards. Control-only PvE effects are outside the requested damage scope.
+
+These decisions specify the target behavior, not completed implementation or evidence of safety.
+
 ## Current partial implementation
 
 `SkillListener` applies the existing combat and archery damage perks, base strength/cunning bonuses and appropriate build-branch multipliers to player targets of player melee and arrows. Players have no mob tier: the strong-mob bonus and tier-pressure penalty are not applied. Existing defenses and the damage event remain in place; these changes do not set or clear cancellation. PvP attacks do not award combat/archery XP. PvP melee lifesteal waits until the next tick and checks the final event cancellation and positive final damage; it still needs real-server verification, including interactions with other plugins and the damage actually accepted by the server. Self attacks, NPCs and worlds with PvP disabled do not receive these skill bonuses.

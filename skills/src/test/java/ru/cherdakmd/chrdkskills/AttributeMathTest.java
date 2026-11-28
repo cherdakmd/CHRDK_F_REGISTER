@@ -49,6 +49,16 @@ class AttributeMathTest {
     }
 
     @Test
+    void pvpAttributesUseBaseBonusWithoutMobTierEffects() {
+        assertEquals(1.4, AttributeMath.meleePvpFactor(50, 50), 1e-9);
+        assertEquals(1.15, AttributeMath.rangedPvpFactor(50), 1e-9);
+        assertEquals(1.0, AttributeMath.meleePvpFactor(-1, -1), 1e-9);
+        assertEquals(1.0, AttributeMath.rangedPvpFactor(-1), 1e-9);
+        // The mob-only strong-foe multiplier remains intact.
+        assertEquals(1.6, AttributeMath.meleeFactor(50, 50, 12, 0), 1e-9);
+    }
+
+    @Test
     void attackAndSupportFactorsScaleWithInvestment() {
         assertEquals(1.0, AttributeMath.meleeFactor(0, 0, 1, 0), 1e-9);
         assertEquals(1.40, AttributeMath.meleeFactor(50, 50, 1, 100), 1e-9,

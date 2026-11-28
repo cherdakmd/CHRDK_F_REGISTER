@@ -52,16 +52,32 @@ public final class AttributeMath {
         return mobTier > attrRank(attributeSum) ? 1.5 : 1.0;
     }
 
+    private static double meleeBonus(int strength, int cunning) {
+        return 0.005 * Math.max(0, strength) + 0.003 * Math.max(0, cunning);
+    }
+
+    private static double rangedBonus(int cunning) {
+        return 0.003 * Math.max(0, cunning);
+    }
+
     /** Сила (+0.5%/очко) и хитрость (+0.3%/очко) в ближнем бою, с бонусом против сильных. */
     public static double meleeFactor(int strength, int cunning, int mobTier, int attributeSum) {
-        double bonus = 0.005 * Math.max(0, strength) + 0.003 * Math.max(0, cunning);
-        return 1.0 + bonus * strongFoeFactor(mobTier, attributeSum);
+        return 1.0 + meleeBonus(strength, cunning) * strongFoeFactor(mobTier, attributeSum);
     }
 
     /** Хитрость в дальнем бою (+0.3%/очко), с бонусом против сильных. */
     public static double rangedFactor(int cunning, int mobTier, int attributeSum) {
-        double bonus = 0.003 * Math.max(0, cunning);
-        return 1.0 + bonus * strongFoeFactor(mobTier, attributeSum);
+        return 1.0 + rangedBonus(cunning) * strongFoeFactor(mobTier, attributeSum);
+    }
+
+    /** PvP: базовые бонусы, без тира моба и бонуса против сильных. */
+    public static double meleePvpFactor(int strength, int cunning) {
+        return 1.0 + meleeBonus(strength, cunning);
+    }
+
+    /** PvP: хитрость без бонуса против сильных и без давления тира. */
+    public static double rangedPvpFactor(int cunning) {
+        return 1.0 + rangedBonus(cunning);
     }
 
     /** Мудрость: +0.5% опыта навыков за очко. */

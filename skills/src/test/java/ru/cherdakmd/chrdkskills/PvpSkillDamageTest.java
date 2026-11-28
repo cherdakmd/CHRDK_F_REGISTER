@@ -79,6 +79,20 @@ class PvpSkillDamageTest {
         verify(f.service, never()).perksFor(any(), any());
     }
 
+    @Test void mobDamageKeepsStrongFoeAndTierPressureAndAwardsCombatXp() {
+        var f = new Fixture(); var mob = mock(org.bukkit.entity.Monster.class);
+        var data = mock(org.bukkit.persistence.PersistentDataContainer.class);
+        when(mob.getPersistentDataContainer()).thenReturn(data);
+        when(data.get(any(org.bukkit.NamespacedKey.class), eq(org.bukkit.persistence.PersistentDataType.INTEGER))).thenReturn(8);
+        when(f.event.getDamager()).thenReturn(f.attacker); when(f.event.getEntity()).thenReturn(mob);
+        when(f.event.getFinalDamage()).thenReturn(10.0);
+        when(f.service.perksFor(f.attacker, SkillType.COMBAT)).thenReturn(new SkillPerks.Active(
+                Map.of(SkillPerk.Kind.MELEE_DAMAGE, .2), List.of()));
+        f.listener.onMelee(f.event);
+        assertEquals(10 * 1.2 * (1 + .08 * 1.5) * .85 * 1.2 * 1.1, f.damage.get(), 1e-9);
+        verify(f.service).award(f.attacker, SkillType.COMBAT, 10L);
+    }
+
     @Test void cancelledHitDoesNotScheduleLifestealAndLateCancellationStopsIt() {
         var f = new Fixture(); when(f.event.getDamager()).thenReturn(f.attacker);
         f.listener.onMelee(f.event); when(f.event.isCancelled()).thenReturn(true);
