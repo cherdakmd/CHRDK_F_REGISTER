@@ -63,6 +63,17 @@ class GuildPeaceAttributionTest {
             default -> throw new AssertionError(m.getName());
         });
     }
+    @Test void automaticRetaliationIsStillBlockedButNeverFinesItsSource() {
+        var defender=entity(Player.class,new State()); var attacker=entity(Player.class,new State());
+        var event=org.mockito.Mockito.mock(org.bukkit.event.entity.EntityDamageByEntityEvent.class);
+        org.mockito.Mockito.when(event.getDamager()).thenReturn(defender);
+        org.mockito.Mockito.when(event.getEntity()).thenReturn(attacker);
+        org.mockito.Mockito.when(event.getDamage()).thenReturn(4.0);
+        ru.cherdakmd.chrdkregister.api.RetaliationDamageContext.run(defender,attacker,()->listener().damage(event));
+        assertEquals(1,calls); assertFalse(penalty);
+        org.mockito.Mockito.verify(event).setCancelled(true);
+        listener().damage(event); assertEquals(2,calls); assertTrue(penalty);
+    }
     @Test void directPeacefulActionIsProvenAndCanBePenalized() {
         var a=new State();peaceful.add(a.id);var listener=listener();
         assertTrue(listener.attack(entity(Player.class,a),entity(Player.class,new State()),"melee"));

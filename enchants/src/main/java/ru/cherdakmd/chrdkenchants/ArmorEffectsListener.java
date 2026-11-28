@@ -89,11 +89,16 @@ public final class ArmorEffectsListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onDamaged(EntityDamageByEntityEvent event) {
+        if (ru.cherdakmd.chrdkregister.api.RetaliationDamageContext.isRetaliation(event)) return;
         if (!(event.getEntity() instanceof Player victim) || !DamageEvidence.positive(event.getFinalDamage())) return;
         if (!(event.getDamager() instanceof LivingEntity attacker) || attacker == victim) return;
         if (processing.contains(victim.getUniqueId())) return;
         Map<String, Integer> enchants = bestArmorEnchants(victim);
+        retaliate(event, victim, attacker, enchants);
+    }
 
+    void retaliate(EntityDamageByEntityEvent event, Player victim, LivingEntity attacker,
+                   Map<String, Integer> enchants) {
         int retribution = enchants.getOrDefault("retribution", 0);
         // возмездие только ближнему бою
         if (retribution > 0 && event.getDamager() instanceof Entity damager
@@ -103,7 +108,12 @@ public final class ArmorEffectsListener implements Listener {
             if (reflect >= 0.5) {
                 processing.add(victim.getUniqueId());
                 try {
-                    attacker.damage(reflect, victim);
+                    if (attacker instanceof Player target) {
+                        ru.cherdakmd.chrdkregister.api.RetaliationDamageContext.run(victim, target,
+                                () -> target.damage(reflect, victim));
+                    } else {
+                        attacker.damage(reflect, victim);
+                    }
                 } finally {
                     processing.remove(victim.getUniqueId());
                 }

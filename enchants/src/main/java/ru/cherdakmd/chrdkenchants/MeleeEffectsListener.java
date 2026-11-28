@@ -88,7 +88,8 @@ public final class MeleeEffectsListener implements Listener {
     /** Побочные эффекты запускаются после защит на HIGH/HIGHEST, а не до их отмены. */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onConfirmedHit(EntityDamageByEntityEvent event) {
-        if (ru.cherdakmd.chrdkregister.api.AreaDamageContext.isAbilityDamage(event)) return;
+        if (ru.cherdakmd.chrdkregister.api.AreaDamageContext.isAbilityDamage(event)
+                || ru.cherdakmd.chrdkregister.api.RetaliationDamageContext.isRetaliation(event)) return;
         if (!(event.getDamager() instanceof Player attacker)
                 || !(event.getEntity() instanceof LivingEntity victim)
                 || !DamageEvidence.positive(event.getFinalDamage()) || processing.contains(attacker.getUniqueId())

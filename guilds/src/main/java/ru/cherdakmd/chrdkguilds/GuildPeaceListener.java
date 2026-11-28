@@ -92,6 +92,9 @@ final class GuildPeaceListener implements Listener {
     }
     /** Автоматика питомцев и неизвестные старые источники блокируются, но не обвиняют владельца. */
     boolean attack(Entity entity,Player victim,String kind) {
+        return attack(entity,victim,kind,false);
+    }
+    private boolean attack(Entity entity,Player victim,String kind,boolean automaticRetaliation) {
         if(!access.authenticated(victim)||victim.isDead())return false;
         boolean direct=entity instanceof Player;
         UUID attacker=owner(entity,0),action=direct?UUID.randomUUID():source(entity);
@@ -100,7 +103,7 @@ final class GuildPeaceListener implements Listener {
         Long created=entity.getPersistentDataContainer().get(createdKey,PersistentDataType.LONG);
         // Доказательства в домене живут 30 суток: древний снаряд после их очистки не обвиняет повторно.
         boolean known=direct||(action!=null&&created!=null&&created>=0&&created<=now&&now-created<GuildSanction.WINDOW);
-        boolean penalize=known&&!(entity instanceof Tameable)
+        boolean penalize=known&&!automaticRetaliation&&!(entity instanceof Tameable)
                 && !entity.getPersistentDataContainer().has(usedKey,PersistentDataType.BYTE)
                 && victim.getWorld().getPVP()&&!victim.isInvulnerable()
                 && victim.getGameMode()!=GameMode.CREATIVE&&victim.getGameMode()!=GameMode.SPECTATOR;
@@ -131,7 +134,8 @@ final class GuildPeaceListener implements Listener {
         if(!enabled() || !(event.getEntity() instanceof Player victim) || event.getDamage()<=0)return;
         Entity source=event.getDamager();
         String kind=source instanceof Projectile?"projectile":source instanceof TNTPrimed||source instanceof EnderCrystal?"explosion":source instanceof EvokerFangs?"fangs":"melee";
-        if(attack(source,victim,kind))event.setCancelled(true);
+        boolean retaliation=ru.cherdakmd.chrdkregister.api.RetaliationDamageContext.isRetaliation(event);
+        if(attack(source,victim,kind,retaliation))event.setCancelled(true);
     }
     @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=true)
     public void splash(PotionSplashEvent event) {

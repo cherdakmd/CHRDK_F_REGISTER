@@ -110,6 +110,8 @@ public final class ArtifactEventListener implements Listener {
     /** Тернистый Плащ: иголки отвечают сами. */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onRetaliate(EntityDamageByEntityEvent event) {
+        if (ru.cherdakmd.chrdkregister.api.RetaliationDamageContext.isRetaliation(event)
+                || !Double.isFinite(event.getFinalDamage()) || event.getFinalDamage() <= 0) return;
         if (!(event.getEntity() instanceof Player victim) || !carries(victim, "ternistyj-plasch")) {
             return;
         }
@@ -122,6 +124,10 @@ public final class ArtifactEventListener implements Listener {
                 || attacker.getGameMode() == GameMode.SPECTATOR)) {
             return;
         }
+        retaliate(victim, damager);
+    }
+
+    void retaliate(Player victim, LivingEntity damager) {
         // Если у нападавшего тоже плащ, его ответный удар вернётся сюда же — второй
         // раз в той же цепочке не отвечаем, иначе плащи убивают друг друга мгновенно.
         UUID damagerId = damager.getUniqueId();
@@ -129,7 +135,12 @@ public final class ArtifactEventListener implements Listener {
             return;
         }
         try {
-            damager.damage(RETALIATE_DAMAGE, victim);
+            if (damager instanceof Player target) {
+                ru.cherdakmd.chrdkregister.api.RetaliationDamageContext.run(victim, target,
+                        () -> target.damage(RETALIATE_DAMAGE, victim));
+            } else {
+                damager.damage(RETALIATE_DAMAGE, victim);
+            }
         } finally {
             retaliating.remove(damagerId);
         }
