@@ -10,7 +10,6 @@ import org.bukkit.event.inventory.PrepareAnvilEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Repairable;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -75,13 +74,7 @@ final class VanillaMergeListener implements Listener {
     private void restore(PrepareAnvilEvent event, ItemStack result, ItemStack left,
                          Map<Enchantment, Integer> leftMap, Map<Enchantment, Integer> merged) {
         Map<Enchantment, Integer> resultMap = VanillaLevels.levels(result);
-        Map<Enchantment, Integer> patched = new LinkedHashMap<>();
-        for (var entry : merged.entrySet()) {
-            int now = resultMap.getOrDefault(entry.getKey(), 0);
-            if (now > 0 && now < entry.getValue()) {
-                patched.put(entry.getKey(), entry.getValue());
-            }
-        }
+        Map<Enchantment, Integer> patched = VanillaLevels.upgrades(resultMap, merged);
         if (patched.isEmpty()) return;
         if (!AnvilPrice.strengthens(merged, leftMap) && sameOutsideEnchants(result, left)) {
             event.setResult(null); // без усиления — без результата: зажатое падение не в счёт

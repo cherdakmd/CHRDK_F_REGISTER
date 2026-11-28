@@ -58,14 +58,18 @@ final class VanillaLevels {
         Map<Enchantment, Integer> resultMap = levels(result);
         Map<Enchantment, Integer> merged = AnvilPrice.merge(levels(left), levels(right),
                 enchantment -> Math.max(levelCap, enchantment.getMaxLevel()));
-        Map<Enchantment, Integer> patched = new LinkedHashMap<>();
-        for (var entry : merged.entrySet()) {
-            int now = resultMap.getOrDefault(entry.getKey(), 0);
-            if (now > 0 && now < entry.getValue()) {
-                patched.put(entry.getKey(), entry.getValue());
-            }
-        }
+        Map<Enchantment, Integer> patched = upgrades(resultMap, merged);
         if (patched.isEmpty()) return;
         applyLevels(result, patched);
+    }
+
+    /** Only raise enchantments already accepted by the native preview. */
+    static <K> Map<K, Integer> upgrades(Map<K, Integer> nativeLevels, Map<K, Integer> merged) {
+        Map<K, Integer> patched = new LinkedHashMap<>();
+        for (var entry : merged.entrySet()) {
+            int now = nativeLevels.getOrDefault(entry.getKey(), 0);
+            if (now > 0 && now < entry.getValue()) patched.put(entry.getKey(), entry.getValue());
+        }
+        return patched;
     }
 }
