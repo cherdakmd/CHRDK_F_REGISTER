@@ -175,6 +175,12 @@ public final class BowEffectsListener implements Listener {
             impacts.damage(key,()->!event.isCancelled() && DamageEvidence.positive(event.getFinalDamage()));
         }
         if (!(event.getEntity() instanceof LivingEntity victim)) return;
+        confirmedControl(event, arrow, victim, enchants);
+    }
+
+    void confirmedControl(EntityDamageByEntityEvent event, Arrow arrow, LivingEntity victim,
+                          Map<String, Integer> enchants) {
+        if (enchants.getOrDefault("frostarrow", 0) <= 0 && !enchants.containsKey("tracer")) return;
         if (victim instanceof Player target) {
             if (!(arrow.getShooter() instanceof Player shooter)) return;
             long generation = plugin.sourceGeneration();

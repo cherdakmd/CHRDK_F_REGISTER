@@ -94,6 +94,11 @@ public final class MeleeEffectsListener implements Listener {
                 || !DamageEvidence.positive(event.getFinalDamage()) || processing.contains(attacker.getUniqueId())
                 || applyingPvpSecondary) return;
         Map<String, Integer> enchants = plugin.items().read(attacker.getInventory().getItemInMainHand());
+        confirmedEffects(event, attacker, victim, enchants);
+    }
+
+    void confirmedEffects(EntityDamageByEntityEvent event, Player attacker, LivingEntity victim,
+                          Map<String, Integer> enchants) {
         if (enchants.isEmpty()) return;
         if (victim instanceof Player target) {
             long generation = plugin.sourceGeneration();
