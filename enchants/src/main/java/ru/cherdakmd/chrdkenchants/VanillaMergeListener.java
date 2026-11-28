@@ -31,9 +31,11 @@ import java.util.Map;
 final class VanillaMergeListener implements Listener {
 
     private final EnchantsPlugin plugin;
+    private final AnvilPreviewSync previewSync;
 
     VanillaMergeListener(EnchantsPlugin plugin) {
         this.plugin = plugin;
+        this.previewSync = new AnvilPreviewSync(task -> plugin.getServer().getScheduler().runTask(plugin, task));
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
@@ -54,6 +56,21 @@ final class VanillaMergeListener implements Listener {
         } else {
             fabricate(event, left, leftMap, merged);
         }
+        // The native anvil preview can show a clamped level even though the final
+        // server-side item was raised. Re-send the FINAL view after all handlers.
+        // This is a visual sync only, not a second merge or a transaction.
+        if (needsPreviewSync(leftMap, merged, Enchantment::getMaxLevel)) {
+            try { previewSync.queue(event.getView()); }
+            catch (RuntimeException error) {
+                plugin.getLogger().warning("Не удалось обновить отображение наковальни (" + error.getClass().getSimpleName() + ").");
+            }
+        }
+    }
+
+    static <K> boolean needsPreviewSync(Map<K, Integer> left, Map<K, Integer> merged,
+                                        java.util.function.ToIntFunction<K> vanillaMax) {
+        return merged.entrySet().stream().anyMatch(entry -> entry.getValue() > vanillaMax.applyAsInt(entry.getKey())
+                && entry.getValue() > left.getOrDefault(entry.getKey(), 0));
     }
 
     /** Pure vanilla book result only. Custom-book quotes are produced by AnvilApplyListener. */
