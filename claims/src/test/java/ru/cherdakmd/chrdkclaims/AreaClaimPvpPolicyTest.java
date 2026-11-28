@@ -27,6 +27,6 @@ class AreaClaimPvpPolicyTest {
         when(plugin.isBypassing(attacker)).thenReturn(true); assertEquals(Verdict.ALLOW,listener.areaPvp(attacker,target));
         when(plugin.isBypassing(attacker)).thenReturn(false); when(store.protectedClaimAt("world",0,0)).thenThrow(new IllegalStateException());
         assertEquals(Verdict.UNKNOWN,listener.areaPvp(attacker,target));
-        verify(target,never()).damage(anyDouble(),any());
+        verify(target,never()).damage(anyDouble(),any(org.bukkit.entity.Entity.class));
     }
 }

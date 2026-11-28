@@ -172,7 +172,9 @@ public final class ClaimProtectionListener implements Listener {
         if (attacker == null || target == null || plugin.config() == null || plugin.store() == null) return unknown;
         try {
             if (!plugin.config().pvp) return ru.cherdakmd.chrdkregister.api.AreaPvpPolicy.Verdict.ALLOW;
-            Claim claim = claimAt(target.getLocation().getBlock());
+            Block block = target.getLocation().getBlock();
+            if (block == null || block.getWorld() == null) return unknown;
+            Claim claim = claimAt(block);
             return may(attacker, claim) ? ru.cherdakmd.chrdkregister.api.AreaPvpPolicy.Verdict.ALLOW
                     : ru.cherdakmd.chrdkregister.api.AreaPvpPolicy.Verdict.DENY;
         } catch (RuntimeException | LinkageError error) {

@@ -27,7 +27,7 @@ class BranchAreaDamageTest {
             gate.when(() -> AreaPvpGate.allows(caster,ally)).thenReturn(false);
             BranchAbilities.damageAround(caster,3,12);
         }
-        verify(mob).damage(12); verify(enemy).damage(12,caster); verify(ally,never()).damage(anyDouble(),any());
+        verify(mob).damage(12); verify(enemy).damage(12,caster); verify(ally,never()).damage(anyDouble(),any(org.bukkit.entity.Entity.class));
         assertFalse(AreaDamageContext.isAbilityDamage(event));
     }
 }
