@@ -20,6 +20,14 @@ final class ArrowExplosionGuard implements Listener {
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void protectKnockback(io.papermc.paper.event.entity.EntityKnockbackEvent event) {
+        if (shots.isEmpty() || !(event.getEntity() instanceof Player target)
+                || event.getCause() != io.papermc.paper.event.entity.EntityKnockbackEvent.Cause.EXPLOSION) return;
+        var shot = shots.peek();
+        if (!AreaPvpGate.allows(shot.shooter(), target, shot.arrow())) event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void protect(EntityDamageEvent event) {
         if (shots.isEmpty() || !(event.getEntity() instanceof Player target)) return;
         if (event.getCause() != EntityDamageEvent.DamageCause.ENTITY_EXPLOSION

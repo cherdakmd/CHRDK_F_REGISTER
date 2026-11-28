@@ -16,6 +16,15 @@ class ArrowExplosionGuardTest {
             gate.when(()->AreaPvpGate.allows(shooter,target,arrow)).thenReturn(false);
             guard.protect(event); verify(event,never()).setCancelled(true);
             guard.explode(shooter,arrow,()->guard.protect(event)); verify(event).setCancelled(true);
+            var knockback=mock(io.papermc.paper.event.entity.EntityKnockbackEvent.class);
+            when(knockback.getEntity()).thenReturn(target);
+            when(knockback.getCause()).thenReturn(io.papermc.paper.event.entity.EntityKnockbackEvent.Cause.EXPLOSION);
+            guard.explode(shooter,arrow,()->guard.protectKnockback(knockback));
+            verify(knockback).setCancelled(true);
+            gate.when(()->AreaPvpGate.allows(shooter,target,arrow)).thenReturn(true);
+            reset(knockback); when(knockback.getEntity()).thenReturn(target);
+            when(knockback.getCause()).thenReturn(io.papermc.paper.event.entity.EntityKnockbackEvent.Cause.EXPLOSION);
+            guard.explode(shooter,arrow,()->guard.protectKnockback(knockback)); verify(knockback,never()).setCancelled(true);
             reset(event); when(event.getEntity()).thenReturn(target); when(event.getCause()).thenReturn(EntityDamageEvent.DamageCause.FALL);
             guard.explode(shooter,arrow,()->guard.protect(event)); verify(event,never()).setCancelled(true);
             assertThrows(IllegalStateException.class,()->guard.explode(shooter,arrow,()->{throw new IllegalStateException();}));

@@ -1,0 +1,21 @@
+name: PvP full candidate checks
+on:
+  push:
+    branches: ['arena/**']
+    paths: ['.github/workflows/pvp-full-check.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v4
+      - run: python3 .github/scripts/prepare_papi.py
+      - name: Build and test all modules (no release)
+        run: ./gradlew --no-daemon --no-configuration-cache -Pchrdk.papiJar=build/dependencies/PlaceholderAPI-2.12.3.jar build --continue
