@@ -11,18 +11,18 @@ import static org.mockito.Mockito.*;
 class AreaPvpGateTest {
     private final Player a = mock(Player.class), b = mock(Player.class);
     private AreaPvpGate.Provider provider(String name, AreaPvpPolicy.Verdict verdict) {
-        return new AreaPvpGate.Provider(name, true, (x,y) -> verdict);
+        return new AreaPvpGate.Provider(name, true, (x,y,z) -> verdict);
     }
     @Test void requiresBothKnownProvidersAndAllAllow() {
         var claims = provider("CHRDK_Claims", AreaPvpPolicy.Verdict.ALLOW);
         var guilds = provider("CHRDK_Guilds", AreaPvpPolicy.Verdict.ALLOW);
-        assertTrue(AreaPvpGate.evaluate(a,b,List.of(claims,guilds)));
-        assertFalse(AreaPvpGate.evaluate(a,b,List.of(claims)));
-        assertFalse(AreaPvpGate.evaluate(a,b,List.of(guilds)));
-        assertFalse(AreaPvpGate.evaluate(a,b,List.of(claims,guilds,provider("extra",AreaPvpPolicy.Verdict.DENY))));
-        assertFalse(AreaPvpGate.evaluate(a,b,List.of(claims,provider("CHRDK_Guilds",AreaPvpPolicy.Verdict.UNKNOWN))));
-        assertFalse(AreaPvpGate.evaluate(a,b,List.of(claims,new AreaPvpGate.Provider("CHRDK_Guilds",false,(x,y)->AreaPvpPolicy.Verdict.ALLOW))));
-        assertFalse(AreaPvpGate.evaluate(a,b,List.of(claims,new AreaPvpGate.Provider("CHRDK_Guilds",true,(x,y)->{throw new IllegalStateException();}))));
+        assertTrue(AreaPvpGate.evaluate(a,b,a,List.of(claims,guilds)));
+        assertFalse(AreaPvpGate.evaluate(a,b,a,List.of(claims)));
+        assertFalse(AreaPvpGate.evaluate(a,b,a,List.of(guilds)));
+        assertFalse(AreaPvpGate.evaluate(a,b,a,List.of(claims,guilds,provider("extra",AreaPvpPolicy.Verdict.DENY))));
+        assertFalse(AreaPvpGate.evaluate(a,b,a,List.of(claims,provider("CHRDK_Guilds",AreaPvpPolicy.Verdict.UNKNOWN))));
+        assertFalse(AreaPvpGate.evaluate(a,b,a,List.of(claims,new AreaPvpGate.Provider("CHRDK_Guilds",false,(x,y,z)->AreaPvpPolicy.Verdict.ALLOW))));
+        assertFalse(AreaPvpGate.evaluate(a,b,a,List.of(claims,new AreaPvpGate.Provider("CHRDK_Guilds",true,(x,y,z)->{throw new IllegalStateException();}))));
     }
     @Test void liveGateRequiresValidPlayersWorldAndServices() {
         var world = mock(org.bukkit.World.class); var manager = mock(org.bukkit.plugin.ServicesManager.class);
@@ -32,8 +32,8 @@ class AreaPvpGateTest {
         when(claims.getName()).thenReturn("CHRDK_Claims"); when(claims.isEnabled()).thenReturn(true);
         when(guilds.getName()).thenReturn("CHRDK_Guilds"); when(guilds.isEnabled()).thenReturn(true);
         when(claimRegistration.getPlugin()).thenReturn(claims); when(guildRegistration.getPlugin()).thenReturn(guilds);
-        when(claimRegistration.getProvider()).thenReturn((x,y)->AreaPvpPolicy.Verdict.ALLOW);
-        when(guildRegistration.getProvider()).thenReturn((x,y)->AreaPvpPolicy.Verdict.ALLOW);
+        when(claimRegistration.getProvider()).thenReturn((x,y,z)->AreaPvpPolicy.Verdict.ALLOW);
+        when(guildRegistration.getProvider()).thenReturn((x,y,z)->AreaPvpPolicy.Verdict.ALLOW);
         when(manager.getRegistrations(AreaPvpPolicy.class)).thenReturn(List.of(claimRegistration,guildRegistration));
         when(a.getUniqueId()).thenReturn(UUID.randomUUID()); when(b.getUniqueId()).thenReturn(UUID.randomUUID());
         when(a.isOnline()).thenReturn(true); when(b.isOnline()).thenReturn(true);

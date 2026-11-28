@@ -6,5 +6,5 @@ import org.bukkit.entity.Player;
 @FunctionalInterface
 public interface AreaPvpPolicy {
     enum Verdict { ALLOW, DENY, UNKNOWN }
-    Verdict check(Player attacker, Player target);
+    Verdict check(Player attacker, Player target, org.bukkit.entity.Entity source);
 }

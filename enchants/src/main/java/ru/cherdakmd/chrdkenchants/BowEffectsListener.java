@@ -143,11 +143,11 @@ public final class BowEffectsListener implements Listener {
                         && hit.getWorld()!=null && world.equals(hit.getWorld().getUID())
                         && hit.getWorld().isChunkLoaded(hit.getBlockX()>>4,hit.getBlockZ()>>4)
                         && shooter!=null && shooter.isOnline() && shooter.getWorld().getUID().equals(world),
-                ()->applyAreaImpact(shooter,hit,enchants));
+                ()->applyAreaImpact(shooter,arrow,hit,enchants));
     }
 
     /** Each damage/explosion remains a Bukkit event for external protection. */
-    private void applyAreaImpact(Player shooter,Location hit,Map<String,Integer> enchants) {
+    private void applyAreaImpact(Player shooter,Arrow arrow,Location hit,Map<String,Integer> enchants) {
         int storm=enchants.getOrDefault("stormarrow",0);
         if(storm>0) {
             hit.getWorld().strikeLightningEffect(hit);
@@ -155,11 +155,11 @@ public final class BowEffectsListener implements Listener {
             for(Entity near:hit.getWorld().getNearbyEntities(hit,2.0,2.0,2.0))
                 if(near instanceof LivingEntity target && target!=shooter
                         && (!(target instanceof Player player)
-                        || ru.cherdakmd.chrdkregister.api.AreaPvpGate.allows(shooter, player)))
+                        || ru.cherdakmd.chrdkregister.api.AreaPvpGate.allows(shooter, player, arrow)))
                     target.damage(damage,shooter);
         }
         int explosive=enchants.getOrDefault("explosive",0);
-        if(explosive>0) explosionGuard.explode(shooter, () ->
+        if(explosive>0) explosionGuard.explode(shooter, arrow, () ->
                 hit.getWorld().createExplosion(hit,0.8f*EnchantParams.value("explosive",explosive),false,false,shooter));
     }
 

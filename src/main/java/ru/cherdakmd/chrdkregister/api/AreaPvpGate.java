@@ -14,6 +14,11 @@ public final class AreaPvpGate {
     record Provider(String name, boolean enabled, AreaPvpPolicy policy) { }
 
     public static boolean allows(Player attacker, Player target) {
+        return allows(attacker, target, attacker);
+    }
+
+    /** For projectile collateral, source must be the original marked projectile. */
+    public static boolean allows(Player attacker, Player target, org.bukkit.entity.Entity source) {
         try {
             if (!Bukkit.isPrimaryThread() || attacker == null || target == null
                     || attacker.getUniqueId().equals(target.getUniqueId())
@@ -28,21 +33,21 @@ public final class AreaPvpGate {
                 providers.add(new Provider(owner == null ? null : owner.getName(),
                         owner != null && owner.isEnabled(), registration.getProvider()));
             }
-            return evaluate(attacker, target, providers);
+            return evaluate(attacker, target, source, providers);
         } catch (RuntimeException | LinkageError error) {
             return false;
         }
     }
 
-    static boolean evaluate(Player attacker, Player target, Collection<Provider> providers) {
-        if (attacker == null || target == null || providers == null) return false;
+    static boolean evaluate(Player attacker, Player target, org.bukkit.entity.Entity source, Collection<Provider> providers) {
+        if (attacker == null || target == null || source == null || providers == null) return false;
         Set<String> missing = new HashSet<>(REQUIRED);
         try {
             for (var provider : providers) {
                 if (provider == null || provider.name() == null || provider.name().isBlank()
                         || !provider.enabled() || provider.policy() == null) return false;
                 missing.remove(provider.name().toLowerCase(Locale.ROOT));
-                if (provider.policy().check(attacker, target) != AreaPvpPolicy.Verdict.ALLOW) return false;
+                if (provider.policy().check(attacker, target, source) != AreaPvpPolicy.Verdict.ALLOW) return false;
             }
             return missing.isEmpty();
         } catch (RuntimeException | LinkageError error) {

@@ -9,16 +9,16 @@ import static org.mockito.Mockito.*;
 
 class ArrowExplosionGuardTest {
     @Test void blocksDeniedCollateralOnlyDuringTheScopedExplosion() {
-        var guard=new ArrowExplosionGuard(); var shooter=mock(Player.class); var target=mock(Player.class);
+        var guard=new ArrowExplosionGuard(); var shooter=mock(Player.class); var target=mock(Player.class); var arrow=mock(org.bukkit.entity.Arrow.class);
         var event=mock(EntityDamageEvent.class); when(event.getEntity()).thenReturn(target);
         when(event.getCause()).thenReturn(EntityDamageEvent.DamageCause.ENTITY_EXPLOSION);
         try(var gate=mockStatic(AreaPvpGate.class)) {
-            gate.when(()->AreaPvpGate.allows(shooter,target)).thenReturn(false);
+            gate.when(()->AreaPvpGate.allows(shooter,target,arrow)).thenReturn(false);
             guard.protect(event); verify(event,never()).setCancelled(true);
-            guard.explode(shooter,()->guard.protect(event)); verify(event).setCancelled(true);
+            guard.explode(shooter,arrow,()->guard.protect(event)); verify(event).setCancelled(true);
             reset(event); when(event.getEntity()).thenReturn(target); when(event.getCause()).thenReturn(EntityDamageEvent.DamageCause.FALL);
-            guard.explode(shooter,()->guard.protect(event)); verify(event,never()).setCancelled(true);
-            assertThrows(IllegalStateException.class,()->guard.explode(shooter,()->{throw new IllegalStateException();}));
+            guard.explode(shooter,arrow,()->guard.protect(event)); verify(event,never()).setCancelled(true);
+            assertThrows(IllegalStateException.class,()->guard.explode(shooter,arrow,()->{throw new IllegalStateException();}));
             when(event.getCause()).thenReturn(EntityDamageEvent.DamageCause.ENTITY_EXPLOSION);
             guard.protect(event); verify(event,never()).setCancelled(true);
         }

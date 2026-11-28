@@ -21,12 +21,12 @@ class AreaClaimPvpPolicyTest {
         when(attacker.getName()).thenReturn("Attacker"); when(target.getLocation()).thenReturn(location);
         when(location.getBlock()).thenReturn(block); when(block.getWorld()).thenReturn(world); when(world.getName()).thenReturn("world");
         var listener=new ClaimProtectionListener(plugin);
-        assertEquals(Verdict.ALLOW,listener.areaPvp(attacker,target));
+        assertEquals(Verdict.ALLOW,listener.areaPvp(attacker,target,attacker));
         var foreign=new Claim("world",0,0,"Owner",0); when(store.protectedClaimAt("world",0,0)).thenReturn(foreign);
-        assertEquals(Verdict.DENY,listener.areaPvp(attacker,target));
-        when(plugin.isBypassing(attacker)).thenReturn(true); assertEquals(Verdict.ALLOW,listener.areaPvp(attacker,target));
+        assertEquals(Verdict.DENY,listener.areaPvp(attacker,target,attacker));
+        when(plugin.isBypassing(attacker)).thenReturn(true); assertEquals(Verdict.ALLOW,listener.areaPvp(attacker,target,attacker));
         when(plugin.isBypassing(attacker)).thenReturn(false); when(store.protectedClaimAt("world",0,0)).thenThrow(new IllegalStateException());
-        assertEquals(Verdict.UNKNOWN,listener.areaPvp(attacker,target));
+        assertEquals(Verdict.UNKNOWN,listener.areaPvp(attacker,target,attacker));
         verify(target,never()).damage(anyDouble(),any(org.bukkit.entity.Entity.class));
     }
 }

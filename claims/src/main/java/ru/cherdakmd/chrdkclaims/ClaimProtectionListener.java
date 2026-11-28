@@ -167,7 +167,7 @@ public final class ClaimProtectionListener implements Listener {
     }
 
     /** Read-only counterpart of onDamage; never sends denial messages or changes claims. */
-    ru.cherdakmd.chrdkregister.api.AreaPvpPolicy.Verdict areaPvp(Player attacker, Player target) {
+    ru.cherdakmd.chrdkregister.api.AreaPvpPolicy.Verdict areaPvp(Player attacker, Player target, org.bukkit.entity.Entity source) {
         var unknown = ru.cherdakmd.chrdkregister.api.AreaPvpPolicy.Verdict.UNKNOWN;
         if (attacker == null || target == null || plugin.config() == null || plugin.store() == null) return unknown;
         try {

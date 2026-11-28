@@ -269,13 +269,26 @@ public final class GuildsPlugin extends JavaPlugin {
 
     /** Collateral targeting check: no attack(), combat mark or financial sanction. */
     ru.cherdakmd.chrdkregister.api.AreaPvpPolicy.Verdict areaPvp(org.bukkit.entity.Player attacker,
-                                                                 org.bukkit.entity.Player target) {
+                                                                 org.bukkit.entity.Player target,
+                                                                 org.bukkit.entity.Entity source) {
         var unknown = ru.cherdakmd.chrdkregister.api.AreaPvpPolicy.Verdict.UNKNOWN;
         var deny = ru.cherdakmd.chrdkregister.api.AreaPvpPolicy.Verdict.DENY;
         try {
             if (!Bukkit.isPrimaryThread() || !isEnabled() || config == null || !config.enabled()
                     || service == null || peace == null || adventureGroups == null || payments == null || payments.paused()
                     || coreApi == null || !authenticated(attacker) || !authenticated(target)) return unknown;
+            if (source instanceof org.bukkit.entity.Projectile shot) {
+                if (!(shot.getShooter() instanceof org.bukkit.entity.Player shooter)
+                        || !shooter.getUniqueId().equals(attacker.getUniqueId())) return unknown;
+                var data = shot.getPersistentDataContainer();
+                String owner = data.get(new org.bukkit.NamespacedKey(getName().toLowerCase(java.util.Locale.ROOT), "pvp_owner"),
+                        org.bukkit.persistence.PersistentDataType.STRING);
+                Byte launchedPeaceful = data.get(new org.bukkit.NamespacedKey(getName().toLowerCase(java.util.Locale.ROOT), "peaceful_launch"),
+                        org.bukkit.persistence.PersistentDataType.BYTE);
+                if (!attacker.getUniqueId().toString().equals(owner) || launchedPeaceful == null
+                        || (launchedPeaceful != 0 && launchedPeaceful != 1)) return unknown;
+                if (launchedPeaceful == 1) return deny;
+            } else if (source != attacker) return unknown;
             var guild = service.relation(attacker.getUniqueId(), target.getUniqueId());
             var group = adventureGroups.areaRelation(attacker.getUniqueId(), target.getUniqueId());
             if (guild == null || group == null || guild == GuildRelation.UNKNOWN
