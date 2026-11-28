@@ -30,9 +30,16 @@ public final class MeleeEffectsListener implements Listener {
     private final EnchantsPlugin plugin;
     /** Защита от рекурсии: пока чара сама наносит урон, новых срабатываний не пропускаем. */
     private final Set<UUID> processing = new HashSet<>();
+    private final DeferredPvpEffects deferred;
+    private boolean applyingPvpSecondary;
 
     public MeleeEffectsListener(EnchantsPlugin plugin) {
+        this(plugin, task -> plugin.getServer().getScheduler().runTask(plugin, task));
+    }
+
+    MeleeEffectsListener(EnchantsPlugin plugin, java.util.function.Consumer<Runnable> scheduler) {
         this.plugin = plugin;
+        this.deferred = new DeferredPvpEffects(scheduler);
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -84,9 +91,31 @@ public final class MeleeEffectsListener implements Listener {
         if (ru.cherdakmd.chrdkregister.api.AreaDamageContext.isAbilityDamage(event)) return;
         if (!(event.getDamager() instanceof Player attacker)
                 || !(event.getEntity() instanceof LivingEntity victim)
-                || !DamageEvidence.positive(event.getFinalDamage()) || processing.contains(attacker.getUniqueId())) return;
+                || !DamageEvidence.positive(event.getFinalDamage()) || processing.contains(attacker.getUniqueId())
+                || applyingPvpSecondary) return;
         Map<String, Integer> enchants = plugin.items().read(attacker.getInventory().getItemInMainHand());
         if (enchants.isEmpty()) return;
+        if (victim instanceof Player target) {
+            long generation = plugin.sourceGeneration();
+            UUID world = target.getWorld().getUID();
+            int chunkX = target.getLocation().getBlockX() >> 4, chunkZ = target.getLocation().getBlockZ() >> 4;
+            Map<String, Integer> captured = Map.copyOf(enchants);
+            deferred.submit(event, () -> generation == plugin.sourceGeneration()
+                            && plugin.coreApi() != null && plugin.coreApi().isAuthenticated(attacker)
+                            && plugin.coreApi().isAuthenticated(target)
+                            && attacker.isOnline() && !attacker.isDead() && target.isOnline()
+                            && world.equals(attacker.getWorld().getUID()) && world.equals(target.getWorld().getUID())
+                            && target.getWorld().getPVP()
+                            && (target.getLocation().getBlockX() >> 4) == chunkX
+                            && (target.getLocation().getBlockZ() >> 4) == chunkZ,
+                    () -> {
+                        if (!processing.add(attacker.getUniqueId())) return;
+                        applyingPvpSecondary = true;
+                        try { applyHitEffects(event, attacker, victim, captured); }
+                        finally { applyingPvpSecondary = false; processing.remove(attacker.getUniqueId()); }
+                    });
+            return;
+        }
         processing.add(attacker.getUniqueId());
         try {
             applyHitEffects(event, attacker, victim, enchants);

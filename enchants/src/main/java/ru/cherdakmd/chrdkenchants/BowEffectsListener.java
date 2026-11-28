@@ -34,12 +34,14 @@ public final class BowEffectsListener implements Listener {
     private final Map<UUID, Location> arrowOrigins = new HashMap<>();
     private record ImpactKey(UUID arrow,UUID target) { }
     private final ImpactEvidenceGate<ImpactKey> impacts;
+    private final DeferredPvpEffects pvpControl;
     private final ArrowExplosionGuard explosionGuard;
     private BukkitTask sweepTask;
 
     public BowEffectsListener(EnchantsPlugin plugin, ArrowExplosionGuard explosionGuard) {
         this.plugin = plugin;
         this.explosionGuard = explosionGuard;
+        this.pvpControl = new DeferredPvpEffects(action -> Bukkit.getScheduler().runTask(plugin, action));
         this.impacts = new ImpactEvidenceGate<>(action -> {
             var task=Bukkit.getScheduler().runTask(plugin,action);return task::cancel;
         },4096);
@@ -173,6 +175,27 @@ public final class BowEffectsListener implements Listener {
             impacts.damage(key,()->!event.isCancelled() && DamageEvidence.positive(event.getFinalDamage()));
         }
         if (!(event.getEntity() instanceof LivingEntity victim)) return;
+        if (victim instanceof Player target) {
+            if (!(arrow.getShooter() instanceof Player shooter)) return;
+            long generation = plugin.sourceGeneration();
+            UUID world = target.getWorld().getUID();
+            int chunkX = target.getLocation().getBlockX() >> 4, chunkZ = target.getLocation().getBlockZ() >> 4;
+            Map<String,Integer> captured = Map.copyOf(enchants);
+            pvpControl.submit(event, () -> generation == plugin.sourceGeneration()
+                            && plugin.coreApi() != null && plugin.coreApi().isAuthenticated(shooter)
+                            && plugin.coreApi().isAuthenticated(target)
+                            && shooter.isOnline() && !shooter.isDead() && target.isOnline() && !target.isDead()
+                            && world.equals(shooter.getWorld().getUID()) && world.equals(target.getWorld().getUID())
+                            && target.getWorld().getPVP()
+                            && (target.getLocation().getBlockX() >> 4) == chunkX
+                            && (target.getLocation().getBlockZ() >> 4) == chunkZ,
+                    () -> applyArrowControl(target, captured));
+            return;
+        }
+        applyArrowControl(victim, enchants);
+    }
+
+    private void applyArrowControl(LivingEntity victim, Map<String,Integer> enchants) {
         int frost = enchants.getOrDefault("frostarrow", 0);
         if (frost > 0) {
             int ticks = EnchantParams.seconds("frostarrow", frost) * 20;
